@@ -1,13 +1,56 @@
 /**
  * Scoring utilities for Runesmith
- * Implements Azul-style adjacency scoring
+ * Implements connected segment scoring
  */
 
 import type { ScoringWall, RuneType } from '../types/game';
 
 /**
- * Calculate score for placing a rune on the wall at given position
- * Returns points based on horizontal and vertical adjacency
+ * Calculate total wall power based on connected segments
+ * Each segment's power is (number of runes in segment)^2
+ * Runes are connected if they share an edge (not diagonal)
+ */
+export function calculateWallPower(wall: ScoringWall): number {
+  const visited = Array(5).fill(null).map(() => Array(5).fill(false));
+  let totalPower = 0;
+  
+  // Flood fill to find each connected segment
+  function floodFill(row: number, col: number): number {
+    // Out of bounds or already visited or empty cell
+    if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
+        visited[row][col] || wall[row][col].runeType === null) {
+      return 0;
+    }
+    
+    visited[row][col] = true;
+    let count = 1;
+    
+    // Check all 4 adjacent cells (up, down, left, right)
+    count += floodFill(row - 1, col); // up
+    count += floodFill(row + 1, col); // down
+    count += floodFill(row, col - 1); // left
+    count += floodFill(row, col + 1); // right
+    
+    return count;
+  }
+  
+  // Find all segments
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      if (!visited[row][col] && wall[row][col].runeType !== null) {
+        const segmentSize = floodFill(row, col);
+        const segmentPower = segmentSize * segmentSize;
+        totalPower += segmentPower;
+      }
+    }
+  }
+  
+  return totalPower;
+}
+
+/**
+ * Legacy function for placement scoring (no longer used for end-of-round scoring)
+ * Kept for backwards compatibility if needed
  */
 export function calculatePlacementScore(
   wall: ScoringWall,
@@ -17,9 +60,8 @@ export function calculatePlacementScore(
   let score = 0;
   
   // Count horizontal adjacent runes
-  let horizontalCount = 1; // Start with the placed rune itself
+  let horizontalCount = 1;
   
-  // Check left
   for (let c = col - 1; c >= 0; c--) {
     if (wall[row][c].runeType !== null) {
       horizontalCount++;
@@ -28,7 +70,6 @@ export function calculatePlacementScore(
     }
   }
   
-  // Check right
   for (let c = col + 1; c < 5; c++) {
     if (wall[row][c].runeType !== null) {
       horizontalCount++;
@@ -38,9 +79,8 @@ export function calculatePlacementScore(
   }
   
   // Count vertical adjacent runes
-  let verticalCount = 1; // Start with the placed rune itself
+  let verticalCount = 1;
   
-  // Check up
   for (let r = row - 1; r >= 0; r--) {
     if (wall[r][col].runeType !== null) {
       verticalCount++;
@@ -49,7 +89,6 @@ export function calculatePlacementScore(
     }
   }
   
-  // Check down
   for (let r = row + 1; r < 5; r++) {
     if (wall[r][col].runeType !== null) {
       verticalCount++;
@@ -58,9 +97,6 @@ export function calculatePlacementScore(
     }
   }
   
-  // Scoring rules:
-  // - If only 1 in both directions (isolated), score 1
-  // - Otherwise, add horizontal and vertical counts
   if (horizontalCount === 1 && verticalCount === 1) {
     score = 1;
   } else {

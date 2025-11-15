@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import type { GameState, Rune, RuneType, Player } from '../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
-import { calculatePlacementScore, calculateFloorPenalty, getWallColumnForRune } from '../utils/scoring';
+import { calculateWallPower, calculateFloorPenalty, getWallColumnForRune } from '../utils/scoring';
 
 interface GameStore extends GameState {
   // Actions
@@ -216,11 +216,10 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // Score both players
       const updatedPlayers = state.players.map((player) => {
-        let newScore = player.score;
         const updatedPatternLines = [...player.patternLines];
         const updatedWall = player.wall.map((row) => [...row]);
         
-        // Process completed pattern lines
+        // Process completed pattern lines - move runes to wall
         player.patternLines.forEach((line, lineIndex) => {
           if (line.count === line.tier && line.runeType) {
             // Line is complete - move one rune to wall
@@ -230,11 +229,7 @@ export const useGameStore = create<GameStore>((set) => ({
             // Place rune on wall
             updatedWall[row][col] = { runeType: line.runeType };
             
-            // Calculate and add score
-            const points = calculatePlacementScore(updatedWall, row, col);
-            newScore += points;
-            
-            console.log(`Player ${player.id}: Line ${lineIndex + 1} complete, placed ${line.runeType} at (${row},${col}), scored ${points} points`);
+            console.log(`Player ${player.id}: Line ${lineIndex + 1} complete, placed ${line.runeType} at (${row},${col})`);
             
             // Clear the pattern line
             updatedPatternLines[lineIndex] = {
@@ -245,11 +240,16 @@ export const useGameStore = create<GameStore>((set) => ({
           }
         });
         
+        // Calculate total wall power based on connected segments
+        const wallPower = calculateWallPower(updatedWall);
+        
         // Apply floor line penalties
         const floorPenalty = calculateFloorPenalty(player.floorLine.runes.length);
-        newScore = Math.max(0, newScore + floorPenalty); // Score can't go below 0
         
-        console.log(`Player ${player.id}: Floor penalty ${floorPenalty}, new score ${newScore}`);
+        // New score = wall power - floor penalty (minimum 0)
+        const newScore = Math.max(0, wallPower + floorPenalty);
+        
+        console.log(`Player ${player.id}: Wall power ${wallPower}, Floor penalty ${floorPenalty}, Total score ${newScore}`);
         
         return {
           ...player,
