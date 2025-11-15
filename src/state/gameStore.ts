@@ -68,13 +68,63 @@ export const useGameStore = create<GameStore>((set) => ({
   
   placeRunes: (patternLineIndex: number) => {
     set((state) => {
-      // TODO: Implement placement logic
-      // 1. Validate pattern line can accept runes
-      // 2. Fill pattern line with selectedRunes
-      // 3. Handle overflow to floor line
-      // 4. Clear selectedRunes
-      console.log('Place runes on line:', patternLineIndex);
-      return state;
+      const { selectedRunes, currentPlayerIndex } = state;
+      
+      // No runes selected, do nothing
+      if (selectedRunes.length === 0) return state;
+      
+      const currentPlayer = state.players[currentPlayerIndex];
+      const patternLine = currentPlayer.patternLines[patternLineIndex];
+      const runeType = selectedRunes[0].runeType;
+      
+      // Validation: Pattern line must be empty or have same rune type
+      if (patternLine.runeType !== null && patternLine.runeType !== runeType) {
+        // Invalid placement - different rune type
+        return state;
+      }
+      
+      // Validation: Pattern line must not be full
+      if (patternLine.count >= patternLine.tier) {
+        // Invalid placement - line is full
+        return state;
+      }
+      
+      // Calculate how many runes fit in the pattern line
+      const availableSpace = patternLine.tier - patternLine.count;
+      const runesToPlace = Math.min(selectedRunes.length, availableSpace);
+      const overflowRunes = selectedRunes.slice(runesToPlace);
+      
+      // Update pattern line
+      const updatedPatternLines = [...currentPlayer.patternLines];
+      updatedPatternLines[patternLineIndex] = {
+        ...patternLine,
+        runeType,
+        count: patternLine.count + runesToPlace,
+      };
+      
+      // Add overflow runes to floor line
+      const updatedFloorLine = {
+        ...currentPlayer.floorLine,
+        runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
+      };
+      
+      // Update player
+      const updatedPlayers: [typeof currentPlayer, typeof currentPlayer] = [
+        ...state.players,
+      ] as [typeof currentPlayer, typeof currentPlayer];
+      
+      updatedPlayers[currentPlayerIndex] = {
+        ...currentPlayer,
+        patternLines: updatedPatternLines,
+        floorLine: updatedFloorLine,
+      };
+      
+      return {
+        ...state,
+        players: updatedPlayers,
+        selectedRunes: [],
+        turnPhase: 'draft' as const,
+      };
     });
   },
   

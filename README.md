@@ -82,6 +82,45 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 4. Factories and center become disabled until runes are placed
 5. Ready for Step 3: placing runes on pattern lines
 
+### ✅ Step 3: Pattern Line Placement (Completed)
+
+**Implemented:**
+- Pattern line placement logic (`src/state/gameStore.ts`):
+  - `placeRunes(patternLineIndex)`: Place selected runes on a pattern line
+    - Validates line can accept runes (empty or same type)
+    - Validates line is not already full
+    - Fills pattern line up to capacity
+    - Overflow runes go to floor line (penalty area)
+    - Clears selected runes after placement
+    - Returns to draft phase for next turn
+
+- Azul validation rules:
+  - Pattern line must be empty OR contain same rune type
+  - Pattern line must have available space (not full)
+  - Only current player's pattern lines are clickable
+  - Visual feedback shows valid vs invalid placement options
+
+- Interactive UI (`PatternLines` component):
+  - Click a pattern line to place selected runes
+  - Valid lines highlighted with blue ring
+  - Invalid lines dimmed (wrong type or full)
+  - Hover effects on valid lines
+  - Shows capacity progress (e.g., "2/3" filled)
+  - Keyboard accessible with ARIA labels
+
+- Overflow handling:
+  - Excess runes beyond pattern line capacity go to floor line
+  - Floor line accumulates penalty runes
+  - Floor line respects max capacity (7 runes)
+
+**How it works:**
+1. After drafting runes, valid pattern lines show blue ring highlight
+2. Click a valid pattern line → runes fill the line
+3. If more runes than space, extras go to floor line (penalties)
+4. Selected runes clear, back to draft phase
+5. Invalid lines (wrong type or full) are dimmed and unclickable
+6. Example: Select 4 Fire runes, click tier-3 line → 3 fit, 1 to floor
+
 ## Getting Started
 
 ### Prerequisites
@@ -155,7 +194,7 @@ src/
 
 ### Gameplay Implementation (In Progress)
 - [x] Step 2: Make factories/runes selectable, implement Azul factory taking
-- [ ] Step 3: Allow placing picked runes onto pattern lines
+- [x] Step 3: Allow placing picked runes onto pattern lines
 - [ ] Step 4: End-of-round detection and scoring
 - [ ] Step 5: Player decks and factory filling
 - [ ] Step 6: Turn system

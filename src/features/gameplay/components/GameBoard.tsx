@@ -14,10 +14,11 @@ interface GameBoardProps {
 
 export function GameBoard({ gameState }: GameBoardProps) {
   const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
-  const { draftRune, draftFromCenter } = useGameActions();
+  const { draftRune, draftFromCenter, placeRunes } = useGameActions();
   
   const isDraftPhase = turnPhase === 'draft';
   const hasSelectedRunes = selectedRunes.length > 0;
+  const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6">
@@ -118,6 +119,9 @@ export function GameBoard({ gameState }: GameBoardProps) {
               key={player.id}
               player={player}
               isActive={index === currentPlayerIndex}
+              onPlaceRunes={index === currentPlayerIndex ? placeRunes : undefined}
+              selectedRuneType={index === currentPlayerIndex ? selectedRuneType : null}
+              canPlace={index === currentPlayerIndex && hasSelectedRunes}
             />
           ))}
         </div>

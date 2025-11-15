@@ -2,7 +2,7 @@
  * PlayerBoard component - displays a player's board (pattern lines, wall, floor line)
  */
 
-import type { Player } from '../../../types/game';
+import type { Player, RuneType } from '../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { RuneToken } from '../../../components/RuneToken';
@@ -10,9 +10,12 @@ import { RuneToken } from '../../../components/RuneToken';
 interface PlayerBoardProps {
   player: Player;
   isActive: boolean;
+  onPlaceRunes?: (patternLineIndex: number) => void;
+  selectedRuneType?: RuneType | null;
+  canPlace?: boolean;
 }
 
-export function PlayerBoard({ player, isActive }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, selectedRuneType, canPlace }: PlayerBoardProps) {
   return (
     <div
       className={`
@@ -31,7 +34,12 @@ export function PlayerBoard({ player, isActive }: PlayerBoardProps) {
         {/* Pattern Lines */}
         <div className="flex-1 flex flex-col items-center">
           <h4 className="text-sm font-semibold text-gray-300 mb-2">Pattern Lines</h4>
-          <PatternLines patternLines={player.patternLines} />
+          <PatternLines 
+            patternLines={player.patternLines}
+            onPlaceRunes={onPlaceRunes}
+            selectedRuneType={selectedRuneType}
+            canPlace={canPlace}
+          />
         </div>
         
         {/* Wall */}
