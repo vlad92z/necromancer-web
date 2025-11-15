@@ -27,15 +27,15 @@ export function PlayerBoard({ player, isActive }: PlayerBoardProps) {
         <div className="text-sm text-gray-400">Score: {player.score}</div>
       </div>
       
-      <div className="flex gap-6">
+      <div className="flex gap-6 justify-between w-full">
         {/* Pattern Lines */}
-        <div>
+        <div className="flex-1 flex flex-col items-center">
           <h4 className="text-sm font-semibold text-gray-300 mb-2">Pattern Lines</h4>
           <PatternLines patternLines={player.patternLines} />
         </div>
         
         {/* Wall */}
-        <div>
+        <div className="flex-1 flex flex-col items-center">
           <h4 className="text-sm font-semibold text-gray-300 mb-2">Scoring Wall</h4>
           <ScoringWall wall={player.wall} />
         </div>
