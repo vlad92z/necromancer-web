@@ -319,13 +319,32 @@ export const useGameStore = create<GameStore>((set) => ({
       // Add a small delay to make AI moves visible
       setTimeout(() => {
         const currentState = useGameStore.getState();
-        makeAIMove(
+        const moveMade = makeAIMove(
           currentState,
           useGameStore.getState().draftRune,
           useGameStore.getState().draftFromCenter,
           useGameStore.getState().placeRunes,
           useGameStore.getState().placeRunesInFloor
         );
+        
+        // If the AI just drafted runes, it needs to place them too
+        // Check again after a short delay
+        if (moveMade) {
+          setTimeout(() => {
+            const newState = useGameStore.getState();
+            // If still AI's turn and has selected runes, make placement move
+            if (newState.players[newState.currentPlayerIndex].type === 'ai' && 
+                newState.selectedRunes.length > 0) {
+              makeAIMove(
+                newState,
+                useGameStore.getState().draftRune,
+                useGameStore.getState().draftFromCenter,
+                useGameStore.getState().placeRunes,
+                useGameStore.getState().placeRunesInFloor
+              );
+            }
+          }, 800);
+        }
       }, 800);
     }
   },
