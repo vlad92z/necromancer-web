@@ -15,7 +15,7 @@ export function ScoringWall({ wall }: ScoringWallProps) {
       {wall.map((row, rowIndex) => (
         <div key={rowIndex} className="flex gap-1">
           {row.map((cell, colIndex) => (
-            <WallCell key={colIndex} cell={cell} />
+            <WallCell key={colIndex} cell={cell} row={rowIndex} col={colIndex} />
           ))}
         </div>
       ))}
