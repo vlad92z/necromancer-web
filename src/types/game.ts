@@ -64,11 +64,17 @@ export interface FloorLine {
 }
 
 /**
+ * Player type (human or AI)
+ */
+export type PlayerType = 'human' | 'ai';
+
+/**
  * Player state
  */
 export interface Player {
   id: string;
   name: string;
+  type: PlayerType;
   patternLines: PatternLine[];
   wall: ScoringWall;
   floorLine: FloorLine;
@@ -82,6 +88,11 @@ export interface Player {
 export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 
 /**
+ * Game mode
+ */
+export type GameMode = 'pvp' | 'pve';
+
+/**
  * Main game state
  */
 export interface GameState {
@@ -93,4 +104,5 @@ export interface GameState {
   round: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
   firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
+  gameMode: GameMode; // PvP or PvE
 }

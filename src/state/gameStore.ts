@@ -3,9 +3,10 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, Rune, RuneType, Player } from '../types/game';
+import type { GameState, Rune, RuneType, Player, GameMode } from '../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
 import { calculateWallPower, calculateFloorPenalty, getWallColumnForRune } from '../utils/scoring';
+import { makeAIMove } from '../utils/aiPlayer';
 
 interface GameStore extends GameState {
   // Actions
@@ -14,7 +15,8 @@ interface GameStore extends GameState {
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
   endRound: () => void;
-  resetGame: () => void;
+  resetGame: (gameMode?: GameMode) => void;
+  triggerAITurn: () => void;
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -304,7 +306,27 @@ export const useGameStore = create<GameStore>((set) => ({
     });
   },
   
-  resetGame: () => {
-    set(initializeGame());
+  resetGame: (gameMode?: GameMode) => {
+    set(initializeGame(gameMode));
+  },
+
+  triggerAITurn: () => {
+    const state = useGameStore.getState();
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    
+    // Only trigger if it's AI's turn and in draft phase
+    if (currentPlayer.type === 'ai' && state.turnPhase === 'draft') {
+      // Add a small delay to make AI moves visible
+      setTimeout(() => {
+        const currentState = useGameStore.getState();
+        makeAIMove(
+          currentState,
+          useGameStore.getState().draftRune,
+          useGameStore.getState().draftFromCenter,
+          useGameStore.getState().placeRunes,
+          useGameStore.getState().placeRunesInFloor
+        );
+      }, 800);
+    }
   },
 }));

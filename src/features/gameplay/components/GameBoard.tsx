@@ -20,6 +20,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const isGameOver = turnPhase === 'game-over';
+  const currentPlayer = players[currentPlayerIndex];
+  const isAITurn = currentPlayer.type === 'ai';
   
   // Determine winner
   const winner = isGameOver 
@@ -62,7 +64,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 key={factory.id} 
                 factory={factory}
                 onDraftRune={draftRune}
-                disabled={!isDraftPhase || hasSelectedRunes}
+                disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
               />
             ))}
           </div>
@@ -87,7 +89,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                     <button
                       key={rune.id}
                       onClick={() => draftFromCenter(rune.runeType)}
-                      disabled={!isDraftPhase || hasSelectedRunes}
+                      disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
                       className="
                         focus:outline-none 
                         focus:ring-2 

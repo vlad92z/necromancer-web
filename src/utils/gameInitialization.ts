@@ -10,6 +10,8 @@ import type {
   ScoringWall,
   Rune,
   RuneType,
+  PlayerType,
+  GameMode,
 } from '../types/game';
 
 /**
@@ -62,10 +64,11 @@ export function createMockDeck(playerId: string): Rune[] {
 /**
  * Create a player
  */
-export function createPlayer(id: string, name: string): Player {
+export function createPlayer(id: string, name: string, type: PlayerType = 'human'): Player {
   return {
     id,
     name,
+    type,
     patternLines: createPatternLines(),
     wall: createEmptyWall(),
     floorLine: {
@@ -133,9 +136,9 @@ export function fillFactories(
 /**
  * Initialize a new game state with filled factories
  */
-export function initializeGame(): GameState {
-  const player1 = createPlayer('player-1', 'Player 1');
-  const player2 = createPlayer('player-2', 'Player 2');
+export function initializeGame(gameMode: GameMode = 'pvp'): GameState {
+  const player1 = createPlayer('player-1', 'Player 1', 'human');
+  const player2 = createPlayer('player-2', gameMode === 'pve' ? 'Computer' : 'Player 2', gameMode === 'pve' ? 'ai' : 'human');
   
   // For 2 players, Azul uses 5 factories
   const emptyFactories = createEmptyFactories(5);
@@ -156,5 +159,6 @@ export function initializeGame(): GameState {
     round: 1,
     selectedRunes: [],
     firstPlayerToken: null,
+    gameMode,
   };
 }
