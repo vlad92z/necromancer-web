@@ -50,9 +50,8 @@ export function PlayerBoard({ player, isActive }: PlayerBoardProps) {
             .map((_, index) => (
               <div
                 key={index}
+                style={{ width: '40px', height: '40px' }}
                 className="
-                  w-10 
-                  h-10 
                   border-2 
                   border-red-900 
                   rounded-lg 

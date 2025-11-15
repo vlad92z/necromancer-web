@@ -20,9 +20,8 @@ export function PatternLines({ patternLines }: PatternLinesProps) {
             .map((_, slotIndex) => (
               <div
                 key={slotIndex}
+                style={{ width: '40px', height: '40px' }}
                 className="
-                  w-10 
-                  h-10 
                   border-2 
                   border-gray-600 
                   rounded-lg 
