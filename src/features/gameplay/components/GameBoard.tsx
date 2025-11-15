@@ -31,6 +31,17 @@ export function GameBoard({ gameState }: GameBoardProps) {
           </div>
         </div>
         
+        {/* Player 1 */}
+        <div className="mb-8">
+          <PlayerBoard
+            player={players[0]}
+            isActive={currentPlayerIndex === 0}
+            onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
+            selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+            canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+          />
+        </div>
+        
         {/* Factories and Center */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4 text-center">Factories</h2>
@@ -112,18 +123,15 @@ export function GameBoard({ gameState }: GameBoardProps) {
           </div>
         )}
         
-        {/* Players */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {players.map((player, index) => (
-            <PlayerBoard
-              key={player.id}
-              player={player}
-              isActive={index === currentPlayerIndex}
-              onPlaceRunes={index === currentPlayerIndex ? placeRunes : undefined}
-              selectedRuneType={index === currentPlayerIndex ? selectedRuneType : null}
-              canPlace={index === currentPlayerIndex && hasSelectedRunes}
-            />
-          ))}
+        {/* Player 2 */}
+        <div>
+          <PlayerBoard
+            player={players[1]}
+            isActive={currentPlayerIndex === 1}
+            onPlaceRunes={currentPlayerIndex === 1 ? placeRunes : undefined}
+            selectedRuneType={currentPlayerIndex === 1 ? selectedRuneType : null}
+            canPlace={currentPlayerIndex === 1 && hasSelectedRunes}
+          />
         </div>
       </div>
     </div>
