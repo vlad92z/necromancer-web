@@ -33,7 +33,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
         {/* Factories and Center */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4 text-center">Factories</h2>
-          <div className="flex flex-wrap justify-center gap-4 mb-6">
+          <div className="flex justify-between items-center gap-6 mb-6 max-w-6xl mx-auto">
             {factories.map((factory) => (
               <Factory 
                 key={factory.id} 

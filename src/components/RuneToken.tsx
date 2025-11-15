@@ -11,22 +11,21 @@ interface RuneTokenProps {
   onClick?: () => void;
 }
 
-const SIZE_CLASSES = {
-  small: 'w-8 h-8 text-xs',
-  medium: 'w-12 h-12 text-base',
-  large: 'w-16 h-16 text-lg',
+const SIZE_CONFIG = {
+  small: { width: 48, height: 48, fontSize: 28 },
+  medium: { width: 64, height: 64, fontSize: 36 },
+  large: { width: 80, height: 80, fontSize: 48 },
 };
 
 export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
   const colorClass = getRuneColorClass(rune.runeType);
   const glyph = getRuneGlyph(rune.runeType);
-  const sizeClass = SIZE_CLASSES[size];
+  const config = SIZE_CONFIG[size];
   
   return (
     <div
       className={`
         ${colorClass} 
-        ${sizeClass} 
         rounded-lg 
         flex 
         items-center 
@@ -36,6 +35,11 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
         shadow-md 
         ${onClick ? 'cursor-pointer hover:scale-110 transition-transform' : ''}
       `}
+      style={{
+        width: `${config.width}px`,
+        height: `${config.height}px`,
+        fontSize: `${config.fontSize}px`,
+      }}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
