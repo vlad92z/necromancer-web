@@ -19,6 +19,16 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const isDraftPhase = turnPhase === 'draft';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
+  const isGameOver = turnPhase === 'game-over';
+  
+  // Determine winner
+  const winner = isGameOver 
+    ? players[0].score > players[1].score 
+      ? players[0] 
+      : players[1].score > players[0].score 
+        ? players[1] 
+        : null // Tie
+    : null;
   
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6">
@@ -135,6 +145,71 @@ export function GameBoard({ gameState }: GameBoardProps) {
             canPlace={currentPlayerIndex === 1 && hasSelectedRunes}
           />
         </div>
+        
+        {/* Game Over Overlay */}
+        {isGameOver && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-2xl p-8 max-w-md w-full mx-4 border-4 border-yellow-500 shadow-2xl">
+              <h2 className="text-4xl font-bold text-center mb-6 text-yellow-400">
+                Game Over!
+              </h2>
+              
+              <div className="space-y-4 mb-6">
+                <div className={`p-4 rounded-lg ${players[0].score >= players[1].score ? 'bg-green-900/50 border-2 border-green-500' : 'bg-gray-700'}`}>
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold">{players[0].name}</span>
+                    <span className="text-2xl font-bold">{players[0].score}</span>
+                  </div>
+                  <div className="text-sm text-gray-400 mt-1">
+                    Runes remaining: {players[0].deck.length}
+                  </div>
+                </div>
+                
+                <div className={`p-4 rounded-lg ${players[1].score >= players[0].score ? 'bg-green-900/50 border-2 border-green-500' : 'bg-gray-700'}`}>
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold">{players[1].name}</span>
+                    <span className="text-2xl font-bold">{players[1].score}</span>
+                  </div>
+                  <div className="text-sm text-gray-400 mt-1">
+                    Runes remaining: {players[1].deck.length}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-center mb-6">
+                {winner ? (
+                  <div className="text-2xl font-bold text-yellow-400">
+                    🏆 {winner.name} Wins! 🏆
+                  </div>
+                ) : (
+                  <div className="text-2xl font-bold text-blue-400">
+                    It's a Tie!
+                  </div>
+                )}
+              </div>
+              
+              <button
+                onClick={() => window.location.reload()}
+                className="
+                  w-full 
+                  bg-blue-600 
+                  hover:bg-blue-700 
+                  text-white 
+                  font-bold 
+                  py-3 
+                  px-6 
+                  rounded-lg
+                  transition-colors
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
+              >
+                New Game
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

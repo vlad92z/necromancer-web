@@ -28,7 +28,9 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     >
       <div className="mb-4">
         <h3 className="text-lg font-bold text-white">{player.name}</h3>
-        <div className="text-sm text-gray-400">Score: {player.score}</div>
+        <div className="text-sm text-gray-400">
+          Score: {player.score} | Deck: {player.deck.length} runes
+        </div>
       </div>
       
       <div className="flex gap-6 justify-between w-full">

@@ -47,7 +47,7 @@ export function createMockDeck(playerId: string): Rune[] {
   
   // Create 4 of each rune type (20 total per player)
   runeTypes.forEach((runeType) => {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 2; i++) {
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
         runeType,
@@ -90,25 +90,24 @@ export function createEmptyFactories(count: number): Factory[] {
 }
 
 /**
- * Fill factories with runes from the combined player decks
+ * Fill factories with runes from player decks
  * Each factory gets 4 runes: 2 from player 1's deck and 2 from player 2's deck
+ * Returns both filled factories and updated decks
  */
-export function fillFactories(factories: Factory[], combinedDeck: Rune[]): Factory[] {
-  // Split the combined deck back into two player decks
-  // Assumes first half is player 1, second half is player 2
-  const midpoint = Math.floor(combinedDeck.length / 2);
-  const deck1 = [...combinedDeck.slice(0, midpoint)];
-  const deck2 = [...combinedDeck.slice(midpoint)];
-  
+export function fillFactories(
+  factories: Factory[], 
+  deck1: Rune[], 
+  deck2: Rune[]
+): { factories: Factory[], deck1: Rune[], deck2: Rune[] } {
   // Shuffle each deck separately
-  deck1.sort(() => Math.random() - 0.5);
-  deck2.sort(() => Math.random() - 0.5);
+  const shuffledDeck1 = [...deck1].sort(() => Math.random() - 0.5);
+  const shuffledDeck2 = [...deck2].sort(() => Math.random() - 0.5);
   
-  return factories.map((factory, index) => {
+  const filledFactories = factories.map((factory, index) => {
     // Get 2 runes from each player's deck
     const startIdx = index * 2;
-    const runesFromPlayer1 = deck1.slice(startIdx, startIdx + 2);
-    const runesFromPlayer2 = deck2.slice(startIdx, startIdx + 2);
+    const runesFromPlayer1 = shuffledDeck1.slice(startIdx, startIdx + 2);
+    const runesFromPlayer2 = shuffledDeck2.slice(startIdx, startIdx + 2);
     
     // Combine and shuffle the 4 runes for this factory
     const runes = [...runesFromPlayer1, ...runesFromPlayer2].sort(() => Math.random() - 0.5);
@@ -118,6 +117,17 @@ export function fillFactories(factories: Factory[], combinedDeck: Rune[]): Facto
       runes,
     };
   });
+  
+  // Remove used runes from decks (10 runes total: 2 per factory × 5 factories)
+  const runesUsed = factories.length * 2;
+  const remainingDeck1 = shuffledDeck1.slice(runesUsed);
+  const remainingDeck2 = shuffledDeck2.slice(runesUsed);
+  
+  return {
+    factories: filledFactories,
+    deck1: remainingDeck1,
+    deck2: remainingDeck2,
+  };
 }
 
 /**
@@ -130,9 +140,12 @@ export function initializeGame(): GameState {
   // For 2 players, Azul uses 5 factories
   const emptyFactories = createEmptyFactories(5);
   
-  // Combine player decks and fill factories (4 runes per factory)
-  const combinedDeck = [...player1.deck, ...player2.deck];
-  const factories = fillFactories(emptyFactories, combinedDeck);
+  // Fill factories and get updated decks
+  const { factories, deck1, deck2 } = fillFactories(emptyFactories, player1.deck, player2.deck);
+  
+  // Update player decks with remaining runes
+  player1.deck = deck1;
+  player2.deck = deck2;
   
   return {
     players: [player1, player2],

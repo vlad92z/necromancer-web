@@ -263,10 +263,35 @@ export const useGameStore = create<GameStore>((set) => ({
         };
       }) as [Player, Player];
       
+      // Check if either player has run out of runes (need 10 runes minimum for 5 factories)
+      const player1HasEnough = updatedPlayers[0].deck.length >= 10;
+      const player2HasEnough = updatedPlayers[1].deck.length >= 10;
+      
+      if (!player1HasEnough || !player2HasEnough) {
+        console.log('Game over! A player has run out of runes.');
+        console.log(`Player 1 runes: ${updatedPlayers[0].deck.length}, Player 2 runes: ${updatedPlayers[1].deck.length}`);
+        
+        return {
+          ...state,
+          players: updatedPlayers,
+          factories: [],
+          centerPool: [],
+          turnPhase: 'game-over',
+          round: state.round,
+        };
+      }
+      
       // Prepare for next round
       const emptyFactories = createEmptyFactories(5);
-      const combinedDeck = [...updatedPlayers[0].deck, ...updatedPlayers[1].deck];
-      const filledFactories = fillFactories(emptyFactories, combinedDeck);
+      const { factories: filledFactories, deck1, deck2 } = fillFactories(
+        emptyFactories, 
+        updatedPlayers[0].deck, 
+        updatedPlayers[1].deck
+      );
+      
+      // Update player decks with remaining runes after filling factories
+      updatedPlayers[0].deck = deck1;
+      updatedPlayers[1].deck = deck2;
       
       return {
         ...state,
