@@ -37,6 +37,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
           <h4 className="text-sm font-semibold text-gray-300 mb-2">Pattern Lines</h4>
           <PatternLines 
             patternLines={player.patternLines}
+            wall={player.wall}
             onPlaceRunes={onPlaceRunes}
             selectedRuneType={selectedRuneType}
             canPlace={canPlace}

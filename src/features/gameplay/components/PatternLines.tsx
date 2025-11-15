@@ -3,27 +3,38 @@
  * Clickable to place selected runes
  */
 
-import type { PatternLine, RuneType } from '../../../types/game';
+import type { PatternLine, RuneType, ScoringWall } from '../../../types/game';
 import { getRuneGlyph } from '../../../utils/runeHelpers';
+import { getWallColumnForRune } from '../../../utils/scoring';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
+  wall: ScoringWall;
   onPlaceRunes?: (patternLineIndex: number) => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
 }
 
-export function PatternLines({ patternLines, onPlaceRunes, selectedRuneType, canPlace }: PatternLinesProps) {
-  const isLineValid = (line: PatternLine) => {
+export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneType, canPlace }: PatternLinesProps) {
+  const isLineValid = (line: PatternLine, lineIndex: number) => {
     if (!canPlace || !selectedRuneType) return false;
+    
     // Line must be empty or have same rune type, and not be full
-    return (line.runeType === null || line.runeType === selectedRuneType) && line.count < line.tier;
+    const matchesType = line.runeType === null || line.runeType === selectedRuneType;
+    const notFull = line.count < line.tier;
+    
+    // Check if rune type already exists on wall in this row
+    const row = lineIndex;
+    const col = getWallColumnForRune(row, selectedRuneType);
+    const notOnWall = wall[row][col].runeType === null;
+    
+    return matchesType && notFull && notOnWall;
   };
   
   return (
     <div className="space-y-2">
       {patternLines.map((line, index) => {
-        const isValid = isLineValid(line);
+        const isValid = isLineValid(line, index);
         const isClickable = canPlace && onPlaceRunes;
         
         return (

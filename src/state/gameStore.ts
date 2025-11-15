@@ -92,6 +92,14 @@ export const useGameStore = create<GameStore>((set) => ({
         return state;
       }
       
+      // Validation: Check if this rune type is already on the wall in this row
+      const row = patternLineIndex;
+      const col = getWallColumnForRune(row, runeType);
+      if (currentPlayer.wall[row][col].runeType !== null) {
+        // Invalid placement - rune type already on wall in this row
+        return state;
+      }
+      
       // Calculate how many runes fit in the pattern line
       const availableSpace = patternLine.tier - patternLine.count;
       const runesToPlace = Math.min(selectedRunes.length, availableSpace);
