@@ -91,14 +91,28 @@ export function createEmptyFactories(count: number): Factory[] {
 
 /**
  * Fill factories with runes from the combined player decks
- * Each factory gets 4 runes (standard Azul rules)
+ * Each factory gets 4 runes: 2 from player 1's deck and 2 from player 2's deck
  */
 export function fillFactories(factories: Factory[], combinedDeck: Rune[]): Factory[] {
-  const shuffled = [...combinedDeck].sort(() => Math.random() - 0.5);
+  // Split the combined deck back into two player decks
+  // Assumes first half is player 1, second half is player 2
+  const midpoint = Math.floor(combinedDeck.length / 2);
+  const deck1 = [...combinedDeck.slice(0, midpoint)];
+  const deck2 = [...combinedDeck.slice(midpoint)];
+  
+  // Shuffle each deck separately
+  deck1.sort(() => Math.random() - 0.5);
+  deck2.sort(() => Math.random() - 0.5);
   
   return factories.map((factory, index) => {
-    const startIdx = index * 4;
-    const runes = shuffled.slice(startIdx, startIdx + 4);
+    // Get 2 runes from each player's deck
+    const startIdx = index * 2;
+    const runesFromPlayer1 = deck1.slice(startIdx, startIdx + 2);
+    const runesFromPlayer2 = deck2.slice(startIdx, startIdx + 2);
+    
+    // Combine and shuffle the 4 runes for this factory
+    const runes = [...runesFromPlayer1, ...runesFromPlayer2].sort(() => Math.random() - 0.5);
+    
     return {
       ...factory,
       runes,
