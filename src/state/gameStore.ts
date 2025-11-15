@@ -246,8 +246,8 @@ export const useGameStore = create<GameStore>((set) => ({
         // Apply floor line penalties
         const floorPenalty = calculateFloorPenalty(player.floorLine.runes.length);
         
-        // New score = wall power - floor penalty (minimum 0)
-        const newScore = Math.max(0, wallPower + floorPenalty);
+        // Add wall power and penalties to existing score (minimum 0)
+        const newScore = Math.max(0, player.score + wallPower + floorPenalty);
         
         console.log(`Player ${player.id}: Wall power ${wallPower}, Floor penalty ${floorPenalty}, Total score ${newScore}`);
         
