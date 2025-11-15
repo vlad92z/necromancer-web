@@ -19,12 +19,12 @@ interface PlayerBoardProps {
 export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace }: PlayerBoardProps) {
   return (
     <div
-      className={`
-        p-4 
-        rounded-lg 
-        border-2 
-        ${isActive ? 'border-blue-500 bg-gray-800' : 'border-gray-700 bg-gray-900'}
-      `}
+      style={{
+        padding: '16px',
+        borderRadius: '8px',
+        border: isActive ? '2px solid rgba(59, 130, 246, 0.5)' : 'white',
+        backgroundColor: isActive ? 'rgba(140, 233, 254, 0.5)' : 'white',
+      }}
     >
       <div className="mb-4">
         <h3 className="text-lg font-bold text-white">{player.name}</h3>
