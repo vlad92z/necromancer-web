@@ -121,6 +121,57 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 5. Invalid lines (wrong type or full) are dimmed and unclickable
 6. Example: Select 4 Fire runes, click tier-3 line → 3 fit, 1 to floor
 
+### ✅ Step 4: End-of-Round Scoring (Completed)
+
+**Implemented:**
+- End-of-round detection:
+  - Automatically triggers when all factories and center pool are empty
+  - Switches to 'scoring' phase before processing
+  - Console logs scoring details for debugging
+
+- Scoring utilities (`src/utils/scoring.ts`):
+  - `calculatePlacementScore()`: Azul-style adjacency scoring
+    - Counts horizontal and vertical adjacent runes
+    - Isolated rune = 1 point
+    - Multiple adjacent = sum of horizontal + vertical counts
+  - `calculateFloorPenalty()`: Standard Azul penalties
+    - Progressive penalties: -1, -2, -4, -6, -8, -11, -14
+    - Score cannot go below 0
+  - `getWallColumnForRune()`: Determines wall placement position
+    - Each rune type has fixed column per row (rotated pattern)
+    - Prevents duplicate types in same row/column
+
+- Round scoring logic (`gameStore.endRound`):
+  - Process each player's completed pattern lines:
+    - Line must be full (count === tier)
+    - Move one rune to scoring wall at correct position
+    - Calculate adjacency score and add to player total
+    - Clear completed pattern line for next round
+  - Apply floor line penalties to both players
+  - Clear floor lines after penalty application
+  - Refill factories from combined player decks
+  - Increment round counter
+  - Return to draft phase
+
+- Wall placement rules:
+  - Pattern line index = wall row (line 1 → row 0, line 5 → row 4)
+  - Column determined by rune type and row (Azul rotation pattern)
+  - Example: Fire in row 0 → column 0, Fire in row 1 → column 1
+
+**How it works:**
+1. Players draft and place runes until all factories empty
+2. Last placement triggers automatic end-of-round scoring
+3. Completed pattern lines (full) move to wall:
+   - One rune placed at calculated position
+   - Points awarded based on adjacent runes
+   - Pattern line clears for next round
+4. Floor line penalties applied (can't go below 0)
+5. Factories refill, new round begins
+6. Example scoring:
+   - Place rune with 2 horizontal + 3 vertical adjacent → 5 points
+   - Isolated rune → 1 point
+   - 3 runes in floor → -4 points penalty
+
 ## Getting Started
 
 ### Prerequisites
@@ -195,7 +246,7 @@ src/
 ### Gameplay Implementation (In Progress)
 - [x] Step 2: Make factories/runes selectable, implement Azul factory taking
 - [x] Step 3: Allow placing picked runes onto pattern lines
-- [ ] Step 4: End-of-round detection and scoring
+- [x] Step 4: End-of-round detection and scoring
 - [ ] Step 5: Player decks and factory filling
 - [ ] Step 6: Turn system
 - [ ] Step 7: Proper Azul adjacency scoring

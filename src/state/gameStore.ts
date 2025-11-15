@@ -3,14 +3,16 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, Rune, RuneType } from '../types/game';
-import { initializeGame } from '../utils/gameInitialization';
+import type { GameState, Rune, RuneType, Player } from '../types/game';
+import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
+import { calculatePlacementScore, calculateFloorPenalty, getWallColumnForRune } from '../utils/scoring';
 
 interface GameStore extends GameState {
   // Actions
   draftRune: (factoryId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
+  endRound: () => void;
   resetGame: () => void;
 }
 
@@ -122,12 +124,96 @@ export const useGameStore = create<GameStore>((set) => ({
       // Switch to next player (alternate between 0 and 1)
       const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
-      return {
+      // Check if round should end (all factories and center empty)
+      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
         ...state,
         players: updatedPlayers,
         selectedRunes: [],
-        turnPhase: 'draft' as const,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
+      };
+      
+      // If round ends, trigger scoring immediately
+      if (shouldEndRound) {
+        // Use setTimeout to trigger endRound after state update
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 0);
+      }
+      
+      return newState;
+    });
+  },
+  
+  endRound: () => {
+    set((state) => {
+      console.log('End of round scoring...');
+      
+      // Score both players
+      const updatedPlayers = state.players.map((player) => {
+        let newScore = player.score;
+        const updatedPatternLines = [...player.patternLines];
+        const updatedWall = player.wall.map((row) => [...row]);
+        
+        // Process completed pattern lines
+        player.patternLines.forEach((line, lineIndex) => {
+          if (line.count === line.tier && line.runeType) {
+            // Line is complete - move one rune to wall
+            const row = lineIndex; // Pattern line index = wall row
+            const col = getWallColumnForRune(row, line.runeType);
+            
+            // Place rune on wall
+            updatedWall[row][col] = { runeType: line.runeType };
+            
+            // Calculate and add score
+            const points = calculatePlacementScore(updatedWall, row, col);
+            newScore += points;
+            
+            console.log(`Player ${player.id}: Line ${lineIndex + 1} complete, placed ${line.runeType} at (${row},${col}), scored ${points} points`);
+            
+            // Clear the pattern line
+            updatedPatternLines[lineIndex] = {
+              tier: line.tier,
+              runeType: null,
+              count: 0,
+            };
+          }
+        });
+        
+        // Apply floor line penalties
+        const floorPenalty = calculateFloorPenalty(player.floorLine.runes.length);
+        newScore = Math.max(0, newScore + floorPenalty); // Score can't go below 0
+        
+        console.log(`Player ${player.id}: Floor penalty ${floorPenalty}, new score ${newScore}`);
+        
+        return {
+          ...player,
+          patternLines: updatedPatternLines,
+          wall: updatedWall,
+          score: newScore,
+          floorLine: {
+            ...player.floorLine,
+            runes: [], // Clear floor line
+          },
+        };
+      }) as [Player, Player];
+      
+      // Prepare for next round
+      const emptyFactories = createEmptyFactories(5);
+      const combinedDeck = [...updatedPlayers[0].deck, ...updatedPlayers[1].deck];
+      const filledFactories = fillFactories(emptyFactories, combinedDeck);
+      
+      return {
+        ...state,
+        players: updatedPlayers,
+        factories: filledFactories,
+        centerPool: [],
+        turnPhase: 'draft',
+        round: state.round + 1,
       };
     });
   },

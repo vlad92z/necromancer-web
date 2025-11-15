@@ -20,23 +20,11 @@ export function PatternLines({ patternLines, onPlaceRunes, selectedRuneType, can
     return (line.runeType === null || line.runeType === selectedRuneType) && line.count < line.tier;
   };
   
-  // Debug logging
-  console.log('PatternLines props:', { canPlace, selectedRuneType, hasHandler: !!onPlaceRunes });
-  
   return (
     <div className="space-y-2">
       {patternLines.map((line, index) => {
         const isValid = isLineValid(line);
         const isClickable = canPlace && onPlaceRunes;
-        
-        console.log(`Line ${index}:`, { 
-          isValid, 
-          isClickable, 
-          lineType: line.runeType, 
-          selectedType: selectedRuneType,
-          count: line.count,
-          tier: line.tier
-        });
         
         return (
           <button
