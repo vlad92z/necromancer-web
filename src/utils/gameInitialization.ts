@@ -90,14 +90,35 @@ export function createEmptyFactories(count: number): Factory[] {
 }
 
 /**
- * Initialize a new game state (static for now)
+ * Fill factories with runes from the combined player decks
+ * Each factory gets 4 runes (standard Azul rules)
+ */
+export function fillFactories(factories: Factory[], combinedDeck: Rune[]): Factory[] {
+  const shuffled = [...combinedDeck].sort(() => Math.random() - 0.5);
+  
+  return factories.map((factory, index) => {
+    const startIdx = index * 4;
+    const runes = shuffled.slice(startIdx, startIdx + 4);
+    return {
+      ...factory,
+      runes,
+    };
+  });
+}
+
+/**
+ * Initialize a new game state with filled factories
  */
 export function initializeGame(): GameState {
   const player1 = createPlayer('player-1', 'Player 1');
   const player2 = createPlayer('player-2', 'Player 2');
   
   // For 2 players, Azul uses 5 factories
-  const factories = createEmptyFactories(5);
+  const emptyFactories = createEmptyFactories(5);
+  
+  // Combine player decks and fill factories (4 runes per factory)
+  const combinedDeck = [...player1.deck, ...player2.deck];
+  const factories = fillFactories(emptyFactories, combinedDeck);
   
   return {
     players: [player1, player2],

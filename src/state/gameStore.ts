@@ -9,6 +9,7 @@ import { initializeGame } from '../utils/gameInitialization';
 interface GameStore extends GameState {
   // Actions
   draftRune: (factoryId: string, runeType: RuneType) => void;
+  draftFromCenter: (runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
   resetGame: () => void;
 }
@@ -20,13 +21,48 @@ export const useGameStore = create<GameStore>((set) => ({
   // Actions
   draftRune: (factoryId: string, runeType: RuneType) => {
     set((state) => {
-      // TODO: Implement draft logic
-      // 1. Find factory with factoryId
-      // 2. Remove all runes of runeType from factory
-      // 3. Move remaining runes to centerPool
-      // 4. Add selected runes to selectedRunes
-      console.log('Draft rune:', factoryId, runeType);
-      return state;
+      // Find the factory
+      const factory = state.factories.find((f) => f.id === factoryId);
+      if (!factory) return state;
+      
+      // Separate runes by selected type
+      const selectedRunes = factory.runes.filter((r) => r.runeType === runeType);
+      const remainingRunes = factory.runes.filter((r) => r.runeType !== runeType);
+      
+      // If no runes of this type, do nothing
+      if (selectedRunes.length === 0) return state;
+      
+      // Update factories (remove all runes from this factory)
+      const updatedFactories = state.factories.map((f) =>
+        f.id === factoryId ? { ...f, runes: [] } : f
+      );
+      
+      // Move remaining runes to center pool
+      const updatedCenterPool = [...state.centerPool, ...remainingRunes];
+      
+      return {
+        ...state,
+        factories: updatedFactories,
+        centerPool: updatedCenterPool,
+        selectedRunes: [...state.selectedRunes, ...selectedRunes],
+      };
+    });
+  },
+  
+  draftFromCenter: (runeType: RuneType) => {
+    set((state) => {
+      // Get all runes of selected type from center
+      const selectedRunes = state.centerPool.filter((r) => r.runeType === runeType);
+      const remainingRunes = state.centerPool.filter((r) => r.runeType !== runeType);
+      
+      // If no runes of this type, do nothing
+      if (selectedRunes.length === 0) return state;
+      
+      return {
+        ...state,
+        centerPool: remainingRunes,
+        selectedRunes: [...state.selectedRunes, ...selectedRunes],
+      };
     });
   },
   

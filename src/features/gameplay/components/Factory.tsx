@@ -1,15 +1,24 @@
 /**
  * Factory component - displays a factory with runes
+ * Implements Azul-style drafting: click a rune type to select all of that type
  */
 
-import type { Factory as FactoryType } from '../../../types/game';
+import type { Factory as FactoryType, RuneType } from '../../../types/game';
 import { RuneToken } from '../../../components/RuneToken';
 
 interface FactoryProps {
   factory: FactoryType;
+  onDraftRune?: (factoryId: string, runeType: RuneType) => void;
+  disabled?: boolean;
 }
 
-export function Factory({ factory }: FactoryProps) {
+export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps) {
+  const handleRuneClick = (runeType: RuneType) => {
+    if (!disabled && onDraftRune) {
+      onDraftRune(factory.id, runeType);
+    }
+  };
+  
   return (
     <div className="
       bg-gray-700 
@@ -20,6 +29,8 @@ export function Factory({ factory }: FactoryProps) {
       flex 
       items-center 
       justify-center
+      transition-all
+      hover:bg-gray-600
     ">
       {factory.runes.length === 0 ? (
         <div className="text-gray-500 text-sm">
@@ -28,11 +39,26 @@ export function Factory({ factory }: FactoryProps) {
       ) : (
         <div className="grid grid-cols-2 gap-2">
           {factory.runes.map((rune) => (
-            <RuneToken 
-              key={rune.id} 
-              rune={rune} 
-              size="small" 
-            />
+            <button
+              key={rune.id}
+              onClick={() => handleRuneClick(rune.runeType)}
+              disabled={disabled}
+              className="
+                focus:outline-none 
+                focus:ring-2 
+                focus:ring-blue-500 
+                rounded-lg
+                disabled:cursor-not-allowed
+                hover:scale-110
+                transition-transform
+              "
+              aria-label={`Select ${rune.runeType} rune from factory`}
+            >
+              <RuneToken 
+                rune={rune} 
+                size="small" 
+              />
+            </button>
           ))}
         </div>
       )}

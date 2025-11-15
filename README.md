@@ -42,6 +42,46 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Zustand for state management
 - Component-based architecture with feature organization
 
+### ✅ Step 2: Factory Drafting Mechanics (Completed)
+
+**Implemented:**
+- Factory initialization with runes:
+  - `fillFactories()`: Fills 5 factories with 4 runes each from combined player decks
+  - Runes are randomly distributed (shuffled) across factories
+  - Uses standard Azul 2-player configuration (5 factories, 4 runes each)
+
+- Azul-style drafting logic (`src/state/gameStore.ts`):
+  - `draftRune(factoryId, runeType)`: Select all runes of a type from a factory
+    - Removes selected runes from factory
+    - Moves remaining runes to center pool
+    - Adds selected runes to player's hand
+  - `draftFromCenter(runeType)`: Select all runes of a type from center pool
+    - Works identically to factory drafting but from center
+
+- Interactive UI components:
+  - `Factory`: Click any rune to select all runes of that type
+    - Visual feedback (hover effects, scale on hover)
+    - Disabled state when runes already selected
+    - Keyboard accessible (focus rings, ARIA labels)
+  - Center Pool: Click runes to draft from center
+    - Same interaction pattern as factories
+  - Selected Runes Display: Shows currently selected runes
+    - Appears below factories when runes are selected
+    - Shows count and visual preview
+    - Provides instruction for next step (place on pattern line)
+
+- State management:
+  - `selectedRunes` tracks currently held runes
+  - Factories become disabled after selection (prevents multiple drafts)
+  - Turn phase tracking ensures drafting only during draft phase
+
+**How it works:**
+1. Click any rune in a factory → all runes of that type are selected
+2. Remaining runes in that factory move to center pool
+3. Selected runes appear in a highlighted "Selected Runes" section
+4. Factories and center become disabled until runes are placed
+5. Ready for Step 3: placing runes on pattern lines
+
 ## Getting Started
 
 ### Prerequisites
@@ -113,8 +153,8 @@ src/
 - [x] Add custom hooks for game actions and state selectors
 - [x] Standardize Tailwind formatting across components
 
-### Gameplay Implementation (Next)
-- [ ] Step 2: Make factories/runes selectable, implement Azul factory taking
+### Gameplay Implementation (In Progress)
+- [x] Step 2: Make factories/runes selectable, implement Azul factory taking
 - [ ] Step 3: Allow placing picked runes onto pattern lines
 - [ ] Step 4: End-of-round detection and scoring
 - [ ] Step 5: Player decks and factory filling
