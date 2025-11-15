@@ -130,32 +130,35 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Console logs scoring details for debugging
 
 - Scoring utilities (`src/utils/scoring.ts`):
-  - `calculatePlacementScore()`: Azul-style adjacency scoring
-    - Counts horizontal and vertical adjacent runes
-    - Isolated rune = 1 point
-    - Multiple adjacent = sum of horizontal + vertical counts
+  - `calculateWallPower()`: Connected segment scoring system
+    - Uses flood-fill algorithm to find all connected segments
+    - Each segment's power = (number of runes)²
+    - Runes are connected if they share an edge (not diagonal)
+    - Example: 7 connected runes = 49 points, 1 isolated rune = 1 point
   - `calculateFloorPenalty()`: Standard Azul penalties
     - Progressive penalties: -1, -2, -4, -6, -8, -11, -14
     - Score cannot go below 0
   - `getWallColumnForRune()`: Determines wall placement position
-    - Each rune type has fixed column per row (rotated pattern)
+    - Each rune type has fixed column per row (rotated Azul pattern)
     - Prevents duplicate types in same row/column
 
 - Round scoring logic (`gameStore.endRound`):
   - Process each player's completed pattern lines:
     - Line must be full (count === tier)
     - Move one rune to scoring wall at correct position
-    - Calculate adjacency score and add to player total
     - Clear completed pattern line for next round
+  - Calculate total wall power from all connected segments
   - Apply floor line penalties to both players
+  - Add wall power + penalties to existing score (accumulative)
   - Clear floor lines after penalty application
-  - Refill factories from combined player decks
+  - Refill factories from player decks (2 runes per player per factory)
   - Increment round counter
   - Return to draft phase
 
 - Wall placement rules:
   - Pattern line index = wall row (line 1 → row 0, line 5 → row 4)
   - Column determined by rune type and row (Azul rotation pattern)
+  - Empty cells show faded grayscale preview of expected rune type
   - Example: Fire in row 0 → column 0, Fire in row 1 → column 1
 
 **How it works:**
@@ -163,14 +166,57 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 2. Last placement triggers automatic end-of-round scoring
 3. Completed pattern lines (full) move to wall:
    - One rune placed at calculated position
-   - Points awarded based on adjacent runes
    - Pattern line clears for next round
-4. Floor line penalties applied (can't go below 0)
-5. Factories refill, new round begins
-6. Example scoring:
-   - Place rune with 2 horizontal + 3 vertical adjacent → 5 points
-   - Isolated rune → 1 point
-   - 3 runes in floor → -4 points penalty
+4. Total wall power calculated from connected segments:
+   - Each connected segment contributes (size)² points
+   - Example: 3 connected + 2 connected = 9 + 4 = 13 points
+5. Floor line penalties applied (can't go below 0)
+6. Round score added to existing score from previous rounds
+7. Factories refill with 2 runes from each player's deck per factory
+8. New round begins
+
+### ✅ Additional Features (Completed)
+
+**Turn System:**
+- Players alternate turns after each action (draft + placement)
+- Active player highlighted with faint blue border
+- Active indicator with pulsing dot and "Your Turn" label
+- Opponent's board dimmed and non-interactive during other player's turn
+
+**Deck Management:**
+- Each player starts with 20 runes (4 of each type)
+- Factory filling uses 2 runes from each player's deck per factory
+- Deck counts displayed on player boards
+- Game ends when a player has fewer than 10 runes remaining
+
+**Game Over Condition:**
+- Checked at end of each round before refilling factories
+- Requires minimum 10 runes per player (2 per factory × 5 factories)
+- Game over modal displays:
+  - Final scores for both players
+  - Remaining rune counts
+  - Winner announcement (or tie)
+  - "New Game" button to restart
+
+**Wall Validation:**
+- Prevents placing runes if that rune type already exists in the wall row
+- Validation in both backend (placeRunes) and frontend (isLineValid)
+- Invalid pattern lines are dimmed and unclickable
+
+**Floor Line Direct Placement:**
+- Option to place selected runes directly in floor line (strategic discard)
+- Floor line shows red ring when runes are selected
+- Clickable with visual feedback
+- Useful for avoiding bad placements or blocking opponent
+
+**UI Improvements:**
+- Inline styles used instead of Tailwind for reliability (sizing, colors)
+- Rune glyphs with color coding: 🔥(Fire) ❄️(Frost) ☠️(Poison) 🌀(Void) 💨(Wind)
+- Wall cells show faded grayscale preview of expected rune type when empty
+- Player boards show deck count and score
+- Active player board has subtle blue border glow
+- Horizontal factory layout for better visibility
+- Vertical player arrangement (Player 1 top, factories middle, Player 2 bottom)
 
 ## Getting Started
 
@@ -243,14 +289,28 @@ src/
 - [x] Add custom hooks for game actions and state selectors
 - [x] Standardize Tailwind formatting across components
 
-### Gameplay Implementation (In Progress)
+### Gameplay Implementation (Completed ✅)
 - [x] Step 2: Make factories/runes selectable, implement Azul factory taking
 - [x] Step 3: Allow placing picked runes onto pattern lines
-- [x] Step 4: End-of-round detection and scoring
-- [ ] Step 5: Player decks and factory filling
-- [ ] Step 6: Turn system
-- [ ] Step 7: Proper Azul adjacency scoring
-- [ ] Step 8: New Game, styling, and UX polish
+- [x] Step 4: End-of-round detection and scoring with connected segment power calculation
+- [x] Step 5: Turn alternation system
+- [x] Step 6: Wall validation (prevent duplicate rune types in row)
+- [x] Step 7: Floor line direct placement option
+- [x] Step 8: Deck management with 2:2 split per factory
+- [x] Step 9: Game over condition and modal
+- [x] Step 10: Active player highlighting and UI polish
+
+### Future Enhancements
+- [ ] Rune effects system (currently all runes have effect: 'None')
+- [ ] Boss selection and special modifiers
+- [ ] Meta-progression (unlocks after losses)
+- [ ] Deck customization UI
+- [ ] Run summary and statistics
+- [ ] Matchmaking (currently local 2-player)
+- [ ] Sound effects and animations
+- [ ] Mobile/touch optimization
+- [ ] Undo/redo for moves
+- [ ] End-game bonuses (row/column/type completion)
 
 ---
 
