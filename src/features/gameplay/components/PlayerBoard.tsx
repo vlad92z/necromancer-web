@@ -11,11 +11,12 @@ interface PlayerBoardProps {
   player: Player;
   isActive: boolean;
   onPlaceRunes?: (patternLineIndex: number) => void;
+  onPlaceRunesInFloor?: () => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, selectedRuneType, canPlace }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace }: PlayerBoardProps) {
   return (
     <div
       className={`
@@ -52,7 +53,18 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, selectedRuneType, 
       {/* Floor Line */}
       <div className="mt-4">
         <h4 className="text-sm font-semibold text-gray-300 mb-2">Floor Line (Penalties)</h4>
-        <div className="flex gap-2">
+        <button
+          onClick={onPlaceRunesInFloor}
+          disabled={!canPlace || !onPlaceRunesInFloor}
+          className={`
+            flex gap-2 w-full
+            ${canPlace && onPlaceRunesInFloor ? 'cursor-pointer hover:bg-red-900/20 ring-2 ring-red-500/50' : ''}
+            ${canPlace && onPlaceRunesInFloor ? '' : 'cursor-default'}
+            p-2 rounded-lg transition-all
+            disabled:cursor-not-allowed
+          `}
+          aria-label="Place runes in floor line (take penalties)"
+        >
           {Array(player.floorLine.maxCapacity)
             .fill(null)
             .map((_, index) => (
@@ -76,7 +88,12 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, selectedRuneType, 
                 )}
               </div>
             ))}
-        </div>
+        </button>
+        {canPlace && onPlaceRunesInFloor && (
+          <div className="text-xs text-gray-400 mt-1 text-center">
+            Click to discard runes here (penalties)
+          </div>
+        )}
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ interface GameStore extends GameState {
   draftRune: (factoryId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
+  placeRunesInFloor: () => void;
   endRound: () => void;
   resetGame: () => void;
 }
@@ -140,6 +141,58 @@ export const useGameStore = create<GameStore>((set) => ({
       // If round ends, trigger scoring immediately
       if (shouldEndRound) {
         // Use setTimeout to trigger endRound after state update
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 0);
+      }
+      
+      return newState;
+    });
+  },
+  
+  placeRunesInFloor: () => {
+    set((state) => {
+      const { selectedRunes, currentPlayerIndex } = state;
+      
+      // No runes selected, do nothing
+      if (selectedRunes.length === 0) return state;
+      
+      const currentPlayer = state.players[currentPlayerIndex];
+      
+      // Add all selected runes to floor line
+      const updatedFloorLine = {
+        ...currentPlayer.floorLine,
+        runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
+      };
+      
+      // Update player
+      const updatedPlayers: [typeof currentPlayer, typeof currentPlayer] = [
+        ...state.players,
+      ] as [typeof currentPlayer, typeof currentPlayer];
+      
+      updatedPlayers[currentPlayerIndex] = {
+        ...currentPlayer,
+        floorLine: updatedFloorLine,
+      };
+      
+      // Switch to next player (alternate between 0 and 1)
+      const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
+      
+      // Check if round should end (all factories and center empty)
+      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
+        ...state,
+        players: updatedPlayers,
+        selectedRunes: [],
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+      };
+      
+      // If round ends, trigger scoring immediately
+      if (shouldEndRound) {
         setTimeout(() => {
           useGameStore.getState().endRound();
         }, 0);
