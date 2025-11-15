@@ -119,11 +119,15 @@ export const useGameStore = create<GameStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
+      // Switch to next player (alternate between 0 and 1)
+      const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
+      
       return {
         ...state,
         players: updatedPlayers,
         selectedRunes: [],
         turnPhase: 'draft' as const,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
       };
     });
   },
