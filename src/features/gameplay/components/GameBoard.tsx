@@ -3,7 +3,7 @@
  */
 
 import type { GameState } from '../../../types/game';
-import { Factory } from './Factory';
+import { FactoriesAndCenter } from './FactoriesAndCenter';
 import { PlayerBoard } from './PlayerBoard';
 import { RuneToken } from '../../../components/RuneToken';
 import { useGameActions } from '../../../hooks/useGameActions';
@@ -77,75 +77,28 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         </div>
         
         {/* Factories and Center */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px' }}>
-          <h2 style={{ fontSize: window.innerWidth < 768 ? '16px' : '20px', fontWeight: 'bold', marginBottom: window.innerWidth < 768 ? '4px' : '16px', textAlign: 'center' }}>Factories</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: window.innerWidth < 768 ? '6px' : '24px', marginBottom: window.innerWidth < 768 ? '6px' : '24px', maxWidth: '72rem', margin: window.innerWidth < 768 ? '0 auto 6px' : '0 auto 24px' }}>
-            {factories.map((factory) => (
-              <Factory 
-                key={factory.id} 
-                factory={factory}
-                onDraftRune={draftRune}
-                disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
-              />
-            ))}
-          </div>
-          
-          {/* Center Pool */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div style={{
-              backgroundColor: '#1f2937',
-              borderRadius: window.innerWidth < 768 ? '4px' : '12px',
-              padding: window.innerWidth < 768 ? '6px' : '16px',
-              minWidth: window.innerWidth < 768 ? '80px' : '200px',
-              minHeight: window.innerWidth < 768 ? '50px' : '120px',
-              width: window.innerWidth < 768 ? '100%' : 'auto'
-            }}>
-              <h3 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px', textAlign: 'center' }}>
-                Center Pool
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {centerPool.length === 0 ? (
-                  <div style={{ color: '#6b7280', fontSize: '14px' }}>Empty</div>
-                ) : (
-                  centerPool.map((rune) => (
-                    <button
-                      key={rune.id}
-                      onClick={() => draftFromCenter(rune.runeType)}
-                      disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
-                      style={{
-                        outline: 'none',
-                        border: 'none',
-                        background: 'transparent',
-                        borderRadius: '8px',
-                        cursor: (!isDraftPhase || hasSelectedRunes || isAITurn) ? 'not-allowed' : 'pointer',
-                        transition: 'transform 0.2s',
-                        padding: 0
-                      }}
-                      onMouseEnter={(e) => !(!isDraftPhase || hasSelectedRunes || isAITurn) && (e.currentTarget.style.transform = 'scale(1.1)')}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      aria-label={`Select ${rune.runeType} runes from center`}
-                    >
-                      <RuneToken rune={rune} size="small" />
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <FactoriesAndCenter
+          factories={factories}
+          centerPool={centerPool}
+          onDraftRune={draftRune}
+          onDraftFromCenter={draftFromCenter}
+          isDraftPhase={isDraftPhase}
+          hasSelectedRunes={hasSelectedRunes}
+          isAITurn={isAITurn}
+        />
         
         {/* Selected Runes Display */}
         {hasSelectedRunes && (
-          <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px', display: 'flex', justifyContent: 'center' }}>
             <div style={{
               backgroundColor: 'rgba(30, 58, 138, 0.3)',
               border: '2px solid #3b82f6',
-              borderRadius: window.innerWidth < 768 ? '8px' : '12px',
-              padding: window.innerWidth < 768 ? '12px' : '16px',
+              borderRadius: window.innerWidth < 768 ? '4px' : '12px',
+              padding: window.innerWidth < 768 ? '6px' : '16px',
               maxWidth: '36rem',
               width: window.innerWidth < 768 ? '100%' : 'auto'
             }}>
-              <h3 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#93c5fd', marginBottom: '8px', textAlign: 'center' }}>
+              <h3 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#93c5fd', marginBottom: '8px', textAlign: 'center' }}>
                 Selected Runes ({selectedRunes.length})
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
