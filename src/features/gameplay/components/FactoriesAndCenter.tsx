@@ -41,7 +41,6 @@ export function FactoriesAndCenter({
   
   return (
     <div style={{ marginBottom: isMobile ? '16px' : '32px' }}>
-      <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: 'bold', marginBottom: isMobile ? '4px' : '16px', textAlign: 'center', color: '#0f172a' }}>Factories</h2>
       
       {/* All 5 Factories in a Row */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: isMobile ? '6px' : '24px', marginBottom: isMobile ? '8px' : '24px' }}>

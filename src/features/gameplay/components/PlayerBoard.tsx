@@ -44,7 +44,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       <div style={{ display: 'flex', flexDirection: 'row', gap: window.innerWidth < 768 ? '6px' : '24px', justifyContent: 'space-between', width: '100%' }}>
         {/* Pattern Lines */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-          <h4 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#475569', marginBottom: window.innerWidth < 768 ? '3px' : '8px' }}>Spell-casting Lines</h4>
           <PatternLines 
             patternLines={player.patternLines}
             wall={player.wall}
@@ -56,21 +55,19 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         
         {/* Wall */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <h4 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#475569', marginBottom: window.innerWidth < 768 ? '3px' : '8px' }}>Rune Wall</h4>
           <ScoringWall wall={player.wall} />
         </div>
       </div>
       
       {/* Floor Line */}
-      <div style={{ marginTop: window.innerWidth < 768 ? '4px' : '16px' }} onClick={(e) => e.stopPropagation()}>
-        <h4 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#475569', marginBottom: window.innerWidth < 768 ? '3px' : '8px' }}>Overcharged</h4>
+      <div style={{ marginTop: window.innerWidth < 768 ? '2px' : '16px' }} onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onPlaceRunesInFloor}
           disabled={!canPlace || !onPlaceRunesInFloor}
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: window.innerWidth < 768 ? '4px' : '8px',
+            gap: window.innerWidth < 768 ? '2px' : '8px',
             width: '100%',
             cursor: (canPlace && onPlaceRunesInFloor) ? 'pointer' : 'default',
             backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(127, 29, 29, 0.2)' : 'transparent',

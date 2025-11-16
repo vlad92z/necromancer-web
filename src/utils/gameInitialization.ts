@@ -73,7 +73,7 @@ export function createPlayer(id: string, name: string, type: PlayerType = 'human
     wall: createEmptyWall(),
     floorLine: {
       runes: [],
-      maxCapacity: 7,
+      maxCapacity: 10,
     },
     score: 0,
     deck: createMockDeck(id),
