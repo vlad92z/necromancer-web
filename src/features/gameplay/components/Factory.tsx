@@ -35,7 +35,7 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
   
   return (
     <div style={{
-      backgroundColor: '#374151',
+      backgroundColor: '#e0f2fe',
       borderRadius: isMobile ? '4px' : '12px',
       padding: isMobile ? '6px' : '16px',
       minWidth: isMobile ? '50px' : '120px',
@@ -45,11 +45,11 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
       justifyContent: 'center',
       transition: 'all 0.2s'
     }}
-    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#bae6fd'}
+    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e0f2fe'}
     >
       {factory.runes.length === 0 ? (
-        <div style={{ color: '#6b7280', fontSize: isMobile ? '6px' : '14px' }}>
+        <div style={{ color: '#64748b', fontSize: isMobile ? '6px' : '14px' }}>
           Empty
         </div>
       ) : (

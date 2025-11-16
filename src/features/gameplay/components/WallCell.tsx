@@ -41,12 +41,12 @@ export function WallCell({ cell, row, col }: WallCellProps) {
       style={{
         width: isMobile ? '30px' : '60px',
         height: isMobile ? '30px' : '60px',
-        border: '2px solid #4b5563',
+        border: '2px solid #cbd5e1',
         borderRadius: isMobile ? '6px' : '8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#1f2937',
+        backgroundColor: '#f8fafc',
         padding: isMobile ? '2px' : '4px'
       }}
     >

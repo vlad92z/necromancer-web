@@ -45,17 +45,17 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
     <div 
       style={{
         minHeight: '100vh',
-        backgroundColor: '#030712',
-        color: 'white',
+        backgroundColor: '#f0f9ff',
+        color: '#1e293b',
         padding: window.innerWidth < 768 ? '8px' : '24px'
       }}
       onClick={handleBackgroundClick}
     >
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center', position: 'fixed', top: window.innerWidth < 768 ? '4px' : '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: '100%', maxWidth: '80rem' }}>
-          <h1 style={{ fontSize: window.innerWidth < 768 ? '30px' : '30px', fontWeight: 'bold', marginBottom: '4px' }}>Masive Spell: Arcane Arena</h1>
-          <div style={{ color: '#9ca3af', fontSize: window.innerWidth < 768 ? '12px' : '14px' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center', position: 'fixed', top: window.innerWidth < 768 ? '4px' : '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: '100%', maxWidth: '80rem', backgroundColor: '#f0f9ff', paddingTop: window.innerWidth < 768 ? '4px' : '24px', paddingBottom: '8px' }}>
+          <h1 style={{ fontSize: window.innerWidth < 768 ? '30px' : '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Masive Spell: Arcane Arena</h1>
+          <div style={{ color: '#64748b', fontSize: window.innerWidth < 768 ? '12px' : '14px' }}>
             Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn
           </div>
         </div>
@@ -108,14 +108,14 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               onClick={cancelSelection}
             >
               <div style={{
-                backgroundColor: 'rgba(30, 58, 138, 0.95)',
+                backgroundColor: 'rgba(219, 234, 254, 0.95)',
                 border: '2px solid #3b82f6',
                 borderRadius: window.innerWidth < 768 ? '4px' : '12px',
                 padding: window.innerWidth < 768 ? '6px' : '16px',
                 maxWidth: '36rem',
                 width: window.innerWidth < 768 ? '90vw' : 'auto'
               }}>
-                <h3 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#93c5fd', marginBottom: '8px', textAlign: 'center' }}>
+                <h3 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#1e40af', marginBottom: '8px', textAlign: 'center' }}>
                   Selected Runes ({selectedRunes.length})
                 </h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
@@ -123,7 +123,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
                     <RuneToken key={rune.id} rune={rune} size="small" />
                   ))}
                 </div>
-                <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '14px', color: '#d1d5db' }}>
+                <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '14px', color: '#475569' }}>
                   Click a pattern line to place these runes
                 </div>
               </div>

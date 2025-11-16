@@ -61,7 +61,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               gap: isMobile ? '2px' : '4px',
               width: '100%',
               cursor: isClickable ? (isValid ? 'pointer' : 'not-allowed') : 'default',
-              backgroundColor: isValid ? 'rgba(55, 65, 81, 0.5)' : 'transparent',
+              backgroundColor: isValid ? 'rgba(191, 219, 254, 0.3)' : 'transparent',
               border: '2px solid transparent',
               borderColor: isValid ? 'rgba(59, 130, 246, 0.5)' : 'transparent',
               opacity: (isClickable && !isValid) ? 0.5 : 1,
@@ -69,8 +69,8 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               borderRadius: isMobile ? '6px' : '8px',
               transition: 'all 0.2s'
             }}
-            onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(55, 65, 81, 0.7)')}
-            onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(55, 65, 81, 0.5)')}
+            onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(147, 197, 253, 0.4)')}
+            onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(191, 219, 254, 0.3)')}
             aria-label={`Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`}
           >
             {/* Empty slots */}
@@ -82,12 +82,12 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                   style={{
                     width: isMobile ? '30px' : '60px',
                     height: isMobile ? '30px' : '60px',
-                    border: '2px solid #4b5563',
+                    border: '2px solid #cbd5e1',
                     borderRadius: isMobile ? '3px' : '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#1f2937'
+                    backgroundColor: '#f8fafc'
                   }}
                 >
                   {slotIndex < line.count && line.runeType ? (
@@ -97,7 +97,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                       style={{ width: '100%', height: '100%', objectFit: 'contain', padding: isMobile ? '2px' : '4px' }}
                     />
                   ) : (
-                    <div style={{fontSize: isMobile ? '14px' : '20px'}}>{line.tier}</div>
+                    <div style={{fontSize: isMobile ? '14px' : '20px', color: '#64748b'}}>{line.tier}</div>
                   )}
                 </div>
               ))}
