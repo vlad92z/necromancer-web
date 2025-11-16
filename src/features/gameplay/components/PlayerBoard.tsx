@@ -34,13 +34,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         backgroundColor: isActive ? 'rgba(191, 219, 254, 0.3)' : '#ffffff',
       }}
     >
-      <div style={{ marginBottom: window.innerWidth < 768 ? '4px' : '16px' }}>
-        <h3 style={{ fontSize: window.innerWidth < 768 ? '7px' : '18px', fontWeight: 'bold', color: '#0f172a' }}>{player.name}</h3>
-        <div style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', color: '#64748b' }}>
-          Score: {player.score} | Deck: {player.deck.length} runes
-        </div>
-      </div>
-      
       <div style={{ display: 'flex', flexDirection: 'row', gap: window.innerWidth < 768 ? '6px' : '24px', justifyContent: 'space-between', width: '100%' }}>
         {/* Pattern Lines */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>

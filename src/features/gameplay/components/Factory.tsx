@@ -57,8 +57,8 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
           {factory.runes.map((rune) => (
             <button
               style={{
-                width: isMobile ? '20px' : '60px',
-                height: isMobile ? '20px' : '60px',
+                width: isMobile ? '30px' : '60px',
+                height: isMobile ? '30px' : '60px',
                 outline: 'none',
                 border: 'none',
                 background: 'transparent',
