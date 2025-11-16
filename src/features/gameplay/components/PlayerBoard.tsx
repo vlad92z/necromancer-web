@@ -90,8 +90,8 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               <div
                 key={index}
                 style={{
-                  width: window.innerWidth < 768 ? '45px' : '60px',
-                  height: window.innerWidth < 768 ? '45px' : '60px',
+                  width: window.innerWidth < 768 ? '30px' : '60px',
+                  height: window.innerWidth < 768 ? '30px' : '60px',
                   border: '2px solid #7f1d1d',
                   borderRadius: window.innerWidth < 768 ? '6px' : '8px',
                   display: 'flex',
