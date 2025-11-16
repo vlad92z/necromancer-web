@@ -46,7 +46,8 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
       <div className="max-w-7xl mx-auto" onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold mb-2">Runesmith</h1>
+          <h1 className="text-3xl font-bold mb-2">Masive Spell</h1>
+          <h4 className="text-3xl font-bold mb-2">Arcane Arena</h4>
           <div className="text-gray-400">
             Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn
           </div>

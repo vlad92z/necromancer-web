@@ -1,4 +1,4 @@
-# Runesmith
+# Massive Spell: Arcane Arena
 
 An Azul-inspired roguelite deck-building 1v1 duel game.
 

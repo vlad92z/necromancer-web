@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the AI agent workflow for the **Runesmith** front-end development. Agents are specialized AI assistants (e.g., Cursor, Claude, GPT) that collaborate with human developers to build, maintain, and improve the game's UI and gameplay logic.
+This document defines the AI agent workflow for the **Massive Spell: Arcane Arena** front-end development. Agents are specialized AI assistants (e.g., Cursor, Claude, GPT) that collaborate with human developers to build, maintain, and improve the game's UI and gameplay logic.
 
 Each agent has a specific domain, quality bar, and boundaries. The goal is **incremental, safe, and reviewable changes** that compound into a robust, maintainable codebase.
 
@@ -56,7 +56,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Writing tests (delegate to TestEngineer).
 
 **Example Prompts**:
-1. "Set up the initial folder structure for Runesmith, including separate directories for gameplay features, meta-progression, and shared components. Use Zustand for game state management."
+1. "Set up the initial folder structure for Massive Spell: Arcane Arena, including separate directories for gameplay features, meta-progression, and shared components. Use Zustand for game state management."
 2. "Define TypeScript types for `Rune`, `Factory`, `PatternLine`, and `ScoringGrid`. Use discriminated unions for `RuneType` (Fire, Frost, Poison, Void, Wind) and `RuneEffect`."
 3. "Create a routing structure with react-router for: home screen, active game, deck view, rune selection after round, and run summary. Include type-safe route parameters."
 
@@ -553,6 +553,6 @@ src/
 
 ## Conclusion
 
-This `Agents.md` document is the single source of truth for AI-assisted development on Runesmith's front-end. Agents should refer to this document before starting work, coordinate with other agents via clear handoffs, and maintain code quality through strict TypeScript, comprehensive testing, and incremental changes.
+This `Agents.md` document is the single source of truth for AI-assisted development on Massive Spell's front-end. Agents should refer to this document before starting work, coordinate with other agents via clear handoffs, and maintain code quality through strict TypeScript, comprehensive testing, and incremental changes.
 
 When in doubt, **ask the human developer** rather than making assumptions. Keep this document updated as the project evolves.

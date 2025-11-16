@@ -1,5 +1,5 @@
 /**
- * Scoring utilities for Runesmith
+ * Scoring utilities for Massive Spell: Arcane Arena
  * Implements connected segment scoring
  */
 
