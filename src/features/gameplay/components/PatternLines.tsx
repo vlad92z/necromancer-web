@@ -44,7 +44,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
   };
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: window.innerWidth < 768 ? '2px' : '4px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       {patternLines.map((line, index) => {
         const isValid = isLineValid(line, index);
         const isClickable = canPlace && onPlaceRunes;
@@ -62,12 +62,12 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               width: '100%',
               cursor: isClickable ? (isValid ? 'pointer' : 'not-allowed') : 'default',
               backgroundColor: isValid ? 'rgba(191, 219, 254, 0.3)' : 'transparent',
-              border: '2px solid transparent',
-              borderColor: isValid ? 'rgba(59, 130, 246, 0.5)' : 'transparent',
+              border: isValid ? '2px solid rgba(59, 130, 246, 0.5)' : 'none',
               opacity: (isClickable && !isValid) ? 0.5 : 1,
               padding: 0,
               borderRadius: isMobile ? '6px' : '8px',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              marginBottom: isMobile ? '2px' : '4px'
             }}
             onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(147, 197, 253, 0.4)')}
             onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(191, 219, 254, 0.3)')}
