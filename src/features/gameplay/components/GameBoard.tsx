@@ -76,17 +76,6 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           />
         </div>
         
-        {/* Factories and Center */}
-        <FactoriesAndCenter
-          factories={factories}
-          centerPool={centerPool}
-          onDraftRune={draftRune}
-          onDraftFromCenter={draftFromCenter}
-          isDraftPhase={isDraftPhase}
-          hasSelectedRunes={hasSelectedRunes}
-          isAITurn={isAITurn}
-        />
-        
         {/* Selected Runes Display */}
         {hasSelectedRunes && (
           <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px', display: 'flex', justifyContent: 'center' }}>
@@ -114,7 +103,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         )}
         
         {/* Player 1 */}
-        <div>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px' }}>
           <PlayerBoard
             player={players[0]}
             isActive={currentPlayerIndex === 0}
@@ -125,6 +114,17 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
             onCancelSelection={cancelSelection}
           />
         </div>
+        
+        {/* Factories and Center */}
+        <FactoriesAndCenter
+          factories={factories}
+          centerPool={centerPool}
+          onDraftRune={draftRune}
+          onDraftFromCenter={draftFromCenter}
+          isDraftPhase={isDraftPhase}
+          hasSelectedRunes={hasSelectedRunes}
+          isAITurn={isAITurn}
+        />
       </div>
       
       {/* Game Over Modal */}
