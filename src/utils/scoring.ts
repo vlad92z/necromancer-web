@@ -7,10 +7,10 @@ import type { ScoringWall, RuneType } from '../types/game';
 
 /**
  * Calculate total wall power based on connected segments
- * Each segment's power is (number of runes in segment)^2
+ * Each segment's power is segmentSize * max(1, segmentSize - floorPenaltyCount)
  * Runes are connected if they share an edge (not diagonal)
  */
-export function calculateWallPower(wall: ScoringWall): number {
+export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0): number {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalPower = 0;
   
@@ -39,7 +39,9 @@ export function calculateWallPower(wall: ScoringWall): number {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
         const segmentSize = floodFill(row, col);
-        const segmentPower = segmentSize * segmentSize;
+        // Apply floor penalty: multiplier = max(1, segmentSize - floorPenaltyCount)
+        const multiplier = Math.max(1, segmentSize - floorPenaltyCount);
+        const segmentPower = segmentSize * multiplier;
         totalPower += segmentPower;
       }
     }

@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import type { GameState, Rune, RuneType, Player, GameMode } from '../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
-import { calculateWallPower, calculateFloorPenalty, getWallColumnForRune } from '../utils/scoring';
+import { calculateWallPower, getWallColumnForRune } from '../utils/scoring';
 import { makeAIMove } from '../utils/aiPlayer';
 
 interface GameStore extends GameState {
@@ -288,15 +288,14 @@ export const useGameStore = create<GameStore>((set) => ({
         });
         
         // Calculate total wall power based on connected segments
-        const wallPower = calculateWallPower(updatedWall);
+        // Floor penalties reduce the multiplier of each segment
+        const floorPenaltyCount = player.floorLine.runes.length;
+        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount);
         
-        // Apply floor line penalties
-        const floorPenalty = calculateFloorPenalty(player.floorLine.runes.length);
+        // Add wall power to existing score (minimum 0)
+        const newScore = Math.max(0, player.score + wallPower);
         
-        // Add wall power and penalties to existing score (minimum 0)
-        const newScore = Math.max(0, player.score + wallPower + floorPenalty);
-        
-        console.log(`Player ${player.id}: Wall power ${wallPower}, Floor penalty ${floorPenalty}, Total score ${newScore}`);
+        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties), Total score ${newScore}`);
         
         return {
           ...player,
