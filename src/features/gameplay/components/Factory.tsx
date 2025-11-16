@@ -4,7 +4,19 @@
  */
 
 import type { Factory as FactoryType, RuneType } from '../../../types/game';
-import { RuneToken } from '../../../components/RuneToken';
+import fireRune from '../../../assets/runes/fire_rune.svg';
+import frostRune from '../../../assets/runes/frost_rune.svg';
+import poisonRune from '../../../assets/runes/poison_rune.svg';
+import voidRune from '../../../assets/runes/void_rune.svg';
+import windRune from '../../../assets/runes/wind_rune.svg';
+
+const RUNE_ASSETS = {
+  Fire: fireRune,
+  Frost: frostRune,
+  Poison: poisonRune,
+  Void: voidRune,
+  Wind: windRune,
+};
 
 interface FactoryProps {
   factory: FactoryType;
@@ -62,9 +74,10 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
               onMouseLeave={(e) => !disabled && (e.currentTarget.style.transform = 'scale(1)')}
               aria-label={`Select ${rune.runeType} rune from factory`}
             >
-              <RuneToken 
-                rune={rune} 
-                size="small" 
+              <img 
+                src={RUNE_ASSETS[rune.runeType]} 
+                alt={`${rune.runeType} rune`}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             </button>
           ))}

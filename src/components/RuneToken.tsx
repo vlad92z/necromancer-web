@@ -17,7 +17,7 @@ interface RuneTokenProps {
 }
 
 const SIZE_CONFIG = {
-  small: { width: 48, height: 48 },
+  small: { width: 20, height: 20 },
   medium: { width: 64, height: 64 },
   large: { width: 80, height: 80 },
 };
