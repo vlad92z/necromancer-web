@@ -10,17 +10,28 @@ import { useGameActions } from '../../../hooks/useGameActions';
 
 interface GameBoardProps {
   gameState: GameState;
+  onNextGame?: () => void;
 }
 
-export function GameBoard({ gameState }: GameBoardProps) {
+export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   
   const isDraftPhase = turnPhase === 'draft';
+  const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
   const isAITurn = currentPlayer.type === 'ai';
+  
+  // Determine winner
+  const winner = isGameOver
+    ? players[0].score > players[1].score
+      ? players[0]
+      : players[1].score > players[0].score
+        ? players[1]
+        : null
+    : null;
   
   const handleBackgroundClick = () => {
     // Background click handler - no longer needed since PlayerBoard handles it
@@ -148,6 +159,52 @@ export function GameBoard({ gameState }: GameBoardProps) {
           />
         </div>
       </div>
+      
+      {/* Game Over Modal */}
+      {isGameOver && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border-4 border-yellow-500 rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <h2 className="text-4xl font-bold text-yellow-500 mb-6">
+              {winner ? 'Victory!' : 'Draw!'}
+            </h2>
+            
+            <div className="mb-6 space-y-4">
+              <div className="text-2xl font-semibold">
+                {winner ? `${winner.name} Wins!` : "It's a Tie!"}
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between items-center bg-gray-800 p-3 rounded-lg">
+                  <span className="font-semibold">{players[0].name}</span>
+                  <span className="text-2xl font-bold text-blue-400">{players[0].score}</span>
+                </div>
+                <div className="flex justify-between items-center bg-gray-800 p-3 rounded-lg">
+                  <span className="font-semibold">{players[1].name}</span>
+                  <span className="text-2xl font-bold text-red-400">{players[1].score}</span>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={onNextGame}
+              className="
+                bg-yellow-500 
+                hover:bg-yellow-600 
+                text-gray-900 
+                font-bold 
+                py-3 
+                px-8 
+                rounded-lg 
+                text-lg
+                transition-colors
+                w-full
+              "
+            >
+              Next Game
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

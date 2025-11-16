@@ -25,35 +25,17 @@ function App() {
     }
   }, [gameState.currentPlayerIndex, gameState.turnPhase, gameState.players, triggerAITurn, showModeSelection])
 
-  // Show mode selection immediately on game over
-  useEffect(() => {
-    if (gameState.turnPhase === 'game-over') {
-      // Save the game result
-      const winner = gameState.players[0].score > gameState.players[1].score 
-        ? gameState.players[0]
-        : gameState.players[1].score > gameState.players[0].score 
-          ? gameState.players[1]
-          : null // Tie
-      
-      const result = {
-        winner,
-        players: gameState.players,
-      }
-      
-      console.log('Game over detected, saving result:', result)
-      setPreviousGameResult(result)
-      
-      // Show mode selection immediately
-      setShowModeSelection(true)
-    }
-  }, [gameState.turnPhase, gameState.players])
+  // Handle navigation from game over screen
+  const handleNextGame = () => {
+    setShowModeSelection(true)
+  }
 
   if (showModeSelection) {
     console.log('Showing mode selection with previousGameResult:', previousGameResult)
     return <GameModeSelection onSelectMode={handleModeSelection} previousGameResult={previousGameResult} />
   }
 
-  return <GameBoard gameState={gameState} />
+  return <GameBoard gameState={gameState} onNextGame={handleNextGame} />
 }
 
 export default App
