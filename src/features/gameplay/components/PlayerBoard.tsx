@@ -60,7 +60,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       </div>
       
       {/* Floor Line */}
-      <div style={{ marginTop: window.innerWidth < 768 ? '2px' : '16px' }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ marginTop: window.innerWidth < 768 ? '0px' : '16px' }} onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onPlaceRunesInFloor}
           disabled={!canPlace || !onPlaceRunesInFloor}

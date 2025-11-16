@@ -53,15 +53,12 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
     >
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center', position: 'fixed', top: window.innerWidth < 768 ? '4px' : '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: '100%', maxWidth: '80rem', backgroundColor: '#f0f9ff', paddingTop: window.innerWidth < 768 ? '4px' : '24px', paddingBottom: '8px' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center' }}>
           <h1 style={{ fontSize: window.innerWidth < 768 ? '15px' : '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Masive Spell: Arcane Arena</h1>
           <div style={{ color: '#64748b', fontSize: window.innerWidth < 768 ? '12px' : '14px' }}>
             Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn
           </div>
         </div>
-        
-        {/* Spacer for fixed header */}
-        <div style={{ height: window.innerWidth < 768 ? '40px' : '100px' }} />
         
         {/* Player 2 */} 
         <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px' }}>
