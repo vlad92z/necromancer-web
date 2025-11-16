@@ -79,10 +79,10 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                 <div
                   key={slotIndex}
                   style={{
-                    width: isMobile ? '40px' : '60px',
-                    height: isMobile ? '40px' : '60px',
+                    width: isMobile ? '30px' : '60px',
+                    height: isMobile ? '30px' : '60px',
                     border: '2px solid #4b5563',
-                    borderRadius: isMobile ? '6px' : '8px',
+                    borderRadius: isMobile ? '3px' : '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

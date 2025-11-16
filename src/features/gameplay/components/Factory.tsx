@@ -24,10 +24,10 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
   return (
     <div style={{
       backgroundColor: '#374151',
-      borderRadius: isMobile ? '8px' : '12px',
-      padding: isMobile ? '12px' : '16px',
-      minWidth: isMobile ? '100px' : '120px',
-      minHeight: isMobile ? '100px' : '120px',
+      borderRadius: isMobile ? '4px' : '12px',
+      padding: isMobile ? '6px' : '16px',
+      minWidth: isMobile ? '50px' : '120px',
+      minHeight: isMobile ? '50px' : '120px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -37,20 +37,20 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
     >
       {factory.runes.length === 0 ? (
-        <div style={{ color: '#6b7280', fontSize: isMobile ? '12px' : '14px' }}>
+        <div style={{ color: '#6b7280', fontSize: isMobile ? '6px' : '14px' }}>
           Empty
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: isMobile ? '4px' : '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: isMobile ? '2px' : '8px' }}>
           {factory.runes.map((rune) => (
             <button
               style={{
-                width: isMobile ? '40px' : '60px',
-                height: isMobile ? '40px' : '60px',
+                width: isMobile ? '20px' : '60px',
+                height: isMobile ? '20px' : '60px',
                 outline: 'none',
                 border: 'none',
                 background: 'transparent',
-                borderRadius: isMobile ? '6px' : '8px',
+                borderRadius: isMobile ? '3px' : '8px',
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 transition: 'transform 0.2s',
                 padding: 0

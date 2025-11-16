@@ -28,23 +28,23 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     <div
       onClick={handleBoardClick}
       style={{
-        padding: window.innerWidth < 768 ? '8px' : '16px',
+        padding: window.innerWidth < 768 ? '4px' : '16px',
         borderRadius: window.innerWidth < 768 ? '6px' : '8px',
         border: isActive ? '2px solid rgba(59, 130, 246, 0.5)' : 'white',
         backgroundColor: isActive ? 'rgba(140, 233, 254, 0.5)' : 'white',
       }}
     >
-      <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '16px' }}>
-        <h3 style={{ fontSize: window.innerWidth < 768 ? '14px' : '18px', fontWeight: 'bold', color: 'white' }}>{player.name}</h3>
-        <div style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', color: '#9ca3af' }}>
+      <div style={{ marginBottom: window.innerWidth < 768 ? '4px' : '16px' }}>
+        <h3 style={{ fontSize: window.innerWidth < 768 ? '7px' : '18px', fontWeight: 'bold', color: 'white' }}>{player.name}</h3>
+        <div style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', color: '#9ca3af' }}>
           Score: {player.score} | Deck: {player.deck.length} runes
         </div>
       </div>
       
-      <div style={{ display: 'flex', flexDirection: window.innerWidth < 768 ? 'column' : 'row', gap: window.innerWidth < 768 ? '12px' : '24px', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: window.innerWidth < 768 ? 'column' : 'row', gap: window.innerWidth < 768 ? '6px' : '24px', justifyContent: 'space-between', width: '100%' }}>
         {/* Pattern Lines */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-          <h4 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '6px' : '8px' }}>Spell-casting Lines</h4>
+          <h4 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '3px' : '8px' }}>Spell-casting Lines</h4>
           <PatternLines 
             patternLines={player.patternLines}
             wall={player.wall}
@@ -56,14 +56,14 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         
         {/* Wall */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <h4 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '6px' : '8px' }}>Rune Wall</h4>
+          <h4 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '3px' : '8px' }}>Rune Wall</h4>
           <ScoringWall wall={player.wall} />
         </div>
       </div>
       
       {/* Floor Line */}
-      <div style={{ marginTop: window.innerWidth < 768 ? '8px' : '16px' }} onClick={(e) => e.stopPropagation()}>
-        <h4 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '6px' : '8px' }}>Overcharged</h4>
+      <div style={{ marginTop: window.innerWidth < 768 ? '4px' : '16px' }} onClick={(e) => e.stopPropagation()}>
+        <h4 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '3px' : '8px' }}>Overcharged</h4>
         <button
           onClick={onPlaceRunesInFloor}
           disabled={!canPlace || !onPlaceRunesInFloor}
@@ -103,13 +103,13 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 {player.floorLine.runes[index] ? (
                   <RuneToken rune={player.floorLine.runes[index]} size="small" />
                 ) : (
-                  <div style={{fontSize: window.innerWidth < 768 ? '14px' : '20px'}}>-{index + 1}</div>
+                  <div style={{fontSize: window.innerWidth < 768 ? '7px' : '20px'}}>-{index + 1}</div>
                 )}
               </div>
             ))}
         </button>
         {canPlace && onPlaceRunesInFloor && (
-          <div style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px', color: '#9ca3af', marginTop: '4px', textAlign: 'center' }}>
+          <div style={{ fontSize: window.innerWidth < 768 ? '5px' : '12px', color: '#9ca3af', marginTop: '4px', textAlign: 'center' }}>
             Click to discard runes here (penalties)
           </div>
         )}

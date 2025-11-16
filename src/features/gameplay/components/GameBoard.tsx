@@ -53,15 +53,18 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
     >
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '12px' : '24px', textAlign: 'center' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center', position: 'fixed', top: window.innerWidth < 768 ? '4px' : '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: '100%', maxWidth: '80rem' }}>
           <h1 style={{ fontSize: window.innerWidth < 768 ? '30px' : '30px', fontWeight: 'bold', marginBottom: '4px' }}>Masive Spell: Arcane Arena</h1>
           <div style={{ color: '#9ca3af', fontSize: window.innerWidth < 768 ? '12px' : '14px' }}>
             Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn
           </div>
         </div>
         
+        {/* Spacer for fixed header */}
+        <div style={{ height: window.innerWidth < 768 ? '40px' : '100px' }} />
+        
         {/* Player 2 */} 
-        <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px' }}>
           <PlayerBoard
             player={players[1]}
             isActive={currentPlayerIndex === 1}
@@ -75,8 +78,8 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         
         {/* Factories and Center */}
         <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px' }}>
-          <h2 style={{ fontSize: window.innerWidth < 768 ? '16px' : '20px', fontWeight: 'bold', marginBottom: window.innerWidth < 768 ? '8px' : '16px', textAlign: 'center' }}>Factories</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: window.innerWidth < 768 ? '12px' : '24px', marginBottom: window.innerWidth < 768 ? '12px' : '24px', maxWidth: '72rem', margin: window.innerWidth < 768 ? '0 auto 12px' : '0 auto 24px' }}>
+          <h2 style={{ fontSize: window.innerWidth < 768 ? '16px' : '20px', fontWeight: 'bold', marginBottom: window.innerWidth < 768 ? '4px' : '16px', textAlign: 'center' }}>Factories</h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: window.innerWidth < 768 ? '6px' : '24px', marginBottom: window.innerWidth < 768 ? '6px' : '24px', maxWidth: '72rem', margin: window.innerWidth < 768 ? '0 auto 6px' : '0 auto 24px' }}>
             {factories.map((factory) => (
               <Factory 
                 key={factory.id} 
@@ -91,10 +94,10 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{
               backgroundColor: '#1f2937',
-              borderRadius: window.innerWidth < 768 ? '8px' : '12px',
-              padding: window.innerWidth < 768 ? '12px' : '16px',
-              minWidth: window.innerWidth < 768 ? '160px' : '200px',
-              minHeight: window.innerWidth < 768 ? '100px' : '120px',
+              borderRadius: window.innerWidth < 768 ? '4px' : '12px',
+              padding: window.innerWidth < 768 ? '6px' : '16px',
+              minWidth: window.innerWidth < 768 ? '80px' : '200px',
+              minHeight: window.innerWidth < 768 ? '50px' : '120px',
               width: window.innerWidth < 768 ? '100%' : 'auto'
             }}>
               <h3 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px', textAlign: 'center' }}>
