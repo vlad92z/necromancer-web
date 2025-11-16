@@ -27,11 +27,18 @@ export function FactoriesAndCenter({
 }: FactoriesAndCenterProps) {
   const isMobile = window.innerWidth < 768;
   
+  // Split factories: first 3 for top, last 2 for sides
+  const topFactories = factories.slice(0, 3);
+  const leftFactory = factories[3];
+  const rightFactory = factories[4];
+  
   return (
     <div style={{ marginBottom: isMobile ? '16px' : '32px' }}>
       <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: 'bold', marginBottom: isMobile ? '4px' : '16px', textAlign: 'center' }}>Factories</h2>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: isMobile ? '6px' : '24px', marginBottom: isMobile ? '6px' : '24px', maxWidth: '72rem', margin: isMobile ? '0 auto 6px' : '0 auto 24px' }}>
-        {factories.map((factory) => (
+      
+      {/* Top 3 Factories */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: isMobile ? '6px' : '24px', marginBottom: isMobile ? '6px' : '16px' }}>
+        {topFactories.map((factory) => (
           <Factory 
             key={factory.id} 
             factory={factory}
@@ -41,22 +48,35 @@ export function FactoriesAndCenter({
         ))}
       </div>
       
-      {/* Center Pool */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+      {/* Middle Row: Left Factory, Center Pool, Right Factory */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: isMobile ? '6px' : '24px' }}>
+        {/* Left Factory */}
+        {leftFactory && (
+          <Factory 
+            key={leftFactory.id} 
+            factory={leftFactory}
+            onDraftRune={onDraftRune}
+            disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
+          />
+        )}
+        
+        {/* Center Pool */}
         <div style={{
           backgroundColor: '#1f2937',
           borderRadius: isMobile ? '4px' : '12px',
           padding: isMobile ? '6px' : '16px',
-          minWidth: isMobile ? '80px' : '200px',
+          minWidth: isMobile ? '80px' : '300px',
           minHeight: isMobile ? '50px' : '120px',
-          width: isMobile ? '100%' : 'auto'
+          maxWidth: isMobile ? '200px' : '400px'
         }}>
-          <h3 style={{ fontSize: isMobile ? '6px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px', textAlign: 'center' }}>
-            Center Pool
-          </h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(6, 1fr)', 
+            gap: isMobile ? '4px' : '8px',
+            justifyContent: 'center'
+          }}>
             {centerPool.length === 0 ? (
-              <div style={{ color: '#6b7280', fontSize: '14px' }}>Empty</div>
+              <div style={{ gridColumn: '1 / -1', color: '#6b7280', fontSize: isMobile ? '10px' : '14px', textAlign: 'center' }}>Empty</div>
             ) : (
               centerPool.map((rune) => (
                 <button
@@ -82,6 +102,16 @@ export function FactoriesAndCenter({
             )}
           </div>
         </div>
+        
+        {/* Right Factory */}
+        {rightFactory && (
+          <Factory 
+            key={rightFactory.id} 
+            factory={rightFactory}
+            onDraftRune={onDraftRune}
+            disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
+          />
+        )}
       </div>
     </div>
   );
