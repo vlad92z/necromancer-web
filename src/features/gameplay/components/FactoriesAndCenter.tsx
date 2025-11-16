@@ -34,7 +34,7 @@ export function FactoriesAndCenter({
   
   return (
     <div style={{ marginBottom: isMobile ? '16px' : '32px' }}>
-      <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: 'bold', marginBottom: isMobile ? '4px' : '16px', textAlign: 'center' }}>Factories</h2>
+      <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: 'bold', marginBottom: isMobile ? '4px' : '16px', textAlign: 'center' }}>Rune Forge</h2>
       
       {/* Top 3 Factories */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: isMobile ? '6px' : '24px', marginBottom: isMobile ? '6px' : '16px' }}>
