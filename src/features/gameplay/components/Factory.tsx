@@ -20,39 +20,44 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
   };
   
   return (
-    <div className="
-      bg-gray-700 
-      rounded-xl 
-      p-4 
-      min-w-[120px] 
-      min-h-[120px] 
-      flex 
-      items-center 
-      justify-center
-      transition-all
-      hover:bg-gray-600
-    ">
+    <div style={{
+      backgroundColor: '#374151',
+      borderRadius: '12px',
+      padding: '16px',
+      minWidth: '120px',
+      minHeight: '120px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'all 0.2s'
+    }}
+    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
+    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+    >
       {factory.runes.length === 0 ? (
-        <div className="text-gray-500 text-sm">
+        <div style={{ color: '#6b7280', fontSize: '14px' }}>
           Empty
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
           {factory.runes.map((rune) => (
             <button
-              style={{ width: '60px', height: '60px' }}
+              style={{
+                width: '60px',
+                height: '60px',
+                outline: 'none',
+                border: 'none',
+                background: 'transparent',
+                borderRadius: '8px',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                transition: 'transform 0.2s',
+                padding: 0
+              }}
               key={rune.id}
               onClick={() => handleRuneClick(rune.runeType)}
               disabled={disabled}
-              className="
-                focus:outline-none 
-                focus:ring-2 
-                focus:ring-blue-500 
-                rounded-lg
-                disabled:cursor-not-allowed
-                hover:scale-110
-                transition-transform
-              "
+              onMouseEnter={(e) => !disabled && (e.currentTarget.style.transform = 'scale(1.1)')}
+              onMouseLeave={(e) => !disabled && (e.currentTarget.style.transform = 'scale(1)')}
               aria-label={`Select ${rune.runeType} rune from factory`}
             >
               <RuneToken 

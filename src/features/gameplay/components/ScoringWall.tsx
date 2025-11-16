@@ -11,9 +11,9 @@ interface ScoringWallProps {
 
 export function ScoringWall({ wall }: ScoringWallProps) {
   return (
-    <div className="space-y-1">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       {wall.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex gap-1">
+        <div key={rowIndex} style={{ display: 'flex', gap: '4px' }}>
           {row.map((cell, colIndex) => (
             <WallCell key={colIndex} cell={cell} row={rowIndex} col={colIndex} />
           ))}

@@ -37,29 +37,29 @@ export function WallCell({ cell, row, col }: WallCellProps) {
   
   return (
     <div
-      style={{ width: '60px', height: '60px' }}
-      className="
-        border-2 
-        border-gray-600 
-        rounded-lg 
-        flex 
-        items-center 
-        justify-center 
-        bg-gray-800
-        p-1
-      "
+      style={{
+        width: '60px',
+        height: '60px',
+        border: '2px solid #4b5563',
+        borderRadius: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#1f2937',
+        padding: '4px'
+      }}
     >
       {cell.runeType ? (
         <img 
           src={runeImage} 
           alt={`${cell.runeType} rune`}
-          className="w-full h-full object-contain"
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       ) : (
         <img 
           src={runeImage} 
           alt={`${expectedRuneType} placeholder`}
-          className="w-full h-full object-contain opacity-30"
+          style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.3 }}
         />
       )}
     </div>

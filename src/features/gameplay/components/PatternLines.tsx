@@ -44,7 +44,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
   };
   
   return (
-    <div className="space-y-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       {patternLines.map((line, index) => {
         const isValid = isLineValid(line, index);
         const isClickable = canPlace && onPlaceRunes;
@@ -54,14 +54,21 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
             key={index}
             onClick={() => isValid && onPlaceRunes?.(index)}
             disabled={!isValid || !isClickable}
-            className={`
-              flex items-center gap-1 w-full
-              ${isClickable ? 'cursor-pointer' : 'cursor-default'}
-              ${isValid ? 'hover:bg-gray-700/50 ring-2 ring-blue-500/50' : ''}
-              ${isClickable && !isValid ? 'opacity-50' : ''}
-              p-1 rounded-lg transition-all
-              disabled:cursor-not-allowed
-            `}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              width: '100%',
+              cursor: isClickable ? (isValid ? 'pointer' : 'not-allowed') : 'default',
+              backgroundColor: isValid ? 'rgba(55, 65, 81, 0.5)' : 'transparent',
+              border: isValid ? '2px solid rgba(59, 130, 246, 0.5)' : '2px solid transparent',
+              opacity: (isClickable && !isValid) ? 0.5 : 1,
+              padding: '4px',
+              borderRadius: '8px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(55, 65, 81, 0.7)')}
+            onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(55, 65, 81, 0.5)')}
             aria-label={`Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`}
           >
             {/* Empty slots */}
@@ -70,22 +77,22 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               .map((_, slotIndex) => (
                 <div
                   key={slotIndex}
-                  style={{ width: '60px', height: '60px' }}
-                  className="
-                    border-2 
-                    border-gray-600 
-                    rounded-lg 
-                    flex 
-                    items-center 
-                    justify-center 
-                    bg-gray-800
-                  "
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    border: '2px solid #4b5563',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#1f2937'
+                  }}
                 >
                   {slotIndex < line.count && line.runeType ? (
                     <img 
                       src={RUNE_ASSETS[line.runeType]} 
                       alt={`${line.runeType} rune`}
-                      className="w-full h-full object-contain p-1"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
                     />
                   ) : (
                     <div style={{fontSize: '20px'}}>{line.tier}</div>

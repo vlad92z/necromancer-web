@@ -31,14 +31,14 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - `GameBoard`: Main game layout with factories, center pool, and both players
 
 - Styling:
-  - Tailwind CSS configured with custom rune colors
+  - Inline CSS with custom rune colors
   - Dark theme optimized for game visibility
   - Responsive layout foundations
 
 **Tech Stack:**
 - React 19 + TypeScript (strict mode)
 - Vite 7 for dev server and build
-- Tailwind CSS for styling
+- Inline CSS for styling
 - Zustand for state management
 - Component-based architecture with feature organization
 
@@ -302,7 +302,7 @@ src/
 - [x] Set up Zustand for state management
 - [x] Reorganize components into features structure
 - [x] Add custom hooks for game actions and state selectors
-- [x] Standardize Tailwind formatting across components
+- [x] Migrate from Tailwind to inline CSS styling
 
 ### Gameplay Implementation (Completed ✅)
 - [x] Step 2: Make factories/runes selectable, implement Azul factory taking

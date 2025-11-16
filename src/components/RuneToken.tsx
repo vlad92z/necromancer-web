@@ -40,18 +40,23 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
       style={{
         width: `${config.width}px`,
         height: `${config.height}px`,
+        borderRadius: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        padding: '4px',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 0.2s',
+        backgroundColor: colorClass === 'bg-red-600' ? '#dc2626' :
+                        colorClass === 'bg-blue-600' ? '#2563eb' :
+                        colorClass === 'bg-green-600' ? '#16a34a' :
+                        colorClass === 'bg-purple-600' ? '#9333ea' :
+                        colorClass === 'bg-yellow-600' ? '#ca8a04' : '#6b7280'
       }}
-      className={`
-        ${colorClass} 
-        rounded-lg 
-        flex 
-        items-center 
-        justify-center 
-        shadow-md 
-        p-1
-        ${onClick ? 'cursor-pointer hover:scale-110 transition-transform' : ''}
-      `}
       onClick={onClick}
+      onMouseEnter={(e) => onClick && (e.currentTarget.style.transform = 'scale(1.1)')}
+      onMouseLeave={(e) => onClick && (e.currentTarget.style.transform = 'scale(1)')}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       aria-label={`${rune.runeType} rune`}
@@ -59,7 +64,7 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
       <img 
         src={runeImage} 
         alt={`${rune.runeType} rune`}
-        className="w-full h-full object-contain"
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
       />
     </div>
   );

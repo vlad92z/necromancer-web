@@ -34,17 +34,17 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         backgroundColor: isActive ? 'rgba(140, 233, 254, 0.5)' : 'white',
       }}
     >
-      <div className="mb-4">
-        <h3 className="text-lg font-bold text-white">{player.name}</h3>
-        <div className="text-sm text-gray-400">
+      <div style={{ marginBottom: '16px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white' }}>{player.name}</h3>
+        <div style={{ fontSize: '14px', color: '#9ca3af' }}>
           Score: {player.score} | Deck: {player.deck.length} runes
         </div>
       </div>
       
-      <div className="flex gap-6 justify-between w-full">
+      <div style={{ display: 'flex', gap: '24px', justifyContent: 'space-between', width: '100%' }}>
         {/* Pattern Lines */}
-        <div className="flex-1 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-          <h4 className="text-sm font-semibold text-gray-300 mb-2">Spell-casting Lines</h4>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+          <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px' }}>Spell-casting Lines</h4>
           <PatternLines 
             patternLines={player.patternLines}
             wall={player.wall}
@@ -55,25 +55,31 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         </div>
         
         {/* Wall */}
-        <div className="flex-1 flex flex-col items-center">
-          <h4 className="text-sm font-semibold text-gray-300 mb-2">Rune Wall</h4>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px' }}>Rune Wall</h4>
           <ScoringWall wall={player.wall} />
         </div>
       </div>
       
       {/* Floor Line */}
-      <div className="mt-4" onClick={(e) => e.stopPropagation()}>
-        <h4 className="text-sm font-semibold text-gray-300 mb-2">Overcharged</h4>
+      <div style={{ marginTop: '16px' }} onClick={(e) => e.stopPropagation()}>
+        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px' }}>Overcharged</h4>
         <button
           onClick={onPlaceRunesInFloor}
           disabled={!canPlace || !onPlaceRunesInFloor}
-          className={`
-            flex gap-2 w-full
-            ${canPlace && onPlaceRunesInFloor ? 'cursor-pointer hover:bg-red-900/20 ring-2 ring-red-500/50' : ''}
-            ${canPlace && onPlaceRunesInFloor ? '' : 'cursor-default'}
-            p-2 rounded-lg transition-all
-            disabled:cursor-not-allowed
-          `}
+          style={{
+            display: 'flex',
+            gap: '8px',
+            width: '100%',
+            cursor: (canPlace && onPlaceRunesInFloor) ? 'pointer' : 'default',
+            backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(127, 29, 29, 0.2)' : 'transparent',
+            border: (canPlace && onPlaceRunesInFloor) ? '2px solid rgba(239, 68, 68, 0.5)' : '2px solid transparent',
+            padding: '8px',
+            borderRadius: '8px',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(127, 29, 29, 0.3)')}
+          onMouseLeave={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(127, 29, 29, 0.2)')}
           aria-label="Place runes in floor line (take penalties)"
         >
           {Array(player.floorLine.maxCapacity)
@@ -81,16 +87,16 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             .map((_, index) => (
               <div
                 key={index}
-                style={{ width: '60px', height: '60px' }}
-                className="
-                  border-2 
-                  border-red-900 
-                  rounded-lg 
-                  flex 
-                  items-center 
-                  justify-center 
-                  bg-gray-800
-                "
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  border: '2px solid #7f1d1d',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#1f2937'
+                }}
               >
                 {player.floorLine.runes[index] ? (
                   <RuneToken rune={player.floorLine.runes[index]} size="small" />
@@ -101,7 +107,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             ))}
         </button>
         {canPlace && onPlaceRunesInFloor && (
-          <div className="text-xs text-gray-400 mt-1 text-center">
+          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px', textAlign: 'center' }}>
             Click to discard runes here (penalties)
           </div>
         )}
