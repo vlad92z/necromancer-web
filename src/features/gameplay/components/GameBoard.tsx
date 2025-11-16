@@ -54,8 +54,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
         <div style={{ marginBottom: window.innerWidth < 768 ? '12px' : '24px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: window.innerWidth < 768 ? '20px' : '30px', fontWeight: 'bold', marginBottom: '4px' }}>Masive Spell</h1>
-          <h4 style={{ fontSize: window.innerWidth < 768 ? '16px' : '30px', fontWeight: 'bold', marginBottom: '8px' }}>Arcane Arena</h4>
+          <h1 style={{ fontSize: window.innerWidth < 768 ? '30px' : '30px', fontWeight: 'bold', marginBottom: '4px' }}>Masive Spell: Arcane Arena</h1>
           <div style={{ color: '#9ca3af', fontSize: window.innerWidth < 768 ? '12px' : '14px' }}>
             Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn
           </div>
