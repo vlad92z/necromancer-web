@@ -63,15 +63,15 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             gap: window.innerWidth < 768 ? '2px' : '8px',
             width: '100%',
             cursor: (canPlace && onPlaceRunesInFloor) ? 'pointer' : 'default',
-            backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(127, 29, 29, 0.2)' : 'transparent',
-            border: (canPlace && onPlaceRunesInFloor) ? '2px solid rgba(239, 68, 68, 0.5)' : '2px solid transparent',
+            backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(254, 202, 202, 0.5)' : 'transparent',
+            border: 'none',
             padding: window.innerWidth < 768 ? '4px' : '8px',
             borderRadius: window.innerWidth < 768 ? '6px' : '8px',
             transition: 'all 0.2s',
             justifyContent: window.innerWidth < 768 ? 'center' : 'flex-start'
           }}
-          onMouseEnter={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(127, 29, 29, 0.3)')}
-          onMouseLeave={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(127, 29, 29, 0.2)')}
+          onMouseEnter={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.7)')}
+          onMouseLeave={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.5)')}
           aria-label="Place runes in floor line (take penalties)"
         >
           {Array(player.floorLine.maxCapacity)
@@ -98,11 +98,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               </div>
             ))}
         </button>
-        {canPlace && onPlaceRunesInFloor && (
-          <div style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px', color: '#64748b', marginTop: '4px', textAlign: 'center' }}>
-            Click to discard runes here (penalties)
-          </div>
-        )}
       </div>
     </div>
   );
