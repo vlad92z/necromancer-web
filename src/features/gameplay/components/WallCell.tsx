@@ -39,8 +39,8 @@ export function WallCell({ cell, row, col }: WallCellProps) {
   return (
     <div
       style={{
-        width: isMobile ? '30px' : '60px',
-        height: isMobile ? '30px' : '60px',
+        width: isMobile ? '35px' : '60px',
+        height: isMobile ? '35px' : '60px',
         border: '2px solid #cbd5e1',
         borderRadius: isMobile ? '6px' : '8px',
         display: 'flex',

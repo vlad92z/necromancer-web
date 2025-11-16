@@ -80,8 +80,8 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                 <div
                   key={slotIndex}
                   style={{
-                    width: isMobile ? '30px' : '60px',
-                    height: isMobile ? '30px' : '60px',
+                    width: isMobile ? '35px' : '60px',
+                    height: isMobile ? '35px' : '60px',
                     border: '2px solid #cbd5e1',
                     borderRadius: isMobile ? '3px' : '8px',
                     display: 'flex',
@@ -101,9 +101,6 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                   )}
                 </div>
               ))}
-            <div style={{fontSize: isMobile ? '14px' : '20px'}}>
-              {line.count}/{line.tier}
-            </div>
           </button>
         );
       })}
