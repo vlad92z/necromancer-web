@@ -3,7 +3,7 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, Rune, RuneType, Player, GameMode } from '../types/game';
+import type { GameState, RuneType, Player } from '../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
 import { calculateWallPower, getWallColumnForRune } from '../utils/scoring';
 import { makeAIMove } from '../utils/aiPlayer';
@@ -16,7 +16,7 @@ interface GameStore extends GameState {
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
   endRound: () => void;
-  resetGame: (gameMode?: GameMode) => void;
+  resetGame: () => void;
   triggerAITurn: () => void;
 }
 
@@ -350,8 +350,8 @@ export const useGameStore = create<GameStore>((set) => ({
     });
   },
   
-  resetGame: (gameMode?: GameMode) => {
-    set(initializeGame(gameMode));
+  resetGame: () => {
+    set(initializeGame());
   },
 
   triggerAITurn: () => {

@@ -195,9 +195,9 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Requires minimum 10 runes per player (2 per factory × 5 factories)
 - Game over modal displays on the game board:
   - Final board state remains visible behind modal
-  - Final scores for both players
-  - Winner announcement (or draw)
-  - "Next Game" button to return to mode selection
+  - Final scores for player and opponent
+  - Victory/Defeat announcement (or draw)
+  - "Play Again" button to restart a new game
   - Players can review final board configuration before proceeding
 
 **Wall Validation:**
@@ -211,13 +211,12 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Clickable with visual feedback
 - Useful for avoiding bad placements or blocking opponent
 
-**Game Modes:**
-- Mode selection screen at game start
-- **PvP**: Local 2-player mode (pass-and-play)
-- **PvE**: Play against random AI opponent
+**Game Mode:**
+- PvE only: Play against AI opponent
   - AI makes random legal moves (draft + placement)
   - 800ms delay between AI actions for visibility
   - AI completes full turns automatically
+  - Game launches directly into play (no mode selection)
 
 **Selection & Cancellation:**
 - Click rune selection tracks source (factory or center)
@@ -277,20 +276,20 @@ src/
 │   └── RuneToken.tsx   # Rune display with SVG assets
 ├── features/           # Feature-based organization
 │   └── gameplay/       # Gameplay-specific features
-│       └── components/ # Factory, GameBoard, GameModeSelection, PatternLines, PlayerBoard, ScoringWall, WallCell
+│       └── components/ # Factory, GameBoard, OpponentView, PatternLines, PlayerBoard, PlayerView, ScoringWall, WallCell
 ├── hooks/              # Custom React hooks
 │   ├── useGameActions.ts  # Game action hooks
 │   └── useGameState.ts    # State selector hooks
 ├── state/              # Global state management
 │   └── gameStore.ts    # Zustand store with game state and actions
 ├── types/              # TypeScript type definitions
-│   └── game.ts         # Core types: Rune, Factory, Player, GameState, GameMode, PlayerType
+│   └── game.ts         # Core types: Rune, Factory, Player, GameState, PlayerType
 ├── utils/              # Utility functions
 │   ├── aiPlayer.ts     # AI opponent logic
 │   ├── gameInitialization.ts  # Game setup and factory filling
 │   ├── runeHelpers.ts  # Rune display utilities
 │   └── scoring.ts      # Wall power calculation with floor penalties
-├── App.tsx             # Root component, mode selection & AI turn triggering
+├── App.tsx             # Root component, game lifecycle & AI turn triggering
 └── main.tsx            # Entry point
 ```
 
@@ -314,7 +313,7 @@ src/
 - [x] Step 8: Deck management with 2:2 split per factory
 - [x] Step 9: Game over condition and modal on game board
 - [x] Step 10: Active player highlighting and UI polish
-- [x] Step 11: PvP vs PvE mode selection
+- [x] Step 11: PvE-only mode (local PvP removed)
 - [x] Step 12: AI opponent with random legal moves
 - [x] Step 13: SVG rune assets integration
 - [x] Step 14: Cancel selection (returns runes to source)
@@ -327,7 +326,7 @@ src/
 - [ ] Deck customization UI
 - [ ] Run summary and statistics
 - [ ] Advanced AI strategies (currently random moves)
-- [ ] Online multiplayer matchmaking
+- [ ] Online multiplayer (server-based PvP)
 - [ ] Sound effects and animations
 - [ ] Mobile/touch optimization
 - [ ] Undo/redo for moves

@@ -8,6 +8,27 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 ---
 
+## Current Architecture (November 2025)
+
+**Game Mode**: PvE Only (Player vs AI Opponent)
+- Local PvP (pass-and-play) has been removed
+- Game launches directly into gameplay without mode selection
+- Player always plays as index 0, AI opponent as index 1
+- Separate view components: `PlayerView` (interactive) and `OpponentView` (read-only)
+
+**Component Structure**:
+- `GameBoard`: Main game orchestration, factories, turn management
+- `PlayerView`: Human player's board with full interaction (pattern lines, floor line, scoring wall)
+- `OpponentView`: AI opponent's board (display-only, no interaction handlers)
+- `PlayerBoard`: Shared board rendering logic used by both views
+
+**State Management**: Zustand store (`gameStore.ts`)
+- Always initializes as PvE (no gameMode parameter)
+- Player names: "Player" (human), "Opponent" (AI)
+- AI turns triggered automatically via `triggerAITurn()` in App.tsx
+
+---
+
 ## Core Principles
 
 1. **Specialization**: Each agent focuses on a specific domain to maintain deep context and consistency.

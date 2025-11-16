@@ -88,15 +88,11 @@ export interface Player {
 export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 
 /**
- * Game mode
- */
-export type GameMode = 'pvp' | 'pve';
-
-/**
  * Main game state
+ * Note: Only PvE (Player vs AI) mode is supported
  */
 export interface GameState {
-  players: [Player, Player]; // Two players
+  players: [Player, Player]; // Player (index 0) and AI Opponent (index 1)
   factories: Factory[];
   centerPool: Rune[]; // Center factory (accumulates leftover runes)
   currentPlayerIndex: 0 | 1;
@@ -105,5 +101,4 @@ export interface GameState {
   selectedRunes: Rune[]; // Runes currently selected by active player
   draftSource: { type: 'factory'; factoryId: string; movedToCenter: Rune[] } | { type: 'center' } | null; // Where the selected runes came from
   firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
-  gameMode: GameMode; // PvP or PvE
 }

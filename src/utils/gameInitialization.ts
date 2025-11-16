@@ -11,7 +11,6 @@ import type {
   Rune,
   RuneType,
   PlayerType,
-  GameMode,
 } from '../types/game';
 
 /**
@@ -135,10 +134,11 @@ export function fillFactories(
 
 /**
  * Initialize a new game state with filled factories
+ * Always creates a PvE game (Player vs AI Opponent)
  */
-export function initializeGame(gameMode: GameMode = 'pvp'): GameState {
-  const player1 = createPlayer('player-1', 'Player 1', 'human');
-  const player2 = createPlayer('player-2', gameMode === 'pve' ? 'Computer' : 'Player 2', gameMode === 'pve' ? 'ai' : 'human');
+export function initializeGame(): GameState {
+  const player1 = createPlayer('player-1', 'Player', 'human');
+  const player2 = createPlayer('player-2', 'Opponent', 'ai');
   
   // For 2 players, Azul uses 5 factories
   const emptyFactories = createEmptyFactories(5);
@@ -160,6 +160,5 @@ export function initializeGame(gameMode: GameMode = 'pvp'): GameState {
     selectedRunes: [],
     draftSource: null,
     firstPlayerToken: null,
-    gameMode,
   };
 }

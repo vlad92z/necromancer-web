@@ -1,10 +1,11 @@
 /**
- * GameBoard component - main game board displaying factories, center, and player boards
+ * GameBoard component - main game board displaying factories, center, player and opponent views
  */
 
 import type { GameState } from '../../../types/game';
 import { FactoriesAndCenter } from './FactoriesAndCenter';
-import { PlayerBoard } from './PlayerBoard';
+import { PlayerView } from './PlayerView';
+import { OpponentView } from './OpponentView';
 import { RuneToken } from '../../../components/RuneToken';
 import { useGameActions } from '../../../hooks/useGameActions';
 
@@ -54,39 +55,28 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
         <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: window.innerWidth < 768 ? '15px' : '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Masive Spell: Arcane Arena</h1>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#64748b', fontSize: window.innerWidth < 768 ? '10px' : '14px', maxWidth: '600px', margin: '0 auto' }}>
-            <div style={{ flex: 1, textAlign: 'left' }}>{players[0].name}: {players[0].score}</div>
-            <div style={{ flex: 1, textAlign: 'center' }}>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
-            <div style={{ flex: 1, textAlign: 'right' }}>{players[1].name}: {players[1].score}</div>
+          <h1 style={{ fontSize: window.innerWidth < 768 ? '15px' : '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: window.innerWidth < 768 ? '10px' : '14px' }}>
+            <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
           </div>
         </div>
         
-        {/* Player 2 */} 
-        <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px' }}>
-          <PlayerBoard
-            player={players[1]}
-            isActive={currentPlayerIndex === 1}
-            onPlaceRunes={currentPlayerIndex === 1 ? placeRunes : undefined}
-            onPlaceRunesInFloor={currentPlayerIndex === 1 ? placeRunesInFloor : undefined}
-            selectedRuneType={currentPlayerIndex === 1 ? selectedRuneType : null}
-            canPlace={currentPlayerIndex === 1 && hasSelectedRunes}
-            onCancelSelection={cancelSelection}
-          />
-        </div>
+        {/* Opponent (AI) */}
+        <OpponentView
+          opponent={players[1]}
+          isActive={currentPlayerIndex === 1}
+        />
         
-        {/* Player 1 */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px' }}>
-          <PlayerBoard
-            player={players[0]}
-            isActive={currentPlayerIndex === 0}
-            onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
-            onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
-            selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-            canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
-            onCancelSelection={cancelSelection}
-          />
-        </div>
+        {/* Player (Human) */}
+        <PlayerView
+          player={players[0]}
+          isActive={currentPlayerIndex === 0}
+          onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
+          onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
+          selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+          canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+          onCancelSelection={cancelSelection}
+        />
         
         {/* Factories and Center */}
         <div style={{ position: 'relative' }}>
@@ -136,7 +126,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ backgroundColor: '#111827', border: '4px solid #eab308', borderRadius: '16px', padding: '32px', maxWidth: '28rem', width: '100%', margin: '0 16px', textAlign: 'center' }}>
             <h2 style={{ fontSize: '36px', fontWeight: 'bold', color: '#eab308', marginBottom: '24px' }}>
-              {winner ? 'Victory!' : 'Draw!'}
+              {winner?.id === 'player-1' ? 'Victory!' : winner ? 'Defeat!' : 'Draw!'}
             </h2>
             
             <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -145,11 +135,11 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px', border: winner?.id === 'player-1' ? '2px solid #22c55e' : 'none' }}>
                   <span style={{ fontWeight: '600' }}>{players[0].name}</span>
                   <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#60a5fa' }}>{players[0].score}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px', border: winner?.id === 'player-2' ? '2px solid #22c55e' : 'none' }}>
                   <span style={{ fontWeight: '600' }}>{players[1].name}</span>
                   <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#f87171' }}>{players[1].score}</span>
                 </div>
@@ -173,7 +163,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ca8a04'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#eab308'}
             >
-              Next Game
+              Play Again
             </button>
           </div>
         </div>
