@@ -147,35 +147,6 @@ export function GameModeSelection({ onSelectMode, previousGameResult }: GameMode
           }}
         >
           <button
-            onClick={() => onSelectMode('pvp')}
-            style={{
-              width: '100%',
-              backgroundColor: 'rgb(37, 99, 235)',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '18px',
-              padding: '20px',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgb(29, 78, 216)';
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgb(37, 99, 235)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            👥 Player vs Player
-            <div style={{ fontSize: '14px', marginTop: '8px', opacity: 0.9 }}>
-              Play against another human
-            </div>
-          </button>
-          
-          <button
             onClick={() => onSelectMode('pve')}
             style={{
               width: '100%',
