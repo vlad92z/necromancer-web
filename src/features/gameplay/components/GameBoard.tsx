@@ -14,7 +14,7 @@ interface GameBoardProps {
 
 export function GameBoard({ gameState }: GameBoardProps) {
   const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
-  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor } = useGameActions();
+  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   
   const isDraftPhase = turnPhase === 'draft';
   const hasSelectedRunes = selectedRunes.length > 0;
@@ -22,9 +22,17 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const currentPlayer = players[currentPlayerIndex];
   const isAITurn = currentPlayer.type === 'ai';
   
+  const handleBackgroundClick = () => {
+    // Background click handler - no longer needed since PlayerBoard handles it
+    // Keeping for potential future use with empty space clicks
+  };
+  
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-7xl mx-auto">
+    <div 
+      className="min-h-screen bg-gray-950 text-white p-6"
+      onClick={handleBackgroundClick}
+    >
+      <div className="max-w-7xl mx-auto" onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold mb-2">Runesmith</h1>
@@ -42,6 +50,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
             selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
             canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+            onCancelSelection={cancelSelection}
           />
         </div>
         
@@ -135,6 +144,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             onPlaceRunesInFloor={currentPlayerIndex === 1 ? placeRunesInFloor : undefined}
             selectedRuneType={currentPlayerIndex === 1 ? selectedRuneType : null}
             canPlace={currentPlayerIndex === 1 && hasSelectedRunes}
+            onCancelSelection={cancelSelection}
           />
         </div>
       </div>

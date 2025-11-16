@@ -10,6 +10,7 @@ export function useGameActions() {
   const draftFromCenter = useGameStore((state) => state.draftFromCenter);
   const placeRunes = useGameStore((state) => state.placeRunes);
   const placeRunesInFloor = useGameStore((state) => state.placeRunesInFloor);
+  const cancelSelection = useGameStore((state) => state.cancelSelection);
   const endRound = useGameStore((state) => state.endRound);
   const resetGame = useGameStore((state) => state.resetGame);
   
@@ -18,6 +19,7 @@ export function useGameActions() {
     draftFromCenter,
     placeRunes,
     placeRunesInFloor,
+    cancelSelection,
     endRound,
     resetGame,
   };

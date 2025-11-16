@@ -103,6 +103,7 @@ export interface GameState {
   turnPhase: TurnPhase;
   round: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
+  draftSource: { type: 'factory'; factoryId: string; movedToCenter: Rune[] } | { type: 'center' } | null; // Where the selected runes came from
   firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
   gameMode: GameMode; // PvP or PvE
 }

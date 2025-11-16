@@ -158,6 +158,7 @@ export function initializeGame(gameMode: GameMode = 'pvp'): GameState {
     turnPhase: 'draft',
     round: 1,
     selectedRunes: [],
+    draftSource: null,
     firstPlayerToken: null,
     gameMode,
   };

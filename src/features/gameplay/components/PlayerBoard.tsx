@@ -14,11 +14,19 @@ interface PlayerBoardProps {
   onPlaceRunesInFloor?: () => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
+  onCancelSelection?: () => void;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection }: PlayerBoardProps) {
+  const handleBoardClick = () => {
+    if (canPlace && onCancelSelection) {
+      onCancelSelection();
+    }
+  };
+
   return (
     <div
+      onClick={handleBoardClick}
       style={{
         padding: '16px',
         borderRadius: '8px',
@@ -35,7 +43,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       
       <div className="flex gap-6 justify-between w-full">
         {/* Pattern Lines */}
-        <div className="flex-1 flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
           <h4 className="text-sm font-semibold text-gray-300 mb-2">Pattern Lines</h4>
           <PatternLines 
             patternLines={player.patternLines}
@@ -54,7 +62,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       </div>
       
       {/* Floor Line */}
-      <div className="mt-4">
+      <div className="mt-4" onClick={(e) => e.stopPropagation()}>
         <h4 className="text-sm font-semibold text-gray-300 mb-2">Floor Line (Penalties)</h4>
         <button
           onClick={onPlaceRunesInFloor}

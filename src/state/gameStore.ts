@@ -14,6 +14,7 @@ interface GameStore extends GameState {
   draftFromCenter: (runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
+  cancelSelection: () => void;
   endRound: () => void;
   resetGame: (gameMode?: GameMode) => void;
   triggerAITurn: () => void;
@@ -50,6 +51,7 @@ export const useGameStore = create<GameStore>((set) => ({
         factories: updatedFactories,
         centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
+        draftSource: { type: 'factory', factoryId, movedToCenter: remainingRunes },
       };
     });
   },
@@ -67,6 +69,7 @@ export const useGameStore = create<GameStore>((set) => ({
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
+        draftSource: { type: 'center' },
       };
     });
   },
@@ -144,6 +147,7 @@ export const useGameStore = create<GameStore>((set) => ({
         ...state,
         players: updatedPlayers,
         selectedRunes: [],
+        draftSource: null,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
       };
@@ -197,6 +201,7 @@ export const useGameStore = create<GameStore>((set) => ({
         ...state,
         players: updatedPlayers,
         selectedRunes: [],
+        draftSource: null,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
       };
@@ -209,6 +214,46 @@ export const useGameStore = create<GameStore>((set) => ({
       }
       
       return newState;
+    });
+  },
+  
+  cancelSelection: () => {
+    set((state) => {
+      // Only allow cancellation if there are selected runes
+      if (state.selectedRunes.length === 0 || !state.draftSource) return state;
+      
+      // Return selected runes to their original source
+      if (state.draftSource.type === 'center') {
+        return {
+          ...state,
+          centerPool: [...state.centerPool, ...state.selectedRunes],
+          selectedRunes: [],
+          draftSource: null,
+        };
+      } else {
+        // Return to factory (both selected runes and the ones moved to center)
+        const factoryId = state.draftSource.factoryId;
+        const movedToCenter = state.draftSource.movedToCenter;
+        
+        // Remove the moved runes from center pool
+        const updatedCenterPool = state.centerPool.filter(
+          (rune) => !movedToCenter.some((moved) => moved.id === rune.id)
+        );
+        
+        const updatedFactories = state.factories.map((f) =>
+          f.id === factoryId
+            ? { ...f, runes: [...f.runes, ...state.selectedRunes, ...movedToCenter] }
+            : f
+        );
+        
+        return {
+          ...state,
+          factories: updatedFactories,
+          centerPool: updatedCenterPool,
+          selectedRunes: [],
+          draftSource: null,
+        };
+      }
     });
   },
   
