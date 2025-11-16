@@ -76,32 +76,6 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           />
         </div>
         
-        {/* Selected Runes Display */}
-        {hasSelectedRunes && (
-          <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px', display: 'flex', justifyContent: 'center' }}>
-            <div style={{
-              backgroundColor: 'rgba(30, 58, 138, 0.3)',
-              border: '2px solid #3b82f6',
-              borderRadius: window.innerWidth < 768 ? '4px' : '12px',
-              padding: window.innerWidth < 768 ? '6px' : '16px',
-              maxWidth: '36rem',
-              width: window.innerWidth < 768 ? '100%' : 'auto'
-            }}>
-              <h3 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#93c5fd', marginBottom: '8px', textAlign: 'center' }}>
-                Selected Runes ({selectedRunes.length})
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {selectedRunes.map((rune) => (
-                  <RuneToken key={rune.id} rune={rune} size="small" />
-                ))}
-              </div>
-              <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '14px', color: '#d1d5db' }}>
-                Click a pattern line to place these runes
-              </div>
-            </div>
-          </div>
-        )}
-        
         {/* Player 1 */}
         <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '32px' }}>
           <PlayerBoard
@@ -116,15 +90,46 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         </div>
         
         {/* Factories and Center */}
-        <FactoriesAndCenter
-          factories={factories}
-          centerPool={centerPool}
-          onDraftRune={draftRune}
-          onDraftFromCenter={draftFromCenter}
-          isDraftPhase={isDraftPhase}
-          hasSelectedRunes={hasSelectedRunes}
-          isAITurn={isAITurn}
-        />
+        <div style={{ position: 'relative' }}>
+          <FactoriesAndCenter
+            factories={factories}
+            centerPool={centerPool}
+            onDraftRune={draftRune}
+            onDraftFromCenter={draftFromCenter}
+            isDraftPhase={isDraftPhase}
+            hasSelectedRunes={hasSelectedRunes}
+            isAITurn={isAITurn}
+          />
+          
+          {/* Selected Runes Display - Overlay */}
+          {hasSelectedRunes && (
+            <div 
+              style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 20, pointerEvents: 'auto' }}
+              onClick={cancelSelection}
+            >
+              <div style={{
+                backgroundColor: 'rgba(30, 58, 138, 0.95)',
+                border: '2px solid #3b82f6',
+                borderRadius: window.innerWidth < 768 ? '4px' : '12px',
+                padding: window.innerWidth < 768 ? '6px' : '16px',
+                maxWidth: '36rem',
+                width: window.innerWidth < 768 ? '90vw' : 'auto'
+              }}>
+                <h3 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#93c5fd', marginBottom: '8px', textAlign: 'center' }}>
+                  Selected Runes ({selectedRunes.length})
+                </h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                  {selectedRunes.map((rune) => (
+                    <RuneToken key={rune.id} rune={rune} size="small" />
+                  ))}
+                </div>
+                <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '14px', color: '#d1d5db' }}>
+                  Click a pattern line to place these runes
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Game Over Modal */}
