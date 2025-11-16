@@ -30,10 +30,14 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const currentPlayer = players[currentPlayerIndex];
   const isAITurn = currentPlayer.type === 'ai';
   
-  // Auto-show opponent overlay on mobile during AI turn
+  // Auto-show opponent overlay on mobile during AI turn (with delay)
   useEffect(() => {
     if (isMobile && isAITurn) {
-      setShowOpponentOverlay(true);
+      const delayTimer = setTimeout(() => {
+        setShowOpponentOverlay(true);
+      }, 2000); // 2 second delay before showing overlay
+      
+      return () => clearTimeout(delayTimer);
     } else if (isMobile && !isAITurn) {
       // Auto-hide when player's turn starts
       setShowOpponentOverlay(false);
@@ -102,24 +106,44 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           )}
         </div>
         
-        {/* Opponent (AI) - Desktop only, or overlay on mobile */}
-        {!isMobile && (
-          <OpponentView
-            opponent={players[1]}
-            isActive={currentPlayerIndex === 1}
-          />
+        {/* Player Boards - Side by side on desktop, stacked on mobile */}
+        {isMobile ? (
+          <>
+            {/* Player (Human) - Mobile */}
+            <PlayerView
+              player={players[0]}
+              isActive={currentPlayerIndex === 0}
+              onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
+              onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
+              selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+              canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+              onCancelSelection={cancelSelection}
+            />
+          </>
+        ) : (
+          <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
+            {/* Player (Human) - Desktop Left */}
+            <div style={{ flex: 1 }}>
+              <PlayerView
+                player={players[0]}
+                isActive={currentPlayerIndex === 0}
+                onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
+                onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
+                selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+                canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+                onCancelSelection={cancelSelection}
+              />
+            </div>
+            
+            {/* Opponent (AI) - Desktop Right */}
+            <div style={{ flex: 1 }}>
+              <OpponentView
+                opponent={players[1]}
+                isActive={currentPlayerIndex === 1}
+              />
+            </div>
+          </div>
         )}
-        
-        {/* Player (Human) */}
-        <PlayerView
-          player={players[0]}
-          isActive={currentPlayerIndex === 0}
-          onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
-          onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
-          selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-          canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
-          onCancelSelection={cancelSelection}
-        />
         
         {/* Factories and Center */}
         <div style={{ position: 'relative' }}>

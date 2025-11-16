@@ -7,11 +7,15 @@ function App() {
   const resetGame = useGameStore((state) => state.resetGame)
   const triggerAITurn = useGameStore((state) => state.triggerAITurn)
 
-  // Trigger AI turn when it's AI's turn
+  // Trigger AI turn when it's AI's turn (with delay)
   useEffect(() => {
     const currentPlayer = gameState.players[gameState.currentPlayerIndex]
     if (currentPlayer.type === 'ai' && gameState.turnPhase === 'draft') {
-      triggerAITurn()
+      const delayTimer = setTimeout(() => {
+        triggerAITurn()
+      }, 2000) // 2 second delay before AI starts
+      
+      return () => clearTimeout(delayTimer)
     }
   }, [gameState.currentPlayerIndex, gameState.turnPhase, gameState.players, triggerAITurn])
 

@@ -118,7 +118,7 @@ export function FactoriesAndCenter({
                 <img 
                   src={RUNE_ASSETS[rune.runeType]} 
                   alt={`${rune.runeType} rune`}
-                  style={{ width: isMobile ? '30px' : '30px', height: isMobile ? '40px' : '40px', objectFit: 'contain' }}
+                  style={{ width: isMobile ? '40px' : '40px', height: isMobile ? '40px' : '40px', objectFit: 'contain' }}
                 />
               </button>
             ))
