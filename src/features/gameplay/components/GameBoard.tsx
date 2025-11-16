@@ -17,6 +17,9 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   
+  const isMobile = window.innerWidth < 768;
+  console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
+  
   const isDraftPhase = turnPhase === 'draft';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
@@ -58,15 +61,15 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           </div>
         </div>
         
-        {/* Player 1 */} 
+        {/* Player 2 */} 
         <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px' }}>
           <PlayerBoard
-            player={players[0]}
-            isActive={currentPlayerIndex === 0}
-            onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
-            onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
-            selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-            canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+            player={players[1]}
+            isActive={currentPlayerIndex === 1}
+            onPlaceRunes={currentPlayerIndex === 1 ? placeRunes : undefined}
+            onPlaceRunesInFloor={currentPlayerIndex === 1 ? placeRunesInFloor : undefined}
+            selectedRuneType={currentPlayerIndex === 1 ? selectedRuneType : null}
+            canPlace={currentPlayerIndex === 1 && hasSelectedRunes}
             onCancelSelection={cancelSelection}
           />
         </div>
@@ -155,15 +158,15 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           </div>
         )}
         
-        {/* Player 2 */}
+        {/* Player 1 */}
         <div>
           <PlayerBoard
-            player={players[1]}
-            isActive={currentPlayerIndex === 1}
-            onPlaceRunes={currentPlayerIndex === 1 ? placeRunes : undefined}
-            onPlaceRunesInFloor={currentPlayerIndex === 1 ? placeRunesInFloor : undefined}
-            selectedRuneType={currentPlayerIndex === 1 ? selectedRuneType : null}
-            canPlace={currentPlayerIndex === 1 && hasSelectedRunes}
+            player={players[0]}
+            isActive={currentPlayerIndex === 0}
+            onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
+            onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
+            selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+            canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
             onCancelSelection={cancelSelection}
           />
         </div>
