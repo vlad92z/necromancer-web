@@ -44,7 +44,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
   };
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: window.innerWidth < 768 ? '4px' : '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: window.innerWidth < 768 ? '2px' : '8px' }}>
       {patternLines.map((line, index) => {
         const isValid = isLineValid(line, index);
         const isClickable = canPlace && onPlaceRunes;
