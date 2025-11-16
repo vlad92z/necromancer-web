@@ -28,23 +28,23 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     <div
       onClick={handleBoardClick}
       style={{
-        padding: '16px',
-        borderRadius: '8px',
+        padding: window.innerWidth < 768 ? '8px' : '16px',
+        borderRadius: window.innerWidth < 768 ? '6px' : '8px',
         border: isActive ? '2px solid rgba(59, 130, 246, 0.5)' : 'white',
         backgroundColor: isActive ? 'rgba(140, 233, 254, 0.5)' : 'white',
       }}
     >
-      <div style={{ marginBottom: '16px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white' }}>{player.name}</h3>
-        <div style={{ fontSize: '14px', color: '#9ca3af' }}>
+      <div style={{ marginBottom: window.innerWidth < 768 ? '8px' : '16px' }}>
+        <h3 style={{ fontSize: window.innerWidth < 768 ? '14px' : '18px', fontWeight: 'bold', color: 'white' }}>{player.name}</h3>
+        <div style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', color: '#9ca3af' }}>
           Score: {player.score} | Deck: {player.deck.length} runes
         </div>
       </div>
       
-      <div style={{ display: 'flex', gap: '24px', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: window.innerWidth < 768 ? 'column' : 'row', gap: window.innerWidth < 768 ? '12px' : '24px', justifyContent: 'space-between', width: '100%' }}>
         {/* Pattern Lines */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-          <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px' }}>Spell-casting Lines</h4>
+          <h4 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '6px' : '8px' }}>Spell-casting Lines</h4>
           <PatternLines 
             patternLines={player.patternLines}
             wall={player.wall}
@@ -56,27 +56,29 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         
         {/* Wall */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px' }}>Rune Wall</h4>
+          <h4 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '6px' : '8px' }}>Rune Wall</h4>
           <ScoringWall wall={player.wall} />
         </div>
       </div>
       
       {/* Floor Line */}
-      <div style={{ marginTop: '16px' }} onClick={(e) => e.stopPropagation()}>
-        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px' }}>Overcharged</h4>
+      <div style={{ marginTop: window.innerWidth < 768 ? '8px' : '16px' }} onClick={(e) => e.stopPropagation()}>
+        <h4 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: window.innerWidth < 768 ? '6px' : '8px' }}>Overcharged</h4>
         <button
           onClick={onPlaceRunesInFloor}
           disabled={!canPlace || !onPlaceRunesInFloor}
           style={{
             display: 'flex',
-            gap: '8px',
+            flexWrap: 'wrap',
+            gap: window.innerWidth < 768 ? '4px' : '8px',
             width: '100%',
             cursor: (canPlace && onPlaceRunesInFloor) ? 'pointer' : 'default',
             backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(127, 29, 29, 0.2)' : 'transparent',
             border: (canPlace && onPlaceRunesInFloor) ? '2px solid rgba(239, 68, 68, 0.5)' : '2px solid transparent',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'all 0.2s'
+            padding: window.innerWidth < 768 ? '4px' : '8px',
+            borderRadius: window.innerWidth < 768 ? '6px' : '8px',
+            transition: 'all 0.2s',
+            justifyContent: window.innerWidth < 768 ? 'center' : 'flex-start'
           }}
           onMouseEnter={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(127, 29, 29, 0.3)')}
           onMouseLeave={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(127, 29, 29, 0.2)')}
@@ -88,10 +90,10 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               <div
                 key={index}
                 style={{
-                  width: '60px',
-                  height: '60px',
+                  width: window.innerWidth < 768 ? '45px' : '60px',
+                  height: window.innerWidth < 768 ? '45px' : '60px',
                   border: '2px solid #7f1d1d',
-                  borderRadius: '8px',
+                  borderRadius: window.innerWidth < 768 ? '6px' : '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -101,13 +103,13 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 {player.floorLine.runes[index] ? (
                   <RuneToken rune={player.floorLine.runes[index]} size="small" />
                 ) : (
-                  <div style={{fontSize: '20px'}}>-{index + 1}</div>
+                  <div style={{fontSize: window.innerWidth < 768 ? '14px' : '20px'}}>-{index + 1}</div>
                 )}
               </div>
             ))}
         </button>
         {canPlace && onPlaceRunesInFloor && (
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px', textAlign: 'center' }}>
+          <div style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px', color: '#9ca3af', marginTop: '4px', textAlign: 'center' }}>
             Click to discard runes here (penalties)
           </div>
         )}

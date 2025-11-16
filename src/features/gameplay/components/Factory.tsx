@@ -19,13 +19,15 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
     }
   };
   
+  const isMobile = window.innerWidth < 768;
+  
   return (
     <div style={{
       backgroundColor: '#374151',
-      borderRadius: '12px',
-      padding: '16px',
-      minWidth: '120px',
-      minHeight: '120px',
+      borderRadius: isMobile ? '8px' : '12px',
+      padding: isMobile ? '12px' : '16px',
+      minWidth: isMobile ? '100px' : '120px',
+      minHeight: isMobile ? '100px' : '120px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -35,20 +37,20 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
     >
       {factory.runes.length === 0 ? (
-        <div style={{ color: '#6b7280', fontSize: '14px' }}>
+        <div style={{ color: '#6b7280', fontSize: isMobile ? '12px' : '14px' }}>
           Empty
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: isMobile ? '4px' : '8px' }}>
           {factory.runes.map((rune) => (
             <button
               style={{
-                width: '60px',
-                height: '60px',
+                width: isMobile ? '40px' : '60px',
+                height: isMobile ? '40px' : '60px',
                 outline: 'none',
                 border: 'none',
                 background: 'transparent',
-                borderRadius: '8px',
+                borderRadius: isMobile ? '6px' : '8px',
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 transition: 'transform 0.2s',
                 padding: 0

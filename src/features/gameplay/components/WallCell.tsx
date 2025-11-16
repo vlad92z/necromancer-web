@@ -34,19 +34,20 @@ function getExpectedRuneType(row: number, col: number): RuneType {
 export function WallCell({ cell, row, col }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col);
   const runeImage = RUNE_ASSETS[cell.runeType || expectedRuneType];
+  const isMobile = window.innerWidth < 768;
   
   return (
     <div
       style={{
-        width: '60px',
-        height: '60px',
+        width: isMobile ? '40px' : '60px',
+        height: isMobile ? '40px' : '60px',
         border: '2px solid #4b5563',
-        borderRadius: '8px',
+        borderRadius: isMobile ? '6px' : '8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#1f2937',
-        padding: '4px'
+        padding: isMobile ? '2px' : '4px'
       }}
     >
       {cell.runeType ? (

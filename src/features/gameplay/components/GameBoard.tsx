@@ -44,22 +44,22 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         minHeight: '100vh',
         backgroundColor: '#030712',
         color: 'white',
-        padding: '24px'
+        padding: window.innerWidth < 768 ? '8px' : '24px'
       }}
       onClick={handleBackgroundClick}
     >
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
-        <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '8px' }}>Masive Spell</h1>
-          <h4 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '8px' }}>Arcane Arena</h4>
-          <div style={{ color: '#9ca3af' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '12px' : '24px', textAlign: 'center' }}>
+          <h1 style={{ fontSize: window.innerWidth < 768 ? '20px' : '30px', fontWeight: 'bold', marginBottom: '4px' }}>Masive Spell</h1>
+          <h4 style={{ fontSize: window.innerWidth < 768 ? '16px' : '30px', fontWeight: 'bold', marginBottom: '8px' }}>Arcane Arena</h4>
+          <div style={{ color: '#9ca3af', fontSize: window.innerWidth < 768 ? '12px' : '14px' }}>
             Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn
           </div>
         </div>
         
         {/* Player 1 */} 
-        <div style={{ marginBottom: '32px' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px' }}>
           <PlayerBoard
             player={players[0]}
             isActive={currentPlayerIndex === 0}
@@ -72,9 +72,9 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         </div>
         
         {/* Factories and Center */}
-        <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', textAlign: 'center' }}>Factories</h2>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px', marginBottom: '24px', maxWidth: '72rem', margin: '0 auto 24px' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px' }}>
+          <h2 style={{ fontSize: window.innerWidth < 768 ? '16px' : '20px', fontWeight: 'bold', marginBottom: window.innerWidth < 768 ? '8px' : '16px', textAlign: 'center' }}>Factories</h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: window.innerWidth < 768 ? '12px' : '24px', marginBottom: window.innerWidth < 768 ? '12px' : '24px', maxWidth: '72rem', margin: window.innerWidth < 768 ? '0 auto 12px' : '0 auto 24px' }}>
             {factories.map((factory) => (
               <Factory 
                 key={factory.id} 
@@ -89,12 +89,13 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{
               backgroundColor: '#1f2937',
-              borderRadius: '12px',
-              padding: '16px',
-              minWidth: '200px',
-              minHeight: '120px'
+              borderRadius: window.innerWidth < 768 ? '8px' : '12px',
+              padding: window.innerWidth < 768 ? '12px' : '16px',
+              minWidth: window.innerWidth < 768 ? '160px' : '200px',
+              minHeight: window.innerWidth < 768 ? '100px' : '120px',
+              width: window.innerWidth < 768 ? '100%' : 'auto'
             }}>
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px', textAlign: 'center' }}>
+              <h3 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#d1d5db', marginBottom: '8px', textAlign: 'center' }}>
                 Center Pool
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
@@ -130,15 +131,16 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         
         {/* Selected Runes Display */}
         {hasSelectedRunes && (
-          <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginBottom: window.innerWidth < 768 ? '16px' : '32px', display: 'flex', justifyContent: 'center' }}>
             <div style={{
               backgroundColor: 'rgba(30, 58, 138, 0.3)',
               border: '2px solid #3b82f6',
-              borderRadius: '12px',
-              padding: '16px',
-              maxWidth: '36rem'
+              borderRadius: window.innerWidth < 768 ? '8px' : '12px',
+              padding: window.innerWidth < 768 ? '12px' : '16px',
+              maxWidth: '36rem',
+              width: window.innerWidth < 768 ? '100%' : 'auto'
             }}>
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#93c5fd', marginBottom: '8px', textAlign: 'center' }}>
+              <h3 style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px', fontWeight: '600', color: '#93c5fd', marginBottom: '8px', textAlign: 'center' }}>
                 Selected Runes ({selectedRunes.length})
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>

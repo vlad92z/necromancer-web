@@ -44,10 +44,11 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
   };
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: window.innerWidth < 768 ? '4px' : '8px' }}>
       {patternLines.map((line, index) => {
         const isValid = isLineValid(line, index);
         const isClickable = canPlace && onPlaceRunes;
+        const isMobile = window.innerWidth < 768;
         
         return (
           <button
@@ -57,14 +58,14 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: isMobile ? '2px' : '4px',
               width: '100%',
               cursor: isClickable ? (isValid ? 'pointer' : 'not-allowed') : 'default',
               backgroundColor: isValid ? 'rgba(55, 65, 81, 0.5)' : 'transparent',
               border: isValid ? '2px solid rgba(59, 130, 246, 0.5)' : '2px solid transparent',
               opacity: (isClickable && !isValid) ? 0.5 : 1,
-              padding: '4px',
-              borderRadius: '8px',
+              padding: isMobile ? '2px' : '4px',
+              borderRadius: isMobile ? '6px' : '8px',
               transition: 'all 0.2s'
             }}
             onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(55, 65, 81, 0.7)')}
@@ -78,10 +79,10 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                 <div
                   key={slotIndex}
                   style={{
-                    width: '60px',
-                    height: '60px',
+                    width: isMobile ? '40px' : '60px',
+                    height: isMobile ? '40px' : '60px',
                     border: '2px solid #4b5563',
-                    borderRadius: '8px',
+                    borderRadius: isMobile ? '6px' : '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -92,14 +93,14 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                     <img 
                       src={RUNE_ASSETS[line.runeType]} 
                       alt={`${line.runeType} rune`}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: isMobile ? '2px' : '4px' }}
                     />
                   ) : (
-                    <div style={{fontSize: '20px'}}>{line.tier}</div>
+                    <div style={{fontSize: isMobile ? '14px' : '20px'}}>{line.tier}</div>
                   )}
                 </div>
               ))}
-            <div style={{fontSize: '20px'}}>
+            <div style={{fontSize: isMobile ? '14px' : '20px'}}>
               {line.count}/{line.tier}
             </div>
           </button>
