@@ -92,18 +92,18 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 style={{
                   width: window.innerWidth < 768 ? '30px' : '60px',
                   height: window.innerWidth < 768 ? '30px' : '60px',
-                  border: '2px solid #7f1d1d',
+                  border: '2px solid #fca5a5',
                   borderRadius: window.innerWidth < 768 ? '6px' : '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: '#1f2937'
+                  backgroundColor: '#fef2f2'
                 }}
               >
                 {player.floorLine.runes[index] ? (
                   <RuneToken rune={player.floorLine.runes[index]} size="small" />
                 ) : (
-                  <div style={{fontSize: window.innerWidth < 768 ? '7px' : '20px'}}>-{index + 1}</div>
+                  <div style={{fontSize: window.innerWidth < 768 ? '7px' : '20px', color: '#991b1b'}}>-{index + 1}</div>
                 )}
               </div>
             ))}
