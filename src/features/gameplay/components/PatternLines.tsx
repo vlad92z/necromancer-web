@@ -4,8 +4,12 @@
  */
 
 import type { PatternLine, RuneType, ScoringWall } from '../../../types/game';
-import { getRuneGlyph } from '../../../utils/runeHelpers';
 import { getWallColumnForRune } from '../../../utils/scoring';
+import fireRune from '../../../assets/runes/fire_rune.svg';
+import frostRune from '../../../assets/runes/frost_rune.svg';
+import poisonRune from '../../../assets/runes/poison_rune.svg';
+import voidRune from '../../../assets/runes/void_rune.svg';
+import windRune from '../../../assets/runes/wind_rune.svg';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
@@ -14,6 +18,14 @@ interface PatternLinesProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
 }
+
+const RUNE_ASSETS = {
+  Fire: fireRune,
+  Frost: frostRune,
+  Poison: poisonRune,
+  Void: voidRune,
+  Wind: windRune,
+};
 
 export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneType, canPlace }: PatternLinesProps) {
   const isLineValid = (line: PatternLine, lineIndex: number) => {
@@ -70,7 +82,11 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                   "
                 >
                   {slotIndex < line.count && line.runeType ? (
-                    <div style={{fontSize: '40px'}}>{getRuneGlyph(line.runeType)}</div>
+                    <img 
+                      src={RUNE_ASSETS[line.runeType]} 
+                      alt={`${line.runeType} rune`}
+                      className="w-full h-full object-contain p-1"
+                    />
                   ) : (
                     <div style={{fontSize: '20px'}}>{line.tier}</div>
                   )}

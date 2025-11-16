@@ -3,7 +3,12 @@
  */
 
 import type { Rune } from '../types/game';
-import { getRuneGlyph, getRuneColorClass } from '../utils/runeHelpers';
+import { getRuneColorClass } from '../utils/runeHelpers';
+import fireRune from '../assets/runes/fire_rune.svg';
+import frostRune from '../assets/runes/frost_rune.svg';
+import poisonRune from '../assets/runes/poison_rune.svg';
+import voidRune from '../assets/runes/void_rune.svg';
+import windRune from '../assets/runes/wind_rune.svg';
 
 interface RuneTokenProps {
   rune: Rune;
@@ -12,28 +17,38 @@ interface RuneTokenProps {
 }
 
 const SIZE_CONFIG = {
-  small: { width: 48, height: 48, fontSize: 28 },
-  medium: { width: 64, height: 64, fontSize: 36 },
-  large: { width: 80, height: 80, fontSize: 48 },
+  small: { width: 48, height: 48 },
+  medium: { width: 64, height: 64 },
+  large: { width: 80, height: 80 },
+};
+
+const RUNE_ASSETS = {
+  Fire: fireRune,
+  Frost: frostRune,
+  Poison: poisonRune,
+  Void: voidRune,
+  Wind: windRune,
 };
 
 export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
   const colorClass = getRuneColorClass(rune.runeType);
-  const glyph = getRuneGlyph(rune.runeType);
+  const runeImage = RUNE_ASSETS[rune.runeType];
   const config = SIZE_CONFIG[size];
   
   return (
     <div
-      style={{fontSize: '40px'}}
+      style={{
+        width: `${config.width}px`,
+        height: `${config.height}px`,
+      }}
       className={`
         ${colorClass} 
         rounded-lg 
         flex 
         items-center 
         justify-center 
-        text-white 
-        font-bold 
         shadow-md 
+        p-1
         ${onClick ? 'cursor-pointer hover:scale-110 transition-transform' : ''}
       `}
       onClick={onClick}
@@ -41,7 +56,11 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
       tabIndex={onClick ? 0 : undefined}
       aria-label={`${rune.runeType} rune`}
     >
-      {glyph}
+      <img 
+        src={runeImage} 
+        alt={`${rune.runeType} rune`}
+        className="w-full h-full object-contain"
+      />
     </div>
   );
 }

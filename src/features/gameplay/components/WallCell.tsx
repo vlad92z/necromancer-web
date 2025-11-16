@@ -3,13 +3,25 @@
  */
 
 import type { WallCell as WallCellType, RuneType } from '../../../types/game';
-import { getRuneGlyph } from '../../../utils/runeHelpers';
+import fireRune from '../../../assets/runes/fire_rune.svg';
+import frostRune from '../../../assets/runes/frost_rune.svg';
+import poisonRune from '../../../assets/runes/poison_rune.svg';
+import voidRune from '../../../assets/runes/void_rune.svg';
+import windRune from '../../../assets/runes/wind_rune.svg';
 
 interface WallCellProps {
   cell: WallCellType;
   row: number;
   col: number;
 }
+
+const RUNE_ASSETS = {
+  Fire: fireRune,
+  Frost: frostRune,
+  Poison: poisonRune,
+  Void: voidRune,
+  Wind: windRune,
+};
 
 // Calculate which rune type belongs in this cell based on Azul pattern
 function getExpectedRuneType(row: number, col: number): RuneType {
@@ -21,6 +33,7 @@ function getExpectedRuneType(row: number, col: number): RuneType {
 
 export function WallCell({ cell, row, col }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col);
+  const runeImage = RUNE_ASSETS[cell.runeType || expectedRuneType];
   
   return (
     <div
@@ -33,20 +46,21 @@ export function WallCell({ cell, row, col }: WallCellProps) {
         items-center 
         justify-center 
         bg-gray-800
+        p-1
       "
     >
       {cell.runeType ? (
-        <div style={{fontSize: '40px'}}>{getRuneGlyph(cell.runeType)}</div>
+        <img 
+          src={runeImage} 
+          alt={`${cell.runeType} rune`}
+          className="w-full h-full object-contain"
+        />
       ) : (
-        <div 
-          style={{ 
-            fontSize: '40px', 
-            opacity: 0.2,
-            filter: 'grayscale(100%)'
-          }}
-        >
-          {getRuneGlyph(expectedRuneType)}
-        </div>
+        <img 
+          src={runeImage} 
+          alt={`${expectedRuneType} placeholder`}
+          className="w-full h-full object-contain opacity-30"
+        />
       )}
     </div>
   );
