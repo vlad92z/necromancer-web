@@ -2,6 +2,7 @@
  * GameBoard component - main game board displaying factories, center, player and opponent views
  */
 
+import { useState, useEffect } from 'react';
 import type { GameState } from '../../../types/game';
 import { FactoriesAndCenter } from './FactoriesAndCenter';
 import { PlayerView } from './PlayerView';
@@ -18,6 +19,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   
+  const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const isMobile = window.innerWidth < 768;
   console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
@@ -27,6 +29,16 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
   const isAITurn = currentPlayer.type === 'ai';
+  
+  // Auto-show opponent overlay on mobile during AI turn
+  useEffect(() => {
+    if (isMobile && isAITurn) {
+      setShowOpponentOverlay(true);
+    } else if (isMobile && !isAITurn) {
+      // Auto-hide when player's turn starts
+      setShowOpponentOverlay(false);
+    }
+  }, [isMobile, isAITurn]);
   
   // Determine winner
   const winner = isGameOver
@@ -54,18 +66,49 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
     >
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center' }}>
+        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center', position: 'relative' }}>
           <h1 style={{ fontSize: window.innerWidth < 768 ? '15px' : '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: window.innerWidth < 768 ? '10px' : '14px' }}>
             <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
           </div>
+          
+          {/* View Opponent Button (Mobile Only) */}
+          {isMobile && currentPlayerIndex === 0 && (
+            <button
+              onClick={() => setShowOpponentOverlay(true)}
+              style={{
+                position: 'absolute',
+                top: '0',
+                right: '0',
+                backgroundColor: '#7c2d12',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                fontSize: '10px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#9a3412'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#7c2d12'}
+            >
+              👁️ Opponent
+            </button>
+          )}
         </div>
         
-        {/* Opponent (AI) */}
-        <OpponentView
-          opponent={players[1]}
-          isActive={currentPlayerIndex === 1}
-        />
+        {/* Opponent (AI) - Desktop only, or overlay on mobile */}
+        {!isMobile && (
+          <OpponentView
+            opponent={players[1]}
+            isActive={currentPlayerIndex === 1}
+          />
+        )}
         
         {/* Player (Human) */}
         <PlayerView
@@ -120,6 +163,53 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           )}
         </div>
       </div>
+      
+      {/* Opponent Overlay (Mobile Only) */}
+      {isMobile && showOpponentOverlay && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+            display: 'flex', 
+            flexDirection: 'column',
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            zIndex: 100,
+            padding: '8px',
+            overflowY: 'auto'
+          }}
+          onClick={() => setShowOpponentOverlay(false)}
+        >
+          <div style={{ width: '100%', maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+              <button
+                onClick={() => setShowOpponentOverlay(false)}
+                style={{
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}
+              >
+                ✕ Close
+              </button>
+            </div>
+            
+            {/* Opponent Board */}
+            <OpponentView
+              opponent={players[1]}
+              isActive={currentPlayerIndex === 1}
+            />
+          </div>
+        </div>
+      )}
       
       {/* Game Over Modal */}
       {isGameOver && (
