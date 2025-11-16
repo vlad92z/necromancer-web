@@ -40,6 +40,7 @@ export function Factory({ factory, onDraftRune, disabled = false }: FactoryProps
         <div className="grid grid-cols-2 gap-2">
           {factory.runes.map((rune) => (
             <button
+              style={{ width: '60px', height: '60px' }}
               key={rune.id}
               onClick={() => handleRuneClick(rune.runeType)}
               disabled={disabled}

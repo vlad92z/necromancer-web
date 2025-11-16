@@ -58,7 +58,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               .map((_, slotIndex) => (
                 <div
                   key={slotIndex}
-                  style={{ width: '40px', height: '40px' }}
+                  style={{ width: '60px', height: '60px' }}
                   className="
                     border-2 
                     border-gray-600 
@@ -70,13 +70,13 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                   "
                 >
                   {slotIndex < line.count && line.runeType ? (
-                    <div className="text-lg">{getRuneGlyph(line.runeType)}</div>
+                    <div style={{fontSize: '40px'}}>{getRuneGlyph(line.runeType)}</div>
                   ) : (
-                    <div className="text-gray-600 text-xs">{line.tier}</div>
+                    <div style={{fontSize: '20px'}}>{line.tier}</div>
                   )}
                 </div>
               ))}
-            <div className="text-gray-400 text-sm ml-2">
+            <div style={{fontSize: '20px'}}>
               {line.count}/{line.tier}
             </div>
           </button>

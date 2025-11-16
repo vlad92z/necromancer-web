@@ -81,7 +81,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             .map((_, index) => (
               <div
                 key={index}
-                style={{ width: '40px', height: '40px' }}
+                style={{ width: '60px', height: '60px' }}
                 className="
                   border-2 
                   border-red-900 
@@ -95,7 +95,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 {player.floorLine.runes[index] ? (
                   <RuneToken rune={player.floorLine.runes[index]} size="small" />
                 ) : (
-                  <div className="text-red-900 text-xs">-{index + 1}</div>
+                  <div style={{fontSize: '20px'}}>-{index + 1}</div>
                 )}
               </div>
             ))}

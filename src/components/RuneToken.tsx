@@ -24,6 +24,7 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
   
   return (
     <div
+      style={{fontSize: '40px'}}
       className={`
         ${colorClass} 
         rounded-lg 
@@ -35,11 +36,6 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
         shadow-md 
         ${onClick ? 'cursor-pointer hover:scale-110 transition-transform' : ''}
       `}
-      style={{
-        width: `${config.width}px`,
-        height: `${config.height}px`,
-        fontSize: `${config.fontSize}px`,
-      }}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}

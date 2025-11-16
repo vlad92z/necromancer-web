@@ -24,7 +24,7 @@ export function WallCell({ cell, row, col }: WallCellProps) {
   
   return (
     <div
-      style={{ width: '40px', height: '40px' }}
+      style={{ width: '60px', height: '60px' }}
       className="
         border-2 
         border-gray-600 
@@ -36,12 +36,12 @@ export function WallCell({ cell, row, col }: WallCellProps) {
       "
     >
       {cell.runeType ? (
-        <div className="text-3xl">{getRuneGlyph(cell.runeType)}</div>
+        <div style={{fontSize: '40px'}}>{getRuneGlyph(cell.runeType)}</div>
       ) : (
         <div 
           style={{ 
-            fontSize: '20px', 
-            opacity: 0.3,
+            fontSize: '40px', 
+            opacity: 0.2,
             filter: 'grayscale(100%)'
           }}
         >

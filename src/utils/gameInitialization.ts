@@ -49,7 +49,7 @@ export function createMockDeck(playerId: string): Rune[] {
   
   // Create 4 of each rune type (20 total per player)
   runeTypes.forEach((runeType) => {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 4; i++) {
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
         runeType,
