@@ -23,7 +23,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Game state initialization with 5 factories (standard for 2-player Azul)
 
 - UI Components:
-  - `RuneToken`: Displays individual runes with color-coding and glyphs (🔥❄️☠️🌀💨)
+  - `RuneToken`: Displays individual runes with color-coding and SVG graphics
   - `Factory`: Shows factory containers (currently empty)
   - `PatternLines`: Displays 5-tier pattern lines with progress
   - `ScoringWall`: Renders 5x5 scoring grid
@@ -130,13 +130,12 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Console logs scoring details for debugging
 
 - Scoring utilities (`src/utils/scoring.ts`):
-  - `calculateWallPower()`: Connected segment scoring system
+  - `calculateWallPower(wall, floorPenaltyCount)`: Connected segment scoring system
     - Uses flood-fill algorithm to find all connected segments
-    - Each segment's power = (number of runes)²
+    - Each segment's power = segmentSize × max(1, segmentSize - floorPenaltyCount)
+    - Floor penalties reduce the multiplier of each segment, not a flat deduction
     - Runes are connected if they share an edge (not diagonal)
-    - Example: 7 connected runes = 49 points, 1 isolated rune = 1 point
-  - `calculateFloorPenalty()`: Standard Azul penalties
-    - Progressive penalties: -1, -2, -4, -6, -8, -11, -14
+    - Example with 2 floor penalties: 7-rune segment = 7 × 5 = 35 points, 1-rune segment = 1 × 1 = 1 point
     - Score cannot go below 0
   - `getWallColumnForRune()`: Determines wall placement position
     - Each rune type has fixed column per row (rotated Azul pattern)
@@ -148,9 +147,10 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
     - Move one rune to scoring wall at correct position
     - Clear completed pattern line for next round
   - Calculate total wall power from all connected segments
-  - Apply floor line penalties to both players
-  - Add wall power + penalties to existing score (accumulative)
-  - Clear floor lines after penalty application
+    - Floor penalties reduce each segment's multiplier (not a flat penalty)
+    - More floor penalties = lower multipliers on all segments
+  - Add wall power to existing score (accumulative)
+  - Clear floor lines after scoring
   - Refill factories from player decks (2 runes per player per factory)
   - Increment round counter
   - Return to draft phase
@@ -168,10 +168,11 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
    - One rune placed at calculated position
    - Pattern line clears for next round
 4. Total wall power calculated from connected segments:
-   - Each connected segment contributes (size)² points
-   - Example: 3 connected + 2 connected = 9 + 4 = 13 points
-5. Floor line penalties applied (can't go below 0)
-6. Round score added to existing score from previous rounds
+   - Each segment's power = segmentSize × max(1, segmentSize - floorPenaltyCount)
+   - Floor penalties reduce multipliers, not flat deduction
+   - Example with 0 floor: 3 connected + 2 connected = 9 + 4 = 13 points
+   - Example with 2 floor: 3 connected + 2 connected = 3 + 2 = 5 points
+5. Round score added to existing score from previous rounds (score can't go below 0)
 7. Factories refill with 2 runes from each player's deck per factory
 8. New round begins
 
@@ -192,11 +193,12 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 **Game Over Condition:**
 - Checked at end of each round before refilling factories
 - Requires minimum 10 runes per player (2 per factory × 5 factories)
-- Game over modal displays:
+- Game over modal displays on the game board:
+  - Final board state remains visible behind modal
   - Final scores for both players
-  - Remaining rune counts
-  - Winner announcement (or tie)
-  - "New Game" button to restart
+  - Winner announcement (or draw)
+  - "Next Game" button to return to mode selection
+  - Players can review final board configuration before proceeding
 
 **Wall Validation:**
 - Prevents placing runes if that rune type already exists in the wall row
@@ -209,14 +211,29 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Clickable with visual feedback
 - Useful for avoiding bad placements or blocking opponent
 
+**Game Modes:**
+- Mode selection screen at game start
+- **PvP**: Local 2-player mode (pass-and-play)
+- **PvE**: Play against random AI opponent
+  - AI makes random legal moves (draft + placement)
+  - 800ms delay between AI actions for visibility
+  - AI completes full turns automatically
+
+**Selection & Cancellation:**
+- Click rune selection tracks source (factory or center)
+- Cancel selection by clicking anywhere on player boards (outside pattern/floor lines)
+- Canceled runes return to original factory (not center)
+- Selected runes moved to center only return to center
+
 **UI Improvements:**
+- SVG rune graphics from `src/assets/runes/` (fire, frost, poison, void, wind)
 - Inline styles used instead of Tailwind for reliability (sizing, colors)
-- Rune glyphs with color coding: 🔥(Fire) ❄️(Frost) ☠️(Poison) 🌀(Void) 💨(Wind)
 - Wall cells show faded grayscale preview of expected rune type when empty
 - Player boards show deck count and score
 - Active player board has subtle blue border glow
 - Horizontal factory layout for better visibility
 - Vertical player arrangement (Player 1 top, factories middle, Player 2 bottom)
+- Game over modal displays on game board (final state visible behind it)
 
 ## Getting Started
 
@@ -254,30 +271,28 @@ npm run lint
 
 ```
 src/
+├── assets/
+│   └── runes/          # SVG rune graphics (fire, frost, poison, void, wind)
 ├── components/          # Reusable UI components
-│   ├── GameBoard.tsx
-│   ├── PatternLines.tsx
-│   ├── PlayerBoard.tsx
-│   ├── RuneToken.tsx
-│   └── ScoringWall.tsx
+│   └── RuneToken.tsx   # Rune display with SVG assets
 ├── features/           # Feature-based organization
 │   └── gameplay/       # Gameplay-specific features
-│       └── components/ # Factory, GameBoard, PatternLines, PlayerBoard, ScoringWall
+│       └── components/ # Factory, GameBoard, GameModeSelection, PatternLines, PlayerBoard, ScoringWall, WallCell
 ├── hooks/              # Custom React hooks
 │   ├── useGameActions.ts  # Game action hooks
 │   └── useGameState.ts    # State selector hooks
 ├── state/              # Global state management
 │   └── gameStore.ts    # Zustand store with game state and actions
 ├── types/              # TypeScript type definitions
-│   └── game.ts
+│   └── game.ts         # Core types: Rune, Factory, Player, GameState, GameMode, PlayerType
 ├── utils/              # Utility functions
-│   ├── gameInitialization.ts
-│   └── runeHelpers.ts  # Rune display utilities
-├── App.tsx             # Root component
+│   ├── aiPlayer.ts     # AI opponent logic
+│   ├── gameInitialization.ts  # Game setup and factory filling
+│   ├── runeHelpers.ts  # Rune display utilities
+│   └── scoring.ts      # Wall power calculation with floor penalties
+├── App.tsx             # Root component, mode selection & AI turn triggering
 └── main.tsx            # Entry point
 ```
-
-**Note:** The project is in transition - gameplay components exist in both `components/` and `features/gameplay/components/`. The app currently uses the `features/` versions. Future work will complete the migration by removing duplicates from `components/`.
 
 
 ## Next Steps
@@ -297,8 +312,13 @@ src/
 - [x] Step 6: Wall validation (prevent duplicate rune types in row)
 - [x] Step 7: Floor line direct placement option
 - [x] Step 8: Deck management with 2:2 split per factory
-- [x] Step 9: Game over condition and modal
+- [x] Step 9: Game over condition and modal on game board
 - [x] Step 10: Active player highlighting and UI polish
+- [x] Step 11: PvP vs PvE mode selection
+- [x] Step 12: AI opponent with random legal moves
+- [x] Step 13: SVG rune assets integration
+- [x] Step 14: Cancel selection (returns runes to source)
+- [x] Step 15: Floor penalty multiplier system (reduces segment scoring)
 
 ### Future Enhancements
 - [ ] Rune effects system (currently all runes have effect: 'None')
@@ -306,11 +326,13 @@ src/
 - [ ] Meta-progression (unlocks after losses)
 - [ ] Deck customization UI
 - [ ] Run summary and statistics
-- [ ] Matchmaking (currently local 2-player)
+- [ ] Advanced AI strategies (currently random moves)
+- [ ] Online multiplayer matchmaking
 - [ ] Sound effects and animations
 - [ ] Mobile/touch optimization
 - [ ] Undo/redo for moves
 - [ ] End-game bonuses (row/column/type completion)
+- [ ] Tutorial/onboarding for new players
 
 ---
 
