@@ -44,7 +44,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
   };
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: window.innerWidth < 768 ? '2px' : '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: window.innerWidth < 768 ? '2px' : '4px' }}>
       {patternLines.map((line, index) => {
         const isValid = isLineValid(line, index);
         const isClickable = canPlace && onPlaceRunes;
@@ -62,9 +62,9 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               width: '100%',
               cursor: isClickable ? (isValid ? 'pointer' : 'not-allowed') : 'default',
               backgroundColor: isValid ? 'rgba(55, 65, 81, 0.5)' : 'transparent',
-              border: isValid ? '2px solid rgba(59, 130, 246, 0.5)' : '2px solid transparent',
+              border: isValid ? '2px solid rgba(59, 130, 246, 0.5)' : 'none',
               opacity: (isClickable && !isValid) ? 0.5 : 1,
-              padding: isMobile ? '2px' : '4px',
+              padding: 0,
               borderRadius: isMobile ? '6px' : '8px',
               transition: 'all 0.2s'
             }}
