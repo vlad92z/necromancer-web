@@ -511,8 +511,8 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 ### Implementation TODO
 
 - [ ] **TODO: Implement Fire effect**
-  - Modify scoring calculation to count Fire runes in each segment
-  - Add Fire count to segment size before multiplying
+  - Modify scoring calculation to count total Fire runes on the Scoring Wall
+  - Add Fire count to Essence before multiplying
   - Update `calculateWallPower()` in `src/utils/scoring.ts`
   - Add visual indicator showing Fire bonus in scoring wall
 
