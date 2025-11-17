@@ -20,7 +20,7 @@ export function OpponentView({ opponent, player, isActive }: OpponentViewProps) 
       <RunePower 
         player={opponent}
         damageTaken={player.score}
-        nameColor="#7c2d12"
+        nameColor="#0c4a6e"
       />
       <PlayerBoard
         player={opponent}

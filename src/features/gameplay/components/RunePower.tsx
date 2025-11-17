@@ -37,7 +37,7 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
     }}>
       {/* Player Info Box */}
       <div style={{
-        flex: 1,
+        flex: '0 0 33%',
         backgroundColor: 'rgba(191, 219, 254, 0.3)',
         border: '2px solid rgba(59, 130, 246, 0.5)',
         borderRadius: isMobile ? '6px' : '8px',
@@ -57,14 +57,13 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
           <span style={{ color: nameColor }}>
             {player.name}
           </span>
-          <span>|</span>
-          <span>Damage Taken: {damageTaken}</span>
+          <span style={{ color: '#ea580c' }}>❤️ {300 - damageTaken}</span>
         </div>
       </div>
 
       {/* Power Stats Box */}
       <div style={{
-        flex: 1,
+        flex: '0 0 66%',
         backgroundColor: 'rgba(191, 219, 254, 0.3)',
         border: '2px solid rgba(59, 130, 246, 0.5)',
         borderRadius: isMobile ? '6px' : '8px',
@@ -83,7 +82,7 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
         }}>
           {essence > 0 ? (
             <>
-              <span>Essence: {essence}</span>
+              <span>Essence: <span style={{ color: '#eab308' }}>{essence}</span></span>
               <span>|</span>
               <span style={{ color: hasPenalty ? '#dc2626' : '#0c4a6e' }}>Focus: {focus}</span>
               <span>|</span>
@@ -91,7 +90,7 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
             </>
           ) : (
             <>
-              <span>Essence: 0</span>
+              <span>Essence: <span style={{ color: '#eab308' }}>0</span></span>
               <span>|</span>
               <span>Focus: 0</span>
               <span>|</span>
