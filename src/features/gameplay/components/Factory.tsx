@@ -56,6 +56,8 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
     boxShadow = '0 0 16px rgba(103, 232, 249, 0.6), inset 0 0 20px rgba(165, 243, 252, 0.4)';
     ariaLabel = `Factory frozen - cannot draft`;
   }
+
+  const runeCellSize = isMobile ? 'medium' : 'large';
   
   return (
     <button
@@ -112,7 +114,7 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
               <RuneCell
                 rune={rune}
                 variant="factory"
-                size="medium"
+                size={runeCellSize}
                 showEffect={false}
               />
             </div>
