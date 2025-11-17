@@ -31,9 +31,10 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
   );
   const hasPenalty = floorPenaltyCount > 0;
   
-  // Count Fire runes for visual indicator
-  const fireRuneCount = player.wall.flat().filter(cell => cell.runeType === 'Fire').length;
-  const hasFireBonus = fireRuneCount > 0;
+  // Count Fire runes: current wall + completed pattern lines
+  const fireRunesOnWall = player.wall.flat().filter(cell => cell.runeType === 'Fire').length;
+  const fireRunesInCompletedLines = completedPatternLines.filter(line => line.runeType === 'Fire').length;
+  const fireRuneCount = fireRunesOnWall + fireRunesInCompletedLines;
   
   return (
     <>
