@@ -27,6 +27,7 @@ export function RunePower({ player }: RunePowerProps) {
   );
   
   const netPower = totalPower + floorPenalty;
+  const hasPenalty = floorPenaltyCount > 0;
   
   return (
     <div style={{
@@ -49,7 +50,7 @@ export function RunePower({ player }: RunePowerProps) {
             {segments.map((seg, index) => (
               <span key={index}>
                 {index > 0 && ' + '}
-                {seg.size}×{seg.multiplier}
+                {seg.size}×<span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{seg.multiplier}</span>
               </span>
             ))}
             {' = '}
