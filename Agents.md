@@ -8,6 +8,30 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 ---
 
+## Quick Reference for AI Agents
+
+**What This Project Is**:
+- Single-page PvE card drafting game (Azul-inspired mechanics)
+- React 19 + TypeScript + Zustand + Framer Motion
+- Inline CSS styling (no Tailwind, no CSS-in-JS libraries)
+- Mobile-first responsive design with overlay patterns
+- No routing, no backend, no meta-progression features
+
+**What to Focus On**:
+- Core gameplay mechanics and polish
+- Mobile/responsive UX improvements
+- AI opponent intelligence
+- Visual feedback and animations
+- Accessibility enhancements
+
+**What's Out of Scope** (for now):
+- Meta-progression (deck building, unlocks, boss selection)
+- Routing or multi-page navigation
+- Backend integration or multiplayer
+- CSS frameworks or utility class systems
+
+---
+
 ## Current Architecture (November 2025)
 
 **Game Mode**: PvE Only (Player vs AI Opponent)
@@ -17,15 +41,33 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Separate view components: `PlayerView` (interactive) and `OpponentView` (read-only)
 
 **Component Structure**:
-- `GameBoard`: Main game orchestration, factories, turn management
+- `GameBoard`: Main game orchestration, factories, turn management, overlay coordination
 - `PlayerView`: Human player's board with full interaction (pattern lines, floor line, scoring wall)
 - `OpponentView`: AI opponent's board (display-only, no interaction handlers)
 - `PlayerBoard`: Shared board rendering logic used by both views
+- **Overlay System**: Mobile-optimized modal components for information and selection
+  - `FactoryOverlay`: Enlarged factory/center pool selector for mobile
+  - `DeckOverlay`: Full-screen deck viewer grouped by rune type
+  - `GameLogOverlay`: Round-by-round scoring history
+  - `RulesOverlay`: Comprehensive game rules explanation
+  - `SelectedRunesOverlay`: In-game selection feedback display
 
 **State Management**: Zustand store (`gameStore.ts`)
 - Always initializes as PvE (no gameMode parameter)
 - Player names: "Player" (human), "Opponent" (AI)
 - AI turns triggered automatically via `triggerAITurn()` in App.tsx
+- Round history tracked for game log overlay
+
+**Styling Approach**: Inline CSS with JavaScript style objects
+- No CSS-in-JS library, no Tailwind, no CSS Modules
+- Styles defined directly in component files for simplicity
+- Mobile-first responsive design with conditional rendering
+- Framer Motion for animations (spring transitions)
+
+**Current Scope**: Single-page game application
+- No routing (no react-router)
+- No meta-progression features (deck building, boss selection, unlocks)
+- Focus: Core PvE gameplay with polished UI/UX
 
 ---
 
@@ -46,12 +88,14 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 **Domain**: Application structure, architecture decisions, state management patterns, routing, build configuration.
 
 **Typical Tasks**:
-- Define folder structure (`src/components`, `src/features/gameplay`, `src/features/meta`, `src/hooks`, `src/state`, `src/types`, `src/utils`).
-- Design global state management approach (React Context + hooks, or Zustand for game/meta state).
-- Establish routing structure (`/`, `/game`, `/deck`, `/run-summary`, `/rune-selection`).
+- Define folder structure (`src/components`, `src/features/gameplay`, `src/hooks`, `src/state`, `src/types`, `src/utils`).
+- Design global state management approach (Zustand for game state).
 - Define TypeScript module boundaries and shared types (e.g., `RuneType`, `RuneEffect`, `GameState`).
 - Configure Vite plugins, environment variables, and build optimizations.
-- Design API boundary layer (mocking strategy, type contracts for backend endpoints).
+- Design component architecture patterns (overlay system, view components).
+- Plan state shape and action patterns for gameplay features.
+
+**Note**: This project currently has NO routing (single-page app) and NO meta-progression features. Focus is on core PvE gameplay.
 
 **Inputs Required**:
 - High-level game features and screen flow.
@@ -59,11 +103,11 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - State management preferences (Context vs. library).
 
 **Outputs Expected**:
-- `src/` folder structure with README explaining each directory.
-- State management setup (Context providers, store initialization).
-- Routing configuration (`src/routes.tsx` or equivalent).
-- Shared type definitions (`src/types/runes.ts`, `src/types/game.ts`).
-- Architecture decision records (ADRs) for major choices.
+- `src/` folder structure with clear organization.
+- Zustand store setup (`src/state/gameStore.ts`).
+- Shared type definitions (`src/types/game.ts`).
+- Component architecture patterns (overlays, views, shared components).
+- Custom hooks for state access and actions (`src/hooks/`).
 
 **Quality Bar**:
 - All architectural decisions must be documented in comments or ADRs.
@@ -77,9 +121,9 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Writing tests (delegate to TestEngineer).
 
 **Example Prompts**:
-1. "Set up the initial folder structure for Massive Spell: Arcane Arena, including separate directories for gameplay features, meta-progression, and shared components. Use Zustand for game state management."
-2. "Define TypeScript types for `Rune`, `Factory`, `PatternLine`, and `ScoringGrid`. Use discriminated unions for `RuneType` (Fire, Frost, Poison, Void, Wind) and `RuneEffect`."
-3. "Create a routing structure with react-router for: home screen, active game, deck view, rune selection after round, and run summary. Include type-safe route parameters."
+1. "Set up the initial folder structure for Massive Spell: Arcane Arena, including separate directories for gameplay features and shared components. Use Zustand for game state management."
+2. "Define TypeScript types for `Rune`, `Factory`, `PatternLine`, and `ScoringWall`. Use discriminated unions for `RuneType` (Fire, Frost, Poison, Void, Wind) and `RuneEffect`."
+3. "Design an overlay component system for mobile-optimized information displays and selections. Include patterns for backdrop dismissal, touch-friendly interactions, and responsive layouts."
 
 ---
 
@@ -102,11 +146,12 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Target platforms (desktop first, mobile secondary).
 
 **Outputs Expected**:
-- React components for core UI elements (`RuneToken.tsx`, `Factory.tsx`, `PatternLine.tsx`, `ScoringGrid.tsx`).
-- Tailwind utility classes or CSS Modules for styling (choose one and be consistent).
-- Animation specs (CSS transitions, Framer Motion configs, or react-spring setups).
-- Accessibility audit checklist and implementation (ARIA labels, focus management).
-- Responsive breakpoints and layout variants.
+- React components for core UI elements (`RuneToken.tsx`, `RuneCell.tsx`, `Factory.tsx`, `PatternLines.tsx`, `ScoringWall.tsx`).
+- Inline CSS style objects for component styling (JavaScript objects, not classes).
+- Overlay components for mobile-optimized interactions (`FactoryOverlay`, `DeckOverlay`, etc.).
+- Framer Motion animation configurations (spring transitions, AnimatePresence).
+- Accessibility implementation (ARIA labels, focus management, keyboard navigation).
+- Responsive patterns using conditional rendering and viewport-based logic.
 
 **Quality Bar**:
 - All interactive elements must be keyboard-accessible.
@@ -121,9 +166,9 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Backend API integration (delegate to FrontendArchitect).
 
 **Example Prompts**:
-1. "Design a responsive layout for the main game board: factories in the center, player pattern lines on the left, opponent pattern lines on the right, scoring grid below, floor line at bottom. Mobile should stack vertically."
-2. "Create a `RuneToken` component that displays rune type (color-coded) and effect (as a glyph icon). Ensure it's accessible and includes hover/focus states for selection."
-3. "Propose an animation sequence for completing a pattern line: runes slide into the scoring grid, points increment with a bounce effect, and the line resets. Use Framer Motion or CSS animations."
+1. "Design a responsive layout for the main game board: opponent view at top, factories/center in middle, player view at bottom. Use inline CSS style objects for all styling."
+2. "Create a `FactoryOverlay` component for mobile that displays factory runes in an enlarged modal, grouped by rune type for easy selection. Include backdrop click-to-close and touch-friendly tap targets."
+3. "Implement Framer Motion spring animations for runes appearing in pattern lines and scoring wall. Use AnimatePresence for enter/exit transitions."
 
 ---
 
@@ -160,8 +205,8 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 **Out of Scope**:
 - Styling components (delegate to UIUXDesigner).
-- Backend communication (delegate to FrontendArchitect).
-- Meta-progression logic (delegate to MetaProgressionEngineer).
+- UI component structure and overlay patterns (delegate to UIUXDesigner).
+- Testing implementation (delegate to TestEngineer).
 
 **Example Prompts**:
 1. "Implement the rune drafting logic: when a player selects runes from a factory, remove them and move the remaining runes to the center. Update game state immutably."
@@ -170,49 +215,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 ---
 
-### 4. MetaProgressionEngineer
-
-**Domain**: Deck-building UI, rune acquisition after rounds, boss selection, run summary, unlocks, persistence.
-
-**Typical Tasks**:
-- Build screens for post-round rune selection (3 random runes, pick 1).
-- Implement deck view UI (list all runes, show counts, filters by type/effect).
-- Design boss selection screen (3 bosses, unique modifiers, pick 1).
-- Create run summary screen (wins, losses, runes acquired, final score).
-- Integrate localStorage or IndexedDB for persisting run state.
-- Handle meta-unlocks (new rune effects unlocked after losing, progression tree).
-- Implement matchmaking UI (mock or real, showing opponent's win count).
-
-**Inputs Required**:
-- Meta-progression rules (how runes are offered, boss mechanics, unlock conditions).
-- State management setup from FrontendArchitect.
-- UI components and layout from UIUXDesigner.
-
-**Outputs Expected**:
-- React components for meta screens (`RuneSelection.tsx`, `DeckView.tsx`, `BossSelection.tsx`, `RunSummary.tsx`).
-- State hooks or Zustand slices for meta state (`useRunState`, `useDeck`, `useUnlocks`).
-- Persistence logic (save/load run state, sync with backend if applicable).
-- Integration with routing (navigate to meta screens after round ends).
-
-**Quality Bar**:
-- Meta state must be serializable (for persistence and undo/redo).
-- Deck view must be performant with 100+ runes.
-- Persistence must handle browser refresh without data loss.
-- UI must clearly communicate progression (progress bars, unlock animations).
-
-**Out of Scope**:
-- Implementing core gameplay logic (delegate to GameplayLogicEngineer).
-- Backend matchmaking algorithm (assume API contract, mock if needed).
-- Visual design details (delegate to UIUXDesigner for layout proposals).
-
-**Example Prompts**:
-1. "Build a rune selection screen that displays 3 random runes after a round win. Each rune shows type, effect, and a brief description. Player clicks one to add it to their deck."
-2. "Create a deck view component that lists all runes grouped by type, with counts and filters. Include a search bar for filtering by effect name."
-3. "Implement localStorage persistence for the current run state: deck, wins, losses, current round, boss selections. Load on app start and save after each round."
-
----
-
-### 5. TestEngineer
+### 4. TestEngineer
 
 **Domain**: Unit tests, component tests, integration tests, test utilities, mocking, regression prevention.
 
@@ -256,7 +259,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 ---
 
-### 6. RefactorAgent
+### 5. RefactorAgent
 
 **Domain**: Code cleanup, deduplication, performance optimization, type hardening, file reorganization, tech debt reduction.
 
@@ -299,7 +302,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 ---
 
-### 7. DocsAgent
+### 6. DocsAgent
 
 **Domain**: Documentation, README updates, Agents.md synchronization, developer onboarding, inline code comments.
 
@@ -346,18 +349,18 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 ### Handoff Flow
 
-Typical workflow for a new feature (e.g., "Implement boss selection screen"):
+Typical workflow for a new feature (e.g., "Implement game log overlay"):
 
-1. **FrontendArchitect**: Defines routing, state shape, API contract.
-   - Output: Route definition, TypeScript types for boss data, mock API.
-2. **UIUXDesigner**: Proposes layout, components, and interactions.
-   - Output: `BossSelection.tsx` component structure, styling (Tailwind/CSS Modules).
-3. **MetaProgressionEngineer**: Implements logic for boss selection, state updates, persistence.
-   - Output: State hooks, event handlers, integration with routing.
+1. **FrontendArchitect**: Defines state shape for round history tracking.
+   - Output: TypeScript types for round history, Zustand store updates.
+2. **UIUXDesigner**: Designs overlay layout and interaction patterns.
+   - Output: `GameLogOverlay.tsx` component with inline CSS, responsive mobile layout.
+3. **GameplayLogicEngineer**: Implements history tracking in game store.
+   - Output: Round history state updates in `gameStore.ts`, history accumulation logic.
 4. **TestEngineer**: Writes component tests and integration tests.
-   - Output: `BossSelection.test.tsx`, mock boss data utilities.
-5. **DocsAgent**: Updates README and writes developer guide for adding new bosses.
-   - Output: Updated docs, inline comments in boss selection logic.
+   - Output: `GameLogOverlay.test.tsx`, test utilities for mock history data.
+5. **DocsAgent**: Updates README with overlay documentation.
+   - Output: Updated `README.md` documenting the game log feature.
 
 ### Conflict Avoidance Rules
 
@@ -415,18 +418,48 @@ If an agent identifies a need for a large refactor (e.g., rewriting state manage
 
 ```
 src/
-├── components/          # Reusable UI components (Button, Card, Modal)
+├── assets/
+│   └── runes/          # SVG rune graphics (fire, frost, poison, void, wind)
+├── components/          # Reusable UI components
+│   ├── RuneAnimation.tsx   # Framer Motion rune animations
+│   ├── RuneCell.tsx        # Enhanced rune display with animations
+│   └── RuneToken.tsx       # Basic rune display component
 ├── features/
-│   ├── gameplay/       # Game board, factories, pattern lines, scoring
-│   ├── meta/           # Deck view, rune selection, boss selection, run summary
-├── hooks/              # Custom hooks (useGameState, useDeck)
-├── state/              # Global state (Context providers, Zustand stores)
-├── types/              # Shared TypeScript types (runes, game, meta)
-├── utils/              # Pure utility functions (scoring, validation)
-├── test-utils/         # Test helpers (mock factories, render utilities)
-├── routes.tsx          # React Router configuration
-├── App.tsx             # Root component
+│   └── gameplay/       # All gameplay features
+│       └── components/ # Gameplay UI components
+│           ├── CenterPool.tsx
+│           ├── DeckOverlay.tsx
+│           ├── FactoriesAndCenter.tsx
+│           ├── Factory.tsx
+│           ├── FactoryOverlay.tsx
+│           ├── FloorLine.tsx
+│           ├── GameBoard.tsx
+│           ├── GameLogOverlay.tsx
+│           ├── GameOverModal.tsx
+│           ├── OpponentView.tsx
+│           ├── PatternLines.tsx
+│           ├── PlayerBoard.tsx
+│           ├── PlayerView.tsx
+│           ├── RulesOverlay.tsx
+│           ├── RunePower.tsx
+│           ├── ScoringWall.tsx
+│           ├── SelectedRunesOverlay.tsx
+│           └── WallCell.tsx
+├── hooks/              # Custom hooks
+│   ├── useGameActions.ts  # Game action hooks
+│   └── useGameState.ts    # State selector hooks
+├── state/              # Global state (Zustand)
+│   └── gameStore.ts    # Main game state and actions
+├── types/              # TypeScript type definitions
+│   └── game.ts         # Core game types
+├── utils/              # Pure utility functions
+│   ├── aiPlayer.ts         # AI opponent logic
+│   ├── gameInitialization.ts  # Game setup
+│   ├── runeHelpers.ts      # Rune utilities
+│   └── scoring.ts          # Scoring calculations
+├── App.tsx             # Root component, AI turn triggering
 ├── main.tsx            # Entry point
+└── index.css           # Global styles (minimal)
 ```
 
 **Naming conventions**:
@@ -437,35 +470,40 @@ src/
 
 ### Styling
 
-**Option: Tailwind CSS** (chosen for this project)
+**Inline CSS with JavaScript Style Objects** (chosen for this project)
 
-- Use Tailwind utility classes for styling.
-- Extract repeated patterns into components (not `@apply` in CSS).
-- Use `tailwind.config.js` to define theme colors for rune types:
-  ```javascript
-  theme: {
-    extend: {
-      colors: {
-        fire: '#FF4500',
-        frost: '#1E90FF',
-        poison: '#32CD32',
-        void: '#8B008B',
-        wind: '#F0E68C',
-      },
-    },
-  }
+- All styles defined as inline JavaScript objects directly in components
+- No CSS files (except minimal global `index.css`), no CSS-in-JS libraries, no Tailwind
+- Define color constants in components or utilities:
+  ```typescript
+  const RUNE_COLORS = {
+    Fire: '#FF4500',
+    Frost: '#1E90FF',
+    Poison: '#32CD32',
+    Void: '#8B008B',
+    Wind: '#F0E68C',
+  };
   ```
-- Avoid "class hell": if a component has >10 utility classes, extract a component.
-- Use `clsx` or `classnames` for conditional classes.
-
-**Alternative: CSS Modules** (if Tailwind is not preferred)
-
-- File naming: `ComponentName.module.css`
-- Use BEM-lite naming within modules: `.component`, `.component__element`, `.component--modifier`.
-- Avoid deeply nested selectors (max 2 levels).
-- Use CSS custom properties for theming (`--color-fire`, `--color-frost`).
+- Use style objects for component styling:
+  ```typescript
+  const buttonStyle = {
+    padding: '8px 16px',
+    backgroundColor: RUNE_COLORS.Fire,
+    borderRadius: '4px',
+    cursor: 'pointer',
+  };
+  <button style={buttonStyle}>Click me</button>
+  ```
+- Conditional styles using spread operator or ternary:
+  ```typescript
+  <div style={{ ...baseStyle, ...(isActive && activeStyle) }}>
+  ```
+- Responsive design via conditional rendering based on `window.innerWidth`
+- Extract repeated style objects into constants within components
 
 ### Testing
+
+**Note**: Testing infrastructure (Vitest, React Testing Library) is not currently set up. When implementing tests, follow these guidelines:
 
 - **Test file naming**: `ComponentName.test.tsx` or `functionName.test.ts`, colocated with source.
 - **Test structure**: Arrange-Act-Assert (AAA) pattern.
@@ -540,10 +578,10 @@ src/
 
 ### Phase 2: UI Design (UIUXDesigner)
 
-**Prompt**: "Design a `Factory` component that displays 4 rune tokens in a circular layout. Runes are clickable and highlight on hover. When clicked, call `onRuneDrafted(runeType)` callback."
+**Prompt**: "Design a `Factory` component that displays 4 rune tokens in a circular layout. Runes are clickable and highlight on hover. When clicked, call `onRuneDrafted(runeType)` callback. Use inline CSS style objects."
 
 **Output**:
-- `src/features/gameplay/Factory.tsx`: Component with Tailwind styling.
+- `src/features/gameplay/components/Factory.tsx`: Component with inline CSS styling.
 - `src/components/RuneToken.tsx`: Reusable rune display component.
 
 ### Phase 3: Logic Implementation (GameplayLogicEngineer)

@@ -24,23 +24,29 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 - UI Components:
   - `RuneToken`: Displays individual runes with color-coding and SVG graphics
-  - `Factory`: Shows factory containers (currently empty)
+  - `RuneCell`: Enhanced rune display component with animation support
+  - `Factory`: Shows factory containers with interactive selection
   - `PatternLines`: Displays 5-tier pattern lines with progress
   - `ScoringWall`: Renders 5x5 scoring grid
   - `PlayerBoard`: Complete player board with pattern lines, wall, and floor line
   - `GameBoard`: Main game layout with factories, center pool, and both players
+  - `RuneAnimation`: Handles smooth rune movement animations
+  - `RunePower`: Displays rune power/effect information
 
 - Styling:
   - Inline CSS with custom rune colors
   - Dark theme optimized for game visibility
-  - Responsive layout foundations
+  - Fully responsive design with mobile-first approach
+  - Touch-optimized interactions for mobile devices
 
 **Tech Stack:**
 - React 19 + TypeScript (strict mode)
 - Vite 7 for dev server and build
 - Inline CSS for styling
 - Zustand for state management
+- Framer Motion for animations
 - Component-based architecture with feature organization
+- Mobile-first responsive design
 
 ### ✅ Step 2: Factory Drafting Mechanics (Completed)
 
@@ -226,7 +232,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 **UI Improvements:**
 - SVG rune graphics from `src/assets/runes/` (fire, frost, poison, void, wind)
-- Inline styles used instead of Tailwind for reliability (sizing, colors)
+- Inline styles used for consistent styling (sizing, colors, layouts)
 - Wall cells show faded grayscale preview of expected rune type when empty
 - Player boards show deck count and score
 - Active player board has subtle blue border glow
@@ -239,6 +245,34 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Calculating scores from wall connections (2 second delay)
   - Clearing floor line penalties (1.5 second delay)
   - Visual feedback through rune animations showing each change
+
+**Mobile & Touch Optimizations:**
+- `FactoryOverlay`: Enlarged modal view for selecting runes from factories/center on mobile
+  - Groups runes by type for easier selection
+  - Touch-friendly tap targets
+  - Backdrop click to close
+- `DeckOverlay`: Full-screen view of player's remaining deck
+  - Organized grid layout grouped by rune type
+  - Shows rune counts and visual previews
+  - Accessible via deck count button on player boards
+- Responsive breakpoints optimized for mobile (375px+), tablet (768px+), and desktop
+- Touch-optimized button sizes and spacing
+- Mobile-friendly overlay patterns for all complex selections
+
+**Information Overlays:**
+- `RulesOverlay`: Comprehensive game rules and instructions
+  - Explains drafting mechanics, pattern line placement, scoring system
+  - Floor line penalties and wall power calculation details
+  - Accessible via "Rules" button on game board
+- `GameLogOverlay`: Round-by-round history and statistics
+  - Displays each round's scoring breakdown
+  - Shows wall segments, multipliers, and final scores per round
+  - Tracks both player and opponent performance over time
+  - Accessible via "History" button on game board
+- `SelectedRunesOverlay`: In-game selection feedback
+  - Displays currently selected runes above factories
+  - Shows count and provides placement instructions
+  - Cancel option to return runes to source
 
 ## Getting Started
 
@@ -340,19 +374,39 @@ src/
 ├── assets/
 │   └── runes/          # SVG rune graphics (fire, frost, poison, void, wind)
 ├── components/          # Reusable UI components
-│   └── RuneToken.tsx   # Rune display with SVG assets
+│   ├── RuneAnimation.tsx  # Rune movement animations
+│   ├── RuneCell.tsx       # Enhanced rune display with animation support
+│   └── RuneToken.tsx      # Basic rune display with SVG assets
 ├── features/           # Feature-based organization
 │   └── gameplay/       # Gameplay-specific features
-│       └── components/ # Factory, GameBoard, OpponentView, PatternLines, PlayerBoard, PlayerView, ScoringWall, WallCell
+│       └── components/ # Gameplay UI components
+│           ├── CenterPool.tsx          # Center pool display and interaction
+│           ├── DeckOverlay.tsx         # Full-screen deck viewer (mobile-optimized)
+│           ├── FactoriesAndCenter.tsx  # Combined factories and center layout
+│           ├── Factory.tsx             # Individual factory display
+│           ├── FactoryOverlay.tsx      # Enlarged factory/center selector (mobile)
+│           ├── FloorLine.tsx           # Floor line (penalty area) display
+│           ├── GameBoard.tsx           # Main game orchestrator
+│           ├── GameLogOverlay.tsx      # Round history and statistics
+│           ├── GameOverModal.tsx       # End-game modal with results
+│           ├── OpponentView.tsx        # AI opponent's board (read-only)
+│           ├── PatternLines.tsx        # 5-tier pattern lines display
+│           ├── PlayerBoard.tsx         # Shared board rendering logic
+│           ├── PlayerView.tsx          # Human player's board (interactive)
+│           ├── RulesOverlay.tsx        # Game rules explanation
+│           ├── RunePower.tsx           # Rune power/effect display
+│           ├── ScoringWall.tsx         # 5x5 scoring grid
+│           ├── SelectedRunesOverlay.tsx # Selected runes feedback display
+│           └── WallCell.tsx            # Individual wall cell component
 ├── hooks/              # Custom React hooks
-│   ├── useGameActions.ts  # Game action hooks
+│   ├── useGameActions.ts  # Game action hooks (draft, place, etc.)
 │   └── useGameState.ts    # State selector hooks
 ├── state/              # Global state management
 │   └── gameStore.ts    # Zustand store with game state and actions
 ├── types/              # TypeScript type definitions
 │   └── game.ts         # Core types: Rune, Factory, Player, GameState, PlayerType
 ├── utils/              # Utility functions
-│   ├── aiPlayer.ts     # AI opponent logic
+│   ├── aiPlayer.ts     # AI opponent logic with strategic decision-making
 │   ├── gameInitialization.ts  # Game setup and factory filling
 │   ├── runeHelpers.ts  # Rune display utilities
 │   └── scoring.ts      # Wall power calculation with floor penalties
@@ -368,7 +422,9 @@ src/
 - [x] Set up Zustand for state management
 - [x] Reorganize components into features structure
 - [x] Add custom hooks for game actions and state selectors
-- [x] Migrate from Tailwind to inline CSS styling
+- [x] Implement inline CSS styling for consistency
+- [x] Component-based architecture with clear separation of concerns
+- [x] Separate view components for player and opponent
 
 ### Gameplay Implementation (Completed ✅)
 - [x] Step 2: Make factories/runes selectable, implement Azul factory taking
@@ -390,14 +446,17 @@ src/
 - [ ] Rune effects system (currently all runes have effect: 'None')
 - [ ] Boss selection and special modifiers
 - [ ] Meta-progression (unlocks after losses)
-- [ ] Deck customization UI
-- [ ] Run summary and statistics
+- [ ] Deck customization UI before game start
+- [ ] Run summary and statistics (enhanced beyond current game log)
 - [ ] Online multiplayer (server-based PvP)
-- [ ] Sound effects and animations
-- [ ] Mobile/touch optimization
+- [ ] Sound effects and background music
+- [ ] Enhanced animations (particle effects, celebrations)
 - [ ] Undo/redo for moves
 - [ ] End-game bonuses (row/column/type completion)
 - [ ] Tutorial/onboarding for new players
+- [ ] Save/load game state for resuming later
+- [ ] Difficulty settings for AI opponent
+- [ ] Achievements and unlockable content
 
 ### AI Improvements
 - [x] **Simple strategies (Completed ✅):**
