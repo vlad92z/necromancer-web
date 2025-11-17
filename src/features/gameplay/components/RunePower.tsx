@@ -20,13 +20,11 @@ export function RunePower({ player }: RunePowerProps) {
   
   const floorPenaltyCount = player.floorLine.runes.length;
   
-  const { segments, totalPower, floorPenalty } = calculateProjectedPower(
+  const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
     completedPatternLines,
     floorPenaltyCount
   );
-  
-  const netPower = totalPower + floorPenalty;
   const hasPenalty = floorPenaltyCount > 0;
   
   return (
@@ -43,21 +41,12 @@ export function RunePower({ player }: RunePowerProps) {
         fontWeight: 'bold',
         textAlign: 'center'
       }}>
-        Current Spellpower: {segments.length > 0 ? (
+        {essence > 0 ? (
           <>
-            {segments.map((seg, index) => (
-              <span key={index}>
-                {index > 0 && ' + '}
-                {seg.essence}×<span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{seg.focus}</span>
-              </span>
-            ))}
-            {' = '}
-            <span style={{ fontWeight: 'bold', color: '#92400e' }}>
-              {netPower}
-            </span>
+            Essence: {essence} | Focus: <span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{focus}</span> | Spellpower: {totalPower}
           </>
         ) : (
-          <span style={{ fontWeight: 'bold', color: '#92400e' }}>0</span>
+          <>Essence: 0 | Focus: 0 | Spellpower: 0</>
         )}
       </div>
     </div>

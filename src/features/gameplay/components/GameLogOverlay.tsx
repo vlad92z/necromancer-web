@@ -149,14 +149,14 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                     <span style={{ fontWeight: 'bold', color: '#059669' }}>
                       {round.playerName}:
                     </span>{' '}
-                    {round.playerSegments.map((seg, i) => (
-                      <span key={i}>
-                        {i > 0 && ' + '}
-                        {seg.essence}×{seg.focus}
-                      </span>
-                    ))}
-                    {round.playerSegments.length > 0 && ' = '}
-                    <span style={{ fontWeight: 'bold' }}>{round.playerTotal}</span>
+                    {round.playerEssence > 0 ? (
+                      <>
+                        {round.playerEssence}×{round.playerFocus} = {' '}
+                        <span style={{ fontWeight: 'bold' }}>{round.playerTotal}</span>
+                      </>
+                    ) : (
+                      <span style={{ fontWeight: 'bold' }}>0</span>
+                    )}
                   </div>
 
                   {/* Opponent Score */}
@@ -168,14 +168,14 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                     <span style={{ fontWeight: 'bold', color: '#dc2626' }}>
                       {round.opponentName}:
                     </span>{' '}
-                    {round.opponentSegments.map((seg, i) => (
-                      <span key={i}>
-                        {i > 0 && ' + '}
-                        {seg.essence}×{seg.focus}
-                      </span>
-                    ))}
-                    {round.opponentSegments.length > 0 && ' = '}
-                    <span style={{ fontWeight: 'bold' }}>{round.opponentTotal}</span>
+                    {round.opponentEssence > 0 ? (
+                      <>
+                        {round.opponentEssence}×{round.opponentFocus} = {' '}
+                        <span style={{ fontWeight: 'bold' }}>{round.opponentTotal}</span>
+                      </>
+                    ) : (
+                      <span style={{ fontWeight: 'bold' }}>0</span>
+                    )}
                   </div>
 
                   {/* Separator (not on last item) */}

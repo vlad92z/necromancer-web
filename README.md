@@ -136,13 +136,14 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Console logs scoring details for debugging
 
 - Scoring utilities (`src/utils/scoring.ts`):
-  - `calculateWallPower(wall, floorPenaltyCount)`: Connected segment scoring system
-    - Uses flood-fill algorithm to find all connected segments
-    - Each segment's power = essence × max(1, essence - floorPenaltyCount)
-    - Floor penalties reduce the focus of each segment, not a flat deduction
+  - `calculateWallPower(wall, floorPenaltyCount)`: Simplified spellpower calculation
+    - **Essence** = total number of active runes on the wall
+    - **Focus** = size of the largest connected segment
+    - **Spellpower** = Essence × max(1, Focus - floorPenaltyCount)
+    - Floor penalties reduce Focus only (not a separate deduction)
     - Runes are connected if they share an edge (not diagonal)
-    - Example with 2 floor penalties: 7-rune segment = 7 × 5 = 35 points, 1-rune segment = 1 × 1 = 1 point
-    - Score cannot go below 0
+    - Example with 0 floor penalties: 12 total runes, 5 largest segment = 12 × 5 = 60 spellpower
+    - Example with 2 floor penalties: 12 total runes, 5 largest segment = 12 × 3 = 36 spellpower
   - `getWallColumnForRune()`: Determines wall placement position
     - Each rune type has fixed column per row (rotated Azul pattern)
     - Prevents duplicate types in same row/column
@@ -152,9 +153,10 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
     - Line must be full (count === tier)
     - Move one rune to scoring wall at correct position
     - Clear completed pattern line for next round
-  - Calculate total wall power from all connected segments
-    - Floor penalties reduce each segment's focus (not a flat penalty)
-    - More floor penalties = lower focus on all segments
+  - Calculate spellpower using simplified formula
+    - Essence = total active runes on wall
+    - Focus = largest connected segment size
+    - Floor penalties reduce Focus (minimum 1)
   - Add wall power to existing score (accumulative)
   - Clear floor lines after scoring
   - Refill factories from player decks (2 runes per player per factory)
@@ -173,12 +175,13 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 3. Completed pattern lines (full) move to wall:
    - One rune placed at calculated position
    - Pattern line clears for next round
-4. Total wall power calculated from connected segments:
-   - Each segment's power = essence × max(1, essence - floorPenaltyCount)
-   - Floor penalties reduce focus, not flat deduction
-   - Example with 0 floor: 3 connected + 2 connected = 9 + 4 = 13 points
-   - Example with 2 floor: 3 connected + 2 connected = 3 + 2 = 5 points
-5. Round score added to existing score from previous rounds (score can't go below 0)
+4. Spellpower calculated using simplified formula:
+   - Essence (total runes) × Focus (largest segment size)
+   - Floor penalties reduce Focus: max(1, largestSegment - floorPenaltyCount)
+   - Example with 0 floor: 12 runes, 5 largest = 12 × 5 = 60 spellpower
+   - Example with 2 floor: 12 runes, 5 largest = 12 × 3 = 36 spellpower
+5. Each player's spellpower is dealt as damage to their opponent
+6. Damage accumulates over all rounds
 7. Factories refill with 2 runes from each player's deck per factory
 8. New round begins
 
@@ -199,11 +202,12 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 **Game Over Condition:**
 - Checked at end of each round before refilling factories
 - Requires minimum 10 runes per player (2 per factory × 5 factories)
+- **Winner**: Player who took the least damage (each round's spellpower becomes damage to opponent)
 - Game over modal displays on the game board:
   - Final board state remains visible behind modal
-  - Final scores for player and opponent
-  - Victory/Defeat announcement (or draw)
-  - "Play Again" button to restart a new game
+  - Damage taken for each player (opponent's accumulated spellpower)
+  - Victory/Defeat announcement (or draw if damage is equal)
+  - "Return to Start" button to go back to start screen
   - Players can review final board configuration before proceeding
 
 **Wall Validation:**
@@ -274,7 +278,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Accessible via "Rules" button on game board
 - `GameLogOverlay`: Round-by-round history and statistics
   - Displays each round's scoring breakdown
-  - Shows wall segments (essence×focus), and final scores per round
+  - Shows essence, focus, and spellpower (damage dealt) per round
   - Tracks both player and opponent performance over time
   - Accessible via "History" button on game board
 - `SelectedRunesOverlay`: In-game selection feedback

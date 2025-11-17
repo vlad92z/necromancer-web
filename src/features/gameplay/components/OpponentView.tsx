@@ -7,10 +7,11 @@ import { PlayerBoard } from './PlayerBoard';
 
 interface OpponentViewProps {
   opponent: Player;
+  player: Player;
   isActive: boolean;
 }
 
-export function OpponentView({ opponent, isActive }: OpponentViewProps) {
+export function OpponentView({ opponent, player, isActive }: OpponentViewProps) {
   const isMobile = window.innerWidth < 768;
   
   return (
@@ -22,7 +23,7 @@ export function OpponentView({ opponent, isActive }: OpponentViewProps) {
         color: '#7c2d12',
         textAlign: 'center'
       }}>
-        {opponent.name} - Total Spellower: {opponent.score}
+        {opponent.name} - Damage Taken: {player.score}
         {isActive && <span style={{ marginLeft: '8px', color: '#ea580c' }}>(Taking Turn...)</span>}
       </div>
       <PlayerBoard

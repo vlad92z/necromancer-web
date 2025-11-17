@@ -66,7 +66,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               🎯 Goal
             </h3>
             <p style={{ margin: 0 }}>
-              Score the most points by strategically placing runes in your casting lines and completing patterns on your scoring wall.
+              Build your spellpower to deal damage to your opponent each round. The player who takes the least damage wins!
             </p>
           </section>
           
@@ -95,13 +95,15 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           
           <section>
             <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
-              ⭐ Scoring
+              ⚔️ Dealing Damage
             </h3>
             <p style={{ margin: 0 }}>
-              • Placing a rune on your wall scores points<br/>
-              • Score 1 point for an isolated rune<br/>
-              • Score more for horizontal and vertical combos<br/>
-              • Floor line runes give penalties (-1 to -10)
+              • <strong>Essence</strong>: Total active runes on your wall<br/>
+              • <strong>Focus</strong>: Size of your largest connected segment<br/>
+              • <strong>Spellpower</strong> = Essence × Focus<br/>
+              • Each round, your Spellpower becomes damage to your opponent<br/>
+              • Floor line penalties reduce your Focus<br/>
+              • Build large connected segments to maximize damage!
             </p>
           </section>
           
@@ -110,7 +112,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               🏁 End Game
             </h3>
             <p style={{ margin: 0 }}>
-              The game ends when a player completes a horizontal row on their scoring wall. Highest score wins!
+              The game ends when a player runs out of runes. The player who took the least damage wins!
             </p>
           </section>
           

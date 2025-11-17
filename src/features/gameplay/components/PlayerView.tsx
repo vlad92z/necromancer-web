@@ -7,6 +7,7 @@ import { PlayerBoard } from './PlayerBoard';
 
 interface PlayerViewProps {
   player: Player;
+  opponent: Player;
   isActive: boolean;
   onPlaceRunes?: (patternLineIndex: number) => void;
   onPlaceRunesInFloor?: () => void;
@@ -17,6 +18,7 @@ interface PlayerViewProps {
 
 export function PlayerView({
   player,
+  opponent,
   isActive,
   onPlaceRunes,
   onPlaceRunesInFloor,
@@ -35,7 +37,7 @@ export function PlayerView({
         color: '#0c4a6e',
         textAlign: 'center'
       }}>
-        {player.name} - Total Spellpower: {player.score}
+        {player.name} - Damage Taken: {opponent.score}
       </div>
       <PlayerBoard
         player={player}

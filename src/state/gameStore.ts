@@ -368,10 +368,12 @@ export const useGameStore = create<GameStore>((set) => ({
       const roundScore = {
         round: state.round,
         playerName: updatedPlayers[0].name,
-        playerSegments: player1Data.segments,
+        playerEssence: player1Data.essence,
+        playerFocus: player1Data.focus,
         playerTotal: player1Data.totalPower,
         opponentName: updatedPlayers[1].name,
-        opponentSegments: player2Data.segments,
+        opponentEssence: player2Data.essence,
+        opponentFocus: player2Data.focus,
         opponentTotal: player2Data.totalPower,
       };
       
