@@ -544,23 +544,28 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 - [x] **✅ Implemented Void effect**
   - Added `voidEffectPending` state to GameState to track when Void effect is active
-  - Created `VoidEffectOverlay` component for factory selection UI
-  - Updated `placeRunes()` to detect Void runes and trigger factory selection
+  - Updated `placeRunes()` to detect Void runes and trigger factory destruction
   - Added `destroyFactory()` action to remove all runes from selected factory
-  - Added `skipVoidEffect()` action to cancel Void effect
   - Created `chooseFactoryToDestroy()` AI function in `src/utils/aiPlayer.ts`
   - AI strategically destroys factories with runes the opponent needs
   - Integrated Void effect handling in App.tsx for AI turns
-  - Void effect skips automatically if all factories are empty
-  - Purple-themed UI overlay for factory destruction
-  - Only triggers when non-empty factories exist after placement
+  - Direct factory click interaction with purple highlighting
+  - Purple-themed message banner for player guidance
+  - Player who places Void gets to choose which factory to destroy
 
-- [ ] **TODO: Implement Frost effect**
-  - Add `frozenFactories` state to track frozen factory IDs per player
-  - Trigger factory freeze selection UI when Frost placed in pattern line
-  - Disable frozen factory for opponent's next turn only
-  - Clear frozen state after opponent's turn
-  - Update `placeRunes()` in `src/state/gameStore.ts`
+- [x] **✅ Implemented Frost effect**
+  - Added `frostEffectPending` and `frozenFactories` state to GameState
+  - Updated `placeRunes()` to detect Frost runes and trigger factory freeze
+  - Added `freezeFactory()` action to freeze selected factory
+  - Frozen factories disabled for opponent's next turn only
+  - Clear frozen state automatically when opponent drafts
+  - Created `chooseFactoryToFreeze()` AI function in `src/utils/aiPlayer.ts`
+  - AI strategically freezes factories with runes opponent needs
+  - Integrated Frost effect handling in App.tsx for AI turns
+  - Direct factory click interaction with cyan highlighting
+  - Frozen factories show icy blue styling with snowflake indicator (❄️)
+  - Cyan-themed message banner for player guidance
+  - Player who places Frost gets to choose which factory to freeze
 
 
 
@@ -572,10 +577,9 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 - [ ] **TODO: Update AI to consider rune effects**
   - Evaluate Fire runes for scoring potential
-  - Consider Frost for blocking opponent
   - Weight Poison collection strategically
-  - Use Void for denial tactics
   - Value Wind as floor insurance and penalty mitigation
+  - Consider Void and Frost for denial tactics (already implemented in chooseFactoryToDestroy/Freeze)
 
 ### Future Enhancements
 - [ ] Boss selection and special modifiers

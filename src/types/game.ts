@@ -139,4 +139,6 @@ export interface GameState {
   scoringPhase: ScoringPhase; // Current step in round-end scoring animation
   roundHistory: RoundScore[]; // History of completed rounds for game log
   voidEffectPending: boolean; // Whether Void effect is waiting for factory selection
+  frostEffectPending: boolean; // Whether Frost effect is waiting for factory selection
+  frozenFactories: string[]; // Factory IDs that are frozen (opponent cannot draft from them)
 }

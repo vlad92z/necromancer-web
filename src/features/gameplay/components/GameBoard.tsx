@@ -21,10 +21,11 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending } = gameState;
+  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenFactories } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
   const destroyFactory = useGameStore((state) => state.destroyFactory);
+  const freezeFactory = useGameStore((state) => state.freezeFactory);
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
@@ -80,6 +81,16 @@ export function GameBoard({ gameState }: GameBoardProps) {
       // Only allow clicking non-empty factories during Void effect
       if (factory && factory.runes.length > 0) {
         destroyFactory(factoryId);
+      }
+      return;
+    }
+    
+    // Handle Frost effect - clicking factory freezes it
+    if (frostEffectPending) {
+      const factory = factories.find(f => f.id === factoryId);
+      // Only allow clicking non-empty factories during Frost effect
+      if (factory && factory.runes.length > 0) {
+        freezeFactory(factoryId);
       }
       return;
     }
@@ -314,6 +325,24 @@ export function GameBoard({ gameState }: GameBoardProps) {
             </div>
           )}
           
+          {/* Frost Effect Message */}
+          {frostEffectPending && !isAITurn && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#06b6d4',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: isMobile ? '14px' : '18px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
+              animation: 'pulse 2s infinite'
+            }}>
+              ❄️ Frost Effect: Click a factory to freeze it! ❄️
+            </div>
+          )}
+          
           <FactoriesAndCenter
             factories={factories}
             centerPool={centerPool}
@@ -323,6 +352,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
             hasSelectedRunes={hasSelectedRunes}
             isAITurn={isAITurn}
             voidEffectPending={voidEffectPending}
+            frostEffectPending={frostEffectPending}
+            frozenFactories={frozenFactories}
           />
           
           {/* Selected Runes Display - Overlay */}

@@ -24,6 +24,7 @@ interface GameStore extends GameState {
   cancelSelection: () => void;
   destroyFactory: (factoryId: string) => void; // Void effect: destroy all runes in a factory
   skipVoidEffect: () => void; // Skip Void effect if player chooses not to use it
+  freezeFactory: (factoryId: string) => void; // Frost effect: freeze a factory (opponent cannot draft)
   endRound: () => void;
   resetGame: () => void;
   triggerAITurn: () => void;
@@ -38,6 +39,12 @@ export const useGameStore = create<GameStore>((set) => ({
   // Actions
   draftRune: (factoryId: string, runeType: RuneType) => {
     set((state) => {
+      // Check if factory is frozen (opponent cannot draft from it)
+      if (state.frozenFactories.includes(factoryId)) {
+        console.log(`Factory ${factoryId} is frozen - cannot draft`);
+        return state;
+      }
+      
       // Find the factory
       const factory = state.factories.find((f) => f.id === factoryId);
       if (!factory) return state;
@@ -57,12 +64,17 @@ export const useGameStore = create<GameStore>((set) => ({
       // Move remaining runes to center pool
       const updatedCenterPool = [...state.centerPool, ...remainingRunes];
       
+      // Clear frozen factories after opponent makes their draft
+      // (Frost effect lasts only for opponent's next turn)
+      const clearedFrozenFactories: string[] = [];
+      
       return {
         ...state,
         factories: updatedFactories,
         centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'factory', factoryId, movedToCenter: remainingRunes },
+        frozenFactories: clearedFrozenFactories,
       };
     });
   },
@@ -76,11 +88,15 @@ export const useGameStore = create<GameStore>((set) => ({
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
       
+      // Clear frozen factories after opponent makes their draft
+      const clearedFrozenFactories: string[] = [];
+      
       return {
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'center' },
+        frozenFactories: clearedFrozenFactories,
       };
     });
   },
@@ -150,6 +166,9 @@ export const useGameStore = create<GameStore>((set) => ({
       const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
       const hasNonEmptyFactories = state.factories.some(f => f.runes.length > 0);
       
+      // Check if Frost runes were placed (Frost effect: freeze a factory)
+      const hasFrostRunes = selectedRunes.some(rune => rune.runeType === 'Frost');
+      
       // Check if round should end (all factories and center empty)
       const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
@@ -169,7 +188,21 @@ export const useGameStore = create<GameStore>((set) => ({
         };
       }
       
-      // Switch to next player (alternate between 0 and 1) - only if no Void effect
+      // If Frost runes were placed and there are non-empty factories, trigger Frost effect
+      // Keep current player so THEY get to choose which factory to freeze
+      if (hasFrostRunes && hasNonEmptyFactories && !shouldEndRound) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          selectedRunes: [],
+          draftSource: null,
+          turnPhase: 'draft' as const,
+          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses factory
+          frostEffectPending: true, // Wait for factory selection
+        };
+      }
+      
+      // Switch to next player (alternate between 0 and 1) - only if no Void/Frost effect
       const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
       const newState = {
@@ -338,6 +371,41 @@ export const useGameStore = create<GameStore>((set) => ({
       const newState = {
         ...state,
         voidEffectPending: false,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+      };
+      
+      // If round ends, trigger scoring
+      if (shouldEndRound) {
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 1000);
+      }
+      
+      return newState;
+    });
+  },
+  
+  freezeFactory: (factoryId: string) => {
+    set((state) => {
+      // Frost effect: freeze the selected factory (opponent cannot draft from it)
+      if (!state.frostEffectPending) return state;
+      
+      // Add factory to frozen list
+      const updatedFrozenFactories = [...state.frozenFactories, factoryId];
+      
+      // Switch to next player after factory is frozen
+      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+      
+      // Check if round should end
+      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
+        ...state,
+        frozenFactories: updatedFrozenFactories,
+        frostEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
       };

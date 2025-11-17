@@ -15,6 +15,8 @@ interface FactoriesAndCenterProps {
   hasSelectedRunes: boolean;
   isAITurn: boolean;
   voidEffectPending: boolean;
+  frostEffectPending: boolean;
+  frozenFactories: string[];
 }
 
 export function FactoriesAndCenter({ 
@@ -25,7 +27,9 @@ export function FactoriesAndCenter({
   isDraftPhase, 
   hasSelectedRunes, 
   isAITurn,
-  voidEffectPending
+  voidEffectPending,
+  frostEffectPending,
+  frozenFactories
 }: FactoriesAndCenterProps) {
   const isMobile = window.innerWidth < 768;
   
@@ -42,8 +46,10 @@ export function FactoriesAndCenter({
                 key={factory.id} 
                 factory={factory}
                 onFactoryClick={onFactoryClick}
-                disabled={voidEffectPending ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn)}
+                disabled={(voidEffectPending || frostEffectPending) ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn || frozenFactories.includes(factory.id))}
                 voidEffectPending={voidEffectPending}
+                frostEffectPending={frostEffectPending}
+                isFrozen={frozenFactories.includes(factory.id)}
               />
             ))}
           </div>
@@ -54,8 +60,10 @@ export function FactoriesAndCenter({
                 key={factory.id} 
                 factory={factory}
                 onFactoryClick={onFactoryClick}
-                disabled={voidEffectPending ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn)}
+                disabled={(voidEffectPending || frostEffectPending) ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn || frozenFactories.includes(factory.id))}
                 voidEffectPending={voidEffectPending}
+                frostEffectPending={frostEffectPending}
+                isFrozen={frozenFactories.includes(factory.id)}
               />
             ))}
           </div>
@@ -68,8 +76,10 @@ export function FactoriesAndCenter({
               key={factory.id} 
               factory={factory}
               onFactoryClick={onFactoryClick}
-              disabled={voidEffectPending ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn)}
+              disabled={(voidEffectPending || frostEffectPending) ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn || frozenFactories.includes(factory.id))}
               voidEffectPending={voidEffectPending}
+              frostEffectPending={frostEffectPending}
+              isFrozen={frozenFactories.includes(factory.id)}
             />
           ))}
         </div>

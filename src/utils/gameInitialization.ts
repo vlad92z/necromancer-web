@@ -166,5 +166,7 @@ export function initializeGame(): GameState {
     scoringPhase: null,
     roundHistory: [],
     voidEffectPending: false,
+    frostEffectPending: false,
+    frozenFactories: [],
   };
 }
