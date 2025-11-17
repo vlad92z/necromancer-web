@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import type { Player } from '../../../types/game';
 import { calculateProjectedPower } from '../../../utils/scoring';
 
@@ -15,6 +16,8 @@ interface RunePowerProps {
 export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
   const isMobile = window.innerWidth < 768;
   const [showExplanation, setShowExplanation] = useState(false);
+  
+  const currentHealth = 300 - damageTaken;
   
   // Find completed pattern lines
   const completedPatternLines = player.patternLines
@@ -65,7 +68,18 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
           <span style={{ color: nameColor }}>
             {player.name}
           </span>
-          <span style={{ color: '#ea580c' }}>❤️ {300 - damageTaken}</span>
+          <motion.span 
+            key={currentHealth}
+            initial={{ scale: 1.5, color: '#dc2626' }}
+            animate={{ scale: 1, color: '#ea580c' }}
+            transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
+            style={{ 
+              color: '#ea580c',
+              display: 'inline-block'
+            }}
+          >
+            ❤️ {currentHealth}
+          </motion.span>
         </div>
       </div>
 
