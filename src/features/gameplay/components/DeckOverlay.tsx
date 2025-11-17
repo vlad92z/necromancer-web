@@ -165,7 +165,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                       : 'repeat(auto-fill, minmax(60px, 1fr))',
                     gap: isMobile ? '4px' : '6px',
                     padding: isMobile ? '6px' : '8px',
-                    backgroundColor: 'white',
+                    backgroundColor: '#f8fafc',
                     borderRadius: isMobile ? '4px' : '6px',
                     flex: 1,
                   }}>
