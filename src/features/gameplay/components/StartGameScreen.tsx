@@ -32,7 +32,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           fontSize: isMobile ? '32px' : '48px', 
           fontWeight: 'bold', 
           color: '#667eea', 
-          marginBottom: '16px',
+          marginBottom: '6px',
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)'
         }}>
           Massive Spell
@@ -54,13 +54,10 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           lineHeight: '1.6'
         }}>
           <p style={{ marginBottom: '12px' }}>
-            Draft powerful runes from mystical factories and craft strategic spell patterns.
+            Prepare powerful runes from mystical Runeforges and craft strategic spell patterns.
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Complete your pattern lines to place runes on your scoring wall and unleash devastating combos!
-          </p>
-          <p>
-            Face off against the AI opponent in this arcane battle of wits.
+            Complete your Spellcasting Lines and place runes on your Spell Wall to unleash devastating combos!
           </p>
         </div>
         
