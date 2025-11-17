@@ -409,10 +409,9 @@ src/
   - [x] Look-ahead planning (consider which runes will be available next turn)
   - [x] Value higher tier lines (tier 5 = more points potential with exponential scaling)
   - [x] Avoid wasted runes (don't draft more than a line can hold, exponential waste penalties)
-- [ ] **Advanced strategies:**
-  - [ ] Minimax algorithm (evaluate multiple moves ahead)
-  - [ ] Scoring simulation (calculate expected points for each move)
-  - [ ] Adaptive difficulty (learn from player patterns)
+- [x] **Advanced strategies:**
+  - [x] Minimax algorithm (evaluate multiple moves ahead)
+  - [x] Scoring simulation (calculate expected points for each move)
 
 ---
 
