@@ -473,9 +473,9 @@ src/
 Each rune type has a unique effect that triggers during gameplay, creating strategic depth and tactical decisions.
 
 ### 🔥 Fire (Power)
-**Effect:** Every Fire rune adds +1 to its containing segment's essence (not the focus)
-- **Example:** A 4-rune segment with 2 Fire runes = 6×4 = 24 points (instead of 4×4 = 16)
-- **Strategy:** Maximize Fire runes in large connected segments for exponential scoring
+**Effect:** Every active Fire rune adds +1 Essence
+- **Example:** Having 4 active Fire runes on the Spell Wall will increase total Essence by 4
+- **Strategy:** Maximize active Fire runes to significantly increase Spellpower
 - **Balance:** High offensive power, no defensive value
 
 ### ❄️ Frost (Control)
