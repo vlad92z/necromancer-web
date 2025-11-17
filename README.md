@@ -556,11 +556,13 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Add visual indicator showing Poison reduction effect
 
 - [ ] **TODO: Implement Void effect**
-  - Add factory selection UI when Void placed in pattern line
+  - Add factory selection UI after Void placed in pattern line
   - Destroy all runes in selected factory
   - Update `placeRunes()` to trigger Void effect
   - Add animation for rune destruction
   - Consider allowing cancellation if player changes mind
+  - Make sure the Computer AI performs this action
+  - Skip factory destruction if all remaining factories are empty.
 
 - [ ] **TODO: Update UI for rune effects**
   - Add effect indicators/tooltips on rune tokens
