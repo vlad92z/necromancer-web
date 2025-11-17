@@ -233,7 +233,12 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Horizontal factory layout for better visibility
 - Vertical player arrangement (Player 1 top, factories middle, Player 2 bottom)
 - Game over modal displays on game board (final state visible behind it)
-- Framer Motion animations for runes appearing in pattern lines (spring animation)
+- Framer Motion animations for runes appearing in pattern lines, scoring wall, and floor line (spring animation)
+- Animated round-end scoring sequence with timing delays:
+  - Moving completed pattern lines to wall (2 second delay)
+  - Calculating scores from wall connections (2 second delay)
+  - Clearing floor line penalties (1.5 second delay)
+  - Visual feedback through rune animations showing each change
 
 ## Getting Started
 

@@ -19,6 +19,7 @@ interface GameStore extends GameState {
   resetGame: () => void;
   triggerAITurn: () => void;
   completeAnimation: () => void; // Complete pending animation and apply placement
+  processScoringStep: () => void; // Process next step in scoring animation
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -207,11 +208,11 @@ export const useGameStore = create<GameStore>((set) => ({
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
       };
       
-      // If round ends, trigger scoring immediately
+      // If round ends, trigger scoring with delay for visual effect
       if (shouldEndRound) {
         setTimeout(() => {
           useGameStore.getState().endRound();
-        }, 0);
+        }, 1000); // 1 second delay before starting scoring animation
       }
       
       return newState;
@@ -260,10 +261,30 @@ export const useGameStore = create<GameStore>((set) => ({
   
   endRound: () => {
     set((state) => {
-      console.log('End of round scoring...');
+      console.log('End of round - starting scoring animation...');
       
-      // Score both players
-      const updatedPlayersArray = state.players.map((player) => {
+      // Start scoring animation sequence
+      return {
+        ...state,
+        scoringPhase: 'moving-to-wall' as const,
+      };
+    });
+    
+    // Start the scoring animation sequence
+    setTimeout(() => {
+      useGameStore.getState().processScoringStep();
+    }, 1500); // 1.5 seconds to show "Moving to Wall" message
+  },
+  
+  processScoringStep: () => {
+    set((state) => {
+      const currentPhase = state.scoringPhase;
+      
+      if (currentPhase === 'moving-to-wall') {
+        console.log('Scoring: Moving runes to wall...');
+        
+        // Score both players - Move completed lines to wall
+        const updatedPlayersArray = state.players.map((player) => {
         const updatedPatternLines = [...player.patternLines];
         const updatedWall = player.wall.map((row) => [...row]);
         
@@ -302,31 +323,94 @@ export const useGameStore = create<GameStore>((set) => ({
           ...player,
           patternLines: updatedPatternLines,
           wall: updatedWall,
-          score: newScore,
-          floorLine: {
-            ...player.floorLine,
-            runes: [], // Clear floor line
-          },
+          score: player.score, // Don't update score yet, just move runes
+          floorLine: player.floorLine, // Don't clear floor yet
         };
       });
       
       const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
       
+      // Move to calculating score phase
+      setTimeout(() => {
+        useGameStore.getState().processScoringStep();
+      }, 2000); // 2 seconds to see runes move to wall
+      
+      return {
+        ...state,
+        players: updatedPlayers,
+        scoringPhase: 'calculating-score' as const,
+      };
+    } else if (currentPhase === 'calculating-score') {
+      console.log('Scoring: Calculating scores...');
+      
+      // Calculate and apply scores
+      const updatedPlayersArray = state.players.map((player) => {
+        const floorPenaltyCount = player.floorLine.runes.length;
+        const wallPower = calculateWallPower(player.wall, floorPenaltyCount);
+        const newScore = Math.max(0, player.score + wallPower);
+        
+        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties), Total score ${newScore}`);
+        
+        return {
+          ...player,
+          score: newScore,
+        };
+      });
+      
+      const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
+      
+      // Move to clearing floor phase
+      setTimeout(() => {
+        useGameStore.getState().processScoringStep();
+      }, 2000); // 2 seconds to see score updates
+      
+      return {
+        ...state,
+        players: updatedPlayers,
+        scoringPhase: 'clearing-floor' as const,
+      };
+    } else if (currentPhase === 'clearing-floor') {
+      console.log('Scoring: Clearing floor lines...');
+      
+      // Clear floor lines
+      const updatedPlayersArray = state.players.map((player) => ({
+        ...player,
+        floorLine: {
+          ...player.floorLine,
+          runes: [],
+        },
+      }));
+      
+      const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
+      
+      // Move to complete phase
+      setTimeout(() => {
+        useGameStore.getState().processScoringStep();
+      }, 1500); // 1.5 seconds to see floor clear
+      
+      return {
+        ...state,
+        players: updatedPlayers,
+        scoringPhase: 'complete' as const,
+      };
+    } else if (currentPhase === 'complete') {
+      console.log('Scoring: Complete, checking game over...');
+      
       // Check if either player has run out of runes (need 10 runes minimum for 5 factories)
-      const player1HasEnough = updatedPlayers[0].deck.length >= 10;
-      const player2HasEnough = updatedPlayers[1].deck.length >= 10;
+      const player1HasEnough = state.players[0].deck.length >= 10;
+      const player2HasEnough = state.players[1].deck.length >= 10;
       
       if (!player1HasEnough || !player2HasEnough) {
         console.log('Game over! A player has run out of runes.');
-        console.log(`Player 1 runes: ${updatedPlayers[0].deck.length}, Player 2 runes: ${updatedPlayers[1].deck.length}`);
+        console.log(`Player 1 runes: ${state.players[0].deck.length}, Player 2 runes: ${state.players[1].deck.length}`);
         
         return {
           ...state,
-          players: updatedPlayers,
           factories: [],
           centerPool: [],
           turnPhase: 'game-over',
           round: state.round,
+          scoringPhase: null,
         };
       }
       
@@ -334,22 +418,30 @@ export const useGameStore = create<GameStore>((set) => ({
       const emptyFactories = createEmptyFactories(5);
       const { factories: filledFactories, deck1, deck2 } = fillFactories(
         emptyFactories, 
-        updatedPlayers[0].deck, 
-        updatedPlayers[1].deck
+        state.players[0].deck, 
+        state.players[1].deck
       );
       
       // Update player decks with remaining runes after filling factories
-      updatedPlayers[0].deck = deck1;
-      updatedPlayers[1].deck = deck2;
+      const finalPlayers: [Player, Player] = [
+        { ...state.players[0], deck: deck1 },
+        { ...state.players[1], deck: deck2 }
+      ];
+      
+      console.log('Round complete! Starting next round...');
       
       return {
         ...state,
-        players: updatedPlayers,
+        players: finalPlayers,
         factories: filledFactories,
         centerPool: [],
         turnPhase: 'draft',
         round: state.round + 1,
+        scoringPhase: null,
       };
+    }
+    
+    return state;
     });
   },
   

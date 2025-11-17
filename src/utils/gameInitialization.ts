@@ -144,7 +144,7 @@ export function initializeGame(): GameState {
   const emptyFactories = createEmptyFactories(5);
   
   // Fill factories and get updated decks
-  const { factories, deck1, deck2 } = fillFactories(emptyFactories, player1.deck, player2.deck);
+  const { factories: filledFactories, deck1, deck2 } = fillFactories(emptyFactories, player1.deck, player2.deck);
   
   // Update player decks with remaining runes
   player1.deck = deck1;
@@ -152,7 +152,7 @@ export function initializeGame(): GameState {
   
   return {
     players: [player1, player2],
-    factories,
+    factories: filledFactories,
     centerPool: [],
     currentPlayerIndex: 0,
     turnPhase: 'draft',
@@ -162,5 +162,6 @@ export function initializeGame(): GameState {
     firstPlayerToken: null,
     animatingRunes: [],
     pendingPlacement: null,
+    scoringPhase: null,
   };
 }
