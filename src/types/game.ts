@@ -93,6 +93,19 @@ export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-o
 export type ScoringPhase = 'moving-to-wall' | 'calculating-score' | 'clearing-floor' | 'complete' | null;
 
 /**
+ * Round history entry for game log
+ */
+export interface RoundScore {
+  round: number;
+  playerName: string;
+  playerSegments: Array<{ size: number; multiplier: number }>;
+  playerTotal: number;
+  opponentName: string;
+  opponentSegments: Array<{ size: number; multiplier: number }>;
+  opponentTotal: number;
+}
+
+/**
  * Animation state for rune movement
  */
 export interface AnimatingRune {
@@ -121,4 +134,5 @@ export interface GameState {
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringPhase: ScoringPhase; // Current step in round-end scoring animation
+  roundHistory: RoundScore[]; // History of completed rounds for game log
 }

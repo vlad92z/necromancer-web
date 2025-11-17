@@ -163,5 +163,6 @@ export function initializeGame(): GameState {
     animatingRunes: [],
     pendingPlacement: null,
     scoringPhase: null,
+    roundHistory: [],
   };
 }

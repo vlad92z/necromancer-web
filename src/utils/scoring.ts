@@ -51,6 +51,49 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
 }
 
 /**
+ * Calculate wall power and return detailed segment information
+ * Used for game log display
+ */
+export function calculateWallPowerWithSegments(
+  wall: ScoringWall, 
+  floorPenaltyCount: number = 0
+): { segments: Array<{ size: number; multiplier: number }>; totalPower: number } {
+  const visited = Array(5).fill(null).map(() => Array(5).fill(false));
+  const segments: Array<{ size: number; multiplier: number }> = [];
+  
+  function floodFill(row: number, col: number): number {
+    if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
+        visited[row][col] || wall[row][col].runeType === null) {
+      return 0;
+    }
+    
+    visited[row][col] = true;
+    let count = 1;
+    
+    count += floodFill(row - 1, col);
+    count += floodFill(row + 1, col);
+    count += floodFill(row, col - 1);
+    count += floodFill(row, col + 1);
+    
+    return count;
+  }
+  
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      if (!visited[row][col] && wall[row][col].runeType !== null) {
+        const segmentSize = floodFill(row, col);
+        const multiplier = Math.max(1, segmentSize - floorPenaltyCount);
+        segments.push({ size: segmentSize, multiplier });
+      }
+    }
+  }
+  
+  const totalPower = segments.reduce((sum, seg) => sum + (seg.size * seg.multiplier), 0);
+  
+  return { segments, totalPower };
+}
+
+/**
  * Legacy function for placement scoring (no longer used for end-of-round scoring)
  * Kept for backwards compatibility if needed
  */

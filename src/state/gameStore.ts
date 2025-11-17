@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import type { GameState, RuneType, Player } from '../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
-import { calculateWallPower, getWallColumnForRune } from '../utils/scoring';
+import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune } from '../utils/scoring';
 import { makeAIMove } from '../utils/aiPlayer';
 
 interface GameStore extends GameState {
@@ -343,7 +343,7 @@ export const useGameStore = create<GameStore>((set) => ({
     } else if (currentPhase === 'calculating-score') {
       console.log('Scoring: Calculating scores...');
       
-      // Calculate and apply scores
+      // Calculate and apply scores, and record round history
       const updatedPlayersArray = state.players.map((player) => {
         const floorPenaltyCount = player.floorLine.runes.length;
         const wallPower = calculateWallPower(player.wall, floorPenaltyCount);
@@ -359,6 +359,20 @@ export const useGameStore = create<GameStore>((set) => ({
       
       const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
       
+      // Record round history for game log
+      const player1Data = calculateWallPowerWithSegments(updatedPlayers[0].wall, updatedPlayers[0].floorLine.runes.length);
+      const player2Data = calculateWallPowerWithSegments(updatedPlayers[1].wall, updatedPlayers[1].floorLine.runes.length);
+      
+      const roundScore = {
+        round: state.round,
+        playerName: updatedPlayers[0].name,
+        playerSegments: player1Data.segments,
+        playerTotal: player1Data.totalPower,
+        opponentName: updatedPlayers[1].name,
+        opponentSegments: player2Data.segments,
+        opponentTotal: player2Data.totalPower,
+      };
+      
       // Move to clearing floor phase
       setTimeout(() => {
         useGameStore.getState().processScoringStep();
@@ -367,6 +381,7 @@ export const useGameStore = create<GameStore>((set) => ({
       return {
         ...state,
         players: updatedPlayers,
+        roundHistory: [...state.roundHistory, roundScore],
         scoringPhase: 'clearing-floor' as const,
       };
     } else if (currentPhase === 'clearing-floor') {

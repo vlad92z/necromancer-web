@@ -12,6 +12,7 @@ import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { FactoryOverlay } from './FactoryOverlay';
+import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 
 interface GameBoardProps {
@@ -26,6 +27,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
+  const [showLogOverlay, setShowLogOverlay] = useState(false);
   const [showFactoryOverlay, setShowFactoryOverlay] = useState(false);
   const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
   const [factoryOverlaySource, setFactoryOverlaySource] = useState<'factory' | 'center'>('factory');
@@ -162,6 +164,24 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               }}
             >
               {isMobile ? '🎴' : '🎴 Deck'}
+            </button>
+            
+            {/* Log Button */}
+            <button
+              onClick={() => setShowLogOverlay(true)}
+              style={{
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '6px 12px' : '8px 16px',
+                fontSize: isMobile ? '12px' : '14px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}
+            >
+              {isMobile ? '📜' : '📜 Log'}
             </button>
             
             {/* Rules Button */}
@@ -335,6 +355,14 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           deck={players[0].deck}
           playerName={players[0].name}
           onClose={() => setShowDeckOverlay(false)}
+        />
+      )}
+      
+      {/* Log Overlay */}
+      {showLogOverlay && (
+        <GameLogOverlay
+          roundHistory={gameState.roundHistory}
+          onClose={() => setShowLogOverlay(false)}
         />
       )}
       
