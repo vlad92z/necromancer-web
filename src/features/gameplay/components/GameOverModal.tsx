@@ -37,11 +37,11 @@ export function GameOverModal({ players, winner, onReturnToStart }: GameOverModa
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: winner?.id === 'player-1' ? '2px solid #22c55e' : 'none' }}>
               <span style={{ fontWeight: '600' }}>{players[0].name}</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#60a5fa' }}>{players[1].score} damage taken</span>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#ea580c' }}>❤️ {300 - players[1].score}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: winner?.id === 'player-2' ? '2px solid #22c55e' : 'none' }}>
               <span style={{ fontWeight: '600' }}>{players[1].name}</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#f87171' }}>{players[0].score} damage taken</span>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#ea580c' }}>❤️ {300 - players[0].score}</span>
             </div>
           </div>
         </div>
