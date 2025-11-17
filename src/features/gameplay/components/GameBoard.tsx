@@ -61,10 +61,13 @@ export function GameBoard({ gameState }: GameBoardProps) {
   }, [isMobile, isAITurn]);
   
   // Determine winner (lowest damage taken wins)
+  // players[0].score = damage dealt by player (taken by opponent)
+  // players[1].score = damage dealt by opponent (taken by player)
+  // So player wins if players[1].score < players[0].score (they took less damage)
   const winner = isGameOver
-    ? players[0].score < players[1].score
+    ? players[1].score < players[0].score
       ? players[0]
-      : players[1].score < players[0].score
+      : players[0].score < players[1].score
         ? players[1]
         : null
     : null;
