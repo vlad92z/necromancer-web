@@ -481,13 +481,14 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 - **Strategy:** Deny key runes to opponent or clean up unwanted colors
 - **Balance:** High disruption but doesn't directly score points
 
-### 💨 Wind (Chaos)
-**Effect:** When you place Wind rune(s) in a pattern line or floor line, randomly move up to 4 runes from the center pool to an empty factory (if one exists)
-- Creates new drafting opportunities from center pool buildup
-- Helps clean up clogged center
-- Works even when Wind goes to floor line
-- **Strategy:** Use Wind to create favorable factories or deny opponent center pool access
-- **Balance:** Situational power, can help or hinder either player depending on randomness
+### 💨 Wind (Mitigation)
+**Effect:** Wind runes placed in the floor line reduce penalties instead of increasing them
+- Each Wind rune in the floor line cancels out one other floor penalty
+- Wind runes still occupy a floor slot (count toward the 7-rune limit)
+- Only affects your own floor penalties, not opponent's
+- **Example:** Floor has [Fire, Fire, Frost, Wind, Wind] = 3 penalties (not 5)
+- **Strategy:** Use Wind as insurance when you can't place runes optimally, or intentionally draft Wind to mitigate unavoidable floor penalties
+- **Balance:** Valuable defensive rune that rewards planning and risk management without being overpowered
 
 ### Implementation TODO
 
@@ -519,12 +520,11 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Consider allowing cancellation if player changes mind
 
 - [ ] **TODO: Implement Wind effect**
-  - Trigger when Wind placed in pattern line OR floor line
-  - Find empty factories (if any exist)
-  - Select up to 4 random runes from center pool
-  - Move selected runes to a random empty factory
-  - Update `placeRunes()` to trigger Wind effect
-  - Add animation for runes moving from center to factory
+  - Modify floor line penalty calculation to exclude Wind runes
+  - Each Wind rune cancels out one other floor penalty (minimum 0 total penalties)
+  - Update `calculateWallPower()` or floor penalty counting logic in `src/utils/scoring.ts`
+  - Wind runes still count toward the 7-rune floor line capacity
+  - Add visual indicator showing Wind mitigation effect in floor line
 
 - [ ] **TODO: Update UI for rune effects**
   - Add effect indicators/tooltips on rune tokens
@@ -537,7 +537,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Consider Frost for blocking opponent
   - Weight Poison collection strategically
   - Use Void for denial tactics
-  - Handle Wind's randomness appropriately
+  - Value Wind as floor insurance and penalty mitigation
 
 ### Future Enhancements
 - [ ] Boss selection and special modifiers
