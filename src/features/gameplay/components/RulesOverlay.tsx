@@ -98,10 +98,11 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               ⭐ Scoring
             </h3>
             <p style={{ margin: 0 }}>
-              • Placing a rune on your wall scores points<br/>
-              • Score 1 point for an isolated rune<br/>
-              • Score more for horizontal and vertical combos<br/>
-              • Floor line runes give penalties (-1 to -10)
+              • <strong>Essence</strong>: Total active runes on your wall<br/>
+              • <strong>Focus</strong>: Size of your largest connected segment<br/>
+              • <strong>Power</strong> = Essence × Focus<br/>
+              • Floor line penalties reduce your Focus<br/>
+              • Build large connected segments to maximize power!
             </p>
           </section>
           

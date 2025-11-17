@@ -98,10 +98,12 @@ export type ScoringPhase = 'moving-to-wall' | 'calculating-score' | 'clearing-fl
 export interface RoundScore {
   round: number;
   playerName: string;
-  playerSegments: Array<{ essence: number; focus: number }>;
+  playerEssence: number;
+  playerFocus: number;
   playerTotal: number;
   opponentName: string;
-  opponentSegments: Array<{ essence: number; focus: number }>;
+  opponentEssence: number;
+  opponentFocus: number;
   opponentTotal: number;
 }
 

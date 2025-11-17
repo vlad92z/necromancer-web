@@ -6,13 +6,16 @@
 import type { ScoringWall, RuneType } from '../types/game';
 
 /**
- * Calculate total wall power based on connected segments
- * Each segment's power is essence * max(1, essence - floorPenaltyCount)
+ * Calculate total wall power using simplified scoring
+ * Essence = total number of active runes on the wall
+ * Focus = size of the largest connected segment (reduced by floor penalty)
+ * Power = Essence × Focus
  * Runes are connected if they share an edge (not diagonal)
  */
 export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0): number {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
-  let totalPower = 0;
+  let totalRunes = 0;
+  let largestSegment = 0;
   
   // Flood fill to find each connected segment
   function floodFill(row: number, col: number): number {
@@ -34,32 +37,36 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
     return count;
   }
   
-  // Find all segments
+  // Find all segments and track the largest
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
-        const essence = floodFill(row, col);
-        // Apply floor penalty: focus = max(1, essence - floorPenaltyCount)
-        const focus = Math.max(1, essence - floorPenaltyCount);
-        const segmentPower = essence * focus;
-        totalPower += segmentPower;
+        const segmentSize = floodFill(row, col);
+        totalRunes += segmentSize;
+        largestSegment = Math.max(largestSegment, segmentSize);
       }
     }
   }
+  
+  // Apply floor penalty to focus (minimum 1)
+  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  const totalPower = totalRunes * focus;
   
   return totalPower;
 }
 
 /**
- * Calculate wall power and return detailed segment information
+ * Calculate wall power and return detailed information
  * Used for game log display
+ * Returns essence (total runes) and focus (largest segment)
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
   floorPenaltyCount: number = 0
-): { segments: Array<{ essence: number; focus: number }>; totalPower: number } {
+): { essence: number; focus: number; totalPower: number } {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
-  const segments: Array<{ essence: number; focus: number }> = [];
+  let totalRunes = 0;
+  let largestSegment = 0;
   
   function floodFill(row: number, col: number): number {
     if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
@@ -81,16 +88,17 @@ export function calculateWallPowerWithSegments(
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
-        const essence = floodFill(row, col);
-        const focus = Math.max(1, essence - floorPenaltyCount);
-        segments.push({ essence, focus });
+        const segmentSize = floodFill(row, col);
+        totalRunes += segmentSize;
+        largestSegment = Math.max(largestSegment, segmentSize);
       }
     }
   }
   
-  const totalPower = segments.reduce((sum, seg) => sum + (seg.essence * seg.focus), 0);
+  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  const totalPower = totalRunes * focus;
   
-  return { segments, totalPower };
+  return { essence: totalRunes, focus, totalPower };
 }
 
 /**
@@ -247,13 +255,13 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
 
 /**
  * Calculate projected power for the end of current turn
- * Shows what segments will be created and their power
+ * Shows what essence and focus will be after placing completed pattern lines
  */
 export function calculateProjectedPower(
   wall: ScoringWall,
   completedPatternLines: Array<{ row: number; runeType: RuneType }>,
   floorPenaltyCount: number
-): { segments: Array<{ essence: number; focus: number; power: number }>; totalPower: number; floorPenalty: number } {
+): { essence: number; focus: number; totalPower: number; floorPenalty: number } {
   // Create a simulated wall with pattern line runes placed
   const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
   
@@ -263,9 +271,10 @@ export function calculateProjectedPower(
     simulatedWall[row][col] = { runeType };
   }
   
-  // Find all segments in the simulated wall
+  // Calculate essence and focus for simulated wall
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
-  const segments: Array<{ essence: number; focus: number; power: number }> = [];
+  let totalRunes = 0;
+  let largestSegment = 0;
   
   function floodFill(row: number, col: number): number {
     if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
@@ -284,20 +293,20 @@ export function calculateProjectedPower(
     return count;
   }
   
-  // Find all segments
+  // Find all segments and track largest
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && simulatedWall[row][col].runeType !== null) {
-        const essence = floodFill(row, col);
-        const focus = Math.max(1, essence - floorPenaltyCount);
-        const segmentPower = essence * focus;
-        segments.push({ essence, focus, power: segmentPower });
+        const segmentSize = floodFill(row, col);
+        totalRunes += segmentSize;
+        largestSegment = Math.max(largestSegment, segmentSize);
       }
     }
   }
   
-  const totalPower = segments.reduce((sum, seg) => sum + seg.power, 0);
+  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  const totalPower = totalRunes * focus;
   const floorPenalty = calculateFloorPenalty(floorPenaltyCount);
   
-  return { segments, totalPower, floorPenalty };
+  return { essence: totalRunes, focus, totalPower, floorPenalty };
 }
