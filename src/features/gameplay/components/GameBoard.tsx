@@ -7,7 +7,9 @@ import type { GameState } from '../../../types/game';
 import { FactoriesAndCenter } from './FactoriesAndCenter';
 import { PlayerView } from './PlayerView';
 import { OpponentView } from './OpponentView';
-import { RuneToken } from '../../../components/RuneToken';
+import { GameOverModal } from './GameOverModal';
+import { SelectedRunesOverlay } from './SelectedRunesOverlay';
+import { RulesOverlay } from './RulesOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 
 interface GameBoardProps {
@@ -20,6 +22,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
+  const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const isMobile = window.innerWidth < 768;
   console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
@@ -76,20 +79,24 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
             <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
           </div>
           
-          {/* View Opponent Button (Mobile Only) */}
-          {isMobile && currentPlayerIndex === 0 && (
+          {/* Top Right Buttons */}
+          <div style={{
+            position: 'absolute',
+            top: '0',
+            right: '0',
+            display: 'flex',
+            gap: isMobile ? '4px' : '8px'
+          }}>
+            {/* Rules Button */}
             <button
-              onClick={() => setShowOpponentOverlay(true)}
+              onClick={() => setShowRulesOverlay(true)}
               style={{
-                position: 'absolute',
-                top: '0',
-                right: '0',
-                backgroundColor: '#7c2d12',
+                backgroundColor: '#0369a1',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                padding: '6px 10px',
-                fontSize: '10px',
+                padding: isMobile ? '6px 10px' : '8px 14px',
+                fontSize: isMobile ? '10px' : '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 display: 'flex',
@@ -98,12 +105,38 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 transition: 'background-color 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#9a3412'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#7c2d12'}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0284c7'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0369a1'}
             >
-              👁️ Opponent
+              ❓ Rules
             </button>
-          )}
+            
+            {/* View Opponent Button (Mobile Only) */}
+            {isMobile && currentPlayerIndex === 0 && (
+              <button
+                onClick={() => setShowOpponentOverlay(true)}
+                style={{
+                  backgroundColor: '#7c2d12',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 10px',
+                  fontSize: '10px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#9a3412'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#7c2d12'}
+              >
+                👁️ Opponent
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Player Boards - Side by side on desktop, stacked on mobile */}
@@ -159,31 +192,10 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           
           {/* Selected Runes Display - Overlay */}
           {hasSelectedRunes && (
-            <div 
-              style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 20, pointerEvents: 'auto' }}
-              onClick={cancelSelection}
-            >
-              <div style={{
-                backgroundColor: 'rgba(219, 234, 254, 0.95)',
-                border: '2px solid #3b82f6',
-                borderRadius: window.innerWidth < 768 ? '4px' : '12px',
-                padding: window.innerWidth < 768 ? '6px' : '16px',
-                maxWidth: '36rem',
-                width: window.innerWidth < 768 ? '90vw' : 'auto'
-              }}>
-                <h3 style={{ fontSize: window.innerWidth < 768 ? '6px' : '14px', fontWeight: '600', color: '#1e40af', marginBottom: '8px', textAlign: 'center' }}>
-                  Selected Runes ({selectedRunes.length})
-                </h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                  {selectedRunes.map((rune) => (
-                    <RuneToken key={rune.id} rune={rune} size="small" />
-                  ))}
-                </div>
-                <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '14px', color: '#475569' }}>
-                  Click a pattern line to place these runes
-                </div>
-              </div>
-            </div>
+            <SelectedRunesOverlay
+              selectedRunes={selectedRunes}
+              onCancel={cancelSelection}
+            />
           )}
         </div>
       </div>
@@ -235,52 +247,18 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         </div>
       )}
       
+      {/* Rules Overlay */}
+      {showRulesOverlay && (
+        <RulesOverlay onClose={() => setShowRulesOverlay(false)} />
+      )}
+      
       {/* Game Over Modal */}
       {isGameOver && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ backgroundColor: '#111827', border: '4px solid #eab308', borderRadius: '16px', padding: '32px', maxWidth: '28rem', width: '100%', margin: '0 16px', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '36px', fontWeight: 'bold', color: '#eab308', marginBottom: '24px' }}>
-              {winner?.id === 'player-1' ? 'Victory!' : winner ? 'Defeat!' : 'Draw!'}
-            </h2>
-            
-            <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ fontSize: '24px', fontWeight: '600' }}>
-                {winner ? `${winner.name} Wins!` : "It's a Tie!"}
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px', border: winner?.id === 'player-1' ? '2px solid #22c55e' : 'none' }}>
-                  <span style={{ fontWeight: '600' }}>{players[0].name}</span>
-                  <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#60a5fa' }}>{players[0].score}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1f2937', padding: '12px', borderRadius: '8px', border: winner?.id === 'player-2' ? '2px solid #22c55e' : 'none' }}>
-                  <span style={{ fontWeight: '600' }}>{players[1].name}</span>
-                  <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#f87171' }}>{players[1].score}</span>
-                </div>
-              </div>
-            </div>
-            
-            <button
-              onClick={onNextGame}
-              style={{
-                backgroundColor: '#eab308',
-                color: '#111827',
-                fontWeight: 'bold',
-                padding: '12px 32px',
-                borderRadius: '8px',
-                fontSize: '18px',
-                width: '100%',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ca8a04'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#eab308'}
-            >
-              Play Again
-            </button>
-          </div>
-        </div>
+        <GameOverModal
+          players={players}
+          winner={winner}
+          onNextGame={onNextGame}
+        />
       )}
     </div>
   );
