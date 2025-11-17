@@ -151,6 +151,7 @@ export function initializeGame(): GameState {
   player2.deck = deck2;
   
   return {
+    gameStarted: false,
     players: [player1, player2],
     factories: filledFactories,
     centerPool: [],

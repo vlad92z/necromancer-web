@@ -3,16 +3,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface RoundScore {
-  round: number;
-  playerName: string;
-  playerSegments: Array<{ size: number; multiplier: number }>;
-  playerTotal: number;
-  opponentName: string;
-  opponentSegments: Array<{ size: number; multiplier: number }>;
-  opponentTotal: number;
-}
+import type { RoundScore } from '../../../types/game';
 
 interface GameLogOverlayProps {
   roundHistory: RoundScore[];
@@ -161,7 +152,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                     {round.playerSegments.map((seg, i) => (
                       <span key={i}>
                         {i > 0 && ' + '}
-                        {seg.size}×{seg.multiplier}
+                        {seg.essence}×{seg.focus}
                       </span>
                     ))}
                     {round.playerSegments.length > 0 && ' = '}
@@ -180,7 +171,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                     {round.opponentSegments.map((seg, i) => (
                       <span key={i}>
                         {i > 0 && ' + '}
-                        {seg.size}×{seg.multiplier}
+                        {seg.essence}×{seg.focus}
                       </span>
                     ))}
                     {round.opponentSegments.length > 0 && ' = '}

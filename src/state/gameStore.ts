@@ -10,6 +10,8 @@ import { makeAIMove } from '../utils/aiPlayer';
 
 interface GameStore extends GameState {
   // Actions
+  startGame: () => void;
+  returnToStartScreen: () => void;
   draftRune: (factoryId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
@@ -457,6 +459,21 @@ export const useGameStore = create<GameStore>((set) => ({
     }
     
     return state;
+    });
+  },
+  
+  startGame: () => {
+    set((state) => ({
+      ...state,
+      gameStarted: true,
+    }));
+  },
+
+  returnToStartScreen: () => {
+    // Reset game and return to start screen
+    set({
+      ...initializeGame(),
+      gameStarted: false,
     });
   },
   

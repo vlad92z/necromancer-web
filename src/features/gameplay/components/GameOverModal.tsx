@@ -7,10 +7,10 @@ import type { Player } from '../../../types/game';
 interface GameOverModalProps {
   players: [Player, Player];
   winner: Player | null;
-  onNextGame?: () => void;
+  onReturnToStart?: () => void;
 }
 
-export function GameOverModal({ players, winner, onNextGame }: GameOverModalProps) {
+export function GameOverModal({ players, winner, onReturnToStart }: GameOverModalProps) {
   const isMobile = window.innerWidth < 768;
   
   return (
@@ -47,7 +47,7 @@ export function GameOverModal({ players, winner, onNextGame }: GameOverModalProp
         </div>
         
         <button
-          onClick={onNextGame}
+          onClick={onReturnToStart}
           style={{
             backgroundColor: '#eab308',
             color: '#111827',
@@ -63,7 +63,7 @@ export function GameOverModal({ players, winner, onNextGame }: GameOverModalProp
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ca8a04'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#eab308'}
         >
-          Play Again
+          Return to Start
         </button>
       </div>
   );

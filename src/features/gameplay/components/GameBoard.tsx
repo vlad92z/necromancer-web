@@ -14,15 +14,16 @@ import { DeckOverlay } from './DeckOverlay';
 import { FactoryOverlay } from './FactoryOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
+import { useGameStore } from '../../../state/gameStore';
 
 interface GameBoardProps {
   gameState: GameState;
-  onNextGame?: () => void;
 }
 
-export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
+export function GameBoard({ gameState }: GameBoardProps) {
   const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
+  const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
@@ -308,7 +309,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               <GameOverModal
                 players={players}
                 winner={winner}
-                onNextGame={onNextGame}
+                onReturnToStart={returnToStartScreen}
               />
             </div>
           )}

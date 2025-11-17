@@ -50,7 +50,7 @@ export function RunePower({ player }: RunePowerProps) {
             {segments.map((seg, index) => (
               <span key={index}>
                 {index > 0 && ' + '}
-                {seg.size}×<span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{seg.multiplier}</span>
+                {seg.essence}×<span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{seg.focus}</span>
               </span>
             ))}
             {' = '}

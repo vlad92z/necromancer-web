@@ -98,10 +98,10 @@ export type ScoringPhase = 'moving-to-wall' | 'calculating-score' | 'clearing-fl
 export interface RoundScore {
   round: number;
   playerName: string;
-  playerSegments: Array<{ size: number; multiplier: number }>;
+  playerSegments: Array<{ essence: number; focus: number }>;
   playerTotal: number;
   opponentName: string;
-  opponentSegments: Array<{ size: number; multiplier: number }>;
+  opponentSegments: Array<{ essence: number; focus: number }>;
   opponentTotal: number;
 }
 
@@ -122,6 +122,7 @@ export interface AnimatingRune {
  * Note: Only PvE (Player vs AI) mode is supported
  */
 export interface GameState {
+  gameStarted: boolean; // Whether the game has been started (false shows start screen)
   players: [Player, Player]; // Player (index 0) and AI Opponent (index 1)
   factories: Factory[];
   centerPool: Rune[]; // Center factory (accumulates leftover runes)
