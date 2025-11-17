@@ -2,12 +2,15 @@
  * StartGameScreen component - displays welcome screen before game begins
  */
 
+import { useState } from 'react';
+
 interface StartGameScreenProps {
   onStartGame: () => void;
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const isMobile = window.innerWidth < 768;
+  const [gameMode, setGameMode] = useState<'classic' | 'standard'>('classic');
   
   return (
     <div style={{
@@ -59,6 +62,76 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           <p style={{ marginBottom: '12px' }}>
             Complete your Spellcasting Lines and place runes on your Spell Wall to unleash devastating combos!
           </p>
+        </div>
+        
+        {/* Game Mode Toggle */}
+        <div style={{
+          marginBottom: '24px',
+          padding: isMobile ? '16px' : '20px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          border: '2px solid #e2e8f0'
+        }}>
+          <div style={{
+            fontSize: isMobile ? '14px' : '16px',
+            fontWeight: '600',
+            color: '#334155',
+            marginBottom: '12px'
+          }}>
+            Game Mode
+          </div>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
+          }}>
+            <button
+              onClick={() => setGameMode('classic')}
+              style={{
+                flex: 1,
+                padding: isMobile ? '10px 16px' : '12px 24px',
+                borderRadius: '8px',
+                fontSize: isMobile ? '14px' : '16px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: gameMode === 'classic' ? '#667eea' : '#cbd5e1',
+                backgroundColor: gameMode === 'classic' ? '#667eea' : '#ffffff',
+                color: gameMode === 'classic' ? '#ffffff' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Classic
+            </button>
+            <button
+              onClick={() => setGameMode('standard')}
+              style={{
+                flex: 1,
+                padding: isMobile ? '10px 16px' : '12px 24px',
+                borderRadius: '8px',
+                fontSize: isMobile ? '14px' : '16px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: gameMode === 'standard' ? '#667eea' : '#cbd5e1',
+                backgroundColor: gameMode === 'standard' ? '#667eea' : '#ffffff',
+                color: gameMode === 'standard' ? '#ffffff' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Standard
+            </button>
+          </div>
+          <div style={{
+            marginTop: '8px',
+            fontSize: isMobile ? '11px' : '13px',
+            color: '#64748b',
+            textAlign: 'center'
+          }}>
+            {gameMode === 'classic' 
+              ? 'Play without rune modifiers' 
+              : 'Play with rune modifiers (coming soon)'}
+          </div>
         </div>
         
         <button
