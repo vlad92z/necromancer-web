@@ -529,7 +529,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 - [ ] **TODO: Implement Poison effect**
   - Count Poison runes on each player's scoring wall
   - Pass opponent's Poison count to scoring calculation
-  - Reduce focus by Poison count (minimum 1\u00d7)
+  - Reduce focus by Poison count (Focus cannot be reduced below 1\u00d7)
   - Update `calculateWallPower()` to accept `opponentPoisonCount` parameter
   - Add visual indicator showing Poison reduction effect
 
