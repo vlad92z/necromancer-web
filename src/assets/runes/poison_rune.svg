@@ -27,10 +27,10 @@
      inkscape:zoom="0.91852959"
      inkscape:cx="423.50296"
      inkscape:cy="367.43509"
-     inkscape:window-width="1920"
+     inkscape:window-width="1800"
      inkscape:window-height="940"
-     inkscape:window-x="1080"
-     inkscape:window-y="351"
+     inkscape:window-x="3017"
+     inkscape:window-y="541"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1" />
   <defs
@@ -65,13 +65,13 @@
        inkscape:collect="always"
        style="color-interpolation-filters:sRGB"
        id="filter24"
-       x="-0.30715112"
-       y="-0.30715112"
-       width="1.6143022"
-       height="1.6143022">
+       x="-0.10868354"
+       y="-0.10868354"
+       width="1.2173671"
+       height="1.2173671">
       <feGaussianBlur
          inkscape:collect="always"
-         stdDeviation="19.196945"
+         stdDeviation="6.7927214"
          id="feGaussianBlur24" />
     </filter>
     <filter

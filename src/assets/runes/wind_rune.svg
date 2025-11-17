@@ -27,10 +27,10 @@
      inkscape:zoom="0.91852959"
      inkscape:cx="423.50296"
      inkscape:cy="367.43509"
-     inkscape:window-width="1920"
+     inkscape:window-width="1800"
      inkscape:window-height="940"
-     inkscape:window-x="1080"
-     inkscape:window-y="351"
+     inkscape:window-x="3000"
+     inkscape:window-y="541"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1" />
   <defs
@@ -44,7 +44,7 @@
          id="stop6" />
       <stop
          style="stop-color:#217ac2;stop-opacity:1;"
-         offset="0.99863023"
+         offset="0.98840296"
          id="stop8" />
       <stop
          style="stop-color:#b0b0b0;stop-opacity:0;"
@@ -65,13 +65,13 @@
        inkscape:collect="always"
        style="color-interpolation-filters:sRGB"
        id="filter24"
-       x="-0.20167336"
-       y="-0.20167336"
-       width="1.4033467"
-       height="1.4033467">
+       x="-0.096225937"
+       y="-0.096225937"
+       width="1.1924519"
+       height="1.1924519">
       <feGaussianBlur
          inkscape:collect="always"
-         stdDeviation="12.604585"
+         stdDeviation="6.0141211"
          id="feGaussianBlur24" />
     </filter>
     <filter
