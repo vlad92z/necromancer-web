@@ -536,7 +536,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Clear frozen state after opponent's turn
   - Update `placeRunes()` in `src/state/gameStore.ts`
 
-- [ ] **TODO: Implement Poison effect**
+- [x] **TODO: Implement Poison effect**
   - Count Poison runes on each player's scoring wall
   - Pass opponent's Poison count to scoring calculation
   - Reduce focus by Poison count (Focus cannot be reduced below 1\u00d7)
