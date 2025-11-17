@@ -294,6 +294,24 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               onCancel={cancelSelection}
             />
           )}
+          
+          {/* Game Over Modal - Centered over factories */}
+          {isGameOver && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 100,
+              width: isMobile ? '90%' : 'auto'
+            }}>
+              <GameOverModal
+                players={players}
+                winner={winner}
+                onNextGame={onNextGame}
+              />
+            </div>
+          )}
         </div>
       </div>
       
@@ -377,15 +395,6 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           sourceType={factoryOverlaySource}
           onSelectRune={handleFactoryOverlaySelect}
           onClose={handleFactoryOverlayClose}
-        />
-      )}
-      
-      {/* Game Over Modal */}
-      {isGameOver && (
-        <GameOverModal
-          players={players}
-          winner={winner}
-          onNextGame={onNextGame}
         />
       )}
     </div>
