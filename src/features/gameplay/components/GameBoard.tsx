@@ -42,8 +42,12 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
       
       return () => clearTimeout(delayTimer);
     } else if (isMobile && !isAITurn) {
-      // Auto-hide when player's turn starts
-      setShowOpponentOverlay(false);
+      // Auto-hide when player's turn starts (with delay)
+      const hideTimer = setTimeout(() => {
+        setShowOpponentOverlay(false);
+      }, 2000); // 2 second delay before hiding overlay
+      
+      return () => clearTimeout(hideTimer);
     }
   }, [isMobile, isAITurn]);
   
