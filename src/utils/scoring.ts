@@ -261,7 +261,7 @@ export function calculateProjectedPower(
   wall: ScoringWall,
   completedPatternLines: Array<{ row: number; runeType: RuneType }>,
   floorPenaltyCount: number
-): { essence: number; focus: number; totalPower: number; floorPenalty: number } {
+): { essence: number; focus: number; totalPower: number } {
   // Create a simulated wall with pattern line runes placed
   const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
   
@@ -306,7 +306,6 @@ export function calculateProjectedPower(
   
   const focus = Math.max(1, largestSegment - floorPenaltyCount);
   const totalPower = totalRunes * focus;
-  const floorPenalty = calculateFloorPenalty(floorPenaltyCount);
   
-  return { essence: totalRunes, focus, totalPower, floorPenalty };
+  return { essence: totalRunes, focus, totalPower };
 }
