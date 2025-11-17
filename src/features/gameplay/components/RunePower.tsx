@@ -37,16 +37,14 @@ export function RunePower({ player }: RunePowerProps) {
       padding: isMobile ? '8px' : '12px',
       marginTop: isMobile ? '8px' : '12px'
     }}>
-      
-      {segments.length > 0 ? (
-        <div style={{
-          fontSize: isMobile ? '11px' : '14px',
-          color: '#78350f',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px'
-        }}>
-          <div style={{ fontWeight: '500' }}>
+      <div style={{
+        fontSize: isMobile ? '11px' : '14px',
+        color: '#78350f',
+        fontWeight: '500',
+        textAlign: 'center'
+      }}>
+        Current Spellpower: {segments.length > 0 ? (
+          <>
             {segments.map((seg, index) => (
               <span key={index}>
                 {index > 0 && ' + '}
@@ -55,54 +53,13 @@ export function RunePower({ player }: RunePowerProps) {
             ))}
             {' = '}
             <span style={{ fontWeight: 'bold', color: '#92400e' }}>
-              {totalPower}
+              {netPower}
             </span>
-          </div>
-          
-          {floorPenaltyCount > 0 && (
-            <div style={{ color: '#991b1b', fontWeight: '500' }}>
-              Overload: {floorPenalty}
-            </div>
-          )}
-          
-          <div style={{
-            paddingTop: '6px',
-            borderTop: '1px solid #fbbf24',
-            fontWeight: 'bold',
-            color: '#92400e'
-          }}>
-            Turn Power: {netPower}
-          </div>
-        </div>
-      ) : floorPenaltyCount > 0 ? (
-        <div style={{
-          fontSize: isMobile ? '11px' : '14px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px'
-        }}>
-          <div style={{ color: '#991b1b', fontWeight: '500' }}>
-            Floor penalty: {floorPenalty}
-          </div>
-          <div style={{
-            paddingTop: '6px',
-            borderTop: '1px solid #fbbf24',
-            fontWeight: 'bold',
-            color: '#92400e'
-          }}>
-            Turn Power: {netPower}
-          </div>
-        </div>
-      ) : (
-        <div style={{
-          fontSize: isMobile ? '11px' : '14px',
-          color: '#78350f',
-          fontWeight: '500',
-          textAlign: 'center'
-        }}>
-          Turn Power: 0
-        </div>
-      )}
+          </>
+        ) : (
+          <span style={{ fontWeight: 'bold', color: '#92400e' }}>0</span>
+        )}
+      </div>
     </div>
   );
 }
