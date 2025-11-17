@@ -262,7 +262,7 @@ export const useGameStore = create<GameStore>((set) => ({
       console.log('End of round scoring...');
       
       // Score both players
-      const updatedPlayers = state.players.map((player) => {
+      const updatedPlayersArray = state.players.map((player) => {
         const updatedPatternLines = [...player.patternLines];
         const updatedWall = player.wall.map((row) => [...row]);
         
@@ -307,7 +307,9 @@ export const useGameStore = create<GameStore>((set) => ({
             runes: [], // Clear floor line
           },
         };
-      }) as [Player, Player];
+      });
+      
+      const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
       
       // Check if either player has run out of runes (need 10 runes minimum for 5 factories)
       const player1HasEnough = updatedPlayers[0].deck.length >= 10;
