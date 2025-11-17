@@ -228,8 +228,8 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
               margin: 0,
               lineHeight: 1.4,
             }}>
-              💡 Runes are drawn from your deck to fill the factories each round. 
-              The game ends when you don't have enough runes left to fill all factories.
+              💡 Runes are drawn from your deck to fill the Runeforges each round. 
+              The game ends when you don't have enough runes left to fill all Runeforges.
             </p>
           </div>
         </motion.div>
