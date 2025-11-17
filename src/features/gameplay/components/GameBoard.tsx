@@ -13,7 +13,6 @@ import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { FactoryOverlay } from './FactoryOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
-import { VoidEffectOverlay } from './VoidEffectOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameStore } from '../../../state/gameStore';
 
@@ -26,7 +25,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
   const destroyFactory = useGameStore((state) => state.destroyFactory);
-  const skipVoidEffect = useGameStore((state) => state.skipVoidEffect);
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
@@ -76,6 +74,17 @@ export function GameBoard({ gameState }: GameBoardProps) {
     : null;
   
   const handleFactoryClick = (factoryId: string) => {
+    // Handle Void effect - clicking factory destroys it
+    if (voidEffectPending) {
+      const factory = factories.find(f => f.id === factoryId);
+      // Only allow clicking non-empty factories during Void effect
+      if (factory && factory.runes.length > 0) {
+        destroyFactory(factoryId);
+      }
+      return;
+    }
+    
+    // Normal draft behavior
     const factory = factories.find(f => f.id === factoryId);
     if (!factory || factory.runes.length === 0) return;
     
@@ -287,6 +296,24 @@ export function GameBoard({ gameState }: GameBoardProps) {
         
         {/* Factories and Center */}
         <div style={{ position: 'relative' }}>
+          {/* Void Effect Message */}
+          {voidEffectPending && !isAITurn && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: isMobile ? '14px' : '18px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
+              animation: 'pulse 2s infinite'
+            }}>
+              💀 Void Effect: Click a factory to destroy it! 💀
+            </div>
+          )}
+          
           <FactoriesAndCenter
             factories={factories}
             centerPool={centerPool}
@@ -295,6 +322,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             isDraftPhase={isDraftPhase}
             hasSelectedRunes={hasSelectedRunes}
             isAITurn={isAITurn}
+            voidEffectPending={voidEffectPending}
           />
           
           {/* Selected Runes Display - Overlay */}
@@ -406,16 +434,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
           sourceType={factoryOverlaySource}
           onSelectRune={handleFactoryOverlaySelect}
           onClose={handleFactoryOverlayClose}
-        />
-      )}
-      
-      {/* Void Effect Overlay - shows when Void effect is pending (current player chooses factory) */}
-      {voidEffectPending && (
-        <VoidEffectOverlay
-          factories={factories}
-          onSelectFactory={destroyFactory}
-          onSkip={skipVoidEffect}
-          isVisible={!isAITurn} // Only show UI for human player
         />
       )}
     </div>

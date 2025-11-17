@@ -14,6 +14,7 @@ interface FactoriesAndCenterProps {
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
   isAITurn: boolean;
+  voidEffectPending: boolean;
 }
 
 export function FactoriesAndCenter({ 
@@ -23,7 +24,8 @@ export function FactoriesAndCenter({
   onCenterClick, 
   isDraftPhase, 
   hasSelectedRunes, 
-  isAITurn 
+  isAITurn,
+  voidEffectPending
 }: FactoriesAndCenterProps) {
   const isMobile = window.innerWidth < 768;
   
@@ -40,7 +42,8 @@ export function FactoriesAndCenter({
                 key={factory.id} 
                 factory={factory}
                 onFactoryClick={onFactoryClick}
-                disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
+                disabled={voidEffectPending ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn)}
+                voidEffectPending={voidEffectPending}
               />
             ))}
           </div>
@@ -51,7 +54,8 @@ export function FactoriesAndCenter({
                 key={factory.id} 
                 factory={factory}
                 onFactoryClick={onFactoryClick}
-                disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
+                disabled={voidEffectPending ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn)}
+                voidEffectPending={voidEffectPending}
               />
             ))}
           </div>
@@ -64,7 +68,8 @@ export function FactoriesAndCenter({
               key={factory.id} 
               factory={factory}
               onFactoryClick={onFactoryClick}
-              disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
+              disabled={voidEffectPending ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn)}
+              voidEffectPending={voidEffectPending}
             />
           ))}
         </div>

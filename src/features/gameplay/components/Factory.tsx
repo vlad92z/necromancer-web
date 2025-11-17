@@ -10,9 +10,10 @@ interface FactoryProps {
   factory: FactoryType;
   onFactoryClick?: (factoryId: string) => void;
   disabled?: boolean;
+  voidEffectPending?: boolean;
 }
 
-export function Factory({ factory, onFactoryClick, disabled = false }: FactoryProps) {
+export function Factory({ factory, onFactoryClick, disabled = false, voidEffectPending = false }: FactoryProps) {
   const handleClick = () => {
     if (!disabled && onFactoryClick && factory.runes.length > 0) {
       onFactoryClick(factory.id);
@@ -21,12 +22,18 @@ export function Factory({ factory, onFactoryClick, disabled = false }: FactoryPr
   
   const isMobile = window.innerWidth < 768;
   
+  // Void effect styling
+  const isVoidTarget = voidEffectPending && factory.runes.length > 0 && !disabled;
+  const backgroundColor = isVoidTarget ? '#7c3aed' : '#e0f2fe';
+  const borderColor = isVoidTarget ? '#6d28d9' : '#bae6fd';
+  const hoverBackgroundColor = isVoidTarget ? '#6d28d9' : '#bae6fd';
+  
   return (
     <button
       onClick={handleClick}
       disabled={disabled || factory.runes.length === 0}
       style={{
-        backgroundColor: '#e0f2fe',
+        backgroundColor: backgroundColor,
         borderRadius: isMobile ? '4px' : '12px',
         padding: isMobile ? '6px' : '16px',
         minWidth: isMobile ? '50px' : '120px',
@@ -35,13 +42,14 @@ export function Factory({ factory, onFactoryClick, disabled = false }: FactoryPr
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.2s',
-        border: '2px solid #bae6fd',
+        border: `2px solid ${borderColor}`,
         cursor: (disabled || factory.runes.length === 0) ? 'not-allowed' : 'pointer',
-        outline: 'none'
+        outline: 'none',
+        boxShadow: isVoidTarget ? '0 0 12px rgba(124, 58, 237, 0.5)' : 'none'
       }}
-      onMouseEnter={(e) => !disabled && factory.runes.length > 0 && (e.currentTarget.style.backgroundColor = '#bae6fd', e.currentTarget.style.transform = 'scale(1.02)')}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#e0f2fe', e.currentTarget.style.transform = 'scale(1)')}
-      aria-label={`Open factory with ${factory.runes.length} runes`}
+      onMouseEnter={(e) => !disabled && factory.runes.length > 0 && (e.currentTarget.style.backgroundColor = hoverBackgroundColor, e.currentTarget.style.transform = 'scale(1.02)')}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = backgroundColor, e.currentTarget.style.transform = 'scale(1)')}
+      aria-label={isVoidTarget ? `Destroy factory with ${factory.runes.length} runes` : `Open factory with ${factory.runes.length} runes`}
     >
       {factory.runes.length === 0 ? (
         <div style={{ color: '#64748b', fontSize: isMobile ? '6px' : '14px' }}>
