@@ -3,7 +3,7 @@
  */
 
 import type { FloorLine as FloorLineType } from '../../../types/game';
-import { RuneToken } from '../../../components/RuneToken';
+import { RuneCell } from '../../../components/RuneCell';
 
 interface FloorLineProps {
   floorLine: FloorLineType;
@@ -37,25 +37,17 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLin
         {Array(floorLine.maxCapacity)
           .fill(null)
           .map((_, index) => (
-            <div
+            <RuneCell
               key={index}
-              style={{
-                width: window.innerWidth < 768 ? '35px' : '60px',
-                height: window.innerWidth < 768 ? '35px' : '60px',
-                border: '2px solid #fca5a5',
-                borderRadius: window.innerWidth < 768 ? '6px' : '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#fef2f2'
+              rune={floorLine.runes[index] || null}
+              variant="floor"
+              size="large"
+              placeholder={{
+                type: 'text',
+                text: `-${index + 1}`,
               }}
-            >
-              {floorLine.runes[index] ? (
-                <RuneToken rune={floorLine.runes[index]} />
-              ) : (
-                <div style={{fontSize: window.innerWidth < 768 ? '7px' : '20px', color: '#991b1b'}}>-{index + 1}</div>
-              )}
-            </div>
+              showEffect={false}
+            />
           ))}
       </button>
     </div>

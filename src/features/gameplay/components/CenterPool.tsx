@@ -3,19 +3,7 @@
  */
 
 import type { Rune, RuneType } from '../../../types/game';
-import fireRune from '../../../assets/runes/fire_rune.svg';
-import frostRune from '../../../assets/runes/frost_rune.svg';
-import poisonRune from '../../../assets/runes/poison_rune.svg';
-import voidRune from '../../../assets/runes/void_rune.svg';
-import windRune from '../../../assets/runes/wind_rune.svg';
-
-const RUNE_ASSETS = {
-  Fire: fireRune,
-  Frost: frostRune,
-  Poison: poisonRune,
-  Void: voidRune,
-  Wind: windRune,
-};
+import { RuneCell } from '../../../components/RuneCell';
 
 interface CenterPoolProps {
   centerPool: Rune[];
@@ -67,10 +55,11 @@ export function CenterPool({
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               aria-label={`Select ${rune.runeType} runes from center`}
             >
-              <img 
-                src={RUNE_ASSETS[rune.runeType]} 
-                alt={`${rune.runeType} rune`}
-                style={{ width: isMobile ? '40px' : '60px', height: isMobile ? '40px' : '60px', objectFit: 'contain' }}
+              <RuneCell
+                rune={rune}
+                variant="center"
+                size="large"
+                showEffect={false}
               />
             </button>
           ))

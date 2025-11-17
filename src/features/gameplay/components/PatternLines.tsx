@@ -5,11 +5,7 @@
 
 import type { PatternLine, RuneType, ScoringWall } from '../../../types/game';
 import { getWallColumnForRune } from '../../../utils/scoring';
-import fireRune from '../../../assets/runes/fire_rune.svg';
-import frostRune from '../../../assets/runes/frost_rune.svg';
-import poisonRune from '../../../assets/runes/poison_rune.svg';
-import voidRune from '../../../assets/runes/void_rune.svg';
-import windRune from '../../../assets/runes/wind_rune.svg';
+import { RuneCell } from '../../../components/RuneCell';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
@@ -18,14 +14,6 @@ interface PatternLinesProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
 }
-
-const RUNE_ASSETS = {
-  Fire: fireRune,
-  Frost: frostRune,
-  Poison: poisonRune,
-  Void: voidRune,
-  Wind: windRune,
-};
 
 export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneType, canPlace }: PatternLinesProps) {
   const isLineValid = (line: PatternLine, lineIndex: number) => {
@@ -73,34 +61,30 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
             onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(191, 219, 254, 0.5)')}
             aria-label={`Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`}
           >
-            {/* Empty slots */}
+            {/* Pattern line slots */}
             {Array(line.tier)
               .fill(null)
-              .map((_, slotIndex) => (
-                <div
-                  key={slotIndex}
-                  style={{
-                    width: isMobile ? '35px' : '60px',
-                    height: isMobile ? '35px' : '60px',
-                    border: '2px solid #cbd5e1',
-                    borderRadius: isMobile ? '3px' : '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#f8fafc'
-                  }}
-                >
-                  {slotIndex < line.count && line.runeType ? (
-                    <img 
-                      src={RUNE_ASSETS[line.runeType]} 
-                      alt={`${line.runeType} rune`}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: isMobile ? '2px' : '4px' }}
-                    />
-                  ) : (
-                    <div style={{fontSize: isMobile ? '14px' : '20px', color: '#64748b'}}>{line.tier}</div>
-                  )}
-                </div>
-              ))}
+              .map((_, slotIndex) => {
+                const rune = slotIndex < line.count && line.runeType ? {
+                  id: `pattern-${index}-${slotIndex}`,
+                  runeType: line.runeType,
+                  effect: { type: 'None' as const }
+                } : null;
+                
+                return (
+                  <RuneCell
+                    key={slotIndex}
+                    rune={rune}
+                    variant="pattern"
+                    size="large"
+                    placeholder={{
+                      type: 'text',
+                      text: String(line.tier),
+                    }}
+                    showEffect={false}
+                  />
+                );
+              })}
           </button>
         );
       })}

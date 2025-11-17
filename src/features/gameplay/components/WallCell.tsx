@@ -3,25 +3,13 @@
  */
 
 import type { WallCell as WallCellType, RuneType } from '../../../types/game';
-import fireRune from '../../../assets/runes/fire_rune.svg';
-import frostRune from '../../../assets/runes/frost_rune.svg';
-import poisonRune from '../../../assets/runes/poison_rune.svg';
-import voidRune from '../../../assets/runes/void_rune.svg';
-import windRune from '../../../assets/runes/wind_rune.svg';
+import { RuneCell } from '../../../components/RuneCell';
 
 interface WallCellProps {
   cell: WallCellType;
   row: number;
   col: number;
 }
-
-const RUNE_ASSETS = {
-  Fire: fireRune,
-  Frost: frostRune,
-  Poison: poisonRune,
-  Void: voidRune,
-  Wind: windRune,
-};
 
 // Calculate which rune type belongs in this cell based on Azul pattern
 function getExpectedRuneType(row: number, col: number): RuneType {
@@ -33,36 +21,24 @@ function getExpectedRuneType(row: number, col: number): RuneType {
 
 export function WallCell({ cell, row, col }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col);
-  const runeImage = RUNE_ASSETS[cell.runeType || expectedRuneType];
-  const isMobile = window.innerWidth < 768;
+  
+  // Convert WallCell to Rune format if occupied
+  const rune = cell.runeType ? {
+    id: `wall-${row}-${col}`,
+    runeType: cell.runeType,
+    effect: { type: 'None' as const }
+  } : null;
   
   return (
-    <div
-      style={{
-        width: isMobile ? '35px' : '60px',
-        height: isMobile ? '35px' : '60px',
-        border: '2px solid #cbd5e1',
-        borderRadius: isMobile ? '6px' : '8px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f8fafc',
-        padding: isMobile ? '2px' : '4px'
+    <RuneCell
+      rune={rune}
+      variant="wall"
+      size="large"
+      placeholder={{
+        type: 'rune',
+        runeType: expectedRuneType,
       }}
-    >
-      {cell.runeType ? (
-        <img 
-          src={runeImage} 
-          alt={`${cell.runeType} rune`}
-          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-        />
-      ) : (
-        <img 
-          src={runeImage} 
-          alt={`${expectedRuneType} placeholder`}
-          style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.3 }}
-        />
-      )}
-    </div>
+      showEffect={false}
+    />
   );
 }
