@@ -3,6 +3,7 @@
  * Supports: Wall cells, Pattern lines, Floor line, Factories, Center pool
  */
 
+import { motion } from 'framer-motion';
 import type { Rune, RuneType } from '../types/game';
 import fireRune from '../assets/runes/fire_rune.svg';
 import frostRune from '../assets/runes/frost_rune.svg';
@@ -92,8 +93,20 @@ export function RuneCell({
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   
+  // Animate when rune appears in pattern lines
+  const shouldAnimate = variant === 'pattern' && rune;
+  
+  const animationProps = shouldAnimate ? {
+    initial: { scale: 0, opacity: 0 } as const,
+    animate: { scale: 1, opacity: 1 } as const,
+    transition: { type: 'spring' as const, stiffness: 300, damping: 20 }
+  } : {};
+  
+  const Container = shouldAnimate ? motion.div : 'div';
+  
   return (
-    <div
+    <Container
+      {...animationProps}
       onClick={clickable ? onClick : undefined}
       style={{
         width: `${config.width}px`,
@@ -106,11 +119,11 @@ export function RuneCell({
         justifyContent: 'center',
         padding: `${config.padding}px`,
         cursor: clickable ? 'pointer' : 'default',
-        transition: 'transform 0.2s',
+        transition: shouldAnimate ? undefined : 'transform 0.2s',
         position: 'relative',
       }}
-      onMouseEnter={(e) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
-      onMouseLeave={(e) => clickable && (e.currentTarget.style.transform = 'scale(1)')}
+      onMouseEnter={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
+      onMouseLeave={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1)')}
     >
       {runeImage && (
         <img 
@@ -149,6 +162,6 @@ export function RuneCell({
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
         }} />
       )}
-    </div>
+    </Container>
   );
 }

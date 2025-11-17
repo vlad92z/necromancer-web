@@ -18,6 +18,7 @@ interface GameStore extends GameState {
   endRound: () => void;
   resetGame: () => void;
   triggerAITurn: () => void;
+  completeAnimation: () => void; // Complete pending animation and apply placement
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -393,5 +394,13 @@ export const useGameStore = create<GameStore>((set) => ({
         }
       }, 2000);
     }
+  },
+
+  completeAnimation: () => {
+    set((state) => ({
+      ...state,
+      animatingRunes: [],
+      pendingPlacement: null,
+    }));
   },
 }));

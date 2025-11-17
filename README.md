@@ -233,6 +233,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Horizontal factory layout for better visibility
 - Vertical player arrangement (Player 1 top, factories middle, Player 2 bottom)
 - Game over modal displays on game board (final state visible behind it)
+- Framer Motion animations for runes appearing in pattern lines (spring animation)
 
 ## Getting Started
 
@@ -386,13 +387,27 @@ src/
 - [ ] Meta-progression (unlocks after losses)
 - [ ] Deck customization UI
 - [ ] Run summary and statistics
-- [ ] Advanced AI strategies (currently random moves)
 - [ ] Online multiplayer (server-based PvP)
 - [ ] Sound effects and animations
 - [ ] Mobile/touch optimization
 - [ ] Undo/redo for moves
 - [ ] End-game bonuses (row/column/type completion)
 - [ ] Tutorial/onboarding for new players
+
+### AI Improvements
+- [x] **Simple strategies (Completed ✅):**
+  - [x] Prioritize completing pattern lines (focus on lines almost full)
+  - [x] Avoid floor line penalties (only use floor when necessary)
+  - [x] Block opponent (take runes the opponent needs)
+  - [x] Maximize wall points (choose placements that create longer connections)
+- [ ] **Medium complexity:**
+  - [ ] Look-ahead planning (consider which runes will be available next turn)
+  - [ ] Value higher tier lines (tier 5 = more points potential)
+  - [ ] Avoid wasted runes (don't draft more than a line can hold)
+- [ ] **Advanced strategies:**
+  - [ ] Minimax algorithm (evaluate multiple moves ahead)
+  - [ ] Scoring simulation (calculate expected points for each move)
+  - [ ] Adaptive difficulty (learn from player patterns)
 
 ---
 

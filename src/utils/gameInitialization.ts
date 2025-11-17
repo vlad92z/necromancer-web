@@ -160,5 +160,7 @@ export function initializeGame(): GameState {
     selectedRunes: [],
     draftSource: null,
     firstPlayerToken: null,
+    animatingRunes: [],
+    pendingPlacement: null,
   };
 }
