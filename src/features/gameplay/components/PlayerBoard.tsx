@@ -49,7 +49,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         
         {/* Wall */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <ScoringWall wall={player.wall} />
+          <ScoringWall wall={player.wall} patternLines={player.patternLines} />
         </div>
       </div>
       

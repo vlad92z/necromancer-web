@@ -33,6 +33,7 @@ export interface RuneCellProps {
   clickable?: boolean;
   onClick?: () => void;
   showEffect?: boolean;
+  isPending?: boolean; // For wall cells with full pattern lines
 }
 
 const SIZE_CONFIG = {
@@ -50,7 +51,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   wall: {
     border: '2px solid #cbd5e1',
     background: '#f8fafc',
-    backgroundOccupied: '#dbeafe',
+    backgroundOccupied: '#fed7aa',
     emptyOpacity: 0.3,
   },
   pattern: {
@@ -83,6 +84,7 @@ export function RuneCell({
   clickable = false,
   onClick,
   showEffect = false,
+  isPending = false,
 }: RuneCellProps) {
   const isMobile = window.innerWidth < 768;
   const sizeKey = isMobile ? (size === 'large' ? 'medium' : 'small') : size;
@@ -95,8 +97,8 @@ export function RuneCell({
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   
-  // Use occupied background for wall cells that have runes
-  const backgroundColor = (variant === 'wall' && rune && variantStyle.backgroundOccupied) 
+  // Use occupied background for wall cells that have runes OR are pending placement
+  const backgroundColor = (variant === 'wall' && (rune || isPending) && variantStyle.backgroundOccupied) 
     ? variantStyle.backgroundOccupied 
     : variantStyle.background;
   

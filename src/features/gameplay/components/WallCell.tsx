@@ -2,13 +2,14 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import type { WallCell as WallCellType, RuneType } from '../../../types/game';
+import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
 interface WallCellProps {
   cell: WallCellType;
   row: number;
   col: number;
+  patternLine: PatternLine;
 }
 
 // Calculate which rune type belongs in this cell based on Azul pattern
@@ -19,8 +20,13 @@ function getExpectedRuneType(row: number, col: number): RuneType {
   return runeTypes[baseIndex];
 }
 
-export function WallCell({ cell, row, col }: WallCellProps) {
+export function WallCell({ cell, row, col, patternLine }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col);
+  
+  // Check if the pattern line is full and matches this cell's expected rune type
+  const isPatternLineFull = patternLine.count === patternLine.tier;
+  const patternLineMatchesCell = patternLine.runeType === expectedRuneType;
+  const isPending = !cell.runeType && isPatternLineFull && patternLineMatchesCell;
   
   // Convert WallCell to Rune format if occupied
   const rune = cell.runeType ? {
@@ -39,6 +45,7 @@ export function WallCell({ cell, row, col }: WallCellProps) {
         runeType: expectedRuneType,
       }}
       showEffect={false}
+      isPending={isPending}
     />
   );
 }
