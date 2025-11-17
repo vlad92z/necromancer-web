@@ -529,6 +529,18 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Updated tooltip to explain Poison effect
   - Only affects opponent's scoring, not your own
 
+- [x] **✅ Implemented Wind effect**
+  - Created `calculateEffectiveFloorPenalty()` helper function in `src/utils/scoring.ts`
+  - Each Wind rune in floor line cancels one other floor penalty (minimum 0)
+  - Wind runes still count toward floor line capacity (7 max)
+  - Updated all three scoring functions to document Wind effect
+  - Updated gameStore to use `calculateEffectiveFloorPenalty()` in all scoring phases
+  - Added visual indicator (💨 emoji) in RunePower component showing Wind mitigation
+  - Added detailed Wind mitigation display in FloorLine component
+  - Shows calculation: "X runes - Y Wind = Z penalties"
+  - Updated tooltip to explain Wind effect
+  - Only affects your own floor penalties, not opponent's
+
 - [ ] **TODO: Implement Frost effect**
   - Add `frozenFactories` state to track frozen factory IDs per player
   - Trigger factory freeze selection UI when Frost placed in pattern line
@@ -549,13 +561,6 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Update `placeRunes()` to trigger Void effect
   - Add animation for rune destruction
   - Consider allowing cancellation if player changes mind
-
-- [ ] **TODO: Implement Wind effect**
-  - Modify floor line penalty calculation to exclude Wind runes
-  - Each Wind rune cancels out one other floor penalty (minimum 0 total penalties)
-  - Update `calculateWallPower()` or floor penalty counting logic in `src/utils/scoring.ts`
-  - Wind runes still count toward the 7-rune floor line capacity
-  - Add visual indicator showing Wind mitigation effect in floor line
 
 - [ ] **TODO: Update UI for rune effects**
   - Add effect indicators/tooltips on rune tokens

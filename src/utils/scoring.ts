@@ -13,6 +13,7 @@ import type { ScoringWall, RuneType } from '../types/game';
  * Runes are connected if they share an edge (not diagonal)
  * Fire Effect: Each Fire rune adds +1 to Essence
  * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
+ * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
  */
 export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0, opponentPoisonCount: number = 0): number {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
@@ -71,6 +72,7 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
  * Returns essence (total runes + Fire bonus) and focus (largest segment)
  * Fire Effect: Each Fire rune adds +1 to Essence
  * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
+ * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
@@ -192,6 +194,19 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 }
 
 /**
+ * Calculate effective floor penalty count after Wind mitigation
+ * Wind Effect: Each Wind rune in the floor line cancels out one other floor penalty
+ * Wind runes still count toward floor line capacity but reduce the penalty impact
+ */
+export function calculateEffectiveFloorPenalty(floorRunes: Array<{ runeType: RuneType | null }>): number {
+  const windCount = floorRunes.filter(rune => rune.runeType === 'Wind').length;
+  const otherRuneCount = floorRunes.length - windCount;
+  
+  // Each Wind rune cancels one other penalty (minimum 0 total penalties)
+  return Math.max(0, otherRuneCount - windCount);
+}
+
+/**
  * Find the correct column for a rune type in a given row
  * In Azul, the wall has a fixed pattern for rune placement
  * For simplicity, we'll use: each rune type can only go in specific columns per row
@@ -280,6 +295,7 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
  * Shows what essence and focus will be after placing completed pattern lines
  * Fire Effect: Each Fire rune adds +1 to Essence
  * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
+ * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
  */
 export function calculateProjectedPower(
   wall: ScoringWall,

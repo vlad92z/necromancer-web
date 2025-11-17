@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Player } from '../../../types/game';
-import { calculateProjectedPower } from '../../../utils/scoring';
+import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../utils/scoring';
 
 interface RunePowerProps {
   player: Player;
@@ -26,7 +26,10 @@ export function RunePower({ player, opponent, damageTaken, nameColor }: RunePowe
     .filter(({ line }) => line.count === line.tier && line.runeType !== null)
     .map(({ line, row }) => ({ row, runeType: line.runeType! }));
   
-  const floorPenaltyCount = player.floorLine.runes.length;
+  // Wind Effect: Calculate effective floor penalty count
+  const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes);
+  const windRuneCount = player.floorLine.runes.filter(rune => rune.runeType === 'Wind').length;
+  const hasWindMitigation = windRuneCount > 0;
   
   // Count opponent's Poison runes (affects this player's Focus)
   const opponentPoisonCount = opponent.wall.flat().filter(cell => cell.runeType === 'Poison').length;
@@ -128,6 +131,11 @@ export function RunePower({ player, opponent, damageTaken, nameColor }: RunePowe
                     ☠️
                   </span>
                 )}
+                {hasWindMitigation && (
+                  <span style={{ color: '#87CEEB', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} mitigating floor penalties`}>
+                    💨
+                  </span>
+                )}
               </span>
               <span>|</span>
               <span>Spellpower: {totalPower}</span>
@@ -220,7 +228,7 @@ export function RunePower({ player, opponent, damageTaken, nameColor }: RunePowe
             <div style={{ marginBottom: '16px' }}>
               <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
               <p style={{ margin: '4px 0 0 0' }}>
-                The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Opponent Poison runes ☠️ also reduce your Focus.
+                The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Opponent Poison runes ☠️ also reduce your Focus. Wind runes 💨 in your floor line cancel out other penalties.
               </p>
             </div>
             

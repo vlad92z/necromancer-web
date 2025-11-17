@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import type { GameState, RuneType, Player } from '../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
-import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune } from '../utils/scoring';
+import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../utils/scoring';
 import { makeAIMove } from '../utils/aiPlayer';
 
 // Helper function to count Poison runes on a wall
@@ -318,7 +318,8 @@ export const useGameStore = create<GameStore>((set) => ({
         
         // Calculate total wall power based on connected segments
         // Floor penalties reduce the multiplier of each segment
-        const floorPenaltyCount = player.floorLine.runes.length;
+        // Wind Effect: Each Wind rune cancels one other floor penalty
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes);
         
         // Get opponent's Poison count (for Poison effect)
         const opponentIndex = state.players.indexOf(player) === 0 ? 1 : 0;
@@ -357,7 +358,8 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // Calculate and apply scores, and record round history
       const updatedPlayersArray = state.players.map((player, playerIndex) => {
-        const floorPenaltyCount = player.floorLine.runes.length;
+        // Wind Effect: Each Wind rune cancels one other floor penalty
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes);
         
         // Get opponent's Poison count (for Poison effect)
         const opponentIndex = playerIndex === 0 ? 1 : 0;
@@ -381,14 +383,18 @@ export const useGameStore = create<GameStore>((set) => ({
       const player1PoisonCount = countPoisonRunes(updatedPlayers[0].wall);
       const player2PoisonCount = countPoisonRunes(updatedPlayers[1].wall);
       
+      // Wind Effect: Calculate effective floor penalties for both players
+      const player1FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[0].floorLine.runes);
+      const player2FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[1].floorLine.runes);
+      
       const player1Data = calculateWallPowerWithSegments(
         updatedPlayers[0].wall, 
-        updatedPlayers[0].floorLine.runes.length,
+        player1FloorPenalty,
         player2PoisonCount // Player 1 is affected by Player 2's Poison
       );
       const player2Data = calculateWallPowerWithSegments(
         updatedPlayers[1].wall, 
-        updatedPlayers[1].floorLine.runes.length,
+        player2FloorPenalty,
         player1PoisonCount // Player 2 is affected by Player 1's Poison
       );
       

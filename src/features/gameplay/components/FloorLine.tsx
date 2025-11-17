@@ -4,6 +4,7 @@
 
 import type { FloorLine as FloorLineType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
+import { calculateEffectiveFloorPenalty } from '../../../utils/scoring';
 
 interface FloorLineProps {
   floorLine: FloorLineType;
@@ -12,8 +13,15 @@ interface FloorLineProps {
 }
 
 export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLineProps) {
+  const isMobile = window.innerWidth < 768;
+  
+  // Calculate Wind mitigation
+  const windCount = floorLine.runes.filter(rune => rune.runeType === 'Wind').length;
+  const effectivePenalties = calculateEffectiveFloorPenalty(floorLine.runes);
+  const hasWindMitigation = windCount > 0 && floorLine.runes.length > 0;
+  
   return (
-    <div style={{ marginTop: window.innerWidth < 768 ? '0px' : '16px' }} onClick={(e) => e.stopPropagation()}>
+    <div style={{ marginTop: isMobile ? '0px' : '16px' }} onClick={(e) => e.stopPropagation()}>
       <button
         onClick={onPlaceRunesInFloor}
         disabled={!canPlace || !onPlaceRunesInFloor}
