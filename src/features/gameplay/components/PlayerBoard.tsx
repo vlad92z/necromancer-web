@@ -91,7 +91,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 }}
               >
                 {player.floorLine.runes[index] ? (
-                  <RuneToken rune={player.floorLine.runes[index]} size="small" />
+                  <RuneToken rune={player.floorLine.runes[index]} />
                 ) : (
                   <div style={{fontSize: window.innerWidth < 768 ? '7px' : '20px', color: '#991b1b'}}>-{index + 1}</div>
                 )}

@@ -48,11 +48,6 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
         padding: '4px',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform 0.2s',
-        backgroundColor: colorClass === 'bg-red-600' ? '#dc2626' :
-                        colorClass === 'bg-blue-600' ? '#2563eb' :
-                        colorClass === 'bg-green-600' ? '#16a34a' :
-                        colorClass === 'bg-purple-600' ? '#9333ea' :
-                        colorClass === 'bg-yellow-600' ? '#ca8a04' : '#6b7280'
       }}
       onClick={onClick}
       onMouseEnter={(e) => onClick && (e.currentTarget.style.transform = 'scale(1.1)')}
