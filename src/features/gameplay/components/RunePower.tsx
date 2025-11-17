@@ -31,46 +31,74 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
   
   return (
     <div style={{
-      backgroundColor: 'rgba(191, 219, 254, 0.3)',
-      border: '2px solid rgba(59, 130, 246, 0.5)',
-      borderRadius: isMobile ? '6px' : '8px',
-      padding: isMobile ? '6px 8px' : '8px 12px',
+      display: 'flex',
+      gap: isMobile ? '6px' : '12px',
       marginBottom: isMobile ? '4px' : '8px'
     }}>
+      {/* Player Info Box */}
       <div style={{
-        fontSize: isMobile ? '12px' : '18px',
-        color: '#0c4a6e',
-        fontWeight: 'bold',
-        textAlign: 'center',
+        flex: 1,
+        backgroundColor: 'rgba(191, 219, 254, 0.3)',
+        border: '2px solid rgba(59, 130, 246, 0.5)',
+        borderRadius: isMobile ? '6px' : '8px',
+        padding: isMobile ? '6px 8px' : '8px 12px',
         display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
         alignItems: 'center',
-        gap: isMobile ? '4px' : '8px'
+        justifyContent: 'flex-start'
       }}>
-        <span style={{ color: nameColor }}>
-          {player.name}
-        </span>
-        <span>|</span>
-        <span>Damage Taken: {damageTaken}</span>
-        <span>|</span>
-        {essence > 0 ? (
-          <>
-            <span>Essence: {essence}</span>
-            <span>|</span>
-            <span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>Focus: {focus}</span>
-            <span>|</span>
-            <span>Spellpower: {totalPower}</span>
-          </>
-        ) : (
-          <>
-            <span>Essence: 0</span>
-            <span>|</span>
-            <span>Focus: 0</span>
-            <span>|</span>
-            <span>Spellpower: 0</span>
-          </>
-        )}
+        <div style={{
+          fontSize: isMobile ? '12px' : '18px',
+          color: '#0c4a6e',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '4px' : '8px'
+        }}>
+          <span style={{ color: nameColor }}>
+            {player.name}
+          </span>
+          <span>|</span>
+          <span>Damage Taken: {damageTaken}</span>
+        </div>
+      </div>
+
+      {/* Power Stats Box */}
+      <div style={{
+        flex: 1,
+        backgroundColor: 'rgba(191, 219, 254, 0.3)',
+        border: '2px solid rgba(59, 130, 246, 0.5)',
+        borderRadius: isMobile ? '6px' : '8px',
+        padding: isMobile ? '6px 8px' : '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end'
+      }}>
+        <div style={{
+          fontSize: isMobile ? '12px' : '18px',
+          color: '#0c4a6e',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '4px' : '8px'
+        }}>
+          {essence > 0 ? (
+            <>
+              <span>Essence: {essence}</span>
+              <span>|</span>
+              <span style={{ color: hasPenalty ? '#dc2626' : '#0c4a6e' }}>Focus: {focus}</span>
+              <span>|</span>
+              <span>Spellpower: {totalPower}</span>
+            </>
+          ) : (
+            <>
+              <span>Essence: 0</span>
+              <span>|</span>
+              <span>Focus: 0</span>
+              <span>|</span>
+              <span>Spellpower: 0</span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
