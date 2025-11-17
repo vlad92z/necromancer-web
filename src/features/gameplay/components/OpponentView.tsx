@@ -17,7 +17,7 @@ export function OpponentView({ opponent, player, isActive, gameMode }: OpponentV
   const isMobile = window.innerWidth < 768;
   
   return (
-    <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
+    <div style={{ marginBottom: isMobile ? '0px' : '24px' }}>
       <RunePower 
         player={opponent}
         opponent={player}

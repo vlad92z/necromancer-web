@@ -393,18 +393,23 @@ export function GameBoard({ gameState }: GameBoardProps) {
           style={{ 
             position: 'fixed', 
             inset: 0, 
-            backgroundColor: 'rgba(0, 0, 0, 0.8)', 
             display: 'flex', 
             flexDirection: 'column',
             alignItems: 'center', 
             justifyContent: 'flex-start',
             zIndex: 100,
             padding: '8px',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            pointerEvents: 'none' // Allow clicks to pass through
           }}
-          onClick={() => setShowOpponentOverlay(false)}
         >
-          <div style={{ width: '100%', maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+          <div 
+            style={{ 
+              width: '100%', 
+              maxWidth: '600px',
+              pointerEvents: 'auto' // Re-enable clicks on opponent view
+            }}
+          >
             {/* Close Button */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
               <button
