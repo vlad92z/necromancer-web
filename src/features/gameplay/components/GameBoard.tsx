@@ -10,6 +10,7 @@ import { OpponentView } from './OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
+import { DeckOverlay } from './DeckOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 
 interface GameBoardProps {
@@ -23,6 +24,7 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
+  const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const isMobile = window.innerWidth < 768;
   console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
@@ -91,6 +93,24 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
             display: 'flex',
             gap: isMobile ? '4px' : '8px'
           }}>
+            {/* Deck Button */}
+            <button
+              onClick={() => setShowDeckOverlay(true)}
+              style={{
+                backgroundColor: '#7c3aed',
+                color: 'white',
+                border: 'none',
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '6px 12px' : '8px 16px',
+                fontSize: isMobile ? '12px' : '14px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}
+            >
+              {isMobile ? '🎴' : '🎴 Deck'}
+            </button>
+            
             {/* Rules Button */}
             <button
               onClick={() => setShowRulesOverlay(true)}
@@ -254,6 +274,15 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
       {/* Rules Overlay */}
       {showRulesOverlay && (
         <RulesOverlay onClose={() => setShowRulesOverlay(false)} />
+      )}
+      
+      {/* Deck Overlay */}
+      {showDeckOverlay && (
+        <DeckOverlay
+          deck={players[0].deck}
+          playerName={players[0].name}
+          onClose={() => setShowDeckOverlay(false)}
+        />
       )}
       
       {/* Game Over Modal */}
