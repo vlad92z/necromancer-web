@@ -8,13 +8,12 @@ import { RuneCell } from '../../../components/RuneCell';
 
 interface FactoryOverlayProps {
   runes: Rune[];
-  sourceType: 'factory' | 'center';
   onSelectRune: (runeType: RuneType) => void;
   onClose: () => void;
   gameMode: 'classic' | 'standard';
 }
 
-export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose, gameMode }: FactoryOverlayProps) {
+export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: FactoryOverlayProps) {
   const isMobile = window.innerWidth < 768;
 
   // Rune effect descriptions (only shown in standard mode)
