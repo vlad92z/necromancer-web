@@ -12,20 +12,23 @@ import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { FactoryOverlay } from './FactoryOverlay';
+import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
+import { useGameStore } from '../../../state/gameStore';
 
 interface GameBoardProps {
   gameState: GameState;
-  onNextGame?: () => void;
 }
 
-export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
+export function GameBoard({ gameState }: GameBoardProps) {
   const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
+  const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
+  const [showLogOverlay, setShowLogOverlay] = useState(false);
   const [showFactoryOverlay, setShowFactoryOverlay] = useState(false);
   const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
   const [factoryOverlaySource, setFactoryOverlaySource] = useState<'factory' | 'center'>('factory');
@@ -164,6 +167,24 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               {isMobile ? '🎴' : '🎴 Deck'}
             </button>
             
+            {/* Log Button */}
+            <button
+              onClick={() => setShowLogOverlay(true)}
+              style={{
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '6px 12px' : '8px 16px',
+                fontSize: isMobile ? '12px' : '14px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}
+            >
+              {isMobile ? '📜' : '📜 Log'}
+            </button>
+            
             {/* Rules Button */}
             <button
               onClick={() => setShowRulesOverlay(true)}
@@ -274,6 +295,24 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
               onCancel={cancelSelection}
             />
           )}
+          
+          {/* Game Over Modal - Centered over factories */}
+          {isGameOver && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 100,
+              width: isMobile ? '90%' : 'auto'
+            }}>
+              <GameOverModal
+                players={players}
+                winner={winner}
+                onReturnToStart={returnToStartScreen}
+              />
+            </div>
+          )}
         </div>
       </div>
       
@@ -338,6 +377,14 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         />
       )}
       
+      {/* Log Overlay */}
+      {showLogOverlay && (
+        <GameLogOverlay
+          roundHistory={gameState.roundHistory}
+          onClose={() => setShowLogOverlay(false)}
+        />
+      )}
+      
       {/* Factory Overlay */}
       {showFactoryOverlay && (
         <FactoryOverlay
@@ -349,15 +396,6 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           sourceType={factoryOverlaySource}
           onSelectRune={handleFactoryOverlaySelect}
           onClose={handleFactoryOverlayClose}
-        />
-      )}
-      
-      {/* Game Over Modal */}
-      {isGameOver && (
-        <GameOverModal
-          players={players}
-          winner={winner}
-          onNextGame={onNextGame}
         />
       )}
     </div>

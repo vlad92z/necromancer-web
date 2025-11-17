@@ -24,23 +24,29 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 - UI Components:
   - `RuneToken`: Displays individual runes with color-coding and SVG graphics
-  - `Factory`: Shows factory containers (currently empty)
+  - `RuneCell`: Enhanced rune display component with animation support
+  - `Factory`: Shows factory containers with interactive selection
   - `PatternLines`: Displays 5-tier pattern lines with progress
   - `ScoringWall`: Renders 5x5 scoring grid
   - `PlayerBoard`: Complete player board with pattern lines, wall, and floor line
   - `GameBoard`: Main game layout with factories, center pool, and both players
+  - `RuneAnimation`: Handles smooth rune movement animations
+  - `RunePower`: Displays rune power/effect information
 
 - Styling:
   - Inline CSS with custom rune colors
   - Dark theme optimized for game visibility
-  - Responsive layout foundations
+  - Fully responsive design with mobile-first approach
+  - Touch-optimized interactions for mobile devices
 
 **Tech Stack:**
 - React 19 + TypeScript (strict mode)
 - Vite 7 for dev server and build
 - Inline CSS for styling
 - Zustand for state management
+- Framer Motion for animations
 - Component-based architecture with feature organization
+- Mobile-first responsive design
 
 ### ✅ Step 2: Factory Drafting Mechanics (Completed)
 
@@ -132,8 +138,8 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Scoring utilities (`src/utils/scoring.ts`):
   - `calculateWallPower(wall, floorPenaltyCount)`: Connected segment scoring system
     - Uses flood-fill algorithm to find all connected segments
-    - Each segment's power = segmentSize × max(1, segmentSize - floorPenaltyCount)
-    - Floor penalties reduce the multiplier of each segment, not a flat deduction
+    - Each segment's power = essence × max(1, essence - floorPenaltyCount)
+    - Floor penalties reduce the focus of each segment, not a flat deduction
     - Runes are connected if they share an edge (not diagonal)
     - Example with 2 floor penalties: 7-rune segment = 7 × 5 = 35 points, 1-rune segment = 1 × 1 = 1 point
     - Score cannot go below 0
@@ -147,8 +153,8 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
     - Move one rune to scoring wall at correct position
     - Clear completed pattern line for next round
   - Calculate total wall power from all connected segments
-    - Floor penalties reduce each segment's multiplier (not a flat penalty)
-    - More floor penalties = lower multipliers on all segments
+    - Floor penalties reduce each segment's focus (not a flat penalty)
+    - More floor penalties = lower focus on all segments
   - Add wall power to existing score (accumulative)
   - Clear floor lines after scoring
   - Refill factories from player decks (2 runes per player per factory)
@@ -168,8 +174,8 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
    - One rune placed at calculated position
    - Pattern line clears for next round
 4. Total wall power calculated from connected segments:
-   - Each segment's power = segmentSize × max(1, segmentSize - floorPenaltyCount)
-   - Floor penalties reduce multipliers, not flat deduction
+   - Each segment's power = essence × max(1, essence - floorPenaltyCount)
+   - Floor penalties reduce focus, not flat deduction
    - Example with 0 floor: 3 connected + 2 connected = 9 + 4 = 13 points
    - Example with 2 floor: 3 connected + 2 connected = 3 + 2 = 5 points
 5. Round score added to existing score from previous rounds (score can't go below 0)
@@ -216,7 +222,15 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - AI makes random legal moves (draft + placement)
   - 800ms delay between AI actions for visibility
   - AI completes full turns automatically
-  - Game launches directly into play (no mode selection)
+  - Start Game Screen: Welcome screen before gameplay begins
+  - Game Over returns to Start Screen instead of auto-restart
+
+**Start Game Screen:**
+- Displays before gameplay begins
+- Shows game title and brief description
+- "Start Game" button to initialize gameplay
+- Responsive design matching game theme
+- Game Over modal returns to this screen instead of immediately restarting
 
 **Selection & Cancellation:**
 - Click rune selection tracks source (factory or center)
@@ -226,7 +240,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 **UI Improvements:**
 - SVG rune graphics from `src/assets/runes/` (fire, frost, poison, void, wind)
-- Inline styles used instead of Tailwind for reliability (sizing, colors)
+- Inline styles used for consistent styling (sizing, colors, layouts)
 - Wall cells show faded grayscale preview of expected rune type when empty
 - Player boards show deck count and score
 - Active player board has subtle blue border glow
@@ -239,6 +253,34 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Calculating scores from wall connections (2 second delay)
   - Clearing floor line penalties (1.5 second delay)
   - Visual feedback through rune animations showing each change
+
+**Mobile & Touch Optimizations:**
+- `FactoryOverlay`: Enlarged modal view for selecting runes from factories/center on mobile
+  - Groups runes by type for easier selection
+  - Touch-friendly tap targets
+  - Backdrop click to close
+- `DeckOverlay`: Full-screen view of player's remaining deck
+  - Organized grid layout grouped by rune type
+  - Shows rune counts and visual previews
+  - Accessible via deck count button on player boards
+- Responsive breakpoints optimized for mobile (375px+), tablet (768px+), and desktop
+- Touch-optimized button sizes and spacing
+- Mobile-friendly overlay patterns for all complex selections
+
+**Information Overlays:**
+- `RulesOverlay`: Comprehensive game rules and instructions
+  - Explains drafting mechanics, pattern line placement, scoring system
+  - Floor line penalties and wall power calculation details
+  - Accessible via "Rules" button on game board
+- `GameLogOverlay`: Round-by-round history and statistics
+  - Displays each round's scoring breakdown
+  - Shows wall segments (essence×focus), and final scores per round
+  - Tracks both player and opponent performance over time
+  - Accessible via "History" button on game board
+- `SelectedRunesOverlay`: In-game selection feedback
+  - Displays currently selected runes above factories
+  - Shows count and provides placement instructions
+  - Cancel option to return runes to source
 
 ## Getting Started
 
@@ -340,19 +382,39 @@ src/
 ├── assets/
 │   └── runes/          # SVG rune graphics (fire, frost, poison, void, wind)
 ├── components/          # Reusable UI components
-│   └── RuneToken.tsx   # Rune display with SVG assets
+│   ├── RuneAnimation.tsx  # Rune movement animations
+│   ├── RuneCell.tsx       # Enhanced rune display with animation support
+│   └── RuneToken.tsx      # Basic rune display with SVG assets
 ├── features/           # Feature-based organization
 │   └── gameplay/       # Gameplay-specific features
-│       └── components/ # Factory, GameBoard, OpponentView, PatternLines, PlayerBoard, PlayerView, ScoringWall, WallCell
+│       └── components/ # Gameplay UI components
+│           ├── CenterPool.tsx          # Center pool display and interaction
+│           ├── DeckOverlay.tsx         # Full-screen deck viewer (mobile-optimized)
+│           ├── FactoriesAndCenter.tsx  # Combined factories and center layout
+│           ├── Factory.tsx             # Individual factory display
+│           ├── FactoryOverlay.tsx      # Enlarged factory/center selector (mobile)
+│           ├── FloorLine.tsx           # Floor line (penalty area) display
+│           ├── GameBoard.tsx           # Main game orchestrator
+│           ├── GameLogOverlay.tsx      # Round history and statistics
+│           ├── GameOverModal.tsx       # End-game modal with results
+│           ├── OpponentView.tsx        # AI opponent's board (read-only)
+│           ├── PatternLines.tsx        # 5-tier pattern lines display
+│           ├── PlayerBoard.tsx         # Shared board rendering logic
+│           ├── PlayerView.tsx          # Human player's board (interactive)
+│           ├── RulesOverlay.tsx        # Game rules explanation
+│           ├── RunePower.tsx           # Rune power/effect display
+│           ├── ScoringWall.tsx         # 5x5 scoring grid
+│           ├── SelectedRunesOverlay.tsx # Selected runes feedback display
+│           └── WallCell.tsx            # Individual wall cell component
 ├── hooks/              # Custom React hooks
-│   ├── useGameActions.ts  # Game action hooks
+│   ├── useGameActions.ts  # Game action hooks (draft, place, etc.)
 │   └── useGameState.ts    # State selector hooks
 ├── state/              # Global state management
 │   └── gameStore.ts    # Zustand store with game state and actions
 ├── types/              # TypeScript type definitions
 │   └── game.ts         # Core types: Rune, Factory, Player, GameState, PlayerType
 ├── utils/              # Utility functions
-│   ├── aiPlayer.ts     # AI opponent logic
+│   ├── aiPlayer.ts     # AI opponent logic with strategic decision-making
 │   ├── gameInitialization.ts  # Game setup and factory filling
 │   ├── runeHelpers.ts  # Rune display utilities
 │   └── scoring.ts      # Wall power calculation with floor penalties
@@ -368,7 +430,9 @@ src/
 - [x] Set up Zustand for state management
 - [x] Reorganize components into features structure
 - [x] Add custom hooks for game actions and state selectors
-- [x] Migrate from Tailwind to inline CSS styling
+- [x] Implement inline CSS styling for consistency
+- [x] Component-based architecture with clear separation of concerns
+- [x] Separate view components for player and opponent
 
 ### Gameplay Implementation (Completed ✅)
 - [x] Step 2: Make factories/runes selectable, implement Azul factory taking
@@ -384,20 +448,111 @@ src/
 - [x] Step 12: AI opponent with random legal moves
 - [x] Step 13: SVG rune assets integration
 - [x] Step 14: Cancel selection (returns runes to source)
-- [x] Step 15: Floor penalty multiplier system (reduces segment scoring)
+- [x] Step 15: Floor penalty focus system (reduces segment scoring)
+
+## Rune Effects System
+
+Each rune type has a unique effect that triggers during gameplay, creating strategic depth and tactical decisions.
+
+### 🔥 Fire (Power)
+**Effect:** Every Fire rune adds +1 to its containing segment's essence (not the focus)
+- **Example:** A 4-rune segment with 2 Fire runes = 6×4 = 24 points (instead of 4×4 = 16)
+- **Strategy:** Maximize Fire runes in large connected segments for exponential scoring
+- **Balance:** High offensive power, no defensive value
+
+### ❄️ Frost (Control)
+**Effect:** When you place Frost rune(s) in a pattern line, freeze one factory of your choice
+- Your opponent cannot draft from that factory on their next turn
+- Multiple Frost runes in one turn still only freeze one factory
+- **Strategy:** Block factories containing runes your opponent needs
+- **Balance:** Tactical control without being oppressive, opponent has 4 other factories + center
+
+### ☠️ Poison (Offense)
+**Effect:** Each Poison rune on your scoring wall reduces your opponent's focus by 1 (minimum 1×)
+- Only affects opponent's scoring, not your own
+- **Example:** You have 3 Poison runes → opponent's 5×3 segment becomes 2×3 = 6 points instead of 15
+- **Strategy:** Collect Poison to cripple opponent's scoring potential
+- **Balance:** Strong but requires building up multiple Poison runes over time
+
+### 🌑 Void (Destruction)
+**Effect:** When you place Void rune(s) in a pattern line, destroy all runes in one factory of your choice
+- Powerful denial tool to remove colors you don't want or opponent needs
+- Can clear problematic factories before opponent's turn
+- **Strategy:** Deny key runes to opponent or clean up unwanted colors
+- **Balance:** High disruption but doesn't directly score points
+
+### 💨 Wind (Mitigation)
+**Effect:** Wind runes placed in the floor line reduce penalties instead of increasing them
+- Each Wind rune in the floor line cancels out one other floor penalty
+- Wind runes still occupy a floor slot (count toward the 7-rune limit)
+- Only affects your own floor penalties, not opponent's
+- **Example:** Floor has [Fire, Fire, Frost, Wind, Wind] = 3 penalties (not 5)
+- **Strategy:** Use Wind as insurance when you can't place runes optimally, or intentionally draft Wind to mitigate unavoidable floor penalties
+- **Balance:** Valuable defensive rune that rewards planning and risk management without being overpowered
+
+### Implementation TODO
+
+- [ ] **TODO: Implement Fire effect**
+  - Modify scoring calculation to count Fire runes in each segment
+  - Add Fire count to segment size before multiplying
+  - Update `calculateWallPower()` in `src/utils/scoring.ts`
+  - Add visual indicator showing Fire bonus in scoring wall
+
+- [ ] **TODO: Implement Frost effect**
+  - Add `frozenFactories` state to track frozen factory IDs per player
+  - Trigger factory freeze selection UI when Frost placed in pattern line
+  - Disable frozen factory for opponent's next turn only
+  - Clear frozen state after opponent's turn
+  - Update `placeRunes()` in `src/state/gameStore.ts`
+
+- [ ] **TODO: Implement Poison effect**
+  - Count Poison runes on each player's scoring wall
+  - Pass opponent's Poison count to scoring calculation
+  - Reduce focus by Poison count (minimum 1\u00d7)
+  - Update `calculateWallPower()` to accept `opponentPoisonCount` parameter
+  - Add visual indicator showing Poison reduction effect
+
+- [ ] **TODO: Implement Void effect**
+  - Add factory selection UI when Void placed in pattern line
+  - Destroy all runes in selected factory
+  - Update `placeRunes()` to trigger Void effect
+  - Add animation for rune destruction
+  - Consider allowing cancellation if player changes mind
+
+- [ ] **TODO: Implement Wind effect**
+  - Modify floor line penalty calculation to exclude Wind runes
+  - Each Wind rune cancels out one other floor penalty (minimum 0 total penalties)
+  - Update `calculateWallPower()` or floor penalty counting logic in `src/utils/scoring.ts`
+  - Wind runes still count toward the 7-rune floor line capacity
+  - Add visual indicator showing Wind mitigation effect in floor line
+
+- [ ] **TODO: Update UI for rune effects**
+  - Add effect indicators/tooltips on rune tokens
+  - Show active effects in game state (frozen factories, Poison count, etc.)
+  - Add effect feedback animations when triggered
+  - Update `RulesOverlay` with rune effect explanations
+
+- [ ] **TODO: Update AI to consider rune effects**
+  - Evaluate Fire runes for scoring potential
+  - Consider Frost for blocking opponent
+  - Weight Poison collection strategically
+  - Use Void for denial tactics
+  - Value Wind as floor insurance and penalty mitigation
 
 ### Future Enhancements
-- [ ] Rune effects system (currently all runes have effect: 'None')
 - [ ] Boss selection and special modifiers
 - [ ] Meta-progression (unlocks after losses)
-- [ ] Deck customization UI
-- [ ] Run summary and statistics
+- [ ] Deck customization UI before game start
+- [ ] Run summary and statistics (enhanced beyond current game log)
 - [ ] Online multiplayer (server-based PvP)
-- [ ] Sound effects and animations
-- [ ] Mobile/touch optimization
+- [ ] Sound effects and background music
+- [ ] Enhanced animations (particle effects, celebrations)
 - [ ] Undo/redo for moves
 - [ ] End-game bonuses (row/column/type completion)
 - [ ] Tutorial/onboarding for new players
+- [ ] Save/load game state for resuming later
+- [ ] Difficulty settings for AI opponent
+- [ ] Achievements and unlockable content
 
 ### AI Improvements
 - [x] **Simple strategies (Completed ✅):**
@@ -409,10 +564,9 @@ src/
   - [x] Look-ahead planning (consider which runes will be available next turn)
   - [x] Value higher tier lines (tier 5 = more points potential with exponential scaling)
   - [x] Avoid wasted runes (don't draft more than a line can hold, exponential waste penalties)
-- [ ] **Advanced strategies:**
-  - [ ] Minimax algorithm (evaluate multiple moves ahead)
-  - [ ] Scoring simulation (calculate expected points for each move)
-  - [ ] Adaptive difficulty (learn from player patterns)
+- [x] **Advanced strategies:**
+  - [x] Minimax algorithm (evaluate multiple moves ahead)
+  - [x] Scoring simulation (calculate expected points for each move)
 
 ---
 

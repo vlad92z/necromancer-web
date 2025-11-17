@@ -10,10 +10,14 @@
  * 5. Look-ahead planning (consider future rune availability)
  * 6. Value higher tier lines (tier 5 = more points potential)
  * 7. Avoid wasted runes (minimize overflow to floor)
+ * 
+ * Advanced strategies:
+ * 8. Minimax algorithm (evaluate multiple moves ahead)
+ * 9. Scoring simulation (calculate expected points for each move)
  */
 
-import type { GameState, RuneType, PatternLine } from '../types/game';
-import { getWallColumnForRune } from './scoring';
+import type { GameState, RuneType, PatternLine, Player } from '../types/game';
+import { getWallColumnForRune, calculateWallPower } from './scoring';
 
 interface DraftMove {
   type: 'factory' | 'center';
@@ -174,6 +178,150 @@ function calculateWasteEfficiency(
 }
 
 /**
+ * ADVANCED: Deep copy a player state for simulation
+ */
+function clonePlayer(player: Player): Player {
+  return {
+    ...player,
+    patternLines: player.patternLines.map(line => ({ ...line })),
+    wall: player.wall.map(row => row.map(cell => ({ ...cell }))),
+    floorLine: {
+      ...player.floorLine,
+      runes: [...player.floorLine.runes]
+    },
+    deck: [...player.deck]
+  };
+}
+
+/**
+ * ADVANCED: Simulate a draft move and return the new game state
+ */
+function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: number | null): GameState {
+  const newState: GameState = {
+    ...state,
+    players: [clonePlayer(state.players[0]), clonePlayer(state.players[1])],
+    factories: state.factories.map(f => ({ ...f, runes: [...f.runes] })),
+    centerPool: [...state.centerPool],
+    selectedRunes: []
+  };
+  
+  const currentPlayer = newState.players[newState.currentPlayerIndex];
+  let runesToPlace: { runeType: RuneType }[] = [];
+  
+  // Execute draft
+  if (move.type === 'factory' && move.factoryId) {
+    const factory = newState.factories.find(f => f.id === move.factoryId);
+    if (factory) {
+      runesToPlace = factory.runes.filter(r => r.runeType === move.runeType);
+      const remainingRunes = factory.runes.filter(r => r.runeType !== move.runeType);
+      newState.centerPool.push(...remainingRunes);
+      factory.runes = [];
+    }
+  } else if (move.type === 'center') {
+    runesToPlace = newState.centerPool.filter(r => r.runeType === move.runeType);
+    newState.centerPool = newState.centerPool.filter(r => r.runeType !== move.runeType);
+  }
+  
+  // Execute placement
+  if (targetLineIndex !== null && targetLineIndex >= 0 && targetLineIndex < 5) {
+    const line = currentPlayer.patternLines[targetLineIndex];
+    const spacesAvailable = line.tier - line.count;
+    const runesToAdd = Math.min(runesToPlace.length, spacesAvailable);
+    const overflow = runesToPlace.length - runesToAdd;
+    
+    line.runeType = move.runeType;
+    line.count += runesToAdd;
+    
+    if (overflow > 0) {
+      // Add overflow to floor line (simplified)
+      for (let i = 0; i < overflow && currentPlayer.floorLine.runes.length < currentPlayer.floorLine.maxCapacity; i++) {
+        currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effect: { type: 'None' } });
+      }
+    }
+  } else {
+    // All to floor line
+    for (let i = 0; i < runesToPlace.length && currentPlayer.floorLine.runes.length < currentPlayer.floorLine.maxCapacity; i++) {
+      currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effect: { type: 'None' } });
+    }
+  }
+  
+  return newState;
+}
+
+/**
+ * ADVANCED: Calculate expected score gain from a move by simulating end-of-round scoring
+ * This simulates what would happen if the round ended after this move
+ */
+function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: number | null): number {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const currentScore = calculateWallPower(currentPlayer.wall, currentPlayer.floorLine.runes.length);
+  
+  // Simulate the move
+  const simulatedState = simulateDraftMove(state, move, targetLineIndex);
+  const simulatedPlayer = simulatedState.players[simulatedState.currentPlayerIndex];
+  
+  // Calculate potential wall state after this line completes
+  const simulatedWall = simulatedPlayer.wall.map(row => row.map(cell => ({ ...cell })));
+  
+  // If we're completing a pattern line, simulate adding it to the wall
+  if (targetLineIndex !== null && targetLineIndex >= 0) {
+    const line = simulatedPlayer.patternLines[targetLineIndex];
+    if (line.count === line.tier && line.runeType !== null) {
+      const col = getWallColumnForRune(targetLineIndex, line.runeType);
+      simulatedWall[targetLineIndex][col].runeType = line.runeType;
+    }
+  }
+  
+  const simulatedScore = calculateWallPower(simulatedWall, simulatedPlayer.floorLine.runes.length);
+  return simulatedScore - currentScore;
+}
+
+/**
+ * ADVANCED: Minimax evaluation - consider opponent's best response
+ * Looks ahead one move for the opponent and evaluates the resulting position
+ */
+function evaluateWithOpponentResponse(state: GameState, move: DraftMove, targetLineIndex: number | null): number {
+  const simulatedState = simulateDraftMove(state, move, targetLineIndex);
+  
+  // Switch to opponent's perspective
+  const opponentIndex = (1 - simulatedState.currentPlayerIndex) as 0 | 1;
+  simulatedState.currentPlayerIndex = opponentIndex;
+  
+  // Get opponent's possible moves
+  const opponentMoves = getLegalDraftMoves(simulatedState);
+  if (opponentMoves.length === 0) {
+    return 0; // No opponent moves available
+  }
+  
+  // Find opponent's best move (their highest scoring move hurts us)
+  let worstCaseForUs = Infinity;
+  
+  for (const opponentMove of opponentMoves.slice(0, Math.min(5, opponentMoves.length))) {
+    // For each opponent move, find their best placement
+    const opponentPlayer = simulatedState.players[simulatedState.currentPlayerIndex];
+    let bestOpponentScore = -Infinity;
+    
+    for (let lineIdx = 0; lineIdx < 5; lineIdx++) {
+      const line = opponentPlayer.patternLines[lineIdx];
+      if (canPlaceOnLine(line, opponentMove.runeType, opponentPlayer.wall, lineIdx)) {
+        const opponentGain = simulateScoreGain(simulatedState, opponentMove, lineIdx);
+        if (opponentGain > bestOpponentScore) {
+          bestOpponentScore = opponentGain;
+        }
+      }
+    }
+    
+    // Calculate net position: our gain minus opponent's gain
+    const ourGain = simulateScoreGain(state, move, targetLineIndex);
+    const netAdvantage = ourGain - bestOpponentScore;
+    
+    worstCaseForUs = Math.min(worstCaseForUs, netAdvantage);
+  }
+  
+  return worstCaseForUs === Infinity ? 0 : worstCaseForUs;
+}
+
+/**
  * Score a draft move based on:
  * 1. Completing pattern lines (highest priority)
  * 2. Avoiding wasted runes (minimize overflow to floor) - ENHANCED
@@ -182,6 +330,8 @@ function calculateWasteEfficiency(
  * 5. MEDIUM: Look-ahead planning for future moves
  * 6. MEDIUM: Value higher tier lines more aggressively
  * 7. MEDIUM: Penalize excessive waste
+ * 8. ADVANCED: Scoring simulation (calculate expected point gain)
+ * 9. ADVANCED: Minimax consideration (opponent response evaluation)
  */
 function scoreDraftMove(move: DraftMove, state: GameState): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
@@ -272,6 +422,36 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   // Strategy 7: MEDIUM - Waste efficiency bonus
   const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType);
   score += wasteEfficiency * 0.5; // Scale it down since it's already factored in waste penalty
+  
+  // Strategy 8: ADVANCED - Scoring simulation
+  // Find the best placement line for this move
+  let bestPlacementLineIndex: number | null = null;
+  let bestPlacementScore = -Infinity;
+  
+  currentPlayer.patternLines.forEach((line, lineIndex) => {
+    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
+      const placementScore = scorePlacementMove(lineIndex, state);
+      if (placementScore > bestPlacementScore) {
+        bestPlacementScore = placementScore;
+        bestPlacementLineIndex = lineIndex;
+      }
+    }
+  });
+  
+  // Calculate expected score gain through simulation
+  if (bestPlacementLineIndex !== null) {
+    const expectedScoreGain = simulateScoreGain(state, move, bestPlacementLineIndex);
+    // Weight the simulated score heavily - it's based on actual game mechanics
+    score += expectedScoreGain * 3;
+  }
+  
+  // Strategy 9: ADVANCED - Minimax evaluation (opponent response)
+  // Consider what the opponent could do in response to this move
+  if (bestPlacementLineIndex !== null) {
+    const minimaxScore = evaluateWithOpponentResponse(state, move, bestPlacementLineIndex);
+    // Add minimax consideration (moderate weight since it's one level deep)
+    score += minimaxScore * 2;
+  }
   
   return score;
 }

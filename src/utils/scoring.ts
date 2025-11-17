@@ -7,7 +7,7 @@ import type { ScoringWall, RuneType } from '../types/game';
 
 /**
  * Calculate total wall power based on connected segments
- * Each segment's power is segmentSize * max(1, segmentSize - floorPenaltyCount)
+ * Each segment's power is essence * max(1, essence - floorPenaltyCount)
  * Runes are connected if they share an edge (not diagonal)
  */
 export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0): number {
@@ -38,16 +38,59 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
-        const segmentSize = floodFill(row, col);
-        // Apply floor penalty: multiplier = max(1, segmentSize - floorPenaltyCount)
-        const multiplier = Math.max(1, segmentSize - floorPenaltyCount);
-        const segmentPower = segmentSize * multiplier;
+        const essence = floodFill(row, col);
+        // Apply floor penalty: focus = max(1, essence - floorPenaltyCount)
+        const focus = Math.max(1, essence - floorPenaltyCount);
+        const segmentPower = essence * focus;
         totalPower += segmentPower;
       }
     }
   }
   
   return totalPower;
+}
+
+/**
+ * Calculate wall power and return detailed segment information
+ * Used for game log display
+ */
+export function calculateWallPowerWithSegments(
+  wall: ScoringWall, 
+  floorPenaltyCount: number = 0
+): { segments: Array<{ essence: number; focus: number }>; totalPower: number } {
+  const visited = Array(5).fill(null).map(() => Array(5).fill(false));
+  const segments: Array<{ essence: number; focus: number }> = [];
+  
+  function floodFill(row: number, col: number): number {
+    if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
+        visited[row][col] || wall[row][col].runeType === null) {
+      return 0;
+    }
+    
+    visited[row][col] = true;
+    let count = 1;
+    
+    count += floodFill(row - 1, col);
+    count += floodFill(row + 1, col);
+    count += floodFill(row, col - 1);
+    count += floodFill(row, col + 1);
+    
+    return count;
+  }
+  
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      if (!visited[row][col] && wall[row][col].runeType !== null) {
+        const essence = floodFill(row, col);
+        const focus = Math.max(1, essence - floorPenaltyCount);
+        segments.push({ essence, focus });
+      }
+    }
+  }
+  
+  const totalPower = segments.reduce((sum, seg) => sum + (seg.essence * seg.focus), 0);
+  
+  return { segments, totalPower };
 }
 
 /**
@@ -210,7 +253,7 @@ export function calculateProjectedPower(
   wall: ScoringWall,
   completedPatternLines: Array<{ row: number; runeType: RuneType }>,
   floorPenaltyCount: number
-): { segments: Array<{ size: number; multiplier: number; power: number }>; totalPower: number; floorPenalty: number } {
+): { segments: Array<{ essence: number; focus: number; power: number }>; totalPower: number; floorPenalty: number } {
   // Create a simulated wall with pattern line runes placed
   const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
   
@@ -222,7 +265,7 @@ export function calculateProjectedPower(
   
   // Find all segments in the simulated wall
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
-  const segments: Array<{ size: number; multiplier: number; power: number }> = [];
+  const segments: Array<{ essence: number; focus: number; power: number }> = [];
   
   function floodFill(row: number, col: number): number {
     if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
@@ -245,10 +288,10 @@ export function calculateProjectedPower(
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && simulatedWall[row][col].runeType !== null) {
-        const segmentSize = floodFill(row, col);
-        const multiplier = Math.max(1, segmentSize - floorPenaltyCount);
-        const segmentPower = segmentSize * multiplier;
-        segments.push({ size: segmentSize, multiplier, power: segmentPower });
+        const essence = floodFill(row, col);
+        const focus = Math.max(1, essence - floorPenaltyCount);
+        const segmentPower = essence * focus;
+        segments.push({ essence, focus, power: segmentPower });
       }
     }
   }
