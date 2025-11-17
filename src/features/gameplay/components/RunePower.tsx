@@ -38,9 +38,9 @@ export function RunePower({ player }: RunePowerProps) {
       marginTop: isMobile ? '8px' : '12px'
     }}>
       <div style={{
-        fontSize: isMobile ? '11px' : '14px',
+        fontSize: isMobile ? '14px' : '20px',
         color: '#78350f',
-        fontWeight: '500',
+        fontWeight: 'bold',
         textAlign: 'center'
       }}>
         Current Spellpower: {segments.length > 0 ? (
