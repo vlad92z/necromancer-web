@@ -93,8 +93,8 @@ export function RuneCell({
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   
-  // Animate when rune appears in pattern lines
-  const shouldAnimate = variant === 'pattern' && rune;
+  // Animate when rune appears in pattern lines, scoring wall, or floor line
+  const shouldAnimate = (variant === 'pattern' || variant === 'wall' || variant === 'floor') && rune;
   
   const animationProps = shouldAnimate ? {
     initial: { scale: 0, opacity: 0 } as const,

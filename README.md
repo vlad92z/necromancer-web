@@ -400,10 +400,10 @@ src/
   - [x] Avoid floor line penalties (only use floor when necessary)
   - [x] Block opponent (take runes the opponent needs)
   - [x] Maximize wall points (choose placements that create longer connections)
-- [ ] **Medium complexity:**
-  - [ ] Look-ahead planning (consider which runes will be available next turn)
-  - [ ] Value higher tier lines (tier 5 = more points potential)
-  - [ ] Avoid wasted runes (don't draft more than a line can hold)
+- [x] **Medium complexity (Completed ✅):**
+  - [x] Look-ahead planning (consider which runes will be available next turn)
+  - [x] Value higher tier lines (tier 5 = more points potential with exponential scaling)
+  - [x] Avoid wasted runes (don't draft more than a line can hold, exponential waste penalties)
 - [ ] **Advanced strategies:**
   - [ ] Minimax algorithm (evaluate multiple moves ahead)
   - [ ] Scoring simulation (calculate expected points for each move)

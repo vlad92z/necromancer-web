@@ -5,9 +5,14 @@
  * 2. Avoid floor line penalties
  * 3. Block opponent's progress
  * 4. Maximize wall connection points
+ * 
+ * Medium complexity strategies:
+ * 5. Look-ahead planning (consider future rune availability)
+ * 6. Value higher tier lines (tier 5 = more points potential)
+ * 7. Avoid wasted runes (minimize overflow to floor)
  */
 
-import type { GameState, RuneType, PatternLine, Player } from '../types/game';
+import type { GameState, RuneType, PatternLine } from '../types/game';
 import { getWallColumnForRune } from './scoring';
 
 interface DraftMove {
@@ -95,11 +100,88 @@ function calculateConnectionScore(wall: any, row: number, col: number): number {
 }
 
 /**
+ * MEDIUM COMPLEXITY: Calculate future rune availability after this draft
+ * Returns a map of how many runes of each type will remain available
+ */
+function calculateFutureAvailability(state: GameState, move: DraftMove): Map<RuneType, number> {
+  const availability = new Map<RuneType, number>();
+  
+  // Count all runes currently available
+  state.factories.forEach(factory => {
+    factory.runes.forEach(rune => {
+      availability.set(rune.runeType, (availability.get(rune.runeType) || 0) + 1);
+    });
+  });
+  
+  state.centerPool.forEach(rune => {
+    availability.set(rune.runeType, (availability.get(rune.runeType) || 0) + 1);
+  });
+  
+  // Subtract the runes we're drafting
+  availability.set(move.runeType, (availability.get(move.runeType) || 0) - move.count);
+  
+  // If drafting from factory, other runes will move to center (still available for opponent)
+  // This doesn't change total availability, just location
+  
+  return availability;
+}
+
+/**
+ * MEDIUM COMPLEXITY: Evaluate if we have incomplete pattern lines that need this rune type
+ */
+function evaluatePatternLineNeeds(player: { patternLines: PatternLine[] }): Map<RuneType, number> {
+  const needs = new Map<RuneType, number>();
+  
+  player.patternLines.forEach((line) => {
+    if (line.runeType !== null && line.count < line.tier) {
+      // This line needs more runes of its type
+      const spacesNeeded = line.tier - line.count;
+      const currentNeed = needs.get(line.runeType) || 0;
+      
+      // Weight by tier (higher tiers = more valuable to complete)
+      const weightedNeed = spacesNeeded * (1 + line.tier * 0.2);
+      needs.set(line.runeType, currentNeed + weightedNeed);
+    }
+  });
+  
+  return needs;
+}
+
+/**
+ * MEDIUM COMPLEXITY: Calculate waste efficiency score
+ * Penalizes drafting more runes than can be efficiently used
+ */
+function calculateWasteEfficiency(
+  move: DraftMove, 
+  player: { patternLines: PatternLine[], wall: any }, 
+  runeType: RuneType
+): number {
+  let bestEfficiency = -100; // Default: all runes wasted
+  
+  player.patternLines.forEach((line, lineIndex) => {
+    if (canPlaceOnLine(line, runeType, player.wall, lineIndex)) {
+      const spacesAvailable = line.tier - line.count;
+      const wastedRunes = Math.max(0, move.count - spacesAvailable);
+      const usedRunes = Math.min(move.count, spacesAvailable);
+      
+      // Efficiency = (used runes / total runes) * 100, minus waste penalty
+      const efficiency = (usedRunes / move.count) * 100 - (wastedRunes * 25);
+      bestEfficiency = Math.max(bestEfficiency, efficiency);
+    }
+  });
+  
+  return bestEfficiency;
+}
+
+/**
  * Score a draft move based on:
  * 1. Completing pattern lines (highest priority)
- * 2. Avoiding wasted runes (minimize overflow to floor)
+ * 2. Avoiding wasted runes (minimize overflow to floor) - ENHANCED
  * 3. Blocking opponent's almost-complete lines
  * 4. Maximizing wall connection potential
+ * 5. MEDIUM: Look-ahead planning for future moves
+ * 6. MEDIUM: Value higher tier lines more aggressively
+ * 7. MEDIUM: Penalize excessive waste
  */
 function scoreDraftMove(move: DraftMove, state: GameState): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
@@ -120,10 +202,24 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
         // Calculate connection bonus for this placement
         const col = getWallColumnForRune(lineIndex, move.runeType);
         const connectionBonus = calculateConnectionScore(currentPlayer.wall, lineIndex, col);
-        bestLineValue = Math.max(bestLineValue, 100 + (line.tier * 10) + (connectionBonus * 20));
+        
+        // MEDIUM: Tier 5 lines worth significantly more (exponential scaling)
+        const tierBonus = Math.pow(line.tier, 1.5) * 8;
+        const lineValue = 100 + tierBonus + (connectionBonus * 20);
+        
+        if (lineValue > bestLineValue) {
+          bestLineValue = lineValue;
+        }
       } else {
-        // Filling towards completion (higher tier = better)
-        bestLineValue = Math.max(bestLineValue, 50 + (line.tier * 5) + move.count);
+        // Filling towards completion
+        // MEDIUM: Higher tiers are more valuable even when not completing
+        const tierBonus = line.tier * 8;
+        const progressBonus = (move.count / spacesNeeded) * 30;
+        const lineValue = 50 + tierBonus + progressBonus;
+        
+        if (lineValue > bestLineValue) {
+          bestLineValue = lineValue;
+        }
       }
       
       minWaste = Math.min(minWaste, waste);
@@ -132,8 +228,12 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   
   score += bestLineValue;
   
-  // Strategy 2: Avoid floor penalties (penalize wasted runes)
-  score -= minWaste * 15;
+  // Strategy 2: MEDIUM - Enhanced waste penalty (exponential for large waste)
+  if (minWaste > 0) {
+    // Small waste (1-2 runes) is tolerable, large waste is very bad
+    const wastePenalty = minWaste <= 2 ? minWaste * 10 : minWaste * 20 + Math.pow(minWaste - 2, 2) * 10;
+    score -= wastePenalty;
+  }
   
   // Strategy 3: Block opponent's progress
   opponent.patternLines.forEach((line) => {
@@ -142,15 +242,43 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
       // If opponent is close to completing this line, blocking is valuable
       if (spacesNeeded <= 2) {
         score += 30; // Bonus for blocking opponent
+      } else if (spacesNeeded <= 3) {
+        score += 15; // Smaller bonus for moderately close lines
       }
     }
   });
+  
+  // Strategy 5: MEDIUM - Look-ahead planning
+  const futureAvailability = calculateFutureAvailability(state, move);
+  const ourNeeds = evaluatePatternLineNeeds(currentPlayer);
+  
+  // Check if we have incomplete lines that need other rune types
+  ourNeeds.forEach((need, neededRuneType) => {
+    if (neededRuneType !== move.runeType) {
+      const futureAmount = futureAvailability.get(neededRuneType) || 0;
+      // If we need this type but it's becoming scarce, slight penalty for taking other types
+      if (need > futureAmount) {
+        score -= 5 * (need - futureAmount);
+      }
+    }
+  });
+  
+  // If this move fulfills a need we have, bonus
+  const thisTypeNeed = ourNeeds.get(move.runeType) || 0;
+  if (thisTypeNeed > 0) {
+    score += thisTypeNeed * 8;
+  }
+  
+  // Strategy 7: MEDIUM - Waste efficiency bonus
+  const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType);
+  score += wasteEfficiency * 0.5; // Scale it down since it's already factored in waste penalty
   
   return score;
 }
 
 /**
  * Choose best draft move using smart strategies
+ * MEDIUM: More intelligent selection with smaller randomness window
  */
 function chooseBestDraftMove(state: GameState): DraftMove | null {
   const moves = getLegalDraftMoves(state);
@@ -165,19 +293,22 @@ function chooseBestDraftMove(state: GameState): DraftMove | null {
   // Sort by score (highest first)
   scoredMoves.sort((a, b) => b.score - a.score);
   
-  // Add some randomness: pick from top 3 moves
-  const topMoves = scoredMoves.slice(0, Math.min(3, scoredMoves.length));
-  const selectedMove = topMoves[Math.floor(Math.random() * topMoves.length)];
+  // MEDIUM: Smarter randomness - only pick from top 2 moves, 
+  // and favor the best move 85% of the time
+  if (scoredMoves.length > 1 && Math.random() < 0.15) {
+    return scoredMoves[1].move;
+  }
   
-  return selectedMove.move;
+  return scoredMoves[0].move;
 }
 
 /**
  * Score a placement move based on:
  * 1. Avoid floor line (highest priority)
  * 2. Prefer lines that will complete
- * 3. Prefer higher tiers
+ * 3. MEDIUM: Prefer higher tiers (exponential scaling)
  * 4. Maximize wall connections
+ * 5. MEDIUM: Minimize waste aggressively
  */
 function scorePlacementMove(
   lineIndex: number | null, 
@@ -188,19 +319,26 @@ function scorePlacementMove(
   
   // Floor placement (last resort)
   if (lineIndex === null) {
-    return -100; // Strongly avoid floor
+    // MEDIUM: Floor penalty scales with number of runes wasted
+    return -100 - (runeCount * 15);
   }
   
   const line = currentPlayer.patternLines[lineIndex];
   const spacesAvailable = line.tier - line.count;
   let score = 0;
   
-  // Strategy 1: Prefer moves that don't overflow to floor
+  // Strategy 1: MEDIUM - Enhanced waste avoidance
   if (runeCount <= spacesAvailable) {
     score += 100; // Big bonus for no waste
+    // Extra bonus for perfect fit (no excess capacity)
+    if (runeCount === spacesAvailable) {
+      score += 25;
+    }
   } else {
     const waste = runeCount - spacesAvailable;
-    score -= waste * 20; // Penalize overflow
+    // MEDIUM: Exponential penalty for large waste
+    const wastePenalty = waste <= 2 ? waste * 15 : waste * 25 + Math.pow(waste - 2, 2) * 10;
+    score -= wastePenalty;
   }
   
   // Strategy 2: Prefer completing lines
@@ -211,8 +349,16 @@ function scorePlacementMove(
     score += 50 + (connectionBonus * 15); // Bonus for completion + connections
   }
   
-  // Strategy 3: Prefer higher tier lines (more points potential)
-  score += line.tier * 5;
+  // Strategy 3: MEDIUM - Exponentially value higher tier lines
+  // Tier 5 should be significantly more valuable than tier 1
+  const tierValue = Math.pow(line.tier, 1.5) * 6;
+  score += tierValue;
+  
+  // MEDIUM: Additional bonus if this placement will complete the line
+  if (runeCount >= spacesAvailable) {
+    // Higher tiers give more points, so completing them is worth more
+    score += line.tier * 12;
+  }
   
   return score;
 }
@@ -243,6 +389,7 @@ function getLegalPlacementMoves(state: GameState): Array<{ type: 'line' | 'floor
 
 /**
  * Choose best placement move using smart strategies
+ * MEDIUM: More deterministic, only randomize if scores are very close
  */
 function chooseBestPlacementMove(state: GameState): { type: 'line' | 'floor', lineIndex?: number } | null {
   const moves = getLegalPlacementMoves(state);
@@ -257,8 +404,10 @@ function chooseBestPlacementMove(state: GameState): { type: 'line' | 'floor', li
   // Sort by score (highest first)
   scoredMoves.sort((a, b) => b.score - a.score);
   
-  // Pick best move (with small chance of picking second best for variety)
-  if (scoredMoves.length > 1 && Math.random() < 0.15) {
+  // MEDIUM: Only pick second best if scores are within 10 points (very close decision)
+  if (scoredMoves.length > 1 && 
+      Math.abs(scoredMoves[0].score - scoredMoves[1].score) <= 10 && 
+      Math.random() < 0.3) {
     return scoredMoves[1].move;
   }
   
