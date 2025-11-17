@@ -232,9 +232,23 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 **Start Game Screen:**
 - Displays before gameplay begins
 - Shows game title and brief description
+- Game mode selection toggle (Classic vs Standard)
 - "Start Game" button to initialize gameplay
 - Responsive design matching game theme
 - Game Over modal returns to this screen instead of immediately restarting
+
+**Game Modes:**
+- **Classic Mode**: Play without rune modifiers
+  - Pure strategic gameplay focused on pattern building and wall connections
+  - Runes function identically with no special effects
+  - Simplified scoring: Essence × Focus
+  - Recommended for learning the core mechanics
+- **Standard Mode**: Play with rune modifiers (coming soon)
+  - Each rune type has unique tactical effects
+  - Fire adds bonus essence, Frost freezes factories, Poison reduces opponent focus
+  - Void destroys factory runes, Wind mitigates floor penalties
+  - Advanced gameplay with deeper strategic decisions
+  - See "Rune Effects System" section below for detailed mechanics
 
 **Selection & Cancellation:**
 - Click rune selection tracks source (factory or center)
