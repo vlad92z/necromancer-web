@@ -92,7 +92,7 @@ export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: Fac
                 color: '#64748b',
                 margin: '4px 0 0 0',
               }}>
-                Select a rune type to draft
+                Select a rune type to prepare
               </p>
             </div>
             <button

@@ -42,10 +42,6 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLin
               rune={floorLine.runes[index] || null}
               variant="floor"
               size="large"
-              placeholder={{
-                type: 'text',
-                text: `-${index + 1}`,
-              }}
               showEffect={false}
             />
           ))}
