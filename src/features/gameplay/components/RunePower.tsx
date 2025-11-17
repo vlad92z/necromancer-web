@@ -60,7 +60,7 @@ export function RunePower({ player }: RunePowerProps) {
           
           {floorPenaltyCount > 0 && (
             <div style={{ color: '#991b1b', fontWeight: '500' }}>
-              Floor: {floorPenalty}
+              Overload: {floorPenalty}
             </div>
           )}
           
