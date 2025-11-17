@@ -15,6 +15,7 @@ interface PlayerViewProps {
   selectedRuneType: RuneType | null;
   canPlace: boolean;
   onCancelSelection: () => void;
+  gameMode: 'classic' | 'standard';
 }
 
 export function PlayerView({
@@ -26,6 +27,7 @@ export function PlayerView({
   selectedRuneType,
   canPlace,
   onCancelSelection,
+  gameMode,
 }: PlayerViewProps) {
   const isMobile = window.innerWidth < 768;
   
@@ -36,6 +38,7 @@ export function PlayerView({
         opponent={opponent}
         damageTaken={opponent.score}
         nameColor="#0c4a6e"
+        gameMode={gameMode}
       />
       <PlayerBoard
         player={player}

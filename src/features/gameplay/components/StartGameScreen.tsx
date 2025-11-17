@@ -5,7 +5,7 @@
 import { useState } from 'react';
 
 interface StartGameScreenProps {
-  onStartGame: () => void;
+  onStartGame: (gameMode: 'classic' | 'standard') => void;
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
@@ -135,7 +135,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         </div>
         
         <button
-          onClick={onStartGame}
+          onClick={() => onStartGame(gameMode)}
           style={{
             backgroundColor: '#eab308',
             color: '#111827',

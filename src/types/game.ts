@@ -125,6 +125,7 @@ export interface AnimatingRune {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
+  gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
   players: [Player, Player]; // Player (index 0) and AI Opponent (index 1)
   factories: Factory[];
   centerPool: Rune[]; // Center factory (accumulates leftover runes)

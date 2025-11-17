@@ -21,7 +21,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenFactories } = gameState;
+  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenFactories, gameMode } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
   const destroyFactory = useGameStore((state) => state.destroyFactory);
@@ -276,6 +276,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
               canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
               onCancelSelection={cancelSelection}
+              gameMode={gameMode}
             />
           </>
         ) : (
@@ -291,6 +292,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
                 canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
                 onCancelSelection={cancelSelection}
+                gameMode={gameMode}
               />
             </div>
             
@@ -300,6 +302,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 opponent={players[1]}
                 player={players[0]}
                 isActive={currentPlayerIndex === 1}
+                gameMode={gameMode}
               />
             </div>
           </div>
@@ -427,6 +430,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               opponent={players[1]}
               player={players[0]}
               isActive={currentPlayerIndex === 1}
+              gameMode={gameMode}
             />
           </div>
         </div>

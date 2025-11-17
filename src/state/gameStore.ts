@@ -15,7 +15,7 @@ function countPoisonRunes(wall: Player['wall']): number {
 
 interface GameStore extends GameState {
   // Actions
-  startGame: () => void;
+  startGame: (gameMode: 'classic' | 'standard') => void;
   returnToStartScreen: () => void;
   draftRune: (factoryId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
@@ -174,9 +174,12 @@ export const useGameStore = create<GameStore>((set) => ({
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allFactoriesEmpty && centerEmpty;
       
+      // Only trigger rune effects in standard mode
+      const isStandardMode = state.gameMode === 'standard';
+      
       // If Void runes were placed and there are non-empty factories, trigger Void effect
       // Keep current player so THEY get to choose which factory to destroy
-      if (hasVoidRunes && hasNonEmptyFactories && !shouldEndRound) {
+      if (isStandardMode && hasVoidRunes && hasNonEmptyFactories && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -190,7 +193,7 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // If Frost runes were placed and there are non-empty factories, trigger Frost effect
       // Keep current player so THEY get to choose which factory to freeze
-      if (hasFrostRunes && hasNonEmptyFactories && !shouldEndRound) {
+      if (isStandardMode && hasFrostRunes && hasNonEmptyFactories && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -473,14 +476,14 @@ export const useGameStore = create<GameStore>((set) => ({
         
         // Calculate total wall power based on connected segments
         // Floor penalties reduce the multiplier of each segment
-        // Wind Effect: Each Wind rune cancels one other floor penalty
-        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes);
+        // Wind Effect: Each Wind rune cancels one other floor penalty (only in standard mode)
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
         
         // Get opponent's Poison count (for Poison effect)
         const opponentIndex = state.players.indexOf(player) === 0 ? 1 : 0;
         const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
         
-        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, opponentPoisonCount);
+        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, opponentPoisonCount, state.gameMode);
         
         // Add wall power to existing score (minimum 0)
         const newScore = Math.max(0, player.score + wallPower);
@@ -514,13 +517,13 @@ export const useGameStore = create<GameStore>((set) => ({
       // Calculate and apply scores, and record round history
       const updatedPlayersArray = state.players.map((player, playerIndex) => {
         // Wind Effect: Each Wind rune cancels one other floor penalty
-        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes);
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
         
         // Get opponent's Poison count (for Poison effect)
         const opponentIndex = playerIndex === 0 ? 1 : 0;
         const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
         
-        const wallPower = calculateWallPower(player.wall, floorPenaltyCount, opponentPoisonCount);
+        const wallPower = calculateWallPower(player.wall, floorPenaltyCount, opponentPoisonCount, state.gameMode);
         const newScore = Math.max(0, player.score + wallPower);
         
         console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties, ${opponentPoisonCount} opponent Poison), Total score ${newScore}`);
@@ -538,19 +541,21 @@ export const useGameStore = create<GameStore>((set) => ({
       const player1PoisonCount = countPoisonRunes(updatedPlayers[0].wall);
       const player2PoisonCount = countPoisonRunes(updatedPlayers[1].wall);
       
-      // Wind Effect: Calculate effective floor penalties for both players
-      const player1FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[0].floorLine.runes);
-      const player2FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[1].floorLine.runes);
+      // Wind Effect: Calculate effective floor penalties for both players (only in standard mode)
+      const player1FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[0].floorLine.runes, state.gameMode);
+      const player2FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[1].floorLine.runes, state.gameMode);
       
       const player1Data = calculateWallPowerWithSegments(
         updatedPlayers[0].wall, 
         player1FloorPenalty,
-        player2PoisonCount // Player 1 is affected by Player 2's Poison
+        player2PoisonCount, // Player 1 is affected by Player 2's Poison
+        state.gameMode
       );
       const player2Data = calculateWallPowerWithSegments(
         updatedPlayers[1].wall, 
         player2FloorPenalty,
-        player1PoisonCount // Player 2 is affected by Player 1's Poison
+        player1PoisonCount, // Player 2 is affected by Player 1's Poison
+        state.gameMode
       );
       
       const roundScore = {
@@ -652,10 +657,11 @@ export const useGameStore = create<GameStore>((set) => ({
     });
   },
   
-  startGame: () => {
+  startGame: (gameMode: 'classic' | 'standard') => {
     set((state) => ({
       ...state,
       gameStarted: true,
+      gameMode: gameMode,
     }));
   },
 

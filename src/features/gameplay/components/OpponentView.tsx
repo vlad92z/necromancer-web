@@ -10,9 +10,10 @@ interface OpponentViewProps {
   opponent: Player;
   player: Player;
   isActive: boolean;
+  gameMode: 'classic' | 'standard';
 }
 
-export function OpponentView({ opponent, player, isActive }: OpponentViewProps) {
+export function OpponentView({ opponent, player, isActive, gameMode }: OpponentViewProps) {
   const isMobile = window.innerWidth < 768;
   
   return (
@@ -22,6 +23,7 @@ export function OpponentView({ opponent, player, isActive }: OpponentViewProps) 
         opponent={player}
         damageTaken={player.score}
         nameColor="#7f1d1d"
+        gameMode={gameMode}
       />
       <PlayerBoard
         player={opponent}

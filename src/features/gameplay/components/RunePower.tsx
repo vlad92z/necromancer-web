@@ -12,9 +12,10 @@ interface RunePowerProps {
   opponent: Player;
   damageTaken: number;
   nameColor: string;
+  gameMode: 'classic' | 'standard';
 }
 
-export function RunePower({ player, opponent, damageTaken, nameColor }: RunePowerProps) {
+export function RunePower({ player, opponent, damageTaken, nameColor, gameMode }: RunePowerProps) {
   const isMobile = window.innerWidth < 768;
   const [showExplanation, setShowExplanation] = useState(false);
   
@@ -26,26 +27,33 @@ export function RunePower({ player, opponent, damageTaken, nameColor }: RunePowe
     .filter(({ line }) => line.count === line.tier && line.runeType !== null)
     .map(({ line, row }) => ({ row, runeType: line.runeType! }));
   
-  // Wind Effect: Calculate effective floor penalty count
-  const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes);
+  // Wind Effect: Calculate effective floor penalty count (only in standard mode)
+  const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, gameMode);
   const windRuneCount = player.floorLine.runes.filter(rune => rune.runeType === 'Wind').length;
-  const hasWindMitigation = windRuneCount > 0;
+  const hasWindMitigation = gameMode === 'standard' && windRuneCount > 0;
   
-  // Count opponent's Poison runes (affects this player's Focus)
-  const opponentPoisonCount = opponent.wall.flat().filter(cell => cell.runeType === 'Poison').length;
+  // Count opponent's Poison runes (affects this player's Focus, only in standard mode)
+  const opponentPoisonCount = gameMode === 'standard' 
+    ? opponent.wall.flat().filter(cell => cell.runeType === 'Poison').length 
+    : 0;
   
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
     completedPatternLines,
     floorPenaltyCount,
-    opponentPoisonCount
+    opponentPoisonCount,
+    gameMode
   );
   const hasPenalty = floorPenaltyCount > 0;
   const hasPoisonEffect = opponentPoisonCount > 0;
   
-  // Count Fire runes: current wall + completed pattern lines
-  const fireRunesOnWall = player.wall.flat().filter(cell => cell.runeType === 'Fire').length;
-  const fireRunesInCompletedLines = completedPatternLines.filter(line => line.runeType === 'Fire').length;
+  // Count Fire runes: current wall + completed pattern lines (only in standard mode)
+  const fireRunesOnWall = gameMode === 'standard' 
+    ? player.wall.flat().filter(cell => cell.runeType === 'Fire').length 
+    : 0;
+  const fireRunesInCompletedLines = gameMode === 'standard'
+    ? completedPatternLines.filter(line => line.runeType === 'Fire').length
+    : 0;
   const fireRuneCount = fireRunesOnWall + fireRunesInCompletedLines;
   
   return (

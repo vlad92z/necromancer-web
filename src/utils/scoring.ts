@@ -15,7 +15,12 @@ import type { ScoringWall, RuneType } from '../types/game';
  * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
  * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
  */
-export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0, opponentPoisonCount: number = 0): number {
+export function calculateWallPower(
+  wall: ScoringWall, 
+  floorPenaltyCount: number = 0, 
+  opponentPoisonCount: number = 0,
+  gameMode: 'classic' | 'standard' = 'standard'
+): number {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
@@ -49,18 +54,19 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
-      // Count Fire runes separately for bonus
-      if (wall[row][col].runeType === 'Fire') {
+      // Count Fire runes separately for bonus (only in standard mode)
+      if (gameMode === 'standard' && wall[row][col].runeType === 'Fire') {
         fireRuneCount++;
       }
     }
   }
   
-  // Calculate essence with Fire bonus
-  const essence = totalRunes + fireRuneCount;
+  // Calculate essence with Fire bonus (only in standard mode)
+  const essence = totalRunes + (gameMode === 'standard' ? fireRuneCount : 0);
   
-  // Apply floor penalty and Poison effect to focus (minimum 1)
-  const focus = Math.max(1, largestSegment - floorPenaltyCount - opponentPoisonCount);
+  // Apply floor penalty and Poison effect to focus (minimum 1) - only in standard mode
+  const poisonReduction = gameMode === 'standard' ? opponentPoisonCount : 0;
+  const focus = Math.max(1, largestSegment - floorPenaltyCount - poisonReduction);
   const totalPower = essence * focus;
   
   return totalPower;
@@ -70,14 +76,15 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
  * Calculate wall power and return detailed information
  * Used for game log display
  * Returns essence (total runes + Fire bonus) and focus (largest segment)
- * Fire Effect: Each Fire rune adds +1 to Essence
- * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
- * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
+ * Fire Effect: Each Fire rune adds +1 to Essence (only in standard mode)
+ * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1) (only in standard mode)
+ * Wind Effect: Each Wind rune in floor line cancels one other floor penalty (only in standard mode)
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
   floorPenaltyCount: number = 0,
-  opponentPoisonCount: number = 0
+  opponentPoisonCount: number = 0,
+  gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalRunes = 0;
@@ -108,18 +115,19 @@ export function calculateWallPowerWithSegments(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
-      // Count Fire runes separately for bonus
-      if (wall[row][col].runeType === 'Fire') {
+      // Count Fire runes separately for bonus (only in standard mode)
+      if (gameMode === 'standard' && wall[row][col].runeType === 'Fire') {
         fireRuneCount++;
       }
     }
   }
   
-  // Calculate essence with Fire bonus
-  const essence = totalRunes + fireRuneCount;
+  // Calculate essence with Fire bonus (only in standard mode)
+  const essence = totalRunes + (gameMode === 'standard' ? fireRuneCount : 0);
   
-  // Apply floor penalty and Poison effect to focus (minimum 1)
-  const focus = Math.max(1, largestSegment - floorPenaltyCount - opponentPoisonCount);
+  // Apply floor penalty and Poison effect to focus (minimum 1) - only in standard mode
+  const poisonReduction = gameMode === 'standard' ? opponentPoisonCount : 0;
+  const focus = Math.max(1, largestSegment - floorPenaltyCount - poisonReduction);
   const totalPower = essence * focus;
   
   return { essence, focus, totalPower };
@@ -195,10 +203,19 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 
 /**
  * Calculate effective floor penalty count after Wind mitigation
- * Wind Effect: Each Wind rune in the floor line cancels out one other floor penalty
+ * Wind Effect: Each Wind rune in the floor line cancels out one other floor penalty (only in standard mode)
  * Wind runes still count toward floor line capacity but reduce the penalty impact
  */
-export function calculateEffectiveFloorPenalty(floorRunes: Array<{ runeType: RuneType | null }>): number {
+export function calculateEffectiveFloorPenalty(
+  floorRunes: Array<{ runeType: RuneType | null }>,
+  gameMode: 'classic' | 'standard' = 'standard'
+): number {
+  // In classic mode, no Wind mitigation - all floor runes count as penalties
+  if (gameMode === 'classic') {
+    return floorRunes.length;
+  }
+  
+  // In standard mode, Wind runes cancel other penalties
   const windCount = floorRunes.filter(rune => rune.runeType === 'Wind').length;
   const otherRuneCount = floorRunes.length - windCount;
   
@@ -301,7 +318,8 @@ export function calculateProjectedPower(
   wall: ScoringWall,
   completedPatternLines: Array<{ row: number; runeType: RuneType }>,
   floorPenaltyCount: number,
-  opponentPoisonCount: number = 0
+  opponentPoisonCount: number = 0,
+  gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
   // Create a simulated wall with pattern line runes placed
   const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
@@ -343,18 +361,19 @@ export function calculateProjectedPower(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
-      // Count Fire runes separately for bonus
-      if (simulatedWall[row][col].runeType === 'Fire') {
+      // Count Fire runes separately for bonus (only in standard mode)
+      if (gameMode === 'standard' && simulatedWall[row][col].runeType === 'Fire') {
         fireRuneCount++;
       }
     }
   }
   
-  // Calculate essence with Fire bonus
-  const essence = totalRunes + fireRuneCount;
+  // Calculate essence with Fire bonus (only in standard mode)
+  const essence = totalRunes + (gameMode === 'standard' ? fireRuneCount : 0);
   
-  // Apply floor penalty and Poison effect to focus (minimum 1)
-  const focus = Math.max(1, largestSegment - floorPenaltyCount - opponentPoisonCount);
+  // Apply floor penalty and Poison effect to focus (minimum 1) - only in standard mode
+  const poisonReduction = gameMode === 'standard' ? opponentPoisonCount : 0;
+  const focus = Math.max(1, largestSegment - floorPenaltyCount - poisonReduction);
   const totalPower = essence * focus;
   
   return { essence, focus, totalPower };
