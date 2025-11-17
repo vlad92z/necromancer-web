@@ -266,6 +266,67 @@ npm run build
 npm run lint
 ```
 
+## Deployment
+
+### Cloudflare Pages
+
+This project is configured for deployment to Cloudflare Pages.
+
+#### Prerequisites
+- Cloudflare account
+- GitHub repository connected to Cloudflare Pages
+- Or Wrangler CLI for direct deployments
+
+#### Automatic Deployment (Recommended)
+
+1. **Connect your repository to Cloudflare Pages:**
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+   - Navigate to Pages
+   - Click "Create a project" → "Connect to Git"
+   - Select your repository
+
+2. **Configure build settings:**
+   - Framework preset: **Vite**
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+   - Node.js version: `20` (set via `.node-version` file)
+
+3. **Deploy:**
+   - Cloudflare will automatically deploy on every push to your main branch
+   - Preview deployments are created for pull requests
+
+#### Manual Deployment via Wrangler
+
+Install Wrangler CLI:
+```bash
+npm install -g wrangler
+```
+
+Login to Cloudflare:
+```bash
+wrangler login
+```
+
+Build and deploy:
+```bash
+npm run build
+wrangler pages deploy dist --project-name=necromancer-web
+```
+
+#### Configuration Files
+
+- `wrangler.toml`: Cloudflare Pages configuration
+- `.node-version`: Specifies Node.js version (20)
+- `public/_headers`: HTTP headers for security and caching
+- `public/_redirects`: SPA routing configuration (all routes → index.html)
+
+#### Custom Domain
+
+To add a custom domain:
+1. Go to your Cloudflare Pages project
+2. Navigate to "Custom domains"
+3. Add your domain and follow DNS configuration steps
+
 ## Project Structure
 
 ```
