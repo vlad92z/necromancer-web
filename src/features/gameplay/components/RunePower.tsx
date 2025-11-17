@@ -31,6 +31,10 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
   );
   const hasPenalty = floorPenaltyCount > 0;
   
+  // Count Fire runes for visual indicator
+  const fireRuneCount = player.wall.flat().filter(cell => cell.runeType === 'Fire').length;
+  const hasFireBonus = fireRuneCount > 0;
+  
   return (
     <>
       <div style={{
@@ -87,7 +91,14 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
         }}>
           {essence > 0 ? (
             <>
-              <span>Essence: <span style={{ color: '#eab308' }}>{essence}</span></span>
+              <span>
+                Essence: <span style={{ color: '#eab308' }}>{essence}</span>
+                {fireRuneCount > 0 && (
+                  <span style={{ color: '#FF4500', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`+${fireRuneCount} from Fire runes`}>
+                    🔥
+                  </span>
+                )}
+              </span>
               <span>|</span>
               <span style={{ color: hasPenalty ? '#dc2626' : '#0c4a6e' }}>Focus: {focus}</span>
               <span>|</span>
@@ -174,7 +185,7 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
             <div style={{ marginBottom: '16px' }}>
               <strong style={{ color: '#eab308' }}>Essence:</strong>
               <p style={{ margin: '4px 0 0 0' }}>
-                The number of active runes on your Spell Wall.
+                The number of active runes on your Spell Wall. Each Fire rune 🔥 adds +1 bonus Essence.
               </p>
             </div>
             
@@ -186,7 +197,7 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <strong style={{ color: '#0c4a6e' }}>Spellpower (Essence x Focus):</strong>
+              <strong style={{ color: '#0c4a6e' }}>Spellpower (Essence × Focus):</strong>
               <p style={{ margin: '4px 0 0 0' }}>
                 Your total damage potential for the round.
               </p>

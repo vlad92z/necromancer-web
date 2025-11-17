@@ -7,15 +7,17 @@ import type { ScoringWall, RuneType } from '../types/game';
 
 /**
  * Calculate total wall power using simplified scoring
- * Essence = total number of active runes on the wall
+ * Essence = total number of active runes on the wall + Fire bonus
  * Focus = size of the largest connected segment (reduced by floor penalty)
  * Power = Essence × Focus
  * Runes are connected if they share an edge (not diagonal)
+ * Fire Effect: Each Fire rune adds +1 to Essence
  */
 export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0): number {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
+  let fireRuneCount = 0;
   
   // Flood fill to find each connected segment
   function floodFill(row: number, col: number): number {
@@ -37,7 +39,7 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
     return count;
   }
   
-  // Find all segments and track the largest
+  // Find all segments and track the largest, count Fire runes
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
@@ -45,12 +47,19 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
+      // Count Fire runes separately for bonus
+      if (wall[row][col].runeType === 'Fire') {
+        fireRuneCount++;
+      }
     }
   }
   
+  // Calculate essence with Fire bonus
+  const essence = totalRunes + fireRuneCount;
+  
   // Apply floor penalty to focus (minimum 1)
   const focus = Math.max(1, largestSegment - floorPenaltyCount);
-  const totalPower = totalRunes * focus;
+  const totalPower = essence * focus;
   
   return totalPower;
 }
@@ -58,7 +67,8 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
 /**
  * Calculate wall power and return detailed information
  * Used for game log display
- * Returns essence (total runes) and focus (largest segment)
+ * Returns essence (total runes + Fire bonus) and focus (largest segment)
+ * Fire Effect: Each Fire rune adds +1 to Essence
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
@@ -67,6 +77,7 @@ export function calculateWallPowerWithSegments(
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
+  let fireRuneCount = 0;
   
   function floodFill(row: number, col: number): number {
     if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
@@ -92,13 +103,20 @@ export function calculateWallPowerWithSegments(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
+      // Count Fire runes separately for bonus
+      if (wall[row][col].runeType === 'Fire') {
+        fireRuneCount++;
+      }
     }
   }
   
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
-  const totalPower = totalRunes * focus;
+  // Calculate essence with Fire bonus
+  const essence = totalRunes + fireRuneCount;
   
-  return { essence: totalRunes, focus, totalPower };
+  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  const totalPower = essence * focus;
+  
+  return { essence, focus, totalPower };
 }
 
 /**
@@ -256,6 +274,7 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
 /**
  * Calculate projected power for the end of current turn
  * Shows what essence and focus will be after placing completed pattern lines
+ * Fire Effect: Each Fire rune adds +1 to Essence
  */
 export function calculateProjectedPower(
   wall: ScoringWall,
@@ -275,6 +294,7 @@ export function calculateProjectedPower(
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
+  let fireRuneCount = 0;
   
   function floodFill(row: number, col: number): number {
     if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
@@ -293,7 +313,7 @@ export function calculateProjectedPower(
     return count;
   }
   
-  // Find all segments and track largest
+  // Find all segments and track largest, count Fire runes
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
       if (!visited[row][col] && simulatedWall[row][col].runeType !== null) {
@@ -301,11 +321,18 @@ export function calculateProjectedPower(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
+      // Count Fire runes separately for bonus
+      if (simulatedWall[row][col].runeType === 'Fire') {
+        fireRuneCount++;
+      }
     }
   }
   
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
-  const totalPower = totalRunes * focus;
+  // Calculate essence with Fire bonus
+  const essence = totalRunes + fireRuneCount;
   
-  return { essence: totalRunes, focus, totalPower };
+  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  const totalPower = essence * focus;
+  
+  return { essence, focus, totalPower };
 }

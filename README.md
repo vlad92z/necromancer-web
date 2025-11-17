@@ -510,11 +510,14 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 ### Implementation TODO
 
-- [ ] **TODO: Implement Fire effect**
-  - Modify scoring calculation to count total Fire runes on the Scoring Wall
-  - Add Fire count to Essence before multiplying
-  - Update `calculateWallPower()` in `src/utils/scoring.ts`
-  - Add visual indicator showing Fire bonus in scoring wall
+- [x] **✅ Implemented Fire effect**
+  - Modified scoring calculation to count total Fire runes on the Scoring Wall
+  - Added Fire count to Essence before multiplying
+  - Updated `calculateWallPower()` in `src/utils/scoring.ts`
+  - Updated `calculateWallPowerWithSegments()` for game log display
+  - Updated `calculateProjectedPower()` for RunePower preview
+  - Added visual indicator (🔥 emoji) showing Fire bonus in RunePower component
+  - Updated tooltip to explain Fire effect
 
 - [ ] **TODO: Implement Frost effect**
   - Add `frozenFactories` state to track frozen factory IDs per player
