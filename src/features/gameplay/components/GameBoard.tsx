@@ -471,7 +471,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
               ? factories.find(f => f.id === selectedFactoryId)?.runes || []
               : centerPool
           }
-          sourceType={factoryOverlaySource}
           onSelectRune={handleFactoryOverlaySelect}
           onClose={handleFactoryOverlayClose}
           gameMode={gameMode}
