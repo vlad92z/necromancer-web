@@ -2,15 +2,15 @@
  * FactoriesAndCenter component - displays factories and center pool
  */
 
-import type { Factory as FactoryType, Rune, RuneType } from '../../../types/game';
+import type { Factory as FactoryType, Rune } from '../../../types/game';
 import { Factory } from './Factory';
 import { CenterPool } from './CenterPool';
 
 interface FactoriesAndCenterProps {
   factories: FactoryType[];
   centerPool: Rune[];
-  onDraftRune: (factoryId: string, runeType: RuneType) => void;
-  onDraftFromCenter: (runeType: RuneType) => void;
+  onFactoryClick: (factoryId: string) => void;
+  onCenterClick: () => void;
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
   isAITurn: boolean;
@@ -19,8 +19,8 @@ interface FactoriesAndCenterProps {
 export function FactoriesAndCenter({ 
   factories, 
   centerPool, 
-  onDraftRune, 
-  onDraftFromCenter, 
+  onFactoryClick, 
+  onCenterClick, 
   isDraftPhase, 
   hasSelectedRunes, 
   isAITurn 
@@ -39,7 +39,7 @@ export function FactoriesAndCenter({
               <Factory 
                 key={factory.id} 
                 factory={factory}
-                onDraftRune={onDraftRune}
+                onFactoryClick={onFactoryClick}
                 disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
               />
             ))}
@@ -50,7 +50,7 @@ export function FactoriesAndCenter({
               <Factory 
                 key={factory.id} 
                 factory={factory}
-                onDraftRune={onDraftRune}
+                onFactoryClick={onFactoryClick}
                 disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
               />
             ))}
@@ -63,7 +63,7 @@ export function FactoriesAndCenter({
             <Factory 
               key={factory.id} 
               factory={factory}
-              onDraftRune={onDraftRune}
+              onFactoryClick={onFactoryClick}
               disabled={!isDraftPhase || hasSelectedRunes || isAITurn}
             />
           ))}
@@ -73,7 +73,7 @@ export function FactoriesAndCenter({
       {/* Center Pool */}
       <CenterPool 
         centerPool={centerPool}
-        onDraftFromCenter={onDraftFromCenter}
+        onCenterClick={onCenterClick}
         isDraftPhase={isDraftPhase}
         hasSelectedRunes={hasSelectedRunes}
         isAITurn={isAITurn}

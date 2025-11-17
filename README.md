@@ -233,6 +233,12 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Horizontal factory layout for better visibility
 - Vertical player arrangement (Player 1 top, factories middle, Player 2 bottom)
 - Game over modal displays on game board (final state visible behind it)
+- Framer Motion animations for runes appearing in pattern lines, scoring wall, and floor line (spring animation)
+- Animated round-end scoring sequence with timing delays:
+  - Moving completed pattern lines to wall (2 second delay)
+  - Calculating scores from wall connections (2 second delay)
+  - Clearing floor line penalties (1.5 second delay)
+  - Visual feedback through rune animations showing each change
 
 ## Getting Started
 
@@ -386,13 +392,27 @@ src/
 - [ ] Meta-progression (unlocks after losses)
 - [ ] Deck customization UI
 - [ ] Run summary and statistics
-- [ ] Advanced AI strategies (currently random moves)
 - [ ] Online multiplayer (server-based PvP)
 - [ ] Sound effects and animations
 - [ ] Mobile/touch optimization
 - [ ] Undo/redo for moves
 - [ ] End-game bonuses (row/column/type completion)
 - [ ] Tutorial/onboarding for new players
+
+### AI Improvements
+- [x] **Simple strategies (Completed ✅):**
+  - [x] Prioritize completing pattern lines (focus on lines almost full)
+  - [x] Avoid floor line penalties (only use floor when necessary)
+  - [x] Block opponent (take runes the opponent needs)
+  - [x] Maximize wall points (choose placements that create longer connections)
+- [x] **Medium complexity (Completed ✅):**
+  - [x] Look-ahead planning (consider which runes will be available next turn)
+  - [x] Value higher tier lines (tier 5 = more points potential with exponential scaling)
+  - [x] Avoid wasted runes (don't draft more than a line can hold, exponential waste penalties)
+- [ ] **Advanced strategies:**
+  - [ ] Minimax algorithm (evaluate multiple moves ahead)
+  - [ ] Scoring simulation (calculate expected points for each move)
+  - [ ] Adaptive difficulty (learn from player patterns)
 
 ---
 

@@ -3,13 +3,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { GameState } from '../../../types/game';
+import type { GameState, RuneType } from '../../../types/game';
 import { FactoriesAndCenter } from './FactoriesAndCenter';
 import { PlayerView } from './PlayerView';
 import { OpponentView } from './OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
+import { DeckOverlay } from './DeckOverlay';
+import { FactoryOverlay } from './FactoryOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 
 interface GameBoardProps {
@@ -23,6 +25,10 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
+  const [showDeckOverlay, setShowDeckOverlay] = useState(false);
+  const [showFactoryOverlay, setShowFactoryOverlay] = useState(false);
+  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
+  const [factoryOverlaySource, setFactoryOverlaySource] = useState<'factory' | 'center'>('factory');
   const isMobile = window.innerWidth < 768;
   console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
@@ -42,8 +48,12 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
       
       return () => clearTimeout(delayTimer);
     } else if (isMobile && !isAITurn) {
-      // Auto-hide when player's turn starts
-      setShowOpponentOverlay(false);
+      // Auto-hide when player's turn starts (with delay)
+      const hideTimer = setTimeout(() => {
+        setShowOpponentOverlay(false);
+      }, 2000); // 2 second delay before hiding overlay
+      
+      return () => clearTimeout(hideTimer);
     }
   }, [isMobile, isAITurn]);
   
@@ -55,6 +65,55 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         ? players[1]
         : null
     : null;
+  
+  const handleFactoryClick = (factoryId: string) => {
+    const factory = factories.find(f => f.id === factoryId);
+    if (!factory || factory.runes.length === 0) return;
+    
+    // Check if all runes are the same type
+    const uniqueTypes = new Set(factory.runes.map(r => r.runeType));
+    if (uniqueTypes.size === 1) {
+      // Auto-select if only one type
+      const runeType = factory.runes[0].runeType;
+      draftRune(factoryId, runeType);
+    } else {
+      // Show overlay for multiple types
+      setSelectedFactoryId(factoryId);
+      setFactoryOverlaySource('factory');
+      setShowFactoryOverlay(true);
+    }
+  };
+  
+  const handleCenterClick = () => {
+    if (centerPool.length === 0) return;
+    
+    // Check if all runes are the same type
+    const uniqueTypes = new Set(centerPool.map(r => r.runeType));
+    if (uniqueTypes.size === 1) {
+      // Auto-select if only one type
+      const runeType = centerPool[0].runeType;
+      draftFromCenter(runeType);
+    } else {
+      // Show overlay for multiple types
+      setSelectedFactoryId(null);
+      setFactoryOverlaySource('center');
+      setShowFactoryOverlay(true);
+    }
+  };
+  
+  const handleFactoryOverlaySelect = (runeType: RuneType) => {
+    if (factoryOverlaySource === 'factory' && selectedFactoryId) {
+      draftRune(selectedFactoryId, runeType);
+    } else if (factoryOverlaySource === 'center') {
+      draftFromCenter(runeType);
+    }
+    setShowFactoryOverlay(false);
+  };
+  
+  const handleFactoryOverlayClose = () => {
+    setShowFactoryOverlay(false);
+    setSelectedFactoryId(null);
+  };
   
   const handleBackgroundClick = () => {
     // Background click handler - no longer needed since PlayerBoard handles it
@@ -87,6 +146,24 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
             display: 'flex',
             gap: isMobile ? '4px' : '8px'
           }}>
+            {/* Deck Button */}
+            <button
+              onClick={() => setShowDeckOverlay(true)}
+              style={{
+                backgroundColor: '#7c3aed',
+                color: 'white',
+                border: 'none',
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '6px 12px' : '8px 16px',
+                fontSize: isMobile ? '12px' : '14px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}
+            >
+              {isMobile ? '🎴' : '🎴 Deck'}
+            </button>
+            
             {/* Rules Button */}
             <button
               onClick={() => setShowRulesOverlay(true)}
@@ -183,8 +260,8 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           <FactoriesAndCenter
             factories={factories}
             centerPool={centerPool}
-            onDraftRune={draftRune}
-            onDraftFromCenter={draftFromCenter}
+            onFactoryClick={handleFactoryClick}
+            onCenterClick={handleCenterClick}
             isDraftPhase={isDraftPhase}
             hasSelectedRunes={hasSelectedRunes}
             isAITurn={isAITurn}
@@ -250,6 +327,29 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
       {/* Rules Overlay */}
       {showRulesOverlay && (
         <RulesOverlay onClose={() => setShowRulesOverlay(false)} />
+      )}
+      
+      {/* Deck Overlay */}
+      {showDeckOverlay && (
+        <DeckOverlay
+          deck={players[0].deck}
+          playerName={players[0].name}
+          onClose={() => setShowDeckOverlay(false)}
+        />
+      )}
+      
+      {/* Factory Overlay */}
+      {showFactoryOverlay && (
+        <FactoryOverlay
+          runes={
+            factoryOverlaySource === 'factory' && selectedFactoryId
+              ? factories.find(f => f.id === selectedFactoryId)?.runes || []
+              : centerPool
+          }
+          sourceType={factoryOverlaySource}
+          onSelectRune={handleFactoryOverlaySelect}
+          onClose={handleFactoryOverlayClose}
+        />
       )}
       
       {/* Game Over Modal */}

@@ -88,6 +88,23 @@ export interface Player {
 export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 
 /**
+ * Scoring phase steps for visual feedback
+ */
+export type ScoringPhase = 'moving-to-wall' | 'calculating-score' | 'clearing-floor' | 'complete' | null;
+
+/**
+ * Animation state for rune movement
+ */
+export interface AnimatingRune {
+  id: string;
+  runeType: RuneType;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
+
+/**
  * Main game state
  * Note: Only PvE (Player vs AI) mode is supported
  */
@@ -101,4 +118,7 @@ export interface GameState {
   selectedRunes: Rune[]; // Runes currently selected by active player
   draftSource: { type: 'factory'; factoryId: string; movedToCenter: Rune[] } | { type: 'center' } | null; // Where the selected runes came from
   firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
+  animatingRunes: AnimatingRune[]; // Runes currently being animated
+  pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
+  scoringPhase: ScoringPhase; // Current step in round-end scoring animation
 }

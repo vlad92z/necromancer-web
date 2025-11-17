@@ -22,7 +22,7 @@ export function OpponentView({ opponent, isActive }: OpponentViewProps) {
         color: '#7c2d12',
         textAlign: 'center'
       }}>
-        {opponent.name} - Power: {opponent.score}
+        {opponent.name} - Total Power: {opponent.score}
         {isActive && <span style={{ marginLeft: '8px', color: '#ea580c' }}>(Taking Turn...)</span>}
       </div>
       <PlayerBoard
