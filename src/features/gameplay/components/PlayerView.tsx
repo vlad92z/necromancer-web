@@ -4,6 +4,7 @@
 
 import type { Player, RuneType } from '../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
+import { RunePower } from './RunePower';
 
 interface PlayerViewProps {
   player: Player;
@@ -14,6 +15,7 @@ interface PlayerViewProps {
   selectedRuneType: RuneType | null;
   canPlace: boolean;
   onCancelSelection: () => void;
+  gameMode: 'classic' | 'standard';
 }
 
 export function PlayerView({
@@ -25,20 +27,19 @@ export function PlayerView({
   selectedRuneType,
   canPlace,
   onCancelSelection,
+  gameMode,
 }: PlayerViewProps) {
   const isMobile = window.innerWidth < 768;
   
   return (
     <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
-      <div style={{ 
-        marginBottom: isMobile ? '4px' : '8px', 
-        fontSize: isMobile ? '12px' : '18px',
-        fontWeight: 'bold',
-        color: '#0c4a6e',
-        textAlign: 'center'
-      }}>
-        {player.name} - Damage Taken: {opponent.score}
-      </div>
+      <RunePower 
+        player={player}
+        opponent={opponent}
+        damageTaken={opponent.score}
+        nameColor="#0c4a6e"
+        gameMode={gameMode}
+      />
       <PlayerBoard
         player={player}
         isActive={isActive}

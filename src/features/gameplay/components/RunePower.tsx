@@ -1,16 +1,26 @@
 /**
- * RunePower component - displays projected power calculation for end of turn
+ * RunePower component - displays player stats and projected power calculation
  */
 
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import type { Player } from '../../../types/game';
-import { calculateProjectedPower } from '../../../utils/scoring';
+import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../utils/scoring';
 
 interface RunePowerProps {
   player: Player;
+  opponent: Player;
+  damageTaken: number;
+  nameColor: string;
+  gameMode: 'classic' | 'standard';
+  isMobileOpponent?: boolean;
 }
 
-export function RunePower({ player }: RunePowerProps) {
+export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, isMobileOpponent = false }: RunePowerProps) {
   const isMobile = window.innerWidth < 768;
+  const [showExplanation, setShowExplanation] = useState(false);
+  
+  const currentHealth = 300 - damageTaken;
   
   // Find completed pattern lines
   const completedPatternLines = player.patternLines
@@ -18,37 +28,247 @@ export function RunePower({ player }: RunePowerProps) {
     .filter(({ line }) => line.count === line.tier && line.runeType !== null)
     .map(({ line, row }) => ({ row, runeType: line.runeType! }));
   
-  const floorPenaltyCount = player.floorLine.runes.length;
+  // Wind Effect: Calculate effective floor penalty count (only in standard mode)
+  const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, gameMode);
+  const windRuneCount = player.floorLine.runes.filter(rune => rune.runeType === 'Wind').length;
+  const hasWindMitigation = gameMode === 'standard' && windRuneCount > 0;
+  
+  // Count opponent's Poison runes (affects this player's Focus, only in standard mode)
+  const opponentPoisonCount = gameMode === 'standard' 
+    ? opponent.wall.flat().filter(cell => cell.runeType === 'Poison').length 
+    : 0;
   
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
     completedPatternLines,
-    floorPenaltyCount
+    floorPenaltyCount,
+    opponentPoisonCount,
+    gameMode
   );
   const hasPenalty = floorPenaltyCount > 0;
+  const hasPoisonEffect = opponentPoisonCount > 0;
+  
+  // Count Fire runes: current wall + completed pattern lines (only in standard mode)
+  const fireRunesOnWall = gameMode === 'standard' 
+    ? player.wall.flat().filter(cell => cell.runeType === 'Fire').length 
+    : 0;
+  const fireRunesInCompletedLines = gameMode === 'standard'
+    ? completedPatternLines.filter(line => line.runeType === 'Fire').length
+    : 0;
+  const fireRuneCount = fireRunesOnWall + fireRunesInCompletedLines;
   
   return (
-    <div style={{
-      backgroundColor: '#fef3c7',
-      border: '2px solid #f59e0b',
-      borderRadius: isMobile ? '6px' : '8px',
-      padding: isMobile ? '8px' : '12px',
-      marginTop: isMobile ? '8px' : '12px'
-    }}>
+    <>
       <div style={{
-        fontSize: isMobile ? '14px' : '20px',
-        color: '#78350f',
-        fontWeight: 'bold',
-        textAlign: 'center'
+        display: 'flex',
+        gap: isMobile ? '6px' : '12px',
+        marginBottom: isMobile ? '4px' : '8px'
       }}>
-        {essence > 0 ? (
-          <>
-            Essence: {essence} | Focus: <span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{focus}</span> | Spellpower: {totalPower}
-          </>
-        ) : (
-          <>Essence: 0 | Focus: 0 | Spellpower: 0</>
-        )}
+      {/* Player Info Box */}
+      <div style={{
+        flex: '0 0 33%',
+        backgroundColor: isMobileOpponent ? '#dbeafe' : 'rgba(191, 219, 254, 0.3)',
+        border: isMobileOpponent ? '2px solid #78350f' : '2px solid rgba(59, 130, 246, 0.5)',
+        borderRadius: isMobile ? '6px' : '8px',
+        padding: isMobile ? '6px 8px' : '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start'
+      }}>
+        <div style={{
+          fontSize: isMobile ? '12px' : '18px',
+          color: isMobileOpponent ? '#fef3c7' : '#0c4a6e',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '4px' : '8px'
+        }}>
+          <span style={{ color: nameColor }}>
+            {player.name}
+          </span>
+          <motion.span 
+            key={currentHealth}
+            initial={{ scale: 1.5, color: '#dc2626' }}
+            animate={{ scale: 1, color: '#ea580c' }}
+            transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
+            style={{ 
+              color: '#ea580c',
+              display: 'inline-block'
+            }}
+          >
+            ❤️ {currentHealth}
+          </motion.span>
+        </div>
+      </div>
+
+      {/* Power Stats Box */}
+      <div style={{
+        flex: '0 0 66%',
+        backgroundColor: isMobileOpponent ? '#dbeafe' : 'rgba(191, 219, 254, 0.3)',
+        border: isMobileOpponent ? '2px solid #78350f' : '2px solid rgba(59, 130, 246, 0.5)',
+        borderRadius: isMobile ? '6px' : '8px',
+        padding: isMobile ? '6px 8px' : '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div style={{
+          fontSize: isMobile ? '12px' : '18px',
+          color: isMobileOpponent ? '#fef3c7' : '#0c4a6e',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '4px' : '8px',
+          flex: 1,
+          justifyContent: 'flex-end'
+        }}>
+          {essence > 0 ? (
+            <>
+              <span>
+                Essence: <span style={{ color: '#eab308' }}>{essence}</span>
+                {fireRuneCount > 0 && (
+                  <span style={{ color: '#FF4500', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`+${fireRuneCount} from Fire runes`}>
+                    🔥
+                  </span>
+                )}
+              </span>
+              <span>|</span>
+              <span style={{ color: hasPenalty || hasPoisonEffect ? '#dc2626' : '#0c4a6e' }}>
+                Focus: {focus}
+                {hasPoisonEffect && (
+                  <span style={{ color: '#32CD32', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`-${opponentPoisonCount} from opponent Poison runes`}>
+                    ☠️
+                  </span>
+                )}
+                {hasWindMitigation && (
+                  <span style={{ color: '#87CEEB', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} mitigating floor penalties`}>
+                    💨
+                  </span>
+                )}
+              </span>
+              <span>|</span>
+              <span>Spellpower: {totalPower}</span>
+            </>
+          ) : (
+            <>
+              <span>Essence: <span style={{ color: '#eab308' }}>0</span></span>
+              <span>|</span>
+              <span>Focus: 0</span>
+              <span>|</span>
+              <span>Spellpower: 0</span>
+            </>
+          )}
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowExplanation(true);
+          }}
+          style={{
+            marginLeft: isMobile ? '4px' : '8px',
+            width: isMobile ? '20px' : '24px',
+            height: isMobile ? '20px' : '24px',
+            borderRadius: '50%',
+            border: '2px solid #0c4a6e',
+            backgroundColor: '#ffffff',
+            color: '#0c4a6e',
+            fontSize: isMobile ? '10px' : '14px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            flexShrink: 0
+          }}
+        >
+          ?
+        </button>
       </div>
     </div>
+
+    {/* Explanation Popup */}
+    {showExplanation && (
+      <div
+        onClick={() => setShowExplanation(false)}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '16px'
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: isMobile ? '20px' : '32px',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <h2 style={{
+            margin: '0 0 16px 0',
+            fontSize: isMobile ? '18px' : '24px',
+            color: '#0c4a6e',
+            fontWeight: 'bold'
+          }}>
+            Spellpower
+          </h2>
+          
+          <div style={{ fontSize: isMobile ? '14px' : '16px', lineHeight: '1.6', color: '#1e293b' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <strong style={{ color: '#eab308' }}>Essence:</strong>
+              <p style={{ margin: '4px 0 0 0' }}>
+                The number of active runes on your Spell Wall. Each Fire rune 🔥 adds +1 bonus Essence.
+              </p>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
+              <p style={{ margin: '4px 0 0 0' }}>
+                The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Opponent Poison runes ☠️ also reduce your Focus. Wind runes 💨 in your floor line cancel out other penalties.
+              </p>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <strong style={{ color: '#0c4a6e' }}>Spellpower (Essence × Focus):</strong>
+              <p style={{ margin: '4px 0 0 0' }}>
+                Your total damage potential for the round.
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => setShowExplanation(false)}
+            style={{
+              marginTop: '20px',
+              padding: isMobile ? '8px 16px' : '10px 24px',
+              backgroundColor: '#0c4a6e',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: isMobile ? '14px' : '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            Got it!
+          </button>
+        </div>
+      </div>
+    )}
+  </>
   );
 }

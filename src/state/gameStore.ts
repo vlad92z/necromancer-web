@@ -5,18 +5,26 @@
 import { create } from 'zustand';
 import type { GameState, RuneType, Player } from '../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
-import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune } from '../utils/scoring';
+import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../utils/scoring';
 import { makeAIMove } from '../utils/aiPlayer';
+
+// Helper function to count Poison runes on a wall
+function countPoisonRunes(wall: Player['wall']): number {
+  return wall.flat().filter(cell => cell.runeType === 'Poison').length;
+}
 
 interface GameStore extends GameState {
   // Actions
-  startGame: () => void;
+  startGame: (gameMode: 'classic' | 'standard') => void;
   returnToStartScreen: () => void;
   draftRune: (factoryId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
+  destroyFactory: (factoryId: string) => void; // Void effect: destroy all runes in a factory
+  skipVoidEffect: () => void; // Skip Void effect if player chooses not to use it
+  freezeFactory: (factoryId: string) => void; // Frost effect: freeze a factory (opponent cannot draft)
   endRound: () => void;
   resetGame: () => void;
   triggerAITurn: () => void;
@@ -31,6 +39,12 @@ export const useGameStore = create<GameStore>((set) => ({
   // Actions
   draftRune: (factoryId: string, runeType: RuneType) => {
     set((state) => {
+      // Check if factory is frozen (opponent cannot draft from it)
+      if (state.frozenFactories.includes(factoryId)) {
+        console.log(`Factory ${factoryId} is frozen - cannot draft`);
+        return state;
+      }
+      
       // Find the factory
       const factory = state.factories.find((f) => f.id === factoryId);
       if (!factory) return state;
@@ -50,12 +64,17 @@ export const useGameStore = create<GameStore>((set) => ({
       // Move remaining runes to center pool
       const updatedCenterPool = [...state.centerPool, ...remainingRunes];
       
+      // Clear frozen factories after opponent makes their draft
+      // (Frost effect lasts only for opponent's next turn)
+      const clearedFrozenFactories: string[] = [];
+      
       return {
         ...state,
         factories: updatedFactories,
         centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'factory', factoryId, movedToCenter: remainingRunes },
+        frozenFactories: clearedFrozenFactories,
       };
     });
   },
@@ -69,11 +88,15 @@ export const useGameStore = create<GameStore>((set) => ({
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
       
+      // Clear frozen factories after opponent makes their draft
+      const clearedFrozenFactories: string[] = [];
+      
       return {
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'center' },
+        frozenFactories: clearedFrozenFactories,
       };
     });
   },
@@ -139,13 +162,51 @@ export const useGameStore = create<GameStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
-      // Switch to next player (alternate between 0 and 1)
-      const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
+      // Check if Void runes were placed (Void effect: destroy a factory)
+      const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
+      const hasNonEmptyFactories = state.factories.some(f => f.runes.length > 0);
+      
+      // Check if Frost runes were placed (Frost effect: freeze a factory)
+      const hasFrostRunes = selectedRunes.some(rune => rune.runeType === 'Frost');
       
       // Check if round should end (all factories and center empty)
       const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      // Only trigger rune effects in standard mode
+      const isStandardMode = state.gameMode === 'standard';
+      
+      // If Void runes were placed and there are non-empty factories, trigger Void effect
+      // Keep current player so THEY get to choose which factory to destroy
+      if (isStandardMode && hasVoidRunes && hasNonEmptyFactories && !shouldEndRound) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          selectedRunes: [],
+          draftSource: null,
+          turnPhase: 'draft' as const,
+          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses factory
+          voidEffectPending: true, // Wait for factory selection
+        };
+      }
+      
+      // If Frost runes were placed and there are non-empty factories, trigger Frost effect
+      // Keep current player so THEY get to choose which factory to freeze
+      if (isStandardMode && hasFrostRunes && hasNonEmptyFactories && !shouldEndRound) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          selectedRunes: [],
+          draftSource: null,
+          turnPhase: 'draft' as const,
+          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses factory
+          frostEffectPending: true, // Wait for factory selection
+        };
+      }
+      
+      // Switch to next player (alternate between 0 and 1) - only if no Void/Frost effect
+      const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
       const newState = {
         ...state,
@@ -261,6 +322,108 @@ export const useGameStore = create<GameStore>((set) => ({
     });
   },
   
+  destroyFactory: (factoryId: string) => {
+    set((state) => {
+      // Void effect: destroy all runes in the selected factory
+      if (!state.voidEffectPending) return state;
+      
+      const updatedFactories = state.factories.map((f) =>
+        f.id === factoryId ? { ...f, runes: [] } : f
+      );
+      
+      // Switch to next player after factory is destroyed
+      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+      
+      // Check if round should end after destroying factory
+      const allFactoriesEmpty = updatedFactories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
+        ...state,
+        factories: updatedFactories,
+        voidEffectPending: false,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+      };
+      
+      // If round ends after Void effect, trigger scoring
+      if (shouldEndRound) {
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 1000);
+      }
+      
+      return newState;
+    });
+  },
+  
+  skipVoidEffect: () => {
+    set((state) => {
+      // Skip Void effect without destroying any factory
+      if (!state.voidEffectPending) return state;
+      
+      // Switch to next player when skipping Void effect
+      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+      
+      // Check if round should end
+      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
+        ...state,
+        voidEffectPending: false,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+      };
+      
+      // If round ends, trigger scoring
+      if (shouldEndRound) {
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 1000);
+      }
+      
+      return newState;
+    });
+  },
+  
+  freezeFactory: (factoryId: string) => {
+    set((state) => {
+      // Frost effect: freeze the selected factory (opponent cannot draft from it)
+      if (!state.frostEffectPending) return state;
+      
+      // Add factory to frozen list
+      const updatedFrozenFactories = [...state.frozenFactories, factoryId];
+      
+      // Switch to next player after factory is frozen
+      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+      
+      // Check if round should end
+      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
+        ...state,
+        frozenFactories: updatedFrozenFactories,
+        frostEffectPending: false,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+      };
+      
+      // If round ends, trigger scoring
+      if (shouldEndRound) {
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 1000);
+      }
+      
+      return newState;
+    });
+  },
+  
   endRound: () => {
     set((state) => {
       console.log('End of round - starting scoring animation...');
@@ -313,8 +476,14 @@ export const useGameStore = create<GameStore>((set) => ({
         
         // Calculate total wall power based on connected segments
         // Floor penalties reduce the multiplier of each segment
-        const floorPenaltyCount = player.floorLine.runes.length;
-        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount);
+        // Wind Effect: Each Wind rune cancels one other floor penalty (only in standard mode)
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
+        
+        // Get opponent's Poison count (for Poison effect)
+        const opponentIndex = state.players.indexOf(player) === 0 ? 1 : 0;
+        const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
+        
+        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, opponentPoisonCount, state.gameMode);
         
         // Add wall power to existing score (minimum 0)
         const newScore = Math.max(0, player.score + wallPower);
@@ -346,12 +515,18 @@ export const useGameStore = create<GameStore>((set) => ({
       console.log('Scoring: Calculating scores...');
       
       // Calculate and apply scores, and record round history
-      const updatedPlayersArray = state.players.map((player) => {
-        const floorPenaltyCount = player.floorLine.runes.length;
-        const wallPower = calculateWallPower(player.wall, floorPenaltyCount);
+      const updatedPlayersArray = state.players.map((player, playerIndex) => {
+        // Wind Effect: Each Wind rune cancels one other floor penalty
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
+        
+        // Get opponent's Poison count (for Poison effect)
+        const opponentIndex = playerIndex === 0 ? 1 : 0;
+        const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
+        
+        const wallPower = calculateWallPower(player.wall, floorPenaltyCount, opponentPoisonCount, state.gameMode);
         const newScore = Math.max(0, player.score + wallPower);
         
-        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties), Total score ${newScore}`);
+        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties, ${opponentPoisonCount} opponent Poison), Total score ${newScore}`);
         
         return {
           ...player,
@@ -362,8 +537,26 @@ export const useGameStore = create<GameStore>((set) => ({
       const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
       
       // Record round history for game log
-      const player1Data = calculateWallPowerWithSegments(updatedPlayers[0].wall, updatedPlayers[0].floorLine.runes.length);
-      const player2Data = calculateWallPowerWithSegments(updatedPlayers[1].wall, updatedPlayers[1].floorLine.runes.length);
+      // Pass opponent Poison counts for accurate display
+      const player1PoisonCount = countPoisonRunes(updatedPlayers[0].wall);
+      const player2PoisonCount = countPoisonRunes(updatedPlayers[1].wall);
+      
+      // Wind Effect: Calculate effective floor penalties for both players (only in standard mode)
+      const player1FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[0].floorLine.runes, state.gameMode);
+      const player2FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[1].floorLine.runes, state.gameMode);
+      
+      const player1Data = calculateWallPowerWithSegments(
+        updatedPlayers[0].wall, 
+        player1FloorPenalty,
+        player2PoisonCount, // Player 1 is affected by Player 2's Poison
+        state.gameMode
+      );
+      const player2Data = calculateWallPowerWithSegments(
+        updatedPlayers[1].wall, 
+        player2FloorPenalty,
+        player1PoisonCount, // Player 2 is affected by Player 1's Poison
+        state.gameMode
+      );
       
       const roundScore = {
         round: state.round,
@@ -464,10 +657,11 @@ export const useGameStore = create<GameStore>((set) => ({
     });
   },
   
-  startGame: () => {
+  startGame: (gameMode: 'classic' | 'standard') => {
     set((state) => ({
       ...state,
       gameStarted: true,
+      gameMode: gameMode,
     }));
   },
 

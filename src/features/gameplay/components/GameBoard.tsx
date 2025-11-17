@@ -21,9 +21,11 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
+  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenFactories, gameMode } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
+  const destroyFactory = useGameStore((state) => state.destroyFactory);
+  const freezeFactory = useGameStore((state) => state.freezeFactory);
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
@@ -73,6 +75,27 @@ export function GameBoard({ gameState }: GameBoardProps) {
     : null;
   
   const handleFactoryClick = (factoryId: string) => {
+    // Handle Void effect - clicking factory destroys it
+    if (voidEffectPending) {
+      const factory = factories.find(f => f.id === factoryId);
+      // Only allow clicking non-empty factories during Void effect
+      if (factory && factory.runes.length > 0) {
+        destroyFactory(factoryId);
+      }
+      return;
+    }
+    
+    // Handle Frost effect - clicking factory freezes it
+    if (frostEffectPending) {
+      const factory = factories.find(f => f.id === factoryId);
+      // Only allow clicking non-empty factories during Frost effect
+      if (factory && factory.runes.length > 0) {
+        freezeFactory(factoryId);
+      }
+      return;
+    }
+    
+    // Normal draft behavior
     const factory = factories.find(f => f.id === factoryId);
     if (!factory || factory.runes.length === 0) return;
     
@@ -253,6 +276,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
               canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
               onCancelSelection={cancelSelection}
+              gameMode={gameMode}
             />
           </>
         ) : (
@@ -268,6 +292,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
                 canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
                 onCancelSelection={cancelSelection}
+                gameMode={gameMode}
               />
             </div>
             
@@ -277,6 +302,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 opponent={players[1]}
                 player={players[0]}
                 isActive={currentPlayerIndex === 1}
+                gameMode={gameMode}
               />
             </div>
           </div>
@@ -284,6 +310,42 @@ export function GameBoard({ gameState }: GameBoardProps) {
         
         {/* Factories and Center */}
         <div style={{ position: 'relative' }}>
+          {/* Void Effect Message */}
+          {voidEffectPending && !isAITurn && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: isMobile ? '14px' : '18px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
+              animation: 'pulse 2s infinite'
+            }}>
+              💀 Void Effect: Click a factory to destroy it! 💀
+            </div>
+          )}
+          
+          {/* Frost Effect Message */}
+          {frostEffectPending && !isAITurn && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#06b6d4',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: isMobile ? '14px' : '18px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
+              animation: 'pulse 2s infinite'
+            }}>
+              ❄️ Frost Effect: Click a factory to freeze it! ❄️
+            </div>
+          )}
+          
           <FactoriesAndCenter
             factories={factories}
             centerPool={centerPool}
@@ -292,6 +354,9 @@ export function GameBoard({ gameState }: GameBoardProps) {
             isDraftPhase={isDraftPhase}
             hasSelectedRunes={hasSelectedRunes}
             isAITurn={isAITurn}
+            voidEffectPending={voidEffectPending}
+            frostEffectPending={frostEffectPending}
+            frozenFactories={frozenFactories}
           />
           
           {/* Selected Runes Display - Overlay */}
@@ -328,18 +393,23 @@ export function GameBoard({ gameState }: GameBoardProps) {
           style={{ 
             position: 'fixed', 
             inset: 0, 
-            backgroundColor: 'rgba(0, 0, 0, 0.8)', 
             display: 'flex', 
             flexDirection: 'column',
             alignItems: 'center', 
             justifyContent: 'flex-start',
             zIndex: 100,
             padding: '8px',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            pointerEvents: 'none' // Allow clicks to pass through
           }}
-          onClick={() => setShowOpponentOverlay(false)}
         >
-          <div style={{ width: '100%', maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+          <div 
+            style={{ 
+              width: '100%', 
+              maxWidth: '600px',
+              pointerEvents: 'auto' // Re-enable clicks on opponent view
+            }}
+          >
             {/* Close Button */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
               <button
@@ -365,6 +435,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               opponent={players[1]}
               player={players[0]}
               isActive={currentPlayerIndex === 1}
+              gameMode={gameMode}
             />
           </div>
         </div>
@@ -400,9 +471,9 @@ export function GameBoard({ gameState }: GameBoardProps) {
               ? factories.find(f => f.id === selectedFactoryId)?.runes || []
               : centerPool
           }
-          sourceType={factoryOverlaySource}
           onSelectRune={handleFactoryOverlaySelect}
           onClose={handleFactoryOverlayClose}
+          gameMode={gameMode}
         />
       )}
     </div>

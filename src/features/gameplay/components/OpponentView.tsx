@@ -4,28 +4,28 @@
 
 import type { Player } from '../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
+import { RunePower } from './RunePower';
 
 interface OpponentViewProps {
   opponent: Player;
   player: Player;
   isActive: boolean;
+  gameMode: 'classic' | 'standard';
 }
 
-export function OpponentView({ opponent, player, isActive }: OpponentViewProps) {
+export function OpponentView({ opponent, player, isActive, gameMode }: OpponentViewProps) {
   const isMobile = window.innerWidth < 768;
   
   return (
-    <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
-      <div style={{ 
-        marginBottom: isMobile ? '4px' : '8px', 
-        fontSize: isMobile ? '12px' : '18px',
-        fontWeight: 'bold',
-        color: '#7c2d12',
-        textAlign: 'center'
-      }}>
-        {opponent.name} - Damage Taken: {player.score}
-        {isActive && <span style={{ marginLeft: '8px', color: '#ea580c' }}>(Taking Turn...)</span>}
-      </div>
+    <div style={{ marginBottom: isMobile ? '0px' : '24px' }}>
+      <RunePower 
+        player={opponent}
+        opponent={player}
+        damageTaken={player.score}
+        nameColor="#7f1d1d"
+        gameMode={gameMode}
+        isMobileOpponent={isMobile}
+      />
       <PlayerBoard
         player={opponent}
         isActive={isActive}
@@ -33,6 +33,7 @@ export function OpponentView({ opponent, player, isActive }: OpponentViewProps) 
         selectedRuneType={null}
         canPlace={false}
         onCancelSelection={() => {}}
+        isMobileOpponent={isMobile}
       />
     </div>
   );

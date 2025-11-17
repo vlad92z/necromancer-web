@@ -12,8 +12,10 @@ interface FloorLineProps {
 }
 
 export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLineProps) {
+  const isMobile = window.innerWidth < 768;
+  
   return (
-    <div style={{ marginTop: window.innerWidth < 768 ? '0px' : '16px' }} onClick={(e) => e.stopPropagation()}>
+    <div style={{ marginTop: isMobile ? '0px' : '16px' }} onClick={(e) => e.stopPropagation()}>
       <button
         onClick={onPlaceRunesInFloor}
         disabled={!canPlace || !onPlaceRunesInFloor}
@@ -42,10 +44,6 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLin
               rune={floorLine.runes[index] || null}
               variant="floor"
               size="large"
-              placeholder={{
-                type: 'text',
-                text: `-${index + 1}`,
-              }}
               showEffect={false}
             />
           ))}

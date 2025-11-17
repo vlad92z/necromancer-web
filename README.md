@@ -232,9 +232,23 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 **Start Game Screen:**
 - Displays before gameplay begins
 - Shows game title and brief description
+- Game mode selection toggle (Classic vs Standard)
 - "Start Game" button to initialize gameplay
 - Responsive design matching game theme
 - Game Over modal returns to this screen instead of immediately restarting
+
+**Game Modes:**
+- **Classic Mode**: Play without rune modifiers
+  - Pure strategic gameplay focused on pattern building and wall connections
+  - Runes function identically with no special effects
+  - Simplified scoring: Essence × Focus
+  - Recommended for learning the core mechanics
+- **Standard Mode**: Play with rune modifiers (coming soon)
+  - Each rune type has unique tactical effects
+  - Fire adds bonus essence, Frost freezes factories, Poison reduces opponent focus
+  - Void destroys factory runes, Wind mitigates floor penalties
+  - Advanced gameplay with deeper strategic decisions
+  - See "Rune Effects System" section below for detailed mechanics
 
 **Selection & Cancellation:**
 - Click rune selection tracks source (factory or center)
@@ -459,9 +473,9 @@ src/
 Each rune type has a unique effect that triggers during gameplay, creating strategic depth and tactical decisions.
 
 ### 🔥 Fire (Power)
-**Effect:** Every Fire rune adds +1 to its containing segment's essence (not the focus)
-- **Example:** A 4-rune segment with 2 Fire runes = 6×4 = 24 points (instead of 4×4 = 16)
-- **Strategy:** Maximize Fire runes in large connected segments for exponential scoring
+**Effect:** Every active Fire rune adds +1 Essence
+- **Example:** Having 4 active Fire runes on the Spell Wall will increase total Essence by 4
+- **Strategy:** Maximize active Fire runes to significantly increase Spellpower
 - **Balance:** High offensive power, no defensive value
 
 ### ❄️ Frost (Control)
@@ -496,39 +510,64 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 ### Implementation TODO
 
-- [ ] **TODO: Implement Fire effect**
-  - Modify scoring calculation to count Fire runes in each segment
-  - Add Fire count to segment size before multiplying
-  - Update `calculateWallPower()` in `src/utils/scoring.ts`
-  - Add visual indicator showing Fire bonus in scoring wall
+- [x] **✅ Implemented Fire effect**
+  - Modified scoring calculation to count total Fire runes on the Scoring Wall
+  - Added Fire count to Essence before multiplying
+  - Updated `calculateWallPower()` in `src/utils/scoring.ts`
+  - Updated `calculateWallPowerWithSegments()` for game log display
+  - Updated `calculateProjectedPower()` for RunePower preview
+  - Added visual indicator (🔥 emoji) showing Fire bonus in RunePower component
+  - Updated tooltip to explain Fire effect
 
-- [ ] **TODO: Implement Frost effect**
-  - Add `frozenFactories` state to track frozen factory IDs per player
-  - Trigger factory freeze selection UI when Frost placed in pattern line
-  - Disable frozen factory for opponent's next turn only
-  - Clear frozen state after opponent's turn
-  - Update `placeRunes()` in `src/state/gameStore.ts`
+- [x] **✅ Implemented Poison effect**
+  - Modified all three scoring functions to accept `opponentPoisonCount` parameter
+  - Opponent Poison count reduces player's Focus (minimum 1)
+  - Updated `calculateWallPower()`, `calculateWallPowerWithSegments()`, and `calculateProjectedPower()` in `src/utils/scoring.ts`
+  - Added helper function `countPoisonRunes()` in gameStore to count Poison runes
+  - Updated gameStore to pass opponent Poison counts during scoring calculations
+  - Added visual indicator (☠️ emoji) showing Poison reduction in RunePower component
+  - Updated tooltip to explain Poison effect
+  - Only affects opponent's scoring, not your own
 
-- [ ] **TODO: Implement Poison effect**
-  - Count Poison runes on each player's scoring wall
-  - Pass opponent's Poison count to scoring calculation
-  - Reduce focus by Poison count (minimum 1\u00d7)
-  - Update `calculateWallPower()` to accept `opponentPoisonCount` parameter
-  - Add visual indicator showing Poison reduction effect
+- [x] **✅ Implemented Wind effect**
+  - Created `calculateEffectiveFloorPenalty()` helper function in `src/utils/scoring.ts`
+  - Each Wind rune in floor line cancels one other floor penalty (minimum 0)
+  - Wind runes still count toward floor line capacity (7 max)
+  - Updated all three scoring functions to document Wind effect
+  - Updated gameStore to use `calculateEffectiveFloorPenalty()` in all scoring phases
+  - Added visual indicator (💨 emoji) in RunePower component showing Wind mitigation
+  - Added detailed Wind mitigation display in FloorLine component
+  - Shows calculation: "X runes - Y Wind = Z penalties"
+  - Wind runes in floor line have green background and border
+  - Updated tooltip to explain Wind effect
+  - Only affects your own floor penalties, not opponent's
 
-- [ ] **TODO: Implement Void effect**
-  - Add factory selection UI when Void placed in pattern line
-  - Destroy all runes in selected factory
-  - Update `placeRunes()` to trigger Void effect
-  - Add animation for rune destruction
-  - Consider allowing cancellation if player changes mind
+- [x] **✅ Implemented Void effect**
+  - Added `voidEffectPending` state to GameState to track when Void effect is active
+  - Updated `placeRunes()` to detect Void runes and trigger factory destruction
+  - Added `destroyFactory()` action to remove all runes from selected factory
+  - Created `chooseFactoryToDestroy()` AI function in `src/utils/aiPlayer.ts`
+  - AI strategically destroys factories with runes the opponent needs
+  - Integrated Void effect handling in App.tsx for AI turns
+  - Direct factory click interaction with purple highlighting
+  - Purple-themed message banner for player guidance
+  - Player who places Void gets to choose which factory to destroy
 
-- [ ] **TODO: Implement Wind effect**
-  - Modify floor line penalty calculation to exclude Wind runes
-  - Each Wind rune cancels out one other floor penalty (minimum 0 total penalties)
-  - Update `calculateWallPower()` or floor penalty counting logic in `src/utils/scoring.ts`
-  - Wind runes still count toward the 7-rune floor line capacity
-  - Add visual indicator showing Wind mitigation effect in floor line
+- [x] **✅ Implemented Frost effect**
+  - Added `frostEffectPending` and `frozenFactories` state to GameState
+  - Updated `placeRunes()` to detect Frost runes and trigger factory freeze
+  - Added `freezeFactory()` action to freeze selected factory
+  - Frozen factories disabled for opponent's next turn only
+  - Clear frozen state automatically when opponent drafts
+  - Created `chooseFactoryToFreeze()` AI function in `src/utils/aiPlayer.ts`
+  - AI strategically freezes factories with runes opponent needs
+  - Integrated Frost effect handling in App.tsx for AI turns
+  - Direct factory click interaction with cyan highlighting
+  - Frozen factories show icy blue styling with snowflake indicator (❄️)
+  - Cyan-themed message banner for player guidance
+  - Player who places Frost gets to choose which factory to freeze
+
+
 
 - [ ] **TODO: Update UI for rune effects**
   - Add effect indicators/tooltips on rune tokens
@@ -538,10 +577,9 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 - [ ] **TODO: Update AI to consider rune effects**
   - Evaluate Fire runes for scoring potential
-  - Consider Frost for blocking opponent
   - Weight Poison collection strategically
-  - Use Void for denial tactics
   - Value Wind as floor insurance and penalty mitigation
+  - Consider Void and Frost for denial tactics (already implemented in chooseFactoryToDestroy/Freeze)
 
 ### Future Enhancements
 - [ ] Boss selection and special modifiers

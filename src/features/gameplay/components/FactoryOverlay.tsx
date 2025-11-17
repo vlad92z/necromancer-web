@@ -8,13 +8,27 @@ import { RuneCell } from '../../../components/RuneCell';
 
 interface FactoryOverlayProps {
   runes: Rune[];
-  sourceType: 'factory' | 'center';
   onSelectRune: (runeType: RuneType) => void;
   onClose: () => void;
+  gameMode: 'classic' | 'standard';
 }
 
-export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: FactoryOverlayProps) {
+export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: FactoryOverlayProps) {
   const isMobile = window.innerWidth < 768;
+
+  // Rune effect descriptions (only shown in standard mode)
+  const getRuneDescription = (runeType: RuneType): string => {
+    if (gameMode === 'classic') return '';
+    
+    const descriptions: Record<RuneType, string> = {
+      Fire: '+1 Essence per Fire rune on your Spell Wall',
+      Frost: 'Freeze a Runeforge for opponent\'s next turn',
+      Poison: '-1 enemy Focus per Poison rune on your Spell Wall',
+      Void: 'Destroy a Runeforge when placed',
+      Wind: 'Overloading Wind runes reduces Focus penalty',
+    };
+    return descriptions[runeType];
+  };
 
   // Group runes by type for organized display
   const runesByType = runes.reduce((acc, rune) => {
@@ -78,39 +92,6 @@ export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: Fac
             alignItems: 'center',
             marginBottom: isMobile ? '16px' : '20px',
           }}>
-            <div>
-              <h2 style={{
-                fontSize: isMobile ? '18px' : '24px',
-                fontWeight: 'bold',
-                color: '#0c4a6e',
-                margin: 0,
-              }}>
-                {sourceType === 'factory' ? 'Factory' : 'Center Pool'}
-              </h2>
-              <p style={{
-                fontSize: isMobile ? '12px' : '14px',
-                color: '#64748b',
-                margin: '4px 0 0 0',
-              }}>
-                Select a rune type to draft
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              style={{
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: isMobile ? '6px' : '8px',
-                padding: isMobile ? '6px 12px' : '8px 16px',
-                fontSize: isMobile ? '12px' : '14px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              }}
-            >
-              ✕
-            </button>
           </div>
 
           {/* Runes grouped by type */}
@@ -151,15 +132,6 @@ export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: Fac
                     e.currentTarget.style.backgroundColor = '#f8fafc';
                   }}
                 >
-                  {/* Sample rune (larger) */}
-                  <div style={{ minWidth: isMobile ? '60px' : '80px' }}>
-                    <RuneCell
-                      rune={typeRunes[0]}
-                      variant="factory"
-                      size="large"
-                      showEffect={false}
-                    />
-                  </div>
 
                   {/* Info and preview */}
                   <div style={{ flex: 1, textAlign: 'left' }}>
@@ -169,15 +141,17 @@ export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: Fac
                       color: '#1e293b',
                       marginBottom: '4px',
                     }}>
-                      {runeType}
+                      {runeType} ({typeRunes.length})
                     </div>
-                    <div style={{
-                      fontSize: isMobile ? '12px' : '14px',
-                      color: '#64748b',
-                      marginBottom: '8px',
-                    }}>
-                      {typeRunes.length} rune{typeRunes.length !== 1 ? 's' : ''}
-                    </div>
+                    {gameMode === 'standard' && (
+                      <div style={{
+                        fontSize: isMobile ? '12px' : '14px',
+                        color: '#64748b',
+                        marginBottom: '8px',
+                      }}>
+                        {getRuneDescription(runeType)}
+                      </div>
+                    )}
                     
                     {/* Preview of all runes of this type */}
                     <div style={{
@@ -188,25 +162,17 @@ export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: Fac
                       {typeRunes.map((rune) => (
                         <div 
                           key={rune.id}
-                          style={{ width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px' }}
+                          style={{ width: isMobile ? '35px' : '60px', height: isMobile ? '35px' : '60px' }}
                         >
                           <RuneCell
                             rune={rune}
                             variant="factory"
-                            size="small"
+                            size="large"
                             showEffect={true}
                           />
                         </div>
                       ))}
                     </div>
-                  </div>
-
-                  {/* Arrow indicator */}
-                  <div style={{
-                    fontSize: isMobile ? '20px' : '24px',
-                    color: '#64748b',
-                  }}>
-                    →
                   </div>
                 </motion.button>
               );

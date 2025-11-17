@@ -152,6 +152,7 @@ export function initializeGame(): GameState {
   
   return {
     gameStarted: false,
+    gameMode: 'standard', // Default to standard mode (will be set when starting game)
     players: [player1, player2],
     factories: filledFactories,
     centerPool: [],
@@ -165,5 +166,8 @@ export function initializeGame(): GameState {
     pendingPlacement: null,
     scoringPhase: null,
     roundHistory: [],
+    voidEffectPending: false,
+    frostEffectPending: false,
+    frozenFactories: [],
   };
 }

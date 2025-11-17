@@ -2,12 +2,17 @@
  * StartGameScreen component - displays welcome screen before game begins
  */
 
+import { useState } from 'react';
+import { RulesOverlay } from './RulesOverlay';
+
 interface StartGameScreenProps {
-  onStartGame: () => void;
+  onStartGame: (gameMode: 'classic' | 'standard') => void;
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const isMobile = window.innerWidth < 768;
+  const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
+  const [showRules, setShowRules] = useState(false);
   
   return (
     <div style={{
@@ -32,7 +37,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           fontSize: isMobile ? '32px' : '48px', 
           fontWeight: 'bold', 
           color: '#667eea', 
-          marginBottom: '16px',
+          marginBottom: '6px',
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)'
         }}>
           Massive Spell
@@ -54,18 +59,85 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           lineHeight: '1.6'
         }}>
           <p style={{ marginBottom: '12px' }}>
-            Draft powerful runes from mystical factories and craft strategic spell patterns.
+            Prepare powerful runes from mystical Runeforges and craft strategic spell patterns.
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Complete your pattern lines to place runes on your scoring wall and unleash devastating combos!
-          </p>
-          <p>
-            Face off against the AI opponent in this arcane battle of wits.
+            Complete your Spellcasting Lines and place runes on your Spell Wall to unleash devastating combos!
           </p>
         </div>
         
+        {/* Game Mode Toggle */}
+        <div style={{
+          marginBottom: '24px',
+          padding: isMobile ? '16px' : '20px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          border: '2px solid #e2e8f0'
+        }}>
+          <div style={{
+            fontSize: isMobile ? '14px' : '16px',
+            fontWeight: '600',
+            color: '#334155',
+            marginBottom: '12px'
+          }}>
+            Game Mode
+          </div>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
+          }}>
+            <button
+              onClick={() => setGameMode('classic')}
+              style={{
+                flex: 1,
+                padding: isMobile ? '10px 16px' : '12px 24px',
+                borderRadius: '8px',
+                fontSize: isMobile ? '14px' : '16px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: gameMode === 'classic' ? '#667eea' : '#cbd5e1',
+                backgroundColor: gameMode === 'classic' ? '#667eea' : '#ffffff',
+                color: gameMode === 'classic' ? '#ffffff' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Classic
+            </button>
+            <button
+              onClick={() => setGameMode('standard')}
+              style={{
+                flex: 1,
+                padding: isMobile ? '10px 16px' : '12px 24px',
+                borderRadius: '8px',
+                fontSize: isMobile ? '14px' : '16px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: gameMode === 'standard' ? '#667eea' : '#cbd5e1',
+                backgroundColor: gameMode === 'standard' ? '#667eea' : '#ffffff',
+                color: gameMode === 'standard' ? '#ffffff' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Standard
+            </button>
+          </div>
+          <div style={{
+            marginTop: '8px',
+            fontSize: isMobile ? '11px' : '13px',
+            color: '#64748b',
+            textAlign: 'center'
+          }}>
+            {gameMode === 'classic' 
+              ? 'Simpler version of the game. All runes are the same.' 
+              : 'Runes have unique modifiers that affect gameplay.'}
+          </div>
+        </div>
+        
         <button
-          onClick={onStartGame}
+          onClick={() => onStartGame(gameMode)}
           style={{
             backgroundColor: '#eab308',
             color: '#111827',
@@ -79,7 +151,8 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             transition: 'all 0.3s',
             boxShadow: '0 4px 12px rgba(234, 179, 8, 0.3)',
             textTransform: 'uppercase',
-            letterSpacing: '1px'
+            letterSpacing: '1px',
+            marginBottom: '16px'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#ca8a04';
@@ -95,14 +168,37 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           Start Game
         </button>
         
-        <div style={{ 
-          marginTop: '24px', 
-          fontSize: isMobile ? '12px' : '14px', 
-          color: '#9ca3af' 
-        }}>
-          Tap the Rules button in-game to learn how to play
-        </div>
+        <button
+          onClick={() => setShowRules(true)}
+          style={{
+            backgroundColor: 'transparent',
+            color: '#667eea',
+            fontWeight: '600',
+            padding: isMobile ? '12px 24px' : '14px 32px',
+            borderRadius: '8px',
+            fontSize: isMobile ? '14px' : '16px',
+            width: '100%',
+            border: '2px solid #667eea',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#667eea';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#667eea';
+          }}
+        >
+          📖 How to Play
+        </button>
       </div>
+      
+      {/* Rules Overlay */}
+      {showRules && (
+        <RulesOverlay onClose={() => setShowRules(false)} />
+      )}
     </div>
   );
 }

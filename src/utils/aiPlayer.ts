@@ -40,8 +40,9 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   const moves: DraftMove[] = [];
   
   // Get unique rune types from factories with counts
+  // Skip frozen factories (opponent cannot draft from them)
   state.factories.forEach(factory => {
-    if (factory.runes.length > 0) {
+    if (factory.runes.length > 0 && !state.frozenFactories.includes(factory.id)) {
       const runeTypes = new Set(factory.runes.map(r => r.runeType));
       runeTypes.forEach(runeType => {
         moves.push({ 
@@ -254,7 +255,7 @@ function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: n
  */
 function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: number | null): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const currentScore = calculateWallPower(currentPlayer.wall, currentPlayer.floorLine.runes.length);
+  const currentScore = calculateWallPower(currentPlayer.wall, currentPlayer.floorLine.runes.length, 0, state.gameMode);
   
   // Simulate the move
   const simulatedState = simulateDraftMove(state, move, targetLineIndex);
@@ -272,7 +273,7 @@ function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: n
     }
   }
   
-  const simulatedScore = calculateWallPower(simulatedWall, simulatedPlayer.floorLine.runes.length);
+  const simulatedScore = calculateWallPower(simulatedWall, simulatedPlayer.floorLine.runes.length, 0, state.gameMode);
   return simulatedScore - currentScore;
 }
 
@@ -592,6 +593,126 @@ function chooseBestPlacementMove(state: GameState): { type: 'line' | 'floor', li
   }
   
   return scoredMoves[0].move;
+}
+
+/**
+ * Choose which factory to destroy with Void effect
+ * Strategy: Destroy the factory with the most runes that the opponent needs
+ */
+export function chooseFactoryToDestroy(state: GameState): string | null {
+  const nonEmptyFactories = state.factories.filter(f => f.runes.length > 0);
+  
+  if (nonEmptyFactories.length === 0) {
+    return null; // No factories to destroy
+  }
+  
+  const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
+  
+  // Score each factory based on how valuable it is to the opponent
+  const scoredFactories = nonEmptyFactories.map(factory => {
+    let score = 0;
+    
+    // Count how many runes the opponent could use from this factory
+    const runeTypeCounts = new Map<RuneType, number>();
+    factory.runes.forEach(rune => {
+      runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
+    });
+    
+    runeTypeCounts.forEach((count, runeType) => {
+      // Check if opponent can use this rune type
+      for (let i = 0; i < opponent.patternLines.length; i++) {
+        const line = opponent.patternLines[i];
+        const row = i;
+        const col = getWallColumnForRune(row, runeType);
+        
+        // Can use if: line is empty or same type, line not full, and not on wall yet
+        if ((line.runeType === null || line.runeType === runeType) &&
+            line.count < line.tier &&
+            opponent.wall[row][col].runeType === null) {
+          // Score based on how many runes opponent could use
+          const spaceAvailable = line.tier - line.count;
+          const usableCount = Math.min(count, spaceAvailable);
+          score += usableCount * 10;
+          
+          // Bonus for completing opponent's line
+          if (line.count + usableCount >= line.tier) {
+            score += 20;
+          }
+          break; // Count this rune type only once
+        }
+      }
+    });
+    
+    // Also consider total rune count (more runes = more options for opponent)
+    score += factory.runes.length * 2;
+    
+    return { factoryId: factory.id, score };
+  });
+  
+  // Sort by score descending
+  scoredFactories.sort((a, b) => b.score - a.score);
+  
+  return scoredFactories[0].factoryId;
+}
+
+/**
+ * AI chooses which factory to freeze with Frost effect
+ * Strategy: Freeze the factory that is most valuable to the opponent
+ */
+export function chooseFactoryToFreeze(state: GameState): string | null {
+  const nonEmptyFactories = state.factories.filter(f => f.runes.length > 0);
+  
+  if (nonEmptyFactories.length === 0) {
+    return null; // No factories to freeze
+  }
+  
+  const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
+  
+  // Use same scoring logic as Void effect - freeze the factory most valuable to opponent
+  const scoredFactories = nonEmptyFactories.map(factory => {
+    let score = 0;
+    
+    // Count how many runes the opponent could use from this factory
+    const runeTypeCounts = new Map<RuneType, number>();
+    factory.runes.forEach(rune => {
+      runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
+    });
+    
+    runeTypeCounts.forEach((count, runeType) => {
+      // Check if opponent can use this rune type
+      for (let i = 0; i < opponent.patternLines.length; i++) {
+        const line = opponent.patternLines[i];
+        const row = i;
+        const col = getWallColumnForRune(row, runeType);
+        
+        // Can use if: line is empty or same type, line not full, and not on wall yet
+        if ((line.runeType === null || line.runeType === runeType) &&
+            line.count < line.tier &&
+            opponent.wall[row][col].runeType === null) {
+          // Score based on how many runes opponent could use
+          const spaceAvailable = line.tier - line.count;
+          const usableCount = Math.min(count, spaceAvailable);
+          score += usableCount * 10;
+          
+          // Bonus for completing opponent's line
+          if (line.count + usableCount >= line.tier) {
+            score += 20;
+          }
+          break; // Count this rune type only once
+        }
+      }
+    });
+    
+    // Also consider total rune count (more runes = more options for opponent)
+    score += factory.runes.length * 2;
+    
+    return { factoryId: factory.id, score };
+  });
+  
+  // Sort by score descending
+  scoredFactories.sort((a, b) => b.score - a.score);
+  
+  return scoredFactories[0].factoryId;
 }
 
 /**

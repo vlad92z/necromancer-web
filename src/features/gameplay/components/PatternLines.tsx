@@ -77,10 +77,6 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                     rune={rune}
                     variant="pattern"
                     size="large"
-                    placeholder={{
-                      type: 'text',
-                      text: String(line.tier),
-                    }}
                     showEffect={false}
                   />
                 );
