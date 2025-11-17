@@ -167,39 +167,29 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
             color: '#0c4a6e',
             fontWeight: 'bold'
           }}>
-            Spellpower Calculation
+            Spellpower
           </h2>
           
           <div style={{ fontSize: isMobile ? '14px' : '16px', lineHeight: '1.6', color: '#1e293b' }}>
             <div style={{ marginBottom: '16px' }}>
               <strong style={{ color: '#eab308' }}>Essence:</strong>
               <p style={{ margin: '4px 0 0 0' }}>
-                Each completed pattern line gives 1 Essence. This represents the raw magical energy from placing runes on your scoring wall.
+                The number of active runes on your Spell Wall.
               </p>
             </div>
             
             <div style={{ marginBottom: '16px' }}>
               <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
               <p style={{ margin: '4px 0 0 0' }}>
-                Focus equals Essence minus floor line penalties. Each rune in your floor line reduces your Focus by 1. <span style={{ color: '#dc2626' }}>Red Focus indicates penalties are being applied.</span>
+                The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus.
               </p>
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <strong style={{ color: '#0c4a6e' }}>Spellpower:</strong>
+              <strong style={{ color: '#0c4a6e' }}>Spellpower (Essence x Focus):</strong>
               <p style={{ margin: '4px 0 0 0' }}>
-                Your total damage potential for the round. Spellpower = Essence + Combo Points - Floor Penalties. Combo points are earned by placing runes adjacent to existing runes on your wall (horizontal and vertical).
+                Your total damage potential for the round.
               </p>
-            </div>
-            
-            <div style={{ 
-              marginTop: '20px', 
-              padding: '12px', 
-              backgroundColor: '#f1f5f9', 
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px'
-            }}>
-              <strong>Example:</strong> 2 completed lines + 5 combo points - 3 floor penalties = 4 Spellpower
             </div>
           </div>
           
