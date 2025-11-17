@@ -4,6 +4,7 @@
 
 import type { Player } from '../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
+import { RunePower } from './RunePower';
 
 interface OpponentViewProps {
   opponent: Player;
@@ -16,16 +17,11 @@ export function OpponentView({ opponent, player, isActive }: OpponentViewProps) 
   
   return (
     <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
-      <div style={{ 
-        marginBottom: isMobile ? '4px' : '8px', 
-        fontSize: isMobile ? '12px' : '18px',
-        fontWeight: 'bold',
-        color: '#7c2d12',
-        textAlign: 'center'
-      }}>
-        {opponent.name} - Damage Taken: {player.score}
-        {isActive && <span style={{ marginLeft: '8px', color: '#ea580c' }}>(Taking Turn...)</span>}
-      </div>
+      <RunePower 
+        player={opponent}
+        damageTaken={player.score}
+        nameColor="#7c2d12"
+      />
       <PlayerBoard
         player={opponent}
         isActive={isActive}
