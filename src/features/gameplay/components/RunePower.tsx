@@ -2,6 +2,7 @@
  * RunePower component - displays player stats and projected power calculation
  */
 
+import { useState } from 'react';
 import type { Player } from '../../../types/game';
 import { calculateProjectedPower } from '../../../utils/scoring';
 
@@ -13,6 +14,7 @@ interface RunePowerProps {
 
 export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
   const isMobile = window.innerWidth < 768;
+  const [showExplanation, setShowExplanation] = useState(false);
   
   // Find completed pattern lines
   const completedPatternLines = player.patternLines
@@ -30,11 +32,12 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
   const hasPenalty = floorPenaltyCount > 0;
   
   return (
-    <div style={{
-      display: 'flex',
-      gap: isMobile ? '6px' : '12px',
-      marginBottom: isMobile ? '4px' : '8px'
-    }}>
+    <>
+      <div style={{
+        display: 'flex',
+        gap: isMobile ? '6px' : '12px',
+        marginBottom: isMobile ? '4px' : '8px'
+      }}>
       {/* Player Info Box */}
       <div style={{
         flex: '0 0 33%',
@@ -70,7 +73,7 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
         padding: isMobile ? '6px 8px' : '8px 12px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-end'
+        justifyContent: 'space-between'
       }}>
         <div style={{
           fontSize: isMobile ? '12px' : '18px',
@@ -78,7 +81,9 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? '4px' : '8px'
+          gap: isMobile ? '4px' : '8px',
+          flex: 1,
+          justifyContent: 'flex-end'
         }}>
           {essence > 0 ? (
             <>
@@ -98,7 +103,126 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
             </>
           )}
         </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowExplanation(true);
+          }}
+          style={{
+            marginLeft: isMobile ? '4px' : '8px',
+            width: isMobile ? '20px' : '24px',
+            height: isMobile ? '20px' : '24px',
+            borderRadius: '50%',
+            border: '2px solid #0c4a6e',
+            backgroundColor: '#ffffff',
+            color: '#0c4a6e',
+            fontSize: isMobile ? '10px' : '14px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            flexShrink: 0
+          }}
+        >
+          ?
+        </button>
       </div>
     </div>
+
+    {/* Explanation Popup */}
+    {showExplanation && (
+      <div
+        onClick={() => setShowExplanation(false)}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '16px'
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: isMobile ? '20px' : '32px',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <h2 style={{
+            margin: '0 0 16px 0',
+            fontSize: isMobile ? '18px' : '24px',
+            color: '#0c4a6e',
+            fontWeight: 'bold'
+          }}>
+            Spellpower Calculation
+          </h2>
+          
+          <div style={{ fontSize: isMobile ? '14px' : '16px', lineHeight: '1.6', color: '#1e293b' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <strong style={{ color: '#eab308' }}>Essence:</strong>
+              <p style={{ margin: '4px 0 0 0' }}>
+                Each completed pattern line gives 1 Essence. This represents the raw magical energy from placing runes on your scoring wall.
+              </p>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
+              <p style={{ margin: '4px 0 0 0' }}>
+                Focus equals Essence minus floor line penalties. Each rune in your floor line reduces your Focus by 1. <span style={{ color: '#dc2626' }}>Red Focus indicates penalties are being applied.</span>
+              </p>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <strong style={{ color: '#0c4a6e' }}>Spellpower:</strong>
+              <p style={{ margin: '4px 0 0 0' }}>
+                Your total damage potential for the round. Spellpower = Essence + Combo Points - Floor Penalties. Combo points are earned by placing runes adjacent to existing runes on your wall (horizontal and vertical).
+              </p>
+            </div>
+            
+            <div style={{ 
+              marginTop: '20px', 
+              padding: '12px', 
+              backgroundColor: '#f1f5f9', 
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px'
+            }}>
+              <strong>Example:</strong> 2 completed lines + 5 combo points - 3 floor penalties = 4 Spellpower
+            </div>
+          </div>
+          
+          <button
+            onClick={() => setShowExplanation(false)}
+            style={{
+              marginTop: '20px',
+              padding: isMobile ? '8px 16px' : '10px 24px',
+              backgroundColor: '#0c4a6e',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: isMobile ? '14px' : '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            Got it!
+          </button>
+        </div>
+      </div>
+    )}
+  </>
   );
 }
