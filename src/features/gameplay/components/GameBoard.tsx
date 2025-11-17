@@ -469,6 +469,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           sourceType={factoryOverlaySource}
           onSelectRune={handleFactoryOverlaySelect}
           onClose={handleFactoryOverlayClose}
+          gameMode={gameMode}
         />
       )}
     </div>

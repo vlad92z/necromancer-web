@@ -11,10 +11,25 @@ interface FactoryOverlayProps {
   sourceType: 'factory' | 'center';
   onSelectRune: (runeType: RuneType) => void;
   onClose: () => void;
+  gameMode: 'classic' | 'standard';
 }
 
-export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: FactoryOverlayProps) {
+export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose, gameMode }: FactoryOverlayProps) {
   const isMobile = window.innerWidth < 768;
+
+  // Rune effect descriptions (only shown in standard mode)
+  const getRuneDescription = (runeType: RuneType): string => {
+    if (gameMode === 'classic') return '';
+    
+    const descriptions: Record<RuneType, string> = {
+      Fire: '+1 Essence per Fire rune on your Spell Wall',
+      Frost: 'Freeze a Runeforge for opponent\'s next turn',
+      Poison: '-1 enemy Focus per Poison rune on your Spell Wall',
+      Void: 'Destroy a Runeforge when placed',
+      Wind: 'Overloading Wind runes reduces Focus penalty',
+    };
+    return descriptions[runeType];
+  };
 
   // Group runes by type for organized display
   const runesByType = runes.reduce((acc, rune) => {
@@ -129,13 +144,15 @@ export function FactoryOverlay({ runes, sourceType, onSelectRune, onClose }: Fac
                     }}>
                       {runeType} ({typeRunes.length})
                     </div>
-                    <div style={{
-                      fontSize: isMobile ? '12px' : '14px',
-                      color: '#64748b',
-                      marginBottom: '8px',
-                    }}>
-                      Describe rune effect here
-                    </div>
+                    {gameMode === 'standard' && (
+                      <div style={{
+                        fontSize: isMobile ? '12px' : '14px',
+                        color: '#64748b',
+                        marginBottom: '8px',
+                      }}>
+                        {getRuneDescription(runeType)}
+                      </div>
+                    )}
                     
                     {/* Preview of all runes of this type */}
                     <div style={{
