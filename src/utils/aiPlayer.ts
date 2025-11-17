@@ -40,8 +40,9 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   const moves: DraftMove[] = [];
   
   // Get unique rune types from factories with counts
+  // Skip frozen factories (opponent cannot draft from them)
   state.factories.forEach(factory => {
-    if (factory.runes.length > 0) {
+    if (factory.runes.length > 0 && !state.frozenFactories.includes(factory.id)) {
       const runeTypes = new Set(factory.runes.map(r => r.runeType));
       runeTypes.forEach(runeType => {
         moves.push({ 
