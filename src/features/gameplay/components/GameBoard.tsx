@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { GameState } from '../../../types/game';
+import type { GameState, RuneType } from '../../../types/game';
 import { FactoriesAndCenter } from './FactoriesAndCenter';
 import { PlayerView } from './PlayerView';
 import { OpponentView } from './OpponentView';
@@ -11,6 +11,7 @@ import { GameOverModal } from './GameOverModal';
 import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
+import { FactoryOverlay } from './FactoryOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 
 interface GameBoardProps {
@@ -25,6 +26,9 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
+  const [showFactoryOverlay, setShowFactoryOverlay] = useState(false);
+  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
+  const [factoryOverlaySource, setFactoryOverlaySource] = useState<'factory' | 'center'>('factory');
   const isMobile = window.innerWidth < 768;
   console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
@@ -61,6 +65,32 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
         ? players[1]
         : null
     : null;
+  
+  const handleFactoryClick = (factoryId: string) => {
+    setSelectedFactoryId(factoryId);
+    setFactoryOverlaySource('factory');
+    setShowFactoryOverlay(true);
+  };
+  
+  const handleCenterClick = () => {
+    setSelectedFactoryId(null);
+    setFactoryOverlaySource('center');
+    setShowFactoryOverlay(true);
+  };
+  
+  const handleFactoryOverlaySelect = (runeType: RuneType) => {
+    if (factoryOverlaySource === 'factory' && selectedFactoryId) {
+      draftRune(selectedFactoryId, runeType);
+    } else if (factoryOverlaySource === 'center') {
+      draftFromCenter(runeType);
+    }
+    setShowFactoryOverlay(false);
+  };
+  
+  const handleFactoryOverlayClose = () => {
+    setShowFactoryOverlay(false);
+    setSelectedFactoryId(null);
+  };
   
   const handleBackgroundClick = () => {
     // Background click handler - no longer needed since PlayerBoard handles it
@@ -207,8 +237,8 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           <FactoriesAndCenter
             factories={factories}
             centerPool={centerPool}
-            onDraftRune={draftRune}
-            onDraftFromCenter={draftFromCenter}
+            onFactoryClick={handleFactoryClick}
+            onCenterClick={handleCenterClick}
             isDraftPhase={isDraftPhase}
             hasSelectedRunes={hasSelectedRunes}
             isAITurn={isAITurn}
@@ -282,6 +312,20 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
           deck={players[0].deck}
           playerName={players[0].name}
           onClose={() => setShowDeckOverlay(false)}
+        />
+      )}
+      
+      {/* Factory Overlay */}
+      {showFactoryOverlay && (
+        <FactoryOverlay
+          runes={
+            factoryOverlaySource === 'factory' && selectedFactoryId
+              ? factories.find(f => f.id === selectedFactoryId)?.runes || []
+              : centerPool
+          }
+          sourceType={factoryOverlaySource}
+          onSelectRune={handleFactoryOverlaySelect}
+          onClose={handleFactoryOverlayClose}
         />
       )}
       
