@@ -131,7 +131,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: isMobile ? '4px' : '6px',
+                    gap: isMobile ? '0px' : '6px',
                     minWidth: isMobile ? '60px' : '80px',
                   }}>
                     <RuneCell
@@ -163,8 +163,8 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                     gridTemplateColumns: isMobile 
                       ? 'repeat(auto-fill, minmax(40px, 1fr))' 
                       : 'repeat(auto-fill, minmax(60px, 1fr))',
-                    gap: isMobile ? '4px' : '6px',
-                    padding: isMobile ? '6px' : '8px',
+                    gap: isMobile ? '0px' : '6px',
+                    padding: isMobile ? '2px' : '8px',
                     backgroundColor: '#f8fafc',
                     borderRadius: isMobile ? '4px' : '6px',
                     flex: 1,
