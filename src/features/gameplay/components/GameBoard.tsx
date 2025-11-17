@@ -60,11 +60,11 @@ export function GameBoard({ gameState }: GameBoardProps) {
     }
   }, [isMobile, isAITurn]);
   
-  // Determine winner
+  // Determine winner (lowest damage taken wins)
   const winner = isGameOver
-    ? players[0].score > players[1].score
+    ? players[0].score < players[1].score
       ? players[0]
-      : players[1].score > players[0].score
+      : players[1].score < players[0].score
         ? players[1]
         : null
     : null;
@@ -243,6 +243,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             {/* Player (Human) - Mobile */}
             <PlayerView
               player={players[0]}
+              opponent={players[1]}
               isActive={currentPlayerIndex === 0}
               onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
               onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
@@ -257,6 +258,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             <div style={{ flex: 1 }}>
               <PlayerView
                 player={players[0]}
+                opponent={players[1]}
                 isActive={currentPlayerIndex === 0}
                 onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
                 onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
@@ -270,6 +272,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             <div style={{ flex: 1 }}>
               <OpponentView
                 opponent={players[1]}
+                player={players[0]}
                 isActive={currentPlayerIndex === 1}
               />
             </div>
@@ -357,6 +360,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             {/* Opponent Board */}
             <OpponentView
               opponent={players[1]}
+              player={players[0]}
               isActive={currentPlayerIndex === 1}
             />
           </div>

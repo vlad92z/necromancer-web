@@ -78,7 +78,7 @@ export interface Player {
   patternLines: PatternLine[];
   wall: ScoringWall;
   floorLine: FloorLine;
-  score: number;
+  score: number; // Total damage taken (accumulated opponent spellpower)
   deck: Rune[]; // Player's deck of runes for this run
 }
 
