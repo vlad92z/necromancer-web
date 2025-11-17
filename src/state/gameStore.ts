@@ -362,7 +362,7 @@ export const useGameStore = create<GameStore>((set) => ({
     
     // Only trigger if it's AI's turn and in draft phase
     if (currentPlayer.type === 'ai' && state.turnPhase === 'draft') {
-      // Add a small delay to make AI moves visible
+      // Add a delay to make AI moves visible
       setTimeout(() => {
         const currentState = useGameStore.getState();
         const moveMade = makeAIMove(
@@ -374,7 +374,7 @@ export const useGameStore = create<GameStore>((set) => ({
         );
         
         // If the AI just drafted runes, it needs to place them too
-        // Check again after a short delay
+        // Check again after a delay
         if (moveMade) {
           setTimeout(() => {
             const newState = useGameStore.getState();
@@ -389,9 +389,9 @@ export const useGameStore = create<GameStore>((set) => ({
                 useGameStore.getState().placeRunesInFloor
               );
             }
-          }, 800);
+          }, 2000);
         }
-      }, 800);
+      }, 2000);
     }
   },
 }));
