@@ -41,22 +41,6 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           <h2 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 'bold', color: '#0c4a6e', margin: 0 }}>
             How to Play
           </h2>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: isMobile ? '6px 12px' : '8px 16px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            ✕ Close
-          </button>
         </div>
         
         {/* Rules Content */}
@@ -66,7 +50,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               🎯 Goal
             </h3>
             <p style={{ margin: 0 }}>
-              Build your spellpower to deal damage to your opponent each round. The player with the most health wins!
+              Build spellpower to deal damage to your opponent each round. The player with the most health wins!
             </p>
           </section>
           
@@ -76,8 +60,8 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             </h3>
             <p style={{ margin: 0, marginBottom: '8px' }}>
               1. Select a rune from any Runeforge to select all runes of that type<br/>
-              2. Remaining runes from that Runeforge move to the center<br/>
-              3. You can also prepare from the center pool
+              2. Remaining runes from the Runeforge move to the center<br/>
+              3. You can also pick runes from the center pool
             </p>
           </section>
           
@@ -86,10 +70,10 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               📊 Spellcasting Lines
             </h3>
             <p style={{ margin: 0 }}>
-              • Each line holds 1-5 runes (top to bottom)<br/>
+              • Each line holds 1-5 runes<br/>
               • A line can only hold one type of rune<br/>
               • Surplus runes cause overload (reduce focus)<br/>
-              • Complete a line to move one rune to your wall<br/>
+              • Complete a line to add that rune to your wall<br/>
               • Runes are connected if they share an edge (not diagonal)
             </p>
           </section>
@@ -100,8 +84,8 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             </h3>
             <p style={{ margin: 0 }}>
               • <strong>Essence</strong>: Total number of active runes on your wall<br/>
-              • <strong>Focus</strong>: Size of your largest connected segment<br/>
-              • <strong>Spellpower</strong> = Essence × Focus<br/>
+              • <strong>Focus</strong>: Size of your largest connected rune segment<br/>
+              • <strong>Spellpower</strong>: Essence × Focus<br/>
               • Each round, deal Spellpower damage to your opponent<br/>
               • Overload reduces your Focus<br/>
               • Build large connected segments to maximize damage!

@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
   onStartGame: (gameMode: 'classic' | 'standard') => void;
@@ -10,7 +11,8 @@ interface StartGameScreenProps {
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const isMobile = window.innerWidth < 768;
-  const [gameMode, setGameMode] = useState<'classic' | 'standard'>('classic');
+  const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
+  const [showRules, setShowRules] = useState(false);
   
   return (
     <div style={{
@@ -129,8 +131,8 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             textAlign: 'center'
           }}>
             {gameMode === 'classic' 
-              ? 'Play without rune modifiers' 
-              : 'Play with rune modifiers (coming soon)'}
+              ? 'Simpler version of the game. All runes are the same.' 
+              : 'Runes have unique modifiers that affect gameplay.'}
           </div>
         </div>
         
@@ -149,7 +151,8 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             transition: 'all 0.3s',
             boxShadow: '0 4px 12px rgba(234, 179, 8, 0.3)',
             textTransform: 'uppercase',
-            letterSpacing: '1px'
+            letterSpacing: '1px',
+            marginBottom: '16px'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#ca8a04';
@@ -165,14 +168,37 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           Start Game
         </button>
         
-        <div style={{ 
-          marginTop: '24px', 
-          fontSize: isMobile ? '12px' : '14px', 
-          color: '#9ca3af' 
-        }}>
-          Tap the Rules button in-game to learn how to play
-        </div>
+        <button
+          onClick={() => setShowRules(true)}
+          style={{
+            backgroundColor: 'transparent',
+            color: '#667eea',
+            fontWeight: '600',
+            padding: isMobile ? '12px 24px' : '14px 32px',
+            borderRadius: '8px',
+            fontSize: isMobile ? '14px' : '16px',
+            width: '100%',
+            border: '2px solid #667eea',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#667eea';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#667eea';
+          }}
+        >
+          📖 How to Play
+        </button>
       </div>
+      
+      {/* Rules Overlay */}
+      {showRules && (
+        <RulesOverlay onClose={() => setShowRules(false)} />
+      )}
     </div>
   );
 }

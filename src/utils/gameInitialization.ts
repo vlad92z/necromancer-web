@@ -152,7 +152,7 @@ export function initializeGame(): GameState {
   
   return {
     gameStarted: false,
-    gameMode: 'classic', // Default to classic mode (will be set when starting game)
+    gameMode: 'standard', // Default to standard mode (will be set when starting game)
     players: [player1, player2],
     factories: filledFactories,
     centerPool: [],
