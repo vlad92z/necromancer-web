@@ -26,10 +26,7 @@ export function RunePower({ player }: RunePowerProps) {
     floorPenaltyCount
   );
   
-  // If no completed lines and no floor penalties, don't show anything
-  if (segments.length === 0 && floorPenaltyCount === 0) {
-    return null;
-  }
+  const netPower = totalPower + floorPenalty;
   
   return (
     <div style={{
@@ -73,16 +70,36 @@ export function RunePower({ player }: RunePowerProps) {
             fontWeight: 'bold',
             color: '#92400e'
           }}>
-            Turn Power: {totalPower + floorPenalty}
+            Turn Power: {netPower}
+          </div>
+        </div>
+      ) : floorPenaltyCount > 0 ? (
+        <div style={{
+          fontSize: isMobile ? '11px' : '14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        }}>
+          <div style={{ color: '#991b1b', fontWeight: '500' }}>
+            Floor penalty: {floorPenalty}
+          </div>
+          <div style={{
+            paddingTop: '6px',
+            borderTop: '1px solid #fbbf24',
+            fontWeight: 'bold',
+            color: '#92400e'
+          }}>
+            Turn Power: {netPower}
           </div>
         </div>
       ) : (
         <div style={{
           fontSize: isMobile ? '11px' : '14px',
-          color: '#991b1b',
-          fontWeight: '500'
+          color: '#78350f',
+          fontWeight: '500',
+          textAlign: 'center'
         }}>
-          Floor penalty: {floorPenalty}
+          Turn Power: 0
         </div>
       )}
     </div>
