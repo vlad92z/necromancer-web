@@ -9,11 +9,12 @@ import { calculateProjectedPower } from '../../../utils/scoring';
 
 interface RunePowerProps {
   player: Player;
+  opponent: Player;
   damageTaken: number;
   nameColor: string;
 }
 
-export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
+export function RunePower({ player, opponent, damageTaken, nameColor }: RunePowerProps) {
   const isMobile = window.innerWidth < 768;
   const [showExplanation, setShowExplanation] = useState(false);
   
@@ -27,12 +28,17 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
   
   const floorPenaltyCount = player.floorLine.runes.length;
   
+  // Count opponent's Poison runes (affects this player's Focus)
+  const opponentPoisonCount = opponent.wall.flat().filter(cell => cell.runeType === 'Poison').length;
+  
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
     completedPatternLines,
-    floorPenaltyCount
+    floorPenaltyCount,
+    opponentPoisonCount
   );
   const hasPenalty = floorPenaltyCount > 0;
+  const hasPoisonEffect = opponentPoisonCount > 0;
   
   // Count Fire runes: current wall + completed pattern lines
   const fireRunesOnWall = player.wall.flat().filter(cell => cell.runeType === 'Fire').length;
@@ -115,7 +121,14 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
                 )}
               </span>
               <span>|</span>
-              <span style={{ color: hasPenalty ? '#dc2626' : '#0c4a6e' }}>Focus: {focus}</span>
+              <span style={{ color: hasPenalty || hasPoisonEffect ? '#dc2626' : '#0c4a6e' }}>
+                Focus: {focus}
+                {hasPoisonEffect && (
+                  <span style={{ color: '#32CD32', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`-${opponentPoisonCount} from opponent Poison runes`}>
+                    ☠️
+                  </span>
+                )}
+              </span>
               <span>|</span>
               <span>Spellpower: {totalPower}</span>
             </>
@@ -207,7 +220,7 @@ export function RunePower({ player, damageTaken, nameColor }: RunePowerProps) {
             <div style={{ marginBottom: '16px' }}>
               <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
               <p style={{ margin: '4px 0 0 0' }}>
-                The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus.
+                The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Opponent Poison runes ☠️ also reduce your Focus.
               </p>
             </div>
             

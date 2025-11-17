@@ -19,8 +19,9 @@ export function OpponentView({ opponent, player, isActive }: OpponentViewProps) 
     <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
       <RunePower 
         player={opponent}
+        opponent={player}
         damageTaken={player.score}
-        nameColor="#0c4a6e"
+        nameColor="#7f1d1d"
       />
       <PlayerBoard
         player={opponent}

@@ -33,6 +33,7 @@ export function PlayerView({
     <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
       <RunePower 
         player={player}
+        opponent={opponent}
         damageTaken={opponent.score}
         nameColor="#0c4a6e"
       />

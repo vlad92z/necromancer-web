@@ -519,6 +519,16 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Added visual indicator (🔥 emoji) showing Fire bonus in RunePower component
   - Updated tooltip to explain Fire effect
 
+- [x] **✅ Implemented Poison effect**
+  - Modified all three scoring functions to accept `opponentPoisonCount` parameter
+  - Opponent Poison count reduces player's Focus (minimum 1)
+  - Updated `calculateWallPower()`, `calculateWallPowerWithSegments()`, and `calculateProjectedPower()` in `src/utils/scoring.ts`
+  - Added helper function `countPoisonRunes()` in gameStore to count Poison runes
+  - Updated gameStore to pass opponent Poison counts during scoring calculations
+  - Added visual indicator (☠️ emoji) showing Poison reduction in RunePower component
+  - Updated tooltip to explain Poison effect
+  - Only affects opponent's scoring, not your own
+
 - [ ] **TODO: Implement Frost effect**
   - Add `frozenFactories` state to track frozen factory IDs per player
   - Trigger factory freeze selection UI when Frost placed in pattern line

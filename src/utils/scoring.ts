@@ -8,12 +8,13 @@ import type { ScoringWall, RuneType } from '../types/game';
 /**
  * Calculate total wall power using simplified scoring
  * Essence = total number of active runes on the wall + Fire bonus
- * Focus = size of the largest connected segment (reduced by floor penalty)
+ * Focus = size of the largest connected segment (reduced by floor penalty and opponent Poison)
  * Power = Essence × Focus
  * Runes are connected if they share an edge (not diagonal)
  * Fire Effect: Each Fire rune adds +1 to Essence
+ * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
  */
-export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0): number {
+export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number = 0, opponentPoisonCount: number = 0): number {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
@@ -57,8 +58,8 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
   // Calculate essence with Fire bonus
   const essence = totalRunes + fireRuneCount;
   
-  // Apply floor penalty to focus (minimum 1)
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  // Apply floor penalty and Poison effect to focus (minimum 1)
+  const focus = Math.max(1, largestSegment - floorPenaltyCount - opponentPoisonCount);
   const totalPower = essence * focus;
   
   return totalPower;
@@ -69,10 +70,12 @@ export function calculateWallPower(wall: ScoringWall, floorPenaltyCount: number 
  * Used for game log display
  * Returns essence (total runes + Fire bonus) and focus (largest segment)
  * Fire Effect: Each Fire rune adds +1 to Essence
+ * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
-  floorPenaltyCount: number = 0
+  floorPenaltyCount: number = 0,
+  opponentPoisonCount: number = 0
 ): { essence: number; focus: number; totalPower: number } {
   const visited = Array(5).fill(null).map(() => Array(5).fill(false));
   let totalRunes = 0;
@@ -113,7 +116,8 @@ export function calculateWallPowerWithSegments(
   // Calculate essence with Fire bonus
   const essence = totalRunes + fireRuneCount;
   
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  // Apply floor penalty and Poison effect to focus (minimum 1)
+  const focus = Math.max(1, largestSegment - floorPenaltyCount - opponentPoisonCount);
   const totalPower = essence * focus;
   
   return { essence, focus, totalPower };
@@ -275,11 +279,13 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
  * Calculate projected power for the end of current turn
  * Shows what essence and focus will be after placing completed pattern lines
  * Fire Effect: Each Fire rune adds +1 to Essence
+ * Poison Effect: Each opponent Poison rune reduces your Focus by 1 (minimum 1)
  */
 export function calculateProjectedPower(
   wall: ScoringWall,
   completedPatternLines: Array<{ row: number; runeType: RuneType }>,
-  floorPenaltyCount: number
+  floorPenaltyCount: number,
+  opponentPoisonCount: number = 0
 ): { essence: number; focus: number; totalPower: number } {
   // Create a simulated wall with pattern line runes placed
   const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
@@ -331,7 +337,8 @@ export function calculateProjectedPower(
   // Calculate essence with Fire bonus
   const essence = totalRunes + fireRuneCount;
   
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  // Apply floor penalty and Poison effect to focus (minimum 1)
+  const focus = Math.max(1, largestSegment - floorPenaltyCount - opponentPoisonCount);
   const totalPower = essence * focus;
   
   return { essence, focus, totalPower };

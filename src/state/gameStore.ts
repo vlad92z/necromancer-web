@@ -8,6 +8,11 @@ import { initializeGame, fillFactories, createEmptyFactories } from '../utils/ga
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune } from '../utils/scoring';
 import { makeAIMove } from '../utils/aiPlayer';
 
+// Helper function to count Poison runes on a wall
+function countPoisonRunes(wall: Player['wall']): number {
+  return wall.flat().filter(cell => cell.runeType === 'Poison').length;
+}
+
 interface GameStore extends GameState {
   // Actions
   startGame: () => void;
@@ -314,7 +319,12 @@ export const useGameStore = create<GameStore>((set) => ({
         // Calculate total wall power based on connected segments
         // Floor penalties reduce the multiplier of each segment
         const floorPenaltyCount = player.floorLine.runes.length;
-        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount);
+        
+        // Get opponent's Poison count (for Poison effect)
+        const opponentIndex = state.players.indexOf(player) === 0 ? 1 : 0;
+        const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
+        
+        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, opponentPoisonCount);
         
         // Add wall power to existing score (minimum 0)
         const newScore = Math.max(0, player.score + wallPower);
@@ -346,12 +356,17 @@ export const useGameStore = create<GameStore>((set) => ({
       console.log('Scoring: Calculating scores...');
       
       // Calculate and apply scores, and record round history
-      const updatedPlayersArray = state.players.map((player) => {
+      const updatedPlayersArray = state.players.map((player, playerIndex) => {
         const floorPenaltyCount = player.floorLine.runes.length;
-        const wallPower = calculateWallPower(player.wall, floorPenaltyCount);
+        
+        // Get opponent's Poison count (for Poison effect)
+        const opponentIndex = playerIndex === 0 ? 1 : 0;
+        const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
+        
+        const wallPower = calculateWallPower(player.wall, floorPenaltyCount, opponentPoisonCount);
         const newScore = Math.max(0, player.score + wallPower);
         
-        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties), Total score ${newScore}`);
+        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties, ${opponentPoisonCount} opponent Poison), Total score ${newScore}`);
         
         return {
           ...player,
@@ -362,8 +377,20 @@ export const useGameStore = create<GameStore>((set) => ({
       const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
       
       // Record round history for game log
-      const player1Data = calculateWallPowerWithSegments(updatedPlayers[0].wall, updatedPlayers[0].floorLine.runes.length);
-      const player2Data = calculateWallPowerWithSegments(updatedPlayers[1].wall, updatedPlayers[1].floorLine.runes.length);
+      // Pass opponent Poison counts for accurate display
+      const player1PoisonCount = countPoisonRunes(updatedPlayers[0].wall);
+      const player2PoisonCount = countPoisonRunes(updatedPlayers[1].wall);
+      
+      const player1Data = calculateWallPowerWithSegments(
+        updatedPlayers[0].wall, 
+        updatedPlayers[0].floorLine.runes.length,
+        player2PoisonCount // Player 1 is affected by Player 2's Poison
+      );
+      const player2Data = calculateWallPowerWithSegments(
+        updatedPlayers[1].wall, 
+        updatedPlayers[1].floorLine.runes.length,
+        player1PoisonCount // Player 2 is affected by Player 1's Poison
+      );
       
       const roundScore = {
         round: state.round,
