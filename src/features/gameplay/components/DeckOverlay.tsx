@@ -121,14 +121,18 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                     borderRadius: isMobile ? '6px' : '8px',
                     padding: isMobile ? '8px' : '10px',
                     border: '2px solid #cbd5e1',
+                    display: 'flex',
+                    gap: isMobile ? '8px' : '12px',
+                    alignItems: 'start',
                   }}
                 >
-                  {/* Type header */}
+                  {/* Type header (on the left) */}
                   <div style={{
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    gap: isMobile ? '6px' : '8px',
-                    marginBottom: isMobile ? '6px' : '8px',
+                    gap: isMobile ? '4px' : '6px',
+                    minWidth: isMobile ? '60px' : '80px',
                   }}>
                     <RuneCell
                       rune={runes[0]}
@@ -137,21 +141,23 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                       showEffect={false}
                     />
                     <div style={{
-                      fontSize: isMobile ? '14px' : '16px',
+                      fontSize: isMobile ? '12px' : '14px',
                       fontWeight: 'bold',
                       color: '#1e293b',
+                      textAlign: 'center',
                     }}>
-                      {runeType} ({runes.length})
+                      {runeType}
                     </div>
                     <div style={{
-                      fontSize: isMobile ? '12px' : '14px',
+                      fontSize: isMobile ? '11px' : '12px',
                       color: '#64748b',
-                      marginLeft: 'auto',
+                      textAlign: 'center',
                     }}>
+                      ({runes.length})
                     </div>
                   </div>
 
-                  {/* Runes grid */}
+                  {/* Runes grid (on the right) */}
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: isMobile 
@@ -161,6 +167,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                     padding: isMobile ? '6px' : '8px',
                     backgroundColor: 'white',
                     borderRadius: isMobile ? '4px' : '6px',
+                    flex: 1,
                   }}>
                     {runes.map((rune, index) => (
                       <motion.div
