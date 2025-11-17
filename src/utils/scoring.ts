@@ -201,3 +201,60 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
   
   return bonus;
 }
+
+/**
+ * Calculate projected power for the end of current turn
+ * Shows what segments will be created and their power
+ */
+export function calculateProjectedPower(
+  wall: ScoringWall,
+  completedPatternLines: Array<{ row: number; runeType: RuneType }>,
+  floorPenaltyCount: number
+): { segments: Array<{ size: number; multiplier: number; power: number }>; totalPower: number; floorPenalty: number } {
+  // Create a simulated wall with pattern line runes placed
+  const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
+  
+  // Place runes from completed pattern lines
+  for (const { row, runeType } of completedPatternLines) {
+    const col = getWallColumnForRune(row, runeType);
+    simulatedWall[row][col] = { runeType };
+  }
+  
+  // Find all segments in the simulated wall
+  const visited = Array(5).fill(null).map(() => Array(5).fill(false));
+  const segments: Array<{ size: number; multiplier: number; power: number }> = [];
+  
+  function floodFill(row: number, col: number): number {
+    if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
+        visited[row][col] || simulatedWall[row][col].runeType === null) {
+      return 0;
+    }
+    
+    visited[row][col] = true;
+    let count = 1;
+    
+    count += floodFill(row - 1, col);
+    count += floodFill(row + 1, col);
+    count += floodFill(row, col - 1);
+    count += floodFill(row, col + 1);
+    
+    return count;
+  }
+  
+  // Find all segments
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      if (!visited[row][col] && simulatedWall[row][col].runeType !== null) {
+        const segmentSize = floodFill(row, col);
+        const multiplier = Math.max(1, segmentSize - floorPenaltyCount);
+        const segmentPower = segmentSize * multiplier;
+        segments.push({ size: segmentSize, multiplier, power: segmentPower });
+      }
+    }
+  }
+  
+  const totalPower = segments.reduce((sum, seg) => sum + seg.power, 0);
+  const floorPenalty = calculateFloorPenalty(floorPenaltyCount);
+  
+  return { segments, totalPower, floorPenalty };
+}

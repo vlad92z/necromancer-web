@@ -35,7 +35,7 @@ export function PlayerView({
         color: '#0c4a6e',
         textAlign: 'center'
       }}>
-        {player.name} - Score: {player.score}
+        {player.name} - Power: {player.score}
       </div>
       <PlayerBoard
         player={player}

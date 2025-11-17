@@ -6,6 +6,7 @@ import type { Player, RuneType } from '../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
+import { RunePower } from './RunePower';
 
 interface PlayerBoardProps {
   player: Player;
@@ -58,6 +59,9 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         onPlaceRunesInFloor={onPlaceRunesInFloor}
         canPlace={canPlace}
       />
+      
+      {/* Rune Power Calculation */}
+      <RunePower player={player} />
     </div>
   );
 }
