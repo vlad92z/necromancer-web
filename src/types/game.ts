@@ -138,4 +138,5 @@ export interface GameState {
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringPhase: ScoringPhase; // Current step in round-end scoring animation
   roundHistory: RoundScore[]; // History of completed rounds for game log
+  voidEffectPending: boolean; // Whether Void effect is waiting for factory selection
 }

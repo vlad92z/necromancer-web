@@ -22,6 +22,8 @@ interface GameStore extends GameState {
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
+  destroyFactory: (factoryId: string) => void; // Void effect: destroy all runes in a factory
+  skipVoidEffect: () => void; // Skip Void effect if player chooses not to use it
   endRound: () => void;
   resetGame: () => void;
   triggerAITurn: () => void;
@@ -144,13 +146,31 @@ export const useGameStore = create<GameStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
-      // Switch to next player (alternate between 0 and 1)
-      const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
+      // Check if Void runes were placed (Void effect: destroy a factory)
+      const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
+      const hasNonEmptyFactories = state.factories.some(f => f.runes.length > 0);
       
       // Check if round should end (all factories and center empty)
       const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      // If Void runes were placed and there are non-empty factories, trigger Void effect
+      // Keep current player so THEY get to choose which factory to destroy
+      if (hasVoidRunes && hasNonEmptyFactories && !shouldEndRound) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          selectedRunes: [],
+          draftSource: null,
+          turnPhase: 'draft' as const,
+          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses factory
+          voidEffectPending: true, // Wait for factory selection
+        };
+      }
+      
+      // Switch to next player (alternate between 0 and 1) - only if no Void effect
+      const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
       const newState = {
         ...state,
@@ -263,6 +283,73 @@ export const useGameStore = create<GameStore>((set) => ({
           draftSource: null,
         };
       }
+    });
+  },
+  
+  destroyFactory: (factoryId: string) => {
+    set((state) => {
+      // Void effect: destroy all runes in the selected factory
+      if (!state.voidEffectPending) return state;
+      
+      const updatedFactories = state.factories.map((f) =>
+        f.id === factoryId ? { ...f, runes: [] } : f
+      );
+      
+      // Switch to next player after factory is destroyed
+      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+      
+      // Check if round should end after destroying factory
+      const allFactoriesEmpty = updatedFactories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
+        ...state,
+        factories: updatedFactories,
+        voidEffectPending: false,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+      };
+      
+      // If round ends after Void effect, trigger scoring
+      if (shouldEndRound) {
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 1000);
+      }
+      
+      return newState;
+    });
+  },
+  
+  skipVoidEffect: () => {
+    set((state) => {
+      // Skip Void effect without destroying any factory
+      if (!state.voidEffectPending) return state;
+      
+      // Switch to next player when skipping Void effect
+      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+      
+      // Check if round should end
+      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      
+      const newState = {
+        ...state,
+        voidEffectPending: false,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+      };
+      
+      // If round ends, trigger scoring
+      if (shouldEndRound) {
+        setTimeout(() => {
+          useGameStore.getState().endRound();
+        }, 1000);
+      }
+      
+      return newState;
     });
   },
   

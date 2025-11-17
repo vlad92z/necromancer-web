@@ -538,8 +538,22 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Added visual indicator (💨 emoji) in RunePower component showing Wind mitigation
   - Added detailed Wind mitigation display in FloorLine component
   - Shows calculation: "X runes - Y Wind = Z penalties"
+  - Wind runes in floor line have green background and border
   - Updated tooltip to explain Wind effect
   - Only affects your own floor penalties, not opponent's
+
+- [x] **✅ Implemented Void effect**
+  - Added `voidEffectPending` state to GameState to track when Void effect is active
+  - Created `VoidEffectOverlay` component for factory selection UI
+  - Updated `placeRunes()` to detect Void runes and trigger factory selection
+  - Added `destroyFactory()` action to remove all runes from selected factory
+  - Added `skipVoidEffect()` action to cancel Void effect
+  - Created `chooseFactoryToDestroy()` AI function in `src/utils/aiPlayer.ts`
+  - AI strategically destroys factories with runes the opponent needs
+  - Integrated Void effect handling in App.tsx for AI turns
+  - Void effect skips automatically if all factories are empty
+  - Purple-themed UI overlay for factory destruction
+  - Only triggers when non-empty factories exist after placement
 
 - [ ] **TODO: Implement Frost effect**
   - Add `frozenFactories` state to track frozen factory IDs per player
@@ -548,21 +562,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Clear frozen state after opponent's turn
   - Update `placeRunes()` in `src/state/gameStore.ts`
 
-- [x] **TODO: Implement Poison effect**
-  - Count Poison runes on each player's scoring wall
-  - Pass opponent's Poison count to scoring calculation
-  - Reduce focus by Poison count (Focus cannot be reduced below 1\u00d7)
-  - Update `calculateWallPower()` to accept `opponentPoisonCount` parameter
-  - Add visual indicator showing Poison reduction effect
 
-- [ ] **TODO: Implement Void effect**
-  - Add factory selection UI after Void placed in pattern line
-  - Destroy all runes in selected factory
-  - Update `placeRunes()` to trigger Void effect
-  - Add animation for rune destruction
-  - Consider allowing cancellation if player changes mind
-  - Make sure the Computer AI performs this action
-  - Skip factory destruction if all remaining factories are empty.
 
 - [ ] **TODO: Update UI for rune effects**
   - Add effect indicators/tooltips on rune tokens

@@ -13,6 +13,7 @@ import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { FactoryOverlay } from './FactoryOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
+import { VoidEffectOverlay } from './VoidEffectOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameStore } from '../../../state/gameStore';
 
@@ -21,9 +22,11 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase } = gameState;
+  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
+  const destroyFactory = useGameStore((state) => state.destroyFactory);
+  const skipVoidEffect = useGameStore((state) => state.skipVoidEffect);
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
@@ -403,6 +406,16 @@ export function GameBoard({ gameState }: GameBoardProps) {
           sourceType={factoryOverlaySource}
           onSelectRune={handleFactoryOverlaySelect}
           onClose={handleFactoryOverlayClose}
+        />
+      )}
+      
+      {/* Void Effect Overlay - shows when Void effect is pending (current player chooses factory) */}
+      {voidEffectPending && (
+        <VoidEffectOverlay
+          factories={factories}
+          onSelectFactory={destroyFactory}
+          onSkip={skipVoidEffect}
+          isVisible={!isAITurn} // Only show UI for human player
         />
       )}
     </div>

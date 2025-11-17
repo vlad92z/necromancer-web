@@ -165,5 +165,6 @@ export function initializeGame(): GameState {
     pendingPlacement: null,
     scoringPhase: null,
     roundHistory: [],
+    voidEffectPending: false,
   };
 }
