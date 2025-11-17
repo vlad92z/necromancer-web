@@ -43,16 +43,12 @@ export function RunePower({ player }: RunePowerProps) {
         fontWeight: 'bold',
         textAlign: 'center'
       }}>
-        Current Spellpower: {essence > 0 ? (
+        {essence > 0 ? (
           <>
-            {essence}×<span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{focus}</span>
-            {' = '}
-            <span style={{ fontWeight: 'bold', color: '#92400e' }}>
-              {netPower}
-            </span>
+            Essence: {essence} | Focus: <span style={{ color: hasPenalty ? '#dc2626' : '#78350f' }}>{focus}</span> | Spellpower: {netPower}
           </>
         ) : (
-          <span style={{ fontWeight: 'bold', color: '#92400e' }}>0</span>
+          <>Essence: 0 | Focus: 0 | Spellpower: 0</>
         )}
       </div>
     </div>
