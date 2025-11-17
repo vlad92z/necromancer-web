@@ -67,15 +67,38 @@ export function GameBoard({ gameState, onNextGame }: GameBoardProps) {
     : null;
   
   const handleFactoryClick = (factoryId: string) => {
-    setSelectedFactoryId(factoryId);
-    setFactoryOverlaySource('factory');
-    setShowFactoryOverlay(true);
+    const factory = factories.find(f => f.id === factoryId);
+    if (!factory || factory.runes.length === 0) return;
+    
+    // Check if all runes are the same type
+    const uniqueTypes = new Set(factory.runes.map(r => r.runeType));
+    if (uniqueTypes.size === 1) {
+      // Auto-select if only one type
+      const runeType = factory.runes[0].runeType;
+      draftRune(factoryId, runeType);
+    } else {
+      // Show overlay for multiple types
+      setSelectedFactoryId(factoryId);
+      setFactoryOverlaySource('factory');
+      setShowFactoryOverlay(true);
+    }
   };
   
   const handleCenterClick = () => {
-    setSelectedFactoryId(null);
-    setFactoryOverlaySource('center');
-    setShowFactoryOverlay(true);
+    if (centerPool.length === 0) return;
+    
+    // Check if all runes are the same type
+    const uniqueTypes = new Set(centerPool.map(r => r.runeType));
+    if (uniqueTypes.size === 1) {
+      // Auto-select if only one type
+      const runeType = centerPool[0].runeType;
+      draftFromCenter(runeType);
+    } else {
+      // Show overlay for multiple types
+      setSelectedFactoryId(null);
+      setFactoryOverlaySource('center');
+      setShowFactoryOverlay(true);
+    }
   };
   
   const handleFactoryOverlaySelect = (runeType: RuneType) => {
