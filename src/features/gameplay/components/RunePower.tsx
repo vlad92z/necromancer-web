@@ -13,9 +13,10 @@ interface RunePowerProps {
   damageTaken: number;
   nameColor: string;
   gameMode: 'classic' | 'standard';
+  isMobileOpponent?: boolean;
 }
 
-export function RunePower({ player, opponent, damageTaken, nameColor, gameMode }: RunePowerProps) {
+export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, isMobileOpponent = false }: RunePowerProps) {
   const isMobile = window.innerWidth < 768;
   const [showExplanation, setShowExplanation] = useState(false);
   
@@ -66,8 +67,8 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode }
       {/* Player Info Box */}
       <div style={{
         flex: '0 0 33%',
-        backgroundColor: 'rgba(191, 219, 254, 0.3)',
-        border: '2px solid rgba(59, 130, 246, 0.5)',
+        backgroundColor: isMobileOpponent ? '#dbeafe' : 'rgba(191, 219, 254, 0.3)',
+        border: isMobileOpponent ? '2px solid #78350f' : '2px solid rgba(59, 130, 246, 0.5)',
         borderRadius: isMobile ? '6px' : '8px',
         padding: isMobile ? '6px 8px' : '8px 12px',
         display: 'flex',
@@ -76,7 +77,7 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode }
       }}>
         <div style={{
           fontSize: isMobile ? '12px' : '18px',
-          color: '#0c4a6e',
+          color: isMobileOpponent ? '#fef3c7' : '#0c4a6e',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
@@ -103,8 +104,8 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode }
       {/* Power Stats Box */}
       <div style={{
         flex: '0 0 66%',
-        backgroundColor: 'rgba(191, 219, 254, 0.3)',
-        border: '2px solid rgba(59, 130, 246, 0.5)',
+        backgroundColor: isMobileOpponent ? '#dbeafe' : 'rgba(191, 219, 254, 0.3)',
+        border: isMobileOpponent ? '2px solid #78350f' : '2px solid rgba(59, 130, 246, 0.5)',
         borderRadius: isMobile ? '6px' : '8px',
         padding: isMobile ? '6px 8px' : '8px 12px',
         display: 'flex',
@@ -113,7 +114,7 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode }
       }}>
         <div style={{
           fontSize: isMobile ? '12px' : '18px',
-          color: '#0c4a6e',
+          color: isMobileOpponent ? '#fef3c7' : '#0c4a6e',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',

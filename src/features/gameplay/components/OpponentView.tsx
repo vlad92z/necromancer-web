@@ -24,6 +24,7 @@ export function OpponentView({ opponent, player, isActive, gameMode }: OpponentV
         damageTaken={player.score}
         nameColor="#7f1d1d"
         gameMode={gameMode}
+        isMobileOpponent={isMobile}
       />
       <PlayerBoard
         player={opponent}
@@ -32,6 +33,7 @@ export function OpponentView({ opponent, player, isActive, gameMode }: OpponentV
         selectedRuneType={null}
         canPlace={false}
         onCancelSelection={() => {}}
+        isMobileOpponent={isMobile}
       />
     </div>
   );

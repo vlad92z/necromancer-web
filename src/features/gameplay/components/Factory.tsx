@@ -104,15 +104,15 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
             <div
               key={rune.id}
               style={{
-                width: isMobile ? '40px' : '60px',
-                height: isMobile ? '40px' : '60px',
+                width: isMobile ? '30px' : '60px',
+                height: isMobile ? '30px' : '60px',
                 pointerEvents: 'none'
               }}
             >
               <RuneCell
                 rune={rune}
                 variant="factory"
-                size="large"
+                size="medium"
                 showEffect={false}
               />
             </div>
