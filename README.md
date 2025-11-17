@@ -442,8 +442,96 @@ src/
 - [x] Step 14: Cancel selection (returns runes to source)
 - [x] Step 15: Floor penalty multiplier system (reduces segment scoring)
 
+## Rune Effects System
+
+Each rune type has a unique effect that triggers during gameplay, creating strategic depth and tactical decisions.
+
+### 🔥 Fire (Power)
+**Effect:** Every Fire rune adds +1 to its containing segment's count (not the multiplier)
+- **Example:** A 4-rune segment with 2 Fire runes = 6×4 = 24 points (instead of 4×4 = 16)
+- **Strategy:** Maximize Fire runes in large connected segments for exponential scoring
+- **Balance:** High offensive power, no defensive value
+
+### ❄️ Frost (Control)
+**Effect:** When you place Frost rune(s) in a pattern line, freeze one factory of your choice
+- Your opponent cannot draft from that factory on their next turn
+- Multiple Frost runes in one turn still only freeze one factory
+- **Strategy:** Block factories containing runes your opponent needs
+- **Balance:** Tactical control without being oppressive, opponent has 4 other factories + center
+
+### ☠️ Poison (Offense)
+**Effect:** Each Poison rune on your scoring wall reduces your opponent's multipliers by 1 (minimum 1×)
+- Only affects opponent's scoring, not your own
+- **Example:** You have 3 Poison runes → opponent's 5×3 segment becomes 2×3 = 6 points instead of 15
+- **Strategy:** Collect Poison to cripple opponent's scoring potential
+- **Balance:** Strong but requires building up multiple Poison runes over time
+
+### 🌑 Void (Destruction)
+**Effect:** When you place Void rune(s) in a pattern line, destroy all runes in one factory of your choice
+- Powerful denial tool to remove colors you don't want or opponent needs
+- Can clear problematic factories before opponent's turn
+- **Strategy:** Deny key runes to opponent or clean up unwanted colors
+- **Balance:** High disruption but doesn't directly score points
+
+### 💨 Wind (Chaos)
+**Effect:** When you place Wind rune(s) in a pattern line or floor line, randomly move up to 4 runes from the center pool to an empty factory (if one exists)
+- Creates new drafting opportunities from center pool buildup
+- Helps clean up clogged center
+- Works even when Wind goes to floor line
+- **Strategy:** Use Wind to create favorable factories or deny opponent center pool access
+- **Balance:** Situational power, can help or hinder either player depending on randomness
+
+### Implementation TODO
+
+- [ ] **TODO: Implement Fire effect**
+  - Modify scoring calculation to count Fire runes in each segment
+  - Add Fire count to segment size before multiplying
+  - Update `calculateWallPower()` in `src/utils/scoring.ts`
+  - Add visual indicator showing Fire bonus in scoring wall
+
+- [ ] **TODO: Implement Frost effect**
+  - Add `frozenFactories` state to track frozen factory IDs per player
+  - Trigger factory freeze selection UI when Frost placed in pattern line
+  - Disable frozen factory for opponent's next turn only
+  - Clear frozen state after opponent's turn
+  - Update `placeRunes()` in `src/state/gameStore.ts`
+
+- [ ] **TODO: Implement Poison effect**
+  - Count Poison runes on each player's scoring wall
+  - Pass opponent's Poison count to scoring calculation
+  - Reduce multipliers by Poison count (minimum 1×)
+  - Update `calculateWallPower()` to accept `opponentPoisonCount` parameter
+  - Add visual indicator showing Poison reduction effect
+
+- [ ] **TODO: Implement Void effect**
+  - Add factory selection UI when Void placed in pattern line
+  - Destroy all runes in selected factory
+  - Update `placeRunes()` to trigger Void effect
+  - Add animation for rune destruction
+  - Consider allowing cancellation if player changes mind
+
+- [ ] **TODO: Implement Wind effect**
+  - Trigger when Wind placed in pattern line OR floor line
+  - Find empty factories (if any exist)
+  - Select up to 4 random runes from center pool
+  - Move selected runes to a random empty factory
+  - Update `placeRunes()` to trigger Wind effect
+  - Add animation for runes moving from center to factory
+
+- [ ] **TODO: Update UI for rune effects**
+  - Add effect indicators/tooltips on rune tokens
+  - Show active effects in game state (frozen factories, Poison count, etc.)
+  - Add effect feedback animations when triggered
+  - Update `RulesOverlay` with rune effect explanations
+
+- [ ] **TODO: Update AI to consider rune effects**
+  - Evaluate Fire runes for scoring potential
+  - Consider Frost for blocking opponent
+  - Weight Poison collection strategically
+  - Use Void for denial tactics
+  - Handle Wind's randomness appropriately
+
 ### Future Enhancements
-- [ ] Rune effects system (currently all runes have effect: 'None')
 - [ ] Boss selection and special modifiers
 - [ ] Meta-progression (unlocks after losses)
 - [ ] Deck customization UI before game start
