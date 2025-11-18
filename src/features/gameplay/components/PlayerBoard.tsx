@@ -40,9 +40,13 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     .filter(({ line }) => line.count === line.tier && line.runeType !== null)
     .map(({ line, row }) => ({ row, runeType: line.runeType! }));
   
-  // Wind Effect: Calculate effective floor penalty count (only in standard mode)
-  const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, gameMode);
-  const windRuneCount = player.floorLine.runes.filter(rune => rune.runeType === 'Wind').length;
+  // Wind Effect: Wind runes in pattern lines mitigate floor penalties (standard mode only)
+  const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, player.patternLines, gameMode);
+  const windRuneCount = gameMode === 'standard'
+    ? player.patternLines.reduce((total, line) => (
+        line.runeType === 'Wind' ? total + line.count : total
+      ), 0)
+    : 0;
   const hasWindMitigation = gameMode === 'standard' && windRuneCount > 0;
  
   const { essence, focus, totalPower } = calculateProjectedPower(
@@ -85,6 +89,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             floorLine={player.floorLine}
             onPlaceRunesInFloor={onPlaceRunesInFloor}
             canPlace={canPlace}
+            mitigatedSlots={windRuneCount}
           />
         </div>
         

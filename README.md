@@ -72,8 +72,8 @@ npm run lint
 **Status**: ✅ Implemented
 
 ### 💨 Wind (Mitigation)
-**Effect**: Wind runes in floor line cancel other penalties  
-**Strategy**: Use as insurance against bad placements  
+**Effect**: Wind runes held in pattern lines cancel floor penalties  
+**Strategy**: Bank Wind runes in pattern lines as insurance before scoring  
 **Status**: ✅ Implemented
 
 ## Project Structure

@@ -17,7 +17,7 @@
  */
 
 import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall } from '../types/game';
-import { getWallColumnForRune, calculateWallPower } from './scoring';
+import { getWallColumnForRune, calculateWallPower, calculateEffectiveFloorPenalty } from './scoring';
 
 interface DraftMove {
   type: 'runeforge' | 'center';
@@ -132,7 +132,7 @@ function calculateFutureAvailability(state: GameState, move: DraftMove): Map<Run
 }
 
 /**
- * MEDIUM COMPLEXITY: Evaluate if we have incomplete pattern lines that need this rune type
+ * MEDIUM COMPLEXITY: Evaluate pattern lines that need this rune type
  */
 function evaluatePatternLineNeeds(player: { patternLines: PatternLine[] }): Map<RuneType, number> {
   const needs = new Map<RuneType, number>();
@@ -255,7 +255,12 @@ function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: n
  */
 function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: number | null): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const currentScore = calculateWallPower(currentPlayer.wall, currentPlayer.floorLine.runes.length, state.gameMode);
+  const currentPenalty = calculateEffectiveFloorPenalty(
+    currentPlayer.floorLine.runes,
+    currentPlayer.patternLines,
+    state.gameMode
+  );
+  const currentScore = calculateWallPower(currentPlayer.wall, currentPenalty, state.gameMode);
   
   // Simulate the move
   const simulatedState = simulateDraftMove(state, move, targetLineIndex);
@@ -273,7 +278,12 @@ function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: n
     }
   }
   
-  const simulatedScore = calculateWallPower(simulatedWall, simulatedPlayer.floorLine.runes.length, state.gameMode);
+  const simulatedPenalty = calculateEffectiveFloorPenalty(
+    simulatedPlayer.floorLine.runes,
+    simulatedPlayer.patternLines,
+    state.gameMode
+  );
+  const simulatedScore = calculateWallPower(simulatedWall, simulatedPenalty, state.gameMode);
   return simulatedScore - currentScore;
 }
 

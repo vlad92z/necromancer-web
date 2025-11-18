@@ -2,6 +2,8 @@
  * FloorLine component - displays the floor line (penalty area)
  */
 
+import { motion } from 'framer-motion';
+import type { Transition } from 'framer-motion';
 import type { FloorLine as FloorLineType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -9,10 +11,25 @@ interface FloorLineProps {
   floorLine: FloorLineType;
   onPlaceRunesInFloor?: () => void;
   canPlace?: boolean;
+  /**
+   * Number of floor slots to visually neutralize (render with standard/pattern-like background).
+   * This should come from Wind runes staged in pattern lines.
+   */
+  mitigatedSlots?: number;
 }
 
-export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLineProps) {
+export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedSlots = 0 }: FloorLineProps) {
   const isSelectable = Boolean(canPlace && onPlaceRunesInFloor);
+  const selectableGlowRest = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
+  const selectableGlowPeak = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
+  const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
+
+  const cellPulseTransition: Transition = {
+    duration: 1.2,
+    repeat: Infinity,
+    repeatType: 'reverse' as const,
+    ease: 'easeInOut' as const
+  };
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -35,23 +52,35 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLin
       >
         {Array(floorLine.maxCapacity)
           .fill(null)
-          .map((_, index) => (
-            <div
-              key={index}
-              style={{
-                boxShadow: isSelectable ? '0 0 16px rgba(239, 68, 68, 0.8)' : 'none',
-                borderRadius: '8px',
-                transition: 'box-shadow 0.2s'
-              }}
-            >
-              <RuneCell
-                rune={floorLine.runes[index] || null}
-                variant="floor"
-                size="large"
-                showEffect={false}
-              />
-            </div>
-          ))}
+          .map((_, index) => {
+            const isNeutral = index < mitigatedSlots;
+            const cellCanGlow = isSelectable && !isNeutral;
+            const cellMotionProps = cellCanGlow
+              ? {
+                  animate: { boxShadow: selectableGlowRange },
+                  transition: cellPulseTransition
+                }
+              : {};
+            return (
+              <motion.div
+                key={index}
+                style={{
+                  boxShadow: cellCanGlow ? selectableGlowRest : 'none',
+                  borderRadius: '8px',
+                  transition: 'box-shadow 0.2s'
+                }}
+                {...cellMotionProps}
+              >
+                <RuneCell
+                  rune={floorLine.runes[index] || null}
+                  variant="floor"
+                  forceVariant={isNeutral ? 'pattern' : undefined}
+                  size="large"
+                  showEffect={false}
+                />
+              </motion.div>
+            );
+          })}
       </button>
     </div>
   );

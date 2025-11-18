@@ -434,8 +434,10 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
           }
         });
         
-        // Calculate total wall power based on connected segments
-        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
+        // Calculate total wall power based on connected segments.
+        // Use the player's original pattern lines (before we cleared completed lines)
+        // so Wind runes that were on completed pattern lines still mitigate penalties.
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, player.patternLines, state.gameMode);
         
         const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, state.gameMode);
         
@@ -466,8 +468,25 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // Calculate and apply scores, and record round history
       
       // Calculate each player's wall power (damage they deal)
-      const player1FloorPenalty = calculateEffectiveFloorPenalty(state.players[0].floorLine.runes, state.gameMode);
-      const player2FloorPenalty = calculateEffectiveFloorPenalty(state.players[1].floorLine.runes, state.gameMode);
+      // Calculate each player's effective floor penalty. Pattern lines in state
+      // may already have been cleared; include Wind runes that are now on the
+      // wall so completed pattern-line Wind runes still mitigate penalties.
+      const baseP1Penalty = calculateEffectiveFloorPenalty(
+        state.players[0].floorLine.runes,
+        state.players[0].patternLines,
+        state.gameMode
+      );
+      const baseP2Penalty = calculateEffectiveFloorPenalty(
+        state.players[1].floorLine.runes,
+        state.players[1].patternLines,
+        state.gameMode
+      );
+
+      const p1WindOnWall = state.players[0].wall.flat().filter(cell => cell.runeType === 'Wind').length;
+      const p2WindOnWall = state.players[1].wall.flat().filter(cell => cell.runeType === 'Wind').length;
+
+      const player1FloorPenalty = Math.max(0, baseP1Penalty - p1WindOnWall);
+      const player2FloorPenalty = Math.max(0, baseP2Penalty - p2WindOnWall);
 
       const player1Data = calculateWallPowerWithSegments(
         state.players[0].wall,
