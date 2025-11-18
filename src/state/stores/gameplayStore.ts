@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, RuneType, Player } from '../../types/game';
+import type { GameState, RuneType, Player, Rune } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 
@@ -55,8 +55,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       if (!runeforge) return state;
       
       // Separate runes by selected type
-      const selectedRunes = runeforge.runes.filter((r: any) => r.runeType === runeType);
-      const remainingRunes = runeforge.runes.filter((r: any) => r.runeType !== runeType);
+      const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
+      const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
@@ -87,8 +87,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
   draftFromCenter: (runeType: RuneType) => {
     set((state) => {
       // Get all runes of selected type from center
-      const selectedRunes = state.centerPool.filter((r: any) => r.runeType === runeType);
-      const remainingRunes = state.centerPool.filter((r: any) => r.runeType !== runeType);
+      const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
+      const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;

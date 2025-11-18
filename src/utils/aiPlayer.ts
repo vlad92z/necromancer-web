@@ -16,7 +16,7 @@
  * 9. Scoring simulation (calculate expected points for each move)
  */
 
-import type { GameState, RuneType, PatternLine, Player } from '../types/game';
+import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall } from '../types/game';
 import { getWallColumnForRune, calculateWallPower } from './scoring';
 
 interface DraftMove {
@@ -29,7 +29,7 @@ interface DraftMove {
 /**
  * Count runes of a specific type in a location
  */
-function countRunes(runes: Array<{ runeType: RuneType }>, runeType: RuneType): number {
+function countRunes(runes: Rune[], runeType: RuneType): number {
   return runes.filter(r => r.runeType === runeType).length;
 }
 
@@ -43,7 +43,7 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   // Skip frozen runeforges (opponent cannot draft from them)
   state.runeforges.forEach(runeforge => {
     if (runeforge.runes.length > 0 && !state.frozenRuneforges.includes(runeforge.id)) {
-      const runeTypes = new Set(runeforge.runes.map((r: any) => r.runeType));
+      const runeTypes = new Set(runeforge.runes.map(r => r.runeType));
       runeTypes.forEach((runeType: RuneType) => {
         moves.push({ 
           type: 'runeforge', 
@@ -57,7 +57,7 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   
   // Get unique rune types from center with counts
   if (state.centerPool.length > 0) {
-    const runeTypes = new Set(state.centerPool.map((r: any) => r.runeType));
+    const runeTypes = new Set(state.centerPool.map(r => r.runeType));
     runeTypes.forEach(runeType => {
       moves.push({ 
         type: 'center', 
@@ -73,7 +73,7 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
 /**
  * Check if a pattern line can accept a specific rune type
  */
-function canPlaceOnLine(line: PatternLine, runeType: RuneType, wall: any, lineIndex: number): boolean {
+function canPlaceOnLine(line: PatternLine, runeType: RuneType, wall: ScoringWall, lineIndex: number): boolean {
   // Check if line is already full
   if (line.count >= line.tier) return false;
   
@@ -90,7 +90,7 @@ function canPlaceOnLine(line: PatternLine, runeType: RuneType, wall: any, lineIn
 /**
  * Calculate how many adjacent runes a placement would create
  */
-function calculateConnectionScore(wall: any, row: number, col: number): number {
+function calculateConnectionScore(wall: ScoringWall, row: number, col: number): number {
   let connections = 0;
   
   // Check horizontal connections
@@ -113,12 +113,12 @@ function calculateFutureAvailability(state: GameState, move: DraftMove): Map<Run
   
   // Count all runes currently available
   state.runeforges.forEach(runeforge => {
-    runeforge.runes.forEach((rune: any) => {
+    runeforge.runes.forEach((rune: Rune) => {
       availability.set(rune.runeType, (availability.get(rune.runeType) || 0) + 1);
     });
   });
   
-  state.centerPool.forEach((rune: any) => {
+  state.centerPool.forEach((rune: Rune) => {
     availability.set(rune.runeType, (availability.get(rune.runeType) || 0) + 1);
   });
   
@@ -158,7 +158,7 @@ function evaluatePatternLineNeeds(player: { patternLines: PatternLine[] }): Map<
  */
 function calculateWasteEfficiency(
   move: DraftMove, 
-  player: { patternLines: PatternLine[], wall: any }, 
+  player: { patternLines: PatternLine[], wall: ScoringWall }, 
   runeType: RuneType
 ): number {
   let bestEfficiency = -100; // Default: all runes wasted
@@ -614,7 +614,7 @@ export function chooseRuneforgeToDestroy(state: GameState): string | null {
     
     // Count how many runes the opponent could use from this runeforge
     const runeTypeCounts = new Map<RuneType, number>();
-    runeforge.runes.forEach((rune: any) => {
+    runeforge.runes.forEach((rune: Rune) => {
       runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
     });
     
@@ -674,7 +674,7 @@ export function chooseRuneforgeToFreeze(state: GameState): string | null {
     
     // Count how many runes the opponent could use from this runeforge
     const runeTypeCounts = new Map<RuneType, number>();
-    runeforge.runes.forEach((rune: any) => {
+    runeforge.runes.forEach((rune: Rune) => {
       runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
     });
     

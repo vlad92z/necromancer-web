@@ -5,6 +5,7 @@
  */
 
 import { motion } from 'framer-motion';
+import type { MouseEvent } from 'react';
 import type { Rune, RuneType } from '../types/game';
 import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
@@ -145,8 +146,8 @@ export function RuneCell({
         transition: shouldAnimate ? undefined : TRANSITIONS.medium,
         position: 'relative',
       }}
-      onMouseEnter={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
-      onMouseLeave={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1)')}
+      onMouseEnter={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
+      onMouseLeave={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1)')}
     >
       {runeImage && (
         <img 

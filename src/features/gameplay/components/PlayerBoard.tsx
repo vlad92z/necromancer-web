@@ -44,12 +44,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
   const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, gameMode);
   const windRuneCount = player.floorLine.runes.filter(rune => rune.runeType === 'Wind').length;
   const hasWindMitigation = gameMode === 'standard' && windRuneCount > 0;
-  
-  // Count player's Life runes (provides healing, only in standard mode)
-  const lifeRuneCount = gameMode === 'standard' 
-    ? player.wall.flat().filter(cell => cell.runeType === 'Life').length 
-    : 0;
-  
+ 
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
     completedPatternLines,

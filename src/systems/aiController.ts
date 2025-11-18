@@ -4,7 +4,6 @@
  * All timing is handled by component useEffect hooks
  */
 
-import type { GameState } from '../types/game';
 import { makeAIMove, chooseRuneforgeToDestroy, chooseRuneforgeToFreeze } from '../utils/aiPlayer';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 
@@ -83,13 +82,13 @@ export const triggerAITurn = executeAITurn;
 /**
  * @deprecated Use executeAIVoidEffect instead
  */
-export function handleAIVoidEffect(_gameState: GameState) {
+export function handleAIVoidEffect() {
   executeAIVoidEffect();
 }
 
 /**
  * @deprecated Use executeAIFrostEffect instead
  */
-export function handleAIFrostEffect(_gameState: GameState) {
+export function handleAIFrostEffect() {
   executeAIFrostEffect();
 }
