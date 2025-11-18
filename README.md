@@ -820,6 +820,264 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 **Payoff**: Clean, maintainable architecture ready for 6+ months of feature development without technical debt
 
+---
+
+## 🎨 Visual Polish & Art Pipeline (When to Add Graphics)
+
+### Recommended Timeline: **AFTER Priority 1-3, BEFORE Major Feature Implementation**
+
+**Why this timing?**
+1. **Architecture First**: State refactoring (Priority 1) and routing (Priority 2) will cause major component restructuring. Adding detailed art before this = redoing art integration work.
+2. **Persistence Needed**: Campaign boss animations and environments require asset management, which depends on the storage/API layer (Priority 3).
+3. **Before Features**: Graphics inform gameplay feel. Implement visual systems before deck drafting/campaign so you can design UI around the art style, not retrofit art into existing UI.
+
+### Phase 1: Art Foundation (Do AFTER Priority 1-3) 🎨 **Week 2-3**
+
+**When**: Right after state refactoring, routing, and persistence are complete.
+
+**Why now**: You'll have a stable component structure and can design the art pipeline properly.
+
+#### TODO: Set Up Asset Pipeline
+- [ ] **Create asset management system:**
+  - [ ] Create `src/assets/` structure:
+    ```
+    src/assets/
+    ├── environments/
+    │   ├── tavern/         # Background scenes
+    │   ├── dungeon/
+    │   ├── castle/
+    │   └── void-realm/
+    ├── characters/
+    │   ├── player/         # Player character sprites/animations
+    │   └── bosses/         # Boss character sprites (one per boss)
+    ├── vfx/                # Visual effects
+    │   ├── spells/         # Spell casting animations
+    │   ├── particles/      # Fire, frost, poison particles
+    │   └── impacts/        # Hit effects, explosions
+    ├── ui/                 # UI elements
+    │   ├── frames/         # Decorative borders, panels
+    │   ├── icons/          # Rune icons (replace current SVG)
+    │   └── buttons/        # Styled buttons, hover states
+    └── audio/              # Sound effects & music
+        ├── sfx/
+        └── music/
+    ```
+  - [ ] Choose asset format strategy (SVG for UI, PNG/WebP for illustrations, Lottie/Rive for animations)
+  - [ ] Set up asset loading system (lazy loading, preloading critical assets)
+  - [ ] Add loading states/skeleton screens during asset load
+
+- [ ] **Create art style guide:**
+  - [ ] Define color palette (extend current rune colors to full theme)
+  - [ ] Choose art style (pixel art, hand-drawn, 3D-rendered, etc.)
+  - [ ] Document resolution requirements (support 1080p-4K, mobile)
+  - [ ] Create reference mockups for key screens
+
+#### TODO: Background Environment System
+- [ ] **Implement environment layers:**
+  - [ ] Create `<EnvironmentBackground environment="tavern|dungeon|castle">` component
+  - [ ] Support parallax layers (far background, mid-ground, foreground)
+  - [ ] Add environment transitions (fade between campaign levels)
+  - [ ] Optimize for performance (use CSS transforms, GPU acceleration)
+  - [ ] Make environments themable per campaign boss
+
+- [ ] **Design environment variations:**
+  - [ ] Tavern (tutorial/early game) - warm, friendly lighting
+  - [ ] Dungeon (mid-game) - dark, atmospheric
+  - [ ] Castle (late game) - grand, imposing
+  - [ ] Void Realm (final boss) - surreal, abstract
+  - [ ] Each boss has environment variant
+
+### Phase 2: Character Animation System (After Feature Implementation) 🎭 **Week 4-5**
+
+**When**: AFTER deck drafting and campaign structure are implemented.
+
+**Why wait**: Character animations interact heavily with game state (boss identity, player deck, turn timing). Implementing before features means guessing at requirements.
+
+#### TODO: Character Sprite System
+- [ ] **Create character animation framework:**
+  - [ ] Create `src/components/Character.tsx` component
+  - [ ] Support sprite sheets or Lottie animations
+  - [ ] Define animation states: idle, casting, hit, victory, defeat
+  - [ ] Sync animations with game events (on draft, on scoring, on effect trigger)
+  - [ ] Add character positioning system (left: player, right: boss)
+
+- [ ] **Player character:**
+  - [ ] Design player character sprite (single design or customizable?)
+  - [ ] Idle animation (breathing, subtle movement)
+  - [ ] Casting animation (triggered when drafting runes)
+  - [ ] Victory animation (end of round if scored points)
+  - [ ] Defeat animation (took damage)
+
+- [ ] **Boss character system:**
+  - [ ] Create boss art for each campaign encounter (8-12 bosses?)
+  - [ ] Unique idle animation per boss
+  - [ ] Boss-specific casting animations
+  - [ ] Boss introduction animation (when entering battle)
+  - [ ] Boss defeat animation (when boss health reaches zero)
+
+#### TODO: Spell VFX System
+- [ ] **Create spell animation layer:**
+  - [ ] Create `<SpellEffect type={runeType} animation="cast|impact">` component
+  - [ ] Fire spells: flame particles, heat distortion, ember trails
+  - [ ] Frost spells: ice crystals, freezing effect, snowflakes
+  - [ ] Poison spells: toxic clouds, dripping venom, green particles
+  - [ ] Void spells: reality warping, black hole effect, dimension tears
+  - [ ] Wind spells: swirling air, leaves/debris, speed lines
+
+- [ ] **Integrate spell VFX with gameplay:**
+  - [ ] Trigger on draft (player "draws" spell energy from factory)
+  - [ ] Trigger on placement (spell charges in pattern line)
+  - [ ] Trigger on scoring (spell is cast at opponent)
+  - [ ] Show spell power visualization (bigger effects for higher spellpower)
+  - [ ] Add impact animation on opponent when damage is dealt
+
+- [ ] **Performance optimization:**
+  - [ ] Use WebGL/Canvas for particle effects (not DOM)
+  - [ ] Implement object pooling for particles
+  - [ ] Add quality settings (high/medium/low VFX)
+  - [ ] Respect `prefers-reduced-motion` (disable/simplify particles)
+
+### Phase 3: UI Polish & Microinteractions (Ongoing) ✨ **Week 5-6**
+
+**When**: Alongside feature implementation, incrementally.
+
+**Why**: UI polish is less disruptive than structural art. Can be done in parallel with feature work.
+
+#### TODO: Enhanced UI Components
+- [ ] **Rune redesign:**
+  - [ ] Replace basic SVG runes with detailed illustrations
+  - [ ] Add glow effects for active runes
+  - [ ] Improve hover states (scale, glow, particle effects)
+  - [ ] Add drag-and-drop with visual feedback (if implementing)
+
+- [ ] **Factory visual upgrade:**
+  - [ ] Design 3D-looking factory containers
+  - [ ] Add glow/highlight when hovering
+  - [ ] Animate runes appearing in factories (round start)
+  - [ ] Void destruction: explosion/disintegration animation
+  - [ ] Frost freeze: ice-over animation
+
+- [ ] **Pattern line enhancement:**
+  - [ ] Add decorative borders/frames
+  - [ ] Completion animation (line fills → sparkle effect)
+  - [ ] Show rune energy flowing into line
+  - [ ] Overflow to floor line: falling/tumbling animation
+
+- [ ] **Scoring wall upgrade:**
+  - [ ] Design mystical/arcane grid background
+  - [ ] Runes embed into wall with impact effect
+  - [ ] Connection lines glow when scoring combos
+  - [ ] Power calculation: visual beam showing spellpower magnitude
+
+#### TODO: Juice & Feedback
+- [ ] **Screen shake on high damage**
+- [ ] **Camera zoom/focus on important moments (boss reveal, final blow)**
+- [ ] **Victory celebration: confetti, fireworks, screen flash**
+- [ ] **Defeat feedback: screen desaturation, slower animations**
+- [ ] **Turn timer: animated hourglass or countdown**
+- [ ] **Combo counter: streak visualization**
+
+### Phase 4: Audio Integration (Final Polish) 🔊 **Week 7+**
+
+**When**: After all core features and art are implemented.
+
+**Why last**: Audio is the final layer of polish. Easier to add once visual timing is finalized.
+
+#### TODO: Audio System
+- [ ] **Set up audio manager:**
+  - [ ] Create `src/systems/audioManager.ts`
+  - [ ] Support volume controls, muting
+  - [ ] Preload critical sounds, lazy-load music
+  - [ ] Add audio settings to persistence layer
+
+- [ ] **Sound effects:**
+  - [ ] Rune draft: soft magical "whoosh"
+  - [ ] Rune placement: satisfying "click" or "thunk"
+  - [ ] Pattern line complete: chime/bell
+  - [ ] Spell cast: type-specific sound (fireball, ice crack, poison hiss)
+  - [ ] Damage impact: hit sound, boss grunt
+  - [ ] Victory/defeat: fanfare/sad trombone
+  - [ ] UI interactions: button clicks, overlay open/close
+
+- [ ] **Background music:**
+  - [ ] Tavern theme (calm, welcoming)
+  - [ ] Battle theme (tense, rhythmic)
+  - [ ] Boss themes (unique per boss, escalating intensity)
+  - [ ] Victory theme (triumphant)
+  - [ ] Defeat theme (somber)
+
+---
+
+## 🗓️ Recommended Implementation Order (Full Timeline)
+
+### **Weeks 1-2: Foundation (MUST DO FIRST)**
+1. ✅ Priority 1: State architecture refactoring
+2. ✅ Priority 2: Routing & navigation
+3. ✅ Priority 3: Persistence layer
+
+### **Weeks 2-3: Art Foundation (BEFORE FEATURES)**
+4. 🎨 Phase 1: Asset pipeline & environment backgrounds
+   - Set up folder structure, loading system
+   - Create first environment (tavern)
+   - Test performance with layered backgrounds
+
+### **Weeks 3-4: Core Features**
+5. ⚙️ Implement deck drafting mode (now you know how to display decks visually)
+6. ⚙️ Implement campaign structure (now you can assign environments per boss)
+
+### **Weeks 4-5: Character Art (AFTER CAMPAIGN)**
+7. 🎭 Phase 2: Character animations & spell VFX
+   - Player character sprites
+   - First 3-5 boss designs
+   - Basic spell effects per rune type
+
+### **Weeks 5-6: Features + UI Polish (PARALLEL WORK)**
+8. ⚙️ Implement post-match rewards (works with art pipeline)
+9. ✨ Phase 3: UI polish & microinteractions (ongoing)
+
+### **Weeks 6-7: Online PvP**
+10. ⚙️ Implement online PvP (now with polished visuals)
+
+### **Week 7+: Final Polish**
+11. 🔊 Phase 4: Audio integration
+12. 🐛 Bug fixes, optimization, playtesting
+
+---
+
+## ⚠️ Art Integration Anti-Patterns to Avoid
+
+**DON'T:**
+- ❌ Add detailed art before state refactoring (you'll redo integration work)
+- ❌ Create all boss art before campaign is implemented (requirements will change)
+- ❌ Add complex animations before fixing setTimeout anti-pattern (timing bugs)
+- ❌ Use heavy assets without lazy loading (slow initial load)
+- ❌ Hard-code asset paths in components (use asset manager)
+
+**DO:**
+- ✅ Start with one environment as a test (tavern) before making all environments
+- ✅ Create placeholder/low-fi art first, swap in high-quality later
+- ✅ Profile performance with heavy assets (test on mobile devices)
+- ✅ Make art swappable (support multiple art styles via configuration)
+- ✅ Keep art decoupled from game logic (separation of concerns)
+
+---
+
+## 🎯 TLDR: When to Add Graphics
+
+**Short answer**: **Weeks 2-3** (after Priority 1-3, before major features)
+
+**Why**: 
+- Too early = wasted effort when restructuring
+- Too late = features designed without visual context
+- Sweet spot = after architecture is stable, before features lock in UX patterns
+
+**Critical path**:
+1. Refactor state/routing/persistence *(weeks 1-2)*
+2. **Add art pipeline & environments** *(weeks 2-3)* ← **YOU ARE HERE**
+3. Implement features with art in mind *(weeks 3-5)*
+4. Add character animations & VFX *(weeks 4-5)*
+5. Final UI polish & audio *(weeks 6-7+)*
+
 ### AI Improvements
 - [x] **Simple strategies (Completed ✅):**
   - [x] Prioritize completing pattern lines (focus on lines almost full)
