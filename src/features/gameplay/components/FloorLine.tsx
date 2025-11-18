@@ -3,6 +3,7 @@
  */
 
 import { motion } from 'framer-motion';
+import type { Transition } from 'framer-motion';
 import type { FloorLine as FloorLineType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -22,6 +23,13 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
   const selectableGlowRest = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
   const selectableGlowPeak = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
+
+  const cellPulseTransition: Transition = {
+    duration: 1.2,
+    repeat: Infinity,
+    repeatType: 'reverse' as const,
+    ease: 'easeInOut' as const
+  };
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -50,7 +58,7 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
             const cellMotionProps = cellCanGlow
               ? {
                   animate: { boxShadow: selectableGlowRange },
-                  transition: { duration: 1.2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
+                  transition: cellPulseTransition
                 }
               : {};
             return (
