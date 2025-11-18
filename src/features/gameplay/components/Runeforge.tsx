@@ -103,7 +103,7 @@ export function Runeforge({
   const glowMotionProps = glowRange
     ? {
         animate: { boxShadow: glowRange },
-        transition: { duration: glowDuration, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' as const }
+        transition: { duration: glowDuration, repeat: Infinity, repeatType: 'reverse' as const, ease: 'easeInOut' as const }
       }
     : {};
 
