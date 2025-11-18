@@ -30,7 +30,7 @@ interface GameplayStore extends GameState {
   processScoringStep: () => void;
 }
 
-export const useGameplayStore = create<GameplayStore>((set, get) => ({
+export const useGameplayStore = create<GameplayStore>((set) => ({
   // Initial state
   ...initializeGame(),
   
@@ -206,24 +206,15 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       // Switch to next player (alternate between 0 and 1) - only if no Void/Frost effect
       const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
-      const newState = {
+      return {
         ...state,
         players: updatedPlayers,
         selectedRunes: [],
         draftSource: null,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        shouldTriggerEndRound: shouldEndRound,
       };
-      
-      // If round ends, trigger scoring immediately
-      if (shouldEndRound) {
-        // Use setTimeout to trigger endRound after state update
-        setTimeout(() => {
-          get().endRound();
-        }, 0);
-      }
-      
-      return newState;
     });
   },
   
@@ -260,23 +251,15 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
-      const newState = {
+      return {
         ...state,
         players: updatedPlayers,
         selectedRunes: [],
         draftSource: null,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        shouldTriggerEndRound: shouldEndRound,
       };
-      
-      // If round ends, trigger scoring with delay for visual effect
-      if (shouldEndRound) {
-        setTimeout(() => {
-          get().endRound();
-        }, 1000);
-      }
-      
-      return newState;
     });
   },
   
@@ -337,22 +320,14 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
-      const newState = {
+      return {
         ...state,
         runeforges: updatedRuneforges,
         voidEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+        shouldTriggerEndRound: shouldEndRound,
       };
-      
-      // If round ends after Void effect, trigger scoring
-      if (shouldEndRound) {
-        setTimeout(() => {
-          get().endRound();
-        }, 1000);
-      }
-      
-      return newState;
     });
   },
   
@@ -369,21 +344,13 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
-      const newState = {
+      return {
         ...state,
         voidEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+        shouldTriggerEndRound: shouldEndRound,
       };
-      
-      // If round ends, trigger scoring
-      if (shouldEndRound) {
-        setTimeout(() => {
-          get().endRound();
-        }, 1000);
-      }
-      
-      return newState;
     });
   },
   
@@ -403,22 +370,14 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
-      const newState = {
+      return {
         ...state,
         frozenRuneforges: updatedFrozenRuneforges,
         frostEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+        shouldTriggerEndRound: shouldEndRound,
       };
-      
-      // If round ends, trigger scoring
-      if (shouldEndRound) {
-        setTimeout(() => {
-          get().endRound();
-        }, 1000);
-      }
-      
-      return newState;
     });
   },
   
@@ -430,13 +389,9 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       return {
         ...state,
         scoringPhase: 'moving-to-wall' as const,
+        shouldTriggerEndRound: false,
       };
     });
-    
-    // Start the scoring animation sequence
-    setTimeout(() => {
-      get().processScoringStep();
-    }, 1500);
   },
   
   processScoringStep: () => {
@@ -496,11 +451,6 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       });
       
       const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
-      
-      // Move to calculating score phase
-      setTimeout(() => {
-        get().processScoringStep();
-      }, 2000);
       
       return {
         ...state,
@@ -563,11 +513,6 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
         opponentTotal: player2Data.totalPower,
       };
       
-      // Move to clearing floor phase
-      setTimeout(() => {
-        get().processScoringStep();
-      }, 2000);
-      
       return {
         ...state,
         players: updatedPlayers,
@@ -587,11 +532,6 @@ export const useGameplayStore = create<GameplayStore>((set, get) => ({
       }));
       
       const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
-      
-      // Move to complete phase
-      setTimeout(() => {
-        get().processScoringStep();
-      }, 1500);
       
       return {
         ...state,

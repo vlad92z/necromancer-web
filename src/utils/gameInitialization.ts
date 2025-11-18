@@ -48,7 +48,7 @@ export function createMockDeck(playerId: string): Rune[] {
   
   // Create 4 of each rune type (20 total per player)
   runeTypes.forEach((runeType) => {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 4; i++) {
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
         runeType,
@@ -169,5 +169,6 @@ export function initializeGame(): GameState {
     voidEffectPending: false,
     frostEffectPending: false,
     frozenRuneforges: [],
+    shouldTriggerEndRound: false,
   };
 }

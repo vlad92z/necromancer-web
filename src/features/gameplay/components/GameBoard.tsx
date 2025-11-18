@@ -2,7 +2,7 @@
  * GameBoard component - main game board displaying runeforges, center, player and opponent views
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { GameState, RuneType } from '../../../types/game';
 import { RuneforgesAndCenter } from './RuneforgesAndCenter';
 import { PlayerView } from './PlayerView';
@@ -21,11 +21,13 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRuneforge = useGameplayStore((state) => state.destroyRuneforge);
   const freezeRuneforge = useGameplayStore((state) => state.freezeRuneforge);
+  const endRound = useGameplayStore((state) => state.endRound);
+  const processScoringStep = useGameplayStore((state) => state.processScoringStep);
   
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
@@ -127,6 +129,50 @@ export function GameBoard({ gameState }: GameBoardProps) {
     // Background click handler - no longer needed since PlayerBoard handles it
     // Keeping for potential future use with empty space clicks
   };
+
+  // Handle end-of-round trigger
+  useEffect(() => {
+    if (shouldTriggerEndRound) {
+      const timer = setTimeout(() => {
+        endRound();
+      }, 1000); // 1 second delay for visual effect
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldTriggerEndRound, endRound]);
+
+  // Handle scoring animation sequence
+  useEffect(() => {
+    if (!scoringPhase) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+
+    if (scoringPhase === 'moving-to-wall') {
+      // Wait 1.5 seconds, then process scoring step
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1500);
+    } else if (scoringPhase === 'calculating-score') {
+      // Wait 2 seconds, then process next step
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 2000);
+    } else if (scoringPhase === 'clearing-floor') {
+      // Wait 1.5 seconds, then complete
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1500);
+    } else if (scoringPhase === 'complete') {
+      // Wait briefly, then process final step (start next round or game over)
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 500);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [scoringPhase, processScoringStep]);
   
   return (
     <div 

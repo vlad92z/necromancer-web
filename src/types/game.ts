@@ -142,4 +142,5 @@ export interface GameState {
   voidEffectPending: boolean; // Whether Void effect is waiting for runeforge selection
   frostEffectPending: boolean; // Whether Frost effect is waiting for runeforge selection
   frozenRuneforges: string[]; // Runeforge IDs that are frozen (opponent cannot draft from them)
+  shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
 }
