@@ -97,7 +97,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
     - Clears selected runes after placement
     - Returns to draft phase for next turn
 
-- Azul validation rules:
+- Validation rules:
   - Pattern line must be empty OR contain same rune type
   - Pattern line must have available space (not full)
   - Only current player's pattern lines are clickable
@@ -112,14 +112,13 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Keyboard accessible with ARIA labels
 
 - Overflow handling:
-  - Excess runes beyond pattern line capacity go to floor line
-  - Floor line accumulates penalty runes
-  - Floor line respects max capacity (7 runes)
+  - Excess runes beyond pattern line capacity go to Overload
+  - Overload accumulates penalty runes
 
 **How it works:**
 1. After drafting runes, valid pattern lines show blue ring highlight
 2. Click a valid pattern line → runes fill the line
-3. If more runes than space, extras go to floor line (penalties)
+3. If more runes than space, extras go to Overflow (penalties)
 4. Selected runes clear, back to draft phase
 5. Invalid lines (wrong type or full) are dimmed and unclickable
 6. Example: Select 4 Fire runes, click tier-3 line → 3 fit, 1 to floor
@@ -137,7 +136,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
     - **Essence** = total number of active runes on the wall
     - **Focus** = size of the largest connected segment
     - **Spellpower** = Essence × max(1, Focus - floorPenaltyCount)
-    - Floor penalties reduce Focus only (not a separate deduction)
+    - Overload reduces Focus only (not a separate deduction)
     - Runes are connected if they share an edge (not diagonal)
     - Example with 0 floor penalties: 12 total runes, 5 largest segment = 12 × 5 = 60 spellpower
     - Example with 2 floor penalties: 12 total runes, 5 largest segment = 12 × 3 = 36 spellpower
@@ -153,9 +152,9 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Calculate spellpower using simplified formula
     - Essence = total active runes on wall
     - Focus = largest connected segment size
-    - Floor penalties reduce Focus (minimum 1)
+    - Overload penalties reduce Focus (minimum 1)
   - Add wall power to existing score (accumulative)
-  - Clear floor lines after scoring
+  - Clear Overflow after scoring
   - Refill runeforges from player decks (2 runes per player per runeforge)
   - Increment round counter
   - Return to draft phase
@@ -172,7 +171,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 3. Completed pattern lines (full) move to wall:
    - One rune placed at calculated position
    - Pattern line clears for next round
-4. Spellpower calculated using simplified formula:
+4. Spellpower calculated:
    - Essence (total runes) × Focus (largest segment size)
    - Floor penalties reduce Focus: max(1, largestSegment - floorPenaltyCount)
    - Example with 0 floor: 12 runes, 5 largest = 12 × 5 = 60 spellpower
@@ -185,10 +184,9 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 ### ✅ Additional Features (Completed)
 
 **Turn System:**
-- Players alternate turns after each action (draft + placement)
-- Active player highlighted with faint blue border
-- Active indicator with pulsing dot and "Your Turn" label
-- Opponent's board dimmed and non-interactive during other player's turn
+- [x] Players alternate turns after each action (draft + placement)
+- [ ] Active indicator with pulsing dot and "Your Turn" label
+- [ ] Opponent's board dimmed and non-interactive during other player's turn
 
 **Deck Management:**
 - Each player starts with 20 runes (4 of each type)
@@ -221,7 +219,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 **Game Mode:**
 - PvE only: Play against AI opponent
   - AI makes random legal moves (draft + placement)
-  - 800ms delay between AI actions for visibility
+  - 2000ms delay between AI actions for visibility
   - AI completes full turns automatically
   - Start Game Screen: Welcome screen before gameplay begins
   - Game Over returns to Start Screen instead of auto-restart
