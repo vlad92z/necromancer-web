@@ -11,7 +11,7 @@ interface FloorLineProps {
   canPlace?: boolean;
   /**
    * Number of floor slots to visually neutralize (render with standard/pattern-like background).
-   * This should come from Wind runes staged in incomplete pattern lines.
+   * This should come from Wind runes staged in pattern lines.
    */
   mitigatedSlots?: number;
 }

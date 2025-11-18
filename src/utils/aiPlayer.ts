@@ -132,7 +132,7 @@ function calculateFutureAvailability(state: GameState, move: DraftMove): Map<Run
 }
 
 /**
- * MEDIUM COMPLEXITY: Evaluate if we have incomplete pattern lines that need this rune type
+ * MEDIUM COMPLEXITY: Evaluate pattern lines that need this rune type
  */
 function evaluatePatternLineNeeds(player: { patternLines: PatternLine[] }): Map<RuneType, number> {
   const needs = new Map<RuneType, number>();
