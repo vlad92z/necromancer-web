@@ -12,37 +12,45 @@ interface FloorLineProps {
 }
 
 export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLineProps) {
+  const isSelectable = Boolean(canPlace && onPlaceRunesInFloor);
+
   return (
     <div onClick={(e) => e.stopPropagation()}>
       <button
         onClick={onPlaceRunesInFloor}
-        disabled={!canPlace || !onPlaceRunesInFloor}
+        disabled={!isSelectable}
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
           gridTemplateRows: 'repeat(5, 1fr)',
           gap: '4px',
-          cursor: (canPlace && onPlaceRunesInFloor) ? 'pointer' : 'default',
-          backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(254, 202, 202, 0.5)' : 'transparent',
+          cursor: isSelectable ? 'pointer' : 'default',
+          backgroundColor: 'transparent',
           border: 'none',
           padding: '8px',
           borderRadius: '8px',
           transition: 'all 0.2s'
         }}
-        onMouseEnter={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.7)')}
-        onMouseLeave={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.5)')}
         aria-label="Place runes in floor line (take penalties)"
       >
         {Array(floorLine.maxCapacity)
           .fill(null)
           .map((_, index) => (
-            <RuneCell
+            <div
               key={index}
-              rune={floorLine.runes[index] || null}
-              variant="floor"
-              size="large"
-              showEffect={false}
-            />
+              style={{
+                boxShadow: isSelectable ? '0 0 16px rgba(239, 68, 68, 0.8)' : 'none',
+                borderRadius: '8px',
+                transition: 'box-shadow 0.2s'
+              }}
+            >
+              <RuneCell
+                rune={floorLine.runes[index] || null}
+                variant="floor"
+                size="large"
+                showEffect={false}
+              />
+            </div>
           ))}
       </button>
     </div>
