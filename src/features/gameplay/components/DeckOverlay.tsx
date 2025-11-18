@@ -23,7 +23,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
     return acc;
   }, {} as Record<RuneType, Rune[]>);
 
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Poison', 'Void', 'Wind'];
+  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
 
   return (
     <AnimatePresence>

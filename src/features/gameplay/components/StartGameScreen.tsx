@@ -19,42 +19,42 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '32px'
+      backgroundColor: '#1a1a1a',
+      color: '#ffffff',
+      padding: '20px'
     }}>
       <div style={{ 
-        backgroundColor: 'white', 
-        border: '4px solid #eab308', 
-        borderRadius: '16px', 
-        padding: '48px 32px', 
-        maxWidth: '600px', //TODO'100%'?
+        backgroundColor: '#0f1724',
+        border: '2px solid rgba(74,158,255,0.12)',
+        borderRadius: '12px', 
+        padding: '36px 28px', 
+        maxWidth: '700px',
         width: '100%',
         textAlign: 'center',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        boxShadow: '0 12px 36px rgba(2,6,23,0.6)'
       }}>
         <h1 style={{ 
           fontSize: '48px', 
           fontWeight: 'bold', 
-          color: '#667eea', 
-          marginBottom: '6px',
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)'
+          color: '#ffffff', 
+          marginBottom: '6px'
         }}>
           Massive Spell
         </h1>
-        
+
         <h2 style={{ 
-          fontSize: '24px', 
+          fontSize: '20px', 
           fontWeight: '600', 
-          color: '#764ba2', 
-          marginBottom: '32px' 
+          color: '#9fb7ff', 
+          marginBottom: '20px' 
         }}>
           Arcane Arena
         </h2>
         
         <div style={{ 
-          marginBottom: '32px', 
+          marginBottom: '24px', 
           fontSize: '16px',
-          color: '#4b5563',
+          color: '#c7d2fe',
           lineHeight: '1.6'
         }}>
           <p style={{ marginBottom: '12px' }}>
@@ -67,16 +67,16 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         
         {/* Game Mode Toggle */}
         <div style={{
-          marginBottom: '24px',
-          padding: '20px',
-          backgroundColor: '#f8fafc',
+          marginBottom: '20px',
+          padding: '16px',
+          backgroundColor: '#071029',
           borderRadius: '8px',
-          border: '2px solid #e2e8f0'
+          border: '1px solid rgba(74,158,255,0.08)'
         }}>
           <div style={{
             fontSize: '16px',
             fontWeight: '600',
-            color: '#334155',
+            color: '#cfe0ff',
             marginBottom: '12px'
           }}>
             Game Mode
@@ -90,16 +90,22 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
               onClick={() => setGameMode('classic')}
               style={{
                 flex: 1,
-                padding: '12px 24px',
+                padding: '10px 18px',
                 borderRadius: '8px',
-                fontSize: '16px',
+                fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: gameMode === 'classic' ? '#667eea' : '#cbd5e1',
-                backgroundColor: gameMode === 'classic' ? '#667eea' : '#ffffff',
-                color: gameMode === 'classic' ? '#ffffff' : '#64748b',
+                borderColor: gameMode === 'classic' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: gameMode === 'classic' ? '#4a9eff' : 'transparent',
+                color: gameMode === 'classic' ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
-                transition: 'all 0.2s'
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (gameMode !== 'classic') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (gameMode !== 'classic') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               Classic
@@ -108,16 +114,22 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
               onClick={() => setGameMode('standard')}
               style={{
                 flex: 1,
-                padding: '12px 24px',
+                padding: '10px 18px',
                 borderRadius: '8px',
-                fontSize: '16px',
+                fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: gameMode === 'standard' ? '#667eea' : '#cbd5e1',
-                backgroundColor: gameMode === 'standard' ? '#667eea' : '#ffffff',
-                color: gameMode === 'standard' ? '#ffffff' : '#64748b',
+                borderColor: gameMode === 'standard' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: gameMode === 'standard' ? '#4a9eff' : 'transparent',
+                color: gameMode === 'standard' ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
-                transition: 'all 0.2s'
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (gameMode !== 'standard') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (gameMode !== 'standard') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               Standard
@@ -126,7 +138,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           <div style={{
             marginTop: '8px',
             fontSize: '13px',
-            color: '#64748b',
+            color: '#9fb7ff',
             textAlign: 'center'
           }}>
             {gameMode === 'classic' 
@@ -138,30 +150,30 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         <button
           onClick={() => onStartGame(gameMode)}
           style={{
-            backgroundColor: '#eab308',
-            color: '#111827',
-            fontWeight: 'bold',
-            padding: '20px 48px',
-            borderRadius: '12px',
-            fontSize: '24px',
+            backgroundColor: '#4a9eff',
+            color: '#ffffff',
+            fontWeight: '700',
+            padding: '16px 24px',
+            borderRadius: '10px',
+            fontSize: '18px',
             width: '100%',
             border: 'none',
             cursor: 'pointer',
-            transition: 'all 0.3s',
-            boxShadow: '0 4px 12px rgba(234, 179, 8, 0.3)',
+            transition: 'all 0.18s',
+            boxShadow: '0 6px 18px rgba(74,158,255,0.14)',
             textTransform: 'uppercase',
             letterSpacing: '1px',
-            marginBottom: '16px'
+            marginBottom: '12px'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#ca8a04';
+            e.currentTarget.style.backgroundColor = '#5ab0ff';
             e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 16px rgba(234, 179, 8, 0.4)';
+            e.currentTarget.style.boxShadow = '0 10px 28px rgba(74,158,255,0.22)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#eab308';
+            e.currentTarget.style.backgroundColor = '#4a9eff';
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(234, 179, 8, 0.3)';
+            e.currentTarget.style.boxShadow = '0 6px 18px rgba(74,158,255,0.14)';
           }}
         >
           Start Game
@@ -171,23 +183,23 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           onClick={() => setShowRules(true)}
           style={{
             backgroundColor: 'transparent',
-            color: '#667eea',
+            color: '#4a9eff',
             fontWeight: '600',
-            padding: '14px 32px',
+            padding: '12px 20px',
             borderRadius: '8px',
-            fontSize: '16px',
+            fontSize: '15px',
             width: '100%',
-            border: '2px solid #667eea',
+            border: '2px solid rgba(74,158,255,0.16)',
             cursor: 'pointer',
-            transition: 'all 0.2s'
+            transition: 'all 0.14s'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#667eea';
+            e.currentTarget.style.backgroundColor = '#4a9eff';
             e.currentTarget.style.color = '#ffffff';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#667eea';
+            e.currentTarget.style.color = '#4a9eff';
           }}
         >
           📖 How to Play

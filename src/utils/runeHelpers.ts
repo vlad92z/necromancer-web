@@ -11,7 +11,7 @@ export function getRuneGlyph(runeType: RuneType): string {
   const glyphs: Record<RuneType, string> = {
     Fire: '🔥',
     Frost: '❄️',
-    Poison: '☠️',
+    Life: '💚',
     Void: '🌀',
     Wind: '💨',
   };
@@ -25,7 +25,7 @@ export function getRuneColorClass(runeType: RuneType): string {
   const colors: Record<RuneType, string> = {
     Fire: 'bg-red-500',
     Frost: 'bg-blue-500',
-    Poison: 'bg-green-500',
+    Life: 'bg-green-500',
     Void: 'bg-purple-700',
     Wind: 'bg-yellow-400',
   };
@@ -43,7 +43,7 @@ export function getRuneEffectDescription(runeType: RuneType, isClassicMode: bool
   const descriptions: Record<RuneType, string> = {
     Fire: 'Each Fire rune on your wall adds +1 Essence',
     Frost: 'Freeze one runeforge after placing',
-    Poison: 'Each Poison rune reduces opponent Focus by 1',
+    Life: 'Each Life rune on your wall heals you every round',
     Void: 'Destroy all runes in one runeforge when placing',
     Wind: 'In floor line: cancels one other penalty',
   };

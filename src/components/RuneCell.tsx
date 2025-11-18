@@ -5,18 +5,19 @@
  */
 
 import { motion } from 'framer-motion';
+import type { MouseEvent } from 'react';
 import type { Rune, RuneType } from '../types/game';
 import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
 import frostRune from '../assets/runes/frost_rune.svg';
-import poisonRune from '../assets/runes/poison_rune.svg';
+import lifeRune from '../assets/runes/life_rune.svg';
 import voidRune from '../assets/runes/void_rune.svg';
 import windRune from '../assets/runes/wind_rune.svg';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
   Frost: frostRune,
-  Poison: poisonRune,
+  Life: lifeRune,
   Void: voidRune,
   Wind: windRune,
 };
@@ -145,8 +146,8 @@ export function RuneCell({
         transition: shouldAnimate ? undefined : TRANSITIONS.medium,
         position: 'relative',
       }}
-      onMouseEnter={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
-      onMouseLeave={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1)')}
+      onMouseEnter={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
+      onMouseLeave={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1)')}
     >
       {runeImage && (
         <img 

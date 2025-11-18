@@ -4,13 +4,13 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, RuneType, Player } from '../../types/game';
+import type { GameState, RuneType, Player, Rune } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 
-// Helper function to count Poison runes on a wall
-function countPoisonRunes(wall: Player['wall']): number {
-  return wall.flat().filter(cell => cell.runeType === 'Poison').length;
+// Helper function to count Life runes on a wall
+function countLifeRunes(wall: Player['wall']): number {
+  return wall.flat().filter(cell => cell.runeType === 'Life').length;
 }
 
 // Navigation callback registry for routing integration
@@ -55,8 +55,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       if (!runeforge) return state;
       
       // Separate runes by selected type
-      const selectedRunes = runeforge.runes.filter((r: any) => r.runeType === runeType);
-      const remainingRunes = runeforge.runes.filter((r: any) => r.runeType !== runeType);
+      const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
+      const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
@@ -87,8 +87,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
   draftFromCenter: (runeType: RuneType) => {
     set((state) => {
       // Get all runes of selected type from center
-      const selectedRunes = state.centerPool.filter((r: any) => r.runeType === runeType);
-      const remainingRunes = state.centerPool.filter((r: any) => r.runeType !== runeType);
+      const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
+      const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
@@ -437,11 +437,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         // Calculate total wall power based on connected segments
         const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
         
-        // Get opponent's Poison count (for Poison effect)
-        const opponentIndex = state.players.indexOf(player) === 0 ? 1 : 0;
-        const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
-        
-        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, opponentPoisonCount, state.gameMode);
+        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, state.gameMode);
         
         // Add wall power to existing score (minimum 0)
         const newHealth = player.health;
@@ -472,25 +468,34 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // Calculate each player's wall power (damage they deal)
       const player1FloorPenalty = calculateEffectiveFloorPenalty(state.players[0].floorLine.runes, state.gameMode);
       const player2FloorPenalty = calculateEffectiveFloorPenalty(state.players[1].floorLine.runes, state.gameMode);
-      const player1PoisonCount = countPoisonRunes(state.players[1].wall);
-      const player2PoisonCount = countPoisonRunes(state.players[0].wall);
 
       const player1Data = calculateWallPowerWithSegments(
         state.players[0].wall,
         player1FloorPenalty,
-        player1PoisonCount,
         state.gameMode
       );
       const player2Data = calculateWallPowerWithSegments(
         state.players[1].wall,
         player2FloorPenalty,
-        player2PoisonCount,
         state.gameMode
       );
 
-      // Damage dealt is opponent's totalPower. Apply damage to health (clamp at 0)
-      const player1NewHealth = Math.max(0, state.players[0].health - player2Data.totalPower);
-      const player2NewHealth = Math.max(0, state.players[1].health - player1Data.totalPower);
+      // Life Effect: Count Life runes and heal players by 10 HP per active Life rune (only in standard mode)
+      const player1LifeCount = state.gameMode === 'standard' ? countLifeRunes(state.players[0].wall) : 0;
+      const player2LifeCount = state.gameMode === 'standard' ? countLifeRunes(state.players[1].wall) : 0;
+      
+      const player1Healing = player1LifeCount * 10;
+      const player2Healing = player2LifeCount * 10;
+
+      // Apply healing from Life runes first (capped at player's maxHealth), then apply damage dealt by opponent
+      const p1Max = state.players[0].maxHealth ?? state.players[0].health;
+      const p2Max = state.players[1].maxHealth ?? state.players[1].health;
+
+      const player1Healed = Math.min(state.players[0].health + player1Healing, p1Max);
+      const player2Healed = Math.min(state.players[1].health + player2Healing, p2Max);
+
+      const player1NewHealth = Math.max(0, player1Healed - player2Data.totalPower);
+      const player2NewHealth = Math.max(0, player2Healed - player1Data.totalPower);
 
       const updatedPlayers: [Player, Player] = [
         { ...state.players[0], health: player1NewHealth },

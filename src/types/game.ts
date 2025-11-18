@@ -6,7 +6,7 @@
 /**
  * Rune types (elemental identities)
  */
-export type RuneType = 'Fire' | 'Frost' | 'Poison' | 'Void' | 'Wind';
+export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind';
 
 /**
  * Rune effect modifiers
@@ -79,6 +79,7 @@ export interface Player {
   wall: ScoringWall;
   floorLine: FloorLine;
   health: number; // Current health (starts at configurable amount, reduced by opponent spellpower)
+  maxHealth?: number; // Maximum health cap (initialized at game start)
   deck: Rune[]; // Player's deck of runes for this run
 }
 

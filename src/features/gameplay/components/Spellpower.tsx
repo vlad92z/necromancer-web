@@ -11,8 +11,6 @@ interface SpellpowerProps {
   totalPower: number;
   fireRuneCount: number;
   hasPenalty: boolean;
-  hasPoisonEffect: boolean;
-  opponentPoisonCount: number;
   hasWindMitigation: boolean;
   windRuneCount: number;
   onShowDeck: () => void;
@@ -26,8 +24,6 @@ export function Spellpower({
   totalPower,
   fireRuneCount,
   hasPenalty,
-  hasPoisonEffect,
-  opponentPoisonCount,
   hasWindMitigation,
   windRuneCount,
   onShowDeck,
@@ -192,18 +188,13 @@ export function Spellpower({
               style={{
                 fontSize: '28px',
                 fontWeight: 'bold',
-                color: hasPenalty || hasPoisonEffect ? '#dc2626' : '#0c4a6e',
+                color: hasPenalty ? '#dc2626' : '#04d1ffff',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px'
               }}
             >
               {focus}
-              {hasPoisonEffect && (
-                <span style={{ color: '#32CD32', fontSize: '14px' }} title={`-${opponentPoisonCount} from opponent Poison runes`}>
-                  ☠️
-                </span>
-              )}
               {hasWindMitigation && (
                 <span style={{ color: '#87CEEB', fontSize: '14px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} mitigating floor penalties`}>
                   💨
@@ -235,12 +226,12 @@ export function Spellpower({
           <motion.div
             key={totalPower}
             initial={{ scale: 1.5, color: '#dc2626' }}
-            animate={{ scale: 1, color: '#7c3aed' }}
+            animate={{ scale: 1, color: '#000000ff' }}
             transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
             style={{
               fontSize: '36px',
               fontWeight: 'bold',
-              color: '#7c3aed',
+              color: '#000000ff',
               marginTop: '-16px'
             }}
           >
@@ -325,7 +316,7 @@ export function Spellpower({
               <div style={{ marginBottom: '16px' }}>
                 <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
                 <p style={{ margin: '4px 0 0 0' }}>
-                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Opponent Poison runes ☠️ also reduce your Focus. Wind runes 💨 in your floor line cancel out other penalties.
+                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Wind runes 💨 in your floor line cancel out other penalties.
                 </p>
               </div>
               

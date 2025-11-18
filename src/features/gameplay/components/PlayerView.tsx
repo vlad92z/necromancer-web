@@ -7,7 +7,6 @@ import { PlayerBoard } from './PlayerBoard';
 
 interface PlayerViewProps {
   player: Player;
-  opponent: Player;
   isActive: boolean;
   onPlaceRunes?: (patternLineIndex: number) => void;
   onPlaceRunesInFloor?: () => void;
@@ -22,7 +21,6 @@ interface PlayerViewProps {
 
 export function PlayerView({
   player,
-  opponent,
   isActive,
   onPlaceRunes,
   onPlaceRunesInFloor,
@@ -38,7 +36,6 @@ export function PlayerView({
     <div>
       <PlayerBoard
         player={player}
-        opponent={opponent}
         isActive={isActive}
         onPlaceRunes={onPlaceRunes}
         onPlaceRunesInFloor={onPlaceRunesInFloor}
