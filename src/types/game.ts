@@ -31,6 +31,7 @@ export interface Rune {
  */
 export interface Runeforge {
   id: string;
+  ownerId: Player['id'];
   runes: Rune[];
 }
 

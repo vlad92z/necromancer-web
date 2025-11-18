@@ -2,13 +2,15 @@
  * RuneforgesAndCenter component - displays runeforges and center pool
  */
 
-import type { Runeforge as RuneforgeType, Rune, RuneType } from '../../../types/game';
+import type { Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../types/game';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
 
 interface RuneforgesAndCenterProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
+  players: [Player, Player];
+  currentPlayerId: Player['id'];
   onRuneClick: (runeforgeId: string, runeType: RuneType) => void;
   onCenterRuneClick: (runeType: RuneType) => void;
   onRuneforgeClick: (runeforgeId: string) => void;
@@ -23,6 +25,8 @@ interface RuneforgesAndCenterProps {
 export function RuneforgesAndCenter({ 
   runeforges, 
   centerPool, 
+  players,
+  currentPlayerId,
   onRuneClick,
   onCenterRuneClick,
   onRuneforgeClick, 
@@ -33,31 +37,82 @@ export function RuneforgesAndCenter({
   frostEffectPending,
   frozenRuneforges
 }: RuneforgesAndCenterProps) {
-  
-  return (
-    <div>
-      
-      {/* Runeforges  */}
+  const [player, opponent] = players;
+  const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
+  const opponentRuneforges = runeforges.filter((forge) => forge.ownerId === opponent.id);
+  const currentPlayerRuneforges = runeforges.filter((forge) => forge.ownerId === currentPlayerId);
+  const hasPersonalRunesAvailable = currentPlayerRuneforges.some((forge) => forge.runes.length > 0);
+  const centerIsEmpty = centerPool.length === 0;
+  const effectActive = voidEffectPending || frostEffectPending;
+  const canDraftOpponentRuneforges = !effectActive && !hasPersonalRunesAvailable && centerIsEmpty;
+
+  const getDisabledState = (forge: RuneforgeType): boolean => {
+    if (effectActive) {
+      return isAITurn;
+    }
+
+    const baseDisabled = !isDraftPhase || hasSelectedRunes || isAITurn || frozenRuneforges.includes(forge.id);
+    if (baseDisabled) {
+      return true;
+    }
+
+    if (forge.ownerId !== currentPlayerId && !canDraftOpponentRuneforges) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const renderRuneforgeRow = (owner: Player, ownedRuneforges: RuneforgeType[], align: 'flex-start' | 'center' | 'flex-end') => (
+    <div key={owner.id} style={{ marginBottom: '16px' }}>
+      <div style={{ 
+        textAlign: align === 'center' ? 'center' : align === 'flex-start' ? 'left' : 'right',
+        fontSize: '16px',
+        fontWeight: 600,
+        marginBottom: '8px',
+        color: '#0f172a'
+      }}>
+        {owner.name}'s Runeforges
+      </div>
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        gap: '24px', 
-        marginBottom: '24px' 
+        justifyContent: align, 
+        gap: '16px', 
+        flexWrap: 'wrap'
       }}>
-        {runeforges.map((runeforge) => (
+        {ownedRuneforges.map((runeforge) => (
           <Runeforge 
             key={runeforge.id} 
             runeforge={runeforge}
             onRuneClick={onRuneClick}
             onRuneforgeClick={onRuneforgeClick}
-            disabled={(voidEffectPending || frostEffectPending) ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn || frozenRuneforges.includes(runeforge.id))}
+            disabled={getDisabledState(runeforge)}
             voidEffectPending={voidEffectPending}
             frostEffectPending={frostEffectPending}
             isFrozen={frozenRuneforges.includes(runeforge.id)}
           />
         ))}
       </div>
+    </div>
+  );
+  
+  return (
+    <div>
+      {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
+
+      {canDraftOpponentRuneforges && !isAITurn && (
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '12px',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          backgroundColor: '#fef3c7',
+          color: '#92400e',
+          fontWeight: 600,
+        }}>
+          No personal runeforges remain and the center is empty. You may draft from your opponent's forges.
+        </div>
+      )}
       
       {/* Center Pool */}
       <CenterPool 
@@ -67,6 +122,8 @@ export function RuneforgesAndCenter({
         hasSelectedRunes={hasSelectedRunes}
         isAITurn={isAITurn}
       />
+
+      {renderRuneforgeRow(player, playerRuneforges, 'center')}
     </div>
   );
 }

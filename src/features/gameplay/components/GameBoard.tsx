@@ -220,6 +220,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
             <RuneforgesAndCenter
               runeforges={runeforges}
               centerPool={centerPool}
+              players={players}
+              currentPlayerId={currentPlayer.id}
               onRuneClick={handleRuneClick}
               onCenterRuneClick={handleCenterRuneClick}
               onRuneforgeClick={handleRuneforgeClick}

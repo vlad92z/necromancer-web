@@ -38,11 +38,21 @@ function countRunes(runes: Rune[], runeType: RuneType): number {
  */
 function getLegalDraftMoves(state: GameState): DraftMove[] {
   const moves: DraftMove[] = [];
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const currentPlayerRuneforges = state.runeforges.filter(runeforge => runeforge.ownerId === currentPlayer.id);
+  const hasPersonalRunesAvailable = currentPlayerRuneforges.some(runeforge => runeforge.runes.length > 0);
+  const centerIsEmpty = state.centerPool.length === 0;
+  const canUseOpponentRuneforges = !hasPersonalRunesAvailable && centerIsEmpty;
   
   // Get unique rune types from runeforges with counts
   // Skip frozen runeforges (opponent cannot draft from them)
   state.runeforges.forEach(runeforge => {
     if (runeforge.runes.length > 0 && !state.frozenRuneforges.includes(runeforge.id)) {
+      const ownsRuneforge = runeforge.ownerId === currentPlayer.id;
+      if (!ownsRuneforge && !canUseOpponentRuneforges) {
+        return;
+      }
+
       const runeTypes = new Set(runeforge.runes.map(r => r.runeType));
       runeTypes.forEach((runeType: RuneType) => {
         moves.push({ 

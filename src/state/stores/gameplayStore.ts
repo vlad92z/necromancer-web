@@ -49,10 +49,21 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         console.log(`Runeforge ${runeforgeId} is frozen - cannot draft`);
         return state;
       }
-      
+
+      const currentPlayer = state.players[state.currentPlayerIndex];
       // Find the runeforge
       const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
+
+      const ownsRuneforge = runeforge.ownerId === currentPlayer.id;
+      const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
+      const hasPersonalRunesAvailable = playerRuneforges.some((f) => f.runes.length > 0);
+      const centerIsEmpty = state.centerPool.length === 0;
+      const canDraftOpponentRuneforge = !ownsRuneforge && !hasPersonalRunesAvailable && centerIsEmpty;
+
+      if (!ownsRuneforge && !canDraftOpponentRuneforge) {
+        return state;
+      }
       
       // Separate runes by selected type
       const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
@@ -580,17 +591,19 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       }
       
       // Prepare for next round
-      const emptyFactories = createEmptyFactories(5);
-      const { runeforges: filledRuneforges, deck1, deck2 } = fillFactories(
-        emptyFactories, 
-        state.players[0].deck, 
-        state.players[1].deck
+      const emptyFactories = createEmptyFactories(state.players, 3);
+      const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
+        emptyFactories,
+        {
+          [state.players[0].id]: state.players[0].deck,
+          [state.players[1].id]: state.players[1].deck,
+        }
       );
       
       // Update player decks with remaining runes after filling runeforges
       const finalPlayers: [Player, Player] = [
-        { ...state.players[0], deck: deck1 },
-        { ...state.players[1], deck: deck2 }
+        { ...state.players[0], deck: decksByPlayer[state.players[0].id] ?? [] },
+        { ...state.players[1], deck: decksByPlayer[state.players[1].id] ?? [] }
       ];
       
       console.log('Round complete! Starting next round...');
