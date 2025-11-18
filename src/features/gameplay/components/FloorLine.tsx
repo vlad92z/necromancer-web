@@ -13,7 +13,7 @@ interface FloorLineProps {
 
 export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLineProps) {
   return (
-    <div style={{ marginTop: '16px' }} onClick={(e) => e.stopPropagation()}>
+    <div onClick={(e) => e.stopPropagation()}>
       <button
         onClick={onPlaceRunesInFloor}
         disabled={!canPlace || !onPlaceRunesInFloor}
