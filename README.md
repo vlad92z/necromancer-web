@@ -580,62 +580,15 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 ---
 
-## 🚨 Critical Refactoring TODOs (Before Adding New Features)
-
-### Priority 1: State Architecture Refactoring ✅ **COMPLETED**
-
-**Problem**: `gameStore.ts` was 727 lines and contained all game logic, side effects, and state. Would become unmaintainable when adding deck drafting, campaign, and PvP features.
-
-**Solution**: Fully refactored to follow React best practices with pure state management and component-driven side effects.
-
-#### ✅ Completed: Split Monolithic Store
-- [x] **Split `gameStore.ts` into modular stores:**
-  - [x] Created `src/state/stores/gameplayStore.ts` - Current game state (runeforges, turns, runes, drafting, placement)
-  - [x] Created `src/state/stores/uiStore.ts` - Overlay states, modal management, transient UI state
-  - [x] Created `src/state/stores/index.ts` - Centralized exports
-  - [x] Updated all components to import from new store locations
-  - [x] Tested thoroughly after migration - build succeeds, dev server runs
-
-#### ✅ Completed: Remove Side Effects from State
-- [x] **Extracted all 10 `setTimeout` calls from gameplayStore.ts to component useEffect hooks:**
-  - [x] Moved end-round timer to GameBoard component (5 instances from placeRunes, placeRunesInFloor, destroyRuneforge, skipVoidEffect, freezeRuneforge)
-  - [x] Moved scoring step timers to GameBoard component (3 instances from processScoringStep: moving-to-wall, calculating-score, clearing-floor)
-  - [x] Added proper cleanup functions (return () => clearTimeout(timer))
-  - [x] Added `shouldTriggerEndRound` flag to GameState for component-driven timing
-  - [x] Removed unused `get` parameter from store creation
-  - [x] Tested build - all changes compile successfully
-
-- [x] **Created clean separation of concerns:**
-  - [x] Store handles pure state transitions (no side effects)
-  - [x] Components handle timing and animation orchestration via useEffect
-  - [x] State flags signal when effects should occur
-  - [x] All timers properly cleaned up on component unmount
-
-#### ✅ Completed: Extract AI Orchestration
-- [x] **Moved AI logic out of App.tsx:**
-  - [x] Created `src/systems/aiController.ts` for AI turn orchestration
-  - [x] Extracted `executeAITurn()` function for AI turn flow management (pure function)
-  - [x] Extracted `executeAIVoidEffect()` for Void effect handling (pure function)
-  - [x] Extracted `executeAIFrostEffect()` for Frost effect handling (pure function)
-  - [x] Added `needsAIPlacement()` helper to check if AI needs to place selected runes
-  - [x] Removed all setTimeout calls from aiController (timing handled by App.tsx)
-  - [x] App.tsx now handles all AI timing via useEffect hooks with proper cleanup
-  - [x] Separated AI draft and placement logic into distinct useEffect hooks
-  - [x] All AI actions are now pure functions called by component effects
-
-- [x] **Created clean separation of concerns:**
-  - [x] aiController handles AI decision-making (pure logic)
-  - [x] App.tsx handles AI timing and orchestration (side effects)
-  - [x] No setTimeout in system modules, all timing in components
-  - [x] Proper cleanup of all timers on component unmount
-
 #### TODO: Future AI Enhancements
   - [ ] Create `src/systems/turnManager.ts` for turn flow management (future enhancement)
   - [ ] Create `src/systems/effectResolver.ts` for unified effect handling (future enhancement)
   - [ ] Support multiple AI difficulty levels
   - [ ] Make AI behavior pluggable (different strategies for campaign bosses)
 
-### Priority 2: Routing & Navigation 🟡 **HIGH**
+## Refactoring TODOs (Before Adding New Features)
+
+### Priority 1: Routing & Navigation 🟡 **HIGH**
 
 **Problem**: Single-page app with boolean toggles won't scale to deck drafting, campaign map, post-match rewards, and matchmaking screens.
 
@@ -658,7 +611,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Add route parameters for campaign boss selection
   - [ ] Support deep linking to game states (for PvP match URLs)
 
-### Priority 3: Persistence Layer 🟡 **HIGH**
+### Priority 2: Persistence Layer 🟡 **HIGH**
 
 **Problem**: No storage for campaign progress, deck collections, player stats, or PvP ELO. All features in roadmap require persistence.
 
@@ -690,7 +643,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Add API client configuration (base URL, headers, error handling)
   - [ ] Add mock API responses for development
 
-### Priority 4: Game Configuration System 🟡 **MEDIUM**
+### Priority 3: Game Configuration System 🟡 **MEDIUM**
 
 **Problem**: Game mode is hardcoded at start. Campaign bosses need different rules, deck drafting changes available runes, PvP needs standardized rules.
 
@@ -720,7 +673,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Apply rules throughout game logic (runeforge filling, scoring, effects)
   - [ ] Validate moves against current rule set
 
-### Priority 5: Style Token System 🟢 **MEDIUM**
+### Priority 4: Style Token System 🟢 **MEDIUM**
 
 **Problem**: Inline styles are scattered across components with hardcoded colors/spacing. Deck builder, campaign map, and PvP UI will need complex layouts with consistent theming.
 
@@ -748,7 +701,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] `<Button variant="primary|secondary|danger">` - Consistent buttons
   - [ ] `<Card>` - Reusable card container
 
-### Priority 6: Error Handling & Resilience 🟢 **LOW-MEDIUM**
+### Priority 5: Error Handling & Resilience 🟢 **LOW-MEDIUM**
 
 #### TODO: Add Error Boundaries
 - [ ] **Create error boundary components:**
@@ -763,7 +716,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Detect impossible states (negative scores, invalid turn order)
   - [ ] Add recovery mechanisms for corrupted state
 
-### Priority 7: Performance Optimizations 🟢 **LOW**
+### Priority 6: Performance Optimizations 🟢 **LOW**
 
 #### TODO: Optimize Re-renders
 - [ ] **Extract repeated hooks:**
