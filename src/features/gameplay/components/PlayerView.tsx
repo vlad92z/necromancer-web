@@ -4,7 +4,6 @@
 
 import type { Player, RuneType } from '../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
-import { RunePower } from './RunePower';
 
 interface PlayerViewProps {
   player: Player;
@@ -31,13 +30,6 @@ export function PlayerView({
 }: PlayerViewProps) {
   return (
     <div style={{ marginBottom: '24px' }}>
-      <RunePower 
-        player={player}
-        opponent={opponent}
-        damageTaken={opponent.score}
-        nameColor="#0c4a6e"
-        gameMode={gameMode}
-      />
       <PlayerBoard
         player={player}
         opponent={opponent}
@@ -48,6 +40,8 @@ export function PlayerView({
         canPlace={canPlace}
         onCancelSelection={onCancelSelection}
         gameMode={gameMode}
+        damageTaken={opponent.score}
+        nameColor="#0c4a6e"
       />
     </div>
   );

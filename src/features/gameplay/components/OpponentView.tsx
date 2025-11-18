@@ -4,7 +4,6 @@
 
 import type { Player } from '../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
-import { RunePower } from './RunePower';
 
 interface OpponentViewProps {
   opponent: Player;
@@ -16,13 +15,6 @@ interface OpponentViewProps {
 export function OpponentView({ opponent, player, isActive, gameMode }: OpponentViewProps) {
   return (
     <div style={{ marginBottom: '24px' }}>
-      <RunePower 
-        player={opponent}
-        opponent={player}
-        damageTaken={player.score}
-        nameColor="#7f1d1d"
-        gameMode={gameMode}
-      />
       <PlayerBoard
         player={opponent}
         opponent={player}
@@ -32,6 +24,8 @@ export function OpponentView({ opponent, player, isActive, gameMode }: OpponentV
         canPlace={false}
         onCancelSelection={() => {}}
         gameMode={gameMode}
+        damageTaken={player.score}
+        nameColor="#7f1d1d"
       />
     </div>
   );

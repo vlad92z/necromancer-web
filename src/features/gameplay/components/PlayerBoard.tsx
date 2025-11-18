@@ -20,9 +20,11 @@ interface PlayerBoardProps {
   canPlace?: boolean;
   onCancelSelection?: () => void;
   gameMode: 'classic' | 'standard';
+  damageTaken: number;
+  nameColor: string;
 }
 
-export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode}: PlayerBoardProps) {
+export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, damageTaken, nameColor}: PlayerBoardProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   
   const handleBoardClick = () => {
@@ -30,6 +32,8 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
       onCancelSelection();
     }
   };
+
+  const currentHealth = 300 - damageTaken;
 
   // Find completed pattern lines
   const completedPatternLines = player.patternLines
@@ -94,27 +98,65 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
           <ScoringWall wall={player.wall} patternLines={player.patternLines} />
         </div>
         
-        {/* RuneScore - Right side */}
+        {/* Right side - Player Info and RuneScore */}
         <div style={{ 
           flex: '0 0 240px',
           display: 'flex', 
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '16px',
-          backgroundColor: 'rgba(191, 219, 254, 0.3)',
-          border: '2px solid rgba(59, 130, 246, 0.5)',
-          borderRadius: '8px',
+          gap: '12px'
         }}>
+          {/* Player Name and Health */}
           <div style={{
-            fontSize: '16px',
-            color: '#0c4a6e',
-            fontWeight: 'bold',
+            backgroundColor: 'rgba(191, 219, 254, 0.3)',
+            border: '2px solid rgba(59, 130, 246, 0.5)',
+            borderRadius: '8px',
+            padding: '12px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
-            width: '100%'
+            alignItems: 'center',
+            gap: '8px'
           }}>
+            <div style={{
+              fontSize: '18px',
+              color: nameColor,
+              fontWeight: 'bold'
+            }}>
+              {player.name}
+            </div>
+            <motion.div
+              key={currentHealth}
+              initial={{ scale: 1.5, color: '#dc2626' }}
+              animate={{ scale: 1, color: '#ea580c' }}
+              transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
+              style={{ 
+                color: '#ea580c',
+                fontSize: '20px',
+                fontWeight: 'bold'
+              }}
+            >
+              ❤️ {currentHealth}
+            </motion.div>
+          </div>
+          
+          {/* RuneScore Stats */}
+          <div style={{
+            backgroundColor: 'rgba(191, 219, 254, 0.3)',
+            border: '2px solid rgba(59, 130, 246, 0.5)',
+            borderRadius: '8px',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1
+          }}>
+            <div style={{
+              fontSize: '16px',
+              color: '#0c4a6e',
+              fontWeight: 'bold',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              width: '100%'
+            }}>
             {essence > 0 ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -227,6 +269,7 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
             >
               ?
             </button>
+            </div>
           </div>
         </div>
       </div>
