@@ -48,7 +48,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               gap: '4px',
               width: '100%',
               cursor: isClickable ? (isValid ? 'pointer' : 'not-allowed') : 'default',
-              backgroundColor: isValid ? 'rgba(191, 219, 254, 0.5)' : 'transparent',
+              backgroundColor: isValid ? 'rgba(34, 197, 94, 0.3)' : 'transparent',
               border: 'none',
               opacity: (isClickable && !isValid) ? 0.5 : 1,
               padding: 0,
@@ -56,8 +56,8 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               transition: 'all 0.2s',
               marginBottom: '4px'
             }}
-            onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(147, 197, 253, 0.6)')}
-            onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(191, 219, 254, 0.5)')}
+            onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.5)')}
+            onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.3)')}
             aria-label={`Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`}
           >
             {/* Pattern line slots */}
