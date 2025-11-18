@@ -40,9 +40,11 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   const moves: DraftMove[] = [];
   const currentPlayer = state.players[state.currentPlayerIndex];
   const currentPlayerRuneforges = state.runeforges.filter(runeforge => runeforge.ownerId === currentPlayer.id);
-  const hasPersonalRunesAvailable = currentPlayerRuneforges.some(runeforge => runeforge.runes.length > 0);
+  const hasAccessibleRuneforges = currentPlayerRuneforges.some(
+    runeforge => runeforge.runes.length > 0 && !state.frozenRuneforges.includes(runeforge.id)
+  );
   const centerIsEmpty = state.centerPool.length === 0;
-  const canUseOpponentRuneforges = !hasPersonalRunesAvailable && centerIsEmpty;
+  const canUseOpponentRuneforges = !hasAccessibleRuneforges && centerIsEmpty;
   
   // Get unique rune types from runeforges with counts
   // Skip frozen runeforges (opponent cannot draft from them)
@@ -66,7 +68,7 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   });
   
   // Get unique rune types from center with counts
-  if (state.centerPool.length > 0) {
+  if (state.centerPool.length > 0 && !hasAccessibleRuneforges) {
     const runeTypes = new Set(state.centerPool.map(r => r.runeType));
     runeTypes.forEach(runeType => {
       moves.push({ 

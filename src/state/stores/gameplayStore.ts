@@ -57,9 +57,11 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
 
       const ownsRuneforge = runeforge.ownerId === currentPlayer.id;
       const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
-      const hasPersonalRunesAvailable = playerRuneforges.some((f) => f.runes.length > 0);
+      const hasAccessibleRuneforges = playerRuneforges.some(
+        (f) => f.runes.length > 0 && !state.frozenRuneforges.includes(f.id)
+      );
       const centerIsEmpty = state.centerPool.length === 0;
-      const canDraftOpponentRuneforge = !ownsRuneforge && !hasPersonalRunesAvailable && centerIsEmpty;
+      const canDraftOpponentRuneforge = !ownsRuneforge && !hasAccessibleRuneforges && centerIsEmpty;
 
       if (!ownsRuneforge && !canDraftOpponentRuneforge) {
         return state;
@@ -97,6 +99,16 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
   
   draftFromCenter: (runeType: RuneType) => {
     set((state) => {
+      const currentPlayer = state.players[state.currentPlayerIndex];
+      const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
+      const hasAccessibleRuneforges = playerRuneforges.some(
+        (f) => f.runes.length > 0 && !state.frozenRuneforges.includes(f.id)
+      );
+
+      if (hasAccessibleRuneforges) {
+        return state;
+      }
+
       // Get all runes of selected type from center
       const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
       const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);

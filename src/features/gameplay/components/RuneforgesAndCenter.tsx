@@ -41,10 +41,14 @@ export function RuneforgesAndCenter({
   const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
   const opponentRuneforges = runeforges.filter((forge) => forge.ownerId === opponent.id);
   const currentPlayerRuneforges = runeforges.filter((forge) => forge.ownerId === currentPlayerId);
-  const hasPersonalRunesAvailable = currentPlayerRuneforges.some((forge) => forge.runes.length > 0);
+  const hasAccessibleRuneforges = currentPlayerRuneforges.some(
+    (forge) => forge.runes.length > 0 && !frozenRuneforges.includes(forge.id)
+  );
   const centerIsEmpty = centerPool.length === 0;
   const effectActive = voidEffectPending || frostEffectPending;
-  const canDraftOpponentRuneforges = !effectActive && !hasPersonalRunesAvailable && centerIsEmpty;
+  const canDraftOpponentRuneforges = !effectActive && !hasAccessibleRuneforges && centerIsEmpty;
+  const canDraftFromCenter = !hasAccessibleRuneforges;
+  const centerDraftBlocked = !canDraftFromCenter && !effectActive && centerPool.length > 0 && isDraftPhase && !hasSelectedRunes && !isAITurn;
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
     if (effectActive) {
@@ -114,6 +118,7 @@ export function RuneforgesAndCenter({
           isDraftPhase={isDraftPhase}
           hasSelectedRunes={hasSelectedRunes}
           isAITurn={isAITurn}
+          canDraftFromCenter={canDraftFromCenter}
         />
       </div>
 

@@ -16,6 +16,7 @@ interface CenterPoolProps {
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
   isAITurn: boolean;
+  canDraftFromCenter: boolean;
 }
 
 export function CenterPool({ 
@@ -23,14 +24,16 @@ export function CenterPool({
   onRuneClick,
   isDraftPhase, 
   hasSelectedRunes, 
-  isAITurn
+  isAITurn,
+  canDraftFromCenter
 }: CenterPoolProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const totalRunes = centerPool.length;
+  const centerDisabled = !isDraftPhase || hasSelectedRunes || isAITurn || !canDraftFromCenter;
   
   const handleRuneClick = (e: React.MouseEvent, runeType: RuneType) => {
     e.stopPropagation();
-    if (isDraftPhase && !hasSelectedRunes && !isAITurn && onRuneClick) {
+    if (!centerDisabled && onRuneClick) {
       onRuneClick(runeType);
     }
   };
@@ -53,7 +56,6 @@ export function CenterPool({
           gap: `30px`
         }}>
           {centerPool.map((rune) => {
-            const disabled = !isDraftPhase || hasSelectedRunes || isAITurn;
             const isHighlighted = hoveredRuneType === rune.runeType;
             const scale = isHighlighted ? 1.08 : 1;
 
@@ -77,13 +79,13 @@ export function CenterPool({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.5 : 1,
+                  cursor: centerDisabled ? 'not-allowed' : 'pointer',
+                  opacity: centerDisabled ? 0.5 : 1,
                   transition: 'transform 0.16s ease, filter 0.16s ease',
                   transform: `scale(${scale})`,
                 }}
                 onClick={(e) => handleRuneClick(e, rune.runeType)}
-                onMouseEnter={() => !disabled && setHoveredRuneType(rune.runeType)}
+                onMouseEnter={() => !centerDisabled && setHoveredRuneType(rune.runeType)}
                 onMouseLeave={() => setHoveredRuneType(null)}
               >
                 <img
