@@ -4,13 +4,16 @@
 
 import type { Rune } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
+import { getRuneEffectDescription } from '../../../utils/runeHelpers';
 
 interface SelectedRunesOverlayProps {
   selectedRunes: Rune[];
   onCancel: () => void;
+  isClassicMode?: boolean;
 }
 
-export function SelectedRunesOverlay({ selectedRunes, onCancel }: SelectedRunesOverlayProps) {
+export function SelectedRunesOverlay({ selectedRunes, onCancel, isClassicMode = false }: SelectedRunesOverlayProps) {
+  const runeType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   
   return (
     <div 
@@ -25,9 +28,6 @@ export function SelectedRunesOverlay({ selectedRunes, onCancel }: SelectedRunesO
         maxWidth: '36rem',
         width: 'auto'
       }}>
-        <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1e40af', marginBottom: '8px', textAlign: 'center' }}>
-          Selected Runes ({selectedRunes.length})
-        </h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
           {selectedRunes.map((rune) => (
             <RuneCell
@@ -39,9 +39,11 @@ export function SelectedRunesOverlay({ selectedRunes, onCancel }: SelectedRunesO
             />
           ))}
         </div>
-        <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '18px', color: '#475569' }}>
-          Place runes in the casting lines.
-        </div>
+        {runeType && (
+          <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '16px', color: '#475569' }}>
+            {getRuneEffectDescription(runeType, isClassicMode)}
+          </div>
+        )}
       </div>
     </div>
   );

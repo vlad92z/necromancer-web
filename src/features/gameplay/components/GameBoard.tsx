@@ -240,6 +240,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               <SelectedRunesOverlay
                 selectedRunes={selectedRunes}
                 onCancel={cancelSelection}
+                isClassicMode={gameMode === 'classic'}
               />
             )}
             

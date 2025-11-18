@@ -57,7 +57,7 @@ npm run lint
 **Status**: ✅ Implemented
 
 ### ❄️ Frost (Control)
-**Effect**: Freeze one runeforge when placing Frost runes  
+**Effect**: Freeze one runeforge after placing Frost runes  
 **Strategy**: Block runeforges with runes opponent needs  
 **Status**: ✅ Implemented
 
