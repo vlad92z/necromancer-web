@@ -1,18 +1,17 @@
 /**
- * VoidEffectOverlay component - allows player to select a factory to destroy with Void effect
+ * VoidEffectOverlay component - allows player to select a runeforge to destroy with Void effect
  */
 
-import type { Factory } from '../../../types/game';
+import type { Runeforge } from '../../../types/game';
 
 interface VoidEffectOverlayProps {
-  factories: Factory[];
-  onSelectFactory: (factoryId: string) => void;
+  factories: Runeforge[];
+  onSelectFactory: (runeforgeId: string) => void;
   onSkip: () => void;
   isVisible: boolean; // Control visibility (hide during AI decision)
 }
 
 export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisible }: VoidEffectOverlayProps) {
-  const isMobile = window.innerWidth < 768;
   
   // Get only non-empty factories
   const nonEmptyFactories = factories.filter(f => f.runes.length > 0);
@@ -39,14 +38,14 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: isMobile ? '16px' : '32px',
+        padding: '32px',
       }}
     >
       <div
         style={{
           backgroundColor: '#1e293b',
-          borderRadius: isMobile ? '12px' : '16px',
-          padding: isMobile ? '20px' : '32px',
+          borderRadius: '16px',
+          padding: '32px',
           maxWidth: '600px',
           width: '100%',
           maxHeight: '80vh',
@@ -58,7 +57,7 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
         <h2
           style={{
             margin: '0 0 16px 0',
-            fontSize: isMobile ? '20px' : '28px',
+            fontSize: '28px',
             color: '#8B008B',
             fontWeight: 'bold',
             textAlign: 'center',
@@ -70,36 +69,36 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
         <p
           style={{
             margin: '0 0 24px 0',
-            fontSize: isMobile ? '14px' : '16px',
+            fontSize: '16px',
             color: '#e2e8f0',
             textAlign: 'center',
             lineHeight: '1.6',
           }}
         >
-          Choose a factory to destroy all its runes, or skip this effect.
+          Choose a runeforge to destroy all its runes, or skip this effect.
         </p>
         
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: isMobile ? '12px' : '16px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
             marginBottom: '24px',
           }}
         >
-          {nonEmptyFactories.map((factory) => (
+          {nonEmptyFactories.map((runeforge) => (
             <button
-              key={factory.id}
-              onClick={() => onSelectFactory(factory.id)}
+              key={runeforge.id}
+              onClick={() => onSelectFactory(runeforge.id)}
               style={{
-                padding: isMobile ? '12px' : '16px',
+                padding: '16px',
                 backgroundColor: '#2d3748',
                 border: '2px solid #8B008B',
-                borderRadius: isMobile ? '8px' : '12px',
+                borderRadius: '12px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 color: '#e2e8f0',
-                fontSize: isMobile ? '14px' : '16px',
+                fontSize: '16px',
                 fontWeight: 'bold',
               }}
               onMouseEnter={(e) => {
@@ -113,9 +112,9 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              Factory {parseInt(factory.id.replace('factory-', '')) + 1}
-              <div style={{ fontSize: isMobile ? '12px' : '14px', marginTop: '8px', opacity: 0.8 }}>
-                {factory.runes.length} rune{factory.runes.length !== 1 ? 's' : ''}
+              Runeforge {parseInt(runeforge.id.replace('runeforge-', '')) + 1}
+              <div style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>
+                {runeforge.runes.length} rune{runeforge.runes.length !== 1 ? 's' : ''}
               </div>
             </button>
           ))}
@@ -125,14 +124,14 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
           onClick={onSkip}
           style={{
             width: '100%',
-            padding: isMobile ? '12px' : '16px',
+            padding: '16px',
             backgroundColor: '#475569',
             border: '2px solid #64748b',
-            borderRadius: isMobile ? '8px' : '12px',
+            borderRadius: '12px',
             cursor: 'pointer',
             transition: 'all 0.2s',
             color: '#e2e8f0',
-            fontSize: isMobile ? '14px' : '16px',
+            fontSize: '16px',
             fontWeight: 'bold',
           }}
           onMouseEnter={(e) => {

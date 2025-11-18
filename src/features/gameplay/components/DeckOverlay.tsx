@@ -13,7 +13,6 @@ interface DeckOverlayProps {
 }
 
 export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
-  const isMobile = window.innerWidth < 768;
 
   // Group runes by type for organized display
   const runesByType = deck.reduce((acc, rune) => {
@@ -45,7 +44,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
           justifyContent: 'center',
           zIndex: 1000,
           backdropFilter: 'blur(4px)',
-          padding: isMobile ? '16px' : '24px',
+          padding: '24px',
         }}
       >
         <motion.div
@@ -55,9 +54,9 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
           onClick={(e) => e.stopPropagation()}
           style={{
             backgroundColor: 'white',
-            borderRadius: isMobile ? '12px' : '16px',
-            padding: isMobile ? '20px' : '32px',
-            maxWidth: isMobile ? '100%' : '700px',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '700px', //TODO'100%'?
             maxHeight: '90vh',
             overflow: 'auto',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
@@ -69,11 +68,11 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: isMobile ? '12px' : '16px',
+            marginBottom: '16px',
           }}>
             <div>
               <h2 style={{
-                fontSize: isMobile ? '18px' : '24px',
+                fontSize: '24px',
                 fontWeight: 'bold',
                 color: '#0c4a6e',
                 margin: 0,
@@ -87,9 +86,9 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                 backgroundColor: '#ef4444',
                 color: 'white',
                 border: 'none',
-                borderRadius: isMobile ? '6px' : '8px',
-                padding: isMobile ? '6px 12px' : '8px 16px',
-                fontSize: isMobile ? '12px' : '14px',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
@@ -103,7 +102,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: isMobile ? '10px' : '12px',
+            gap: '12px',
           }}>
             {runeTypes.map((runeType, typeIndex) => {
               const runes = runesByType[runeType] || [];
@@ -118,11 +117,11 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                   transition={{ delay: typeIndex * 0.05 }}
                   style={{
                     backgroundColor: '#f8fafc',
-                    borderRadius: isMobile ? '6px' : '8px',
-                    padding: isMobile ? '8px' : '10px',
+                    borderRadius: '8px',
+                    padding: '10px',
                     border: '2px solid #cbd5e1',
                     display: 'flex',
-                    gap: isMobile ? '8px' : '12px',
+                    gap: '12px',
                     alignItems: 'start',
                   }}
                 >
@@ -131,17 +130,17 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: isMobile ? '0px' : '6px',
-                    minWidth: isMobile ? '60px' : '80px',
+                    gap: '6px',
+                    minWidth: '80px',
                   }}>
                     <RuneCell
                       rune={runes[0]}
-                      variant="factory"
-                      size={isMobile ? 'small' : 'medium'}
+                      variant="runeforge"
+                      size={'medium'}
                       showEffect={false}
                     />
                     <div style={{
-                      fontSize: isMobile ? '12px' : '14px',
+                      fontSize: '14px',
                       fontWeight: 'bold',
                       color: '#1e293b',
                       textAlign: 'center',
@@ -149,7 +148,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                       {runeType}
                     </div>
                     <div style={{
-                      fontSize: isMobile ? '11px' : '12px',
+                      fontSize: '12px',
                       color: '#64748b',
                       textAlign: 'center',
                     }}>
@@ -160,13 +159,11 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                   {/* Runes grid (on the right) */}
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: isMobile 
-                      ? 'repeat(auto-fill, minmax(40px, 1fr))' 
-                      : 'repeat(auto-fill, minmax(60px, 1fr))',
-                    gap: isMobile ? '0px' : '6px',
-                    padding: isMobile ? '2px' : '8px',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))',
+                    gap: '6px',
+                    padding: '8px',
                     backgroundColor: '#f8fafc',
-                    borderRadius: isMobile ? '4px' : '6px',
+                    borderRadius: '6px',
                     flex: 1,
                   }}>
                     {runes.map((rune, index) => (
@@ -183,8 +180,8 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                       >
                         <RuneCell
                           rune={rune}
-                          variant="factory"
-                          size={isMobile ? 'small' : 'large'}
+                          variant="runeforge"
+                          size={'large'}
                           showEffect={true}
                         />
                       </motion.div>
@@ -198,15 +195,15 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
           {/* Empty state */}
           {deck.length === 0 && (
             <div style={{
-              padding: isMobile ? '32px' : '48px',
+              padding: '48px',
               textAlign: 'center',
               color: '#94a3b8',
             }}>
-              <div style={{ fontSize: isMobile ? '48px' : '64px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '64px', marginBottom: '16px' }}>
                 🎴
               </div>
               <p style={{
-                fontSize: isMobile ? '16px' : '18px',
+                fontSize: '18px',
                 fontWeight: 'bold',
               }}>
                 No runes remaining
@@ -216,14 +213,14 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
 
           {/* Footer info */}
           <div style={{
-            marginTop: isMobile ? '12px' : '16px',
-            padding: isMobile ? '8px' : '12px',
+            marginTop: '16px',
+            padding: '12px',
             backgroundColor: '#eff6ff',
-            borderRadius: isMobile ? '6px' : '8px',
+            borderRadius: '8px',
             border: '2px solid #bfdbfe',
           }}>
             <p style={{
-              fontSize: isMobile ? '11px' : '13px',
+              fontSize: '13px',
               color: '#1e40af',
               margin: 0,
               lineHeight: 1.4,

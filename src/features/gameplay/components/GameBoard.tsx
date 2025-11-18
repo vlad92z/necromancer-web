@@ -1,41 +1,36 @@
 /**
- * GameBoard component - main game board displaying factories, center, player and opponent views
+ * GameBoard component - main game board displaying runeforges, center, player and opponent views
  */
 
 import { useState, useEffect } from 'react';
 import type { GameState, RuneType } from '../../../types/game';
-import { FactoriesAndCenter } from './FactoriesAndCenter';
+import { RuneforgesAndCenter } from './RuneforgesAndCenter';
 import { PlayerView } from './PlayerView';
 import { OpponentView } from './OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
-import { FactoryOverlay } from './FactoryOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
-import { useGameStore } from '../../../state/gameStore';
+import { useGameplayStore } from '../../../state/stores/gameplayStore';
 
 interface GameBoardProps {
   gameState: GameState;
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenFactories, gameMode } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
-  const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
-  const destroyFactory = useGameStore((state) => state.destroyFactory);
-  const freezeFactory = useGameStore((state) => state.freezeFactory);
+  const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
+  const destroyRuneforge = useGameplayStore((state) => state.destroyRuneforge);
+  const freezeRuneforge = useGameplayStore((state) => state.freezeRuneforge);
+  const endRound = useGameplayStore((state) => state.endRound);
+  const processScoringStep = useGameplayStore((state) => state.processScoringStep);
   
-  const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showLogOverlay, setShowLogOverlay] = useState(false);
-  const [showFactoryOverlay, setShowFactoryOverlay] = useState(false);
-  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
-  const [factoryOverlaySource, setFactoryOverlaySource] = useState<'factory' | 'center'>('factory');
-  const isMobile = window.innerWidth < 768;
-  console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
   const isDraftPhase = turnPhase === 'draft';
   const isGameOver = turnPhase === 'game-over';
@@ -43,25 +38,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
   const isAITurn = currentPlayer.type === 'ai';
-  
-  // Auto-show opponent overlay on mobile during AI turn (with delay)
-  useEffect(() => {
-    if (isMobile && isAITurn) {
-      const delayTimer = setTimeout(() => {
-        setShowOpponentOverlay(true);
-      }, 2000); // 2 second delay before showing overlay
-      
-      return () => clearTimeout(delayTimer);
-    } else if (isMobile && !isAITurn) {
-      // Auto-hide when player's turn starts (with delay)
-      const hideTimer = setTimeout(() => {
-        setShowOpponentOverlay(false);
-      }, 2000); // 2 second delay before hiding overlay
-      
-      return () => clearTimeout(hideTimer);
-    }
-  }, [isMobile, isAITurn]);
-  
+
   // Determine winner (lowest damage taken wins)
   // players[0].score = damage dealt by player (taken by opponent)
   // players[1].score = damage dealt by opponent (taken by player)
@@ -74,199 +51,229 @@ export function GameBoard({ gameState }: GameBoardProps) {
         : null
     : null;
   
-  const handleFactoryClick = (factoryId: string) => {
-    // Handle Void effect - clicking factory destroys it
+  const handleRuneClick = (runeforgeId: string, runeType: RuneType) => {
+    // Direct rune click always drafts that rune type
+    draftRune(runeforgeId, runeType);
+  };
+  
+  const handleCenterRuneClick = (runeType: RuneType) => {
+    // Direct center rune click drafts that rune type from center
+    draftFromCenter(runeType);
+  };
+  
+  const handleRuneforgeClick = (runeforgeId: string) => {
+    // Handle Void effect - clicking runeforge destroys it
     if (voidEffectPending) {
-      const factory = factories.find(f => f.id === factoryId);
-      // Only allow clicking non-empty factories during Void effect
-      if (factory && factory.runes.length > 0) {
-        destroyFactory(factoryId);
+      const runeforge = runeforges.find(f => f.id === runeforgeId);
+      // Only allow clicking non-empty runeforges during Void effect
+      if (runeforge && runeforge.runes.length > 0) {
+        destroyRuneforge(runeforgeId);
       }
       return;
     }
     
-    // Handle Frost effect - clicking factory freezes it
+    // Handle Frost effect - clicking runeforge freezes it
     if (frostEffectPending) {
-      const factory = factories.find(f => f.id === factoryId);
-      // Only allow clicking non-empty factories during Frost effect
-      if (factory && factory.runes.length > 0) {
-        freezeFactory(factoryId);
+      const runeforge = runeforges.find(f => f.id === runeforgeId);
+      // Only allow clicking non-empty runeforges during Frost effect
+      if (runeforge && runeforge.runes.length > 0) {
+        freezeRuneforge(runeforgeId);
       }
       return;
     }
-    
-    // Normal draft behavior
-    const factory = factories.find(f => f.id === factoryId);
-    if (!factory || factory.runes.length === 0) return;
-    
-    // Check if all runes are the same type
-    const uniqueTypes = new Set(factory.runes.map(r => r.runeType));
-    if (uniqueTypes.size === 1) {
-      // Auto-select if only one type
-      const runeType = factory.runes[0].runeType;
-      draftRune(factoryId, runeType);
-    } else {
-      // Show overlay for multiple types
-      setSelectedFactoryId(factoryId);
-      setFactoryOverlaySource('factory');
-      setShowFactoryOverlay(true);
-    }
-  };
-  
-  const handleCenterClick = () => {
-    if (centerPool.length === 0) return;
-    
-    // Check if all runes are the same type
-    const uniqueTypes = new Set(centerPool.map(r => r.runeType));
-    if (uniqueTypes.size === 1) {
-      // Auto-select if only one type
-      const runeType = centerPool[0].runeType;
-      draftFromCenter(runeType);
-    } else {
-      // Show overlay for multiple types
-      setSelectedFactoryId(null);
-      setFactoryOverlaySource('center');
-      setShowFactoryOverlay(true);
-    }
-  };
-  
-  const handleFactoryOverlaySelect = (runeType: RuneType) => {
-    if (factoryOverlaySource === 'factory' && selectedFactoryId) {
-      draftRune(selectedFactoryId, runeType);
-    } else if (factoryOverlaySource === 'center') {
-      draftFromCenter(runeType);
-    }
-    setShowFactoryOverlay(false);
-  };
-  
-  const handleFactoryOverlayClose = () => {
-    setShowFactoryOverlay(false);
-    setSelectedFactoryId(null);
   };
   
   const handleBackgroundClick = () => {
     // Background click handler - no longer needed since PlayerBoard handles it
     // Keeping for potential future use with empty space clicks
   };
+
+  // Handle end-of-round trigger
+  useEffect(() => {
+    if (shouldTriggerEndRound) {
+      const timer = setTimeout(() => {
+        endRound();
+      }, 1000); // 1 second delay for visual effect
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldTriggerEndRound, endRound]);
+
+  // Handle scoring animation sequence
+  useEffect(() => {
+    if (!scoringPhase) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+
+    if (scoringPhase === 'moving-to-wall') {
+      // Wait 1.5 seconds, then process scoring step
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1500);
+    } else if (scoringPhase === 'calculating-score') {
+      // Wait 2 seconds, then process next step
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 2000);
+    } else if (scoringPhase === 'clearing-floor') {
+      // Wait 1.5 seconds, then complete
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1500);
+    } else if (scoringPhase === 'complete') {
+      // Wait briefly, then process final step (start next round or game over)
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 500);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [scoringPhase, processScoringStep]);
   
   return (
     <div 
       style={{
-        minHeight: '100vh',
+        height: '100vh',
         backgroundColor: '#f0f9ff',
         color: '#1e293b',
-        padding: window.innerWidth < 768 ? '8px' : '24px'
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}
       onClick={handleBackgroundClick}
     >
-      <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
-        {/* Game Header */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center', position: 'relative' }}>
-          <h1 style={{ fontSize: window.innerWidth < 768 ? '15px' : '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: window.innerWidth < 768 ? '10px' : '14px' }}>
-            <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
+
+      {/* Three Equal Sections Container */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }} onClick={(e) => e.stopPropagation()}>
+        
+        {/* Opponent View - Top 33% */}
+        <div style={{ 
+          height: '33.33%', 
+          padding: '16px',
+          borderBottom: '2px solid #cbd5e1',
+          overflow: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ width: '100%', maxWidth: '1200px' }}>
+            <OpponentView
+              opponent={players[1]}
+              player={players[0]}
+              isActive={currentPlayerIndex === 1}
+              gameMode={gameMode}
+            />
           </div>
-          
-          {/* Top Right Buttons */}
-          <div style={{
-            position: 'absolute',
-            top: '0',
-            right: '0',
-            display: 'flex',
-            gap: isMobile ? '4px' : '8px'
-          }}>
-            {/* Deck Button */}
-            <button
-              onClick={() => setShowDeckOverlay(true)}
-              style={{
+        </div>
+
+        {/* Drafting Table (Runeforges and Center) - Middle 33% */}
+        <div style={{ 
+          height: '33.33%', 
+          padding: '16px',
+          borderBottom: '2px solid #cbd5e1',
+          overflow: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative'
+        }}>
+          <div style={{ width: '100%', maxWidth: '1200px' }}>
+            {/* Void Effect Message */}
+            {voidEffectPending && !isAITurn && (
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '16px',
+                padding: '12px',
                 backgroundColor: '#7c3aed',
                 color: 'white',
-                border: 'none',
-                borderRadius: isMobile ? '6px' : '8px',
-                padding: isMobile ? '6px 12px' : '8px 16px',
-                fontSize: isMobile ? '12px' : '14px',
-                cursor: 'pointer',
+                borderRadius: '8px',
+                fontSize: '18px',
                 fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-              }}
-            >
-              {isMobile ? '🎴' : '🎴 Deck'}
-            </button>
+                boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
+                animation: 'pulse 2s infinite'
+              }}>
+                💀 Void Effect: Click a runeforge to destroy it! 💀
+              </div>
+            )}
             
-            {/* Log Button */}
-            <button
-              onClick={() => setShowLogOverlay(true)}
-              style={{
-                backgroundColor: '#059669',
+            {/* Frost Effect Message */}
+            {frostEffectPending && !isAITurn && (
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '16px',
+                padding: '12px',
+                backgroundColor: '#06b6d4',
                 color: 'white',
-                border: 'none',
-                borderRadius: isMobile ? '6px' : '8px',
-                padding: isMobile ? '6px 12px' : '8px 16px',
-                fontSize: isMobile ? '12px' : '14px',
-                cursor: 'pointer',
+                borderRadius: '8px',
+                fontSize: '18px',
                 fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-              }}
-            >
-              {isMobile ? '📜' : '📜 Log'}
-            </button>
+                boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
+                animation: 'pulse 2s infinite'
+              }}>
+                ❄️ Frost Effect: Click a runeforge to freeze it! ❄️
+              </div>
+            )}
             
-            {/* Rules Button */}
-            <button
-              onClick={() => setShowRulesOverlay(true)}
-              style={{
-                backgroundColor: '#0369a1',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: isMobile ? '6px 10px' : '8px 14px',
-                fontSize: isMobile ? '10px' : '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0284c7'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0369a1'}
-            >
-              ❓ Rules
-            </button>
+            <RuneforgesAndCenter
+              runeforges={runeforges}
+              centerPool={centerPool}
+              onRuneClick={handleRuneClick}
+              onCenterRuneClick={handleCenterRuneClick}
+              onRuneforgeClick={handleRuneforgeClick}
+              isDraftPhase={isDraftPhase}
+              hasSelectedRunes={hasSelectedRunes}
+              isAITurn={isAITurn}
+              voidEffectPending={voidEffectPending}
+              frostEffectPending={frostEffectPending}
+              frozenRuneforges={frozenRuneforges}
+            />
             
-            {/* View Opponent Button (Mobile Only) */}
-            {isMobile && currentPlayerIndex === 0 && (
-              <button
-                onClick={() => setShowOpponentOverlay(true)}
-                style={{
-                  backgroundColor: '#7c2d12',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '10px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#9a3412'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#7c2d12'}
-              >
-                👁️ Opponent
-              </button>
+            {/* Selected Runes Display - Overlay */}
+            {hasSelectedRunes && (
+              <SelectedRunesOverlay
+                selectedRunes={selectedRunes}
+                onCancel={cancelSelection}
+                isClassicMode={gameMode === 'classic'}
+              />
+            )}
+            
+            {/* Game Over Modal - Centered over drafting area */}
+            {isGameOver && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 100,
+                width: 'auto'
+              }}>
+                <GameOverModal
+                  players={players}
+                  winner={winner}
+                  onReturnToStart={returnToStartScreen}
+                />
+              </div>
             )}
           </div>
         </div>
-        
-        {/* Player Boards - Side by side on desktop, stacked on mobile */}
-        {isMobile ? (
-          <>
-            {/* Player (Human) - Mobile */}
+
+        {/* Player View - Bottom 33% */}
+        <div style={{ 
+          height: '33.33%', 
+          padding: '16px',
+          overflow: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ width: '100%', maxWidth: '1200px' }}>
             <PlayerView
               player={players[0]}
               opponent={players[1]}
@@ -277,169 +284,13 @@ export function GameBoard({ gameState }: GameBoardProps) {
               canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
               onCancelSelection={cancelSelection}
               gameMode={gameMode}
+              onShowDeck={() => setShowDeckOverlay(true)}
+              onShowLog={() => setShowLogOverlay(true)}
+              onShowRules={() => setShowRulesOverlay(true)}
             />
-          </>
-        ) : (
-          <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
-            {/* Player (Human) - Desktop Left */}
-            <div style={{ flex: 1 }}>
-              <PlayerView
-                player={players[0]}
-                opponent={players[1]}
-                isActive={currentPlayerIndex === 0}
-                onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
-                onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
-                selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-                canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
-                onCancelSelection={cancelSelection}
-                gameMode={gameMode}
-              />
-            </div>
-            
-            {/* Opponent (AI) - Desktop Right */}
-            <div style={{ flex: 1 }}>
-              <OpponentView
-                opponent={players[1]}
-                player={players[0]}
-                isActive={currentPlayerIndex === 1}
-                gameMode={gameMode}
-              />
-            </div>
           </div>
-        )}
-        
-        {/* Factories and Center */}
-        <div style={{ position: 'relative' }}>
-          {/* Void Effect Message */}
-          {voidEffectPending && !isAITurn && (
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '16px',
-              padding: '12px',
-              backgroundColor: '#7c3aed',
-              color: 'white',
-              borderRadius: '8px',
-              fontSize: isMobile ? '14px' : '18px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
-              animation: 'pulse 2s infinite'
-            }}>
-              💀 Void Effect: Click a factory to destroy it! 💀
-            </div>
-          )}
-          
-          {/* Frost Effect Message */}
-          {frostEffectPending && !isAITurn && (
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '16px',
-              padding: '12px',
-              backgroundColor: '#06b6d4',
-              color: 'white',
-              borderRadius: '8px',
-              fontSize: isMobile ? '14px' : '18px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
-              animation: 'pulse 2s infinite'
-            }}>
-              ❄️ Frost Effect: Click a factory to freeze it! ❄️
-            </div>
-          )}
-          
-          <FactoriesAndCenter
-            factories={factories}
-            centerPool={centerPool}
-            onFactoryClick={handleFactoryClick}
-            onCenterClick={handleCenterClick}
-            isDraftPhase={isDraftPhase}
-            hasSelectedRunes={hasSelectedRunes}
-            isAITurn={isAITurn}
-            voidEffectPending={voidEffectPending}
-            frostEffectPending={frostEffectPending}
-            frozenFactories={frozenFactories}
-          />
-          
-          {/* Selected Runes Display - Overlay */}
-          {hasSelectedRunes && (
-            <SelectedRunesOverlay
-              selectedRunes={selectedRunes}
-              onCancel={cancelSelection}
-            />
-          )}
-          
-          {/* Game Over Modal - Centered over factories */}
-          {isGameOver && (
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 100,
-              width: isMobile ? '90%' : 'auto'
-            }}>
-              <GameOverModal
-                players={players}
-                winner={winner}
-                onReturnToStart={returnToStartScreen}
-              />
-            </div>
-          )}
         </div>
       </div>
-      
-      {/* Opponent Overlay (Mobile Only) */}
-      {isMobile && showOpponentOverlay && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            inset: 0, 
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center', 
-            justifyContent: 'flex-start',
-            zIndex: 100,
-            padding: '8px',
-            overflowY: 'auto',
-            pointerEvents: 'none' // Allow clicks to pass through
-          }}
-        >
-          <div 
-            style={{ 
-              width: '100%', 
-              maxWidth: '600px',
-              pointerEvents: 'auto' // Re-enable clicks on opponent view
-            }}
-          >
-            {/* Close Button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-              <button
-                onClick={() => setShowOpponentOverlay(false)}
-                style={{
-                  backgroundColor: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                }}
-              >
-                ✕ Close
-              </button>
-            </div>
-            
-            {/* Opponent Board */}
-            <OpponentView
-              opponent={players[1]}
-              player={players[0]}
-              isActive={currentPlayerIndex === 1}
-              gameMode={gameMode}
-            />
-          </div>
-        </div>
-      )}
       
       {/* Rules Overlay */}
       {showRulesOverlay && (
@@ -460,20 +311,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
         <GameLogOverlay
           roundHistory={gameState.roundHistory}
           onClose={() => setShowLogOverlay(false)}
-        />
-      )}
-      
-      {/* Factory Overlay */}
-      {showFactoryOverlay && (
-        <FactoryOverlay
-          runes={
-            factoryOverlaySource === 'factory' && selectedFactoryId
-              ? factories.find(f => f.id === selectedFactoryId)?.runes || []
-              : centerPool
-          }
-          onSelectRune={handleFactoryOverlaySelect}
-          onClose={handleFactoryOverlayClose}
-          gameMode={gameMode}
         />
       )}
     </div>

@@ -2,12 +2,13 @@
  * CenterPool component - displays the center pool where leftover runes accumulate
  */
 
-import type { Rune } from '../../../types/game';
+import { useState } from 'react';
+import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
 interface CenterPoolProps {
   centerPool: Rune[];
-  onCenterClick: () => void;
+  onRuneClick?: (runeType: RuneType) => void;
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
   isAITurn: boolean;
@@ -15,56 +16,76 @@ interface CenterPoolProps {
 
 export function CenterPool({ 
   centerPool, 
-  onCenterClick, 
+  onRuneClick,
   isDraftPhase, 
   hasSelectedRunes, 
-  isAITurn 
+  isAITurn
 }: CenterPoolProps) {
-  const isMobile = window.innerWidth < 768;
+  const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
+  
+  const handleRuneClick = (e: React.MouseEvent, runeType: RuneType) => {
+    e.stopPropagation();
+    if (isDraftPhase && !hasSelectedRunes && !isAITurn && onRuneClick) {
+      onRuneClick(runeType);
+    }
+  };
+  
+  // Determine if center pool is selectable
+  const isSelectable = isDraftPhase && !hasSelectedRunes && !isAITurn && centerPool.length > 0 && onRuneClick;
   
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <button
-        onClick={onCenterClick}
-        disabled={!isDraftPhase || hasSelectedRunes || isAITurn || centerPool.length === 0}
+      <div
         style={{
           backgroundColor: '#dbeafe',
-          borderRadius: isMobile ? '4px' : '12px',
-          padding: isMobile ? '6px' : '16px',
+          borderRadius: '12px',
+          padding: '16px',
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'center',
-          gap: isMobile ? '4px' : '8px',
+          alignItems: 'center',
+          alignContent: 'center',
+          gap: '8px',
           maxWidth: '90%',
-          border: '2px solid #bfdbfe',
-          cursor: (!isDraftPhase || hasSelectedRunes || isAITurn || centerPool.length === 0) ? 'not-allowed' : 'pointer',
-          outline: 'none',
-          transition: 'all 0.2s'
+          border: isSelectable ? '2px solid #22c55e' : '2px solid #bfdbfe',
+          minHeight: '80px',
+          boxShadow: isSelectable ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
         }}
-        onMouseEnter={(e) => !(!isDraftPhase || hasSelectedRunes || isAITurn || centerPool.length === 0) && (e.currentTarget.style.backgroundColor = '#bfdbfe', e.currentTarget.style.transform = 'scale(1.02)')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dbeafe', e.currentTarget.style.transform = 'scale(1)')}
-        aria-label={`Open center pool with ${centerPool.length} runes`}
       >
         {centerPool.length === 0 ? (
-          <div style={{ color: '#6b7280', fontSize: isMobile ? '10px' : '14px', textAlign: 'center', padding: isMobile ? '8px' : '16px' }}>Empty</div>
+          <div style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', padding: '16px' }}>Empty</div>
         ) : (
-          centerPool.map((rune) => (
-            <div
-              key={rune.id}
-              style={{
-                pointerEvents: 'none'
-              }}
-            >
-              <RuneCell
-                rune={rune}
-                variant="center"
-                size="large"
-                showEffect={false}
-              />
-            </div>
-          ))
+          centerPool.map((rune) => {
+            const disabled = !isDraftPhase || hasSelectedRunes || isAITurn;
+            const isHighlighted = hoveredRuneType === rune.runeType;
+            
+            return (
+              <div
+                key={rune.id}
+                style={{
+                  position: 'relative',
+                  pointerEvents: disabled ? 'none' : 'auto',
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  opacity: disabled ? 0.5 : 1,
+                  transform: isHighlighted ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.15s ease',
+                  filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none'
+                }}
+                onClick={(e) => handleRuneClick(e, rune.runeType)}
+                onMouseEnter={() => !disabled && setHoveredRuneType(rune.runeType)}
+                onMouseLeave={() => setHoveredRuneType(null)}
+              >
+                <RuneCell
+                  rune={rune}
+                  variant="center"
+                  size="large"
+                  showEffect={false}
+                />
+              </div>
+            );
+          })
         )}
-      </button>
+      </div>
     </div>
   );
 }

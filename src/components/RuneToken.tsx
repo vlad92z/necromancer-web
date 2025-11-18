@@ -1,10 +1,11 @@
 /**
  * RuneToken component - displays a single rune
- * Now uses the unified RuneCell component
+ * Now uses the unified RuneCell component with design tokens
  */
 
 import type { Rune } from '../types/game';
 import { RuneCell } from './RuneCell';
+import { TRANSITIONS } from '../styles/tokens';
 
 interface RuneTokenProps {
   rune: Rune;
@@ -22,7 +23,7 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
       tabIndex={onClick ? 0 : undefined}
       style={{
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 0.2s',
+        transition: `transform ${TRANSITIONS.medium}`,
       }}
     >
       <RuneCell

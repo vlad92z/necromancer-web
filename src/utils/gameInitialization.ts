@@ -5,7 +5,7 @@
 import type {
   GameState,
   Player,
-  Factory,
+  Runeforge,
   PatternLine,
   ScoringWall,
   Rune,
@@ -48,7 +48,7 @@ export function createMockDeck(playerId: string): Rune[] {
   
   // Create 4 of each rune type (20 total per player)
   runeTypes.forEach((runeType) => {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 4; i++) {
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
         runeType,
@@ -72,7 +72,7 @@ export function createPlayer(id: string, name: string, type: PlayerType = 'human
     wall: createEmptyWall(),
     floorLine: {
       runes: [],
-      maxCapacity: 9,
+      maxCapacity: 10,
     },
     score: 0,
     deck: createMockDeck(id),
@@ -82,51 +82,51 @@ export function createPlayer(id: string, name: string, type: PlayerType = 'human
 /**
  * Create empty factories (for static rendering, no runes yet)
  */
-export function createEmptyFactories(count: number): Factory[] {
+export function createEmptyFactories(count: number): Runeforge[] {
   return Array(count)
     .fill(null)
     .map((_, index) => ({
-      id: `factory-${index}`,
+      id: `runeforge-${index}`,
       runes: [],
     }));
 }
 
 /**
  * Fill factories with runes from player decks
- * Each factory gets 4 runes: 2 from player 1's deck and 2 from player 2's deck
+ * Each runeforge gets 4 runes: 2 from player 1's deck and 2 from player 2's deck
  * Returns both filled factories and updated decks
  */
 export function fillFactories(
-  factories: Factory[], 
+  runeforges: Runeforge[], 
   deck1: Rune[], 
   deck2: Rune[]
-): { factories: Factory[], deck1: Rune[], deck2: Rune[] } {
+): { runeforges: Runeforge[], deck1: Rune[], deck2: Rune[] } {
   // Shuffle each deck separately
   const shuffledDeck1 = [...deck1].sort(() => Math.random() - 0.5);
   const shuffledDeck2 = [...deck2].sort(() => Math.random() - 0.5);
   
-  const filledFactories = factories.map((factory, index) => {
+  const filledRuneforges = runeforges.map((runeforge, index) => {
     // Get 2 runes from each player's deck
     const startIdx = index * 2;
     const runesFromPlayer1 = shuffledDeck1.slice(startIdx, startIdx + 2);
     const runesFromPlayer2 = shuffledDeck2.slice(startIdx, startIdx + 2);
     
-    // Combine and shuffle the 4 runes for this factory
-    const runes = [...runesFromPlayer1, ...runesFromPlayer2].sort(() => Math.random() - 0.5);
+    // Combine and shuffle the 4 runes for this runeforge
+    const combinedRunes = [...runesFromPlayer1, ...runesFromPlayer2].sort(() => Math.random() - 0.5);
     
     return {
-      ...factory,
-      runes,
+      ...runeforge,
+      runes: combinedRunes,
     };
   });
   
-  // Remove used runes from decks (10 runes total: 2 per factory × 5 factories)
-  const runesUsed = factories.length * 2;
+  // Remove used runes from decks (10 runes total: 2 per runeforge × 5 runeforges)
+  const runesUsed = runeforges.length * 2;
   const remainingDeck1 = shuffledDeck1.slice(runesUsed);
   const remainingDeck2 = shuffledDeck2.slice(runesUsed);
   
   return {
-    factories: filledFactories,
+    runeforges: filledRuneforges,
     deck1: remainingDeck1,
     deck2: remainingDeck2,
   };
@@ -144,7 +144,7 @@ export function initializeGame(): GameState {
   const emptyFactories = createEmptyFactories(5);
   
   // Fill factories and get updated decks
-  const { factories: filledFactories, deck1, deck2 } = fillFactories(emptyFactories, player1.deck, player2.deck);
+  const { runeforges: filledRuneforges, deck1, deck2 } = fillFactories(emptyFactories, player1.deck, player2.deck);
   
   // Update player decks with remaining runes
   player1.deck = deck1;
@@ -154,7 +154,7 @@ export function initializeGame(): GameState {
     gameStarted: false,
     gameMode: 'standard', // Default to standard mode (will be set when starting game)
     players: [player1, player2],
-    factories: filledFactories,
+    runeforges: filledRuneforges,
     centerPool: [],
     currentPlayerIndex: 0,
     turnPhase: 'draft',
@@ -168,6 +168,7 @@ export function initializeGame(): GameState {
     roundHistory: [],
     voidEffectPending: false,
     frostEffectPending: false,
-    frozenFactories: [],
+    frozenRuneforges: [],
+    shouldTriggerEndRound: false,
   };
 }

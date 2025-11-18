@@ -1,10 +1,12 @@
 /**
  * RuneCell component - unified cell display for runes across all game areas
- * Supports: Wall cells, Pattern lines, Floor line, Factories, Center pool
+ * Supports: Wall cells, Pattern lines, Floor line, Runeforges, Center pool
+ * Now uses centralized design tokens for consistent styling
  */
 
 import { motion } from 'framer-motion';
 import type { Rune, RuneType } from '../types/game';
+import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
 import frostRune from '../assets/runes/frost_rune.svg';
 import poisonRune from '../assets/runes/poison_rune.svg';
@@ -19,7 +21,7 @@ const RUNE_ASSETS = {
   Wind: windRune,
 };
 
-export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'factory' | 'center' | 'selected';
+export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
 
 export interface RuneCellProps {
   rune?: Rune | null;
@@ -39,7 +41,7 @@ export interface RuneCellProps {
 const SIZE_CONFIG = {
   small: { width: 30, height: 30, fontSize: 10, padding: 2 },
   medium: { width: 35, height: 35, fontSize: 14, padding: 2 },
-  large: { width: 60, height: 60, fontSize: 20, padding: 4 },
+  large: { width: 45, height: 45, fontSize: 20, padding: 4 },
 };
 
 const VARIANT_STYLES: Record<RuneCellVariant, {
@@ -49,20 +51,20 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   emptyOpacity?: number;
 }> = {
   wall: {
-    border: '2px solid #cbd5e1',
-    background: '#f8fafc',
+    border: `2px solid ${COLORS.ui.borderLight}`,
+    background: '#dbeafe', // Light blue background
     backgroundOccupied: '#fed7aa',
     emptyOpacity: 0.3,
   },
   pattern: {
-    border: '2px solid #cbd5e1',
-    background: '#f8fafc',
+    border: `2px solid ${COLORS.ui.borderLight}`,
+    background: '#dbeafe', // Light blue background
   },
   floor: {
     border: '2px solid #fca5a5',
     background: '#fef2f2',
   },
-  factory: {
+  runeforge: {
     border: 'none',
     background: 'transparent',
   },
@@ -71,7 +73,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
     background: 'transparent',
   },
   selected: {
-    border: '2px solid #3b82f6',
+    border: `2px solid ${COLORS.ui.accent}`,
     background: '#dbeafe',
   },
 };
@@ -86,9 +88,7 @@ export function RuneCell({
   showEffect = false,
   isPending = false,
 }: RuneCellProps) {
-  const isMobile = window.innerWidth < 768;
-  const sizeKey = isMobile ? (size === 'large' ? 'medium' : 'small') : size;
-  const config = SIZE_CONFIG[sizeKey];
+  const config = SIZE_CONFIG[size];
   const variantStyle = VARIANT_STYLES[variant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
@@ -135,14 +135,14 @@ export function RuneCell({
         width: `${config.width}px`,
         height: `${config.height}px`,
         border: borderStyle,
-        borderRadius: isMobile ? '6px' : '8px',
+        borderRadius: `${RADIUS.md}px`,
         backgroundColor: backgroundColor,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: `${config.padding}px`,
         cursor: clickable ? 'pointer' : 'default',
-        transition: shouldAnimate ? undefined : 'transform 0.2s',
+        transition: shouldAnimate ? undefined : TRANSITIONS.medium,
         position: 'relative',
       }}
       onMouseEnter={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
@@ -164,7 +164,7 @@ export function RuneCell({
       {hasTextPlaceholder && (
         <div style={{ 
           fontSize: `${config.fontSize}px`, 
-          color: variant === 'floor' ? '#991b1b' : '#64748b',
+          color: variant === 'floor' ? COLORS.status.error : COLORS.ui.textMuted,
           fontWeight: variant === 'floor' ? 'bold' : 'normal',
         }}>
           {placeholder.text}
@@ -179,10 +179,10 @@ export function RuneCell({
           right: '-4px',
           width: '12px',
           height: '12px',
-          borderRadius: '50%',
-          backgroundColor: '#eab308',
-          border: '2px solid white',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          borderRadius: RADIUS.round,
+          backgroundColor: COLORS.status.warning,
+          border: `2px solid ${COLORS.ui.text}`,
+          boxShadow: SHADOWS.sm,
         }} />
       )}
     </Container>

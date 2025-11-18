@@ -14,13 +14,10 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Single-page PvE card drafting game (Azul-inspired mechanics)
 - React 19 + TypeScript + Zustand + Framer Motion
 - Inline CSS styling (no Tailwind, no CSS-in-JS libraries)
-- Mobile-first responsive design with overlay patterns
 - No routing, no backend, no meta-progression features
 
 **What to Focus On**:
 - Core gameplay mechanics and polish
-- Mobile/responsive UX improvements
-- AI opponent intelligence
 - Visual feedback and animations
 - Accessibility enhancements
 
@@ -41,12 +38,12 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Separate view components: `PlayerView` (interactive) and `OpponentView` (read-only)
 
 **Component Structure**:
-- `GameBoard`: Main game orchestration, factories, turn management, overlay coordination
+- `GameBoard`: Main game orchestration, runeforges, turn management, overlay coordination
 - `PlayerView`: Human player's board with full interaction (pattern lines, floor line, scoring wall)
 - `OpponentView`: AI opponent's board (display-only, no interaction handlers)
 - `PlayerBoard`: Shared board rendering logic used by both views
 - **Overlay System**: Mobile-optimized modal components for information and selection
-  - `FactoryOverlay`: Enlarged factory/center pool selector for mobile
+  - `RuneforgeOverlay`: Enlarged runeforge/center pool selector for mobile
   - `DeckOverlay`: Full-screen deck viewer grouped by rune type
   - `GameLogOverlay`: Round-by-round scoring history
   - `RulesOverlay`: Comprehensive game rules explanation
@@ -122,7 +119,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 **Example Prompts**:
 1. "Set up the initial folder structure for Massive Spell: Arcane Arena, including separate directories for gameplay features and shared components. Use Zustand for game state management."
-2. "Define TypeScript types for `Rune`, `Factory`, `PatternLine`, and `ScoringWall`. Use discriminated unions for `RuneType` (Fire, Frost, Poison, Void, Wind) and `RuneEffect`."
+2. "Define TypeScript types for `Rune`, `Runeforge`, `PatternLine`, and `ScoringWall`. Use discriminated unions for `RuneType` (Fire, Frost, Poison, Void, Wind) and `RuneEffect`."
 3. "Design an overlay component system for mobile-optimized information displays and selections. Include patterns for backdrop dismissal, touch-friendly interactions, and responsive layouts."
 
 ---
@@ -132,8 +129,8 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 **Domain**: Component design, layout, visual hierarchy, animations, accessibility, game feel, responsiveness.
 
 **Typical Tasks**:
-- Design responsive layouts for game board (factories, pattern lines, scoring grid, floor line).
-- Create reusable UI components (Button, Card, Modal, RuneToken, FactoryDisplay).
+- Design responsive layouts for game board (runeforges, pattern lines, scoring grid, floor line).
+- Create reusable UI components (Button, Card, Modal, RuneToken, RuneforgeDisplay).
 - Propose color schemes and visual identity for rune types (Fire = red, Frost = blue, etc.).
 - Design animations for rune drafting, placement, line completion, scoring.
 - Ensure accessibility (colorblind-friendly palettes, keyboard navigation, screen reader support).
@@ -141,14 +138,14 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Define spacing, typography, and theming system.
 
 **Inputs Required**:
-- Game mechanics (how factories work, how pattern lines fill, scoring rules).
+- Game mechanics (how runeforges work, how pattern lines fill, scoring rules).
 - Branding guidelines (if any) or creative freedom to propose.
 - Target platforms (desktop first, mobile secondary).
 
 **Outputs Expected**:
-- React components for core UI elements (`RuneToken.tsx`, `RuneCell.tsx`, `Factory.tsx`, `PatternLines.tsx`, `ScoringWall.tsx`).
+- React components for core UI elements (`RuneToken.tsx`, `RuneCell.tsx`, `Runeforge.tsx`, `PatternLines.tsx`, `ScoringWall.tsx`).
 - Inline CSS style objects for component styling (JavaScript objects, not classes).
-- Overlay components for mobile-optimized interactions (`FactoryOverlay`, `DeckOverlay`, etc.).
+- Overlay components for mobile-optimized interactions (`RuneforgeOverlay`, `DeckOverlay`, etc.).
 - Framer Motion animation configurations (spring transitions, AnimatePresence).
 - Accessibility implementation (ARIA labels, focus management, keyboard navigation).
 - Responsive patterns using conditional rendering and viewport-based logic.
@@ -157,7 +154,6 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - All interactive elements must be keyboard-accessible.
 - Rune types must be distinguishable by color AND icon/glyph for colorblind users.
 - Animations must respect `prefers-reduced-motion`.
-- Mobile layout must work on 375px width minimum.
 - Components must be themable (dark mode support or future theming).
 
 **Out of Scope**:
@@ -166,8 +162,8 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Backend API integration (delegate to FrontendArchitect).
 
 **Example Prompts**:
-1. "Design a responsive layout for the main game board: opponent view at top, factories/center in middle, player view at bottom. Use inline CSS style objects for all styling."
-2. "Create a `FactoryOverlay` component for mobile that displays factory runes in an enlarged modal, grouped by rune type for easy selection. Include backdrop click-to-close and touch-friendly tap targets."
+1. "Design a responsive layout for the main game board: opponent view at top, runeforges/center in middle, player view at bottom. Use inline CSS style objects for all styling."
+2. "Create a `RuneforgeOverlay` component for mobile that displays runeforge runes in an enlarged modal, grouped by rune type for easy selection. Include backdrop click-to-close and touch-friendly tap targets."
 3. "Implement Framer Motion spring animations for runes appearing in pattern lines and scoring wall. Use AnimatePresence for enter/exit transitions."
 
 ---
@@ -178,7 +174,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 **Typical Tasks**:
 - Implement state machine for turn phases (draft, place, end-of-round, scoring).
-- Write logic for drafting runes from factories (selecting, removing remaining runes to center).
+- Write logic for drafting runes from runeforges (selecting, removing remaining runes to center).
 - Implement pattern line filling rules (1–5 tiers, overflow to floor line).
 - Calculate scoring based on Azul-inspired combo rules (adjacent runes in grid).
 - Handle rune effects (e.g., "+1 rune placed", "double scoring", "-1 cost").
@@ -209,7 +205,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Testing implementation (delegate to TestEngineer).
 
 **Example Prompts**:
-1. "Implement the rune drafting logic: when a player selects runes from a factory, remove them and move the remaining runes to the center. Update game state immutably."
+1. "Implement the rune drafting logic: when a player selects runes from a runeforge, remove them and move the remaining runes to the center. Update game state immutably."
 2. "Write the pattern line placement logic: given a selected rune type and target tier (1–5), validate that the line can accept the rune, fill the line, and handle overflow to the floor line."
 3. "Create the end-of-round scoring function: for each completed pattern line, move one rune to the scoring grid, calculate points based on horizontal/vertical combos, apply floor line penalties, and reset pattern lines."
 
@@ -222,7 +218,7 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 **Typical Tasks**:
 - Write Vitest unit tests for pure game logic (scoring, placement rules, state reducers).
 - Write React Testing Library tests for components (user interactions, state updates).
-- Create test utilities (mock game states, factories, runes, API responses).
+- Create test utilities (mock game states, runeforges, runes, API responses).
 - Set up test coverage reporting and enforce thresholds (>80% for logic).
 - Write regression tests for critical bugs once fixed.
 - Mock backend API calls (MSW or manual mocks).
@@ -235,8 +231,8 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Bug reports or edge cases to cover.
 
 **Outputs Expected**:
-- Test files colocated with source (`Factory.test.tsx`, `scoring.test.ts`).
-- Test utilities in `src/test-utils/` (mock factories, render helpers).
+- Test files colocated with source (`Runeforge.test.tsx`, `scoring.test.ts`).
+- Test utilities in `src/test-utils/` (mock runeforges, render helpers).
 - CI integration (run tests on PR, block merge if coverage drops).
 - Test coverage report (visible in CI or locally).
 
@@ -254,8 +250,8 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 
 **Example Prompts**:
 1. "Write unit tests for the `calculateScore` function: test empty grid, single rune, horizontal combo, vertical combo, and full grid edge cases."
-2. "Write a React Testing Library test for the `Factory` component: render with mock runes, simulate click on a rune, verify that `onRuneDrafted` callback is called with correct rune."
-3. "Create a test utility `mockGameState` that generates a valid game state with factories, pattern lines, and scoring grid for integration tests."
+2. "Write a React Testing Library test for the `Runeforge` component: render with mock runes, simulate click on a rune, verify that `onRuneDrafted` callback is called with correct rune."
+3. "Create a test utility `mockGameState` that generates a valid game state with runeforges, pattern lines, and scoring grid for integration tests."
 
 ---
 
@@ -429,9 +425,9 @@ src/
 │       └── components/ # Gameplay UI components
 │           ├── CenterPool.tsx
 │           ├── DeckOverlay.tsx
-│           ├── FactoriesAndCenter.tsx
-│           ├── Factory.tsx
-│           ├── FactoryOverlay.tsx
+│           ├── RuneforgesAndCenter.tsx
+│           ├── Runeforge.tsx
+│           ├── RuneforgeOverlay.tsx
 │           ├── FloorLine.tsx
 │           ├── GameBoard.tsx
 │           ├── GameLogOverlay.tsx
@@ -510,13 +506,13 @@ src/
 - **What to test**:
   - Core game logic (scoring, placement, drafting): unit tests, >90% coverage.
   - Critical UI flows (drafting runes, completing lines): integration tests.
-  - Edge cases (full pattern line, invalid moves, empty factories).
+  - Edge cases (full pattern line, invalid moves, empty runeforges).
 - **What NOT to test**:
   - Implementation details (internal state, private functions).
   - Styling (unless testing conditional class application).
   - Third-party libraries (assume they work).
 - **Mocking**: Use Vitest mocks for API calls, `@testing-library/user-event` for interactions.
-- **Test utilities**: Create factories for test data (`createMockRune()`, `createMockGameState()`).
+- **Test utilities**: Create runeforges for test data (`createMockRune()`, `createMockGameState()`).
 
 ### Accessibility & UX
 
@@ -566,27 +562,27 @@ src/
 
 ## Example Multi-Agent Workflow
 
-**Feature**: Implement rune factories and drafting logic.
+**Feature**: Implement rune runeforges and drafting logic.
 
 ### Phase 1: Architecture (FrontendArchitect)
 
-**Prompt**: "Define TypeScript types for `Factory`, `Rune`, and the `draftRune` action. Factories contain 4 runes each, and the center factory accumulates leftover runes. Draft action removes selected runes from a factory and moves leftovers to center."
+**Prompt**: "Define TypeScript types for `Runeforge`, `Rune`, and the `draftRune` action. Runeforges contain 4 runes each, and the center runeforge accumulates leftover runes. Draft action removes selected runes from a runeforge and moves leftovers to center."
 
 **Output**:
-- `src/types/game.ts`: Types for `Factory`, `Rune`, `GameState`.
+- `src/types/game.ts`: Types for `Runeforge`, `Rune`, `GameState`.
 - `src/state/gameState.ts`: Zustand store with `draftRune` action.
 
 ### Phase 2: UI Design (UIUXDesigner)
 
-**Prompt**: "Design a `Factory` component that displays 4 rune tokens in a circular layout. Runes are clickable and highlight on hover. When clicked, call `onRuneDrafted(runeType)` callback. Use inline CSS style objects."
+**Prompt**: "Design a `Runeforge` component that displays 4 rune tokens in a circular layout. Runes are clickable and highlight on hover. When clicked, call `onRuneDrafted(runeType)` callback. Use inline CSS style objects."
 
 **Output**:
-- `src/features/gameplay/components/Factory.tsx`: Component with inline CSS styling.
+- `src/features/gameplay/components/Runeforge.tsx`: Component with inline CSS styling.
 - `src/components/RuneToken.tsx`: Reusable rune display component.
 
 ### Phase 3: Logic Implementation (GameplayLogicEngineer)
 
-**Prompt**: "Implement the `draftRune` action in Zustand: given a factory ID and rune type, remove all runes of that type from the factory, move leftovers to the center factory, and update the player's hand."
+**Prompt**: "Implement the `draftRune` action in Zustand: given a runeforge ID and rune type, remove all runes of that type from the runeforge, move leftovers to the center runeforge, and update the player's hand."
 
 **Output**:
 - `src/state/gameState.ts`: `draftRune` function with immutable state updates.
@@ -594,11 +590,11 @@ src/
 
 ### Phase 4: Testing (TestEngineer)
 
-**Prompt**: "Write unit tests for `draftRune` logic: test drafting from a standard factory, drafting from the center factory, and edge case where factory is empty."
+**Prompt**: "Write unit tests for `draftRune` logic: test drafting from a standard runeforge, drafting from the center runeforge, and edge case where runeforge is empty."
 
 **Output**:
 - `src/utils/draftLogic.test.ts`: Unit tests for draft helpers.
-- `src/features/gameplay/Factory.test.tsx`: Component test simulating rune click.
+- `src/features/gameplay/Runeforge.test.tsx`: Component test simulating rune click.
 
 ### Phase 5: Documentation (DocsAgent)
 

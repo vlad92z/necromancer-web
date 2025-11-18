@@ -20,8 +20,8 @@ import type { GameState, RuneType, PatternLine, Player } from '../types/game';
 import { getWallColumnForRune, calculateWallPower } from './scoring';
 
 interface DraftMove {
-  type: 'factory' | 'center';
-  factoryId?: string;
+  type: 'runeforge' | 'center';
+  runeforgeId?: string;
   runeType: RuneType;
   count: number; // Number of runes that will be drafted
 }
@@ -39,17 +39,17 @@ function countRunes(runes: Array<{ runeType: RuneType }>, runeType: RuneType): n
 function getLegalDraftMoves(state: GameState): DraftMove[] {
   const moves: DraftMove[] = [];
   
-  // Get unique rune types from factories with counts
-  // Skip frozen factories (opponent cannot draft from them)
-  state.factories.forEach(factory => {
-    if (factory.runes.length > 0 && !state.frozenFactories.includes(factory.id)) {
-      const runeTypes = new Set(factory.runes.map(r => r.runeType));
-      runeTypes.forEach(runeType => {
+  // Get unique rune types from runeforges with counts
+  // Skip frozen runeforges (opponent cannot draft from them)
+  state.runeforges.forEach(runeforge => {
+    if (runeforge.runes.length > 0 && !state.frozenRuneforges.includes(runeforge.id)) {
+      const runeTypes = new Set(runeforge.runes.map((r: any) => r.runeType));
+      runeTypes.forEach((runeType: RuneType) => {
         moves.push({ 
-          type: 'factory', 
-          factoryId: factory.id, 
+          type: 'runeforge', 
+          runeforgeId: runeforge.id, 
           runeType,
-          count: countRunes(factory.runes, runeType)
+          count: countRunes(runeforge.runes, runeType)
         });
       });
     }
@@ -57,7 +57,7 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   
   // Get unique rune types from center with counts
   if (state.centerPool.length > 0) {
-    const runeTypes = new Set(state.centerPool.map(r => r.runeType));
+    const runeTypes = new Set(state.centerPool.map((r: any) => r.runeType));
     runeTypes.forEach(runeType => {
       moves.push({ 
         type: 'center', 
@@ -112,20 +112,20 @@ function calculateFutureAvailability(state: GameState, move: DraftMove): Map<Run
   const availability = new Map<RuneType, number>();
   
   // Count all runes currently available
-  state.factories.forEach(factory => {
-    factory.runes.forEach(rune => {
+  state.runeforges.forEach(runeforge => {
+    runeforge.runes.forEach((rune: any) => {
       availability.set(rune.runeType, (availability.get(rune.runeType) || 0) + 1);
     });
   });
   
-  state.centerPool.forEach(rune => {
+  state.centerPool.forEach((rune: any) => {
     availability.set(rune.runeType, (availability.get(rune.runeType) || 0) + 1);
   });
   
   // Subtract the runes we're drafting
   availability.set(move.runeType, (availability.get(move.runeType) || 0) - move.count);
   
-  // If drafting from factory, other runes will move to center (still available for opponent)
+  // If drafting from runeforge, other runes will move to center (still available for opponent)
   // This doesn't change total availability, just location
   
   return availability;
@@ -201,7 +201,7 @@ function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: n
   const newState: GameState = {
     ...state,
     players: [clonePlayer(state.players[0]), clonePlayer(state.players[1])],
-    factories: state.factories.map(f => ({ ...f, runes: [...f.runes] })),
+    runeforges: state.runeforges.map(f => ({ ...f, runes: [...f.runes] })),
     centerPool: [...state.centerPool],
     selectedRunes: []
   };
@@ -210,13 +210,13 @@ function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: n
   let runesToPlace: { runeType: RuneType }[] = [];
   
   // Execute draft
-  if (move.type === 'factory' && move.factoryId) {
-    const factory = newState.factories.find(f => f.id === move.factoryId);
-    if (factory) {
-      runesToPlace = factory.runes.filter(r => r.runeType === move.runeType);
-      const remainingRunes = factory.runes.filter(r => r.runeType !== move.runeType);
+  if (move.type === 'runeforge' && move.runeforgeId) {
+    const runeforge = newState.runeforges.find(f => f.id === move.runeforgeId);
+    if (runeforge) {
+      runesToPlace = runeforge.runes.filter(r => r.runeType === move.runeType);
+      const remainingRunes = runeforge.runes.filter(r => r.runeType !== move.runeType);
       newState.centerPool.push(...remainingRunes);
-      factory.runes = [];
+      runeforge.runes = [];
     }
   } else if (move.type === 'center') {
     runesToPlace = newState.centerPool.filter(r => r.runeType === move.runeType);
@@ -596,25 +596,25 @@ function chooseBestPlacementMove(state: GameState): { type: 'line' | 'floor', li
 }
 
 /**
- * Choose which factory to destroy with Void effect
- * Strategy: Destroy the factory with the most runes that the opponent needs
+ * Choose which runeforge to destroy with Void effect
+ * Strategy: Destroy the runeforge with the most runes that the opponent needs
  */
-export function chooseFactoryToDestroy(state: GameState): string | null {
-  const nonEmptyFactories = state.factories.filter(f => f.runes.length > 0);
+export function chooseRuneforgeToDestroy(state: GameState): string | null {
+  const nonEmptyRuneforges = state.runeforges.filter(f => f.runes.length > 0);
   
-  if (nonEmptyFactories.length === 0) {
-    return null; // No factories to destroy
+  if (nonEmptyRuneforges.length === 0) {
+    return null; // No runeforges to destroy
   }
   
   const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
   
-  // Score each factory based on how valuable it is to the opponent
-  const scoredFactories = nonEmptyFactories.map(factory => {
+  // Score each runeforge based on how valuable it is to the opponent
+  const scoredRuneforges = nonEmptyRuneforges.map(runeforge => {
     let score = 0;
     
-    // Count how many runes the opponent could use from this factory
+    // Count how many runes the opponent could use from this runeforge
     const runeTypeCounts = new Map<RuneType, number>();
-    factory.runes.forEach(rune => {
+    runeforge.runes.forEach((rune: any) => {
       runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
     });
     
@@ -644,37 +644,37 @@ export function chooseFactoryToDestroy(state: GameState): string | null {
     });
     
     // Also consider total rune count (more runes = more options for opponent)
-    score += factory.runes.length * 2;
+    score += runeforge.runes.length * 2;
     
-    return { factoryId: factory.id, score };
+    return { runeforgeId: runeforge.id, score };
   });
   
   // Sort by score descending
-  scoredFactories.sort((a, b) => b.score - a.score);
+  scoredRuneforges.sort((a, b) => b.score - a.score);
   
-  return scoredFactories[0].factoryId;
+  return scoredRuneforges[0].runeforgeId;
 }
 
 /**
- * AI chooses which factory to freeze with Frost effect
- * Strategy: Freeze the factory that is most valuable to the opponent
+ * AI chooses which runeforge to freeze with Frost effect
+ * Strategy: Freeze the runeforge that is most valuable to the opponent
  */
-export function chooseFactoryToFreeze(state: GameState): string | null {
-  const nonEmptyFactories = state.factories.filter(f => f.runes.length > 0);
+export function chooseRuneforgeToFreeze(state: GameState): string | null {
+  const nonEmptyRuneforges = state.runeforges.filter(f => f.runes.length > 0);
   
-  if (nonEmptyFactories.length === 0) {
-    return null; // No factories to freeze
+  if (nonEmptyRuneforges.length === 0) {
+    return null; // No runeforges to freeze
   }
   
   const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
   
-  // Use same scoring logic as Void effect - freeze the factory most valuable to opponent
-  const scoredFactories = nonEmptyFactories.map(factory => {
+  // Use same scoring logic as Void effect - freeze the runeforge most valuable to opponent
+  const scoredRuneforges = nonEmptyRuneforges.map(runeforge => {
     let score = 0;
     
-    // Count how many runes the opponent could use from this factory
+    // Count how many runes the opponent could use from this runeforge
     const runeTypeCounts = new Map<RuneType, number>();
-    factory.runes.forEach(rune => {
+    runeforge.runes.forEach((rune: any) => {
       runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
     });
     
@@ -704,15 +704,15 @@ export function chooseFactoryToFreeze(state: GameState): string | null {
     });
     
     // Also consider total rune count (more runes = more options for opponent)
-    score += factory.runes.length * 2;
+    score += runeforge.runes.length * 2;
     
-    return { factoryId: factory.id, score };
+    return { runeforgeId: runeforge.id, score };
   });
   
   // Sort by score descending
-  scoredFactories.sort((a, b) => b.score - a.score);
+  scoredRuneforges.sort((a, b) => b.score - a.score);
   
-  return scoredFactories[0].factoryId;
+  return scoredRuneforges[0].runeforgeId;
 }
 
 /**
@@ -721,7 +721,7 @@ export function chooseFactoryToFreeze(state: GameState): string | null {
  */
 export function makeAIMove(
   state: GameState,
-  draftRune: (factoryId: string, runeType: RuneType) => void,
+  draftRune: (runeforgeId: string, runeType: RuneType) => void,
   draftFromCenter: (runeType: RuneType) => void,
   placeRunes: (lineIndex: number) => void,
   placeRunesInFloor: () => void
@@ -744,8 +744,8 @@ export function makeAIMove(
   const move = chooseBestDraftMove(state);
   if (!move) return false;
   
-  if (move.type === 'factory' && move.factoryId) {
-    draftRune(move.factoryId, move.runeType);
+  if (move.type === 'runeforge' && move.runeforgeId) {
+    draftRune(move.runeforgeId, move.runeType);
   } else if (move.type === 'center') {
     draftFromCenter(move.runeType);
   }

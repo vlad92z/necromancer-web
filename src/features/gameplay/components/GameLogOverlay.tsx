@@ -11,8 +11,6 @@ interface GameLogOverlayProps {
 }
 
 export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
-  const isMobile = window.innerWidth < 768;
-
   return (
     <AnimatePresence>
       <motion.div
@@ -32,7 +30,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
           justifyContent: 'center',
           zIndex: 1000,
           backdropFilter: 'blur(4px)',
-          padding: isMobile ? '16px' : '24px',
+          padding: '24px',
         }}
       >
         <motion.div
@@ -42,9 +40,9 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
           onClick={(e) => e.stopPropagation()}
           style={{
             backgroundColor: 'white',
-            borderRadius: isMobile ? '12px' : '16px',
-            padding: isMobile ? '20px' : '32px',
-            maxWidth: isMobile ? '100%' : '600px',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '600px',
             maxHeight: '90vh',
             overflow: 'auto',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
@@ -56,11 +54,11 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: isMobile ? '16px' : '20px',
+            marginBottom: '20px',
           }}>
             <div>
               <h2 style={{
-                fontSize: isMobile ? '18px' : '24px',
+                fontSize: '24px',
                 fontWeight: 'bold',
                 color: '#0c4a6e',
                 margin: 0,
@@ -68,7 +66,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                 Game Log
               </h2>
               <p style={{
-                fontSize: isMobile ? '12px' : '14px',
+                fontSize: '14px',
                 color: '#64748b',
                 margin: '4px 0 0 0',
               }}>
@@ -81,9 +79,9 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                 backgroundColor: '#ef4444',
                 color: 'white',
                 border: 'none',
-                borderRadius: isMobile ? '6px' : '8px',
-                padding: isMobile ? '6px 12px' : '8px 16px',
-                fontSize: isMobile ? '12px' : '14px',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
@@ -97,19 +95,19 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: isMobile ? '16px' : '20px',
+            gap: '20px',
           }}>
             {roundHistory.length === 0 ? (
               <div style={{
-                padding: isMobile ? '32px' : '48px',
+                padding: '48px',
                 textAlign: 'center',
                 color: '#94a3b8',
               }}>
-                <div style={{ fontSize: isMobile ? '48px' : '64px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '64px', marginBottom: '16px' }}>
                   📜
                 </div>
                 <p style={{
-                  fontSize: isMobile ? '16px' : '18px',
+                  fontSize: '18px',
                   fontWeight: 'bold',
                 }}>
                   No rounds completed yet
@@ -124,26 +122,26 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                   transition={{ delay: index * 0.05 }}
                   style={{
                     backgroundColor: '#f8fafc',
-                    borderRadius: isMobile ? '8px' : '12px',
-                    padding: isMobile ? '12px' : '16px',
+                    borderRadius: '12px',
+                    padding: '16px',
                     border: '2px solid #cbd5e1',
                   }}
                 >
                   {/* Round Number */}
                   <div style={{
-                    fontSize: isMobile ? '14px' : '16px',
+                    fontSize: '16px',
                     fontWeight: 'bold',
                     color: '#0c4a6e',
-                    marginBottom: isMobile ? '8px' : '12px',
+                    marginBottom: '12px',
                   }}>
                     Round {round.round}
                   </div>
 
                   {/* Player Score */}
                   <div style={{
-                    fontSize: isMobile ? '12px' : '14px',
+                    fontSize: '14px',
                     color: '#1e293b',
-                    marginBottom: isMobile ? '6px' : '8px',
+                    marginBottom: '8px',
                     fontFamily: 'monospace',
                   }}>
                     <span style={{ fontWeight: 'bold', color: '#059669' }}>
@@ -161,7 +159,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
 
                   {/* Opponent Score */}
                   <div style={{
-                    fontSize: isMobile ? '12px' : '14px',
+                    fontSize: '14px',
                     color: '#1e293b',
                     fontFamily: 'monospace',
                   }}>
@@ -181,7 +179,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                   {/* Separator (not on last item) */}
                   {index < roundHistory.length - 1 && (
                     <div style={{
-                      marginTop: isMobile ? '8px' : '12px',
+                      marginTop: '12px',
                       borderBottom: '1px dashed #cbd5e1',
                     }} />
                   )}

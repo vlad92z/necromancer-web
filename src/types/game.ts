@@ -27,9 +27,9 @@ export interface Rune {
 }
 
 /**
- * A factory containing runes to draft from
+ * A runeforge containing runes to draft from
  */
-export interface Factory {
+export interface Runeforge {
   id: string;
   runes: Rune[];
 }
@@ -127,19 +127,20 @@ export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
   players: [Player, Player]; // Player (index 0) and AI Opponent (index 1)
-  factories: Factory[];
-  centerPool: Rune[]; // Center factory (accumulates leftover runes)
+  runeforges: Runeforge[];
+  centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   currentPlayerIndex: 0 | 1;
   turnPhase: TurnPhase;
   round: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
-  draftSource: { type: 'factory'; factoryId: string; movedToCenter: Rune[] } | { type: 'center' } | null; // Where the selected runes came from
+  draftSource: { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[] } | { type: 'center' } | null; // Where the selected runes came from
   firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringPhase: ScoringPhase; // Current step in round-end scoring animation
   roundHistory: RoundScore[]; // History of completed rounds for game log
-  voidEffectPending: boolean; // Whether Void effect is waiting for factory selection
-  frostEffectPending: boolean; // Whether Frost effect is waiting for factory selection
-  frozenFactories: string[]; // Factory IDs that are frozen (opponent cannot draft from them)
+  voidEffectPending: boolean; // Whether Void effect is waiting for runeforge selection
+  frostEffectPending: boolean; // Whether Frost effect is waiting for runeforge selection
+  frozenRuneforges: string[]; // Runeforge IDs that are frozen (opponent cannot draft from them)
+  shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
 }

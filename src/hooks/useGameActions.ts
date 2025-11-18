@@ -3,16 +3,16 @@
  * Provides convenient access to game state mutations
  */
 
-import { useGameStore } from '../state/gameStore';
+import { useGameplayStore } from '../state/stores/gameplayStore';
 
 export function useGameActions() {
-  const draftRune = useGameStore((state) => state.draftRune);
-  const draftFromCenter = useGameStore((state) => state.draftFromCenter);
-  const placeRunes = useGameStore((state) => state.placeRunes);
-  const placeRunesInFloor = useGameStore((state) => state.placeRunesInFloor);
-  const cancelSelection = useGameStore((state) => state.cancelSelection);
-  const endRound = useGameStore((state) => state.endRound);
-  const resetGame = useGameStore((state) => state.resetGame);
+  const draftRune = useGameplayStore((state) => state.draftRune);
+  const draftFromCenter = useGameplayStore((state) => state.draftFromCenter);
+  const placeRunes = useGameplayStore((state) => state.placeRunes);
+  const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
+  const cancelSelection = useGameplayStore((state) => state.cancelSelection);
+  const endRound = useGameplayStore((state) => state.endRound);
+  const resetGame = useGameplayStore((state) => state.resetGame);
   
   return {
     draftRune,

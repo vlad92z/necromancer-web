@@ -10,7 +10,6 @@ interface StartGameScreenProps {
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
-  const isMobile = window.innerWidth < 768;
   const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
   const [showRules, setShowRules] = useState(false);
   
@@ -21,20 +20,20 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
       alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: isMobile ? '16px' : '32px'
+      padding: '32px'
     }}>
       <div style={{ 
         backgroundColor: 'white', 
         border: '4px solid #eab308', 
-        borderRadius: isMobile ? '12px' : '16px', 
-        padding: isMobile ? '32px 20px' : '48px 32px', 
-        maxWidth: isMobile ? '100%' : '600px', 
+        borderRadius: '16px', 
+        padding: '48px 32px', 
+        maxWidth: '600px', //TODO'100%'?
         width: '100%',
         textAlign: 'center',
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
       }}>
         <h1 style={{ 
-          fontSize: isMobile ? '32px' : '48px', 
+          fontSize: '48px', 
           fontWeight: 'bold', 
           color: '#667eea', 
           marginBottom: '6px',
@@ -44,7 +43,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         </h1>
         
         <h2 style={{ 
-          fontSize: isMobile ? '20px' : '24px', 
+          fontSize: '24px', 
           fontWeight: '600', 
           color: '#764ba2', 
           marginBottom: '32px' 
@@ -54,7 +53,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         
         <div style={{ 
           marginBottom: '32px', 
-          fontSize: isMobile ? '14px' : '16px',
+          fontSize: '16px',
           color: '#4b5563',
           lineHeight: '1.6'
         }}>
@@ -69,13 +68,13 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         {/* Game Mode Toggle */}
         <div style={{
           marginBottom: '24px',
-          padding: isMobile ? '16px' : '20px',
+          padding: '20px',
           backgroundColor: '#f8fafc',
           borderRadius: '8px',
           border: '2px solid #e2e8f0'
         }}>
           <div style={{
-            fontSize: isMobile ? '14px' : '16px',
+            fontSize: '16px',
             fontWeight: '600',
             color: '#334155',
             marginBottom: '12px'
@@ -91,9 +90,9 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
               onClick={() => setGameMode('classic')}
               style={{
                 flex: 1,
-                padding: isMobile ? '10px 16px' : '12px 24px',
+                padding: '12px 24px',
                 borderRadius: '8px',
-                fontSize: isMobile ? '14px' : '16px',
+                fontSize: '16px',
                 fontWeight: '600',
                 border: '2px solid',
                 borderColor: gameMode === 'classic' ? '#667eea' : '#cbd5e1',
@@ -109,9 +108,9 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
               onClick={() => setGameMode('standard')}
               style={{
                 flex: 1,
-                padding: isMobile ? '10px 16px' : '12px 24px',
+                padding: '12px 24px',
                 borderRadius: '8px',
-                fontSize: isMobile ? '14px' : '16px',
+                fontSize: '16px',
                 fontWeight: '600',
                 border: '2px solid',
                 borderColor: gameMode === 'standard' ? '#667eea' : '#cbd5e1',
@@ -126,7 +125,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
           </div>
           <div style={{
             marginTop: '8px',
-            fontSize: isMobile ? '11px' : '13px',
+            fontSize: '13px',
             color: '#64748b',
             textAlign: 'center'
           }}>
@@ -142,9 +141,9 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             backgroundColor: '#eab308',
             color: '#111827',
             fontWeight: 'bold',
-            padding: isMobile ? '16px 32px' : '20px 48px',
+            padding: '20px 48px',
             borderRadius: '12px',
-            fontSize: isMobile ? '18px' : '24px',
+            fontSize: '24px',
             width: '100%',
             border: 'none',
             cursor: 'pointer',
@@ -174,9 +173,9 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             backgroundColor: 'transparent',
             color: '#667eea',
             fontWeight: '600',
-            padding: isMobile ? '12px 24px' : '14px 32px',
+            padding: '14px 32px',
             borderRadius: '8px',
-            fontSize: isMobile ? '14px' : '16px',
+            fontSize: '16px',
             width: '100%',
             border: '2px solid #667eea',
             cursor: 'pointer',

@@ -11,16 +11,14 @@ interface GameOverModalProps {
 }
 
 export function GameOverModal({ players, winner, onReturnToStart }: GameOverModalProps) {
-  const isMobile = window.innerWidth < 768;
-  
   return (
     <div style={{ 
       backgroundColor: 'white', 
       border: '4px solid #eab308', 
-      borderRadius: isMobile ? '12px' : '16px', 
-      padding: isMobile ? '20px' : '32px', 
-      maxWidth: isMobile ? '100%' : '72rem', 
-      minWidth: isMobile ? '100%' : '50rem', 
+      borderRadius: '16px', 
+      padding: '32px', 
+      maxWidth: '72rem', 
+      minWidth: '50rem', 
       width: '100%',
       textAlign: 'center',
       boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'

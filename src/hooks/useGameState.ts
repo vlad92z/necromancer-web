@@ -3,28 +3,28 @@
  * Optimizes re-renders by selecting only needed state slices
  */
 
-import { useGameStore } from '../state/gameStore';
+import { useGameplayStore } from '../state/stores/gameplayStore';
 
 /**
  * Get current player state
  */
 export function useCurrentPlayer() {
-  return useGameStore((state) => state.players[state.currentPlayerIndex]);
+  return useGameplayStore((state) => state.players[state.currentPlayerIndex]);
 }
 
 /**
  * Get opponent player state
  */
 export function useOpponentPlayer() {
-  return useGameStore((state) => state.players[state.currentPlayerIndex === 0 ? 1 : 0]);
+  return useGameplayStore((state) => state.players[state.currentPlayerIndex === 0 ? 1 : 0]);
 }
 
 /**
- * Get factories and center pool
+ * Get runeforges and center pool
  */
 export function useFactories() {
-  return useGameStore((state) => ({
-    factories: state.factories,
+  return useGameplayStore((state) => ({
+    runeforges: state.runeforges,
     centerPool: state.centerPool,
   }));
 }
@@ -33,19 +33,19 @@ export function useFactories() {
  * Get current turn phase
  */
 export function useTurnPhase() {
-  return useGameStore((state) => state.turnPhase);
+  return useGameplayStore((state) => state.turnPhase);
 }
 
 /**
  * Get selected runes
  */
 export function useSelectedRunes() {
-  return useGameStore((state) => state.selectedRunes);
+  return useGameplayStore((state) => state.selectedRunes);
 }
 
 /**
  * Get current round number
  */
 export function useRound() {
-  return useGameStore((state) => state.round);
+  return useGameplayStore((state) => state.round);
 }

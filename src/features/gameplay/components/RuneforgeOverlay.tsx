@@ -1,21 +1,19 @@
 /**
- * FactoryOverlay component - displays a factory or center pool in an enlarged overlay for selection
+ * RuneforgeOverlay component - displays a runeforge or center pool in an enlarged overlay for selection
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
-interface FactoryOverlayProps {
+interface RuneforgeOverlayProps {
   runes: Rune[];
   onSelectRune: (runeType: RuneType) => void;
   onClose: () => void;
   gameMode: 'classic' | 'standard';
 }
 
-export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: FactoryOverlayProps) {
-  const isMobile = window.innerWidth < 768;
-
+export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: RuneforgeOverlayProps) {
   // Rune effect descriptions (only shown in standard mode)
   const getRuneDescription = (runeType: RuneType): string => {
     if (gameMode === 'classic') return '';
@@ -66,7 +64,7 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
           justifyContent: 'center',
           zIndex: 1000,
           backdropFilter: 'blur(4px)',
-          padding: isMobile ? '16px' : '24px',
+          padding: '24px',
         }}
       >
         <motion.div
@@ -76,9 +74,9 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
           onClick={(e) => e.stopPropagation()}
           style={{
             backgroundColor: 'white',
-            borderRadius: isMobile ? '12px' : '16px',
-            padding: isMobile ? '20px' : '32px',
-            maxWidth: isMobile ? '100%' : '500px',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '500px', //TODO'100%'?
             maxHeight: '90vh',
             overflow: 'auto',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
@@ -90,7 +88,7 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: isMobile ? '16px' : '20px',
+            marginBottom: '20px',
           }}>
           </div>
 
@@ -98,7 +96,7 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: isMobile ? '12px' : '16px',
+            gap: '16px',
           }}>
             {availableTypes.map((runeType, typeIndex) => {
               const typeRunes = runesByType[runeType];
@@ -112,12 +110,12 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
                   onClick={() => handleRuneTypeClick(runeType)}
                   style={{
                     backgroundColor: '#f8fafc',
-                    borderRadius: isMobile ? '8px' : '12px',
-                    padding: isMobile ? '12px' : '16px',
+                    borderRadius: '12px',
+                    padding: '16px',
                     border: '3px solid #cbd5e1',
                     cursor: 'pointer',
                     display: 'flex',
-                    gap: isMobile ? '12px' : '16px',
+                    gap: '16px',
                     alignItems: 'center',
                     transition: 'all 0.2s',
                   }}
@@ -136,7 +134,7 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
                   {/* Info and preview */}
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <div style={{
-                      fontSize: isMobile ? '16px' : '20px',
+                      fontSize: '20px',
                       fontWeight: 'bold',
                       color: '#1e293b',
                       marginBottom: '4px',
@@ -145,7 +143,7 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
                     </div>
                     {gameMode === 'standard' && (
                       <div style={{
-                        fontSize: isMobile ? '12px' : '14px',
+                        fontSize: '14px',
                         color: '#64748b',
                         marginBottom: '8px',
                       }}>
@@ -156,17 +154,17 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
                     {/* Preview of all runes of this type */}
                     <div style={{
                       display: 'flex',
-                      gap: isMobile ? '4px' : '6px',
+                      gap: '6px',
                       flexWrap: 'wrap',
                     }}>
                       {typeRunes.map((rune) => (
                         <div 
                           key={rune.id}
-                          style={{ width: isMobile ? '35px' : '60px', height: isMobile ? '35px' : '60px' }}
+                          style={{ width: '60px', height: '60px' }}
                         >
                           <RuneCell
                             rune={rune}
-                            variant="factory"
+                            variant="runeforge"
                             size="large"
                             showEffect={true}
                           />
@@ -182,15 +180,15 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
           {/* Empty state */}
           {runes.length === 0 && (
             <div style={{
-              padding: isMobile ? '32px' : '48px',
+              padding: '48px',
               textAlign: 'center',
               color: '#94a3b8',
             }}>
-              <div style={{ fontSize: isMobile ? '48px' : '64px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '64px', marginBottom: '16px' }}>
                 ∅
               </div>
               <p style={{
-                fontSize: isMobile ? '16px' : '18px',
+                fontSize: '18px',
                 fontWeight: 'bold',
               }}>
                 No runes available
