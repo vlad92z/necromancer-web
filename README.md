@@ -382,9 +382,18 @@ src/
 ├── assets/
 │   └── runes/          # SVG rune graphics (fire, frost, poison, void, wind)
 ├── components/          # Reusable UI components
+│   ├── layout/         # Layout primitives (NEW)
+│   │   ├── Button.tsx      # Reusable button with variants
+│   │   ├── Card.tsx        # Card container component
+│   │   ├── Grid.tsx        # CSS Grid wrapper
+│   │   ├── Modal.tsx       # Modal/overlay component
+│   │   ├── Stack.tsx       # Flexbox layout component
+│   │   └── index.ts        # Layout component exports
 │   ├── RuneAnimation.tsx  # Rune movement animations
 │   ├── RuneCell.tsx       # Enhanced rune display with animation support
 │   └── RuneToken.tsx      # Basic rune display with SVG assets
+├── examples/           # Example components (NEW)
+│   └── DesignTokenExample.tsx  # Design system usage examples
 ├── features/           # Feature-based organization
 │   └── gameplay/       # Gameplay-specific features
 │       └── components/ # Gameplay UI components
@@ -421,6 +430,8 @@ src/
 │       ├── gameplayStore.ts  # Game state and actions
 │       ├── index.ts          # Store exports
 │       └── uiStore.ts        # UI state
+├── styles/             # Design system (NEW)
+│   └── tokens.ts       # Centralized design tokens (colors, spacing, typography, etc.)
 ├── systems/            # Game systems
 │   └── aiController.ts # AI opponent logic and turn execution
 ├── types/              # TypeScript type definitions
@@ -664,33 +675,58 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Apply rules throughout game logic (runeforge filling, scoring, effects)
   - [ ] Validate moves against current rule set
 
-### Priority 4: Style Token System 🟢 **MEDIUM**
+### Priority 4: Style Token System 🟢 **MEDIUM** ✅ **COMPLETED**
 
 **Problem**: Inline styles are scattered across components with hardcoded colors/spacing. Deck builder, campaign map, and PvP UI will need complex layouts with consistent theming.
 
-#### TODO: Extract Design Tokens
-- [ ] **Create centralized style tokens:**
-  - [ ] Create `src/styles/tokens.ts` with:
-    ```typescript
-    export const COLORS = {
-      runes: { Fire: '#FF4500', Frost: '#1E90FF', Poison: '#32CD32', Void: '#8B008B', Wind: '#F0E68C' },
-      ui: { background: '#1a1a1a', surface: '#2a2a2a', border: '#333', accent: '#4a9eff' },
-      status: { success: '#00ff00', error: '#ff0000', warning: '#ffaa00', info: '#00aaff' }
-    };
-    export const SPACING = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 };
-    export const TYPOGRAPHY = { small: 12, base: 14, large: 16, xlarge: 20, heading: 24 };
-    export const RADIUS = { sm: 4, md: 8, lg: 12, round: '50%' };
-    export const SHADOWS = { sm: '0 2px 4px rgba(0,0,0,0.3)', md: '0 4px 8px rgba(0,0,0,0.4)' };
-    ```
-  - [ ] Replace hardcoded values throughout codebase
-  - [ ] Support dark/light theme variants (future)
+#### ✅ Extract Design Tokens (COMPLETED)
+- [x] **Create centralized style tokens:**
+  - [x] Created `src/styles/tokens.ts` with comprehensive design tokens:
+    - `COLORS`: Rune colors, UI colors, status colors, effects, overlays
+    - `SPACING`: xs (4px) through xxxl (64px)
+    - `TYPOGRAPHY`: small (12px) through display (40px)
+    - `RADIUS`: sm through round (50%)
+    - `SHADOWS`: sm through xl, with custom glow functions
+    - `TRANSITIONS`: fast, medium, slow, spring
+    - `BREAKPOINTS`: mobile, tablet, desktop, wide
+    - `Z_INDEX`: base through notification
+  - [x] Added helper functions: `getRuneGlow()`, `getResponsiveValue()`
+  - [x] Updated components to use tokens (RuneToken, RuneCell)
+  - [x] Support for theme variants (extensible structure)
 
-- [ ] **Create reusable layout components:**
-  - [ ] `<Stack direction="vertical|horizontal" spacing={}>` - Flexbox wrapper
-  - [ ] `<Grid columns={} gap={}>` - CSS Grid wrapper
-  - [ ] `<Modal>` - Standardized modal component
-  - [ ] `<Button variant="primary|secondary|danger">` - Consistent buttons
-  - [ ] `<Card>` - Reusable card container
+- [x] **Create reusable layout components:**
+  - [x] `<Stack>` - Flexbox wrapper with direction, spacing, alignment, wrap
+  - [x] `<Grid>` - CSS Grid wrapper with columns, gap, auto-fit support
+  - [x] `<Modal>` - Standardized modal with backdrop, keyboard navigation, focus management
+  - [x] `<Button>` - Consistent buttons with variants (primary, secondary, danger, success, ghost) and sizes
+  - [x] `<Card>` - Reusable card container with variants (default, elevated, outlined) and hover effects
+  - [x] Created `src/components/layout/index.ts` for convenient imports
+  - [x] Created example file: `src/examples/DesignTokenExample.tsx`
+
+**Usage Example:**
+```typescript
+import { COLORS, SPACING, RADIUS } from '../styles/tokens';
+import { Stack, Button, Card } from '../components/layout';
+
+// Using tokens
+const style = {
+  padding: `${SPACING.lg}px`,
+  borderRadius: `${RADIUS.md}px`,
+  backgroundColor: COLORS.ui.surface,
+};
+
+// Using layout components
+<Stack direction="vertical" spacing="md">
+  <Card variant="elevated">
+    <Button variant="primary">Click me</Button>
+  </Card>
+</Stack>
+```
+
+**Next Steps:**
+- Gradually migrate remaining components to use design tokens
+- Consider adding theme provider for dark/light mode switching
+- Extract more hardcoded values as they're discovered
 
 ### Priority 5: Error Handling & Resilience 🟢 **LOW-MEDIUM**
 

@@ -1,10 +1,12 @@
 /**
  * RuneCell component - unified cell display for runes across all game areas
  * Supports: Wall cells, Pattern lines, Floor line, Runeforges, Center pool
+ * Now uses centralized design tokens for consistent styling
  */
 
 import { motion } from 'framer-motion';
 import type { Rune, RuneType } from '../types/game';
+import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
 import frostRune from '../assets/runes/frost_rune.svg';
 import poisonRune from '../assets/runes/poison_rune.svg';
@@ -49,14 +51,14 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   emptyOpacity?: number;
 }> = {
   wall: {
-    border: '2px solid #cbd5e1',
-    background: '#f8fafc',
+    border: `2px solid ${COLORS.ui.borderLight}`,
+    background: COLORS.ui.backgroundLight,
     backgroundOccupied: '#fed7aa',
     emptyOpacity: 0.3,
   },
   pattern: {
-    border: '2px solid #cbd5e1',
-    background: '#f8fafc',
+    border: `2px solid ${COLORS.ui.borderLight}`,
+    background: COLORS.ui.backgroundLight,
   },
   floor: {
     border: '2px solid #fca5a5',
@@ -71,7 +73,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
     background: 'transparent',
   },
   selected: {
-    border: '2px solid #3b82f6',
+    border: `2px solid ${COLORS.ui.accent}`,
     background: '#dbeafe',
   },
 };
@@ -133,14 +135,14 @@ export function RuneCell({
         width: `${config.width}px`,
         height: `${config.height}px`,
         border: borderStyle,
-        borderRadius: '8px',
+        borderRadius: `${RADIUS.md}px`,
         backgroundColor: backgroundColor,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: `${config.padding}px`,
         cursor: clickable ? 'pointer' : 'default',
-        transition: shouldAnimate ? undefined : 'transform 0.2s',
+        transition: shouldAnimate ? undefined : TRANSITIONS.medium,
         position: 'relative',
       }}
       onMouseEnter={(e: any) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
@@ -162,7 +164,7 @@ export function RuneCell({
       {hasTextPlaceholder && (
         <div style={{ 
           fontSize: `${config.fontSize}px`, 
-          color: variant === 'floor' ? '#991b1b' : '#64748b',
+          color: variant === 'floor' ? COLORS.status.error : COLORS.ui.textMuted,
           fontWeight: variant === 'floor' ? 'bold' : 'normal',
         }}>
           {placeholder.text}
@@ -177,10 +179,10 @@ export function RuneCell({
           right: '-4px',
           width: '12px',
           height: '12px',
-          borderRadius: '50%',
-          backgroundColor: '#eab308',
-          border: '2px solid white',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          borderRadius: RADIUS.round,
+          backgroundColor: COLORS.status.warning,
+          border: `2px solid ${COLORS.ui.text}`,
+          boxShadow: SHADOWS.sm,
         }} />
       )}
     </Container>
