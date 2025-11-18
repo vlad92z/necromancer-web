@@ -2,6 +2,7 @@
  * FloorLine component - displays the floor line (penalty area)
  */
 
+import { motion } from 'framer-motion';
 import type { FloorLine as FloorLineType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -18,6 +19,9 @@ interface FloorLineProps {
 
 export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedSlots = 0 }: FloorLineProps) {
   const isSelectable = Boolean(canPlace && onPlaceRunesInFloor);
+  const selectableGlowRest = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
+  const selectableGlowPeak = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
+  const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -42,14 +46,22 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
           .fill(null)
           .map((_, index) => {
             const isNeutral = index < mitigatedSlots;
+            const cellCanGlow = isSelectable && !isNeutral;
+            const cellMotionProps = cellCanGlow
+              ? {
+                  animate: { boxShadow: selectableGlowRange },
+                  transition: { duration: 1.2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
+                }
+              : {};
             return (
-              <div
+              <motion.div
                 key={index}
                 style={{
-                  boxShadow: isNeutral ? 'none' : (isSelectable ? '0 0 16px rgba(239, 68, 68, 0.8)' : 'none'),
+                  boxShadow: cellCanGlow ? selectableGlowRest : 'none',
                   borderRadius: '8px',
                   transition: 'box-shadow 0.2s'
                 }}
+                {...cellMotionProps}
               >
                 <RuneCell
                   rune={floorLine.runes[index] || null}
@@ -58,7 +70,7 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
                   size="large"
                   showEffect={false}
                 />
-              </div>
+              </motion.div>
             );
           })}
       </button>

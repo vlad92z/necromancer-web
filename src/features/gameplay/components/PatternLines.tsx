@@ -3,6 +3,7 @@
  * Clickable to place selected runes
  */
 
+import { motion } from 'framer-motion';
 import type { PatternLine, RuneType, ScoringWall } from '../../../types/game';
 import { getWallColumnForRune } from '../../../utils/scoring';
 import { RuneCell } from '../../../components/RuneCell';
@@ -30,6 +31,10 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
     
     return matchesType && notFull && notOnWall;
   };
+  
+  const selectableGlowRest = '0 0 18px rgba(34, 197, 94, 0.75), 0 0 38px rgba(34, 197, 94, 0.35)';
+  const selectableGlowPeak = '0 0 28px rgba(16, 185, 129, 0.95), 0 0 56px rgba(21, 128, 61, 0.55)';
+  const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
   
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -67,15 +72,22 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                   runeType: line.runeType,
                   effect: { type: 'None' as const }
                 } : null;
+                const cellMotionProps = isValid
+                  ? {
+                      animate: { boxShadow: selectableGlowRange },
+                      transition: { duration: 1.2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
+                    }
+                  : {};
                 
                 return (
-                  <div
+                  <motion.div
                     key={slotIndex}
                     style={{
-                      boxShadow: isValid ? '0 0 16px rgba(34, 197, 94, 0.8)' : 'none',
+                      boxShadow: isValid ? selectableGlowRest : 'none',
                       borderRadius: '8px',
                       transition: 'box-shadow 0.2s'
                     }}
+                    {...cellMotionProps}
                   >
                     <RuneCell
                       rune={rune}
@@ -83,7 +95,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                       size="large"
                       showEffect={false}
                     />
-                  </div>
+                  </motion.div>
                 );
               })}
           </button>
