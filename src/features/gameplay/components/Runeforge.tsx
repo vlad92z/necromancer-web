@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import type { Transition } from 'framer-motion';
 import type { Runeforge as RuneforgeType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -86,10 +87,17 @@ export function Runeforge({
     ariaLabel = `Runeforge frozen - cannot draft`;
   }
   
+  const pulseTransition: Transition = {
+    duration: 1.5,
+    repeat: Infinity,
+    repeatType: 'reverse' as const,
+    ease: 'easeInOut' as const
+  };
+
   const selectableMotionProps = isSelectable
     ? {
         animate: { boxShadow: selectableGlowRange },
-        transition: { duration: 1.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
+        transition: pulseTransition
       }
     : {};
 
