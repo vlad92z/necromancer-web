@@ -2,6 +2,7 @@
  * CenterPool component - displays the center pool where leftover runes accumulate
  */
 
+import { useState } from 'react';
 import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -20,6 +21,7 @@ export function CenterPool({
   hasSelectedRunes, 
   isAITurn
 }: CenterPoolProps) {
+  const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   
   const handleRuneClick = (e: React.MouseEvent, runeType: RuneType) => {
     e.stopPropagation();
@@ -51,6 +53,7 @@ export function CenterPool({
         ) : (
           centerPool.map((rune) => {
             const disabled = !isDraftPhase || hasSelectedRunes || isAITurn;
+            const isHighlighted = hoveredRuneType === rune.runeType;
             
             return (
               <div
@@ -59,9 +62,14 @@ export function CenterPool({
                   position: 'relative',
                   pointerEvents: disabled ? 'none' : 'auto',
                   cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.5 : 1
+                  opacity: disabled ? 0.5 : 1,
+                  transform: isHighlighted ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.15s ease',
+                  filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none'
                 }}
                 onClick={(e) => handleRuneClick(e, rune.runeType)}
+                onMouseEnter={() => !disabled && setHoveredRuneType(rune.runeType)}
+                onMouseLeave={() => setHoveredRuneType(null)}
               >
                 <RuneCell
                   rune={rune}

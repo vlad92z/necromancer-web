@@ -3,6 +3,7 @@
  * Implements Azul-style drafting: click a rune type to select all of that type
  */
 
+import { useState } from 'react';
 import type { Runeforge as RuneforgeType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -25,6 +26,7 @@ export function Runeforge({
   frostEffectPending = false, 
   isFrozen = false
 }: RuneforgeProps) {
+  const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   
   const handleClick = () => {
     // For Void/Frost effects, click the entire runeforge
@@ -117,6 +119,8 @@ export function Runeforge({
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
           {runeforge.runes.map((rune) => {
+            const isHighlighted = hoveredRuneType === rune.runeType;
+            
             return (
               <div
                 key={rune.id}
@@ -125,9 +129,14 @@ export function Runeforge({
                   height: '60px',
                   position: 'relative',
                   pointerEvents: (voidEffectPending || frostEffectPending || disabled) ? 'none' : 'auto',
-                  cursor: (voidEffectPending || frostEffectPending || disabled) ? 'not-allowed' : 'pointer'
+                  cursor: (voidEffectPending || frostEffectPending || disabled) ? 'not-allowed' : 'pointer',
+                  transform: isHighlighted ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.15s ease',
+                  filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none'
                 }}
                 onClick={(e) => handleRuneClick(e, rune.runeType)}
+                onMouseEnter={() => !disabled && !voidEffectPending && !frostEffectPending && setHoveredRuneType(rune.runeType)}
+                onMouseLeave={() => setHoveredRuneType(null)}
               >
                 <RuneCell
                   rune={rune}
