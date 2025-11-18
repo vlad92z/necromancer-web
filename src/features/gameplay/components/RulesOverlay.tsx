@@ -7,8 +7,6 @@ interface RulesOverlayProps {
 }
 
 export function RulesOverlay({ onClose }: RulesOverlayProps) {
-  const isMobile = window.innerWidth < 768;
-  
   return (
     <div 
       style={{ 
@@ -19,7 +17,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
         alignItems: 'center', 
         justifyContent: 'center',
         zIndex: 100,
-        padding: isMobile ? '16px' : '24px',
+        padding: '24px',
         overflowY: 'auto'
       }}
       onClick={onClose}
@@ -28,7 +26,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
         style={{ 
           backgroundColor: '#ffffff',
           borderRadius: '12px',
-          padding: isMobile ? '20px' : '32px',
+          padding: '32px',
           maxWidth: '600px',
           width: '100%',
           color: '#1e293b',
@@ -38,15 +36,15 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 'bold', color: '#0c4a6e', margin: 0 }}>
+          <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#0c4a6e', margin: 0 }}>
             How to Play
           </h2>
         </div>
         
         {/* Rules Content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '20px', fontSize: isMobile ? '14px' : '16px', lineHeight: '1.6' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '16px', lineHeight: '1.6' }}>
           <section>
-            <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
               🎯 Goal
             </h3>
             <p style={{ margin: 0 }}>
@@ -55,7 +53,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           </section>
           
           <section>
-            <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
               🎲 Spell Preparation Phase
             </h3>
             <p style={{ margin: 0, marginBottom: '8px' }}>
@@ -66,7 +64,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           </section>
           
           <section>
-            <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
               📊 Spellcasting Lines
             </h3>
             <p style={{ margin: 0 }}>
@@ -79,7 +77,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           </section>
           
           <section>
-            <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
               ⚔️ Dealing Damage
             </h3>
             <p style={{ margin: 0 }}>
@@ -93,7 +91,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           </section>
           
           <section>
-            <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
               🏁 End Game
             </h3>
             <p style={{ margin: 0 }}>
@@ -108,9 +106,9 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               backgroundColor: '#0369a1',
               color: 'white',
               fontWeight: 'bold',
-              padding: isMobile ? '10px 24px' : '12px 32px',
+              padding: '12px 32px',
               borderRadius: '8px',
-              fontSize: isMobile ? '14px' : '16px',
+              fontSize: '16px',
               width: '100%',
               border: 'none',
               cursor: 'pointer',

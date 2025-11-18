@@ -27,15 +27,12 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const destroyRuneforge = useGameStore((state) => state.destroyRuneforge);
   const freezeRuneforge = useGameStore((state) => state.freezeRuneforge);
   
-  const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showLogOverlay, setShowLogOverlay] = useState(false);
   const [showRuneforgeOverlay, setShowRuneforgeOverlay] = useState(false);
   const [selectedRuneforgeId, setSelectedRuneforgeId] = useState<string | null>(null);
   const [runeforgeOverlaySource, setRuneforgeOverlaySource] = useState<'runeforge' | 'center'>('runeforge');
-  const isMobile = window.innerWidth < 768;
-  console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
   const isDraftPhase = turnPhase === 'draft';
   const isGameOver = turnPhase === 'game-over';
@@ -43,25 +40,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
   const isAITurn = currentPlayer.type === 'ai';
-  
-  // Auto-show opponent overlay on mobile during AI turn (with delay)
-  useEffect(() => {
-    if (isMobile && isAITurn) {
-      const delayTimer = setTimeout(() => {
-        setShowOpponentOverlay(true);
-      }, 2000); // 2 second delay before showing overlay
-      
-      return () => clearTimeout(delayTimer);
-    } else if (isMobile && !isAITurn) {
-      // Auto-hide when player's turn starts (with delay)
-      const hideTimer = setTimeout(() => {
-        setShowOpponentOverlay(false);
-      }, 2000); // 2 second delay before hiding overlay
-      
-      return () => clearTimeout(hideTimer);
-    }
-  }, [isMobile, isAITurn]);
-  
+
   // Determine winner (lowest damage taken wins)
   // players[0].score = damage dealt by player (taken by opponent)
   // players[1].score = damage dealt by opponent (taken by player)
@@ -155,15 +134,15 @@ export function GameBoard({ gameState }: GameBoardProps) {
         minHeight: '100vh',
         backgroundColor: '#f0f9ff',
         color: '#1e293b',
-        padding: window.innerWidth < 768 ? '8px' : '24px'
+        padding: '24px'
       }}
       onClick={handleBackgroundClick}
     >
       <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
         {/* Game Header */}
-        <div style={{ marginBottom: window.innerWidth < 768 ? '6px' : '24px', textAlign: 'center', position: 'relative' }}>
-          <h1 style={{ fontSize: window.innerWidth < 768 ? '15px' : '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: window.innerWidth < 768 ? '10px' : '14px' }}>
+        <div style={{ marginBottom: '24px', textAlign: 'center', position: 'relative' }}>
+          <h1 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: '14px' }}>
             <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
           </div>
           
@@ -173,7 +152,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             top: '0',
             right: '0',
             display: 'flex',
-            gap: isMobile ? '4px' : '8px'
+            gap: '8px'
           }}>
             {/* Deck Button */}
             <button
@@ -182,15 +161,15 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 backgroundColor: '#7c3aed',
                 color: 'white',
                 border: 'none',
-                borderRadius: isMobile ? '6px' : '8px',
-                padding: isMobile ? '6px 12px' : '8px 16px',
-                fontSize: isMobile ? '12px' : '14px',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}
             >
-              {isMobile ? '🎴' : '🎴 Deck'}
+              {'🎴 Deck'}
             </button>
             
             {/* Log Button */}
@@ -200,15 +179,15 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 backgroundColor: '#059669',
                 color: 'white',
                 border: 'none',
-                borderRadius: isMobile ? '6px' : '8px',
-                padding: isMobile ? '6px 12px' : '8px 16px',
-                fontSize: isMobile ? '12px' : '14px',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}
             >
-              {isMobile ? '📜' : '📜 Log'}
+              {'📜 Log'}
             </button>
             
             {/* Rules Button */}
@@ -219,8 +198,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                padding: isMobile ? '6px 10px' : '8px 14px',
-                fontSize: isMobile ? '10px' : '14px',
+                padding: '8px 14px',
+                fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 display: 'flex',
@@ -234,52 +213,12 @@ export function GameBoard({ gameState }: GameBoardProps) {
             >
               ❓ Rules
             </button>
-            
-            {/* View Opponent Button (Mobile Only) */}
-            {isMobile && currentPlayerIndex === 0 && (
-              <button
-                onClick={() => setShowOpponentOverlay(true)}
-                style={{
-                  backgroundColor: '#7c2d12',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '10px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#9a3412'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#7c2d12'}
-              >
-                👁️ Opponent
-              </button>
-            )}
           </div>
         </div>
         
-        {/* Player Boards - Side by side on desktop, stacked on mobile */}
-        {isMobile ? (
-          <>
-            {/* Player (Human) - Mobile */}
-            <PlayerView
-              player={players[0]}
-              opponent={players[1]}
-              isActive={currentPlayerIndex === 0}
-              onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
-              onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
-              selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-              canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
-              onCancelSelection={cancelSelection}
-              gameMode={gameMode}
-            />
-          </>
-        ) : (
+        {/* Player Boards */}
+        {
+          (
           <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
             {/* Player (Human) - Desktop Left */}
             <div style={{ flex: 1 }}>
@@ -306,7 +245,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
               />
             </div>
           </div>
-        )}
+        )
+        }
         
         {/* Factories and Center */}
         <div style={{ position: 'relative' }}>
@@ -319,7 +259,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               backgroundColor: '#7c3aed',
               color: 'white',
               borderRadius: '8px',
-              fontSize: isMobile ? '14px' : '18px',
+              fontSize: '18px',
               fontWeight: 'bold',
               boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
               animation: 'pulse 2s infinite'
@@ -337,7 +277,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               backgroundColor: '#06b6d4',
               color: 'white',
               borderRadius: '8px',
-              fontSize: isMobile ? '14px' : '18px',
+              fontSize: '18px',
               fontWeight: 'bold',
               boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
               animation: 'pulse 2s infinite'
@@ -375,7 +315,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               left: '50%',
               transform: 'translate(-50%, -50%)',
               zIndex: 100,
-              width: isMobile ? '90%' : 'auto'
+              width: 'auto'
             }}>
               <GameOverModal
                 players={players}
@@ -386,60 +326,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
           )}
         </div>
       </div>
-      
-      {/* Opponent Overlay (Mobile Only) */}
-      {isMobile && showOpponentOverlay && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            inset: 0, 
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center', 
-            justifyContent: 'flex-start',
-            zIndex: 100,
-            padding: '8px',
-            overflowY: 'auto',
-            pointerEvents: 'none' // Allow clicks to pass through
-          }}
-        >
-          <div 
-            style={{ 
-              width: '100%', 
-              maxWidth: '600px',
-              pointerEvents: 'auto' // Re-enable clicks on opponent view
-            }}
-          >
-            {/* Close Button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-              <button
-                onClick={() => setShowOpponentOverlay(false)}
-                style={{
-                  backgroundColor: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                }}
-              >
-                ✕ Close
-              </button>
-            </div>
-            
-            {/* Opponent Board */}
-            <OpponentView
-              opponent={players[1]}
-              player={players[0]}
-              isActive={currentPlayerIndex === 1}
-              gameMode={gameMode}
-            />
-          </div>
-        </div>
-      )}
       
       {/* Rules Overlay */}
       {showRulesOverlay && (

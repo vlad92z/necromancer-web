@@ -22,8 +22,6 @@ export function Runeforge({ runeforge, onRuneforgeClick, disabled = false, voidE
     }
   };
   
-  const isMobile = window.innerWidth < 768;
-  
   // Determine styling based on state
   let backgroundColor = '#e0f2fe';
   let borderColor = '#bae6fd';
@@ -56,8 +54,6 @@ export function Runeforge({ runeforge, onRuneforgeClick, disabled = false, voidE
     boxShadow = '0 0 16px rgba(103, 232, 249, 0.6), inset 0 0 20px rgba(165, 243, 252, 0.4)';
     ariaLabel = `Runeforge frozen - cannot draft`;
   }
-
-  const runeCellSize = isMobile ? 'medium' : 'large';
   
   return (
     <button
@@ -65,10 +61,10 @@ export function Runeforge({ runeforge, onRuneforgeClick, disabled = false, voidE
       disabled={disabled || runeforge.runes.length === 0}
       style={{
         backgroundColor: backgroundColor,
-        borderRadius: isMobile ? '4px' : '12px',
-        padding: isMobile ? '6px' : '16px',
-        minWidth: isMobile ? '50px' : '120px',
-        minHeight: isMobile ? '50px' : '120px',
+        borderRadius: '12px',
+        padding: '16px',
+        minWidth: '120px',
+        minHeight: '120px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -87,9 +83,9 @@ export function Runeforge({ runeforge, onRuneforgeClick, disabled = false, voidE
       {isFrozen && !voidEffectPending && !frostEffectPending && (
         <div style={{
           position: 'absolute',
-          top: isMobile ? '2px' : '4px',
-          right: isMobile ? '2px' : '4px',
-          fontSize: isMobile ? '12px' : '24px',
+          top: '4px',
+          right: '4px',
+          fontSize: '24px',
           filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.8))'
         }}>
           ❄️
@@ -97,24 +93,24 @@ export function Runeforge({ runeforge, onRuneforgeClick, disabled = false, voidE
       )}
       
       {runeforge.runes.length === 0 ? (
-        <div style={{ color: '#64748b', fontSize: isMobile ? '6px' : '14px' }}>
+        <div style={{ color: '#64748b', fontSize: '14px' }}>
           Empty
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: isMobile ? '2px' : '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
           {runeforge.runes.map((rune) => (
             <div
               key={rune.id}
               style={{
-                width: isMobile ? '30px' : '60px',
-                height: isMobile ? '30px' : '60px',
+                width: '60px',
+                height: '60px',
                 pointerEvents: 'none'
               }}
             >
               <RuneCell
                 rune={rune}
                 variant="runeforge"
-                size={runeCellSize}
+                size='large'
                 showEffect={false}
               />
             </div>

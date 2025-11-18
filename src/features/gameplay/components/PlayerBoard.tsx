@@ -15,10 +15,9 @@ interface PlayerBoardProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
-  isMobileOpponent?: boolean;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, isMobileOpponent = false }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection}: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -29,13 +28,13 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     <div
       onClick={handleBoardClick}
       style={{
-        padding: window.innerWidth < 768 ? '4px' : '16px',
-        borderRadius: window.innerWidth < 768 ? '6px' : '8px',
+        padding: '16px',
+        borderRadius: '8px',
         border: isActive ? '2px solid rgba(59, 130, 246, 0.5)' : '2px solid #e2e8f0',
-        backgroundColor: isMobileOpponent ? '#dbeafe' : (isActive ? 'rgba(191, 219, 254, 0.3)' : '#ffffff'),
+        backgroundColor: '#ffffff',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'row', gap: window.innerWidth < 768 ? '6px' : '24px', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', justifyContent: 'space-between', width: '100%' }}>
         {/* Pattern Lines */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
           <PatternLines 

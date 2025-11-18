@@ -14,17 +14,14 @@ interface OpponentViewProps {
 }
 
 export function OpponentView({ opponent, player, isActive, gameMode }: OpponentViewProps) {
-  const isMobile = window.innerWidth < 768;
-  
   return (
-    <div style={{ marginBottom: isMobile ? '0px' : '24px' }}>
+    <div style={{ marginBottom: '24px' }}>
       <RunePower 
         player={opponent}
         opponent={player}
         damageTaken={player.score}
         nameColor="#7f1d1d"
         gameMode={gameMode}
-        isMobileOpponent={isMobile}
       />
       <PlayerBoard
         player={opponent}
@@ -33,7 +30,6 @@ export function OpponentView({ opponent, player, isActive, gameMode }: OpponentV
         selectedRuneType={null}
         canPlace={false}
         onCancelSelection={() => {}}
-        isMobileOpponent={isMobile}
       />
     </div>
   );

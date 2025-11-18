@@ -86,9 +86,7 @@ export function RuneCell({
   showEffect = false,
   isPending = false,
 }: RuneCellProps) {
-  const isMobile = window.innerWidth < 768;
-  const sizeKey = isMobile ? (size === 'large' ? 'medium' : 'small') : size;
-  const config = SIZE_CONFIG[sizeKey];
+  const config = SIZE_CONFIG[size];
   const variantStyle = VARIANT_STYLES[variant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
@@ -135,7 +133,7 @@ export function RuneCell({
         width: `${config.width}px`,
         height: `${config.height}px`,
         border: borderStyle,
-        borderRadius: isMobile ? '6px' : '8px',
+        borderRadius: '8px',
         backgroundColor: backgroundColor,
         display: 'flex',
         alignItems: 'center',

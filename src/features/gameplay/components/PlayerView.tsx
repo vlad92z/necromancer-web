@@ -29,10 +29,8 @@ export function PlayerView({
   onCancelSelection,
   gameMode,
 }: PlayerViewProps) {
-  const isMobile = window.innerWidth < 768;
-  
   return (
-    <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
+    <div style={{ marginBottom: '24px' }}>
       <RunePower 
         player={player}
         opponent={opponent}

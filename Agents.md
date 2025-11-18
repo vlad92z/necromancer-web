@@ -14,13 +14,10 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - Single-page PvE card drafting game (Azul-inspired mechanics)
 - React 19 + TypeScript + Zustand + Framer Motion
 - Inline CSS styling (no Tailwind, no CSS-in-JS libraries)
-- Mobile-first responsive design with overlay patterns
 - No routing, no backend, no meta-progression features
 
 **What to Focus On**:
 - Core gameplay mechanics and polish
-- Mobile/responsive UX improvements
-- AI opponent intelligence
 - Visual feedback and animations
 - Accessibility enhancements
 
@@ -157,7 +154,6 @@ Each agent has a specific domain, quality bar, and boundaries. The goal is **inc
 - All interactive elements must be keyboard-accessible.
 - Rune types must be distinguishable by color AND icon/glyph for colorblind users.
 - Animations must respect `prefers-reduced-motion`.
-- Mobile layout must work on 375px width minimum.
 - Components must be themable (dark mode support or future theming).
 
 **Out of Scope**:

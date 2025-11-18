@@ -35,8 +35,6 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 - Styling:
   - Inline CSS with custom rune colors
-  - Fully responsive design with mobile-first approach
-  - Touch-optimized interactions for mobile devices
 
 **Tech Stack:**
 - React 19 + TypeScript (strict mode)
@@ -270,19 +268,6 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Calculating scores from wall connections (2 second delay)
   - Clearing floor line penalties (1.5 second delay)
   - Visual feedback through rune animations showing each change
-
-**Mobile & Touch Optimizations:**
-- `RuneforgeOverlay`: Enlarged modal view for selecting runes from runeforges/center on mobile
-  - Groups runes by type for easier selection
-  - Touch-friendly tap targets
-  - Backdrop click to close
-- `DeckOverlay`: Full-screen view of player's remaining deck
-  - Organized grid layout grouped by rune type
-  - Shows rune counts and visual previews
-  - Accessible via deck count button on player boards
-- Responsive breakpoints optimized for mobile (375px+), tablet (768px+), and desktop
-- Touch-optimized button sizes and spacing
-- Mobile-friendly overlay patterns for all complex selections
 
 **Information Overlays:**
 - `RulesOverlay`: Comprehensive game rules and instructions

@@ -13,11 +13,9 @@ interface RunePowerProps {
   damageTaken: number;
   nameColor: string;
   gameMode: 'classic' | 'standard';
-  isMobileOpponent?: boolean;
 }
 
-export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, isMobileOpponent = false }: RunePowerProps) {
-  const isMobile = window.innerWidth < 768;
+export function RunePower({ player, opponent, damageTaken, nameColor, gameMode}: RunePowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   
   const currentHealth = 300 - damageTaken;
@@ -61,27 +59,27 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
     <>
       <div style={{
         display: 'flex',
-        gap: isMobile ? '6px' : '12px',
-        marginBottom: isMobile ? '4px' : '8px'
+        gap: '12px',
+        marginBottom: '8px'
       }}>
       {/* Player Info Box */}
       <div style={{
         flex: '0 0 33%',
-        backgroundColor: isMobileOpponent ? '#dbeafe' : 'rgba(191, 219, 254, 0.3)',
-        border: isMobileOpponent ? '2px solid #78350f' : '2px solid rgba(59, 130, 246, 0.5)',
-        borderRadius: isMobile ? '6px' : '8px',
-        padding: isMobile ? '6px 8px' : '8px 12px',
+        backgroundColor: 'rgba(191, 219, 254, 0.3)',
+        border: '2px solid rgba(59, 130, 246, 0.5)',
+        borderRadius: '8px',
+        padding: '8px 12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-start'
       }}>
         <div style={{
-          fontSize: isMobile ? '12px' : '18px',
-          color: isMobileOpponent ? '#fef3c7' : '#0c4a6e',
+          fontSize: '18px',
+          color: '#0c4a6e',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? '4px' : '8px'
+          gap: '8px'
         }}>
           <span style={{ color: nameColor }}>
             {player.name}
@@ -104,21 +102,21 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
       {/* Power Stats Box */}
       <div style={{
         flex: '0 0 66%',
-        backgroundColor: isMobileOpponent ? '#dbeafe' : 'rgba(191, 219, 254, 0.3)',
-        border: isMobileOpponent ? '2px solid #78350f' : '2px solid rgba(59, 130, 246, 0.5)',
-        borderRadius: isMobile ? '6px' : '8px',
-        padding: isMobile ? '6px 8px' : '8px 12px',
+        backgroundColor: 'rgba(191, 219, 254, 0.3)',
+        border: '2px solid rgba(59, 130, 246, 0.5)',
+        borderRadius: '8px',
+        padding: '8px 12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
         <div style={{
-          fontSize: isMobile ? '12px' : '18px',
-          color: isMobileOpponent ? '#fef3c7' : '#0c4a6e',
+          fontSize: '18px',
+          color: '#0c4a6e',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? '4px' : '8px',
+          gap: '8px',
           flex: 1,
           justifyContent: 'flex-end'
         }}>
@@ -127,7 +125,7 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
               <span>
                 Essence: <span style={{ color: '#eab308' }}>{essence}</span>
                 {fireRuneCount > 0 && (
-                  <span style={{ color: '#FF4500', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`+${fireRuneCount} from Fire runes`}>
+                  <span style={{ color: '#FF4500', fontSize: '14px', marginLeft: '2px' }} title={`+${fireRuneCount} from Fire runes`}>
                     🔥
                   </span>
                 )}
@@ -136,12 +134,12 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
               <span style={{ color: hasPenalty || hasPoisonEffect ? '#dc2626' : '#0c4a6e' }}>
                 Focus: {focus}
                 {hasPoisonEffect && (
-                  <span style={{ color: '#32CD32', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`-${opponentPoisonCount} from opponent Poison runes`}>
+                  <span style={{ color: '#32CD32', fontSize: '14px', marginLeft: '2px' }} title={`-${opponentPoisonCount} from opponent Poison runes`}>
                     ☠️
                   </span>
                 )}
                 {hasWindMitigation && (
-                  <span style={{ color: '#87CEEB', fontSize: isMobile ? '10px' : '14px', marginLeft: '2px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} mitigating floor penalties`}>
+                  <span style={{ color: '#87CEEB', fontSize: '14px', marginLeft: '2px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} mitigating floor penalties`}>
                     💨
                   </span>
                 )}
@@ -165,14 +163,14 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
             setShowExplanation(true);
           }}
           style={{
-            marginLeft: isMobile ? '4px' : '8px',
-            width: isMobile ? '20px' : '24px',
-            height: isMobile ? '20px' : '24px',
+            marginLeft: '8px',
+            width: '24px',
+            height: '24px',
             borderRadius: '50%',
             border: '2px solid #0c4a6e',
             backgroundColor: '#ffffff',
             color: '#0c4a6e',
-            fontSize: isMobile ? '10px' : '14px',
+            fontSize: '14px',
             fontWeight: 'bold',
             cursor: 'pointer',
             display: 'flex',
@@ -210,7 +208,7 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
           style={{
             backgroundColor: '#ffffff',
             borderRadius: '12px',
-            padding: isMobile ? '20px' : '32px',
+            padding: '32px',
             maxWidth: '600px',
             maxHeight: '80vh',
             overflow: 'auto',
@@ -219,14 +217,14 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
         >
           <h2 style={{
             margin: '0 0 16px 0',
-            fontSize: isMobile ? '18px' : '24px',
+            fontSize: '24px',
             color: '#0c4a6e',
             fontWeight: 'bold'
           }}>
             Spellpower
           </h2>
           
-          <div style={{ fontSize: isMobile ? '14px' : '16px', lineHeight: '1.6', color: '#1e293b' }}>
+          <div style={{ fontSize: '16px', lineHeight: '1.6', color: '#1e293b' }}>
             <div style={{ marginBottom: '16px' }}>
               <strong style={{ color: '#eab308' }}>Essence:</strong>
               <p style={{ margin: '4px 0 0 0' }}>
@@ -253,12 +251,12 @@ export function RunePower({ player, opponent, damageTaken, nameColor, gameMode, 
             onClick={() => setShowExplanation(false)}
             style={{
               marginTop: '20px',
-              padding: isMobile ? '8px 16px' : '10px 24px',
+              padding: '10px 24px',
               backgroundColor: '#0c4a6e',
               color: '#ffffff',
               border: 'none',
               borderRadius: '6px',
-              fontSize: isMobile ? '14px' : '16px',
+              fontSize: '16px',
               fontWeight: 'bold',
               cursor: 'pointer',
               width: '100%'

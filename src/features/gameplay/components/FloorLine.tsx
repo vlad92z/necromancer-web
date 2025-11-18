@@ -12,25 +12,23 @@ interface FloorLineProps {
 }
 
 export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLineProps) {
-  const isMobile = window.innerWidth < 768;
-  
   return (
-    <div style={{ marginTop: isMobile ? '0px' : '16px' }} onClick={(e) => e.stopPropagation()}>
+    <div style={{ marginTop: '16px' }} onClick={(e) => e.stopPropagation()}>
       <button
         onClick={onPlaceRunesInFloor}
         disabled={!canPlace || !onPlaceRunesInFloor}
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: window.innerWidth < 768 ? '2px' : '8px',
+          gap: '8px',
           width: '100%',
           cursor: (canPlace && onPlaceRunesInFloor) ? 'pointer' : 'default',
           backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(254, 202, 202, 0.5)' : 'transparent',
           border: 'none',
-          padding: window.innerWidth < 768 ? '4px' : '8px',
-          borderRadius: window.innerWidth < 768 ? '6px' : '8px',
+          padding: '8px',
+          borderRadius: '8px',
           transition: 'all 0.2s',
-          justifyContent: window.innerWidth < 768 ? 'center' : 'flex-start'
+          justifyContent: 'flex-start'
         }}
         onMouseEnter={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.7)')}
         onMouseLeave={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.5)')}

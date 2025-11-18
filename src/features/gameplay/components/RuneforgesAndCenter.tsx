@@ -31,18 +31,17 @@ export function RuneforgesAndCenter({
   frostEffectPending,
   frozenRuneforges
 }: RuneforgesAndCenterProps) {
-  const isMobile = window.innerWidth < 768;
   
   return (
-    <div style={{ marginBottom: isMobile ? '16px' : '32px' }}>
+    <div style={{ marginBottom: '32px' }}>
       
-      {/* Runeforges - Single row for both mobile and desktop */}
+      {/* Runeforges  */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        gap: isMobile ? '6px' : '24px', 
-        marginBottom: isMobile ? '8px' : '24px' 
+        gap: '24px', 
+        marginBottom: '24px' 
       }}>
         {runeforges.map((runeforge) => (
           <Runeforge 

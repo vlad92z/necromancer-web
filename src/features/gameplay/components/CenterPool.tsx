@@ -20,7 +20,6 @@ export function CenterPool({
   hasSelectedRunes, 
   isAITurn 
 }: CenterPoolProps) {
-  const isMobile = window.innerWidth < 768;
   
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -29,12 +28,12 @@ export function CenterPool({
         disabled={!isDraftPhase || hasSelectedRunes || isAITurn || centerPool.length === 0}
         style={{
           backgroundColor: '#dbeafe',
-          borderRadius: isMobile ? '4px' : '12px',
-          padding: isMobile ? '6px' : '16px',
+          borderRadius: '12px',
+          padding: '16px',
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'center',
-          gap: isMobile ? '4px' : '8px',
+          gap: '8px',
           maxWidth: '90%',
           border: '2px solid #bfdbfe',
           cursor: (!isDraftPhase || hasSelectedRunes || isAITurn || centerPool.length === 0) ? 'not-allowed' : 'pointer',
@@ -46,7 +45,7 @@ export function CenterPool({
         aria-label={`Open center pool with ${centerPool.length} runes`}
       >
         {centerPool.length === 0 ? (
-          <div style={{ color: '#6b7280', fontSize: isMobile ? '10px' : '14px', textAlign: 'center', padding: isMobile ? '8px' : '16px' }}>Empty</div>
+          <div style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', padding: '16px' }}>Empty</div>
         ) : (
           centerPool.map((rune) => (
             <div
