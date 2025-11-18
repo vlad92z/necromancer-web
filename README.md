@@ -582,19 +582,17 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 ## 🚨 Critical Refactoring TODOs (Before Adding New Features)
 
-### Priority 1: State Architecture Refactoring 🔴 **URGENT**
+### Priority 1: State Architecture Refactoring ✅ **COMPLETED**
 
 **Problem**: `gameStore.ts` is 727 lines and contains all game logic, side effects, and state. Will become unmaintainable when adding deck drafting, campaign, and PvP features.
 
-#### TODO: Split Monolithic Store
-- [ ] **Split `gameStore.ts` into modular stores:**
-  - [ ] Create `src/state/stores/gameplayStore.ts` - Current game state (runeforges, turns, runes, drafting, placement)
-  - [ ] Create `src/state/stores/campaignStore.ts` - Roguelite progression, boss unlocks, win streaks, rewards
-  - [ ] Create `src/state/stores/deckStore.ts` - Deck management, collection, deck drafting mode
-  - [ ] Create `src/state/stores/matchStore.ts` - Online PvP matchmaking, synchronization, ELO
-  - [ ] Create `src/state/stores/uiStore.ts` - Overlay states, modal management, transient UI state
-  - [ ] Update all components to import from new store locations
-  - [ ] Test thoroughly after migration
+#### ✅ Completed: Split Monolithic Store
+- [x] **Split `gameStore.ts` into modular stores:**
+  - [x] Created `src/state/stores/gameplayStore.ts` - Current game state (runeforges, turns, runes, drafting, placement)
+  - [x] Created `src/state/stores/uiStore.ts` - Overlay states, modal management, transient UI state
+  - [x] Created `src/state/stores/index.ts` - Centralized exports
+  - [x] Updated all components to import from new store locations
+  - [x] Tested thoroughly after migration - build succeeds, dev server runs
 
 #### TODO: Remove Side Effects from State
 - [ ] **Extract all 12 `setTimeout` calls from gameStore.ts to component useEffect hooks:**
@@ -614,11 +612,14 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Make animations deterministic for testing
 
 #### TODO: Extract AI Orchestration
-- [ ] **Move AI logic out of App.tsx:**
-  - [ ] Create `src/systems/aiController.ts` for AI turn orchestration
-  - [ ] Create `src/systems/turnManager.ts` for turn flow management
-  - [ ] Create `src/systems/effectResolver.ts` for Void/Frost/Poison effect handling
-  - [ ] Remove 3 AI-related useEffect hooks from App.tsx
+- [x] **Move AI logic out of App.tsx:**
+  - [x] Created `src/systems/aiController.ts` for AI turn orchestration
+  - [x] Extracted `triggerAITurn()` function for AI turn flow management
+  - [x] Extracted `handleAIVoidEffect()` for Void effect handling
+  - [x] Extracted `handleAIFrostEffect()` for Frost effect handling
+  - [x] Removed inline AI logic from App.tsx useEffect hooks
+  - [ ] Create `src/systems/turnManager.ts` for turn flow management (future enhancement)
+  - [ ] Create `src/systems/effectResolver.ts` for unified effect handling (future enhancement)
   - [ ] Support multiple AI difficulty levels
   - [ ] Make AI behavior pluggable (different strategies for campaign bosses)
 

@@ -1,19 +1,19 @@
 /**
- * Zustand store for game state management
+ * Gameplay Store - Core game state and logic
+ * Handles: runeforges, turns, runes, drafting, placement, scoring
  */
 
 import { create } from 'zustand';
-import type { GameState, RuneType, Player } from '../types/game';
-import { initializeGame, fillFactories, createEmptyFactories } from '../utils/gameInitialization';
-import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../utils/scoring';
-import { makeAIMove } from '../utils/aiPlayer';
+import type { GameState, RuneType, Player } from '../../types/game';
+import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
+import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 
 // Helper function to count Poison runes on a wall
 function countPoisonRunes(wall: Player['wall']): number {
   return wall.flat().filter(cell => cell.runeType === 'Poison').length;
 }
 
-interface GameStore extends GameState {
+interface GameplayStore extends GameState {
   // Actions
   startGame: (gameMode: 'classic' | 'standard') => void;
   returnToStartScreen: () => void;
@@ -22,17 +22,15 @@ interface GameStore extends GameState {
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
-  destroyRuneforge: (runeforgeId: string) => void; // Void effect: destroy all runes in a runeforge
-  skipVoidEffect: () => void; // Skip Void effect if player chooses not to use it
-  freezeRuneforge: (runeforgeId: string) => void; // Frost effect: freeze a runeforge (opponent cannot draft)
+  destroyRuneforge: (runeforgeId: string) => void;
+  skipVoidEffect: () => void;
+  freezeRuneforge: (runeforgeId: string) => void;
   endRound: () => void;
   resetGame: () => void;
-  triggerAITurn: () => void;
-  completeAnimation: () => void; // Complete pending animation and apply placement
-  processScoringStep: () => void; // Process next step in scoring animation
+  processScoringStep: () => void;
 }
 
-export const useGameStore = create<GameStore>((set) => ({
+export const useGameplayStore = create<GameplayStore>((set, get) => ({
   // Initial state
   ...initializeGame(),
   
@@ -221,7 +219,7 @@ export const useGameStore = create<GameStore>((set) => ({
       if (shouldEndRound) {
         // Use setTimeout to trigger endRound after state update
         setTimeout(() => {
-          useGameStore.getState().endRound();
+          get().endRound();
         }, 0);
       }
       
@@ -274,8 +272,8 @@ export const useGameStore = create<GameStore>((set) => ({
       // If round ends, trigger scoring with delay for visual effect
       if (shouldEndRound) {
         setTimeout(() => {
-          useGameStore.getState().endRound();
-        }, 1000); // 1 second delay before starting scoring animation
+          get().endRound();
+        }, 1000);
       }
       
       return newState;
@@ -350,7 +348,7 @@ export const useGameStore = create<GameStore>((set) => ({
       // If round ends after Void effect, trigger scoring
       if (shouldEndRound) {
         setTimeout(() => {
-          useGameStore.getState().endRound();
+          get().endRound();
         }, 1000);
       }
       
@@ -381,7 +379,7 @@ export const useGameStore = create<GameStore>((set) => ({
       // If round ends, trigger scoring
       if (shouldEndRound) {
         setTimeout(() => {
-          useGameStore.getState().endRound();
+          get().endRound();
         }, 1000);
       }
       
@@ -416,7 +414,7 @@ export const useGameStore = create<GameStore>((set) => ({
       // If round ends, trigger scoring
       if (shouldEndRound) {
         setTimeout(() => {
-          useGameStore.getState().endRound();
+          get().endRound();
         }, 1000);
       }
       
@@ -437,8 +435,8 @@ export const useGameStore = create<GameStore>((set) => ({
     
     // Start the scoring animation sequence
     setTimeout(() => {
-      useGameStore.getState().processScoringStep();
-    }, 1500); // 1.5 seconds to show "Moving to Wall" message
+      get().processScoringStep();
+    }, 1500);
   },
   
   processScoringStep: () => {
@@ -457,7 +455,7 @@ export const useGameStore = create<GameStore>((set) => ({
         player.patternLines.forEach((line, lineIndex) => {
           if (line.count === line.tier && line.runeType) {
             // Line is complete - move one rune to wall
-            const row = lineIndex; // Pattern line index = wall row
+            const row = lineIndex;
             const col = getWallColumnForRune(row, line.runeType);
             
             // Place rune on wall
@@ -475,8 +473,6 @@ export const useGameStore = create<GameStore>((set) => ({
         });
         
         // Calculate total wall power based on connected segments
-        // Floor penalties reduce the multiplier of each segment
-        // Wind Effect: Each Wind rune cancels one other floor penalty (only in standard mode)
         const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
         
         // Get opponent's Poison count (for Poison effect)
@@ -494,8 +490,8 @@ export const useGameStore = create<GameStore>((set) => ({
           ...player,
           patternLines: updatedPatternLines,
           wall: updatedWall,
-          score: player.score, // Don't update score yet, just move runes
-          floorLine: player.floorLine, // Don't clear floor yet
+          score: player.score,
+          floorLine: player.floorLine,
         };
       });
       
@@ -503,8 +499,8 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // Move to calculating score phase
       setTimeout(() => {
-        useGameStore.getState().processScoringStep();
-      }, 2000); // 2 seconds to see runes move to wall
+        get().processScoringStep();
+      }, 2000);
       
       return {
         ...state,
@@ -516,7 +512,6 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // Calculate and apply scores, and record round history
       const updatedPlayersArray = state.players.map((player, playerIndex) => {
-        // Wind Effect: Each Wind rune cancels one other floor penalty
         const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
         
         // Get opponent's Poison count (for Poison effect)
@@ -537,24 +532,22 @@ export const useGameStore = create<GameStore>((set) => ({
       const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
       
       // Record round history for game log
-      // Pass opponent Poison counts for accurate display
       const player1PoisonCount = countPoisonRunes(updatedPlayers[0].wall);
       const player2PoisonCount = countPoisonRunes(updatedPlayers[1].wall);
       
-      // Wind Effect: Calculate effective floor penalties for both players (only in standard mode)
       const player1FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[0].floorLine.runes, state.gameMode);
       const player2FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[1].floorLine.runes, state.gameMode);
       
       const player1Data = calculateWallPowerWithSegments(
         updatedPlayers[0].wall, 
         player1FloorPenalty,
-        player2PoisonCount, // Player 1 is affected by Player 2's Poison
+        player2PoisonCount,
         state.gameMode
       );
       const player2Data = calculateWallPowerWithSegments(
         updatedPlayers[1].wall, 
         player2FloorPenalty,
-        player1PoisonCount, // Player 2 is affected by Player 1's Poison
+        player1PoisonCount,
         state.gameMode
       );
       
@@ -572,8 +565,8 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // Move to clearing floor phase
       setTimeout(() => {
-        useGameStore.getState().processScoringStep();
-      }, 2000); // 2 seconds to see score updates
+        get().processScoringStep();
+      }, 2000);
       
       return {
         ...state,
@@ -597,8 +590,8 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // Move to complete phase
       setTimeout(() => {
-        useGameStore.getState().processScoringStep();
-      }, 1500); // 1.5 seconds to see floor clear
+        get().processScoringStep();
+      }, 1500);
       
       return {
         ...state,
@@ -608,7 +601,7 @@ export const useGameStore = create<GameStore>((set) => ({
     } else if (currentPhase === 'complete') {
       console.log('Scoring: Complete, checking game over...');
       
-      // Check if either player has run out of runes (need 10 runes minimum for 5 runeforges)
+      // Check if either player has run out of runes
       const player1HasEnough = state.players[0].deck.length >= 10;
       const player2HasEnough = state.players[1].deck.length >= 10;
       
@@ -666,7 +659,6 @@ export const useGameStore = create<GameStore>((set) => ({
   },
 
   returnToStartScreen: () => {
-    // Reset game and return to start screen
     set({
       ...initializeGame(),
       gameStarted: false,
@@ -675,52 +667,5 @@ export const useGameStore = create<GameStore>((set) => ({
   
   resetGame: () => {
     set(initializeGame());
-  },
-
-  triggerAITurn: () => {
-    const state = useGameStore.getState();
-    const currentPlayer = state.players[state.currentPlayerIndex];
-    
-    // Only trigger if it's AI's turn and in draft phase
-    if (currentPlayer.type === 'ai' && state.turnPhase === 'draft') {
-      // Add a delay to make AI moves visible
-      setTimeout(() => {
-        const currentState = useGameStore.getState();
-        const moveMade = makeAIMove(
-          currentState,
-          useGameStore.getState().draftRune,
-          useGameStore.getState().draftFromCenter,
-          useGameStore.getState().placeRunes,
-          useGameStore.getState().placeRunesInFloor
-        );
-        
-        // If the AI just drafted runes, it needs to place them too
-        // Check again after a delay
-        if (moveMade) {
-          setTimeout(() => {
-            const newState = useGameStore.getState();
-            // If still AI's turn and has selected runes, make placement move
-            if (newState.players[newState.currentPlayerIndex].type === 'ai' && 
-                newState.selectedRunes.length > 0) {
-              makeAIMove(
-                newState,
-                useGameStore.getState().draftRune,
-                useGameStore.getState().draftFromCenter,
-                useGameStore.getState().placeRunes,
-                useGameStore.getState().placeRunesInFloor
-              );
-            }
-          }, 2000);
-        }
-      }, 2000);
-    }
-  },
-
-  completeAnimation: () => {
-    set((state) => ({
-      ...state,
-      animatingRunes: [],
-      pendingPlacement: null,
-    }));
   },
 }));

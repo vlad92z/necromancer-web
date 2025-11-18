@@ -14,7 +14,7 @@ import { DeckOverlay } from './DeckOverlay';
 import { RuneforgeOverlay } from './RuneforgeOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
-import { useGameStore } from '../../../state/gameStore';
+import { useGameplayStore } from '../../../state/stores/gameplayStore';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -23,9 +23,9 @@ interface GameBoardProps {
 export function GameBoard({ gameState }: GameBoardProps) {
   const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
-  const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
-  const destroyRuneforge = useGameStore((state) => state.destroyRuneforge);
-  const freezeRuneforge = useGameStore((state) => state.freezeRuneforge);
+  const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
+  const destroyRuneforge = useGameplayStore((state) => state.destroyRuneforge);
+  const freezeRuneforge = useGameplayStore((state) => state.freezeRuneforge);
   
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
