@@ -15,6 +15,9 @@ interface SpellpowerProps {
   opponentPoisonCount: number;
   hasWindMitigation: boolean;
   windRuneCount: number;
+  onShowDeck: () => void;
+  onShowLog: () => void;
+  onShowRules: () => void;
 }
 
 export function Spellpower({
@@ -27,6 +30,9 @@ export function Spellpower({
   opponentPoisonCount,
   hasWindMitigation,
   windRuneCount,
+  onShowDeck,
+  onShowLog,
+  onShowRules,
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
 
@@ -42,8 +48,80 @@ export function Spellpower({
         flexDirection: 'column',
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        position: 'relative'
       }}>
+        {/* Top Right Buttons */}
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          display: 'flex',
+          gap: '6px'
+        }}>
+          {/* Deck Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onShowDeck();
+            }}
+            style={{
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            {'🎴 Deck'}
+          </button>
+          
+          {/* Log Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onShowLog();
+            }}
+            style={{
+              backgroundColor: '#059669',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            {'📜 Log'}
+          </button>
+          
+          {/* Rules Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onShowRules();
+            }}
+            style={{
+              backgroundColor: '#0369a1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            {'❓ Rules'}
+          </button>
+        </div>
         {/* Formula Display */}
         <div style={{
           display: 'flex',

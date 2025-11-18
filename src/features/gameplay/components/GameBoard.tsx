@@ -151,75 +151,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: '14px' }}>
           <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
         </div>
-        
-        {/* Top Right Buttons */}
-        <div style={{
-          position: 'absolute',
-          top: '16px',
-          right: '24px',
-          display: 'flex',
-          gap: '8px'
-        }}>
-          {/* Deck Button */}
-          <button
-            onClick={() => setShowDeckOverlay(true)}
-            style={{
-              backgroundColor: '#7c3aed',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-            }}
-          >
-            {'🎴 Deck'}
-          </button>
-          
-          {/* Log Button */}
-          <button
-            onClick={() => setShowLogOverlay(true)}
-            style={{
-              backgroundColor: '#059669',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-            }}
-          >
-            {'📜 Log'}
-          </button>
-          
-          {/* Rules Button */}
-          <button
-            onClick={() => setShowRulesOverlay(true)}
-            style={{
-              backgroundColor: '#0369a1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '8px 14px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0284c7'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0369a1'}
-          >
-            ❓ Rules
-          </button>
-        </div>
       </div>
 
       {/* Three Equal Sections Container */}
@@ -359,6 +290,9 @@ export function GameBoard({ gameState }: GameBoardProps) {
               canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
               onCancelSelection={cancelSelection}
               gameMode={gameMode}
+              onShowDeck={() => setShowDeckOverlay(true)}
+              onShowLog={() => setShowLogOverlay(true)}
+              onShowRules={() => setShowRulesOverlay(true)}
             />
           </div>
         </div>

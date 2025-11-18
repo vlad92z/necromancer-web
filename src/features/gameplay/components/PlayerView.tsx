@@ -15,6 +15,9 @@ interface PlayerViewProps {
   canPlace: boolean;
   onCancelSelection: () => void;
   gameMode: 'classic' | 'standard';
+  onShowDeck: () => void;
+  onShowLog: () => void;
+  onShowRules: () => void;
 }
 
 export function PlayerView({
@@ -27,6 +30,9 @@ export function PlayerView({
   canPlace,
   onCancelSelection,
   gameMode,
+  onShowDeck,
+  onShowLog,
+  onShowRules,
 }: PlayerViewProps) {
   return (
     <div>
@@ -42,6 +48,9 @@ export function PlayerView({
         gameMode={gameMode}
         damageTaken={opponent.score}
         nameColor="#0c4a6e"
+        onShowDeck={onShowDeck}
+        onShowLog={onShowLog}
+        onShowRules={onShowRules}
       />
     </div>
   );

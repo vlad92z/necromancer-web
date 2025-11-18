@@ -22,9 +22,12 @@ interface PlayerBoardProps {
   gameMode: 'classic' | 'standard';
   damageTaken: number;
   nameColor: string;
+  onShowDeck: () => void;
+  onShowLog: () => void;
+  onShowRules: () => void;
 }
 
-export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, damageTaken, nameColor}: PlayerBoardProps) {
+export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, damageTaken, nameColor, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -161,6 +164,9 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
             opponentPoisonCount={opponentPoisonCount}
             hasWindMitigation={hasWindMitigation}
             windRuneCount={windRuneCount}
+            onShowDeck={onShowDeck}
+            onShowLog={onShowLog}
+            onShowRules={onShowRules}
           />
         </div>
       </div>
