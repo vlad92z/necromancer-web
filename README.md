@@ -600,37 +600,6 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 ## Refactoring TODOs (Before Adding New Features)
 
-### Priority 1: Routing & Navigation 🟡 **HIGH** ✅ COMPLETED
-
-**Implementation Complete!** React Router has been successfully integrated.
-
-#### ✅ Completed: Add React Router
-- [x] **Install and configure routing:**
-  - [x] `npm install react-router-dom`
-  - [x] Create `src/routes/` folder
-  - [x] Create route components:
-    - [x] `MainMenu.tsx` - Game mode selection (Quick Play, Campaign, Deck Builder, Matchmaking)
-    - [x] `GameMatch.tsx` - Main game (moved from App.tsx)
-    - [x] `CampaignMap.tsx` - Boss selection (stub for future)
-    - [x] `DeckBuilder.tsx` - Pre-match deck drafting (stub for future)
-    - [x] `PostMatchRewards.tsx` - Deck improvements (stub for future)
-    - [x] `Matchmaking.tsx` - Online PvP lobby (stub for future)
-  - [x] Set up router in App.tsx with `<BrowserRouter>` and route definitions
-  - [x] Add catch-all redirect to main menu
-
-- [x] **Update state management for routing:**
-  - [x] Make stores route-aware (clear game state on route change)
-  - [x] Add navigation callback system for returnToStartScreen
-  - [x] Support clean navigation between routes
-  
-**Routes:**
-- `/` - Main menu with game mode selection
-- `/game` - Quick Play match (PvE)
-- `/campaign` - Campaign map (coming soon)
-- `/deck-builder` - Deck builder (coming soon)
-- `/rewards` - Post-match rewards (coming soon)
-- `/matchmaking` - Online matchmaking (coming soon)
-
 **Problem**: Single-page app with boolean toggles won't scale to deck drafting, campaign map, post-match rewards, and matchmaking screens.
 - [ ] **Install and configure routing:**
   - [ ] `npm install react-router-dom`
