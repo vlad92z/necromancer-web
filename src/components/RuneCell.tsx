@@ -27,6 +27,12 @@ export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'cent
 export interface RuneCellProps {
   rune?: Rune | null;
   variant: RuneCellVariant;
+  /**
+   * Optionally force the visual variant used for styling. Useful when a floor
+   * cell should visually look like a pattern cell without changing its semantic
+   * variant (so Wind-in-floor logic still treats it as a floor rune).
+   */
+  forceVariant?: RuneCellVariant;
   size?: 'small' | 'medium' | 'large';
   placeholder?: {
     type: 'rune' | 'text';
@@ -82,6 +88,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
 export function RuneCell({
   rune,
   variant,
+  forceVariant,
   size = 'medium',
   placeholder,
   clickable = false,
@@ -90,7 +97,8 @@ export function RuneCell({
   isPending = false,
 }: RuneCellProps) {
   const config = SIZE_CONFIG[size];
-  const variantStyle = VARIANT_STYLES[variant];
+  const usedVariant = forceVariant ?? variant;
+  const variantStyle = VARIANT_STYLES[usedVariant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
   const runeImage = runeType ? RUNE_ASSETS[runeType] : null;
@@ -98,12 +106,18 @@ export function RuneCell({
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   
-  // Highlight Wind runes in pattern lines to communicate mitigation effect
+  // Highlight Wind runes in pattern lines to communicate mitigation effect.
+  // Note: use the *semantic* variant (original `variant`) to determine whether
+  // a rune is actually in a pattern line. We intentionally do not use
+  // `usedVariant` here so that forcing a 'pattern' look for a floor cell does
+  // not accidentally highlight Wind runes that are actually on the floor.
   const isWindMitigating = variant === 'pattern' && rune?.runeType === 'Wind';
   
   // Use occupied background for wall cells that have runes OR are pending placement
-  let backgroundColor = (variant === 'wall' && (rune || isPending) && variantStyle.backgroundOccupied) 
-    ? variantStyle.backgroundOccupied 
+  // Use `usedVariant` for styling decisions so callers can force visuals
+  // without changing semantic behavior.
+  let backgroundColor = (usedVariant === 'wall' && (rune || isPending) && variantStyle.backgroundOccupied)
+    ? variantStyle.backgroundOccupied
     : variantStyle.background;
   
   // Override background for mitigating Wind runes in pattern lines
@@ -118,7 +132,7 @@ export function RuneCell({
   }
   
   // Animate when rune appears in pattern lines, scoring wall, or floor line
-  const shouldAnimate = (variant === 'pattern' || variant === 'wall' || variant === 'floor') && rune;
+  const shouldAnimate = (usedVariant === 'pattern' || usedVariant === 'wall' || usedVariant === 'floor') && rune;
   
   const animationProps = shouldAnimate ? {
     initial: { scale: 0, opacity: 0 } as const,
@@ -165,8 +179,8 @@ export function RuneCell({
       {hasTextPlaceholder && (
         <div style={{ 
           fontSize: `${config.fontSize}px`, 
-          color: variant === 'floor' ? COLORS.status.error : COLORS.ui.textMuted,
-          fontWeight: variant === 'floor' ? 'bold' : 'normal',
+          color: usedVariant === 'floor' ? COLORS.status.error : COLORS.ui.textMuted,
+          fontWeight: usedVariant === 'floor' ? 'bold' : 'normal',
         }}>
           {placeholder.text}
         </div>

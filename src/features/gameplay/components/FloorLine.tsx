@@ -9,9 +9,14 @@ interface FloorLineProps {
   floorLine: FloorLineType;
   onPlaceRunesInFloor?: () => void;
   canPlace?: boolean;
+  /**
+   * Number of floor slots to visually neutralize (render with standard/pattern-like background).
+   * This should come from Wind runes staged in incomplete pattern lines.
+   */
+  mitigatedSlots?: number;
 }
 
-export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLineProps) {
+export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedSlots = 0 }: FloorLineProps) {
   const isSelectable = Boolean(canPlace && onPlaceRunesInFloor);
 
   return (
@@ -35,23 +40,27 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLin
       >
         {Array(floorLine.maxCapacity)
           .fill(null)
-          .map((_, index) => (
-            <div
-              key={index}
-              style={{
-                boxShadow: isSelectable ? '0 0 16px rgba(239, 68, 68, 0.8)' : 'none',
-                borderRadius: '8px',
-                transition: 'box-shadow 0.2s'
-              }}
-            >
-              <RuneCell
-                rune={floorLine.runes[index] || null}
-                variant="floor"
-                size="large"
-                showEffect={false}
-              />
-            </div>
-          ))}
+          .map((_, index) => {
+            const isNeutral = index < mitigatedSlots;
+            return (
+              <div
+                key={index}
+                style={{
+                  boxShadow: isNeutral ? 'none' : (isSelectable ? '0 0 16px rgba(239, 68, 68, 0.8)' : 'none'),
+                  borderRadius: '8px',
+                  transition: 'box-shadow 0.2s'
+                }}
+              >
+                <RuneCell
+                  rune={floorLine.runes[index] || null}
+                  variant="floor"
+                  forceVariant={isNeutral ? 'pattern' : undefined}
+                  size="large"
+                  showEffect={false}
+                />
+              </div>
+            );
+          })}
       </button>
     </div>
   );

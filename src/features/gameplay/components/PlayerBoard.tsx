@@ -94,6 +94,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             floorLine={player.floorLine}
             onPlaceRunesInFloor={onPlaceRunesInFloor}
             canPlace={canPlace}
+            mitigatedSlots={windRuneCount}
           />
         </div>
         
