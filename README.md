@@ -447,34 +447,6 @@ src/
 
 See `ROUTING_IMPLEMENTATION.md` for full technical details.
 
-
-## Next Steps
-
-### Architecture Improvements (Completed ✅)
-- [x] Extract duplicated rune helper functions to utils
-- [x] Set up Zustand for state management
-- [x] Reorganize components into features structure
-- [x] Add custom hooks for game actions and state selectors
-- [x] Implement inline CSS styling for consistency
-- [x] Component-based architecture with clear separation of concerns
-- [x] Separate view components for player and opponent
-
-### Gameplay Implementation (Completed ✅)
-- [x] Step 2: Make runeforges/runes selectable, implement Azul runeforge taking
-- [x] Step 3: Allow placing picked runes onto pattern lines
-- [x] Step 4: End-of-round detection and scoring with connected segment power calculation
-- [x] Step 5: Turn alternation system
-- [x] Step 6: Wall validation (prevent duplicate rune types in row)
-- [x] Step 7: Floor line direct placement option
-- [x] Step 8: Deck management with 2:2 split per runeforge
-- [x] Step 9: Game over condition and modal on game board
-- [x] Step 10: Active player highlighting and UI polish
-- [x] Step 11: PvE-only mode (local PvP removed)
-- [x] Step 12: AI opponent with random legal moves
-- [x] Step 13: SVG rune assets integration
-- [x] Step 14: Cancel selection (returns runes to source)
-- [x] Step 15: Floor penalty focus system (reduces segment scoring)
-
 ## Rune Effects System
 
 Each rune type has a unique effect that triggers during gameplay, creating strategic depth and tactical decisions.
@@ -574,8 +546,6 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Cyan-themed message banner for player guidance
   - Player who places Frost gets to choose which runeforge to freeze
 
-
-
 - [ ] **TODO: Update UI for rune effects**
   - Add effect indicators/tooltips on rune tokens
   - Show active effects in game state (frozen runeforges, Poison count, etc.)
@@ -674,34 +644,6 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Pass GameRules to `initializeGame()`
   - [ ] Apply rules throughout game logic (runeforge filling, scoring, effects)
   - [ ] Validate moves against current rule set
-
-### Priority 4: Style Token System 🟢 **MEDIUM** ✅ **COMPLETED**
-
-**Problem**: Inline styles are scattered across components with hardcoded colors/spacing. Deck builder, campaign map, and PvP UI will need complex layouts with consistent theming.
-
-#### ✅ Extract Design Tokens (COMPLETED)
-- [x] **Create centralized style tokens:**
-  - [x] Created `src/styles/tokens.ts` with comprehensive design tokens:
-    - `COLORS`: Rune colors, UI colors, status colors, effects, overlays
-    - `SPACING`: xs (4px) through xxxl (64px)
-    - `TYPOGRAPHY`: small (12px) through display (40px)
-    - `RADIUS`: sm through round (50%)
-    - `SHADOWS`: sm through xl, with custom glow functions
-    - `TRANSITIONS`: fast, medium, slow, spring
-    - `BREAKPOINTS`: mobile, tablet, desktop, wide
-    - `Z_INDEX`: base through notification
-  - [x] Added helper functions: `getRuneGlow()`, `getResponsiveValue()`
-  - [x] Updated components to use tokens (RuneToken, RuneCell)
-  - [x] Support for theme variants (extensible structure)
-
-- [x] **Create reusable layout components:**
-  - [x] `<Stack>` - Flexbox wrapper with direction, spacing, alignment, wrap
-  - [x] `<Grid>` - CSS Grid wrapper with columns, gap, auto-fit support
-  - [x] `<Modal>` - Standardized modal with backdrop, keyboard navigation, focus management
-  - [x] `<Button>` - Consistent buttons with variants (primary, secondary, danger, success, ghost) and sizes
-  - [x] `<Card>` - Reusable card container with variants (default, elevated, outlined) and hover effects
-  - [x] Created `src/components/layout/index.ts` for convenient imports
-  - [x] Created example file: `src/examples/DesignTokenExample.tsx`
 
 **Usage Example:**
 ```typescript
