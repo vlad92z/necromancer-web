@@ -35,7 +35,6 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 - Styling:
   - Inline CSS with custom rune colors
-  - Dark theme optimized for game visibility
   - Fully responsive design with mobile-first approach
   - Touch-optimized interactions for mobile devices
 
