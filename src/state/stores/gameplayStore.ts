@@ -487,10 +487,15 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       const player1Healing = player1LifeCount * 10;
       const player2Healing = player2LifeCount * 10;
 
-      // Damage dealt is opponent's totalPower. Apply damage to health (clamp at 0)
-      // Then apply healing from Life runes
-      const player1NewHealth = Math.max(0, state.players[0].health - player2Data.totalPower) + player1Healing;
-      const player2NewHealth = Math.max(0, state.players[1].health - player1Data.totalPower) + player2Healing;
+      // Apply healing from Life runes first (capped at player's maxHealth), then apply damage dealt by opponent
+      const p1Max = state.players[0].maxHealth ?? state.players[0].health;
+      const p2Max = state.players[1].maxHealth ?? state.players[1].health;
+
+      const player1Healed = Math.min(state.players[0].health + player1Healing, p1Max);
+      const player2Healed = Math.min(state.players[1].health + player2Healing, p2Max);
+
+      const player1NewHealth = Math.max(0, player1Healed - player2Data.totalPower);
+      const player2NewHealth = Math.max(0, player2Healed - player1Data.totalPower);
 
       const updatedPlayers: [Player, Player] = [
         { ...state.players[0], health: player1NewHealth },
