@@ -434,6 +434,8 @@ src/
 └── main.tsx            # Entry point
 ```
 
+See `ROUTING_IMPLEMENTATION.md` for full technical details.
+
 
 ## Next Steps
 
@@ -599,25 +601,6 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Make AI behavior pluggable (different strategies for campaign bosses)
 
 ## Refactoring TODOs (Before Adding New Features)
-
-**Problem**: Single-page app with boolean toggles won't scale to deck drafting, campaign map, post-match rewards, and matchmaking screens.
-- [ ] **Install and configure routing:**
-  - [ ] `npm install react-router-dom`
-  - [ ] Create `src/routes/` folder
-  - [ ] Create route components:
-    - [ ] `MainMenu.tsx` - Game mode selection, continue campaign
-    - [ ] `CampaignMap.tsx` - Boss selection, progression visualization
-    - [ ] `DeckBuilder.tsx` - Pre-match deck drafting interface
-    - [ ] `GameMatch.tsx` - Main game (move GameBoard here)
-    - [ ] `PostMatchRewards.tsx` - Deck improvements, rewards after winning
-    - [ ] `Matchmaking.tsx` - Online PvP lobby, waiting room
-  - [ ] Set up router in App.tsx with `<BrowserRouter>` and route definitions
-  - [ ] Add navigation guards (prevent leaving match without confirmation)
-
-- [ ] **Update state management for routing:**
-  - [ ] Make stores route-aware (clear game state on route change)
-  - [ ] Add route parameters for campaign boss selection
-  - [ ] Support deep linking to game states (for PvP match URLs)
 
 ### Priority 2: Persistence Layer 🟡 **HIGH**
 
@@ -1033,20 +1016,6 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 3. Implement features with art in mind *(weeks 3-5)*
 4. Add character animations & VFX *(weeks 4-5)*
 5. Final UI polish & audio *(weeks 6-7+)*
-
-### AI Improvements
-- [x] **Simple strategies (Completed ✅):**
-  - [x] Prioritize completing pattern lines (focus on lines almost full)
-  - [x] Avoid floor line penalties (only use floor when necessary)
-  - [x] Block opponent (take runes the opponent needs)
-  - [x] Maximize wall points (choose placements that create longer connections)
-- [x] **Medium complexity (Completed ✅):**
-  - [x] Look-ahead planning (consider which runes will be available next turn)
-  - [x] Value higher tier lines (tier 5 = more points potential with exponential scaling)
-  - [x] Avoid wasted runes (don't draft more than a line can hold, exponential waste penalties)
-- [x] **Advanced strategies:**
-  - [x] Minimax algorithm (evaluate multiple moves ahead)
-  - [x] Scoring simulation (calculate expected points for each move)
 
 ---
 
