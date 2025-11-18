@@ -95,8 +95,16 @@ export function Runeforge({
         boxShadow: boxShadow,
         position: 'relative'
       }}
-      onMouseEnter={(e) => !disabled && runeforge.runes.length > 0 && (e.currentTarget.style.backgroundColor = hoverBackgroundColor, e.currentTarget.style.transform = 'scale(1.02)')}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = backgroundColor, e.currentTarget.style.transform = 'scale(1)')}
+      onMouseEnter={(e) => {
+        if (!disabled && runeforge.runes.length > 0 && onRuneforgeClick && (voidEffectPending || frostEffectPending)) {
+          e.currentTarget.style.backgroundColor = hoverBackgroundColor;
+          e.currentTarget.style.transform = 'scale(1.02)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = backgroundColor;
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
       aria-label={ariaLabel}
     >
       {/* Frozen indicator */}
