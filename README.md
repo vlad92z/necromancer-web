@@ -596,6 +596,230 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 - [ ] Difficulty settings for AI opponent
 - [ ] Achievements and unlockable content
 
+---
+
+## 🚨 Critical Refactoring TODOs (Before Adding New Features)
+
+### Priority 1: State Architecture Refactoring 🔴 **URGENT**
+
+**Problem**: `gameStore.ts` is 727 lines and contains all game logic, side effects, and state. Will become unmaintainable when adding deck drafting, campaign, and PvP features.
+
+#### TODO: Split Monolithic Store
+- [ ] **Split `gameStore.ts` into modular stores:**
+  - [ ] Create `src/state/stores/gameplayStore.ts` - Current game state (factories, turns, runes, drafting, placement)
+  - [ ] Create `src/state/stores/campaignStore.ts` - Roguelite progression, boss unlocks, win streaks, rewards
+  - [ ] Create `src/state/stores/deckStore.ts` - Deck management, collection, deck drafting mode
+  - [ ] Create `src/state/stores/matchStore.ts` - Online PvP matchmaking, synchronization, ELO
+  - [ ] Create `src/state/stores/uiStore.ts` - Overlay states, modal management, transient UI state
+  - [ ] Update all components to import from new store locations
+  - [ ] Test thoroughly after migration
+
+#### TODO: Remove Side Effects from State
+- [ ] **Extract all 12 `setTimeout` calls from gameStore.ts to component useEffect hooks:**
+  - [ ] Move end-round timer (line 223) to GameBoard component
+  - [ ] Move floor placement timer (line 276) to GameBoard component
+  - [ ] Move factory destruction timer (line 352) to App.tsx
+  - [ ] Move void skip timer (line 383) to App.tsx
+  - [ ] Move frost freeze timer (line 418) to App.tsx
+  - [ ] Move scoring step timers (lines 439, 505, 574, 599, 687, 700) to GameBoard component
+  - [ ] Add proper cleanup functions (return () => clearTimeout(timer))
+  - [ ] Test animation timing remains consistent
+
+- [ ] **Create animation queue system:**
+  - [ ] Create `src/systems/animationQueue.ts` to manage sequential animations
+  - [ ] Replace manual setTimeout chaining with queue-based approach
+  - [ ] Support pause/resume/cancel for animations
+  - [ ] Make animations deterministic for testing
+
+#### TODO: Extract AI Orchestration
+- [ ] **Move AI logic out of App.tsx:**
+  - [ ] Create `src/systems/aiController.ts` for AI turn orchestration
+  - [ ] Create `src/systems/turnManager.ts` for turn flow management
+  - [ ] Create `src/systems/effectResolver.ts` for Void/Frost/Poison effect handling
+  - [ ] Remove 3 AI-related useEffect hooks from App.tsx
+  - [ ] Support multiple AI difficulty levels
+  - [ ] Make AI behavior pluggable (different strategies for campaign bosses)
+
+### Priority 2: Routing & Navigation 🟡 **HIGH**
+
+**Problem**: Single-page app with boolean toggles won't scale to deck drafting, campaign map, post-match rewards, and matchmaking screens.
+
+#### TODO: Add React Router
+- [ ] **Install and configure routing:**
+  - [ ] `npm install react-router-dom`
+  - [ ] Create `src/routes/` folder
+  - [ ] Create route components:
+    - [ ] `MainMenu.tsx` - Game mode selection, continue campaign
+    - [ ] `CampaignMap.tsx` - Boss selection, progression visualization
+    - [ ] `DeckBuilder.tsx` - Pre-match deck drafting interface
+    - [ ] `GameMatch.tsx` - Main game (move GameBoard here)
+    - [ ] `PostMatchRewards.tsx` - Deck improvements, rewards after winning
+    - [ ] `Matchmaking.tsx` - Online PvP lobby, waiting room
+  - [ ] Set up router in App.tsx with `<BrowserRouter>` and route definitions
+  - [ ] Add navigation guards (prevent leaving match without confirmation)
+
+- [ ] **Update state management for routing:**
+  - [ ] Make stores route-aware (clear game state on route change)
+  - [ ] Add route parameters for campaign boss selection
+  - [ ] Support deep linking to game states (for PvP match URLs)
+
+### Priority 3: Persistence Layer 🟡 **HIGH**
+
+**Problem**: No storage for campaign progress, deck collections, player stats, or PvP ELO. All features in roadmap require persistence.
+
+#### TODO: Add Client-Side Storage
+- [ ] **Create storage services:**
+  - [ ] Create `src/services/storage/localStorage.ts` - Persistent client storage wrapper
+  - [ ] Create `src/services/storage/sessionStorage.ts` - Temporary storage for current session
+  - [ ] Add versioning for storage schema (handle migrations)
+  - [ ] Add error handling for quota exceeded, corrupted data
+
+- [ ] **Define data schemas:**
+  - [ ] Campaign progress schema (unlocked bosses, win streak, current run)
+  - [ ] Deck collection schema (owned runes, deck configurations)
+  - [ ] Player stats schema (total wins/losses, best spellpower, fastest win)
+  - [ ] Settings schema (audio preferences, UI preferences)
+
+- [ ] **Integrate with stores:**
+  - [ ] Add persistence middleware to campaignStore
+  - [ ] Add persistence middleware to deckStore
+  - [ ] Auto-save on state changes (debounced)
+  - [ ] Load saved state on app startup
+
+#### TODO: Prepare API Layer Structure
+- [ ] **Create API service stubs (for future PvP):**
+  - [ ] Create `src/services/api/matchmaking.ts` - PvP matchmaking endpoints
+  - [ ] Create `src/services/api/campaign.ts` - Campaign state sync (optional cloud save)
+  - [ ] Create `src/services/api/decks.ts` - Deck CRUD operations
+  - [ ] Create `src/services/api/auth.ts` - Player authentication (for PvP)
+  - [ ] Add API client configuration (base URL, headers, error handling)
+  - [ ] Add mock API responses for development
+
+### Priority 4: Game Configuration System 🟡 **MEDIUM**
+
+**Problem**: Game mode is hardcoded at start. Campaign bosses need different rules, deck drafting changes available runes, PvP needs standardized rules.
+
+#### TODO: Make Game Rules Configurable
+- [ ] **Create GameRules interface:**
+  ```typescript
+  interface GameRules {
+    runeEffectsEnabled: boolean;
+    deckSize: number;
+    factoryCount: number;
+    runesPerFactory: number;
+    roundLimit?: number;
+    specialRules?: BossModifier[];
+    allowedRuneTypes?: RuneType[];
+    floorPenaltyMultiplier?: number;
+  }
+  ```
+- [ ] **Create rule presets:**
+  - [ ] Classic mode rules (no effects)
+  - [ ] Standard mode rules (current implementation)
+  - [ ] Campaign boss-specific rules (different per boss)
+  - [ ] Draft mode rules (limited rune pool)
+  - [ ] PvP ranked rules (balanced, standardized)
+
+- [ ] **Update game initialization:**
+  - [ ] Pass GameRules to `initializeGame()`
+  - [ ] Apply rules throughout game logic (factory filling, scoring, effects)
+  - [ ] Validate moves against current rule set
+
+### Priority 5: Style Token System 🟢 **MEDIUM**
+
+**Problem**: Inline styles are scattered across components with hardcoded colors/spacing. Deck builder, campaign map, and PvP UI will need complex layouts with consistent theming.
+
+#### TODO: Extract Design Tokens
+- [ ] **Create centralized style tokens:**
+  - [ ] Create `src/styles/tokens.ts` with:
+    ```typescript
+    export const COLORS = {
+      runes: { Fire: '#FF4500', Frost: '#1E90FF', Poison: '#32CD32', Void: '#8B008B', Wind: '#F0E68C' },
+      ui: { background: '#1a1a1a', surface: '#2a2a2a', border: '#333', accent: '#4a9eff' },
+      status: { success: '#00ff00', error: '#ff0000', warning: '#ffaa00', info: '#00aaff' }
+    };
+    export const SPACING = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 };
+    export const TYPOGRAPHY = { small: 12, base: 14, large: 16, xlarge: 20, heading: 24 };
+    export const RADIUS = { sm: 4, md: 8, lg: 12, round: '50%' };
+    export const SHADOWS = { sm: '0 2px 4px rgba(0,0,0,0.3)', md: '0 4px 8px rgba(0,0,0,0.4)' };
+    ```
+  - [ ] Replace hardcoded values throughout codebase
+  - [ ] Support dark/light theme variants (future)
+
+- [ ] **Create reusable layout components:**
+  - [ ] `<Stack direction="vertical|horizontal" spacing={}>` - Flexbox wrapper
+  - [ ] `<Grid columns={} gap={}>` - CSS Grid wrapper
+  - [ ] `<Modal>` - Standardized modal component
+  - [ ] `<Button variant="primary|secondary|danger">` - Consistent buttons
+  - [ ] `<Card>` - Reusable card container
+
+### Priority 6: Error Handling & Resilience 🟢 **LOW-MEDIUM**
+
+#### TODO: Add Error Boundaries
+- [ ] **Create error boundary components:**
+  - [ ] Root error boundary in App.tsx (catch all errors)
+  - [ ] GameBoard error boundary (recover from game state errors)
+  - [ ] Overlay error boundary (graceful modal failures)
+  - [ ] Add error logging service
+
+- [ ] **Add state validation:**
+  - [ ] Create `validateGameState()` function
+  - [ ] Run validation after each state mutation (dev mode only)
+  - [ ] Detect impossible states (negative scores, invalid turn order)
+  - [ ] Add recovery mechanisms for corrupted state
+
+### Priority 7: Performance Optimizations 🟢 **LOW**
+
+#### TODO: Optimize Re-renders
+- [ ] **Extract repeated hooks:**
+  - [ ] Create `useIsAITurn()` hook (replaces 10+ inline checks)
+  - [ ] Create `useCurrentPlayer()` and `useOpponent()` hooks
+  - [ ] Create `useGamePhase()` hook
+
+- [ ] **Memoize expensive calculations:**
+  - [ ] Memoize `getWallColumnForRune()` results
+  - [ ] Memoize AI move calculation (debounce)
+  - [ ] Add `useMemo` to wall power calculations
+  - [ ] Use `React.memo` for static components (RuneToken, WallCell)
+
+- [ ] **Extract utility functions:**
+  - [ ] Create `getNextPlayerIndex(current)` util (replaces ternary operator pattern)
+  - [ ] Create `isFactoryEmpty(factory)` util
+  - [ ] Create `hasRuneTypeOnWall(wall, row, runeType)` util
+
+---
+
+## Refactoring Timeline Estimate
+
+**Phase 1: State Architecture** (2-3 days)
+- Split gameStore.ts into 5 modular stores
+- Extract all setTimeout calls to useEffect hooks
+- Create systems folder (turnManager, aiController, effectResolver)
+
+**Phase 2: Routing** (1-2 days)
+- Install React Router
+- Create route components (stubs)
+- Update navigation flow
+
+**Phase 3: Persistence** (1-2 days)
+- Create storage services
+- Define data schemas
+- Add save/load integration
+
+**Phase 4: Configuration & Tokens** (1 day)
+- Create GameRules interface and presets
+- Extract style tokens
+- Create layout components
+
+**Phase 5: Polish** (1 day)
+- Add error boundaries
+- Performance optimizations
+- Code cleanup
+
+**Total Estimated Time**: 6-9 days
+
+**Payoff**: Clean, maintainable architecture ready for 6+ months of feature development without technical debt
+
 ### AI Improvements
 - [x] **Simple strategies (Completed ✅):**
   - [x] Prioritize completing pattern lines (focus on lines almost full)
