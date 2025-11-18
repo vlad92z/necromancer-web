@@ -63,7 +63,7 @@ export function createMockDeck(playerId: string): Rune[] {
 /**
  * Create a player
  */
-export function createPlayer(id: string, name: string, type: PlayerType = 'human'): Player {
+export function createPlayer(id: string, name: string, type: PlayerType = 'human', startingHealth: number = 300): Player {
   return {
     id,
     name,
@@ -74,7 +74,7 @@ export function createPlayer(id: string, name: string, type: PlayerType = 'human
       runes: [],
       maxCapacity: 10,
     },
-    score: 0,
+    health: startingHealth,
     deck: createMockDeck(id),
   };
 }
@@ -136,9 +136,9 @@ export function fillFactories(
  * Initialize a new game state with filled factories
  * Always creates a PvE game (Player vs AI Opponent)
  */
-export function initializeGame(): GameState {
-  const player1 = createPlayer('player-1', 'Player', 'human');
-  const player2 = createPlayer('player-2', 'Opponent', 'ai');
+export function initializeGame(startingHealth: number = 300): GameState {
+  const player1 = createPlayer('player-1', 'Player', 'human', startingHealth);
+  const player2 = createPlayer('player-2', 'Opponent', 'ai', startingHealth);
   
   // For 2 players, Azul uses 5 factories
   const emptyFactories = createEmptyFactories(5);

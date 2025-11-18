@@ -444,15 +444,15 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, opponentPoisonCount, state.gameMode);
         
         // Add wall power to existing score (minimum 0)
-        const newScore = Math.max(0, player.score + wallPower);
-        
-        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties), Total score ${newScore}`);
-        
+        const newHealth = player.health;
+
+        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties), Health remains ${newHealth}`);
+
         return {
           ...player,
           patternLines: updatedPatternLines,
           wall: updatedWall,
-          score: player.score,
+          health: player.health,
           floorLine: player.floorLine,
         };
       });
@@ -468,46 +468,35 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       console.log('Scoring: Calculating scores...');
       
       // Calculate and apply scores, and record round history
-      const updatedPlayersArray = state.players.map((player, playerIndex) => {
-        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
-        
-        // Get opponent's Poison count (for Poison effect)
-        const opponentIndex = playerIndex === 0 ? 1 : 0;
-        const opponentPoisonCount = countPoisonRunes(state.players[opponentIndex].wall);
-        
-        const wallPower = calculateWallPower(player.wall, floorPenaltyCount, opponentPoisonCount, state.gameMode);
-        const newScore = Math.max(0, player.score + wallPower);
-        
-        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties, ${opponentPoisonCount} opponent Poison), Total score ${newScore}`);
-        
-        return {
-          ...player,
-          score: newScore,
-        };
-      });
       
-      const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
-      
-      // Record round history for game log
-      const player1PoisonCount = countPoisonRunes(updatedPlayers[0].wall);
-      const player2PoisonCount = countPoisonRunes(updatedPlayers[1].wall);
-      
-      const player1FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[0].floorLine.runes, state.gameMode);
-      const player2FloorPenalty = calculateEffectiveFloorPenalty(updatedPlayers[1].floorLine.runes, state.gameMode);
-      
+      // Calculate each player's wall power (damage they deal)
+      const player1FloorPenalty = calculateEffectiveFloorPenalty(state.players[0].floorLine.runes, state.gameMode);
+      const player2FloorPenalty = calculateEffectiveFloorPenalty(state.players[1].floorLine.runes, state.gameMode);
+      const player1PoisonCount = countPoisonRunes(state.players[1].wall);
+      const player2PoisonCount = countPoisonRunes(state.players[0].wall);
+
       const player1Data = calculateWallPowerWithSegments(
-        updatedPlayers[0].wall, 
+        state.players[0].wall,
         player1FloorPenalty,
-        player2PoisonCount,
-        state.gameMode
-      );
-      const player2Data = calculateWallPowerWithSegments(
-        updatedPlayers[1].wall, 
-        player2FloorPenalty,
         player1PoisonCount,
         state.gameMode
       );
-      
+      const player2Data = calculateWallPowerWithSegments(
+        state.players[1].wall,
+        player2FloorPenalty,
+        player2PoisonCount,
+        state.gameMode
+      );
+
+      // Damage dealt is opponent's totalPower. Apply damage to health (clamp at 0)
+      const player1NewHealth = Math.max(0, state.players[0].health - player2Data.totalPower);
+      const player2NewHealth = Math.max(0, state.players[1].health - player1Data.totalPower);
+
+      const updatedPlayers: [Player, Player] = [
+        { ...state.players[0], health: player1NewHealth },
+        { ...state.players[1], health: player2NewHealth }
+      ];
+
       const roundScore = {
         round: state.round,
         playerName: updatedPlayers[0].name,
@@ -519,7 +508,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         opponentFocus: player2Data.focus,
         opponentTotal: player2Data.totalPower,
       };
-      
+
       return {
         ...state,
         players: updatedPlayers,

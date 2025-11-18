@@ -46,7 +46,6 @@ export function PlayerView({
         canPlace={canPlace}
         onCancelSelection={onCancelSelection}
         gameMode={gameMode}
-        damageTaken={opponent.score}
         nameColor="#0c4a6e"
         onShowDeck={onShowDeck}
         onShowLog={onShowLog}
