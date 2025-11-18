@@ -682,13 +682,14 @@ export function chooseRuneforgeToDestroy(state: GameState): string | null {
  * Strategy: Freeze the runeforge that is most valuable to the opponent
  */
 export function chooseRuneforgeToFreeze(state: GameState): string | null {
-  const nonEmptyRuneforges = state.runeforges.filter(f => f.runes.length > 0);
+  const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
+  const nonEmptyRuneforges = state.runeforges.filter(
+    (f) => f.ownerId === opponent.id && f.runes.length > 0
+  );
   
   if (nonEmptyRuneforges.length === 0) {
     return null; // No runeforges to freeze
   }
-  
-  const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
   
   // Use same scoring logic as Void effect - freeze the runeforge most valuable to opponent
   const scoredRuneforges = nonEmptyRuneforges.map(runeforge => {

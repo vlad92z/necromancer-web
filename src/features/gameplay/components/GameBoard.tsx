@@ -72,8 +72,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
     // Handle Frost effect - clicking runeforge freezes it
     if (frostEffectPending) {
       const runeforge = runeforges.find(f => f.id === runeforgeId);
-      // Only allow clicking non-empty runeforges during Frost effect
-      if (runeforge && runeforge.runes.length > 0) {
+      // Only allow freezing opponent runeforges with runes
+      if (runeforge && runeforge.runes.length > 0 && runeforge.ownerId !== currentPlayer.id) {
         freezeRuneforge(runeforgeId);
       }
       return;
@@ -196,24 +196,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 animation: 'pulse 2s infinite'
               }}>
                 💀 Void Effect: Click a runeforge to destroy it! 💀
-              </div>
-            )}
-            
-            {/* Frost Effect Message */}
-            {frostEffectPending && !isAITurn && (
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '16px',
-                padding: '12px',
-                backgroundColor: '#06b6d4',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
-                animation: 'pulse 2s infinite'
-              }}>
-                ❄️ Frost Effect: Click a runeforge to freeze it! ❄️
               </div>
             )}
             

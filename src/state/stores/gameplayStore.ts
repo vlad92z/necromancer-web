@@ -196,6 +196,12 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       
       // Check if Frost runes were placed (Frost effect: freeze a runeforge)
       const hasFrostRunes = selectedRunes.some(rune => rune.runeType === 'Frost');
+      const opponentIndex = currentPlayerIndex === 0 ? 1 : 0;
+      const opponentId = state.players[opponentIndex].id;
+      const opponentActiveRuneforges = state.runeforges.filter(
+        (f) => f.ownerId === opponentId && f.runes.length > 0
+      );
+      const canTriggerFrostEffect = opponentActiveRuneforges.length > 1;
       
       // Check if round should end (all runeforges and center empty)
       const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
@@ -221,7 +227,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       
       // If Frost runes were placed and there are non-empty runeforges, trigger Frost effect
       // Keep current player so THEY get to choose which runeforge to freeze
-      if (isStandardMode && hasFrostRunes && hasNonEmptyFactories && !shouldEndRound) {
+      if (isStandardMode && hasFrostRunes && canTriggerFrostEffect && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -388,9 +394,26 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
     set((state) => {
       // Frost effect: freeze the selected runeforge (opponent cannot draft from it)
       if (!state.frostEffectPending) return state;
+
+      const currentPlayer = state.players[state.currentPlayerIndex];
+      const targetRuneforge = state.runeforges.find((f) => f.id === runeforgeId);
+      if (!targetRuneforge) {
+        return state;
+      }
+
+      // Only allow freezing opponent runeforges
+      if (targetRuneforge.ownerId === currentPlayer.id) {
+        return state;
+      }
+
+      if (targetRuneforge.runes.length === 0) {
+        return state;
+      }
       
       // Add runeforge to frozen list
-      const updatedFrozenRuneforges = [...state.frozenRuneforges, runeforgeId];
+      const updatedFrozenRuneforges = state.frozenRuneforges.includes(runeforgeId)
+        ? state.frozenRuneforges
+        : [...state.frozenRuneforges, runeforgeId];
       
       // Switch to next player after runeforge is frozen
       const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;

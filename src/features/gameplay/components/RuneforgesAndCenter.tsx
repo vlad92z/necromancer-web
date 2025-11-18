@@ -52,7 +52,13 @@ export function RuneforgesAndCenter({
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
     if (effectActive) {
-      return isAITurn;
+      if (isAITurn) {
+        return true;
+      }
+      if (frostEffectPending && forge.ownerId === currentPlayerId) {
+        return true;
+      }
+      return false;
     }
 
     const baseDisabled = !isDraftPhase || hasSelectedRunes || isAITurn || frozenRuneforges.includes(forge.id);
