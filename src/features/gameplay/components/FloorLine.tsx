@@ -18,17 +18,16 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace }: FloorLin
         onClick={onPlaceRunesInFloor}
         disabled={!canPlace || !onPlaceRunesInFloor}
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gridTemplateRows: 'repeat(5, 1fr)',
+          gap: '4px',
           cursor: (canPlace && onPlaceRunesInFloor) ? 'pointer' : 'default',
           backgroundColor: (canPlace && onPlaceRunesInFloor) ? 'rgba(254, 202, 202, 0.5)' : 'transparent',
           border: 'none',
           padding: '8px',
           borderRadius: '8px',
-          transition: 'all 0.2s',
-          justifyContent: 'flex-start'
+          transition: 'all 0.2s'
         }}
         onMouseEnter={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.7)')}
         onMouseLeave={(e) => (canPlace && onPlaceRunesInFloor) && (e.currentTarget.style.backgroundColor = 'rgba(254, 202, 202, 0.5)')}

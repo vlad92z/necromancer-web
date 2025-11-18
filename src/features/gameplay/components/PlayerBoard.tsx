@@ -79,6 +79,21 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+        {/* Floor Line - Left side */}
+        <div style={{ 
+          flex: '0 0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          paddingRight: '16px'
+        }} onClick={(e) => e.stopPropagation()}>
+          <FloorLine 
+            floorLine={player.floorLine}
+            onPlaceRunesInFloor={onPlaceRunesInFloor}
+            canPlace={canPlace}
+          />
+        </div>
+        
         {/* Pattern Lines */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
           <PatternLines 
@@ -149,13 +164,6 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
           />
         </div>
       </div>
-      
-      {/* Floor Line */}
-      <FloorLine 
-        floorLine={player.floorLine}
-        onPlaceRunesInFloor={onPlaceRunesInFloor}
-        canPlace={canPlace}
-      />
     </div>
   );
 }
