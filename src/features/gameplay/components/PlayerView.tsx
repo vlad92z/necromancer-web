@@ -29,7 +29,7 @@ export function PlayerView({
   gameMode,
 }: PlayerViewProps) {
   return (
-    <div style={{ marginBottom: '24px' }}>
+    <div>
       <PlayerBoard
         player={player}
         opponent={opponent}
