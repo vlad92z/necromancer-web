@@ -12,7 +12,7 @@ import type { ScoringWall, RuneType } from '../types/game';
  * Power = Essence × Focus
  * Runes are connected if they share an edge (not diagonal)
  * Fire Effect: Each Fire rune adds +1 to Essence
- * Life Effect: Active Life runes heal the player by their current Essence amount (handled separately in store)
+ * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
  * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
  */
 export function calculateWallPower(
@@ -75,7 +75,7 @@ export function calculateWallPower(
  * Used for game log display
  * Returns essence (total runes + Fire bonus) and focus (largest segment)
  * Fire Effect: Each Fire rune adds +1 to Essence (only in standard mode)
- * Life Effect: Active Life runes heal the player by their current Essence amount (handled separately in store)
+ * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
  * Wind Effect: Each Wind rune in floor line cancels one other floor penalty (only in standard mode)
  */
 export function calculateWallPowerWithSegments(
@@ -307,7 +307,7 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
  * Calculate projected power for the end of current turn
  * Shows what essence and focus will be after placing completed pattern lines
  * Fire Effect: Each Fire rune adds +1 to Essence
- * Life Effect: Active Life runes heal the player by their current Essence amount (handled separately in store)
+ * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
  * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
  */
 export function calculateProjectedPower(

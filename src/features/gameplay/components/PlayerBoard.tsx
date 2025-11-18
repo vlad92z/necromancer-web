@@ -58,7 +58,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
   );
   const hasPenalty = floorPenaltyCount > 0;
   const hasLifeHealing = lifeRuneCount > 0;
-  const healingAmount = hasLifeHealing ? essence : 0;
+  const healingAmount = lifeRuneCount * 10;
   
   // Count Fire runes: current wall + completed pattern lines (only in standard mode)
   const fireRunesOnWall = gameMode === 'standard' 

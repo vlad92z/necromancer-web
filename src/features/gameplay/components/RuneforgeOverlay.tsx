@@ -21,7 +21,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
     const descriptions: Record<RuneType, string> = {
       Fire: '+1 Essence per Fire rune on your Spell Wall',
       Frost: 'Freeze a Runeforge for opponent\'s next turn',
-      Life: 'Heal by your current Essence amount',
+      Life: 'Heal 10 HP per active Life rune each round',
       Void: 'Destroy a Runeforge when placed',
       Wind: 'Overloading Wind runes reduces Focus penalty',
     };

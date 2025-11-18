@@ -62,7 +62,7 @@ npm run lint
 **Status**: ✅ Implemented
 
 ### 💚 Life (Sustain)
-**Effect**: Active Life runes heal the player by their current Essence amount  
+**Effect**: Active Life runes heal the player for 10 HP per active Life rune each round  
 **Strategy**: Collect Life runes for sustain and survivability  
 **Status**: ✅ Implemented
 

@@ -202,7 +202,7 @@ export function Spellpower({
             >
               {focus}
               {hasLifeHealing && (
-                <span style={{ color: '#32CD32', fontSize: '14px' }} title={`+${healingAmount} HP from ${lifeRuneCount} Life rune${lifeRuneCount > 1 ? 's' : ''}`}>
+                <span style={{ color: '#32CD32', fontSize: '14px' }} title={`+${healingAmount} HP (10 × ${lifeRuneCount} Life rune${lifeRuneCount > 1 ? 's' : ''})`}>
                   💚
                 </span>
               )}
@@ -327,7 +327,7 @@ export function Spellpower({
               <div style={{ marginBottom: '16px' }}>
                 <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
                 <p style={{ margin: '4px 0 0 0' }}>
-                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Wind runes 💨 in your floor line cancel out other penalties. Life runes 💚 heal you by your current Essence amount.
+                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Wind runes 💨 in your floor line cancel out other penalties. Life runes 💚 heal 10 HP per active Life rune each round.
                 </p>
               </div>
               

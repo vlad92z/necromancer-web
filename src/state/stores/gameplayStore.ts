@@ -480,12 +480,12 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         state.gameMode
       );
 
-      // Life Effect: Count Life runes and heal players by their Essence (only in standard mode)
+      // Life Effect: Count Life runes and heal players by 10 HP per active Life rune (only in standard mode)
       const player1LifeCount = state.gameMode === 'standard' ? countLifeRunes(state.players[0].wall) : 0;
       const player2LifeCount = state.gameMode === 'standard' ? countLifeRunes(state.players[1].wall) : 0;
       
-      const player1Healing = player1LifeCount > 0 ? player1Data.essence : 0;
-      const player2Healing = player2LifeCount > 0 ? player2Data.essence : 0;
+      const player1Healing = player1LifeCount * 10;
+      const player2Healing = player2LifeCount * 10;
 
       // Damage dealt is opponent's totalPower. Apply damage to health (clamp at 0)
       // Then apply healing from Life runes
