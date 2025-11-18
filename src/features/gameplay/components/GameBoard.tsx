@@ -39,14 +39,11 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const currentPlayer = players[currentPlayerIndex];
   const isAITurn = currentPlayer.type === 'ai';
 
-  // Determine winner (lowest damage taken wins)
-  // players[0].score = damage dealt by player (taken by opponent)
-  // players[1].score = damage dealt by opponent (taken by player)
-  // So player wins if players[1].score < players[0].score (they took less damage)
+  // Determine winner by highest remaining health
   const winner = isGameOver
-    ? players[1].score < players[0].score
+    ? players[0].health > players[1].health
       ? players[0]
-      : players[0].score < players[1].score
+      : players[1].health > players[0].health
         ? players[1]
         : null
     : null;

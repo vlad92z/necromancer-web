@@ -20,21 +20,20 @@ interface PlayerBoardProps {
   canPlace?: boolean;
   onCancelSelection?: () => void;
   gameMode: 'classic' | 'standard';
-  damageTaken: number;
   nameColor: string;
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
 }
 
-export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, damageTaken, nameColor, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
+export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
     }
   };
 
-  const currentHealth = 300 - damageTaken;
+  const currentHealth = player.health;
 
   // Find completed pattern lines
   const completedPatternLines = player.patternLines

@@ -24,7 +24,6 @@ export function OpponentView({ opponent, player, isActive, gameMode }: OpponentV
         canPlace={false}
         onCancelSelection={() => {}}
         gameMode={gameMode}
-        damageTaken={player.score}
         nameColor="#7f1d1d"
         // Dummy overlay handlers (opponent doesn't need these)
         onShowDeck={() => {}}
