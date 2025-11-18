@@ -140,18 +140,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }}
       onClick={handleBackgroundClick}
     >
-      {/* Game Header */}
-      <div style={{ 
-        padding: '16px 24px', 
-        textAlign: 'center', 
-        position: 'relative',
-        borderBottom: '2px solid #0c4a6e'
-      }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: '14px' }}>
-          <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
-        </div>
-      </div>
 
       {/* Three Equal Sections Container */}
       <div style={{ 
