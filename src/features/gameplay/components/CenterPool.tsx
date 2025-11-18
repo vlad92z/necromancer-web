@@ -30,6 +30,9 @@ export function CenterPool({
     }
   };
   
+  // Determine if center pool is selectable
+  const isSelectable = isDraftPhase && !hasSelectedRunes && !isAITurn && centerPool.length > 0 && onRuneClick;
+  
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
       <div
@@ -44,8 +47,9 @@ export function CenterPool({
           alignContent: 'center',
           gap: '8px',
           maxWidth: '90%',
-          border: '2px solid #bfdbfe',
-          minHeight: '80px'
+          border: isSelectable ? '2px solid #22c55e' : '2px solid #bfdbfe',
+          minHeight: '80px',
+          boxShadow: isSelectable ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
         }}
       >
         {centerPool.length === 0 ? (

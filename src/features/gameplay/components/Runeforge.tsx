@@ -49,6 +49,13 @@ export function Runeforge({
   let boxShadow = 'none';
   let ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
   
+  // Normal selectable state (green highlight when player can select)
+  const isSelectable = !disabled && !voidEffectPending && !frostEffectPending && !isFrozen && runeforge.runes.length > 0 && onRuneClick;
+  if (isSelectable) {
+    borderColor = '#22c55e';
+    boxShadow = '0 0 12px rgba(34, 197, 94, 0.5)';
+  }
+  
   // Void effect styling (purple)
   if (voidEffectPending && runeforge.runes.length > 0 && !disabled) {
     backgroundColor = '#7c3aed';
