@@ -5,7 +5,6 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { Transition } from 'framer-motion';
 import type { Runeforge as RuneforgeType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -53,12 +52,22 @@ export function Runeforge({
   const selectableGlowRest = '0 0 20px rgba(34, 197, 94, 0.75), 0 0 48px rgba(34, 197, 94, 0.35)';
   const selectableGlowPeak = '0 0 32px rgba(16, 185, 129, 0.95), 0 0 70px rgba(34, 197, 94, 0.55)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
+  const voidGlowRest = '0 6px 24px rgba(99, 102, 241, 0.9), inset 0 0 8px rgba(124, 58, 237, 0.25)';
+  const voidGlowPeak = '0 10px 34px rgba(129, 140, 248, 1), inset 0 0 14px rgba(139, 92, 246, 0.35)';
+  const voidGlowRange: [string, string] = [voidGlowRest, voidGlowPeak];
+  const frostGlowRest = '0 6px 24px rgba(2, 132, 199, 0.9), inset 0 0 8px rgba(6, 182, 212, 0.15)';
+  const frostGlowPeak = '0 10px 34px rgba(56, 189, 248, 1), inset 0 0 14px rgba(6, 182, 212, 0.3)';
+  const frostGlowRange: [string, string] = [frostGlowRest, frostGlowPeak];
+  let glowRange: [string, string] | null = null;
+  let glowDuration = 1.5;
   
   // Normal selectable state (green highlight when player can select)
   const isSelectable = !disabled && !voidEffectPending && !frostEffectPending && !isFrozen && runeforge.runes.length > 0 && onRuneClick;
   if (isSelectable) {
     borderColor = '#22c55e';
     boxShadow = selectableGlowRest;
+    glowRange = selectableGlowRange;
+    glowDuration = 1.5;
   }
   
   // Void effect styling (purple)
@@ -66,7 +75,9 @@ export function Runeforge({
     // Use a dark purple glow instead of changing the background
     borderColor = '#6d28d9';
     hoverBackgroundColor = '#e0f2fe';
-    boxShadow = '0 6px 24px rgba(99, 102, 241, 0.9), inset 0 0 8px rgba(124, 58, 237, 0.25)';
+    boxShadow = voidGlowRest;
+    glowRange = voidGlowRange;
+    glowDuration = 1.4;
     ariaLabel = `Destroy runeforge with ${runeforge.runes.length} runes`;
   }
   
@@ -75,7 +86,9 @@ export function Runeforge({
     // Use a dark blue glow instead of changing the background
     borderColor = '#0891b2';
     hoverBackgroundColor = '#e0f2fe';
-    boxShadow = '0 6px 24px rgba(2, 132, 199, 0.9), inset 0 0 8px rgba(6, 182, 212, 0.15)';
+    boxShadow = frostGlowRest;
+    glowRange = frostGlowRange;
+    glowDuration = 1.4;
     ariaLabel = `Freeze runeforge with ${runeforge.runes.length} runes`;
   }
   
@@ -87,17 +100,10 @@ export function Runeforge({
     ariaLabel = `Runeforge frozen - cannot draft`;
   }
   
-  const pulseTransition: Transition = {
-    duration: 1.5,
-    repeat: Infinity,
-    repeatType: 'reverse' as const,
-    ease: 'easeInOut' as const
-  };
-
-  const selectableMotionProps = isSelectable
+  const glowMotionProps = glowRange
     ? {
-        animate: { boxShadow: selectableGlowRange },
-        transition: pulseTransition
+        animate: { boxShadow: glowRange },
+        transition: { duration: glowDuration, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' as const }
       }
     : {};
 
@@ -139,7 +145,7 @@ export function Runeforge({
         e.currentTarget.style.transform = 'scale(1)';
       }}
       aria-label={ariaLabel}
-      {...selectableMotionProps}
+      {...glowMotionProps}
     >
       {/* Frozen indicator */}
       {isFrozen && !voidEffectPending && !frostEffectPending && (
