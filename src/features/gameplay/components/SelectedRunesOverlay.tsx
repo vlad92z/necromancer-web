@@ -11,7 +11,6 @@ interface SelectedRunesOverlayProps {
 }
 
 export function SelectedRunesOverlay({ selectedRunes, onCancel }: SelectedRunesOverlayProps) {
-  const isMobile = window.innerWidth < 768;
   
   return (
     <div 
@@ -21,12 +20,12 @@ export function SelectedRunesOverlay({ selectedRunes, onCancel }: SelectedRunesO
       <div style={{
         backgroundColor: 'rgba(219, 234, 254, 0.95)',
         border: '2px solid #3b82f6',
-        borderRadius: isMobile ? '4px' : '12px',
-        padding: isMobile ? '6px' : '16px',
+        borderRadius: '12px',
+        padding: '16px',
         maxWidth: '36rem',
-        width: isMobile ? '90vw' : 'auto'
+        width: 'auto'
       }}>
-        <h3 style={{ fontSize: isMobile ? '12px' : '24px', fontWeight: '600', color: '#1e40af', marginBottom: '8px', textAlign: 'center' }}>
+        <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1e40af', marginBottom: '8px', textAlign: 'center' }}>
           Selected Runes ({selectedRunes.length})
         </h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
@@ -40,7 +39,7 @@ export function SelectedRunesOverlay({ selectedRunes, onCancel }: SelectedRunesO
             />
           ))}
         </div>
-        <div style={{ marginTop: '12px', textAlign: 'center', fontSize: isMobile ? '10px' : '18px', color: '#475569' }}>
+        <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '18px', color: '#475569' }}>
           Place runes in the casting lines.
         </div>
       </div>
