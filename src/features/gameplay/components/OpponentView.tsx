@@ -7,17 +7,15 @@ import { PlayerBoard } from './PlayerBoard';
 
 interface OpponentViewProps {
   opponent: Player;
-  player: Player;
   isActive: boolean;
   gameMode: 'classic' | 'standard';
 }
 
-export function OpponentView({ opponent, player, isActive, gameMode }: OpponentViewProps) {
+export function OpponentView({ opponent, isActive, gameMode }: OpponentViewProps) {
   return (
     <div style={{ marginBottom: '24px' }}>
       <PlayerBoard
         player={opponent}
-        opponent={player}
         isActive={isActive}
         // No interaction handlers for opponent view
         selectedRuneType={null}

@@ -14,7 +14,7 @@ interface WallCellProps {
 
 // Calculate which rune type belongs in this cell based on Azul pattern
 function getExpectedRuneType(row: number, col: number): RuneType {
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Poison', 'Void', 'Wind'];
+  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
   // Reverse the rotation: subtract row from col to find the base index
   const baseIndex = (col - row + 5) % 5;
   return runeTypes[baseIndex];

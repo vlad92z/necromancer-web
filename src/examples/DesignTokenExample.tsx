@@ -45,7 +45,7 @@ export function DesignTokenExample() {
 
         {/* Example 3: Using Grid for multiple items */}
         <Grid columns={3} gap="md">
-          {['Fire', 'Frost', 'Poison'].map((rune) => (
+          {['Fire', 'Frost', 'Life'].map((rune) => (
             <Card key={rune} variant="outlined" hoverable>
               <Stack spacing="sm" align="center">
                 <div style={{

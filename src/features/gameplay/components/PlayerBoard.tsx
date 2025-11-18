@@ -12,7 +12,6 @@ import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../.
 
 interface PlayerBoardProps {
   player: Player;
-  opponent: Player;
   isActive: boolean;
   onPlaceRunes?: (patternLineIndex: number) => void;
   onPlaceRunesInFloor?: () => void;
@@ -26,7 +25,7 @@ interface PlayerBoardProps {
   onShowRules: () => void;
 }
 
-export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -46,20 +45,20 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
   const windRuneCount = player.floorLine.runes.filter(rune => rune.runeType === 'Wind').length;
   const hasWindMitigation = gameMode === 'standard' && windRuneCount > 0;
   
-  // Count opponent's Poison runes (affects this player's Focus, only in standard mode)
-  const opponentPoisonCount = gameMode === 'standard' 
-    ? opponent.wall.flat().filter(cell => cell.runeType === 'Poison').length 
+  // Count player's Life runes (provides healing, only in standard mode)
+  const lifeRuneCount = gameMode === 'standard' 
+    ? player.wall.flat().filter(cell => cell.runeType === 'Life').length 
     : 0;
   
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
     completedPatternLines,
     floorPenaltyCount,
-    opponentPoisonCount,
     gameMode
   );
   const hasPenalty = floorPenaltyCount > 0;
-  const hasPoisonEffect = opponentPoisonCount > 0;
+  const hasLifeHealing = lifeRuneCount > 0;
+  const healingAmount = hasLifeHealing ? essence : 0;
   
   // Count Fire runes: current wall + completed pattern lines (only in standard mode)
   const fireRunesOnWall = gameMode === 'standard' 
@@ -159,8 +158,9 @@ export function PlayerBoard({ player, opponent, isActive, onPlaceRunes, onPlaceR
             totalPower={totalPower}
             fireRuneCount={fireRuneCount}
             hasPenalty={hasPenalty}
-            hasPoisonEffect={hasPoisonEffect}
-            opponentPoisonCount={opponentPoisonCount}
+            hasLifeHealing={hasLifeHealing}
+            lifeRuneCount={lifeRuneCount}
+            healingAmount={healingAmount}
             hasWindMitigation={hasWindMitigation}
             windRuneCount={windRuneCount}
             onShowDeck={onShowDeck}

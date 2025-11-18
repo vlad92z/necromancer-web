@@ -163,7 +163,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
           <div style={{ width: '100%', maxWidth: '1200px' }}>
             <OpponentView
               opponent={players[1]}
-              player={players[0]}
               isActive={currentPlayerIndex === 1}
               gameMode={gameMode}
             />
@@ -273,7 +272,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
           <div style={{ width: '100%', maxWidth: '1200px' }}>
             <PlayerView
               player={players[0]}
-              opponent={players[1]}
               isActive={currentPlayerIndex === 0}
               onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
               onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}

@@ -6,7 +6,7 @@
 /**
  * Rune types (elemental identities)
  */
-export type RuneType = 'Fire' | 'Frost' | 'Poison' | 'Void' | 'Wind';
+export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind';
 
 /**
  * Rune effect modifiers

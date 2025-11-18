@@ -7,7 +7,7 @@ export const COLORS = {
   runes: {
     Fire: '#FF4500',
     Frost: '#1E90FF',
-    Poison: '#32CD32',
+    Life: '#32CD32',
     Void: '#8B008B',
     Wind: '#F0E68C',
   },
@@ -33,7 +33,7 @@ export const COLORS = {
   effects: {
     fireGlow: 'rgba(255, 69, 0, 0.3)',
     frostGlow: 'rgba(30, 144, 255, 0.3)',
-    poisonGlow: 'rgba(50, 205, 50, 0.3)',
+    lifeGlow: 'rgba(50, 205, 50, 0.3)',
     voidGlow: 'rgba(139, 0, 139, 0.3)',
     windGlow: 'rgba(240, 230, 140, 0.3)',
   },
@@ -108,11 +108,11 @@ export const Z_INDEX = {
 /**
  * Helper function to get rune-specific glow color
  */
-export function getRuneGlow(runeType: 'Fire' | 'Frost' | 'Poison' | 'Void' | 'Wind'): string {
+export function getRuneGlow(runeType: 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind'): string {
   const glowMap = {
     Fire: COLORS.effects.fireGlow,
     Frost: COLORS.effects.frostGlow,
-    Poison: COLORS.effects.poisonGlow,
+    Life: COLORS.effects.lifeGlow,
     Void: COLORS.effects.voidGlow,
     Wind: COLORS.effects.windGlow,
   };

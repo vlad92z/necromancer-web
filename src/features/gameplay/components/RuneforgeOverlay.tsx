@@ -21,7 +21,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
     const descriptions: Record<RuneType, string> = {
       Fire: '+1 Essence per Fire rune on your Spell Wall',
       Frost: 'Freeze a Runeforge for opponent\'s next turn',
-      Poison: '-1 enemy Focus per Poison rune on your Spell Wall',
+      Life: 'Heal by your current Essence amount',
       Void: 'Destroy a Runeforge when placed',
       Wind: 'Overloading Wind runes reduces Focus penalty',
     };
@@ -37,7 +37,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
     return acc;
   }, {} as Record<RuneType, Rune[]>);
 
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Poison', 'Void', 'Wind'];
+  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
   const availableTypes = runeTypes.filter(type => runesByType[type]?.length > 0);
 
   const handleRuneTypeClick = (runeType: RuneType) => {

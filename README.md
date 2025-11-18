@@ -61,9 +61,9 @@ npm run lint
 **Strategy**: Block runeforges with runes opponent needs  
 **Status**: ✅ Implemented
 
-### ☠️ Poison (Offense)
-**Effect**: Each Poison rune reduces opponent's Focus by 1 (minimum 1)  
-**Strategy**: Collect Poison to cripple opponent scoring  
+### 💚 Life (Sustain)
+**Effect**: Active Life runes heal the player by their current Essence amount  
+**Strategy**: Collect Life runes for sustain and survivability  
 **Status**: ✅ Implemented
 
 ### 🌑 Void (Destruction)
@@ -130,7 +130,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### UI/UX Enhancements
 - [ ] Add effect indicators/tooltips on rune tokens
-- [ ] Show active effects in game state (frozen runeforges, Poison count)
+- [ ] Show active effects in game state (frozen runeforges, Life healing)
 - [ ] Add effect feedback animations when triggered
 - [ ] Update `RulesOverlay` with rune effect explanations
 - [ ] Active player indicator with pulsing dot and "Your Turn" label
@@ -138,7 +138,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### AI Improvements
 - [ ] Make AI evaluate Fire runes for scoring potential
-- [ ] Add strategic Poison collection weighting
+- [ ] Add strategic Life collection weighting for survivability
 - [ ] AI should value Wind as floor insurance
 - [ ] Support multiple AI difficulty levels
 - [ ] Make AI behavior pluggable (different strategies for campaign bosses)
@@ -208,7 +208,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Set up asset management system for environments, characters, VFX, UI
 - [ ] Create background environment system with parallax layers
 - [ ] Design and implement character sprites (player + bosses)
-- [ ] Add spell VFX system (Fire/Frost/Poison/Void/Wind animations)
+- [ ] Add spell VFX system (Fire/Frost/Life/Void/Wind animations)
 - [ ] Enhance runeforge visuals (3D containers, glow effects)
 - [ ] Add juice & feedback (screen shake, camera zoom, celebrations)
 

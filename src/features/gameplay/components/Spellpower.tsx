@@ -11,8 +11,9 @@ interface SpellpowerProps {
   totalPower: number;
   fireRuneCount: number;
   hasPenalty: boolean;
-  hasPoisonEffect: boolean;
-  opponentPoisonCount: number;
+  hasLifeHealing: boolean;
+  lifeRuneCount: number;
+  healingAmount: number;
   hasWindMitigation: boolean;
   windRuneCount: number;
   onShowDeck: () => void;
@@ -26,8 +27,9 @@ export function Spellpower({
   totalPower,
   fireRuneCount,
   hasPenalty,
-  hasPoisonEffect,
-  opponentPoisonCount,
+  hasLifeHealing,
+  lifeRuneCount,
+  healingAmount,
   hasWindMitigation,
   windRuneCount,
   onShowDeck,
@@ -192,16 +194,16 @@ export function Spellpower({
               style={{
                 fontSize: '28px',
                 fontWeight: 'bold',
-                color: hasPenalty || hasPoisonEffect ? '#dc2626' : '#0c4a6e',
+                color: hasPenalty ? '#dc2626' : '#0c4a6e',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px'
               }}
             >
               {focus}
-              {hasPoisonEffect && (
-                <span style={{ color: '#32CD32', fontSize: '14px' }} title={`-${opponentPoisonCount} from opponent Poison runes`}>
-                  ☠️
+              {hasLifeHealing && (
+                <span style={{ color: '#32CD32', fontSize: '14px' }} title={`+${healingAmount} HP from ${lifeRuneCount} Life rune${lifeRuneCount > 1 ? 's' : ''}`}>
+                  💚
                 </span>
               )}
               {hasWindMitigation && (
@@ -325,7 +327,7 @@ export function Spellpower({
               <div style={{ marginBottom: '16px' }}>
                 <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
                 <p style={{ margin: '4px 0 0 0' }}>
-                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Opponent Poison runes ☠️ also reduce your Focus. Wind runes 💨 in your floor line cancel out other penalties.
+                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Wind runes 💨 in your floor line cancel out other penalties. Life runes 💚 heal you by your current Essence amount.
                 </p>
               </div>
               

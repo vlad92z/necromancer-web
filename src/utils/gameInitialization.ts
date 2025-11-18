@@ -44,7 +44,7 @@ export function createPatternLines(): PatternLine[] {
  */
 export function createMockDeck(playerId: string): Rune[] {
   const deck: Rune[] = [];
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Poison', 'Void', 'Wind'];
+  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
   
   // Create 4 of each rune type (20 total per player)
   runeTypes.forEach((runeType) => {
