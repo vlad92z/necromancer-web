@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import type { Runeforge as RuneforgeType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
@@ -48,12 +49,15 @@ export function Runeforge({
   let hoverBackgroundColor = '#bae6fd';
   let boxShadow = 'none';
   let ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
+  const selectableGlowRest = '0 0 20px rgba(34, 197, 94, 0.75), 0 0 48px rgba(34, 197, 94, 0.35)';
+  const selectableGlowPeak = '0 0 32px rgba(16, 185, 129, 0.95), 0 0 70px rgba(34, 197, 94, 0.55)';
+  const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
   
   // Normal selectable state (green highlight when player can select)
   const isSelectable = !disabled && !voidEffectPending && !frostEffectPending && !isFrozen && runeforge.runes.length > 0 && onRuneClick;
   if (isSelectable) {
     borderColor = '#22c55e';
-    boxShadow = '0 0 12px rgba(34, 197, 94, 0.5)';
+    boxShadow = selectableGlowRest;
   }
   
   // Void effect styling (purple)
@@ -82,8 +86,15 @@ export function Runeforge({
     ariaLabel = `Runeforge frozen - cannot draft`;
   }
   
+  const selectableMotionProps = isSelectable
+    ? {
+        animate: { boxShadow: selectableGlowRange },
+        transition: { duration: 1.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
+      }
+    : {};
+
   return (
-    <button
+    <motion.button
       onClick={handleClick}
       disabled={disabled || runeforge.runes.length === 0}
       style={{
@@ -120,6 +131,7 @@ export function Runeforge({
         e.currentTarget.style.transform = 'scale(1)';
       }}
       aria-label={ariaLabel}
+      {...selectableMotionProps}
     >
       {/* Frozen indicator */}
       {isFrozen && !voidEffectPending && !frostEffectPending && (
@@ -187,6 +199,6 @@ export function Runeforge({
           })}
         </div>
       )}
-    </button>
+    </motion.button>
   );
 }
