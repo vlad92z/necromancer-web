@@ -88,7 +88,7 @@ export function RuneforgesAndCenter({
   );
   
   return (
-    <div>
+    <div style={{ position: 'relative', padding: '8px 0 24px' }}>
       {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
 
       {canDraftOpponentRuneforges && !isAITurn && (
@@ -100,19 +100,22 @@ export function RuneforgesAndCenter({
           backgroundColor: '#fef3c7',
           color: '#92400e',
           fontWeight: 600,
+          position: 'relative',
+          zIndex: 2
         }}>
           No personal runeforges remain and the center is empty. You may draft from your opponent's forges.
         </div>
       )}
       
-      {/* Center Pool */}
-      <CenterPool 
-        centerPool={centerPool}
-        onRuneClick={onCenterRuneClick}
-        isDraftPhase={isDraftPhase}
-        hasSelectedRunes={hasSelectedRunes}
-        isAITurn={isAITurn}
-      />
+      <div style={{ position: 'relative', minHeight: '40px', marginBottom: '6px' }}>
+        <CenterPool 
+          centerPool={centerPool}
+          onRuneClick={onCenterRuneClick}
+          isDraftPhase={isDraftPhase}
+          hasSelectedRunes={hasSelectedRunes}
+          isAITurn={isAITurn}
+        />
+      </div>
 
       {renderRuneforgeRow(player, playerRuneforges, 'center')}
     </div>
