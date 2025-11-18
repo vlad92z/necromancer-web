@@ -409,8 +409,20 @@ src/
 ├── hooks/              # Custom React hooks
 │   ├── useGameActions.ts  # Game action hooks (draft, place, etc.)
 │   └── useGameState.ts    # State selector hooks
+├── routes/             # Route components (React Router)
+│   ├── MainMenu.tsx        # Main menu with mode selection
+│   ├── GameMatch.tsx       # Game match route
+│   ├── CampaignMap.tsx     # Campaign map (stub)
+│   ├── DeckBuilder.tsx     # Deck builder (stub)
+│   ├── PostMatchRewards.tsx # Post-match rewards (stub)
+│   └── Matchmaking.tsx     # Matchmaking (stub)
 ├── state/              # Global state management
-│   └── gameStore.ts    # Zustand store with game state and actions
+│   └── stores/         # Zustand stores
+│       ├── gameplayStore.ts  # Game state and actions
+│       ├── index.ts          # Store exports
+│       └── uiStore.ts        # UI state
+├── systems/            # Game systems
+│   └── aiController.ts # AI opponent logic and turn execution
 ├── types/              # TypeScript type definitions
 │   └── game.ts         # Core types: Rune, Runeforge, Player, GameState, PlayerType
 ├── utils/              # Utility functions
@@ -418,7 +430,7 @@ src/
 │   ├── gameInitialization.ts  # Game setup and runeforge filling
 │   ├── runeHelpers.ts  # Rune display utilities
 │   └── scoring.ts      # Wall power calculation with floor penalties
-├── App.tsx             # Root component, game lifecycle & AI turn triggering
+├── App.tsx             # Root component, router configuration
 └── main.tsx            # Entry point
 ```
 
@@ -588,11 +600,38 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 ## Refactoring TODOs (Before Adding New Features)
 
-### Priority 1: Routing & Navigation 🟡 **HIGH**
+### Priority 1: Routing & Navigation 🟡 **HIGH** ✅ COMPLETED
+
+**Implementation Complete!** React Router has been successfully integrated.
+
+#### ✅ Completed: Add React Router
+- [x] **Install and configure routing:**
+  - [x] `npm install react-router-dom`
+  - [x] Create `src/routes/` folder
+  - [x] Create route components:
+    - [x] `MainMenu.tsx` - Game mode selection (Quick Play, Campaign, Deck Builder, Matchmaking)
+    - [x] `GameMatch.tsx` - Main game (moved from App.tsx)
+    - [x] `CampaignMap.tsx` - Boss selection (stub for future)
+    - [x] `DeckBuilder.tsx` - Pre-match deck drafting (stub for future)
+    - [x] `PostMatchRewards.tsx` - Deck improvements (stub for future)
+    - [x] `Matchmaking.tsx` - Online PvP lobby (stub for future)
+  - [x] Set up router in App.tsx with `<BrowserRouter>` and route definitions
+  - [x] Add catch-all redirect to main menu
+
+- [x] **Update state management for routing:**
+  - [x] Make stores route-aware (clear game state on route change)
+  - [x] Add navigation callback system for returnToStartScreen
+  - [x] Support clean navigation between routes
+  
+**Routes:**
+- `/` - Main menu with game mode selection
+- `/game` - Quick Play match (PvE)
+- `/campaign` - Campaign map (coming soon)
+- `/deck-builder` - Deck builder (coming soon)
+- `/rewards` - Post-match rewards (coming soon)
+- `/matchmaking` - Online matchmaking (coming soon)
 
 **Problem**: Single-page app with boolean toggles won't scale to deck drafting, campaign map, post-match rewards, and matchmaking screens.
-
-#### TODO: Add React Router
 - [ ] **Install and configure routing:**
   - [ ] `npm install react-router-dom`
   - [ ] Create `src/routes/` folder

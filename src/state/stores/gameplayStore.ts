@@ -13,6 +13,13 @@ function countPoisonRunes(wall: Player['wall']): number {
   return wall.flat().filter(cell => cell.runeType === 'Poison').length;
 }
 
+// Navigation callback registry for routing integration
+let navigationCallback: (() => void) | null = null;
+
+export function setNavigationCallback(callback: (() => void) | null) {
+  navigationCallback = callback;
+}
+
 interface GameplayStore extends GameState {
   // Actions
   startGame: (gameMode: 'classic' | 'standard') => void;
@@ -603,6 +610,10 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       ...initializeGame(),
       gameStarted: false,
     });
+    // Call navigation callback if registered (for router integration)
+    if (navigationCallback) {
+      navigationCallback();
+    }
   },
   
   resetGame: () => {
