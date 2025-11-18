@@ -11,7 +11,6 @@ import { GameOverModal } from './GameOverModal';
 import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
-import { RuneforgeOverlay } from './RuneforgeOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
@@ -32,9 +31,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showLogOverlay, setShowLogOverlay] = useState(false);
-  const [showRuneforgeOverlay, setShowRuneforgeOverlay] = useState(false);
-  const [selectedRuneforgeId, setSelectedRuneforgeId] = useState<string | null>(null);
-  const [runeforgeOverlaySource, setRuneforgeOverlaySource] = useState<'runeforge' | 'center'>('runeforge');
   
   const isDraftPhase = turnPhase === 'draft';
   const isGameOver = turnPhase === 'game-over';
@@ -54,6 +50,16 @@ export function GameBoard({ gameState }: GameBoardProps) {
         ? players[1]
         : null
     : null;
+  
+  const handleRuneClick = (runeforgeId: string, runeType: RuneType) => {
+    // Direct rune click always drafts that rune type
+    draftRune(runeforgeId, runeType);
+  };
+  
+  const handleCenterRuneClick = (runeType: RuneType) => {
+    // Direct center rune click drafts that rune type from center
+    draftFromCenter(runeType);
+  };
   
   const handleRuneforgeClick = (runeforgeId: string) => {
     // Handle Void effect - clicking runeforge destroys it
@@ -75,54 +81,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }
       return;
     }
-    
-    // Normal draft behavior
-    const runeforge = runeforges.find(f => f.id === runeforgeId);
-    if (!runeforge || runeforge.runes.length === 0) return;
-    
-    // Check if all runes are the same type
-    const uniqueTypes = new Set(runeforge.runes.map(r => r.runeType));
-    if (uniqueTypes.size === 1) {
-      // Auto-select if only one type
-      const runeType = runeforge.runes[0].runeType;
-      draftRune(runeforgeId, runeType);
-    } else {
-      // Show overlay for multiple types
-      setSelectedRuneforgeId(runeforgeId);
-      setRuneforgeOverlaySource('runeforge');
-      setShowRuneforgeOverlay(true);
-    }
-  };
-  
-  const handleCenterClick = () => {
-    if (centerPool.length === 0) return;
-    
-    // Check if all runes are the same type
-    const uniqueTypes = new Set(centerPool.map(r => r.runeType));
-    if (uniqueTypes.size === 1) {
-      // Auto-select if only one type
-      const runeType = centerPool[0].runeType;
-      draftFromCenter(runeType);
-    } else {
-      // Show overlay for multiple types
-      setSelectedRuneforgeId(null);
-      setRuneforgeOverlaySource('center');
-      setShowRuneforgeOverlay(true);
-    }
-  };
-  
-  const handleRuneforgeOverlaySelect = (runeType: RuneType) => {
-    if (runeforgeOverlaySource === 'runeforge' && selectedRuneforgeId) {
-      draftRune(selectedRuneforgeId, runeType);
-    } else if (runeforgeOverlaySource === 'center') {
-      draftFromCenter(runeType);
-    }
-    setShowRuneforgeOverlay(false);
-  };
-  
-  const handleRuneforgeOverlayClose = () => {
-    setShowRuneforgeOverlay(false);
-    setSelectedRuneforgeId(null);
   };
   
   const handleBackgroundClick = () => {
@@ -266,14 +224,16 @@ export function GameBoard({ gameState }: GameBoardProps) {
             <RuneforgesAndCenter
               runeforges={runeforges}
               centerPool={centerPool}
+              onRuneClick={handleRuneClick}
+              onCenterRuneClick={handleCenterRuneClick}
               onRuneforgeClick={handleRuneforgeClick}
-              onCenterClick={handleCenterClick}
               isDraftPhase={isDraftPhase}
               hasSelectedRunes={hasSelectedRunes}
               isAITurn={isAITurn}
               voidEffectPending={voidEffectPending}
               frostEffectPending={frostEffectPending}
               frozenRuneforges={frozenRuneforges}
+              isClassicMode={gameMode === 'classic'}
             />
             
             {/* Selected Runes Display - Overlay */}
@@ -351,20 +311,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
         <GameLogOverlay
           roundHistory={gameState.roundHistory}
           onClose={() => setShowLogOverlay(false)}
-        />
-      )}
-      
-      {/* Runeforge Overlay */}
-      {showRuneforgeOverlay && (
-        <RuneforgeOverlay
-          runes={
-            runeforgeOverlaySource === 'runeforge' && selectedRuneforgeId
-              ? runeforges.find(f => f.id === selectedRuneforgeId)?.runes || []
-              : centerPool
-          }
-          onSelectRune={handleRuneforgeOverlaySelect}
-          onClose={handleRuneforgeOverlayClose}
-          gameMode={gameMode}
         />
       )}
     </div>
