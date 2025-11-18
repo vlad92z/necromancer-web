@@ -88,10 +88,10 @@ export function Runeforge({
       disabled={disabled || runeforge.runes.length === 0}
       style={{
         backgroundColor: backgroundColor,
-        borderRadius: '12px',
-        padding: '16px',
-        minWidth: '60px',
-        minHeight: '60px',
+        borderRadius: '50%',
+        width: '140px',
+        height: '140px',
+        padding: '8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -139,22 +139,35 @@ export function Runeforge({
           Empty
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-          {runeforge.runes.map((rune) => {
+        <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {runeforge.runes.map((rune, idx) => {
             const isHighlighted = hoveredRuneType === rune.runeType;
-            
+
+            // Diamond positions: top, right, bottom, left
+            const positions: Array<React.CSSProperties> = [
+              { top: '8%', left: '50%', transform: 'translate(-50%, -25%)' }, // top
+              { top: '50%', left: '92%', transform: 'translate(-75%, -50%)' }, // right
+              { top: '92%', left: '50%', transform: 'translate(-50%, -75%)' }, // bottom
+              { top: '50%', left: '8%', transform: 'translate(-25%, -50%)' }  // left
+            ];
+
+            const pos = positions[idx % 4];
+            const baseSize = 56;
+            const baseTransform = `${pos.transform} ${isHighlighted ? 'scale(1.1)' : 'scale(1)'} `;
+
             return (
               <div
                 key={rune.id}
                 style={{
-                  width: '60px',
-                  height: '60px',
-                  position: 'relative',
+                  width: `${baseSize}px`,
+                  height: `${baseSize}px`,
+                  position: 'absolute',
                   pointerEvents: (voidEffectPending || frostEffectPending || disabled) ? 'none' : 'auto',
                   cursor: (voidEffectPending || frostEffectPending || disabled) ? 'not-allowed' : 'pointer',
-                  transform: isHighlighted ? 'scale(1.1)' : 'scale(1)',
                   transition: 'transform 0.15s ease',
-                  filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none'
+                  filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none',
+                  ...pos,
+                  transform: baseTransform
                 }}
                 onClick={(e) => handleRuneClick(e, rune.runeType)}
                 onMouseEnter={() => !disabled && !voidEffectPending && !frostEffectPending && setHoveredRuneType(rune.runeType)}
