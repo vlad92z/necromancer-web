@@ -107,7 +107,7 @@ export function RuneforgesAndCenter({
         </div>
       )}
       
-      <div style={{ position: 'relative', minHeight: '40px', marginBottom: '6px' }}>
+      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px' }}>
         <CenterPool 
           centerPool={centerPool}
           onRuneClick={onCenterRuneClick}

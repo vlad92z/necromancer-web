@@ -50,8 +50,7 @@ export function CenterPool({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: `12px`,
-          padding: '0 8px'
+          gap: `30px`
         }}>
           {centerPool.map((rune) => {
             const disabled = !isDraftPhase || hasSelectedRunes || isAITurn;
@@ -73,8 +72,8 @@ export function CenterPool({
               <div
                 key={rune.id}
                 style={{
-                  width: '35px',
-                  height: '35px',
+                  width: '40px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -90,7 +89,7 @@ export function CenterPool({
                 <img
                     src={runeImage}
                     alt={`${rune.runeType} rune`}
-                    style={{width: '35px', height: '35px'}}
+                    style={{width: '40px', height: '40px'}}
                   />
               </div>
             );
