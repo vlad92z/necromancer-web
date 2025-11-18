@@ -2,7 +2,7 @@
  * GameBoard component - main game board displaying runeforges, center, player and opponent views
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { GameState, RuneType } from '../../../types/game';
 import { RuneforgesAndCenter } from './RuneforgesAndCenter';
 import { PlayerView } from './PlayerView';
