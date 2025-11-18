@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, RuneType, Player, Rune } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 
@@ -29,7 +29,7 @@ interface GameplayStore extends GameState {
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
-  destroyRuneforge: (runeforgeId: string) => void;
+  destroyRune: (target: VoidTarget) => void;
   skipVoidEffect: () => void;
   freezeRuneforge: (runeforgeId: string) => void;
   endRound: () => void;
@@ -190,9 +190,9 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
-      // Check if Void runes were placed (Void effect: destroy a runeforge)
+      // Check if Void runes were placed (Void effect: destroy a single rune)
       const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
-      const hasNonEmptyFactories = state.runeforges.some(f => f.runes.length > 0);
+      const hasVoidTargets = state.runeforges.some(f => f.runes.length > 0) || state.centerPool.length > 0;
       
       // Check if Frost runes were placed (Frost effect: freeze a runeforge)
       const hasFrostRunes = selectedRunes.some(rune => rune.runeType === 'Frost');
@@ -211,9 +211,9 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // Only trigger rune effects in standard mode
       const isStandardMode = state.gameMode === 'standard';
       
-      // If Void runes were placed and there are non-empty runeforges, trigger Void effect
-      // Keep current player so THEY get to choose which runeforge to destroy
-      if (isStandardMode && hasVoidRunes && hasNonEmptyFactories && !shouldEndRound) {
+      // If Void runes were placed and there are available targets, trigger Void effect
+      // Keep current player so THEY get to choose which rune to destroy
+      if (isStandardMode && hasVoidRunes && hasVoidTargets && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -339,37 +339,72 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
     });
   },
   
-  destroyRuneforge: (runeforgeId: string) => {
+  destroyRune: (target: VoidTarget) => {
     set((state) => {
-      // Void effect: destroy all runes in the selected runeforge
+      // Void effect: destroy a single rune from a runeforge or the center
       if (!state.voidEffectPending) return state;
-      
-      const updatedRuneforges = state.runeforges.map((f) =>
-        f.id === runeforgeId ? { ...f, runes: [] } : f
-      );
-      
-      // Switch to next player after runeforge is destroyed
+
       const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
-      
-      // Check if round should end after destroying runeforge
-      const allRuneforgesEmpty = updatedRuneforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-      
-      return {
-        ...state,
-        runeforges: updatedRuneforges,
-        voidEffectPending: false,
-        currentPlayerIndex: nextPlayerIndex as 0 | 1,
-        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
-        shouldTriggerEndRound: shouldEndRound,
-      };
+
+      if (target.source === 'runeforge') {
+        const targetRuneforge = state.runeforges.find((f) => f.id === target.runeforgeId);
+        if (!targetRuneforge) {
+          return state;
+        }
+
+        const hasRune = targetRuneforge.runes.some((r) => r.id === target.runeId);
+        if (!hasRune) {
+          return state;
+        }
+
+        const updatedRuneforges = state.runeforges.map((f) =>
+          f.id === target.runeforgeId
+            ? { ...f, runes: f.runes.filter((r) => r.id !== target.runeId) }
+            : f
+        );
+
+        const allRuneforgesEmpty = updatedRuneforges.every((f) => f.runes.length === 0);
+        const centerEmpty = state.centerPool.length === 0;
+        const shouldEndRound = allRuneforgesEmpty && centerEmpty;
+
+        return {
+          ...state,
+          runeforges: updatedRuneforges,
+          voidEffectPending: false,
+          currentPlayerIndex: nextPlayerIndex as 0 | 1,
+          turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+          shouldTriggerEndRound: shouldEndRound,
+        };
+      }
+
+      if (target.source === 'center') {
+        const hasRune = state.centerPool.some((r) => r.id === target.runeId);
+        if (!hasRune) {
+          return state;
+        }
+
+        const updatedCenterPool = state.centerPool.filter((r) => r.id !== target.runeId);
+        const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
+        const centerEmpty = updatedCenterPool.length === 0;
+        const shouldEndRound = allRuneforgesEmpty && centerEmpty;
+
+        return {
+          ...state,
+          centerPool: updatedCenterPool,
+          voidEffectPending: false,
+          currentPlayerIndex: nextPlayerIndex as 0 | 1,
+          turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+          shouldTriggerEndRound: shouldEndRound,
+        };
+      }
+
+      return state;
     });
   },
   
   skipVoidEffect: () => {
     set((state) => {
-      // Skip Void effect without destroying any runeforge
+      // Skip Void effect without destroying any rune
       if (!state.voidEffectPending) return state;
       
       // Switch to next player when skipping Void effect

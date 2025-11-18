@@ -5,13 +5,14 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { Runeforge as RuneforgeType, RuneType } from '../../../types/game';
+import type { Runeforge as RuneforgeType, RuneType, Rune } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
 interface RuneforgeProps {
   runeforge: RuneforgeType;
   onRuneClick?: (runeforgeId: string, runeType: RuneType) => void;
   onRuneforgeClick?: (runeforgeId: string) => void;
+  onVoidRuneSelect?: (runeforgeId: string, runeId: string) => void;
   disabled?: boolean;
   voidEffectPending?: boolean;
   frostEffectPending?: boolean;
@@ -22,24 +23,32 @@ export function Runeforge({
   runeforge, 
   onRuneClick,
   onRuneforgeClick, 
+  onVoidRuneSelect,
   disabled = false, 
   voidEffectPending = false, 
   frostEffectPending = false, 
   isFrozen = false
 }: RuneforgeProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
+  const canSelectRunesForVoid = Boolean(
+    voidEffectPending && onVoidRuneSelect && !disabled && runeforge.runes.length > 0
+  );
   
   const handleClick = () => {
-    // For Void/Frost effects, click the entire runeforge
-    if (!disabled && onRuneforgeClick && runeforge.runes.length > 0 && (voidEffectPending || frostEffectPending)) {
+    // For Frost effect, click the entire runeforge
+    if (!disabled && onRuneforgeClick && runeforge.runes.length > 0 && frostEffectPending) {
       onRuneforgeClick(runeforge.id);
     }
   };
   
-  const handleRuneClick = (e: React.MouseEvent, runeType: RuneType) => {
+  const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
     e.stopPropagation();
+    if (canSelectRunesForVoid && onVoidRuneSelect) {
+      onVoidRuneSelect(runeforge.id, rune.id);
+      return;
+    }
     if (!disabled && onRuneClick && !voidEffectPending && !frostEffectPending) {
-      onRuneClick(runeforge.id, runeType);
+      onRuneClick(runeforge.id, rune.runeType);
     }
   };
   
@@ -78,7 +87,7 @@ export function Runeforge({
     boxShadow = voidGlowRest;
     glowRange = voidGlowRange;
     glowDuration = 1.4;
-    ariaLabel = `Destroy runeforge with ${runeforge.runes.length} runes`;
+    ariaLabel = `Select a rune to destroy from this runeforge (${runeforge.runes.length} runes)`;
   }
   
   // Frost effect styling (cyan)
@@ -122,20 +131,18 @@ export function Runeforge({
         justifyContent: 'center',
         transition: 'all 0.2s',
         border: `2px solid ${borderColor}`,
-        cursor: (disabled || runeforge.runes.length === 0) ? 'not-allowed' : 'pointer',
+        cursor: (disabled || runeforge.runes.length === 0)
+          ? 'not-allowed'
+          : (voidEffectPending ? 'default' : 'pointer'),
         outline: 'none',
         boxShadow: boxShadow,
         position: 'relative'
       }}
       onMouseEnter={(e) => {
-        if (!disabled && runeforge.runes.length > 0 && onRuneforgeClick && (voidEffectPending || frostEffectPending)) {
-          if (voidEffectPending) {
-            e.currentTarget.style.boxShadow = '0 10px 32px rgba(99, 102, 241, 1), inset 0 0 10px rgba(124, 58, 237, 0.35)';
-          } else if (frostEffectPending) {
+        if (!disabled && runeforge.runes.length > 0 && onRuneforgeClick && frostEffectPending) {
             e.currentTarget.style.boxShadow = '0 10px 32px rgba(3, 105, 161, 1), inset 0 0 10px rgba(6, 182, 212, 0.25)';
-          } else {
-            e.currentTarget.style.backgroundColor = hoverBackgroundColor;
-          }
+        } else if (!voidEffectPending) {
+          e.currentTarget.style.backgroundColor = hoverBackgroundColor;
           e.currentTarget.style.transform = 'scale(1.02)';
         }
       }}
@@ -180,13 +187,19 @@ export function Runeforge({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    pointerEvents: (voidEffectPending || frostEffectPending || disabled) ? 'none' : 'auto',
-                    cursor: (voidEffectPending || frostEffectPending || disabled) ? 'not-allowed' : 'pointer',
-                    transition: 'transform 0.15s ease',
+                    pointerEvents: (!canSelectRunesForVoid && (frostEffectPending || disabled)) ? 'none' : 'auto',
+                    cursor: canSelectRunesForVoid
+                      ? 'crosshair'
+                      : ((frostEffectPending || disabled) ? 'not-allowed' : 'pointer'),
+                    transition: 'transform 0.15s ease, box-shadow 0.2s ease',
                     filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none',
-                    transform: isHighlighted ? 'scale(1.08)' : 'scale(1)'
+                    transform: isHighlighted ? 'scale(1.08)' : 'scale(1)',
+                    boxShadow: canSelectRunesForVoid
+                      ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 24px rgba(167, 139, 250, 0.45)'
+                      : 'none',
+                    borderRadius: '50%'
                   }}
-                  onClick={(e) => handleRuneClick(e, rune.runeType)}
+                  onClick={(e) => handleRuneClick(e, rune)}
                   onMouseEnter={() => !disabled && !voidEffectPending && !frostEffectPending && setHoveredRuneType(rune.runeType)}
                   onMouseLeave={() => setHoveredRuneType(null)}
                 >

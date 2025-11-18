@@ -14,6 +14,8 @@ interface RuneforgesAndCenterProps {
   onRuneClick: (runeforgeId: string, runeType: RuneType) => void;
   onCenterRuneClick: (runeType: RuneType) => void;
   onRuneforgeClick: (runeforgeId: string) => void;
+  onVoidRuneforgeRuneSelect: (runeforgeId: string, runeId: string) => void;
+  onVoidCenterRuneSelect: (runeId: string) => void;
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
   isAITurn: boolean;
@@ -30,6 +32,8 @@ export function RuneforgesAndCenter({
   onRuneClick,
   onCenterRuneClick,
   onRuneforgeClick, 
+  onVoidRuneforgeRuneSelect,
+  onVoidCenterRuneSelect,
   isDraftPhase, 
   hasSelectedRunes, 
   isAITurn,
@@ -48,7 +52,6 @@ export function RuneforgesAndCenter({
   const effectActive = voidEffectPending || frostEffectPending;
   const canDraftOpponentRuneforges = !effectActive && !hasAccessibleRuneforges && centerIsEmpty;
   const canDraftFromCenter = !hasAccessibleRuneforges;
-  const centerDraftBlocked = !canDraftFromCenter && !effectActive && centerPool.length > 0 && isDraftPhase && !hasSelectedRunes && !isAITurn;
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
     if (effectActive) {
@@ -87,6 +90,7 @@ export function RuneforgesAndCenter({
             runeforge={runeforge}
             onRuneClick={onRuneClick}
             onRuneforgeClick={onRuneforgeClick}
+            onVoidRuneSelect={onVoidRuneforgeRuneSelect}
             disabled={getDisabledState(runeforge)}
             voidEffectPending={voidEffectPending}
             frostEffectPending={frostEffectPending}
@@ -121,10 +125,12 @@ export function RuneforgesAndCenter({
         <CenterPool 
           centerPool={centerPool}
           onRuneClick={onCenterRuneClick}
+          onVoidRuneSelect={onVoidCenterRuneSelect}
           isDraftPhase={isDraftPhase}
           hasSelectedRunes={hasSelectedRunes}
           isAITurn={isAITurn}
           canDraftFromCenter={canDraftFromCenter}
+          voidEffectPending={voidEffectPending}
         />
       </div>
 

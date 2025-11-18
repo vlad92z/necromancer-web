@@ -23,7 +23,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
-  const destroyRuneforge = useGameplayStore((state) => state.destroyRuneforge);
+  const destroyRune = useGameplayStore((state) => state.destroyRune);
   const freezeRuneforge = useGameplayStore((state) => state.freezeRuneforge);
   const endRound = useGameplayStore((state) => state.endRound);
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
@@ -59,16 +59,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
   };
   
   const handleRuneforgeClick = (runeforgeId: string) => {
-    // Handle Void effect - clicking runeforge destroys it
-    if (voidEffectPending) {
-      const runeforge = runeforges.find(f => f.id === runeforgeId);
-      // Only allow clicking non-empty runeforges during Void effect
-      if (runeforge && runeforge.runes.length > 0) {
-        destroyRuneforge(runeforgeId);
-      }
-      return;
-    }
-    
     // Handle Frost effect - clicking runeforge freezes it
     if (frostEffectPending) {
       const runeforge = runeforges.find(f => f.id === runeforgeId);
@@ -78,6 +68,22 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }
       return;
     }
+  };
+
+  const handleVoidRuneFromRuneforge = (runeforgeId: string, runeId: string) => {
+    if (!voidEffectPending) {
+      return;
+    }
+
+    destroyRune({ source: 'runeforge', runeforgeId, runeId });
+  };
+
+  const handleVoidRuneFromCenter = (runeId: string) => {
+    if (!voidEffectPending) {
+      return;
+    }
+
+    destroyRune({ source: 'center', runeId });
   };
   
   const handleBackgroundClick = () => {
@@ -195,7 +201,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
                 animation: 'pulse 2s infinite'
               }}>
-                💀 Void Effect: Click a runeforge to destroy it! 💀
+                💀 Void Effect: Click a rune to destroy it! 💀
               </div>
             )}
             
@@ -207,6 +213,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
               onRuneClick={handleRuneClick}
               onCenterRuneClick={handleCenterRuneClick}
               onRuneforgeClick={handleRuneforgeClick}
+              onVoidRuneforgeRuneSelect={handleVoidRuneFromRuneforge}
+              onVoidCenterRuneSelect={handleVoidRuneFromCenter}
               isDraftPhase={isDraftPhase}
               hasSelectedRunes={hasSelectedRunes}
               isAITurn={isAITurn}

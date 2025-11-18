@@ -4,7 +4,7 @@
  * All timing is handled by component useEffect hooks
  */
 
-import { makeAIMove, chooseRuneforgeToDestroy, chooseRuneforgeToFreeze } from '../utils/aiPlayer';
+import { makeAIMove, chooseVoidRuneTarget, chooseRuneforgeToFreeze } from '../utils/aiPlayer';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 
 /**
@@ -46,15 +46,15 @@ export function needsAIPlacement(): boolean {
 }
 
 /**
- * Execute AI Void effect (runeforge destruction)
+ * Execute AI Void effect (single rune destruction)
  * Pure function - no setTimeout, timing handled by caller
  */
 export function executeAIVoidEffect() {
   const state = useGameplayStore.getState();
-  const runeforgeToDestroy = chooseRuneforgeToDestroy(state);
+  const runeTarget = chooseVoidRuneTarget(state);
   
-  if (runeforgeToDestroy) {
-    state.destroyRuneforge(runeforgeToDestroy);
+  if (runeTarget) {
+    state.destroyRune(runeTarget);
   } else {
     state.skipVoidEffect();
   }

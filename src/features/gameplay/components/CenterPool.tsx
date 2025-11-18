@@ -13,28 +13,37 @@ import windRune from '../../../assets/runes/wind_rune.svg';
 interface CenterPoolProps {
   centerPool: Rune[];
   onRuneClick?: (runeType: RuneType) => void;
+  onVoidRuneSelect?: (runeId: string) => void;
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
   isAITurn: boolean;
   canDraftFromCenter: boolean;
+  voidEffectPending?: boolean;
 }
 
 export function CenterPool({ 
   centerPool, 
   onRuneClick,
+  onVoidRuneSelect,
   isDraftPhase, 
   hasSelectedRunes, 
   isAITurn,
-  canDraftFromCenter
+  canDraftFromCenter,
+  voidEffectPending = false
 }: CenterPoolProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const totalRunes = centerPool.length;
-  const centerDisabled = !isDraftPhase || hasSelectedRunes || isAITurn || !canDraftFromCenter;
+  const voidSelectionActive = Boolean(voidEffectPending && onVoidRuneSelect && !isAITurn);
+  const centerDisabled = voidSelectionActive ? false : (!isDraftPhase || hasSelectedRunes || isAITurn || !canDraftFromCenter);
   
-  const handleRuneClick = (e: React.MouseEvent, runeType: RuneType) => {
+  const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
     e.stopPropagation();
+    if (voidSelectionActive && onVoidRuneSelect) {
+      onVoidRuneSelect(rune.id);
+      return;
+    }
     if (!centerDisabled && onRuneClick) {
-      onRuneClick(runeType);
+      onRuneClick(rune.runeType);
     }
   };
   
@@ -58,6 +67,9 @@ export function CenterPool({
           {centerPool.map((rune) => {
             const isHighlighted = hoveredRuneType === rune.runeType;
             const scale = isHighlighted ? 1.08 : 1;
+            const glowStyle = voidSelectionActive
+              ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
+              : 'none';
 
             // Map rune types to assets (kept local to avoid changing RuneCell)
             const RUNE_ASSETS: Record<string, string> = {
@@ -79,13 +91,15 @@ export function CenterPool({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: centerDisabled ? 'not-allowed' : 'pointer',
-                  opacity: centerDisabled ? 0.5 : 1,
-                  transition: 'transform 0.16s ease, filter 0.16s ease',
+                  cursor: voidSelectionActive ? 'crosshair' : (centerDisabled ? 'not-allowed' : 'pointer'),
+                  opacity: centerDisabled && !voidSelectionActive ? 0.5 : 1,
+                  transition: 'transform 0.16s ease, filter 0.16s ease, box-shadow 0.2s ease',
                   transform: `scale(${scale})`,
+                  boxShadow: glowStyle,
+                  borderRadius: '50%'
                 }}
-                onClick={(e) => handleRuneClick(e, rune.runeType)}
-                onMouseEnter={() => !centerDisabled && setHoveredRuneType(rune.runeType)}
+                onClick={(e) => handleRuneClick(e, rune)}
+                onMouseEnter={() => !centerDisabled && !voidSelectionActive && setHoveredRuneType(rune.runeType)}
                 onMouseLeave={() => setHoveredRuneType(null)}
               >
                 <img

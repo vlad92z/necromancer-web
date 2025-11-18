@@ -22,7 +22,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
       Fire: '+1 Essence per Fire rune on your Spell Wall',
       Frost: 'Freeze a Runeforge for opponent\'s next turn',
       Life: 'Heal 10 HP per active Life rune each round',
-      Void: 'Destroy a Runeforge when placed',
+      Void: 'Destroy one rune from any Runeforge or the center when placed',
       Wind: 'Stage Wind runes in pattern lines to reduce Focus penalty',
     };
     return descriptions[runeType];
