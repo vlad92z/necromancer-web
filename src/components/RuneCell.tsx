@@ -52,13 +52,13 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
 }> = {
   wall: {
     border: `2px solid ${COLORS.ui.borderLight}`,
-    background: COLORS.ui.backgroundLight,
+    background: '#dbeafe', // Light blue background
     backgroundOccupied: '#fed7aa',
     emptyOpacity: 0.3,
   },
   pattern: {
     border: `2px solid ${COLORS.ui.borderLight}`,
-    background: COLORS.ui.backgroundLight,
+    background: '#dbeafe', // Light blue background
   },
   floor: {
     border: '2px solid #fca5a5',
