@@ -194,18 +194,13 @@ export function Spellpower({
               style={{
                 fontSize: '28px',
                 fontWeight: 'bold',
-                color: hasPenalty ? '#dc2626' : '#0c4a6e',
+                color: hasPenalty ? '#dc2626' : '#04d1ffff',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px'
               }}
             >
               {focus}
-              {hasLifeHealing && (
-                <span style={{ color: '#32CD32', fontSize: '14px' }} title={`+${healingAmount} HP (10 × ${lifeRuneCount} Life rune${lifeRuneCount > 1 ? 's' : ''})`}>
-                  💚
-                </span>
-              )}
               {hasWindMitigation && (
                 <span style={{ color: '#87CEEB', fontSize: '14px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} mitigating floor penalties`}>
                   💨
@@ -237,12 +232,12 @@ export function Spellpower({
           <motion.div
             key={totalPower}
             initial={{ scale: 1.5, color: '#dc2626' }}
-            animate={{ scale: 1, color: '#7c3aed' }}
+            animate={{ scale: 1, color: '#000000ff' }}
             transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
             style={{
               fontSize: '36px',
               fontWeight: 'bold',
-              color: '#7c3aed',
+              color: '#000000ff',
               marginTop: '-16px'
             }}
           >
