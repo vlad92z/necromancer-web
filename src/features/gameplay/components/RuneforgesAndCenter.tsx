@@ -66,15 +66,6 @@ export function RuneforgesAndCenter({
   const renderRuneforgeRow = (owner: Player, ownedRuneforges: RuneforgeType[], align: 'flex-start' | 'center' | 'flex-end') => (
     <div key={owner.id} style={{ marginBottom: '16px' }}>
       <div style={{ 
-        textAlign: align === 'center' ? 'center' : align === 'flex-start' ? 'left' : 'right',
-        fontSize: '16px',
-        fontWeight: 600,
-        marginBottom: '8px',
-        color: '#0f172a'
-      }}>
-        {owner.name}'s Runeforges
-      </div>
-      <div style={{ 
         display: 'flex', 
         justifyContent: align, 
         gap: '16px', 
