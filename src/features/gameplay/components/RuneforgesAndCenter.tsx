@@ -1,42 +1,42 @@
 /**
- * FactoriesAndCenter component - displays factories and center pool
+ * RuneforgesAndCenter component - displays runeforges and center pool
  */
 
-import type { Factory as FactoryType, Rune } from '../../../types/game';
-import { Factory } from './Factory';
+import type { Runeforge as RuneforgeType, Rune } from '../../../types/game';
+import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
 
-interface FactoriesAndCenterProps {
-  factories: FactoryType[];
+interface RuneforgesAndCenterProps {
+  runeforges: RuneforgeType[];
   centerPool: Rune[];
-  onFactoryClick: (factoryId: string) => void;
+  onRuneforgeClick: (runeforgeId: string) => void;
   onCenterClick: () => void;
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
   isAITurn: boolean;
   voidEffectPending: boolean;
   frostEffectPending: boolean;
-  frozenFactories: string[];
+  frozenRuneforges: string[];
 }
 
-export function FactoriesAndCenter({ 
-  factories, 
+export function RuneforgesAndCenter({ 
+  runeforges, 
   centerPool, 
-  onFactoryClick, 
+  onRuneforgeClick, 
   onCenterClick, 
   isDraftPhase, 
   hasSelectedRunes, 
   isAITurn,
   voidEffectPending,
   frostEffectPending,
-  frozenFactories
-}: FactoriesAndCenterProps) {
+  frozenRuneforges
+}: RuneforgesAndCenterProps) {
   const isMobile = window.innerWidth < 768;
   
   return (
     <div style={{ marginBottom: isMobile ? '16px' : '32px' }}>
       
-      {/* Factories - Single row for both mobile and desktop */}
+      {/* Runeforges - Single row for both mobile and desktop */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
@@ -44,15 +44,15 @@ export function FactoriesAndCenter({
         gap: isMobile ? '6px' : '24px', 
         marginBottom: isMobile ? '8px' : '24px' 
       }}>
-        {factories.map((factory) => (
-          <Factory 
-            key={factory.id} 
-            factory={factory}
-            onFactoryClick={onFactoryClick}
-            disabled={(voidEffectPending || frostEffectPending) ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn || frozenFactories.includes(factory.id))}
+        {runeforges.map((runeforge) => (
+          <Runeforge 
+            key={runeforge.id} 
+            runeforge={runeforge}
+            onRuneforgeClick={onRuneforgeClick}
+            disabled={(voidEffectPending || frostEffectPending) ? isAITurn : (!isDraftPhase || hasSelectedRunes || isAITurn || frozenRuneforges.includes(runeforge.id))}
             voidEffectPending={voidEffectPending}
             frostEffectPending={frostEffectPending}
-            isFrozen={frozenFactories.includes(factory.id)}
+            isFrozen={frozenRuneforges.includes(runeforge.id)}
           />
         ))}
       </div>

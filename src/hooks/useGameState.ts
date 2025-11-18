@@ -20,11 +20,11 @@ export function useOpponentPlayer() {
 }
 
 /**
- * Get factories and center pool
+ * Get runeforges and center pool
  */
 export function useFactories() {
   return useGameStore((state) => ({
-    factories: state.factories,
+    runeforges: state.runeforges,
     centerPool: state.centerPool,
   }));
 }

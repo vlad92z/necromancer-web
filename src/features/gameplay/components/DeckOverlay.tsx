@@ -136,7 +136,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                   }}>
                     <RuneCell
                       rune={runes[0]}
-                      variant="factory"
+                      variant="runeforge"
                       size={isMobile ? 'small' : 'medium'}
                       showEffect={false}
                     />
@@ -183,7 +183,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                       >
                         <RuneCell
                           rune={rune}
-                          variant="factory"
+                          variant="runeforge"
                           size={isMobile ? 'small' : 'large'}
                           showEffect={true}
                         />

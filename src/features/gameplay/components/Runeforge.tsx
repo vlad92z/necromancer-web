@@ -1,24 +1,24 @@
 /**
- * Factory component - displays a factory with runes
+ * Runeforge component - displays a runeforge with runes
  * Implements Azul-style drafting: click a rune type to select all of that type
  */
 
-import type { Factory as FactoryType } from '../../../types/game';
+import type { Runeforge as RuneforgeType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
-interface FactoryProps {
-  factory: FactoryType;
-  onFactoryClick?: (factoryId: string) => void;
+interface RuneforgeProps {
+  runeforge: RuneforgeType;
+  onRuneforgeClick?: (runeforgeId: string) => void;
   disabled?: boolean;
   voidEffectPending?: boolean;
   frostEffectPending?: boolean;
   isFrozen?: boolean;
 }
 
-export function Factory({ factory, onFactoryClick, disabled = false, voidEffectPending = false, frostEffectPending = false, isFrozen = false }: FactoryProps) {
+export function Runeforge({ runeforge, onRuneforgeClick, disabled = false, voidEffectPending = false, frostEffectPending = false, isFrozen = false }: RuneforgeProps) {
   const handleClick = () => {
-    if (!disabled && onFactoryClick && factory.runes.length > 0) {
-      onFactoryClick(factory.id);
+    if (!disabled && onRuneforgeClick && runeforge.runes.length > 0) {
+      onRuneforgeClick(runeforge.id);
     }
   };
   
@@ -29,24 +29,24 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
   let borderColor = '#bae6fd';
   let hoverBackgroundColor = '#bae6fd';
   let boxShadow = 'none';
-  let ariaLabel = `Open factory with ${factory.runes.length} runes`;
+  let ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
   
   // Void effect styling (purple)
-  if (voidEffectPending && factory.runes.length > 0 && !disabled) {
+  if (voidEffectPending && runeforge.runes.length > 0 && !disabled) {
     backgroundColor = '#7c3aed';
     borderColor = '#6d28d9';
     hoverBackgroundColor = '#6d28d9';
     boxShadow = '0 0 12px rgba(124, 58, 237, 0.5)';
-    ariaLabel = `Destroy factory with ${factory.runes.length} runes`;
+    ariaLabel = `Destroy runeforge with ${runeforge.runes.length} runes`;
   }
   
   // Frost effect styling (cyan)
-  if (frostEffectPending && factory.runes.length > 0 && !disabled) {
+  if (frostEffectPending && runeforge.runes.length > 0 && !disabled) {
     backgroundColor = '#06b6d4';
     borderColor = '#0891b2';
     hoverBackgroundColor = '#0891b2';
     boxShadow = '0 0 12px rgba(6, 182, 212, 0.5)';
-    ariaLabel = `Freeze factory with ${factory.runes.length} runes`;
+    ariaLabel = `Freeze runeforge with ${runeforge.runes.length} runes`;
   }
   
   // Frozen state styling (icy blue with snowflakes)
@@ -54,7 +54,7 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
     backgroundColor = '#cffafe';
     borderColor = '#67e8f9';
     boxShadow = '0 0 16px rgba(103, 232, 249, 0.6), inset 0 0 20px rgba(165, 243, 252, 0.4)';
-    ariaLabel = `Factory frozen - cannot draft`;
+    ariaLabel = `Runeforge frozen - cannot draft`;
   }
 
   const runeCellSize = isMobile ? 'medium' : 'large';
@@ -62,7 +62,7 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
   return (
     <button
       onClick={handleClick}
-      disabled={disabled || factory.runes.length === 0}
+      disabled={disabled || runeforge.runes.length === 0}
       style={{
         backgroundColor: backgroundColor,
         borderRadius: isMobile ? '4px' : '12px',
@@ -74,12 +74,12 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
         justifyContent: 'center',
         transition: 'all 0.2s',
         border: `2px solid ${borderColor}`,
-        cursor: (disabled || factory.runes.length === 0) ? 'not-allowed' : 'pointer',
+        cursor: (disabled || runeforge.runes.length === 0) ? 'not-allowed' : 'pointer',
         outline: 'none',
         boxShadow: boxShadow,
         position: 'relative'
       }}
-      onMouseEnter={(e) => !disabled && factory.runes.length > 0 && (e.currentTarget.style.backgroundColor = hoverBackgroundColor, e.currentTarget.style.transform = 'scale(1.02)')}
+      onMouseEnter={(e) => !disabled && runeforge.runes.length > 0 && (e.currentTarget.style.backgroundColor = hoverBackgroundColor, e.currentTarget.style.transform = 'scale(1.02)')}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = backgroundColor, e.currentTarget.style.transform = 'scale(1)')}
       aria-label={ariaLabel}
     >
@@ -96,13 +96,13 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
         </div>
       )}
       
-      {factory.runes.length === 0 ? (
+      {runeforge.runes.length === 0 ? (
         <div style={{ color: '#64748b', fontSize: isMobile ? '6px' : '14px' }}>
           Empty
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: isMobile ? '2px' : '8px' }}>
-          {factory.runes.map((rune) => (
+          {runeforge.runes.map((rune) => (
             <div
               key={rune.id}
               style={{
@@ -113,7 +113,7 @@ export function Factory({ factory, onFactoryClick, disabled = false, voidEffectP
             >
               <RuneCell
                 rune={rune}
-                variant="factory"
+                variant="runeforge"
                 size={runeCellSize}
                 showEffect={false}
               />

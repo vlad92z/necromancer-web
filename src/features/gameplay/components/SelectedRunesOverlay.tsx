@@ -1,5 +1,5 @@
 /**
- * SelectedRunesOverlay component - displays selected runes over the factories area
+ * SelectedRunesOverlay component - displays selected runes over the runeforges area
  */
 
 import type { Rune } from '../../../types/game';

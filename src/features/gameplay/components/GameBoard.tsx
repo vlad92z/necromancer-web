@@ -1,17 +1,17 @@
 /**
- * GameBoard component - main game board displaying factories, center, player and opponent views
+ * GameBoard component - main game board displaying runeforges, center, player and opponent views
  */
 
 import { useState, useEffect } from 'react';
 import type { GameState, RuneType } from '../../../types/game';
-import { FactoriesAndCenter } from './FactoriesAndCenter';
+import { RuneforgesAndCenter } from './RuneforgesAndCenter';
 import { PlayerView } from './PlayerView';
 import { OpponentView } from './OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
-import { FactoryOverlay } from './FactoryOverlay';
+import { RuneforgeOverlay } from './RuneforgeOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameStore } from '../../../state/gameStore';
@@ -21,19 +21,19 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, factories, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenFactories, gameMode } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameStore((state) => state.returnToStartScreen);
-  const destroyFactory = useGameStore((state) => state.destroyFactory);
-  const freezeFactory = useGameStore((state) => state.freezeFactory);
+  const destroyRuneforge = useGameStore((state) => state.destroyRuneforge);
+  const freezeRuneforge = useGameStore((state) => state.freezeRuneforge);
   
   const [showOpponentOverlay, setShowOpponentOverlay] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showLogOverlay, setShowLogOverlay] = useState(false);
-  const [showFactoryOverlay, setShowFactoryOverlay] = useState(false);
-  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
-  const [factoryOverlaySource, setFactoryOverlaySource] = useState<'factory' | 'center'>('factory');
+  const [showRuneforgeOverlay, setShowRuneforgeOverlay] = useState(false);
+  const [selectedRuneforgeId, setSelectedRuneforgeId] = useState<string | null>(null);
+  const [runeforgeOverlaySource, setRuneforgeOverlaySource] = useState<'runeforge' | 'center'>('runeforge');
   const isMobile = window.innerWidth < 768;
   console.log(`Rendering game in ${isMobile ? 'MOBILE' : 'DESKTOP'} mode (screen width: ${window.innerWidth}px)`);
   
@@ -74,42 +74,42 @@ export function GameBoard({ gameState }: GameBoardProps) {
         : null
     : null;
   
-  const handleFactoryClick = (factoryId: string) => {
-    // Handle Void effect - clicking factory destroys it
+  const handleRuneforgeClick = (runeforgeId: string) => {
+    // Handle Void effect - clicking runeforge destroys it
     if (voidEffectPending) {
-      const factory = factories.find(f => f.id === factoryId);
-      // Only allow clicking non-empty factories during Void effect
-      if (factory && factory.runes.length > 0) {
-        destroyFactory(factoryId);
+      const runeforge = runeforges.find(f => f.id === runeforgeId);
+      // Only allow clicking non-empty runeforges during Void effect
+      if (runeforge && runeforge.runes.length > 0) {
+        destroyRuneforge(runeforgeId);
       }
       return;
     }
     
-    // Handle Frost effect - clicking factory freezes it
+    // Handle Frost effect - clicking runeforge freezes it
     if (frostEffectPending) {
-      const factory = factories.find(f => f.id === factoryId);
-      // Only allow clicking non-empty factories during Frost effect
-      if (factory && factory.runes.length > 0) {
-        freezeFactory(factoryId);
+      const runeforge = runeforges.find(f => f.id === runeforgeId);
+      // Only allow clicking non-empty runeforges during Frost effect
+      if (runeforge && runeforge.runes.length > 0) {
+        freezeRuneforge(runeforgeId);
       }
       return;
     }
     
     // Normal draft behavior
-    const factory = factories.find(f => f.id === factoryId);
-    if (!factory || factory.runes.length === 0) return;
+    const runeforge = runeforges.find(f => f.id === runeforgeId);
+    if (!runeforge || runeforge.runes.length === 0) return;
     
     // Check if all runes are the same type
-    const uniqueTypes = new Set(factory.runes.map(r => r.runeType));
+    const uniqueTypes = new Set(runeforge.runes.map(r => r.runeType));
     if (uniqueTypes.size === 1) {
       // Auto-select if only one type
-      const runeType = factory.runes[0].runeType;
-      draftRune(factoryId, runeType);
+      const runeType = runeforge.runes[0].runeType;
+      draftRune(runeforgeId, runeType);
     } else {
       // Show overlay for multiple types
-      setSelectedFactoryId(factoryId);
-      setFactoryOverlaySource('factory');
-      setShowFactoryOverlay(true);
+      setSelectedRuneforgeId(runeforgeId);
+      setRuneforgeOverlaySource('runeforge');
+      setShowRuneforgeOverlay(true);
     }
   };
   
@@ -124,24 +124,24 @@ export function GameBoard({ gameState }: GameBoardProps) {
       draftFromCenter(runeType);
     } else {
       // Show overlay for multiple types
-      setSelectedFactoryId(null);
-      setFactoryOverlaySource('center');
-      setShowFactoryOverlay(true);
+      setSelectedRuneforgeId(null);
+      setRuneforgeOverlaySource('center');
+      setShowRuneforgeOverlay(true);
     }
   };
   
-  const handleFactoryOverlaySelect = (runeType: RuneType) => {
-    if (factoryOverlaySource === 'factory' && selectedFactoryId) {
-      draftRune(selectedFactoryId, runeType);
-    } else if (factoryOverlaySource === 'center') {
+  const handleRuneforgeOverlaySelect = (runeType: RuneType) => {
+    if (runeforgeOverlaySource === 'runeforge' && selectedRuneforgeId) {
+      draftRune(selectedRuneforgeId, runeType);
+    } else if (runeforgeOverlaySource === 'center') {
       draftFromCenter(runeType);
     }
-    setShowFactoryOverlay(false);
+    setShowRuneforgeOverlay(false);
   };
   
-  const handleFactoryOverlayClose = () => {
-    setShowFactoryOverlay(false);
-    setSelectedFactoryId(null);
+  const handleRuneforgeOverlayClose = () => {
+    setShowRuneforgeOverlay(false);
+    setSelectedRuneforgeId(null);
   };
   
   const handleBackgroundClick = () => {
@@ -324,7 +324,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
               animation: 'pulse 2s infinite'
             }}>
-              💀 Void Effect: Click a factory to destroy it! 💀
+              💀 Void Effect: Click a runeforge to destroy it! 💀
             </div>
           )}
           
@@ -342,21 +342,21 @@ export function GameBoard({ gameState }: GameBoardProps) {
               boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
               animation: 'pulse 2s infinite'
             }}>
-              ❄️ Frost Effect: Click a factory to freeze it! ❄️
+              ❄️ Frost Effect: Click a runeforge to freeze it! ❄️
             </div>
           )}
           
-          <FactoriesAndCenter
-            factories={factories}
+          <RuneforgesAndCenter
+            runeforges={runeforges}
             centerPool={centerPool}
-            onFactoryClick={handleFactoryClick}
+            onRuneforgeClick={handleRuneforgeClick}
             onCenterClick={handleCenterClick}
             isDraftPhase={isDraftPhase}
             hasSelectedRunes={hasSelectedRunes}
             isAITurn={isAITurn}
             voidEffectPending={voidEffectPending}
             frostEffectPending={frostEffectPending}
-            frozenFactories={frozenFactories}
+            frozenRuneforges={frozenRuneforges}
           />
           
           {/* Selected Runes Display - Overlay */}
@@ -463,16 +463,16 @@ export function GameBoard({ gameState }: GameBoardProps) {
         />
       )}
       
-      {/* Factory Overlay */}
-      {showFactoryOverlay && (
-        <FactoryOverlay
+      {/* Runeforge Overlay */}
+      {showRuneforgeOverlay && (
+        <RuneforgeOverlay
           runes={
-            factoryOverlaySource === 'factory' && selectedFactoryId
-              ? factories.find(f => f.id === selectedFactoryId)?.runes || []
+            runeforgeOverlaySource === 'runeforge' && selectedRuneforgeId
+              ? runeforges.find(f => f.id === selectedRuneforgeId)?.runes || []
               : centerPool
           }
-          onSelectRune={handleFactoryOverlaySelect}
-          onClose={handleFactoryOverlayClose}
+          onSelectRune={handleRuneforgeOverlaySelect}
+          onClose={handleRuneforgeOverlayClose}
           gameMode={gameMode}
         />
       )}

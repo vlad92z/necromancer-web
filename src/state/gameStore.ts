@@ -17,14 +17,14 @@ interface GameStore extends GameState {
   // Actions
   startGame: (gameMode: 'classic' | 'standard') => void;
   returnToStartScreen: () => void;
-  draftRune: (factoryId: string, runeType: RuneType) => void;
+  draftRune: (runeforgeId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
-  destroyFactory: (factoryId: string) => void; // Void effect: destroy all runes in a factory
+  destroyRuneforge: (runeforgeId: string) => void; // Void effect: destroy all runes in a runeforge
   skipVoidEffect: () => void; // Skip Void effect if player chooses not to use it
-  freezeFactory: (factoryId: string) => void; // Frost effect: freeze a factory (opponent cannot draft)
+  freezeRuneforge: (runeforgeId: string) => void; // Frost effect: freeze a runeforge (opponent cannot draft)
   endRound: () => void;
   resetGame: () => void;
   triggerAITurn: () => void;
@@ -37,44 +37,44 @@ export const useGameStore = create<GameStore>((set) => ({
   ...initializeGame(),
   
   // Actions
-  draftRune: (factoryId: string, runeType: RuneType) => {
+  draftRune: (runeforgeId: string, runeType: RuneType) => {
     set((state) => {
-      // Check if factory is frozen (opponent cannot draft from it)
-      if (state.frozenFactories.includes(factoryId)) {
-        console.log(`Factory ${factoryId} is frozen - cannot draft`);
+      // Check if runeforge is frozen (opponent cannot draft from it)
+      if (state.frozenRuneforges.includes(runeforgeId)) {
+        console.log(`Runeforge ${runeforgeId} is frozen - cannot draft`);
         return state;
       }
       
-      // Find the factory
-      const factory = state.factories.find((f) => f.id === factoryId);
-      if (!factory) return state;
+      // Find the runeforge
+      const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
+      if (!runeforge) return state;
       
       // Separate runes by selected type
-      const selectedRunes = factory.runes.filter((r) => r.runeType === runeType);
-      const remainingRunes = factory.runes.filter((r) => r.runeType !== runeType);
+      const selectedRunes = runeforge.runes.filter((r: any) => r.runeType === runeType);
+      const remainingRunes = runeforge.runes.filter((r: any) => r.runeType !== runeType);
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
       
-      // Update factories (remove all runes from this factory)
-      const updatedFactories = state.factories.map((f) =>
-        f.id === factoryId ? { ...f, runes: [] } : f
+      // Update runeforges (remove all runes from this runeforge)
+      const updatedRuneforges = state.runeforges.map((f) =>
+        f.id === runeforgeId ? { ...f, runes: [] } : f
       );
       
       // Move remaining runes to center pool
       const updatedCenterPool = [...state.centerPool, ...remainingRunes];
       
-      // Clear frozen factories after opponent makes their draft
+      // Clear frozen runeforges after opponent makes their draft
       // (Frost effect lasts only for opponent's next turn)
-      const clearedFrozenFactories: string[] = [];
+      const clearedFrozenRuneforges: string[] = [];
       
       return {
         ...state,
-        factories: updatedFactories,
+        runeforges: updatedRuneforges,
         centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
-        draftSource: { type: 'factory', factoryId, movedToCenter: remainingRunes },
-        frozenFactories: clearedFrozenFactories,
+        draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes },
+        frozenRuneforges: clearedFrozenRuneforges,
       };
     });
   },
@@ -82,21 +82,21 @@ export const useGameStore = create<GameStore>((set) => ({
   draftFromCenter: (runeType: RuneType) => {
     set((state) => {
       // Get all runes of selected type from center
-      const selectedRunes = state.centerPool.filter((r) => r.runeType === runeType);
-      const remainingRunes = state.centerPool.filter((r) => r.runeType !== runeType);
+      const selectedRunes = state.centerPool.filter((r: any) => r.runeType === runeType);
+      const remainingRunes = state.centerPool.filter((r: any) => r.runeType !== runeType);
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
       
-      // Clear frozen factories after opponent makes their draft
-      const clearedFrozenFactories: string[] = [];
+      // Clear frozen runeforges after opponent makes their draft
+      const clearedFrozenRuneforges: string[] = [];
       
       return {
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'center' },
-        frozenFactories: clearedFrozenFactories,
+        frozenRuneforges: clearedFrozenRuneforges,
       };
     });
   },
@@ -162,23 +162,23 @@ export const useGameStore = create<GameStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
-      // Check if Void runes were placed (Void effect: destroy a factory)
+      // Check if Void runes were placed (Void effect: destroy a runeforge)
       const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
-      const hasNonEmptyFactories = state.factories.some(f => f.runes.length > 0);
+      const hasNonEmptyFactories = state.runeforges.some(f => f.runes.length > 0);
       
-      // Check if Frost runes were placed (Frost effect: freeze a factory)
+      // Check if Frost runes were placed (Frost effect: freeze a runeforge)
       const hasFrostRunes = selectedRunes.some(rune => rune.runeType === 'Frost');
       
-      // Check if round should end (all factories and center empty)
-      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      // Check if round should end (all runeforges and center empty)
+      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
       // Only trigger rune effects in standard mode
       const isStandardMode = state.gameMode === 'standard';
       
-      // If Void runes were placed and there are non-empty factories, trigger Void effect
-      // Keep current player so THEY get to choose which factory to destroy
+      // If Void runes were placed and there are non-empty runeforges, trigger Void effect
+      // Keep current player so THEY get to choose which runeforge to destroy
       if (isStandardMode && hasVoidRunes && hasNonEmptyFactories && !shouldEndRound) {
         return {
           ...state,
@@ -186,13 +186,13 @@ export const useGameStore = create<GameStore>((set) => ({
           selectedRunes: [],
           draftSource: null,
           turnPhase: 'draft' as const,
-          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses factory
-          voidEffectPending: true, // Wait for factory selection
+          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
+          voidEffectPending: true, // Wait for runeforge selection
         };
       }
       
-      // If Frost runes were placed and there are non-empty factories, trigger Frost effect
-      // Keep current player so THEY get to choose which factory to freeze
+      // If Frost runes were placed and there are non-empty runeforges, trigger Frost effect
+      // Keep current player so THEY get to choose which runeforge to freeze
       if (isStandardMode && hasFrostRunes && hasNonEmptyFactories && !shouldEndRound) {
         return {
           ...state,
@@ -200,8 +200,8 @@ export const useGameStore = create<GameStore>((set) => ({
           selectedRunes: [],
           draftSource: null,
           turnPhase: 'draft' as const,
-          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses factory
-          frostEffectPending: true, // Wait for factory selection
+          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
+          frostEffectPending: true, // Wait for runeforge selection
         };
       }
       
@@ -257,10 +257,10 @@ export const useGameStore = create<GameStore>((set) => ({
       // Switch to next player (alternate between 0 and 1)
       const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
-      // Check if round should end (all factories and center empty)
-      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      // Check if round should end (all runeforges and center empty)
+      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
       const newState = {
         ...state,
@@ -296,8 +296,8 @@ export const useGameStore = create<GameStore>((set) => ({
           draftSource: null,
         };
       } else {
-        // Return to factory (both selected runes and the ones moved to center)
-        const factoryId = state.draftSource.factoryId;
+        // Return to runeforge (both selected runes and the ones moved to center)
+        const runeforgeId = state.draftSource.runeforgeId;
         const movedToCenter = state.draftSource.movedToCenter;
         
         // Remove the moved runes from center pool
@@ -305,15 +305,15 @@ export const useGameStore = create<GameStore>((set) => ({
           (rune) => !movedToCenter.some((moved) => moved.id === rune.id)
         );
         
-        const updatedFactories = state.factories.map((f) =>
-          f.id === factoryId
+        const updatedRuneforges = state.runeforges.map((f) =>
+          f.id === runeforgeId
             ? { ...f, runes: [...f.runes, ...state.selectedRunes, ...movedToCenter] }
             : f
         );
         
         return {
           ...state,
-          factories: updatedFactories,
+          runeforges: updatedRuneforges,
           centerPool: updatedCenterPool,
           selectedRunes: [],
           draftSource: null,
@@ -322,26 +322,26 @@ export const useGameStore = create<GameStore>((set) => ({
     });
   },
   
-  destroyFactory: (factoryId: string) => {
+  destroyRuneforge: (runeforgeId: string) => {
     set((state) => {
-      // Void effect: destroy all runes in the selected factory
+      // Void effect: destroy all runes in the selected runeforge
       if (!state.voidEffectPending) return state;
       
-      const updatedFactories = state.factories.map((f) =>
-        f.id === factoryId ? { ...f, runes: [] } : f
+      const updatedRuneforges = state.runeforges.map((f) =>
+        f.id === runeforgeId ? { ...f, runes: [] } : f
       );
       
-      // Switch to next player after factory is destroyed
+      // Switch to next player after runeforge is destroyed
       const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
       
-      // Check if round should end after destroying factory
-      const allFactoriesEmpty = updatedFactories.every((f) => f.runes.length === 0);
+      // Check if round should end after destroying runeforge
+      const allRuneforgesEmpty = updatedRuneforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
       const newState = {
         ...state,
-        factories: updatedFactories,
+        runeforges: updatedRuneforges,
         voidEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
@@ -360,16 +360,16 @@ export const useGameStore = create<GameStore>((set) => ({
   
   skipVoidEffect: () => {
     set((state) => {
-      // Skip Void effect without destroying any factory
+      // Skip Void effect without destroying any runeforge
       if (!state.voidEffectPending) return state;
       
       // Switch to next player when skipping Void effect
       const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
       
       // Check if round should end
-      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
       const newState = {
         ...state,
@@ -389,25 +389,25 @@ export const useGameStore = create<GameStore>((set) => ({
     });
   },
   
-  freezeFactory: (factoryId: string) => {
+  freezeRuneforge: (runeforgeId: string) => {
     set((state) => {
-      // Frost effect: freeze the selected factory (opponent cannot draft from it)
+      // Frost effect: freeze the selected runeforge (opponent cannot draft from it)
       if (!state.frostEffectPending) return state;
       
-      // Add factory to frozen list
-      const updatedFrozenFactories = [...state.frozenFactories, factoryId];
+      // Add runeforge to frozen list
+      const updatedFrozenRuneforges = [...state.frozenRuneforges, runeforgeId];
       
-      // Switch to next player after factory is frozen
+      // Switch to next player after runeforge is frozen
       const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
       
       // Check if round should end
-      const allFactoriesEmpty = state.factories.every((f) => f.runes.length === 0);
+      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allFactoriesEmpty && centerEmpty;
+      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
       const newState = {
         ...state,
-        frozenFactories: updatedFrozenFactories,
+        frozenRuneforges: updatedFrozenRuneforges,
         frostEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
@@ -608,7 +608,7 @@ export const useGameStore = create<GameStore>((set) => ({
     } else if (currentPhase === 'complete') {
       console.log('Scoring: Complete, checking game over...');
       
-      // Check if either player has run out of runes (need 10 runes minimum for 5 factories)
+      // Check if either player has run out of runes (need 10 runes minimum for 5 runeforges)
       const player1HasEnough = state.players[0].deck.length >= 10;
       const player2HasEnough = state.players[1].deck.length >= 10;
       
@@ -618,7 +618,7 @@ export const useGameStore = create<GameStore>((set) => ({
         
         return {
           ...state,
-          factories: [],
+          runeforges: [],
           centerPool: [],
           turnPhase: 'game-over',
           round: state.round,
@@ -628,13 +628,13 @@ export const useGameStore = create<GameStore>((set) => ({
       
       // Prepare for next round
       const emptyFactories = createEmptyFactories(5);
-      const { factories: filledFactories, deck1, deck2 } = fillFactories(
+      const { runeforges: filledRuneforges, deck1, deck2 } = fillFactories(
         emptyFactories, 
         state.players[0].deck, 
         state.players[1].deck
       );
       
-      // Update player decks with remaining runes after filling factories
+      // Update player decks with remaining runes after filling runeforges
       const finalPlayers: [Player, Player] = [
         { ...state.players[0], deck: deck1 },
         { ...state.players[1], deck: deck2 }
@@ -645,7 +645,7 @@ export const useGameStore = create<GameStore>((set) => ({
       return {
         ...state,
         players: finalPlayers,
-        factories: filledFactories,
+        runeforges: filledRuneforges,
         centerPool: [],
         turnPhase: 'draft',
         round: state.round + 1,

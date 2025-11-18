@@ -1,6 +1,6 @@
 /**
  * RuneCell component - unified cell display for runes across all game areas
- * Supports: Wall cells, Pattern lines, Floor line, Factories, Center pool
+ * Supports: Wall cells, Pattern lines, Floor line, Runeforges, Center pool
  */
 
 import { motion } from 'framer-motion';
@@ -19,7 +19,7 @@ const RUNE_ASSETS = {
   Wind: windRune,
 };
 
-export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'factory' | 'center' | 'selected';
+export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
 
 export interface RuneCellProps {
   rune?: Rune | null;
@@ -62,7 +62,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
     border: '2px solid #fca5a5',
     background: '#fef2f2',
   },
-  factory: {
+  runeforge: {
     border: 'none',
     background: 'transparent',
   },

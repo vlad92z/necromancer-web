@@ -10,26 +10,26 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Core type definitions (`src/types/game.ts`):
   - `RuneType`: Fire, Frost, Poison, Void, Wind
   - `Rune`: Individual rune with type and effect
-  - `Factory`: Container for runes to draft from
+  - `Runeforge`: Container for runes to draft from
   - `PatternLine`: 5-tier lines (capacity 1-5) for building combos
   - `ScoringWall`: 5x5 grid for scoring
   - `Player`: Complete player state with pattern lines, wall, floor line, score
-  - `GameState`: Main game state with 2 players, factories, center pool, turn tracking
+  - `GameState`: Main game state with 2 players, runeforges, center pool, turn tracking
 
 - Game initialization (`src/utils/gameInitialization.ts`):
   - Empty wall creation
   - Pattern line setup (5 lines, tiers 1-5)
   - Mock player decks (20 runes per player)
-  - Game state initialization with 5 factories (standard for 2-player Azul)
+  - Game state initialization with 5 runeforges (standard for 2-player Azul)
 
 - UI Components:
   - `RuneToken`: Displays individual runes with color-coding and SVG graphics
   - `RuneCell`: Enhanced rune display component with animation support
-  - `Factory`: Shows factory containers with interactive selection
+  - `Runeforge`: Shows runeforge containers with interactive selection
   - `PatternLines`: Displays 5-tier pattern lines with progress
   - `ScoringWall`: Renders 5x5 scoring grid
   - `PlayerBoard`: Complete player board with pattern lines, wall, and floor line
-  - `GameBoard`: Main game layout with factories, center pool, and both players
+  - `GameBoard`: Main game layout with runeforges, center pool, and both players
   - `RuneAnimation`: Handles smooth rune movement animations
   - `RunePower`: Displays rune power/effect information
 
@@ -47,44 +47,44 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Component-based architecture with feature organization
 - Mobile-first responsive design
 
-### ✅ Step 2: Factory Drafting Mechanics (Completed)
+### ✅ Step 2: Runeforge Drafting Mechanics (Completed)
 
 **Implemented:**
-- Factory initialization with runes:
-  - `fillFactories()`: Fills 5 factories with 4 runes each from combined player decks
-  - Runes are randomly distributed (shuffled) across factories
-  - Uses standard Azul 2-player configuration (5 factories, 4 runes each)
+- Runeforge initialization with runes:
+  - `fillRuneforges()`: Fills 5 runeforges with 4 runes each from combined player decks
+  - Runes are randomly distributed (shuffled) across runeforges
+  - Uses standard Azul 2-player configuration (5 runeforges, 4 runes each)
 
 - Azul-style drafting logic (`src/state/gameStore.ts`):
-  - `draftRune(factoryId, runeType)`: Select all runes of a type from a factory
-    - Removes selected runes from factory
+  - `draftRune(runeforgeId, runeType)`: Select all runes of a type from a runeforge
+    - Removes selected runes from runeforge
     - Moves remaining runes to center pool
     - Adds selected runes to player's hand
   - `draftFromCenter(runeType)`: Select all runes of a type from center pool
-    - Works identically to factory drafting but from center
+    - Works identically to runeforge drafting but from center
 
 - Interactive UI components:
-  - `Factory`: Click any rune to select all runes of that type
+  - `Runeforge`: Click any rune to select all runes of that type
     - Visual feedback (hover effects, scale on hover)
     - Disabled state when runes already selected
     - Keyboard accessible (focus rings, ARIA labels)
   - Center Pool: Click runes to draft from center
-    - Same interaction pattern as factories
+    - Same interaction pattern as runeforges
   - Selected Runes Display: Shows currently selected runes
-    - Appears below factories when runes are selected
+    - Appears below runeforges when runes are selected
     - Shows count and visual preview
     - Provides instruction for next step (place on pattern line)
 
 - State management:
   - `selectedRunes` tracks currently held runes
-  - Factories become disabled after selection (prevents multiple drafts)
+  - Runeforges become disabled after selection (prevents multiple drafts)
   - Turn phase tracking ensures drafting only during draft phase
 
 **How it works:**
-1. Click any rune in a factory → all runes of that type are selected
-2. Remaining runes in that factory move to center pool
+1. Click any rune in a runeforge → all runes of that type are selected
+2. Remaining runes in that runeforge move to center pool
 3. Selected runes appear in a highlighted "Selected Runes" section
-4. Factories and center become disabled until runes are placed
+4. Runeforges and center become disabled until runes are placed
 5. Ready for Step 3: placing runes on pattern lines
 
 ### ✅ Step 3: Pattern Line Placement (Completed)
@@ -130,7 +130,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 **Implemented:**
 - End-of-round detection:
-  - Automatically triggers when all factories and center pool are empty
+  - Automatically triggers when all runeforges and center pool are empty
   - Switches to 'scoring' phase before processing
   - Console logs scoring details for debugging
 
@@ -158,7 +158,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
     - Floor penalties reduce Focus (minimum 1)
   - Add wall power to existing score (accumulative)
   - Clear floor lines after scoring
-  - Refill factories from player decks (2 runes per player per factory)
+  - Refill runeforges from player decks (2 runes per player per runeforge)
   - Increment round counter
   - Return to draft phase
 
@@ -169,7 +169,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Example: Fire in row 0 → column 0, Fire in row 1 → column 1
 
 **How it works:**
-1. Players draft and place runes until all factories empty
+1. Players draft and place runes until all runeforges empty
 2. Last placement triggers automatic end-of-round scoring
 3. Completed pattern lines (full) move to wall:
    - One rune placed at calculated position
@@ -181,7 +181,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
    - Example with 2 floor: 12 runes, 5 largest = 12 × 3 = 36 spellpower
 5. Each player's spellpower is dealt as damage to their opponent
 6. Damage accumulates over all rounds
-7. Factories refill with 2 runes from each player's deck per factory
+7. Runeforges refill with 2 runes from each player's deck per runeforge
 8. New round begins
 
 ### ✅ Additional Features (Completed)
@@ -194,13 +194,13 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 
 **Deck Management:**
 - Each player starts with 20 runes (4 of each type)
-- Factory filling uses 2 runes from each player's deck per factory
+- Runeforge filling uses 2 runes from each player's deck per runeforge
 - Deck counts displayed on player boards
 - Game ends when a player has fewer than 10 runes remaining
 
 **Game Over Condition:**
-- Checked at end of each round before refilling factories
-- Requires minimum 10 runes per player (2 per factory × 5 factories)
+- Checked at end of each round before refilling runeforges
+- Requires minimum 10 runes per player (2 per runeforge × 5 runeforges)
 - **Winner**: Player who took the least damage (each round's spellpower becomes damage to opponent)
 - Game over modal displays on the game board:
   - Final board state remains visible behind modal
@@ -244,15 +244,15 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Recommended for learning the core mechanics
 - **Standard Mode**: Play with rune modifiers (coming soon)
   - Each rune type has unique tactical effects
-  - Fire adds bonus essence, Frost freezes factories, Poison reduces opponent focus
-  - Void destroys factory runes, Wind mitigates floor penalties
+  - Fire adds bonus essence, Frost freezes runeforges, Poison reduces opponent focus
+  - Void destroys runeforge runes, Wind mitigates floor penalties
   - Advanced gameplay with deeper strategic decisions
   - See "Rune Effects System" section below for detailed mechanics
 
 **Selection & Cancellation:**
-- Click rune selection tracks source (factory or center)
+- Click rune selection tracks source (runeforge or center)
 - Cancel selection by clicking anywhere on player boards (outside pattern/floor lines)
-- Canceled runes return to original factory (not center)
+- Canceled runes return to original runeforge (not center)
 - Selected runes moved to center only return to center
 
 **UI Improvements:**
@@ -261,8 +261,8 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
 - Wall cells show faded grayscale preview of expected rune type when empty
 - Player boards show deck count and score
 - Active player board has subtle blue border glow
-- Horizontal factory layout for better visibility
-- Vertical player arrangement (Player 1 top, factories middle, Player 2 bottom)
+- Horizontal runeforge layout for better visibility
+- Vertical player arrangement (Player 1 top, runeforges middle, Player 2 bottom)
 - Game over modal displays on game board (final state visible behind it)
 - Framer Motion animations for runes appearing in pattern lines, scoring wall, and floor line (spring animation)
 - Animated round-end scoring sequence with timing delays:
@@ -272,7 +272,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Visual feedback through rune animations showing each change
 
 **Mobile & Touch Optimizations:**
-- `FactoryOverlay`: Enlarged modal view for selecting runes from factories/center on mobile
+- `RuneforgeOverlay`: Enlarged modal view for selecting runes from runeforges/center on mobile
   - Groups runes by type for easier selection
   - Touch-friendly tap targets
   - Backdrop click to close
@@ -295,7 +295,7 @@ An Azul-inspired roguelite deck-building 1v1 duel game.
   - Tracks both player and opponent performance over time
   - Accessible via "History" button on game board
 - `SelectedRunesOverlay`: In-game selection feedback
-  - Displays currently selected runes above factories
+  - Displays currently selected runes above runeforges
   - Shows count and provides placement instructions
   - Cancel option to return runes to source
 
@@ -407,9 +407,9 @@ src/
 │       └── components/ # Gameplay UI components
 │           ├── CenterPool.tsx          # Center pool display and interaction
 │           ├── DeckOverlay.tsx         # Full-screen deck viewer (mobile-optimized)
-│           ├── FactoriesAndCenter.tsx  # Combined factories and center layout
-│           ├── Factory.tsx             # Individual factory display
-│           ├── FactoryOverlay.tsx      # Enlarged factory/center selector (mobile)
+│           ├── RuneforgesAndCenter.tsx  # Combined runeforges and center layout
+│           ├── Runeforge.tsx             # Individual runeforge display
+│           ├── RuneforgeOverlay.tsx      # Enlarged runeforge/center selector (mobile)
 │           ├── FloorLine.tsx           # Floor line (penalty area) display
 │           ├── GameBoard.tsx           # Main game orchestrator
 │           ├── GameLogOverlay.tsx      # Round history and statistics
@@ -429,10 +429,10 @@ src/
 ├── state/              # Global state management
 │   └── gameStore.ts    # Zustand store with game state and actions
 ├── types/              # TypeScript type definitions
-│   └── game.ts         # Core types: Rune, Factory, Player, GameState, PlayerType
+│   └── game.ts         # Core types: Rune, Runeforge, Player, GameState, PlayerType
 ├── utils/              # Utility functions
 │   ├── aiPlayer.ts     # AI opponent logic with strategic decision-making
-│   ├── gameInitialization.ts  # Game setup and factory filling
+│   ├── gameInitialization.ts  # Game setup and runeforge filling
 │   ├── runeHelpers.ts  # Rune display utilities
 │   └── scoring.ts      # Wall power calculation with floor penalties
 ├── App.tsx             # Root component, game lifecycle & AI turn triggering
@@ -452,13 +452,13 @@ src/
 - [x] Separate view components for player and opponent
 
 ### Gameplay Implementation (Completed ✅)
-- [x] Step 2: Make factories/runes selectable, implement Azul factory taking
+- [x] Step 2: Make runeforges/runes selectable, implement Azul runeforge taking
 - [x] Step 3: Allow placing picked runes onto pattern lines
 - [x] Step 4: End-of-round detection and scoring with connected segment power calculation
 - [x] Step 5: Turn alternation system
 - [x] Step 6: Wall validation (prevent duplicate rune types in row)
 - [x] Step 7: Floor line direct placement option
-- [x] Step 8: Deck management with 2:2 split per factory
+- [x] Step 8: Deck management with 2:2 split per runeforge
 - [x] Step 9: Game over condition and modal on game board
 - [x] Step 10: Active player highlighting and UI polish
 - [x] Step 11: PvE-only mode (local PvP removed)
@@ -478,11 +478,11 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 - **Balance:** High offensive power, no defensive value
 
 ### ❄️ Frost (Control)
-**Effect:** When you place Frost rune(s) in a pattern line, freeze one factory of your choice
-- Your opponent cannot draft from that factory on their next turn
-- Multiple Frost runes in one turn still only freeze one factory
-- **Strategy:** Block factories containing runes your opponent needs
-- **Balance:** Tactical control without being oppressive, opponent has 4 other factories + center
+**Effect:** When you place Frost rune(s) in a pattern line, freeze one runeforge of your choice
+- Your opponent cannot draft from that runeforge on their next turn
+- Multiple Frost runes in one turn still only freeze one runeforge
+- **Strategy:** Block runeforges containing runes your opponent needs
+- **Balance:** Tactical control without being oppressive, opponent has 4 other runeforges + center
 
 ### ☠️ Poison (Offense)
 **Effect:** Each Poison rune on your scoring wall reduces your opponent's focus by 1 (minimum 1×)
@@ -492,9 +492,9 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 - **Balance:** Strong but requires building up multiple Poison runes over time
 
 ### 🌑 Void (Destruction)
-**Effect:** When you place Void rune(s) in a pattern line, destroy all runes in one factory of your choice
+**Effect:** When you place Void rune(s) in a pattern line, destroy all runes in one runeforge of your choice
 - Powerful denial tool to remove colors you don't want or opponent needs
-- Can clear problematic factories before opponent's turn
+- Can clear problematic runeforges before opponent's turn
 - **Strategy:** Deny key runes to opponent or clean up unwanted colors
 - **Balance:** High disruption but doesn't directly score points
 
@@ -543,34 +543,34 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 - [x] **✅ Implemented Void effect**
   - Added `voidEffectPending` state to GameState to track when Void effect is active
-  - Updated `placeRunes()` to detect Void runes and trigger factory destruction
-  - Added `destroyFactory()` action to remove all runes from selected factory
-  - Created `chooseFactoryToDestroy()` AI function in `src/utils/aiPlayer.ts`
-  - AI strategically destroys factories with runes the opponent needs
+  - Updated `placeRunes()` to detect Void runes and trigger runeforge destruction
+  - Added `destroyRuneforge()` action to remove all runes from selected runeforge
+  - Created `chooseRuneforgeToDestroy()` AI function in `src/utils/aiPlayer.ts`
+  - AI strategically destroys runeforges with runes the opponent needs
   - Integrated Void effect handling in App.tsx for AI turns
-  - Direct factory click interaction with purple highlighting
+  - Direct runeforge click interaction with purple highlighting
   - Purple-themed message banner for player guidance
-  - Player who places Void gets to choose which factory to destroy
+  - Player who places Void gets to choose which runeforge to destroy
 
 - [x] **✅ Implemented Frost effect**
-  - Added `frostEffectPending` and `frozenFactories` state to GameState
-  - Updated `placeRunes()` to detect Frost runes and trigger factory freeze
-  - Added `freezeFactory()` action to freeze selected factory
-  - Frozen factories disabled for opponent's next turn only
+  - Added `frostEffectPending` and `frozenRuneforges` state to GameState
+  - Updated `placeRunes()` to detect Frost runes and trigger runeforge freeze
+  - Added `freezeRuneforge()` action to freeze selected runeforge
+  - Frozen runeforges disabled for opponent's next turn only
   - Clear frozen state automatically when opponent drafts
-  - Created `chooseFactoryToFreeze()` AI function in `src/utils/aiPlayer.ts`
-  - AI strategically freezes factories with runes opponent needs
+  - Created `chooseRuneforgeToFreeze()` AI function in `src/utils/aiPlayer.ts`
+  - AI strategically freezes runeforges with runes opponent needs
   - Integrated Frost effect handling in App.tsx for AI turns
-  - Direct factory click interaction with cyan highlighting
-  - Frozen factories show icy blue styling with snowflake indicator (❄️)
+  - Direct runeforge click interaction with cyan highlighting
+  - Frozen runeforges show icy blue styling with snowflake indicator (❄️)
   - Cyan-themed message banner for player guidance
-  - Player who places Frost gets to choose which factory to freeze
+  - Player who places Frost gets to choose which runeforge to freeze
 
 
 
 - [ ] **TODO: Update UI for rune effects**
   - Add effect indicators/tooltips on rune tokens
-  - Show active effects in game state (frozen factories, Poison count, etc.)
+  - Show active effects in game state (frozen runeforges, Poison count, etc.)
   - Add effect feedback animations when triggered
   - Update `RulesOverlay` with rune effect explanations
 
@@ -578,7 +578,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - Evaluate Fire runes for scoring potential
   - Weight Poison collection strategically
   - Value Wind as floor insurance and penalty mitigation
-  - Consider Void and Frost for denial tactics (already implemented in chooseFactoryToDestroy/Freeze)
+  - Consider Void and Frost for denial tactics (already implemented in chooseRuneforgeToDestroy/Freeze)
 
 ### Future Enhancements
 - [ ] Boss selection and special modifiers
@@ -605,7 +605,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 #### TODO: Split Monolithic Store
 - [ ] **Split `gameStore.ts` into modular stores:**
-  - [ ] Create `src/state/stores/gameplayStore.ts` - Current game state (factories, turns, runes, drafting, placement)
+  - [ ] Create `src/state/stores/gameplayStore.ts` - Current game state (runeforges, turns, runes, drafting, placement)
   - [ ] Create `src/state/stores/campaignStore.ts` - Roguelite progression, boss unlocks, win streaks, rewards
   - [ ] Create `src/state/stores/deckStore.ts` - Deck management, collection, deck drafting mode
   - [ ] Create `src/state/stores/matchStore.ts` - Online PvP matchmaking, synchronization, ELO
@@ -617,7 +617,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 - [ ] **Extract all 12 `setTimeout` calls from gameStore.ts to component useEffect hooks:**
   - [ ] Move end-round timer (line 223) to GameBoard component
   - [ ] Move floor placement timer (line 276) to GameBoard component
-  - [ ] Move factory destruction timer (line 352) to App.tsx
+  - [ ] Move runeforge destruction timer (line 352) to App.tsx
   - [ ] Move void skip timer (line 383) to App.tsx
   - [ ] Move frost freeze timer (line 418) to App.tsx
   - [ ] Move scoring step timers (lines 439, 505, 574, 599, 687, 700) to GameBoard component
@@ -704,8 +704,8 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   interface GameRules {
     runeEffectsEnabled: boolean;
     deckSize: number;
-    factoryCount: number;
-    runesPerFactory: number;
+    runeforgeCount: number;
+    runesPerRuneforge: number;
     roundLimit?: number;
     specialRules?: BossModifier[];
     allowedRuneTypes?: RuneType[];
@@ -721,7 +721,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 - [ ] **Update game initialization:**
   - [ ] Pass GameRules to `initializeGame()`
-  - [ ] Apply rules throughout game logic (factory filling, scoring, effects)
+  - [ ] Apply rules throughout game logic (runeforge filling, scoring, effects)
   - [ ] Validate moves against current rule set
 
 ### Priority 5: Style Token System 🟢 **MEDIUM**
@@ -783,7 +783,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 - [ ] **Extract utility functions:**
   - [ ] Create `getNextPlayerIndex(current)` util (replaces ternary operator pattern)
-  - [ ] Create `isFactoryEmpty(factory)` util
+  - [ ] Create `isRuneforgeEmpty(runeforge)` util
   - [ ] Create `hasRuneTypeOnWall(wall, row, runeType)` util
 
 ---
@@ -924,7 +924,7 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Wind spells: swirling air, leaves/debris, speed lines
 
 - [ ] **Integrate spell VFX with gameplay:**
-  - [ ] Trigger on draft (player "draws" spell energy from factory)
+  - [ ] Trigger on draft (player "draws" spell energy from runeforge)
   - [ ] Trigger on placement (spell charges in pattern line)
   - [ ] Trigger on scoring (spell is cast at opponent)
   - [ ] Show spell power visualization (bigger effects for higher spellpower)
@@ -949,10 +949,10 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [ ] Improve hover states (scale, glow, particle effects)
   - [ ] Add drag-and-drop with visual feedback (if implementing)
 
-- [ ] **Factory visual upgrade:**
-  - [ ] Design 3D-looking factory containers
+- [ ] **Runeforge visual upgrade:**
+  - [ ] Design 3D-looking runeforge containers
   - [ ] Add glow/highlight when hovering
-  - [ ] Animate runes appearing in factories (round start)
+  - [ ] Animate runes appearing in runeforges (round start)
   - [ ] Void destruction: explosion/disintegration animation
   - [ ] Frost freeze: ice-over animation
 

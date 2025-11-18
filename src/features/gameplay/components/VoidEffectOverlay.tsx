@@ -1,12 +1,12 @@
 /**
- * VoidEffectOverlay component - allows player to select a factory to destroy with Void effect
+ * VoidEffectOverlay component - allows player to select a runeforge to destroy with Void effect
  */
 
-import type { Factory } from '../../../types/game';
+import type { Runeforge } from '../../../types/game';
 
 interface VoidEffectOverlayProps {
-  factories: Factory[];
-  onSelectFactory: (factoryId: string) => void;
+  factories: Runeforge[];
+  onSelectFactory: (runeforgeId: string) => void;
   onSkip: () => void;
   isVisible: boolean; // Control visibility (hide during AI decision)
 }
@@ -76,7 +76,7 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
             lineHeight: '1.6',
           }}
         >
-          Choose a factory to destroy all its runes, or skip this effect.
+          Choose a runeforge to destroy all its runes, or skip this effect.
         </p>
         
         <div
@@ -87,10 +87,10 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
             marginBottom: '24px',
           }}
         >
-          {nonEmptyFactories.map((factory) => (
+          {nonEmptyFactories.map((runeforge) => (
             <button
-              key={factory.id}
-              onClick={() => onSelectFactory(factory.id)}
+              key={runeforge.id}
+              onClick={() => onSelectFactory(runeforge.id)}
               style={{
                 padding: isMobile ? '12px' : '16px',
                 backgroundColor: '#2d3748',
@@ -113,9 +113,9 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              Factory {parseInt(factory.id.replace('factory-', '')) + 1}
+              Runeforge {parseInt(runeforge.id.replace('runeforge-', '')) + 1}
               <div style={{ fontSize: isMobile ? '12px' : '14px', marginTop: '8px', opacity: 0.8 }}>
-                {factory.runes.length} rune{factory.runes.length !== 1 ? 's' : ''}
+                {runeforge.runes.length} rune{runeforge.runes.length !== 1 ? 's' : ''}
               </div>
             </button>
           ))}

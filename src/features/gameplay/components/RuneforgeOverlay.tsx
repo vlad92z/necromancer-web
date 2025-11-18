@@ -1,19 +1,19 @@
 /**
- * FactoryOverlay component - displays a factory or center pool in an enlarged overlay for selection
+ * RuneforgeOverlay component - displays a runeforge or center pool in an enlarged overlay for selection
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
-interface FactoryOverlayProps {
+interface RuneforgeOverlayProps {
   runes: Rune[];
   onSelectRune: (runeType: RuneType) => void;
   onClose: () => void;
   gameMode: 'classic' | 'standard';
 }
 
-export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: FactoryOverlayProps) {
+export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: RuneforgeOverlayProps) {
   const isMobile = window.innerWidth < 768;
 
   // Rune effect descriptions (only shown in standard mode)
@@ -166,7 +166,7 @@ export function FactoryOverlay({ runes, onSelectRune, onClose, gameMode }: Facto
                         >
                           <RuneCell
                             rune={rune}
-                            variant="factory"
+                            variant="runeforge"
                             size="large"
                             showEffect={true}
                           />
