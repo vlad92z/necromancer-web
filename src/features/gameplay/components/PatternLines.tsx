@@ -48,7 +48,7 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               gap: '4px',
               width: '100%',
               cursor: isClickable ? (isValid ? 'pointer' : 'not-allowed') : 'default',
-              backgroundColor: isValid ? 'rgba(34, 197, 94, 0.3)' : 'transparent',
+              backgroundColor: 'transparent',
               border: 'none',
               opacity: (isClickable && !isValid) ? 0.5 : 1,
               padding: 0,
@@ -56,8 +56,6 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
               transition: 'all 0.2s',
               marginBottom: '4px'
             }}
-            onMouseEnter={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.5)')}
-            onMouseLeave={(e) => isValid && (e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.3)')}
             aria-label={`Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`}
           >
             {/* Pattern line slots */}
@@ -71,13 +69,21 @@ export function PatternLines({ patternLines, wall, onPlaceRunes, selectedRuneTyp
                 } : null;
                 
                 return (
-                  <RuneCell
+                  <div
                     key={slotIndex}
-                    rune={rune}
-                    variant="pattern"
-                    size="large"
-                    showEffect={false}
-                  />
+                    style={{
+                      boxShadow: isValid ? '0 0 16px rgba(34, 197, 94, 0.8)' : 'none',
+                      borderRadius: '8px',
+                      transition: 'box-shadow 0.2s'
+                    }}
+                  >
+                    <RuneCell
+                      rune={rune}
+                      variant="pattern"
+                      size="large"
+                      showEffect={false}
+                    />
+                  </div>
                 );
               })}
           </button>
