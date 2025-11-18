@@ -40,12 +40,14 @@ export function PlayerView({
       />
       <PlayerBoard
         player={player}
+        opponent={opponent}
         isActive={isActive}
         onPlaceRunes={onPlaceRunes}
         onPlaceRunesInFloor={onPlaceRunesInFloor}
         selectedRuneType={selectedRuneType}
         canPlace={canPlace}
         onCancelSelection={onCancelSelection}
+        gameMode={gameMode}
       />
     </div>
   );

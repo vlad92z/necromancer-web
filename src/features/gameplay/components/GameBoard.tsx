@@ -131,199 +131,236 @@ export function GameBoard({ gameState }: GameBoardProps) {
   return (
     <div 
       style={{
-        minHeight: '100vh',
+        height: '100vh',
         backgroundColor: '#f0f9ff',
         color: '#1e293b',
-        padding: '24px'
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}
       onClick={handleBackgroundClick}
     >
-      <div style={{ maxWidth: '80rem', margin: '0 auto' }} onClick={(e) => e.stopPropagation()}>
-        {/* Game Header */}
-        <div style={{ marginBottom: '24px', textAlign: 'center', position: 'relative' }}>
-          <h1 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: '14px' }}>
-            <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
-          </div>
-          
-          {/* Top Right Buttons */}
-          <div style={{
-            position: 'absolute',
-            top: '0',
-            right: '0',
-            display: 'flex',
-            gap: '8px'
-          }}>
-            {/* Deck Button */}
-            <button
-              onClick={() => setShowDeckOverlay(true)}
-              style={{
-                backgroundColor: '#7c3aed',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-              }}
-            >
-              {'🎴 Deck'}
-            </button>
-            
-            {/* Log Button */}
-            <button
-              onClick={() => setShowLogOverlay(true)}
-              style={{
-                backgroundColor: '#059669',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-              }}
-            >
-              {'📜 Log'}
-            </button>
-            
-            {/* Rules Button */}
-            <button
-              onClick={() => setShowRulesOverlay(true)}
-              style={{
-                backgroundColor: '#0369a1',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 14px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0284c7'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0369a1'}
-            >
-              ❓ Rules
-            </button>
-          </div>
+      {/* Game Header */}
+      <div style={{ 
+        padding: '16px 24px', 
+        textAlign: 'center', 
+        position: 'relative',
+        borderBottom: '2px solid #0c4a6e'
+      }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px', color: '#0c4a6e' }}>Massive Spell: Arcane Arena</h1>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: '14px' }}>
+          <div>Round {gameState.round} | {players[currentPlayerIndex].name}'s Turn</div>
         </div>
         
-        {/* Player Boards */}
-        {
-          (
-          <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
-            {/* Player (Human) - Desktop Left */}
-            <div style={{ flex: 1 }}>
-              <PlayerView
-                player={players[0]}
-                opponent={players[1]}
-                isActive={currentPlayerIndex === 0}
-                onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
-                onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
-                selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-                canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
-                onCancelSelection={cancelSelection}
-                gameMode={gameMode}
-              />
-            </div>
-            
-            {/* Opponent (AI) - Desktop Right */}
-            <div style={{ flex: 1 }}>
-              <OpponentView
-                opponent={players[1]}
-                player={players[0]}
-                isActive={currentPlayerIndex === 1}
-                gameMode={gameMode}
-              />
-            </div>
-          </div>
-        )
-        }
-        
-        {/* Factories and Center */}
-        <div style={{ position: 'relative' }}>
-          {/* Void Effect Message */}
-          {voidEffectPending && !isAITurn && (
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '16px',
-              padding: '12px',
+        {/* Top Right Buttons */}
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          right: '24px',
+          display: 'flex',
+          gap: '8px'
+        }}>
+          {/* Deck Button */}
+          <button
+            onClick={() => setShowDeckOverlay(true)}
+            style={{
               backgroundColor: '#7c3aed',
               color: 'white',
+              border: 'none',
               borderRadius: '8px',
-              fontSize: '18px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              cursor: 'pointer',
               fontWeight: 'bold',
-              boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
-              animation: 'pulse 2s infinite'
-            }}>
-              💀 Void Effect: Click a runeforge to destroy it! 💀
-            </div>
-          )}
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            {'🎴 Deck'}
+          </button>
           
-          {/* Frost Effect Message */}
-          {frostEffectPending && !isAITurn && (
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '16px',
-              padding: '12px',
-              backgroundColor: '#06b6d4',
+          {/* Log Button */}
+          <button
+            onClick={() => setShowLogOverlay(true)}
+            style={{
+              backgroundColor: '#059669',
               color: 'white',
+              border: 'none',
               borderRadius: '8px',
-              fontSize: '18px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              cursor: 'pointer',
               fontWeight: 'bold',
-              boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
-              animation: 'pulse 2s infinite'
-            }}>
-              ❄️ Frost Effect: Click a runeforge to freeze it! ❄️
-            </div>
-          )}
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            {'📜 Log'}
+          </button>
           
-          <RuneforgesAndCenter
-            runeforges={runeforges}
-            centerPool={centerPool}
-            onRuneforgeClick={handleRuneforgeClick}
-            onCenterClick={handleCenterClick}
-            isDraftPhase={isDraftPhase}
-            hasSelectedRunes={hasSelectedRunes}
-            isAITurn={isAITurn}
-            voidEffectPending={voidEffectPending}
-            frostEffectPending={frostEffectPending}
-            frozenRuneforges={frozenRuneforges}
-          />
-          
-          {/* Selected Runes Display - Overlay */}
-          {hasSelectedRunes && (
-            <SelectedRunesOverlay
-              selectedRunes={selectedRunes}
-              onCancel={cancelSelection}
+          {/* Rules Button */}
+          <button
+            onClick={() => setShowRulesOverlay(true)}
+            style={{
+              backgroundColor: '#0369a1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 14px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0284c7'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0369a1'}
+          >
+            ❓ Rules
+          </button>
+        </div>
+      </div>
+
+      {/* Three Equal Sections Container */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }} onClick={(e) => e.stopPropagation()}>
+        
+        {/* Opponent View - Top 33% */}
+        <div style={{ 
+          height: '33.33%', 
+          padding: '16px',
+          borderBottom: '2px solid #cbd5e1',
+          overflow: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ width: '100%', maxWidth: '1200px' }}>
+            <OpponentView
+              opponent={players[1]}
+              player={players[0]}
+              isActive={currentPlayerIndex === 1}
+              gameMode={gameMode}
             />
-          )}
-          
-          {/* Game Over Modal - Centered over factories */}
-          {isGameOver && (
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 100,
-              width: 'auto'
-            }}>
-              <GameOverModal
-                players={players}
-                winner={winner}
-                onReturnToStart={returnToStartScreen}
+          </div>
+        </div>
+
+        {/* Drafting Table (Runeforges and Center) - Middle 33% */}
+        <div style={{ 
+          height: '33.33%', 
+          padding: '16px',
+          borderBottom: '2px solid #cbd5e1',
+          overflow: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative'
+        }}>
+          <div style={{ width: '100%', maxWidth: '1200px' }}>
+            {/* Void Effect Message */}
+            {voidEffectPending && !isAITurn && (
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '16px',
+                padding: '12px',
+                backgroundColor: '#7c3aed',
+                color: 'white',
+                borderRadius: '8px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
+                animation: 'pulse 2s infinite'
+              }}>
+                💀 Void Effect: Click a runeforge to destroy it! 💀
+              </div>
+            )}
+            
+            {/* Frost Effect Message */}
+            {frostEffectPending && !isAITurn && (
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '16px',
+                padding: '12px',
+                backgroundColor: '#06b6d4',
+                color: 'white',
+                borderRadius: '8px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
+                animation: 'pulse 2s infinite'
+              }}>
+                ❄️ Frost Effect: Click a runeforge to freeze it! ❄️
+              </div>
+            )}
+            
+            <RuneforgesAndCenter
+              runeforges={runeforges}
+              centerPool={centerPool}
+              onRuneforgeClick={handleRuneforgeClick}
+              onCenterClick={handleCenterClick}
+              isDraftPhase={isDraftPhase}
+              hasSelectedRunes={hasSelectedRunes}
+              isAITurn={isAITurn}
+              voidEffectPending={voidEffectPending}
+              frostEffectPending={frostEffectPending}
+              frozenRuneforges={frozenRuneforges}
+            />
+            
+            {/* Selected Runes Display - Overlay */}
+            {hasSelectedRunes && (
+              <SelectedRunesOverlay
+                selectedRunes={selectedRunes}
+                onCancel={cancelSelection}
               />
-            </div>
-          )}
+            )}
+            
+            {/* Game Over Modal - Centered over drafting area */}
+            {isGameOver && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 100,
+                width: 'auto'
+              }}>
+                <GameOverModal
+                  players={players}
+                  winner={winner}
+                  onReturnToStart={returnToStartScreen}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Player View - Bottom 33% */}
+        <div style={{ 
+          height: '33.33%', 
+          padding: '16px',
+          overflow: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ width: '100%', maxWidth: '1200px' }}>
+            <PlayerView
+              player={players[0]}
+              opponent={players[1]}
+              isActive={currentPlayerIndex === 0}
+              onPlaceRunes={currentPlayerIndex === 0 ? placeRunes : undefined}
+              onPlaceRunesInFloor={currentPlayerIndex === 0 ? placeRunesInFloor : undefined}
+              selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+              canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+              onCancelSelection={cancelSelection}
+              gameMode={gameMode}
+            />
+          </div>
         </div>
       </div>
       

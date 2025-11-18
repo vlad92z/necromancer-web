@@ -25,11 +25,13 @@ export function OpponentView({ opponent, player, isActive, gameMode }: OpponentV
       />
       <PlayerBoard
         player={opponent}
+        opponent={player}
         isActive={isActive}
         // No interaction handlers for opponent view
         selectedRuneType={null}
         canPlace={false}
         onCancelSelection={() => {}}
+        gameMode={gameMode}
       />
     </div>
   );
