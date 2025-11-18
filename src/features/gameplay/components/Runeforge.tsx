@@ -58,19 +58,19 @@ export function Runeforge({
   
   // Void effect styling (purple)
   if (voidEffectPending && runeforge.runes.length > 0 && !disabled) {
-    backgroundColor = '#7c3aed';
+    // Use a dark purple glow instead of changing the background
     borderColor = '#6d28d9';
-    hoverBackgroundColor = '#6d28d9';
-    boxShadow = '0 0 12px rgba(124, 58, 237, 0.5)';
+    hoverBackgroundColor = '#e0f2fe';
+    boxShadow = '0 6px 24px rgba(99, 102, 241, 0.9), inset 0 0 8px rgba(124, 58, 237, 0.25)';
     ariaLabel = `Destroy runeforge with ${runeforge.runes.length} runes`;
   }
   
   // Frost effect styling (cyan)
   if (frostEffectPending && runeforge.runes.length > 0 && !disabled) {
-    backgroundColor = '#06b6d4';
+    // Use a dark blue glow instead of changing the background
     borderColor = '#0891b2';
-    hoverBackgroundColor = '#0891b2';
-    boxShadow = '0 0 12px rgba(6, 182, 212, 0.5)';
+    hoverBackgroundColor = '#e0f2fe';
+    boxShadow = '0 6px 24px rgba(2, 132, 199, 0.9), inset 0 0 8px rgba(6, 182, 212, 0.15)';
     ariaLabel = `Freeze runeforge with ${runeforge.runes.length} runes`;
   }
   
@@ -104,12 +104,19 @@ export function Runeforge({
       }}
       onMouseEnter={(e) => {
         if (!disabled && runeforge.runes.length > 0 && onRuneforgeClick && (voidEffectPending || frostEffectPending)) {
-          e.currentTarget.style.backgroundColor = hoverBackgroundColor;
+          if (voidEffectPending) {
+            e.currentTarget.style.boxShadow = '0 10px 32px rgba(99, 102, 241, 1), inset 0 0 10px rgba(124, 58, 237, 0.35)';
+          } else if (frostEffectPending) {
+            e.currentTarget.style.boxShadow = '0 10px 32px rgba(3, 105, 161, 1), inset 0 0 10px rgba(6, 182, 212, 0.25)';
+          } else {
+            e.currentTarget.style.backgroundColor = hoverBackgroundColor;
+          }
           e.currentTarget.style.transform = 'scale(1.02)';
         }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = backgroundColor;
+        e.currentTarget.style.boxShadow = boxShadow;
         e.currentTarget.style.transform = 'scale(1)';
       }}
       aria-label={ariaLabel}
