@@ -67,17 +67,37 @@ function getLargestConnectedComponent(wall: ScoringWallType) {
 
 export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   // Compute largest connected set of occupied cells and their pixel centers
+  // Also compute short neighbor-to-neighbor edges (right + down) to avoid duplicates
   const overlay = useMemo(() => {
     const comp = getLargestConnectedComponent(wall);
     if (!comp.nodes.length) return null;
 
-    const points = comp.nodes.map(({ row, col }) => {
+    const key = (r: number, c: number) => `${r}-${c}`;
+    const pointsMap = new Map<string, { x: number; y: number; row: number; col: number }>();
+    for (const { row, col } of comp.nodes) {
       const x = col * (CELL_SIZE + GAP) + CELL_SIZE / 2;
       const y = row * (CELL_SIZE + GAP) + CELL_SIZE / 2;
-      return { x, y };
-    });
+      pointsMap.set(key(row, col), { x, y, row, col });
+    }
 
-    return { points };
+    const edges: { x1: number; y1: number; x2: number; y2: number }[] = [];
+
+    for (const { row, col } of comp.nodes) {
+      // only check right and down neighbors to avoid duplicate lines
+      const right = pointsMap.get(key(row, col + 1));
+      if (right) {
+        const a = pointsMap.get(key(row, col))!;
+        edges.push({ x1: a.x, y1: a.y, x2: right.x, y2: right.y });
+      }
+      const down = pointsMap.get(key(row + 1, col));
+      if (down) {
+        const a = pointsMap.get(key(row, col))!;
+        edges.push({ x1: a.x, y1: a.y, x2: down.x, y2: down.y });
+      }
+    }
+
+    const points = Array.from(pointsMap.values()).map(p => ({ x: p.x, y: p.y }));
+    return { points, edges };
   }, [wall]);
 
   const totalWidth = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP;
@@ -99,17 +119,21 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
             overflow: 'visible',
           }}
         >
-          {overlay.points.length > 1 && (
-            <polyline
-              points={overlay.points.map(p => `${p.x},${p.y}`).join(' ')}
-              fill="none"
-              stroke="#f59e0b" /* amber accent */
+          {/* draw short edges between orthogonal neighbors */}
+          {overlay.edges && overlay.edges.map((e, i) => (
+            <line
+              key={i}
+              x1={e.x1}
+              y1={e.y1}
+              x2={e.x2}
+              y2={e.y2}
+              stroke="#f59e0b"
               strokeWidth={6}
               strokeLinecap="round"
               strokeLinejoin="round"
-              opacity={0.75}
+              opacity={0.8}
             />
-          )}
+          ))}
 
           {/* highlight nodes */}
           {overlay.points.map((p, idx) => (
