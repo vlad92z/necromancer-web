@@ -11,9 +11,6 @@ interface SpellpowerProps {
   totalPower: number;
   fireRuneCount: number;
   hasPenalty: boolean;
-  hasLifeHealing: boolean;
-  lifeRuneCount: number;
-  healingAmount: number;
   hasWindMitigation: boolean;
   windRuneCount: number;
   onShowDeck: () => void;
@@ -27,9 +24,6 @@ export function Spellpower({
   totalPower,
   fireRuneCount,
   hasPenalty,
-  hasLifeHealing,
-  lifeRuneCount,
-  healingAmount,
   hasWindMitigation,
   windRuneCount,
   onShowDeck,
