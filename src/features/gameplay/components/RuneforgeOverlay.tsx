@@ -23,7 +23,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
       Frost: 'Freeze a Runeforge for opponent\'s next turn',
       Life: 'Heal 10 HP per active Life rune each round',
       Void: 'Destroy a Runeforge when placed',
-      Wind: 'Overloading Wind runes reduces Focus penalty',
+      Wind: 'Stage Wind runes in incomplete pattern lines to reduce Focus penalty',
     };
     return descriptions[runeType];
   };

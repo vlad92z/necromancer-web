@@ -98,23 +98,23 @@ export function RuneCell({
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   
-  // Special background for Wind runes in floor line (green to indicate mitigation)
-  const isWindInFloor = variant === 'floor' && rune?.runeType === 'Wind';
+  // Highlight Wind runes in pattern lines to communicate mitigation effect
+  const isWindMitigating = variant === 'pattern' && rune?.runeType === 'Wind';
   
   // Use occupied background for wall cells that have runes OR are pending placement
   let backgroundColor = (variant === 'wall' && (rune || isPending) && variantStyle.backgroundOccupied) 
     ? variantStyle.backgroundOccupied 
     : variantStyle.background;
   
-  // Override background for Wind runes in floor line
-  if (isWindInFloor) {
-    backgroundColor = '#d1fae5'; // Light green background for Wind mitigation
+  // Override background for mitigating Wind runes in pattern lines
+  if (isWindMitigating) {
+    backgroundColor = '#e0f2fe'; // Light blue background for Wind mitigation
   }
   
-  // Override border for Wind runes in floor line
+  // Override border for mitigating Wind runes in pattern lines
   let borderStyle = variantStyle.border;
-  if (isWindInFloor) {
-    borderStyle = '2px solid #86efac'; // Green border for Wind mitigation
+  if (isWindMitigating) {
+    borderStyle = '2px solid #38bdf8'; // Blue border for Wind mitigation
   }
   
   // Animate when rune appears in pattern lines, scoring wall, or floor line

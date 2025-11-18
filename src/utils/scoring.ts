@@ -3,7 +3,7 @@
  * Implements connected segment scoring
  */
 
-import type { ScoringWall, RuneType } from '../types/game';
+import type { PatternLine, ScoringWall, RuneType } from '../types/game';
 
 /**
  * Calculate total wall power using simplified scoring
@@ -13,7 +13,7 @@ import type { ScoringWall, RuneType } from '../types/game';
  * Runes are connected if they share an edge (not diagonal)
  * Fire Effect: Each Fire rune adds +1 to Essence
  * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
- * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
+ * Wind Effect: Wind runes held in incomplete pattern lines cancel floor penalties one-for-one
  */
 export function calculateWallPower(
   wall: ScoringWall, 
@@ -76,7 +76,7 @@ export function calculateWallPower(
  * Returns essence (total runes + Fire bonus) and focus (largest segment)
  * Fire Effect: Each Fire rune adds +1 to Essence (only in standard mode)
  * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
- * Wind Effect: Each Wind rune in floor line cancels one other floor penalty (only in standard mode)
+ * Wind Effect: Wind runes held in incomplete pattern lines cancel floor penalties one-for-one (only in standard mode)
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
@@ -199,24 +199,36 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 
 /**
  * Calculate effective floor penalty count after Wind mitigation
- * Wind Effect: Each Wind rune in the floor line cancels out one other floor penalty (only in standard mode)
- * Wind runes still count toward floor line capacity but reduce the penalty impact
+ * Wind Effect: Wind runes retained in incomplete pattern lines cancel out floor penalties (only in standard mode)
+ * Wind runes still count toward their pattern line capacity but mitigate floor penalties while the line remains incomplete
  */
 export function calculateEffectiveFloorPenalty(
   floorRunes: Array<{ runeType: RuneType | null }>,
+  patternLines: Pick<PatternLine, 'runeType' | 'count' | 'tier'>[],
   gameMode: 'classic' | 'standard' = 'standard'
 ): number {
   // In classic mode, no Wind mitigation - all floor runes count as penalties
   if (gameMode === 'classic') {
     return floorRunes.length;
   }
-  
-  // In standard mode, Wind runes cancel other penalties
-  const windCount = floorRunes.filter(rune => rune.runeType === 'Wind').length;
-  const otherRuneCount = floorRunes.length - windCount;
-  
-  // Each Wind rune cancels one other penalty (minimum 0 total penalties)
-  return Math.max(0, otherRuneCount - windCount);
+
+  // Wind runes only mitigate penalties while they remain in incomplete pattern lines
+  const windRunesInPatternLines = patternLines.reduce((total, line) => {
+    if (line.runeType !== 'Wind') {
+      return total;
+    }
+
+    // Completed lines move runes to the wall during scoring, so only incomplete lines mitigate penalties
+    const isLineIncomplete = line.count < line.tier;
+    if (!isLineIncomplete) {
+      return total;
+    }
+
+    return total + line.count;
+  }, 0);
+
+  const effectivePenalty = floorRunes.length - windRunesInPatternLines;
+  return Math.max(0, effectivePenalty);
 }
 
 /**
@@ -308,7 +320,7 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
  * Shows what essence and focus will be after placing completed pattern lines
  * Fire Effect: Each Fire rune adds +1 to Essence
  * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
- * Wind Effect: Each Wind rune in floor line cancels one other floor penalty
+ * Wind Effect: Wind runes held in incomplete pattern lines cancel floor penalties one-for-one
  */
 export function calculateProjectedPower(
   wall: ScoringWall,

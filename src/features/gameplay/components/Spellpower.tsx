@@ -196,7 +196,7 @@ export function Spellpower({
             >
               {focus}
               {hasWindMitigation && (
-                <span style={{ color: '#87CEEB', fontSize: '14px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} mitigating floor penalties`}>
+                <span style={{ color: '#87CEEB', fontSize: '14px' }} title={`${windRuneCount} Wind rune${windRuneCount > 1 ? 's' : ''} staged in incomplete pattern lines to offset floor penalties`}>
                   💨
                 </span>
               )}
@@ -316,7 +316,7 @@ export function Spellpower({
               <div style={{ marginBottom: '16px' }}>
                 <strong style={{ color: '#0c4a6e' }}>Focus:</strong>
                 <p style={{ margin: '4px 0 0 0' }}>
-                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Wind runes 💨 in your floor line cancel out other penalties.
+                  The size of the largest connected rune segment on your Spell Wall. Overload reduces your Focus. Wind runes 💨 held in incomplete pattern lines cancel out floor penalties.
                 </p>
               </div>
               

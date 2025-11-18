@@ -435,7 +435,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         });
         
         // Calculate total wall power based on connected segments
-        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, state.gameMode);
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, updatedPatternLines, state.gameMode);
         
         const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, state.gameMode);
         
@@ -466,8 +466,16 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // Calculate and apply scores, and record round history
       
       // Calculate each player's wall power (damage they deal)
-      const player1FloorPenalty = calculateEffectiveFloorPenalty(state.players[0].floorLine.runes, state.gameMode);
-      const player2FloorPenalty = calculateEffectiveFloorPenalty(state.players[1].floorLine.runes, state.gameMode);
+      const player1FloorPenalty = calculateEffectiveFloorPenalty(
+        state.players[0].floorLine.runes,
+        state.players[0].patternLines,
+        state.gameMode
+      );
+      const player2FloorPenalty = calculateEffectiveFloorPenalty(
+        state.players[1].floorLine.runes,
+        state.players[1].patternLines,
+        state.gameMode
+      );
 
       const player1Data = calculateWallPowerWithSegments(
         state.players[0].wall,
