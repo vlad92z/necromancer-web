@@ -233,7 +233,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
               voidEffectPending={voidEffectPending}
               frostEffectPending={frostEffectPending}
               frozenRuneforges={frozenRuneforges}
-              isClassicMode={gameMode === 'classic'}
             />
             
             {/* Selected Runes Display - Overlay */}

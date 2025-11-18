@@ -18,7 +18,6 @@ interface RuneforgesAndCenterProps {
   voidEffectPending: boolean;
   frostEffectPending: boolean;
   frozenRuneforges: string[];
-  isClassicMode: boolean;
 }
 
 export function RuneforgesAndCenter({ 
@@ -32,8 +31,7 @@ export function RuneforgesAndCenter({
   isAITurn,
   voidEffectPending,
   frostEffectPending,
-  frozenRuneforges,
-  isClassicMode
+  frozenRuneforges
 }: RuneforgesAndCenterProps) {
   
   return (
@@ -57,7 +55,6 @@ export function RuneforgesAndCenter({
             voidEffectPending={voidEffectPending}
             frostEffectPending={frostEffectPending}
             isFrozen={frozenRuneforges.includes(runeforge.id)}
-            isClassicMode={isClassicMode}
           />
         ))}
       </div>
@@ -69,7 +66,6 @@ export function RuneforgesAndCenter({
         isDraftPhase={isDraftPhase}
         hasSelectedRunes={hasSelectedRunes}
         isAITurn={isAITurn}
-        isClassicMode={isClassicMode}
       />
     </div>
   );

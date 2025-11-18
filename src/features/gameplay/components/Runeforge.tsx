@@ -3,10 +3,8 @@
  * Implements Azul-style drafting: click a rune type to select all of that type
  */
 
-import { useState } from 'react';
 import type { Runeforge as RuneforgeType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
-import { getRuneEffectDescription } from '../../../utils/runeHelpers';
 
 interface RuneforgeProps {
   runeforge: RuneforgeType;
@@ -16,7 +14,6 @@ interface RuneforgeProps {
   voidEffectPending?: boolean;
   frostEffectPending?: boolean;
   isFrozen?: boolean;
-  isClassicMode?: boolean;
 }
 
 export function Runeforge({ 
@@ -26,10 +23,8 @@ export function Runeforge({
   disabled = false, 
   voidEffectPending = false, 
   frostEffectPending = false, 
-  isFrozen = false,
-  isClassicMode = false
+  isFrozen = false
 }: RuneforgeProps) {
-  const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   
   const handleClick = () => {
     // For Void/Frost effects, click the entire runeforge
@@ -122,10 +117,6 @@ export function Runeforge({
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
           {runeforge.runes.map((rune) => {
-            // Count how many runes of this type are in the runeforge
-            const runeTypeCount = runeforge.runes.filter(r => r.runeType === rune.runeType).length;
-            const showTooltip = hoveredRuneType === rune.runeType;
-            
             return (
               <div
                 key={rune.id}
@@ -137,8 +128,6 @@ export function Runeforge({
                   cursor: (voidEffectPending || frostEffectPending || disabled) ? 'not-allowed' : 'pointer'
                 }}
                 onClick={(e) => handleRuneClick(e, rune.runeType)}
-                onMouseEnter={() => setHoveredRuneType(rune.runeType)}
-                onMouseLeave={() => setHoveredRuneType(null)}
               >
                 <RuneCell
                   rune={rune}
@@ -146,47 +135,6 @@ export function Runeforge({
                   size='large'
                   showEffect={false}
                 />
-                
-                {/* Tooltip */}
-                {showTooltip && !voidEffectPending && !frostEffectPending && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '100%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    marginBottom: '8px',
-                    backgroundColor: '#1e293b',
-                    color: '#fff',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    whiteSpace: 'normal',
-                    textAlign: 'center',
-                    pointerEvents: 'none',
-                    zIndex: 1000,
-                    maxWidth: '200px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
-                  }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                      {runeTypeCount} {rune.runeType} rune{runeTypeCount > 1 ? 's' : ''}
-                    </div>
-                    <div style={{ fontSize: '11px', opacity: 0.9 }}>
-                      {getRuneEffectDescription(rune.runeType, isClassicMode)}
-                    </div>
-                    {/* Arrow */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 0,
-                      height: 0,
-                      borderLeft: '6px solid transparent',
-                      borderRight: '6px solid transparent',
-                      borderTop: '6px solid #1e293b'
-                    }} />
-                  </div>
-                )}
               </div>
             );
           })}
