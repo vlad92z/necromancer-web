@@ -33,12 +33,15 @@ export function CenterPool({
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'center',
+          alignItems: 'center',
+          alignContent: 'center',
           gap: '8px',
           maxWidth: '90%',
           border: '2px solid #bfdbfe',
           cursor: (!isDraftPhase || hasSelectedRunes || isAITurn || centerPool.length === 0) ? 'not-allowed' : 'pointer',
           outline: 'none',
-          transition: 'all 0.2s'
+          transition: 'all 0.2s',
+          minHeight: '80px'
         }}
         onMouseEnter={(e) => !(!isDraftPhase || hasSelectedRunes || isAITurn || centerPool.length === 0) && (e.currentTarget.style.backgroundColor = '#bfdbfe', e.currentTarget.style.transform = 'scale(1.02)')}
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dbeafe', e.currentTarget.style.transform = 'scale(1)')}

@@ -33,7 +33,7 @@ export function RuneforgesAndCenter({
 }: RuneforgesAndCenterProps) {
   
   return (
-    <div style={{ marginBottom: '32px' }}>
+    <div>
       
       {/* Runeforges  */}
       <div style={{ 
