@@ -255,7 +255,7 @@ function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: n
  */
 function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: number | null): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const currentScore = calculateWallPower(currentPlayer.wall, currentPlayer.floorLine.runes.length, 0, state.gameMode);
+  const currentScore = calculateWallPower(currentPlayer.wall, currentPlayer.floorLine.runes.length, state.gameMode);
   
   // Simulate the move
   const simulatedState = simulateDraftMove(state, move, targetLineIndex);
@@ -273,7 +273,7 @@ function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: n
     }
   }
   
-  const simulatedScore = calculateWallPower(simulatedWall, simulatedPlayer.floorLine.runes.length, 0, state.gameMode);
+  const simulatedScore = calculateWallPower(simulatedWall, simulatedPlayer.floorLine.runes.length, state.gameMode);
   return simulatedScore - currentScore;
 }
 
