@@ -584,7 +584,9 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
 
 ### Priority 1: State Architecture Refactoring ✅ **COMPLETED**
 
-**Problem**: `gameStore.ts` is 727 lines and contains all game logic, side effects, and state. Will become unmaintainable when adding deck drafting, campaign, and PvP features.
+**Problem**: `gameStore.ts` was 727 lines and contained all game logic, side effects, and state. Would become unmaintainable when adding deck drafting, campaign, and PvP features.
+
+**Solution**: Fully refactored to follow React best practices with pure state management and component-driven side effects.
 
 #### ✅ Completed: Split Monolithic Store
 - [x] **Split `gameStore.ts` into modular stores:**
@@ -609,13 +611,25 @@ Each rune type has a unique effect that triggers during gameplay, creating strat
   - [x] State flags signal when effects should occur
   - [x] All timers properly cleaned up on component unmount
 
-#### TODO: Extract AI Orchestration
-- [x] **Move AI logic out of App.tsx:**
+#### ✅ Completed: Extract AI Orchestration
+- [x] **Moved AI logic out of App.tsx:**
   - [x] Created `src/systems/aiController.ts` for AI turn orchestration
-  - [x] Extracted `triggerAITurn()` function for AI turn flow management
-  - [x] Extracted `handleAIVoidEffect()` for Void effect handling
-  - [x] Extracted `handleAIFrostEffect()` for Frost effect handling
-  - [x] Removed inline AI logic from App.tsx useEffect hooks
+  - [x] Extracted `executeAITurn()` function for AI turn flow management (pure function)
+  - [x] Extracted `executeAIVoidEffect()` for Void effect handling (pure function)
+  - [x] Extracted `executeAIFrostEffect()` for Frost effect handling (pure function)
+  - [x] Added `needsAIPlacement()` helper to check if AI needs to place selected runes
+  - [x] Removed all setTimeout calls from aiController (timing handled by App.tsx)
+  - [x] App.tsx now handles all AI timing via useEffect hooks with proper cleanup
+  - [x] Separated AI draft and placement logic into distinct useEffect hooks
+  - [x] All AI actions are now pure functions called by component effects
+
+- [x] **Created clean separation of concerns:**
+  - [x] aiController handles AI decision-making (pure logic)
+  - [x] App.tsx handles AI timing and orchestration (side effects)
+  - [x] No setTimeout in system modules, all timing in components
+  - [x] Proper cleanup of all timers on component unmount
+
+#### TODO: Future AI Enhancements
   - [ ] Create `src/systems/turnManager.ts` for turn flow management (future enhancement)
   - [ ] Create `src/systems/effectResolver.ts` for unified effect handling (future enhancement)
   - [ ] Support multiple AI difficulty levels
