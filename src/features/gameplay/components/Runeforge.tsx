@@ -8,6 +8,11 @@ import { motion } from 'framer-motion';
 import type { Runeforge as RuneforgeType, RuneType, Rune } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 
+interface SelectedDisplayOverride {
+  runes: Rune[];
+  selectedRuneIds: string[];
+}
+
 interface RuneforgeProps {
   runeforge: RuneforgeType;
   onRuneClick?: (runeforgeId: string, runeType: RuneType) => void;
@@ -15,6 +20,9 @@ interface RuneforgeProps {
   disabled?: boolean;
   voidEffectPending?: boolean;
   frostEffectPending?: boolean;
+  displayOverride?: SelectedDisplayOverride;
+  selectionSourceActive?: boolean;
+  onCancelSelection?: () => void;
 }
 
 export function Runeforge({ 
@@ -23,15 +31,28 @@ export function Runeforge({
   onVoidRuneSelect,
   disabled = false, 
   voidEffectPending = false, 
-  frostEffectPending = false
+  frostEffectPending = false,
+  displayOverride,
+  selectionSourceActive = false,
+  onCancelSelection
 }: RuneforgeProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const canSelectRunesForVoid = Boolean(
     voidEffectPending && onVoidRuneSelect && !disabled && runeforge.runes.length > 0
   );
+  const displayedRunes = displayOverride ? displayOverride.runes : runeforge.runes;
+  const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
+  const selectionActive = selectionSourceActive && Boolean(displayOverride);
   
-  const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
+  const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedForDisplay: boolean) => {
     e.stopPropagation();
+    if (isSelectedForDisplay && onCancelSelection) {
+      onCancelSelection();
+      return;
+    }
+    if (selectionActive) {
+      return;
+    }
     if (canSelectRunesForVoid && onVoidRuneSelect) {
       onVoidRuneSelect(runeforge.id, rune.id);
       return;
@@ -42,24 +63,24 @@ export function Runeforge({
   };
   
   // Determine styling based on state
-  let backgroundColor = '#e0f2fe';
-  let borderColor = '#bae6fd';
-  let hoverBackgroundColor = '#bae6fd';
-  let boxShadow = 'none';
+  const backgroundColor = '#1c1034';
+  let borderColor = 'rgba(255, 255, 255, 0.15)';
+  let hoverBackgroundColor = '#251646';
+  let boxShadow = '0 8px 24px rgba(0, 0, 0, 0.45)';
   let ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
-  const selectableGlowRest = '0 0 20px rgba(34, 197, 94, 0.75), 0 0 48px rgba(34, 197, 94, 0.35)';
-  const selectableGlowPeak = '0 0 32px rgba(16, 185, 129, 0.95), 0 0 70px rgba(34, 197, 94, 0.55)';
+  const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
+  const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
-  const frostGlowRest = '0 6px 24px rgba(2, 132, 199, 0.9), inset 0 0 8px rgba(6, 182, 212, 0.15)';
-  const frostGlowPeak = '0 10px 34px rgba(56, 189, 248, 1), inset 0 0 14px rgba(6, 182, 212, 0.3)';
+  const frostGlowRest = '0 6px 24px rgba(6, 182, 212, 0.85), inset 0 0 8px rgba(34, 211, 238, 0.25)';
+  const frostGlowPeak = '0 10px 34px rgba(59, 130, 246, 1), inset 0 0 14px rgba(34, 211, 238, 0.4)';
   const frostGlowRange: [string, string] = [frostGlowRest, frostGlowPeak];
   let glowRange: [string, string] | null = null;
   let glowDuration = 1.5;
   
   // Normal selectable state (green highlight when player can select)
-  const isSelectable = !disabled && !voidEffectPending && !frostEffectPending && runeforge.runes.length > 0 && onRuneClick;
+  const isSelectable = !disabled && !selectionActive && !voidEffectPending && !frostEffectPending && runeforge.runes.length > 0 && onRuneClick;
   if (isSelectable) {
-    borderColor = '#22c55e';
+    borderColor = '#c084fc';
     boxShadow = selectableGlowRest;
     glowRange = selectableGlowRange;
     glowDuration = 1.5;
@@ -68,8 +89,8 @@ export function Runeforge({
   // Frost effect styling (cyan)
   if (frostEffectPending && runeforge.runes.length > 0 && !disabled) {
     // Use a dark blue glow instead of changing the background
-    borderColor = '#0891b2';
-    hoverBackgroundColor = '#e0f2fe';
+    borderColor = '#22d3ee';
+    hoverBackgroundColor = '#1c1034';
     boxShadow = frostGlowRest;
     glowRange = frostGlowRange;
     glowDuration = 1.4;
@@ -83,23 +104,25 @@ export function Runeforge({
       }
     : {};
 
+  const buttonDisabled = selectionActive ? false : (disabled || runeforge.runes.length === 0);
+
   return (
     <motion.button
-      disabled={disabled || runeforge.runes.length === 0}
+      disabled={buttonDisabled}
       style={{
         backgroundColor: backgroundColor,
         borderRadius: '16px',
-        width: '280px',
-        height: '60px',
-        padding: '8px',
+        width: 'min(32vmin, 360px)',
+        height: 'min(7.5vmin, 84px)',
+        padding: 'min(1vmin, 12px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.2s',
-        border: `2px solid ${borderColor}`,
-        cursor: (disabled || runeforge.runes.length === 0)
-          ? 'not-allowed'
-          : (voidEffectPending ? 'default' : 'pointer'),
+        border: `1px solid ${borderColor}`,
+        cursor: selectionActive
+          ? 'pointer'
+          : (buttonDisabled ? 'not-allowed' : (voidEffectPending ? 'default' : 'pointer')),
         outline: 'none',
         boxShadow: boxShadow,
         position: 'relative'
@@ -118,35 +141,57 @@ export function Runeforge({
       aria-label={ariaLabel}
       {...glowMotionProps}
     >
-      {runeforge.runes.length === 0 ? (
-        <div style={{ color: '#64748b', fontSize: '14px' }}>
-          
+      {displayedRunes.length === 0 ? (
+        <div style={{ color: '#7c8db5', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          Empty Forge
         </div>
       ) : (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'center' }}>
-            {runeforge.runes.map((rune) => {
-              const isHighlighted = hoveredRuneType === rune.runeType;
-              const baseSize = 56;
+          <div style={{ display: 'flex', gap: 'min(1.4vmin, 14px)', alignItems: 'center', justifyContent: 'center' }}>
+            {displayedRunes.map((rune) => {
+              const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
+              const isHighlighted = hoveredRuneType === rune.runeType && !displayOverride;
+              const baseSize = 'min(5.6vmin, 56px)';
+              const motionProps = isSelectedForDisplay
+                ? {
+                    animate: { scale: [1.05, 1.12, 1.05], y: [-2, 2, -2], rotate: [-1.5, 1.5, -1.5] },
+                    transition: { duration: 1, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+                  }
+                : {
+                    animate: { scale: isHighlighted ? 1.08 : 1, y: 0, rotate: 0 },
+                    transition: { duration: 0.2 }
+                  };
               return (
-                <div
+                <motion.div
                   key={rune.id}
                   style={{
-                    width: `${baseSize}px`,
-                    height: `${baseSize}px`,
+                    width: baseSize,
+                    height: baseSize,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    pointerEvents: (!canSelectRunesForVoid && (frostEffectPending || disabled)) ? 'none' : 'auto',
-                    cursor: ((frostEffectPending || disabled) ? 'not-allowed' : 'pointer'),
-                    transition: 'transform 0.15s ease, box-shadow 0.2s ease',
-                    filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none',
-                    transform: isHighlighted ? 'scale(1.08)' : 'scale(1)',
+                    pointerEvents: selectionActive
+                      ? (isSelectedForDisplay ? 'auto' : 'none')
+                      : ((!canSelectRunesForVoid && (frostEffectPending || disabled)) ? 'none' : 'auto'),
+                    cursor: selectionActive
+                      ? (isSelectedForDisplay ? 'pointer' : 'not-allowed')
+                      : ((frostEffectPending || disabled) ? 'not-allowed' : 'pointer'),
+                    boxShadow: isSelectedForDisplay
+                      ? '0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(196, 181, 253, 0.35)'
+                      : isHighlighted
+                        ? '0 0 10px rgba(255, 255, 255, 0.4)'
+                        : 'none',
+                    filter: isSelectedForDisplay ? 'brightness(1.2)' : (isHighlighted ? 'brightness(1.1)' : 'none'),
                     borderRadius: '50%',
                   }}
-                  onClick={(e) => handleRuneClick(e, rune)}
-                  onMouseEnter={() => !disabled && !voidEffectPending && !frostEffectPending && setHoveredRuneType(rune.runeType)}
+                  onClick={(e) => handleRuneClick(e, rune, isSelectedForDisplay)}
+                  onMouseEnter={() => {
+                    if (!disabled && !voidEffectPending && !frostEffectPending && !selectionActive) {
+                      setHoveredRuneType(rune.runeType);
+                    }
+                  }}
                   onMouseLeave={() => setHoveredRuneType(null)}
+                  {...motionProps}
                 >
                   <RuneCell
                     rune={rune}
@@ -155,7 +200,7 @@ export function Runeforge({
                     showEffect={false}
                     isVoidPending={canSelectRunesForVoid}
                   />
-                </div>
+                </motion.div>
               );
             })}
           </div>
