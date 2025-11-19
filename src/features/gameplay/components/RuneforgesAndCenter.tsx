@@ -104,23 +104,6 @@ export function RuneforgesAndCenter({
   return (
     <div style={{ position: 'relative', padding: '8px 0 24px' }}>
       {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
-
-      {canDraftOpponentRuneforges && !isAITurn && (
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '12px',
-          padding: '8px 12px',
-          borderRadius: '8px',
-          backgroundColor: '#fef3c7',
-          color: '#92400e',
-          fontWeight: 600,
-          position: 'relative',
-          zIndex: 2
-        }}>
-          No personal runeforges remain and the center is empty. You may draft from your opponent's forges.
-        </div>
-      )}
-      
       <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px' }}>
         <CenterPool 
           centerPool={centerPool}

@@ -187,23 +187,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
           position: 'relative'
         }}>
           <div style={{ width: '100%', maxWidth: '1200px' }}>
-            {/* Void Effect Message */}
-            {voidEffectPending && !isAITurn && (
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '16px',
-                padding: '12px',
-                backgroundColor: '#7c3aed',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
-                animation: 'pulse 2s infinite'
-              }}>
-                💀 Void Effect: Click a rune to destroy it! 💀
-              </div>
-            )}
             
             <RuneforgesAndCenter
               runeforges={runeforges}

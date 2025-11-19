@@ -43,6 +43,7 @@ export interface RuneCellProps {
   onClick?: () => void;
   showEffect?: boolean;
   isPending?: boolean; // For wall cells with full pattern lines
+  isVoidPending?: boolean; // true if a void effect is pending selection
 }
 
 const SIZE_CONFIG = {
@@ -95,6 +96,7 @@ export function RuneCell({
   onClick,
   showEffect = false,
   isPending = false,
+  isVoidPending = false,
 }: RuneCellProps) {
   const config = SIZE_CONFIG[size];
   const usedVariant = forceVariant ?? variant;
@@ -141,7 +143,9 @@ export function RuneCell({
   } : {};
   
   const Container = shouldAnimate ? motion.div : 'div';
-  
+  const glowStyle = true
+              ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
+              : 'none';
   return (
     <Container
       {...animationProps}
@@ -149,16 +153,19 @@ export function RuneCell({
       style={{
         width: `${config.width}px`,
         height: `${config.height}px`,
-        border: borderStyle,
-        borderRadius: `${RADIUS.md}px`,
-        backgroundColor: backgroundColor,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: `${config.padding}px`,
-        cursor: clickable ? 'pointer' : 'default',
         transition: shouldAnimate ? undefined : TRANSITIONS.medium,
+        boxShadow: isVoidPending ? glowStyle : 'none',
+        borderRadius: isVoidPending ? '50%' : `${RADIUS.md}px`,
+        border: borderStyle,
+        backgroundColor: backgroundColor,
+        padding: isVoidPending ? 0 : `${config.padding}px`,
+        cursor: clickable ? 'pointer' : 'default',
+        
         position: 'relative',
+        
       }}
       onMouseEnter={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
       onMouseLeave={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1)')}

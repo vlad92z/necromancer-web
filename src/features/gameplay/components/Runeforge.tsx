@@ -80,15 +80,15 @@ export function Runeforge({
   }
   
   // Void effect styling (purple)
-  if (voidEffectPending && runeforge.runes.length > 0 && !disabled) {
+  // if (voidEffectPending && runeforge.runes.length > 0 && !disabled) {
     // Use a dark purple glow instead of changing the background
-    borderColor = '#6d28d9';
-    hoverBackgroundColor = '#e0f2fe';
-    boxShadow = voidGlowRest;
-    glowRange = voidGlowRange;
-    glowDuration = 1.4;
-    ariaLabel = `Select a rune to destroy from this runeforge (${runeforge.runes.length} runes)`;
-  }
+    // borderColor = '#6d28d9';
+  //   hoverBackgroundColor = '#e0f2fe';
+  //   boxShadow = voidGlowRest;
+  //   glowRange = voidGlowRange;
+  //   glowDuration = 1.4;
+  //   ariaLabel = `Select a rune to destroy from this runeforge (${runeforge.runes.length} runes)`;
+  // }
   
   // Frost effect styling (cyan)
   if (frostEffectPending && runeforge.runes.length > 0 && !disabled) {
@@ -177,7 +177,9 @@ export function Runeforge({
             {runeforge.runes.map((rune) => {
               const isHighlighted = hoveredRuneType === rune.runeType;
               const baseSize = 56;
-
+              const glowStyle = voidEffectPending
+              ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
+              : 'none';
               return (
                 <div
                   key={rune.id}
@@ -188,16 +190,12 @@ export function Runeforge({
                     alignItems: 'center',
                     justifyContent: 'center',
                     pointerEvents: (!canSelectRunesForVoid && (frostEffectPending || disabled)) ? 'none' : 'auto',
-                    cursor: canSelectRunesForVoid
-                      ? 'crosshair'
-                      : ((frostEffectPending || disabled) ? 'not-allowed' : 'pointer'),
+                    cursor: ((frostEffectPending || disabled) ? 'not-allowed' : 'pointer'),
                     transition: 'transform 0.15s ease, box-shadow 0.2s ease',
                     filter: isHighlighted ? 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))' : 'none',
                     transform: isHighlighted ? 'scale(1.08)' : 'scale(1)',
-                    boxShadow: canSelectRunesForVoid
-                      ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 24px rgba(167, 139, 250, 0.45)'
-                      : 'none',
-                    borderRadius: '50%'
+                    borderRadius: '50%',
+                    // boxShadow: glowStyle,
                   }}
                   onClick={(e) => handleRuneClick(e, rune)}
                   onMouseEnter={() => !disabled && !voidEffectPending && !frostEffectPending && setHoveredRuneType(rune.runeType)}
@@ -208,6 +206,7 @@ export function Runeforge({
                     variant="runeforge"
                     size='large'
                     showEffect={false}
+                    isVoidPending={canSelectRunesForVoid}
                   />
                 </div>
               );
