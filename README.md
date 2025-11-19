@@ -39,8 +39,8 @@ npm run lint
 - **Essence** = total runes on wall
 - **Focus** = largest connected segment size
 - **Spellpower** = Essence × max(1, Focus - floor penalties)
-- Spellpower dealt as damage to opponent
-- Winner = least damage taken when decks exhaust
+- Spellpower dealt as damage to opponent at the end of every round
+- Winner = Player with the most health once runes run out
 
 ### Game Modes
 - **Classic**: Pure strategy without rune effects
@@ -67,7 +67,7 @@ npm run lint
 **Status**: ✅ Implemented
 
 ### 🌑 Void (Destruction)
-**Effect**: Destroy all runes in one runeforge when placing Void  
+**Effect**: Destroy any rune on the shared board (Runeforges or Center Pool) 
 **Strategy**: Deny key runes or clear unwanted colors  
 **Status**: ✅ Implemented
 
