@@ -8,7 +8,6 @@ import { RuneforgesAndCenter } from './RuneforgesAndCenter';
 import { PlayerView } from './PlayerView';
 import { OpponentView } from './OpponentView';
 import { GameOverModal } from './GameOverModal';
-import { SelectedRunesOverlay } from './SelectedRunesOverlay';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
@@ -33,7 +32,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
@@ -255,18 +254,10 @@ export function GameBoard({ gameState }: GameBoardProps) {
               isAITurn={isAITurn}
               voidEffectPending={voidEffectPending}
               frostEffectPending={frostEffectPending}
+              selectedRunes={selectedRunes}
+              draftSource={draftSource}
+              onCancelSelection={cancelSelection}
             />
-            
-            {/* Selected Runes Display - Overlay */}
-            {hasSelectedRunes && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <SelectedRunesOverlay
-                  selectedRunes={selectedRunes}
-                  onCancel={cancelSelection}
-                  isClassicMode={gameMode === 'classic'}
-                />
-              </div>
-            )}
             
             {/* Game Over Modal - Centered over drafting area */}
             {isGameOver && (

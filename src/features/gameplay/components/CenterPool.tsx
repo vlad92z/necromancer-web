@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import type { Rune, RuneType } from '../../../types/game';
 import fireRune from '../../../assets/runes/fire_rune.svg';
 import frostRune from '../../../assets/runes/frost_rune.svg';
@@ -19,6 +20,10 @@ interface CenterPoolProps {
   isAITurn: boolean;
   canDraftFromCenter: boolean;
   voidEffectPending?: boolean;
+  selectedRunes: Rune[];
+  selectionFromCenter: boolean;
+  pendingRunesFromRuneforge?: Rune[];
+  onCancelSelection?: () => void;
 }
 
 export function CenterPool({ 
@@ -29,15 +34,34 @@ export function CenterPool({
   hasSelectedRunes, 
   isAITurn,
   canDraftFromCenter,
-  voidEffectPending = false
+  voidEffectPending = false,
+  selectedRunes,
+  selectionFromCenter,
+  pendingRunesFromRuneforge = [],
+  onCancelSelection
 }: CenterPoolProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
-  const totalRunes = centerPool.length;
+  const pendingRunesFromRuneforgeIds = new Set(pendingRunesFromRuneforge.map((rune) => rune.id));
+  const filteredCenterRunes = centerPool.filter((rune) => !pendingRunesFromRuneforgeIds.has(rune.id));
+  const centerRuneIds = new Set(filteredCenterRunes.map((rune) => rune.id));
+  const displayRunes = [
+    ...filteredCenterRunes.map((rune) => ({ rune, isSelected: false })),
+    ...(selectionFromCenter
+      ? selectedRunes
+          .filter((rune) => !centerRuneIds.has(rune.id))
+          .map((rune) => ({ rune, isSelected: true }))
+      : [])
+  ];
+  const totalRunes = displayRunes.length;
   const voidSelectionActive = Boolean(voidEffectPending && onVoidRuneSelect && !isAITurn);
   const centerDisabled = voidSelectionActive ? false : (!isDraftPhase || hasSelectedRunes || isAITurn || !canDraftFromCenter);
   
-  const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
+  const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedDisplay: boolean) => {
     e.stopPropagation();
+    if (isSelectedDisplay && onCancelSelection) {
+      onCancelSelection();
+      return;
+    }
     if (voidSelectionActive && onVoidRuneSelect) {
       onVoidRuneSelect(rune.id);
       return;
@@ -69,13 +93,21 @@ export function CenterPool({
           border: totalRunes === 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
           boxShadow: totalRunes === 0 ? 'none' : '0 25px 45px rgba(2, 6, 23, 0.6)',
         }}>
-          {centerPool.map((rune) => {
-            const isHighlighted = hoveredRuneType === rune.runeType;
-            const scale = isHighlighted ? 1.08 : 1;
+          {displayRunes.map(({ rune, isSelected }) => {
+            const isHighlighted = hoveredRuneType === rune.runeType && !isSelected;
             const glowStyle = voidSelectionActive
               ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
-              : 'none';
+              : (isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none');
             const runeSize = 'min(4.4vmin, 46px)';
+            const motionProps = isSelected
+              ? {
+                  animate: { scale: [1.08, 1.16, 1.08], y: [-1.5, 1.5, -1.5], rotate: [-1.8, 1.8, -1.8] },
+                  transition: { duration: 1, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+                }
+              : {
+                  animate: { scale: isHighlighted ? 1.08 : 1, y: 0, rotate: 0 },
+                  transition: { duration: 0.2 }
+                };
 
             // Map rune types to assets (kept local to avoid changing RuneCell)
             const RUNE_ASSETS: Record<string, string> = {
@@ -89,32 +121,36 @@ export function CenterPool({
             const runeImage = RUNE_ASSETS[rune.runeType];
 
             return (
-              <div
-                key={rune.id}
+              <motion.div
+                key={`${rune.id}-${isSelected ? 'selected' : 'pool'}`}
                 style={{
                   width: runeSize,
                   height: runeSize,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: voidSelectionActive ? 'crosshair' : (centerDisabled ? 'not-allowed' : 'pointer'),
-                  opacity: centerDisabled && !voidSelectionActive ? 0.5 : 1,
-                  transition: 'transform 0.16s ease, filter 0.16s ease, box-shadow 0.2s ease',
-                  transform: `scale(${scale})`,
+                  cursor: isSelected
+                    ? 'pointer'
+                    : voidSelectionActive
+                      ? 'crosshair'
+                      : (centerDisabled ? 'not-allowed' : 'pointer'),
+                  opacity: (centerDisabled && !voidSelectionActive && !isSelected) ? 0.5 : 1,
                   boxShadow: glowStyle,
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(9, 4, 30, 0.82)'
+                  backgroundColor: 'rgba(9, 4, 30, 0.82)',
+                  pointerEvents: isSelected ? 'auto' : (centerDisabled ? 'none' : 'auto')
                 }}
-                onClick={(e) => handleRuneClick(e, rune)}
-                onMouseEnter={() => !centerDisabled && !voidSelectionActive && setHoveredRuneType(rune.runeType)}
+                onClick={(e) => handleRuneClick(e, rune, isSelected)}
+                onMouseEnter={() => !centerDisabled && !voidSelectionActive && !isSelected && setHoveredRuneType(rune.runeType)}
                 onMouseLeave={() => setHoveredRuneType(null)}
+                {...motionProps}
               >
                 <img
                     src={runeImage}
                     alt={`${rune.runeType} rune`}
                     style={{width: runeSize, height: runeSize}}
                   />
-              </div>
+              </motion.div>
             );
           })}
         </div>
