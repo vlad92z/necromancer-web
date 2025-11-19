@@ -68,6 +68,9 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
       
+      // Capture original order before clearing for display restoration
+      const originalRunes = runeforge.runes;
+
       // Update runeforges (remove all runes from this runeforge)
       const updatedRuneforges = state.runeforges.map((f) =>
         f.id === runeforgeId ? { ...f, runes: [] } : f
@@ -81,7 +84,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         runeforges: updatedRuneforges,
         centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
-        draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes },
+        draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
       };
     });
   },
@@ -324,6 +327,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         // Return to runeforge (both selected runes and the ones moved to center)
         const runeforgeId = state.draftSource.runeforgeId;
         const movedToCenter = state.draftSource.movedToCenter;
+        const originalRunes = state.draftSource.originalRunes;
         
         // Remove the moved runes from center pool
         const updatedCenterPool = state.centerPool.filter(
@@ -332,7 +336,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         
         const updatedRuneforges = state.runeforges.map((f) =>
           f.id === runeforgeId
-            ? { ...f, runes: [...f.runes, ...state.selectedRunes, ...movedToCenter] }
+            ? { ...f, runes: originalRunes }
             : f
         );
         

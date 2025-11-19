@@ -2,7 +2,7 @@
  * RuneforgesAndCenter component - displays runeforges and center pool
  */
 
-import type { Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../types/game';
+import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../types/game';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
 
@@ -20,6 +20,9 @@ interface RuneforgesAndCenterProps {
   isAITurn: boolean;
   voidEffectPending: boolean;
   frostEffectPending: boolean;
+  selectedRunes: Rune[];
+  draftSource: GameState['draftSource'];
+  onCancelSelection: () => void;
 }
 
 export function RuneforgesAndCenter({ 
@@ -35,7 +38,10 @@ export function RuneforgesAndCenter({
   hasSelectedRunes, 
   isAITurn,
   voidEffectPending,
-  frostEffectPending
+  frostEffectPending,
+  selectedRunes,
+  draftSource,
+  onCancelSelection
 }: RuneforgesAndCenterProps) {
   const [player, opponent] = players;
   const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
@@ -49,7 +55,14 @@ export function RuneforgesAndCenter({
   const canDraftOpponentRuneforges = !frostActive && !hasAccessibleRuneforges && centerIsEmpty;
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
+  const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
+  const pendingRunesFromRuneforge = draftSource?.type === 'runeforge' ? draftSource.movedToCenter : [];
+  const selectedRuneforgeOriginalRunes = draftSource?.type === 'runeforge' ? draftSource.originalRunes : [];
+  const selectionFromCenter = draftSource?.type === 'center';
+  const selectedRuneIds = selectedRunes.map((rune) => rune.id);
+
   const getDisabledState = (forge: RuneforgeType): boolean => {
+    const selectionMatchesForge = selectedFromRuneforgeId === forge.id;
     if (frostActive && !voidEffectPending) {
       return true;
     }
@@ -58,8 +71,12 @@ export function RuneforgesAndCenter({
       return false;
     }
 
-    const baseDisabled = !isDraftPhase || hasSelectedRunes || isAITurn;
+    const baseDisabled = !isDraftPhase || isAITurn;
     if (baseDisabled) {
+      return true;
+    }
+
+    if (hasSelectedRunes && !selectionMatchesForge) {
       return true;
     }
 
@@ -71,7 +88,7 @@ export function RuneforgesAndCenter({
   };
 
   const renderRuneforgeRow = (owner: Player, ownedRuneforges: RuneforgeType[], align: 'flex-start' | 'center' | 'flex-end') => (
-    <div key={owner.id} style={{ marginBottom: '16px' }}>
+    <div key={owner.id} style={{ marginBottom: '16px', width: '100%' }}>
       <div style={{ 
         display: 'flex', 
         justifyContent: align, 
@@ -84,9 +101,19 @@ export function RuneforgesAndCenter({
             runeforge={runeforge}
             onRuneClick={onRuneClick}
             onVoidRuneSelect={onVoidRuneforgeRuneSelect}
-            disabled={getDisabledState(runeforge)}
+            disabled={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes ? false : getDisabledState(runeforge)}
             voidEffectPending={voidEffectPending}
             frostEffectPending={frostEffectPending}
+            displayOverride={
+              selectedFromRuneforgeId === runeforge.id
+                ? {
+                    runes: selectedRuneforgeOriginalRunes,
+                    selectedRuneIds,
+                  }
+                : undefined
+            }
+            selectionSourceActive={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes}
+            onCancelSelection={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes ? onCancelSelection : undefined}
           />
         ))}
       </div>
@@ -94,9 +121,20 @@ export function RuneforgesAndCenter({
   );
   
   return (
-    <div style={{ position: 'relative', padding: '8px 0 24px' }}>
+    <div
+      style={{
+        position: 'relative',
+        padding: '8px 0',
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
       {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
-      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px' }}>
+      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px', width: '100%' }}>
         <CenterPool 
           centerPool={centerPool}
           onRuneClick={onCenterRuneClick}
@@ -106,6 +144,10 @@ export function RuneforgesAndCenter({
           isAITurn={isAITurn}
           canDraftFromCenter={canDraftFromCenter}
           voidEffectPending={voidEffectPending}
+          selectedRunes={selectionFromCenter ? selectedRunes : []}
+          selectionFromCenter={Boolean(selectionFromCenter)}
+          onCancelSelection={selectionFromCenter ? onCancelSelection : undefined}
+          pendingRunesFromRuneforge={pendingRunesFromRuneforge}
         />
       </div>
 

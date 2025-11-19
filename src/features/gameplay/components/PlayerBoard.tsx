@@ -2,7 +2,6 @@
  * PlayerBoard component - displays a player's board (pattern lines, wall, floor line)
  */
 
-import { motion } from 'framer-motion';
 import type { Player, RuneType } from '../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
@@ -36,6 +35,10 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
   };
 
   const currentHealth = player.health;
+  const lifeRuneCount = gameMode === 'standard'
+    ? player.wall.flat().filter((cell) => cell.runeType === 'Life').length
+    : 0;
+  const healingAmount = lifeRuneCount * 10;
 
   // Find completed pattern lines
   const completedPatternLines = player.patternLines
@@ -69,24 +72,40 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     : 0;
   const fireRuneCount = fireRunesOnWall + fireRunesInCompletedLines;
 
+  const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
+
   return (
     <div
       onClick={handleBoardClick}
       style={{
-        padding: '4px',
-        borderRadius: '8px',
-        border: isActive ? '2px solid rgba(59, 130, 246, 0.5)' : '2px solid #e2e8f0',
-        backgroundColor: '#ffffff',
+        width: '100%',
+        height: '100%',
+        padding: 'min(1.2vmin, 16px)',
+        borderRadius: '28px',
+        border: isActive ? '1px solid rgba(168, 85, 247, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'rgba(14, 6, 32, 0.92)',
+        boxShadow: isActive ? '0 18px 60px rgba(104, 62, 189, 0.45)' : '0 10px 40px rgba(3, 0, 18, 0.65)',
+        transition: 'border 0.2s ease, box-shadow 0.2s ease'
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'stretch', 
+        justifyContent: 'space-between', 
+        gap: 'min(1.5vmin, 18px)',
+        width: '100%',
+        height: '100%'
+      }}>
         {/* Floor Line - Left side */}
         <div style={{ 
-          flex: '0 0 auto',
+          flex: '0 0 min(16vmin, 180px)',
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'center',
-          paddingRight: '16px'
+          padding: 'min(1vmin, 12px)',
+          borderRadius: '20px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'rgba(255, 255, 255, 0.02)'
         }} onClick={(e) => e.stopPropagation()}>
           <FloorLine 
             floorLine={player.floorLine}
@@ -97,7 +116,16 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         </div>
         
         {/* Pattern Lines */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ 
+          flex: '1.1 1 0', 
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          padding: 'min(1vmin, 14px)'
+        }} onClick={(e) => e.stopPropagation()}>
           <PatternLines 
             patternLines={player.patternLines}
             wall={player.wall}
@@ -111,52 +139,34 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         </div>
         
         {/* Wall */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ 
+          flex: '1.1 1 0', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          padding: 'min(1vmin, 14px)'
+        }}>
           <ScoringWall wall={player.wall} patternLines={player.patternLines} />
         </div>
         
         {/* Right side - Player Info and RuneScore */}
         <div style={{ 
-          flex: '0 0 240px',
+          flex: '0 0 auto',
+          width: detailPanelWidth,
+          minWidth: detailPanelWidth,
+          maxWidth: detailPanelWidth,
           display: 'flex', 
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-          {/* Player Name and Health */}
-          <div style={{
-            backgroundColor: 'rgba(191, 219, 254, 0.3)',
-            border: '2px solid rgba(59, 130, 246, 0.5)',
-            borderRadius: '8px',
-            padding: '12px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <div style={{
-              fontSize: '18px',
-              color: nameColor,
-              fontWeight: 'bold'
-            }}>
-              {player.name}
-            </div>
-            <motion.div
-              key={currentHealth}
-              initial={{ scale: 1.5, color: '#dc2626' }}
-              animate={{ scale: 1, color: '#ea580c' }}
-              transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
-              style={{ 
-                color: '#ea580c',
-                fontSize: '20px',
-                fontWeight: 'bold'
-              }}
-            >
-              ❤️ {currentHealth}
-            </motion.div>
-          </div>
-          
-          {/* RuneScore Stats */}
+          flexDirection: 'column'
+        }} onClick={(e) => e.stopPropagation()}>
           <Spellpower
+            playerName={player.name}
+            isActive={isActive}
+            nameColor={nameColor}
+            health={currentHealth}
+            healing={healingAmount}
             essence={essence}
             focus={focus}
             totalPower={totalPower}
