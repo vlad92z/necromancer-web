@@ -129,7 +129,7 @@ export function CenterPool({
             const glowStyle = voidSelectionActive
               ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
               : (isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none');
-            const runeSize = 'min(4.4vmin, 46px)';
+            const runeSize = '60px';
             const motionProps = isSelected
               ? {
                   animate: { scale: [1.08, 1.16, 1.08], y: [-1.5, 1.5, -1.5], rotate: [-1.8, 1.8, -1.8] },
