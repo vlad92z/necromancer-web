@@ -132,17 +132,17 @@ export function Spellpower({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5em', padding: '0.5em 0.75em', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '0.5rem', border: '1px solid rgba(74, 222, 128, 0.25)' }}>
           <StatIcon type="health" color="#4ade80" />
-          <span style={{ color: '#fff' }}>{`+${healing}`}</span>
+          <span style={{ color: '#fff' }}>{`${healing}`}</span>
         </div>
       </div>
 
       {/* Essence / Focus / Spellpower */}
       <div style={{ display: 'flex', gap: '0.5em' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25em', padding: '0.5em', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '0.5rem', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25em', padding: '0.5em', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '0.5rem', border: '1px solid rgba(250, 204, 21, 0.25)' }}>
           <StatIcon type="essence" color="#facc15" />
           <span style={{ color: '#fff' }}>{essence}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25em', padding: '0.5em', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '0.5rem', border: '1px solid rgba(250, 204, 21, 0.25)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25em', padding: '0.5em', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '0.5rem', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
           <StatIcon type="focus" color="#38bdf8" />
           <span style={{ color: '#fff' }}>{focus}</span>
         </div>
