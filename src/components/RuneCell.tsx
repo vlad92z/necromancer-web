@@ -143,9 +143,7 @@ export function RuneCell({
   } : {};
   
   const Container = shouldAnimate ? motion.div : 'div';
-  const glowStyle = true
-              ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
-              : 'none';
+  const glowStyle = '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)';
   return (
     <Container
       {...animationProps}

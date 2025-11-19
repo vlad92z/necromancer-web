@@ -63,7 +63,7 @@ export function Runeforge({
   };
   
   // Determine styling based on state
-  let backgroundColor = '#1c1034';
+  const backgroundColor = '#1c1034';
   let borderColor = 'rgba(255, 255, 255, 0.15)';
   let hoverBackgroundColor = '#251646';
   let boxShadow = '0 8px 24px rgba(0, 0, 0, 0.45)';

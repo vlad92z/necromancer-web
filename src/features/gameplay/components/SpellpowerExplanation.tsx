@@ -1,7 +1,6 @@
 /**
  * SpellpowerExplanation - extracted explanation popup for Spellpower
  */
-import React from 'react';
 
 export interface SpellpowerExplanationProps {
   onClose: () => void;
