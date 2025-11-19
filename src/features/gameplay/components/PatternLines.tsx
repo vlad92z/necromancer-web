@@ -78,9 +78,6 @@ export function PatternLines({
           : placementClickable
             ? (isPlacementTarget ? 'pointer' : 'not-allowed')
             : 'default';
-        const isDimmed = freezeSelectionEnabled
-          ? !(canFreezeLine && freezeClickable)
-          : buttonDisabled;
 
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
         const ariaLabel = freezeSelectionEnabled
