@@ -81,55 +81,50 @@ export function createPlayer(id: string, name: string, type: PlayerType = 'human
 }
 
 /**
- * Create empty factories (for static rendering, no runes yet)
+ * Create empty runeforges for each player
  */
-export function createEmptyFactories(count: number): Runeforge[] {
-  return Array(count)
-    .fill(null)
-    .map((_, index) => ({
-      id: `runeforge-${index}`,
-      runes: [],
-    }));
+export function createEmptyFactories(players: [Player, Player], perPlayerCount: number): Runeforge[] {
+  return players.flatMap((player) =>
+    Array(perPlayerCount)
+      .fill(null)
+      .map((_, index) => ({
+        id: `${player.id}-runeforge-${index + 1}`,
+        ownerId: player.id,
+        runes: [],
+      }))
+  );
 }
 
 /**
- * Fill factories with runes from player decks
- * Each runeforge gets 4 runes: 2 from player 1's deck and 2 from player 2's deck
- * Returns both filled factories and updated decks
+ * Fill runeforges with runes from their owner's deck
+ * Each runeforge pulls only from its owning player's deck
  */
 export function fillFactories(
-  runeforges: Runeforge[], 
-  deck1: Rune[], 
-  deck2: Rune[]
-): { runeforges: Runeforge[], deck1: Rune[], deck2: Rune[] } {
-  // Shuffle each deck separately
-  const shuffledDeck1 = [...deck1].sort(() => Math.random() - 0.5);
-  const shuffledDeck2 = [...deck2].sort(() => Math.random() - 0.5);
-  
-  const filledRuneforges = runeforges.map((runeforge, index) => {
-    // Get 2 runes from each player's deck
-    const startIdx = index * 2;
-    const runesFromPlayer1 = shuffledDeck1.slice(startIdx, startIdx + 2);
-    const runesFromPlayer2 = shuffledDeck2.slice(startIdx, startIdx + 2);
-    
-    // Combine and shuffle the 4 runes for this runeforge
-    const combinedRunes = [...runesFromPlayer1, ...runesFromPlayer2].sort(() => Math.random() - 0.5);
-    
+  runeforges: Runeforge[],
+  playerDecks: Record<string, Rune[]>,
+  runesPerRuneforge: number = 4
+): { runeforges: Runeforge[]; decksByPlayer: Record<string, Rune[]> } {
+  const shuffledDecks: Record<string, Rune[]> = {};
+
+  Object.entries(playerDecks).forEach(([playerId, deck]) => {
+    shuffledDecks[playerId] = [...deck].sort(() => Math.random() - 0.5);
+  });
+
+  const filledRuneforges = runeforges.map((runeforge) => {
+    const ownerDeck = shuffledDecks[runeforge.ownerId] ?? [];
+    const runesToDeal = Math.min(ownerDeck.length, runesPerRuneforge);
+    const runesForForge = ownerDeck.slice(0, runesToDeal);
+    shuffledDecks[runeforge.ownerId] = ownerDeck.slice(runesToDeal);
+
     return {
       ...runeforge,
-      runes: combinedRunes,
+      runes: runesForForge,
     };
   });
-  
-  // Remove used runes from decks (10 runes total: 2 per runeforge × 5 runeforges)
-  const runesUsed = runeforges.length * 2;
-  const remainingDeck1 = shuffledDeck1.slice(runesUsed);
-  const remainingDeck2 = shuffledDeck2.slice(runesUsed);
-  
+
   return {
     runeforges: filledRuneforges,
-    deck1: remainingDeck1,
-    deck2: remainingDeck2,
+    decksByPlayer: shuffledDecks,
   };
 }
 
@@ -141,15 +136,18 @@ export function initializeGame(startingHealth: number = 300): GameState {
   const player1 = createPlayer('player-1', 'Player', 'human', startingHealth);
   const player2 = createPlayer('player-2', 'Opponent', 'ai', startingHealth);
   
-  // For 2 players, Azul uses 5 factories
-  const emptyFactories = createEmptyFactories(5);
+  // Each player gets 3 personal runeforges
+  const emptyFactories = createEmptyFactories([player1, player2], 3);
   
   // Fill factories and get updated decks
-  const { runeforges: filledRuneforges, deck1, deck2 } = fillFactories(emptyFactories, player1.deck, player2.deck);
+  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(emptyFactories, {
+    [player1.id]: player1.deck,
+    [player2.id]: player2.deck,
+  });
   
   // Update player decks with remaining runes
-  player1.deck = deck1;
-  player2.deck = deck2;
+  player1.deck = decksByPlayer[player1.id] ?? [];
+  player2.deck = decksByPlayer[player2.id] ?? [];
   
   return {
     gameStarted: false,
@@ -169,7 +167,10 @@ export function initializeGame(startingHealth: number = 300): GameState {
     roundHistory: [],
     voidEffectPending: false,
     frostEffectPending: false,
-    frozenRuneforges: [],
+    frozenPatternLines: {
+      [player1.id]: [],
+      [player2.id]: [],
+    },
     shouldTriggerEndRound: false,
   };
 }

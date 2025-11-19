@@ -1,5 +1,6 @@
 /**
- * VoidEffectOverlay component - allows player to select a runeforge to destroy with Void effect
+ * VoidEffectOverlay component - legacy UI for resolving the Void effect.
+ * NOTE: The live Void effect now destroys a single rune; update this overlay if re-enabled.
  */
 
 import type { Runeforge } from '../../../types/game';
@@ -75,7 +76,7 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
             lineHeight: '1.6',
           }}
         >
-          Choose a runeforge to destroy all its runes, or skip this effect.
+          Legacy overlay: update to rune-level targeting if the Void effect is handled here again.
         </p>
         
         <div

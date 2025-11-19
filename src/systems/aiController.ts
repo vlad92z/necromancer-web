@@ -4,7 +4,7 @@
  * All timing is handled by component useEffect hooks
  */
 
-import { makeAIMove, chooseRuneforgeToDestroy, chooseRuneforgeToFreeze } from '../utils/aiPlayer';
+import { makeAIMove, chooseVoidRuneTarget, choosePatternLineToFreeze } from '../utils/aiPlayer';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 
 /**
@@ -46,30 +46,32 @@ export function needsAIPlacement(): boolean {
 }
 
 /**
- * Execute AI Void effect (runeforge destruction)
+ * Execute AI Void effect (single rune destruction)
  * Pure function - no setTimeout, timing handled by caller
  */
 export function executeAIVoidEffect() {
   const state = useGameplayStore.getState();
-  const runeforgeToDestroy = chooseRuneforgeToDestroy(state);
+  const runeTarget = chooseVoidRuneTarget(state);
   
-  if (runeforgeToDestroy) {
-    state.destroyRuneforge(runeforgeToDestroy);
+  if (runeTarget) {
+    state.destroyRune(runeTarget);
   } else {
     state.skipVoidEffect();
   }
 }
 
 /**
- * Execute AI Frost effect (runeforge freezing)
+ * Execute AI Frost effect (pattern line freezing)
  * Pure function - no setTimeout, timing handled by caller
  */
 export function executeAIFrostEffect() {
   const state = useGameplayStore.getState();
-  const runeforgeToFreeze = chooseRuneforgeToFreeze(state);
+  const patternLineToFreeze = choosePatternLineToFreeze(state);
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const opponentId = state.players[opponentIndex].id;
   
-  if (runeforgeToFreeze) {
-    state.freezeRuneforge(runeforgeToFreeze);
+  if (patternLineToFreeze !== null) {
+    state.freezePatternLine(opponentId, patternLineToFreeze);
   }
 }
 

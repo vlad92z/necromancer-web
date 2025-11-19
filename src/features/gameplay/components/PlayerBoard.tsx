@@ -20,12 +20,15 @@ interface PlayerBoardProps {
   onCancelSelection?: () => void;
   gameMode: 'classic' | 'standard';
   nameColor: string;
+  frozenPatternLines?: number[];
+  freezeSelectionEnabled?: boolean;
+  onFreezePatternLine?: (patternLineIndex: number) => void;
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -101,6 +104,9 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             onPlaceRunes={onPlaceRunes}
             selectedRuneType={selectedRuneType}
             canPlace={canPlace}
+            frozenLineIndexes={frozenPatternLines}
+            freezeSelectionEnabled={freezeSelectionEnabled}
+            onFreezeLine={onFreezePatternLine}
           />
         </div>
         

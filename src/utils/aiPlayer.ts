@@ -16,7 +16,7 @@
  * 9. Scoring simulation (calculate expected points for each move)
  */
 
-import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall } from '../types/game';
+import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidTarget } from '../types/game';
 import { getWallColumnForRune, calculateWallPower, calculateEffectiveFloorPenalty } from './scoring';
 
 interface DraftMove {
@@ -38,11 +38,22 @@ function countRunes(runes: Rune[], runeType: RuneType): number {
  */
 function getLegalDraftMoves(state: GameState): DraftMove[] {
   const moves: DraftMove[] = [];
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const currentPlayerRuneforges = state.runeforges.filter(runeforge => runeforge.ownerId === currentPlayer.id);
+  const hasAccessibleRuneforges = currentPlayerRuneforges.some(
+    runeforge => runeforge.runes.length > 0
+  );
+  const centerIsEmpty = state.centerPool.length === 0;
+  const canUseOpponentRuneforges = !hasAccessibleRuneforges && centerIsEmpty;
   
   // Get unique rune types from runeforges with counts
-  // Skip frozen runeforges (opponent cannot draft from them)
   state.runeforges.forEach(runeforge => {
-    if (runeforge.runes.length > 0 && !state.frozenRuneforges.includes(runeforge.id)) {
+    if (runeforge.runes.length > 0) {
+      const ownsRuneforge = runeforge.ownerId === currentPlayer.id;
+      if (!ownsRuneforge && !canUseOpponentRuneforges) {
+        return;
+      }
+
       const runeTypes = new Set(runeforge.runes.map(r => r.runeType));
       runeTypes.forEach((runeType: RuneType) => {
         moves.push({ 
@@ -56,7 +67,7 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   });
   
   // Get unique rune types from center with counts
-  if (state.centerPool.length > 0) {
+  if (state.centerPool.length > 0 && !hasAccessibleRuneforges) {
     const runeTypes = new Set(state.centerPool.map(r => r.runeType));
     runeTypes.forEach(runeType => {
       moves.push({ 
@@ -73,7 +84,16 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
 /**
  * Check if a pattern line can accept a specific rune type
  */
-function canPlaceOnLine(line: PatternLine, runeType: RuneType, wall: ScoringWall, lineIndex: number): boolean {
+function canPlaceOnLine(
+  line: PatternLine,
+  runeType: RuneType,
+  wall: ScoringWall,
+  lineIndex: number,
+  frozenLineIndexes: number[] = []
+): boolean {
+  if (frozenLineIndexes.includes(lineIndex)) {
+    return false;
+  }
   // Check if line is already full
   if (line.count >= line.tier) return false;
   
@@ -159,12 +179,13 @@ function evaluatePatternLineNeeds(player: { patternLines: PatternLine[] }): Map<
 function calculateWasteEfficiency(
   move: DraftMove, 
   player: { patternLines: PatternLine[], wall: ScoringWall }, 
-  runeType: RuneType
+  runeType: RuneType,
+  frozenLineIndexes: number[] = []
 ): number {
   let bestEfficiency = -100; // Default: all runes wasted
   
   player.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, runeType, player.wall, lineIndex)) {
+    if (canPlaceOnLine(line, runeType, player.wall, lineIndex, frozenLineIndexes)) {
       const spacesAvailable = line.tier - line.count;
       const wastedRunes = Math.max(0, move.count - spacesAvailable);
       const usedRunes = Math.min(move.count, spacesAvailable);
@@ -310,11 +331,12 @@ function evaluateWithOpponentResponse(state: GameState, move: DraftMove, targetL
   for (const opponentMove of opponentMoves.slice(0, Math.min(5, opponentMoves.length))) {
     // For each opponent move, find their best placement
     const opponentPlayer = simulatedState.players[simulatedState.currentPlayerIndex];
+    const opponentFrozenLines = simulatedState.frozenPatternLines[opponentPlayer.id] ?? [];
     let bestOpponentScore = -Infinity;
     
     for (let lineIdx = 0; lineIdx < 5; lineIdx++) {
       const line = opponentPlayer.patternLines[lineIdx];
-      if (canPlaceOnLine(line, opponentMove.runeType, opponentPlayer.wall, lineIdx)) {
+      if (canPlaceOnLine(line, opponentMove.runeType, opponentPlayer.wall, lineIdx, opponentFrozenLines)) {
         const opponentGain = simulateScoreGain(simulatedState, opponentMove, lineIdx);
         if (opponentGain > bestOpponentScore) {
           bestOpponentScore = opponentGain;
@@ -347,6 +369,7 @@ function evaluateWithOpponentResponse(state: GameState, move: DraftMove, targetL
 function scoreDraftMove(move: DraftMove, state: GameState): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const opponent = state.players[1 - state.currentPlayerIndex];
+  const currentPlayerFrozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   let score = 0;
   
   // Find best line this move could fill
@@ -354,7 +377,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   let minWaste = move.count;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
+    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, currentPlayerFrozenLines)) {
       const spacesNeeded = line.tier - line.count;
       const waste = Math.max(0, move.count - spacesNeeded);
       
@@ -431,7 +454,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   }
   
   // Strategy 7: MEDIUM - Waste efficiency bonus
-  const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType);
+  const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType, currentPlayerFrozenLines);
   score += wasteEfficiency * 0.5; // Scale it down since it's already factored in waste penalty
   
   // Strategy 8: ADVANCED - Scoring simulation
@@ -440,7 +463,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   let bestPlacementScore = -Infinity;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
+    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, currentPlayerFrozenLines)) {
       const placementScore = scorePlacementMove(lineIndex, state);
       if (placementScore > bestPlacementScore) {
         bestPlacementScore = placementScore;
@@ -506,12 +529,17 @@ function scorePlacementMove(
   state: GameState
 ): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   const runeCount = state.selectedRunes.length;
   
   // Floor placement (last resort)
   if (lineIndex === null) {
     // MEDIUM: Floor penalty scales with number of runes wasted
     return -100 - (runeCount * 15);
+  }
+  
+  if (frozenLines.includes(lineIndex)) {
+    return -Infinity;
   }
   
   const line = currentPlayer.patternLines[lineIndex];
@@ -560,6 +588,7 @@ function scorePlacementMove(
 function getLegalPlacementMoves(state: GameState): Array<{ type: 'line' | 'floor', lineIndex?: number }> {
   const moves: Array<{ type: 'line' | 'floor', lineIndex?: number }> = [];
   const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   
   if (state.selectedRunes.length === 0) return moves;
   
@@ -567,7 +596,7 @@ function getLegalPlacementMoves(state: GameState): Array<{ type: 'line' | 'floor
   
   // Check each pattern line
   currentPlayer.patternLines.forEach((line, index) => {
-    if (canPlaceOnLine(line, runeType, currentPlayer.wall, index)) {
+    if (canPlaceOnLine(line, runeType, currentPlayer.wall, index, frozenLines)) {
       moves.push({ type: 'line', lineIndex: index });
     }
   });
@@ -606,123 +635,154 @@ function chooseBestPlacementMove(state: GameState): { type: 'line' | 'floor', li
 }
 
 /**
- * Choose which runeforge to destroy with Void effect
- * Strategy: Destroy the runeforge with the most runes that the opponent needs
+ * Estimate how valuable a rune type is for the opponent.
  */
-export function chooseRuneforgeToDestroy(state: GameState): string | null {
-  const nonEmptyRuneforges = state.runeforges.filter(f => f.runes.length > 0);
-  
-  if (nonEmptyRuneforges.length === 0) {
-    return null; // No runeforges to destroy
-  }
-  
-  const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
-  
-  // Score each runeforge based on how valuable it is to the opponent
-  const scoredRuneforges = nonEmptyRuneforges.map(runeforge => {
-    let score = 0;
-    
-    // Count how many runes the opponent could use from this runeforge
-    const runeTypeCounts = new Map<RuneType, number>();
-    runeforge.runes.forEach((rune: Rune) => {
-      runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
-    });
-    
-    runeTypeCounts.forEach((count, runeType) => {
-      // Check if opponent can use this rune type
-      for (let i = 0; i < opponent.patternLines.length; i++) {
-        const line = opponent.patternLines[i];
-        const row = i;
-        const col = getWallColumnForRune(row, runeType);
-        
-        // Can use if: line is empty or same type, line not full, and not on wall yet
-        if ((line.runeType === null || line.runeType === runeType) &&
-            line.count < line.tier &&
-            opponent.wall[row][col].runeType === null) {
-          // Score based on how many runes opponent could use
-          const spaceAvailable = line.tier - line.count;
-          const usableCount = Math.min(count, spaceAvailable);
-          score += usableCount * 10;
-          
-          // Bonus for completing opponent's line
-          if (line.count + usableCount >= line.tier) {
-            score += 20;
-          }
-          break; // Count this rune type only once
-        }
-      }
-    });
-    
-    // Also consider total rune count (more runes = more options for opponent)
-    score += runeforge.runes.length * 2;
-    
-    return { runeforgeId: runeforge.id, score };
+function calculateOpponentNeedForRune(opponent: Player, runeType: RuneType): number {
+  let bestScore = 0;
+
+  opponent.patternLines.forEach((line, lineIndex) => {
+    // Skip lines that cannot take this rune type
+    if (line.runeType !== null && line.runeType !== runeType) {
+      return;
+    }
+
+    if (line.count >= line.tier) {
+      return;
+    }
+
+    const col = getWallColumnForRune(lineIndex, runeType);
+    if (opponent.wall[lineIndex][col].runeType !== null) {
+      return;
+    }
+
+    const spacesRemaining = line.tier - line.count;
+    let score = 6 + line.tier * 2;
+
+    // Prefer lines that are close to completion
+    if (spacesRemaining === 1) {
+      score += 14;
+    } else {
+      score += Math.max(0, 4 - spacesRemaining) * 2;
+    }
+
+    // Slight bonus for starting empty lines of higher tiers
+    if (line.count === 0) {
+      score += 4 + line.tier;
+    } else {
+      score += line.count * 3;
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+    }
   });
-  
-  // Sort by score descending
-  scoredRuneforges.sort((a, b) => b.score - a.score);
-  
-  return scoredRuneforges[0].runeforgeId;
+
+  return bestScore;
 }
 
 /**
- * AI chooses which runeforge to freeze with Frost effect
- * Strategy: Freeze the runeforge that is most valuable to the opponent
+ * Choose which rune to destroy with the Void effect.
+ * Strategy: Remove the rune that most helps the opponent progress.
  */
-export function chooseRuneforgeToFreeze(state: GameState): string | null {
-  const nonEmptyRuneforges = state.runeforges.filter(f => f.runes.length > 0);
-  
-  if (nonEmptyRuneforges.length === 0) {
-    return null; // No runeforges to freeze
+export function chooseVoidRuneTarget(state: GameState): VoidTarget | null {
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const opponent = state.players[opponentIndex];
+  const currentPlayerId = state.players[state.currentPlayerIndex].id;
+
+  const candidates: Array<{ target: VoidTarget; score: number }> = [];
+
+  state.runeforges.forEach((runeforge) => {
+    runeforge.runes.forEach((rune) => {
+      const needScore = Math.max(2, calculateOpponentNeedForRune(opponent, rune.runeType));
+      let totalScore = needScore;
+
+      if (runeforge.ownerId === opponent.id) {
+        totalScore += 6;
+      } else if (runeforge.ownerId === currentPlayerId) {
+        totalScore -= 4;
+      } else {
+        totalScore += 2;
+      }
+
+      candidates.push({
+        target: { source: 'runeforge', runeforgeId: runeforge.id, runeId: rune.id },
+        score: totalScore,
+      });
+    });
+  });
+
+  state.centerPool.forEach((rune) => {
+    const needScore = Math.max(2, calculateOpponentNeedForRune(opponent, rune.runeType));
+    candidates.push({
+      target: { source: 'center', runeId: rune.id },
+      score: needScore + 4,
+    });
+  });
+
+  if (candidates.length === 0) {
+    return null;
   }
+
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0].target;
+}
+
+/**
+ * AI chooses which opponent pattern line to freeze with Frost effect
+ * Strategy: Freeze lines that are close to completion or high-value tiers
+ */
+export function choosePatternLineToFreeze(state: GameState): number | null {
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const opponent = state.players[opponentIndex];
+  const frozenLines = state.frozenPatternLines[opponent.id] ?? [];
   
-  const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
+  let bestLineIndex: number | null = null;
+  let bestScore = -Infinity;
   
-  // Use same scoring logic as Void effect - freeze the runeforge most valuable to opponent
-  const scoredRuneforges = nonEmptyRuneforges.map(runeforge => {
+  opponent.patternLines.forEach((line, index) => {
+    if (line.count >= line.tier) {
+      return;
+    }
+    if (frozenLines.includes(index)) {
+      return;
+    }
+    
+    const spacesRemaining = line.tier - line.count;
+    const row = index;
+    const runeType = line.runeType;
+    const columnOccupied = runeType ? opponent.wall[row][getWallColumnForRune(row, runeType)].runeType !== null : false;
+    if (columnOccupied) {
+      return;
+    }
+    
     let score = 0;
     
-    // Count how many runes the opponent could use from this runeforge
-    const runeTypeCounts = new Map<RuneType, number>();
-    runeforge.runes.forEach((rune: Rune) => {
-      runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
-    });
+    // Progress on the line matters the most
+    score += line.count * 12;
     
-    runeTypeCounts.forEach((count, runeType) => {
-      // Check if opponent can use this rune type
-      for (let i = 0; i < opponent.patternLines.length; i++) {
-        const line = opponent.patternLines[i];
-        const row = i;
-        const col = getWallColumnForRune(row, runeType);
-        
-        // Can use if: line is empty or same type, line not full, and not on wall yet
-        if ((line.runeType === null || line.runeType === runeType) &&
-            line.count < line.tier &&
-            opponent.wall[row][col].runeType === null) {
-          // Score based on how many runes opponent could use
-          const spaceAvailable = line.tier - line.count;
-          const usableCount = Math.min(count, spaceAvailable);
-          score += usableCount * 10;
-          
-          // Bonus for completing opponent's line
-          if (line.count + usableCount >= line.tier) {
-            score += 20;
-          }
-          break; // Count this rune type only once
-        }
-      }
-    });
+    // High tier lines are more valuable to block
+    score += line.tier * 4;
     
-    // Also consider total rune count (more runes = more options for opponent)
-    score += runeforge.runes.length * 2;
+    // Nearly complete lines get a large bonus
+    if (line.count === line.tier - 1 && line.count > 0) {
+      score += 25;
+    }
     
-    return { runeforgeId: runeforge.id, score };
+    // Lines with established rune type are more disruptive to freeze
+    if (line.runeType !== null) {
+      score += 10;
+    }
+    
+    // Prefer lines that still have room but aren't empty
+    score -= spacesRemaining * 2;
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestLineIndex = index;
+    }
   });
   
-  // Sort by score descending
-  scoredRuneforges.sort((a, b) => b.score - a.score);
-  
-  return scoredRuneforges[0].runeforgeId;
+  return bestLineIndex;
 }
 
 /**

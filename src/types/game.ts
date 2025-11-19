@@ -31,8 +31,16 @@ export interface Rune {
  */
 export interface Runeforge {
   id: string;
+  ownerId: Player['id'];
   runes: Rune[];
 }
+
+/**
+ * Selection target for the Void effect
+ */
+export type VoidTarget =
+  | { source: 'runeforge'; runeforgeId: Runeforge['id']; runeId: Rune['id'] }
+  | { source: 'center'; runeId: Rune['id'] };
 
 /**
  * Pattern line (1-5 tiers, each requiring matching runes to complete)
@@ -140,8 +148,8 @@ export interface GameState {
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringPhase: ScoringPhase; // Current step in round-end scoring animation
   roundHistory: RoundScore[]; // History of completed rounds for game log
-  voidEffectPending: boolean; // Whether Void effect is waiting for runeforge selection
-  frostEffectPending: boolean; // Whether Frost effect is waiting for runeforge selection
-  frozenRuneforges: string[]; // Runeforge IDs that are frozen (opponent cannot draft from them)
+  voidEffectPending: boolean; // Whether Void effect is waiting for rune destruction selection
+  frostEffectPending: boolean; // Whether Frost effect is waiting for pattern line selection
+  frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
 }

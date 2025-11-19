@@ -20,11 +20,11 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
-  const destroyRuneforge = useGameplayStore((state) => state.destroyRuneforge);
-  const freezeRuneforge = useGameplayStore((state) => state.freezeRuneforge);
+  const destroyRune = useGameplayStore((state) => state.destroyRune);
+  const freezePatternLine = useGameplayStore((state) => state.freezePatternLine);
   const endRound = useGameplayStore((state) => state.endRound);
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
   
@@ -58,26 +58,33 @@ export function GameBoard({ gameState }: GameBoardProps) {
     draftFromCenter(runeType);
   };
   
-  const handleRuneforgeClick = (runeforgeId: string) => {
-    // Handle Void effect - clicking runeforge destroys it
-    if (voidEffectPending) {
-      const runeforge = runeforges.find(f => f.id === runeforgeId);
-      // Only allow clicking non-empty runeforges during Void effect
-      if (runeforge && runeforge.runes.length > 0) {
-        destroyRuneforge(runeforgeId);
-      }
+  const opponent = players[1];
+  const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
+  const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
+  const canFreezeOpponentPatternLine = frostEffectPending && currentPlayerIndex === 0;
+
+  const handleFreezePatternLine = (lineIndex: number) => {
+    if (!canFreezeOpponentPatternLine) {
       return;
     }
-    
-    // Handle Frost effect - clicking runeforge freezes it
-    if (frostEffectPending) {
-      const runeforge = runeforges.find(f => f.id === runeforgeId);
-      // Only allow clicking non-empty runeforges during Frost effect
-      if (runeforge && runeforge.runes.length > 0) {
-        freezeRuneforge(runeforgeId);
-      }
+
+    freezePatternLine(opponent.id, lineIndex);
+  };
+
+  const handleVoidRuneFromRuneforge = (runeforgeId: string, runeId: string) => {
+    if (!voidEffectPending) {
       return;
     }
+
+    destroyRune({ source: 'runeforge', runeforgeId, runeId });
+  };
+
+  const handleVoidRuneFromCenter = (runeId: string) => {
+    if (!voidEffectPending) {
+      return;
+    }
+
+    destroyRune({ source: 'center', runeId });
   };
   
   const handleBackgroundClick = () => {
@@ -165,6 +172,9 @@ export function GameBoard({ gameState }: GameBoardProps) {
               opponent={players[1]}
               isActive={currentPlayerIndex === 1}
               gameMode={gameMode}
+              frozenPatternLines={opponentFrozenLines}
+              freezeSelectionEnabled={canFreezeOpponentPatternLine}
+              onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
             />
           </div>
         </div>
@@ -181,54 +191,21 @@ export function GameBoard({ gameState }: GameBoardProps) {
           position: 'relative'
         }}>
           <div style={{ width: '100%', maxWidth: '1200px' }}>
-            {/* Void Effect Message */}
-            {voidEffectPending && !isAITurn && (
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '16px',
-                padding: '12px',
-                backgroundColor: '#7c3aed',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 8px rgba(124, 58, 237, 0.3)',
-                animation: 'pulse 2s infinite'
-              }}>
-                💀 Void Effect: Click a runeforge to destroy it! 💀
-              </div>
-            )}
-            
-            {/* Frost Effect Message */}
-            {frostEffectPending && !isAITurn && (
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '16px',
-                padding: '12px',
-                backgroundColor: '#06b6d4',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 8px rgba(6, 182, 212, 0.3)',
-                animation: 'pulse 2s infinite'
-              }}>
-                ❄️ Frost Effect: Click a runeforge to freeze it! ❄️
-              </div>
-            )}
             
             <RuneforgesAndCenter
               runeforges={runeforges}
               centerPool={centerPool}
+              players={players}
+              currentPlayerId={currentPlayer.id}
               onRuneClick={handleRuneClick}
               onCenterRuneClick={handleCenterRuneClick}
-              onRuneforgeClick={handleRuneforgeClick}
+              onVoidRuneforgeRuneSelect={handleVoidRuneFromRuneforge}
+              onVoidCenterRuneSelect={handleVoidRuneFromCenter}
               isDraftPhase={isDraftPhase}
               hasSelectedRunes={hasSelectedRunes}
               isAITurn={isAITurn}
               voidEffectPending={voidEffectPending}
               frostEffectPending={frostEffectPending}
-              frozenRuneforges={frozenRuneforges}
             />
             
             {/* Selected Runes Display - Overlay */}
@@ -279,6 +256,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
               onCancelSelection={cancelSelection}
               gameMode={gameMode}
+              frozenPatternLines={playerFrozenLines}
               onShowDeck={() => setShowDeckOverlay(true)}
               onShowLog={() => setShowLogOverlay(true)}
               onShowRules={() => setShowRulesOverlay(true)}
