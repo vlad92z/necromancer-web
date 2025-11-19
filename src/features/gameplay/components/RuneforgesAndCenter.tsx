@@ -45,12 +45,12 @@ export function RuneforgesAndCenter({
     (forge) => forge.runes.length > 0
   );
   const centerIsEmpty = centerPool.length === 0;
-  const effectActive = voidEffectPending || frostEffectPending;
-  const canDraftOpponentRuneforges = !effectActive && !hasAccessibleRuneforges && centerIsEmpty;
+  const frostActive = frostEffectPending;
+  const canDraftOpponentRuneforges = !frostActive && !hasAccessibleRuneforges && centerIsEmpty;
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
-    if (effectActive) {
+    if (frostActive) {
       return true;
     }
 
