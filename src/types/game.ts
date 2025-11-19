@@ -1,6 +1,5 @@
 /**
  * Core game types for Massive Spell: Arcane Arena
- * Azul-inspired roguelite deck-building game
  */
 
 /**

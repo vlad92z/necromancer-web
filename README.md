@@ -30,7 +30,8 @@ npm run lint
 ## Core Game Mechanics
 
 ### Drafting & Placement
-- Draft runes from 5 runeforges or center pool (Azul-style)
+- Draft runes from your runeforges
+- Once each players runeforges are empty, draft from the shared pool
 - Place runes in 5-tier pattern lines (capacity 1-5)
 - Complete lines transfer to 5×5 scoring wall
 - Overflow runes go to floor line (penalties)
@@ -131,10 +132,10 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 #### UI/UX Enhancements
 
 ##### Layout & Navigation
-- [ ] Remove the “EMPTY FORGE” placeholder label
-- [ ] Increase component scale to eliminate excess padding
+- [ ] Make better use of available space. Reduce the padding/margins around player boards and drafting view. Increase the size of all UI elements.
+
+##### Theming
 - [ ] Restyle the Game End Screen to match the rest of the app
-- [ ] Remove the Azul-inspired description from the main screen
 - [ ] Add a Quick Play back button that returns to the main menu
 
 ##### Animation & Motion

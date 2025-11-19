@@ -1,6 +1,6 @@
 /**
  * Runeforge component - displays a runeforge with runes
- * Implements Azul-style drafting: click a rune type to select all of that type
+ * Implements drafting: click a rune type to select all of that type
  */
 
 import { useState } from 'react';
@@ -144,8 +144,7 @@ export function Runeforge({
       {...glowMotionProps}
     >
       {displayedRunes.length === 0 ? (
-        <div style={{ color: '#7c8db5', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Empty Forge
+        <div>
         </div>
       ) : (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

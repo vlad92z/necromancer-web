@@ -62,7 +62,7 @@ export function MainMenu() {
   return (
     <div style={containerStyle}>
       <h1 style={titleStyle}>Massive Spell: Arcane Arena</h1>
-      <p style={subtitleStyle}>An Azul-inspired roguelite deck-building duel</p>
+      <p style={subtitleStyle}>A roguelite deck-building duel</p>
       
       <div style={menuStyle}>
         <button
