@@ -135,6 +135,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
           flexDirection: 'column'
         }} onClick={(e) => e.stopPropagation()}>
           <Spellpower
+            playerId={player.id}
             playerName={player.name}
             isActive={isActive}
             nameColor={nameColor}
