@@ -21,12 +21,14 @@ export function SelectedRunesOverlay({ selectedRunes, onCancel, isClassicMode = 
       onClick={onCancel}
     >
       <div style={{
-        backgroundColor: 'rgba(219, 234, 254, 0.95)',
-        border: '2px solid #3b82f6',
-        borderRadius: '12px',
-        padding: '16px',
+        background: 'rgba(17, 7, 31, 0.95)',
+        border: '1px solid rgba(255, 255, 255, 0.18)',
+        borderRadius: '20px',
+        padding: 'min(2vmin, 24px)',
         maxWidth: '36rem',
-        width: 'auto'
+        width: 'auto',
+        boxShadow: '0 30px 80px rgba(5, 0, 15, 0.8)',
+        color: '#f5f3ff'
       }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
           {selectedRunes.map((rune) => (
@@ -40,7 +42,7 @@ export function SelectedRunesOverlay({ selectedRunes, onCancel, isClassicMode = 
           ))}
         </div>
         {runeType && (
-          <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '16px', color: '#475569' }}>
+          <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '16px', color: '#c9c2ff' }}>
             {getRuneEffectDescription(runeType, isClassicMode)}
           </div>
         )}

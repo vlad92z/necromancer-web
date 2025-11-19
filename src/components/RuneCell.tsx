@@ -59,18 +59,18 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   emptyOpacity?: number;
 }> = {
   wall: {
-    border: `2px solid ${COLORS.ui.borderLight}`,
-    background: '#dbeafe', // Light blue background
-    backgroundOccupied: '#fed7aa',
-    emptyOpacity: 0.3,
+    border: `1px solid ${COLORS.ui.borderLight}`,
+    background: '#1c0f2e',
+    backgroundOccupied: '#3f1c5c',
+    emptyOpacity: 0.35,
   },
   pattern: {
-    border: `2px solid ${COLORS.ui.borderLight}`,
-    background: '#dbeafe', // Light blue background
+    border: `1px solid ${COLORS.ui.borderLight}`,
+    background: '#160a29',
   },
   floor: {
-    border: '2px solid #fca5a5',
-    background: '#fef2f2',
+    border: '1px solid rgba(248, 113, 113, 0.6)',
+    background: '#2b0b1f',
   },
   runeforge: {
     border: 'none',
@@ -82,7 +82,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   },
   selected: {
     border: `2px solid ${COLORS.ui.accent}`,
-    background: '#dbeafe',
+    background: '#2c1254',
   },
 };
 
@@ -124,13 +124,13 @@ export function RuneCell({
   
   // Override background for mitigating Wind runes in pattern lines
   if (isWindMitigating) {
-    backgroundColor = '#e0f2fe'; // Light blue background for Wind mitigation
+    backgroundColor = '#1e1c48';
   }
   
   // Override border for mitigating Wind runes in pattern lines
   let borderStyle = variantStyle.border;
   if (isWindMitigating) {
-    borderStyle = '2px solid #38bdf8'; // Blue border for Wind mitigation
+    borderStyle = '2px solid #38bdf8';
   }
   
   // Animate when rune appears in pattern lines, scoring wall, or floor line

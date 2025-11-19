@@ -42,16 +42,16 @@ export function Runeforge({
   };
   
   // Determine styling based on state
-  let backgroundColor = '#e0f2fe';
-  let borderColor = '#bae6fd';
-  let hoverBackgroundColor = '#bae6fd';
-  let boxShadow = 'none';
+  let backgroundColor = '#1c1034';
+  let borderColor = 'rgba(255, 255, 255, 0.15)';
+  let hoverBackgroundColor = '#251646';
+  let boxShadow = '0 8px 24px rgba(0, 0, 0, 0.45)';
   let ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
-  const selectableGlowRest = '0 0 20px rgba(34, 197, 94, 0.75), 0 0 48px rgba(34, 197, 94, 0.35)';
-  const selectableGlowPeak = '0 0 32px rgba(16, 185, 129, 0.95), 0 0 70px rgba(34, 197, 94, 0.55)';
+  const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
+  const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
-  const frostGlowRest = '0 6px 24px rgba(2, 132, 199, 0.9), inset 0 0 8px rgba(6, 182, 212, 0.15)';
-  const frostGlowPeak = '0 10px 34px rgba(56, 189, 248, 1), inset 0 0 14px rgba(6, 182, 212, 0.3)';
+  const frostGlowRest = '0 6px 24px rgba(6, 182, 212, 0.85), inset 0 0 8px rgba(34, 211, 238, 0.25)';
+  const frostGlowPeak = '0 10px 34px rgba(59, 130, 246, 1), inset 0 0 14px rgba(34, 211, 238, 0.4)';
   const frostGlowRange: [string, string] = [frostGlowRest, frostGlowPeak];
   let glowRange: [string, string] | null = null;
   let glowDuration = 1.5;
@@ -59,7 +59,7 @@ export function Runeforge({
   // Normal selectable state (green highlight when player can select)
   const isSelectable = !disabled && !voidEffectPending && !frostEffectPending && runeforge.runes.length > 0 && onRuneClick;
   if (isSelectable) {
-    borderColor = '#22c55e';
+    borderColor = '#c084fc';
     boxShadow = selectableGlowRest;
     glowRange = selectableGlowRange;
     glowDuration = 1.5;
@@ -68,8 +68,8 @@ export function Runeforge({
   // Frost effect styling (cyan)
   if (frostEffectPending && runeforge.runes.length > 0 && !disabled) {
     // Use a dark blue glow instead of changing the background
-    borderColor = '#0891b2';
-    hoverBackgroundColor = '#e0f2fe';
+    borderColor = '#22d3ee';
+    hoverBackgroundColor = '#1c1034';
     boxShadow = frostGlowRest;
     glowRange = frostGlowRange;
     glowDuration = 1.4;
@@ -89,14 +89,14 @@ export function Runeforge({
       style={{
         backgroundColor: backgroundColor,
         borderRadius: '16px',
-        width: '280px',
-        height: '60px',
-        padding: '8px',
+        width: 'min(32vmin, 360px)',
+        height: 'min(7.5vmin, 84px)',
+        padding: 'min(1vmin, 12px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.2s',
-        border: `2px solid ${borderColor}`,
+        border: `1px solid ${borderColor}`,
         cursor: (disabled || runeforge.runes.length === 0)
           ? 'not-allowed'
           : (voidEffectPending ? 'default' : 'pointer'),
@@ -119,21 +119,21 @@ export function Runeforge({
       {...glowMotionProps}
     >
       {runeforge.runes.length === 0 ? (
-        <div style={{ color: '#64748b', fontSize: '14px' }}>
-          
+        <div style={{ color: '#7c8db5', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          Empty Forge
         </div>
       ) : (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: 'min(1.4vmin, 14px)', alignItems: 'center', justifyContent: 'center' }}>
             {runeforge.runes.map((rune) => {
               const isHighlighted = hoveredRuneType === rune.runeType;
-              const baseSize = 56;
+              const baseSize = 'min(5.6vmin, 56px)';
               return (
                 <div
                   key={rune.id}
                   style={{
-                    width: `${baseSize}px`,
-                    height: `${baseSize}px`,
+                    width: baseSize,
+                    height: baseSize,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

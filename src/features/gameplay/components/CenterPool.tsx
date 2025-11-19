@@ -62,7 +62,12 @@ export function CenterPool({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: `30px`
+          gap: 'min(1.8vmin, 30px)',
+          padding: 'min(1vmin, 16px)',
+          borderRadius: '28px',
+          background: totalRunes === 0 ? 'transparent' : 'rgba(12, 6, 29, 0.85)',
+          border: totalRunes === 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: totalRunes === 0 ? 'none' : '0 25px 45px rgba(2, 6, 23, 0.6)',
         }}>
           {centerPool.map((rune) => {
             const isHighlighted = hoveredRuneType === rune.runeType;
@@ -70,6 +75,7 @@ export function CenterPool({
             const glowStyle = voidSelectionActive
               ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
               : 'none';
+            const runeSize = 'min(4.4vmin, 46px)';
 
             // Map rune types to assets (kept local to avoid changing RuneCell)
             const RUNE_ASSETS: Record<string, string> = {
@@ -86,8 +92,8 @@ export function CenterPool({
               <div
                 key={rune.id}
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: runeSize,
+                  height: runeSize,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -96,7 +102,8 @@ export function CenterPool({
                   transition: 'transform 0.16s ease, filter 0.16s ease, box-shadow 0.2s ease',
                   transform: `scale(${scale})`,
                   boxShadow: glowStyle,
-                  borderRadius: '50%'
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(9, 4, 30, 0.82)'
                 }}
                 onClick={(e) => handleRuneClick(e, rune)}
                 onMouseEnter={() => !centerDisabled && !voidSelectionActive && setHoveredRuneType(rune.runeType)}
@@ -105,7 +112,7 @@ export function CenterPool({
                 <img
                     src={runeImage}
                     alt={`${rune.runeType} rune`}
-                    style={{width: '40px', height: '40px'}}
+                    style={{width: runeSize, height: runeSize}}
                   />
               </div>
             );
