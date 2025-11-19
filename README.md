@@ -130,19 +130,10 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### UI/UX Enhancements
 
-##### Pattern Lines & Scoring Wall
-- [ ] Render pattern line runes fully opaque
-- [ ] Improve the Pattern Line Freeze visual (add a frost emoji to each frozen cell instead of at the end of the line)
-- [ ] Apply the connected-segment styling to cells that will be filled this turn
-- [ ] Healing counted in the Spellpower view should include scoring wall runes and completed pattern lines.
-
 ##### Status & Guidance
 - [ ] Show tooltips for health, healing, focus, essence, and spellpower; click should reveal expanded details
 - [ ] Turn the focus indicator red while overloaded runes exist
-- [ ] Add bottom guidance text that explains next actions and selected rune effects
 - [ ] Make the active player emphasis stronger
-- [ ] Active player indicator with pulsing dot and "Your Turn" label
-- [ ] Dim opponent's board during other player's turn
 
 ##### Layout & Navigation
 - [ ] Remove the “EMPTY FORGE” placeholder label
