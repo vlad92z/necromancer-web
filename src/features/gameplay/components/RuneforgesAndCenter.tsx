@@ -88,7 +88,7 @@ export function RuneforgesAndCenter({
   };
 
   const renderRuneforgeRow = (owner: Player, ownedRuneforges: RuneforgeType[], align: 'flex-start' | 'center' | 'flex-end') => (
-    <div key={owner.id} style={{ marginBottom: '16px' }}>
+    <div key={owner.id} style={{ marginBottom: '16px', width: '100%' }}>
       <div style={{ 
         display: 'flex', 
         justifyContent: align, 
@@ -121,9 +121,20 @@ export function RuneforgesAndCenter({
   );
   
   return (
-    <div style={{ position: 'relative', padding: '8px 0 24px' }}>
+    <div
+      style={{
+        position: 'relative',
+        padding: '8px 0',
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
       {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
-      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px' }}>
+      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px', width: '100%' }}>
         <CenterPool 
           centerPool={centerPool}
           onRuneClick={onCenterRuneClick}
