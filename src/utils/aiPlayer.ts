@@ -84,7 +84,16 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
 /**
  * Check if a pattern line can accept a specific rune type
  */
-function canPlaceOnLine(line: PatternLine, runeType: RuneType, wall: ScoringWall, lineIndex: number): boolean {
+function canPlaceOnLine(
+  line: PatternLine,
+  runeType: RuneType,
+  wall: ScoringWall,
+  lineIndex: number,
+  frozenLineIndexes: number[] = []
+): boolean {
+  if (frozenLineIndexes.includes(lineIndex)) {
+    return false;
+  }
   // Check if line is already full
   if (line.count >= line.tier) return false;
   
@@ -170,12 +179,13 @@ function evaluatePatternLineNeeds(player: { patternLines: PatternLine[] }): Map<
 function calculateWasteEfficiency(
   move: DraftMove, 
   player: { patternLines: PatternLine[], wall: ScoringWall }, 
-  runeType: RuneType
+  runeType: RuneType,
+  frozenLineIndexes: number[] = []
 ): number {
   let bestEfficiency = -100; // Default: all runes wasted
   
   player.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, runeType, player.wall, lineIndex)) {
+    if (canPlaceOnLine(line, runeType, player.wall, lineIndex, frozenLineIndexes)) {
       const spacesAvailable = line.tier - line.count;
       const wastedRunes = Math.max(0, move.count - spacesAvailable);
       const usedRunes = Math.min(move.count, spacesAvailable);
@@ -321,11 +331,12 @@ function evaluateWithOpponentResponse(state: GameState, move: DraftMove, targetL
   for (const opponentMove of opponentMoves.slice(0, Math.min(5, opponentMoves.length))) {
     // For each opponent move, find their best placement
     const opponentPlayer = simulatedState.players[simulatedState.currentPlayerIndex];
+    const opponentFrozenLines = simulatedState.frozenPatternLines[opponentPlayer.id] ?? [];
     let bestOpponentScore = -Infinity;
     
     for (let lineIdx = 0; lineIdx < 5; lineIdx++) {
       const line = opponentPlayer.patternLines[lineIdx];
-      if (canPlaceOnLine(line, opponentMove.runeType, opponentPlayer.wall, lineIdx)) {
+      if (canPlaceOnLine(line, opponentMove.runeType, opponentPlayer.wall, lineIdx, opponentFrozenLines)) {
         const opponentGain = simulateScoreGain(simulatedState, opponentMove, lineIdx);
         if (opponentGain > bestOpponentScore) {
           bestOpponentScore = opponentGain;
@@ -358,6 +369,7 @@ function evaluateWithOpponentResponse(state: GameState, move: DraftMove, targetL
 function scoreDraftMove(move: DraftMove, state: GameState): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const opponent = state.players[1 - state.currentPlayerIndex];
+  const currentPlayerFrozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   let score = 0;
   
   // Find best line this move could fill
@@ -365,7 +377,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   let minWaste = move.count;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
+    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, currentPlayerFrozenLines)) {
       const spacesNeeded = line.tier - line.count;
       const waste = Math.max(0, move.count - spacesNeeded);
       
@@ -442,7 +454,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   }
   
   // Strategy 7: MEDIUM - Waste efficiency bonus
-  const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType);
+  const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType, currentPlayerFrozenLines);
   score += wasteEfficiency * 0.5; // Scale it down since it's already factored in waste penalty
   
   // Strategy 8: ADVANCED - Scoring simulation
@@ -451,7 +463,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   let bestPlacementScore = -Infinity;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
+    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, currentPlayerFrozenLines)) {
       const placementScore = scorePlacementMove(lineIndex, state);
       if (placementScore > bestPlacementScore) {
         bestPlacementScore = placementScore;
@@ -517,12 +529,17 @@ function scorePlacementMove(
   state: GameState
 ): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   const runeCount = state.selectedRunes.length;
   
   // Floor placement (last resort)
   if (lineIndex === null) {
     // MEDIUM: Floor penalty scales with number of runes wasted
     return -100 - (runeCount * 15);
+  }
+  
+  if (frozenLines.includes(lineIndex)) {
+    return -Infinity;
   }
   
   const line = currentPlayer.patternLines[lineIndex];
@@ -571,6 +588,7 @@ function scorePlacementMove(
 function getLegalPlacementMoves(state: GameState): Array<{ type: 'line' | 'floor', lineIndex?: number }> {
   const moves: Array<{ type: 'line' | 'floor', lineIndex?: number }> = [];
   const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   
   if (state.selectedRunes.length === 0) return moves;
   
@@ -578,7 +596,7 @@ function getLegalPlacementMoves(state: GameState): Array<{ type: 'line' | 'floor
   
   // Check each pattern line
   currentPlayer.patternLines.forEach((line, index) => {
-    if (canPlaceOnLine(line, runeType, currentPlayer.wall, index)) {
+    if (canPlaceOnLine(line, runeType, currentPlayer.wall, index, frozenLines)) {
       moves.push({ type: 'line', lineIndex: index });
     }
   });

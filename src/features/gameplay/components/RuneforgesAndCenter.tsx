@@ -50,8 +50,12 @@ export function RuneforgesAndCenter({
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
-    if (frostActive) {
+    if (frostActive && !voidEffectPending) {
       return true;
+    }
+
+    if (voidEffectPending) {
+      return false;
     }
 
     const baseDisabled = !isDraftPhase || hasSelectedRunes || isAITurn;
