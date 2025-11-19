@@ -13,7 +13,6 @@ interface RuneforgesAndCenterProps {
   currentPlayerId: Player['id'];
   onRuneClick: (runeforgeId: string, runeType: RuneType) => void;
   onCenterRuneClick: (runeType: RuneType) => void;
-  onRuneforgeClick: (runeforgeId: string) => void;
   onVoidRuneforgeRuneSelect: (runeforgeId: string, runeId: string) => void;
   onVoidCenterRuneSelect: (runeId: string) => void;
   isDraftPhase: boolean;
@@ -21,7 +20,6 @@ interface RuneforgesAndCenterProps {
   isAITurn: boolean;
   voidEffectPending: boolean;
   frostEffectPending: boolean;
-  frozenRuneforges: string[];
 }
 
 export function RuneforgesAndCenter({ 
@@ -31,22 +29,20 @@ export function RuneforgesAndCenter({
   currentPlayerId,
   onRuneClick,
   onCenterRuneClick,
-  onRuneforgeClick, 
   onVoidRuneforgeRuneSelect,
   onVoidCenterRuneSelect,
   isDraftPhase, 
   hasSelectedRunes, 
   isAITurn,
   voidEffectPending,
-  frostEffectPending,
-  frozenRuneforges
+  frostEffectPending
 }: RuneforgesAndCenterProps) {
   const [player, opponent] = players;
   const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
   const opponentRuneforges = runeforges.filter((forge) => forge.ownerId === opponent.id);
   const currentPlayerRuneforges = runeforges.filter((forge) => forge.ownerId === currentPlayerId);
   const hasAccessibleRuneforges = currentPlayerRuneforges.some(
-    (forge) => forge.runes.length > 0 && !frozenRuneforges.includes(forge.id)
+    (forge) => forge.runes.length > 0
   );
   const centerIsEmpty = centerPool.length === 0;
   const effectActive = voidEffectPending || frostEffectPending;
@@ -55,16 +51,10 @@ export function RuneforgesAndCenter({
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
     if (effectActive) {
-      if (isAITurn) {
-        return true;
-      }
-      if (frostEffectPending && forge.ownerId === currentPlayerId) {
-        return true;
-      }
-      return false;
+      return true;
     }
 
-    const baseDisabled = !isDraftPhase || hasSelectedRunes || isAITurn || frozenRuneforges.includes(forge.id);
+    const baseDisabled = !isDraftPhase || hasSelectedRunes || isAITurn;
     if (baseDisabled) {
       return true;
     }
@@ -89,12 +79,10 @@ export function RuneforgesAndCenter({
             key={runeforge.id} 
             runeforge={runeforge}
             onRuneClick={onRuneClick}
-            onRuneforgeClick={onRuneforgeClick}
             onVoidRuneSelect={onVoidRuneforgeRuneSelect}
             disabled={getDisabledState(runeforge)}
             voidEffectPending={voidEffectPending}
             frostEffectPending={frostEffectPending}
-            isFrozen={frozenRuneforges.includes(runeforge.id)}
           />
         ))}
       </div>

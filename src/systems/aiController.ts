@@ -4,7 +4,7 @@
  * All timing is handled by component useEffect hooks
  */
 
-import { makeAIMove, chooseVoidRuneTarget, chooseRuneforgeToFreeze } from '../utils/aiPlayer';
+import { makeAIMove, chooseVoidRuneTarget, choosePatternLineToFreeze } from '../utils/aiPlayer';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 
 /**
@@ -61,15 +61,17 @@ export function executeAIVoidEffect() {
 }
 
 /**
- * Execute AI Frost effect (runeforge freezing)
+ * Execute AI Frost effect (pattern line freezing)
  * Pure function - no setTimeout, timing handled by caller
  */
 export function executeAIFrostEffect() {
   const state = useGameplayStore.getState();
-  const runeforgeToFreeze = chooseRuneforgeToFreeze(state);
+  const patternLineToFreeze = choosePatternLineToFreeze(state);
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const opponentId = state.players[opponentIndex].id;
   
-  if (runeforgeToFreeze) {
-    state.freezeRuneforge(runeforgeToFreeze);
+  if (patternLineToFreeze !== null) {
+    state.freezePatternLine(opponentId, patternLineToFreeze);
   }
 }
 

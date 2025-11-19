@@ -42,7 +42,7 @@ export function getRuneEffectDescription(runeType: RuneType, isClassicMode: bool
   
   const descriptions: Record<RuneType, string> = {
     Fire: 'Each Fire rune on your wall adds +1 Essence',
-    Frost: 'Freeze one runeforge after placing',
+    Frost: 'Freeze an opponent pattern line after placing',
     Life: 'Each Life rune on your wall heals you every round',
     Void: 'Destroy a single rune from any runeforge or the center when placing',
     Wind: 'Wind runes in pattern lines cancel one floor penalty each',

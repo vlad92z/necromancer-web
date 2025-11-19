@@ -41,15 +41,14 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const currentPlayerRuneforges = state.runeforges.filter(runeforge => runeforge.ownerId === currentPlayer.id);
   const hasAccessibleRuneforges = currentPlayerRuneforges.some(
-    runeforge => runeforge.runes.length > 0 && !state.frozenRuneforges.includes(runeforge.id)
+    runeforge => runeforge.runes.length > 0
   );
   const centerIsEmpty = state.centerPool.length === 0;
   const canUseOpponentRuneforges = !hasAccessibleRuneforges && centerIsEmpty;
   
   // Get unique rune types from runeforges with counts
-  // Skip frozen runeforges (opponent cannot draft from them)
   state.runeforges.forEach(runeforge => {
-    if (runeforge.runes.length > 0 && !state.frozenRuneforges.includes(runeforge.id)) {
+    if (runeforge.runes.length > 0) {
       const ownsRuneforge = runeforge.ownerId === currentPlayer.id;
       if (!ownsRuneforge && !canUseOpponentRuneforges) {
         return;
@@ -711,64 +710,61 @@ export function chooseVoidRuneTarget(state: GameState): VoidTarget | null {
 }
 
 /**
- * AI chooses which runeforge to freeze with Frost effect
- * Strategy: Freeze the runeforge that is most valuable to the opponent
+ * AI chooses which opponent pattern line to freeze with Frost effect
+ * Strategy: Freeze lines that are close to completion or high-value tiers
  */
-export function chooseRuneforgeToFreeze(state: GameState): string | null {
-  const opponent = state.players[state.currentPlayerIndex === 0 ? 1 : 0];
-  const nonEmptyRuneforges = state.runeforges.filter(
-    (f) => f.ownerId === opponent.id && f.runes.length > 0
-  );
+export function choosePatternLineToFreeze(state: GameState): number | null {
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const opponent = state.players[opponentIndex];
+  const frozenLines = state.frozenPatternLines[opponent.id] ?? [];
   
-  if (nonEmptyRuneforges.length === 0) {
-    return null; // No runeforges to freeze
-  }
+  let bestLineIndex: number | null = null;
+  let bestScore = -Infinity;
   
-  // Score each runeforge based on how valuable it is to the opponent
-  const scoredRuneforges = nonEmptyRuneforges.map(runeforge => {
+  opponent.patternLines.forEach((line, index) => {
+    if (line.count >= line.tier) {
+      return;
+    }
+    if (frozenLines.includes(index)) {
+      return;
+    }
+    
+    const spacesRemaining = line.tier - line.count;
+    const row = index;
+    const runeType = line.runeType;
+    const columnOccupied = runeType ? opponent.wall[row][getWallColumnForRune(row, runeType)].runeType !== null : false;
+    if (columnOccupied) {
+      return;
+    }
+    
     let score = 0;
     
-    // Count how many runes the opponent could use from this runeforge
-    const runeTypeCounts = new Map<RuneType, number>();
-    runeforge.runes.forEach((rune: Rune) => {
-      runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) || 0) + 1);
-    });
+    // Progress on the line matters the most
+    score += line.count * 12;
     
-    runeTypeCounts.forEach((count, runeType) => {
-      // Check if opponent can use this rune type
-      for (let i = 0; i < opponent.patternLines.length; i++) {
-        const line = opponent.patternLines[i];
-        const row = i;
-        const col = getWallColumnForRune(row, runeType);
-        
-        // Can use if: line is empty or same type, line not full, and not on wall yet
-        if ((line.runeType === null || line.runeType === runeType) &&
-            line.count < line.tier &&
-            opponent.wall[row][col].runeType === null) {
-          // Score based on how many runes opponent could use
-          const spaceAvailable = line.tier - line.count;
-          const usableCount = Math.min(count, spaceAvailable);
-          score += usableCount * 10;
-          
-          // Bonus for completing opponent's line
-          if (line.count + usableCount >= line.tier) {
-            score += 20;
-          }
-          break; // Count this rune type only once
-        }
-      }
-    });
+    // High tier lines are more valuable to block
+    score += line.tier * 4;
     
-    // Also consider total rune count (more runes = more options for opponent)
-    score += runeforge.runes.length * 2;
+    // Nearly complete lines get a large bonus
+    if (line.count === line.tier - 1 && line.count > 0) {
+      score += 25;
+    }
     
-    return { runeforgeId: runeforge.id, score };
+    // Lines with established rune type are more disruptive to freeze
+    if (line.runeType !== null) {
+      score += 10;
+    }
+    
+    // Prefer lines that still have room but aren't empty
+    score -= spacesRemaining * 2;
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestLineIndex = index;
+    }
   });
   
-  // Sort by score descending
-  scoredRuneforges.sort((a, b) => b.score - a.score);
-  
-  return scoredRuneforges[0].runeforgeId;
+  return bestLineIndex;
 }
 
 /**

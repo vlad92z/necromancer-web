@@ -31,7 +31,7 @@ interface GameplayStore extends GameState {
   cancelSelection: () => void;
   destroyRune: (target: VoidTarget) => void;
   skipVoidEffect: () => void;
-  freezeRuneforge: (runeforgeId: string) => void;
+  freezePatternLine: (playerId: string, patternLineIndex: number) => void;
   endRound: () => void;
   resetGame: () => void;
   processScoringStep: () => void;
@@ -44,12 +44,6 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType) => {
     set((state) => {
-      // Check if runeforge is frozen (opponent cannot draft from it)
-      if (state.frozenRuneforges.includes(runeforgeId)) {
-        console.log(`Runeforge ${runeforgeId} is frozen - cannot draft`);
-        return state;
-      }
-
       const currentPlayer = state.players[state.currentPlayerIndex];
       // Find the runeforge
       const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
@@ -58,7 +52,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       const ownsRuneforge = runeforge.ownerId === currentPlayer.id;
       const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
       const hasAccessibleRuneforges = playerRuneforges.some(
-        (f) => f.runes.length > 0 && !state.frozenRuneforges.includes(f.id)
+        (f) => f.runes.length > 0
       );
       const centerIsEmpty = state.centerPool.length === 0;
       const canDraftOpponentRuneforge = !ownsRuneforge && !hasAccessibleRuneforges && centerIsEmpty;
@@ -82,17 +76,12 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // Move remaining runes to center pool
       const updatedCenterPool = [...state.centerPool, ...remainingRunes];
       
-      // Clear frozen runeforges after opponent makes their draft
-      // (Frost effect lasts only for opponent's next turn)
-      const clearedFrozenRuneforges: string[] = [];
-      
       return {
         ...state,
         runeforges: updatedRuneforges,
         centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes },
-        frozenRuneforges: clearedFrozenRuneforges,
       };
     });
   },
@@ -102,7 +91,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       const currentPlayer = state.players[state.currentPlayerIndex];
       const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
       const hasAccessibleRuneforges = playerRuneforges.some(
-        (f) => f.runes.length > 0 && !state.frozenRuneforges.includes(f.id)
+        (f) => f.runes.length > 0
       );
 
       if (hasAccessibleRuneforges) {
@@ -116,15 +105,11 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
       
-      // Clear frozen runeforges after opponent makes their draft
-      const clearedFrozenRuneforges: string[] = [];
-      
       return {
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'center' },
-        frozenRuneforges: clearedFrozenRuneforges,
       };
     });
   },
@@ -138,6 +123,14 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       
       const currentPlayer = state.players[currentPlayerIndex];
       const patternLine = currentPlayer.patternLines[patternLineIndex];
+      if (!patternLine) {
+        return state;
+      }
+      const frozenLinesForPlayer = state.frozenPatternLines[currentPlayer.id] ?? [];
+      if (frozenLinesForPlayer.includes(patternLineIndex)) {
+        console.log(`Pattern line ${patternLineIndex + 1} is frozen - cannot place runes`);
+        return state;
+      }
       const runeType = selectedRunes[0].runeType;
       
       // Validation: Pattern line must be empty or have same rune type
@@ -190,18 +183,25 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
+      // Clear any frozen lines affecting this player after they complete placement
+      const updatedFrozenPatternLines = {
+        ...state.frozenPatternLines,
+        [currentPlayer.id]: [],
+      };
+      
       // Check if Void runes were placed (Void effect: destroy a single rune)
       const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
       const hasVoidTargets = state.runeforges.some(f => f.runes.length > 0) || state.centerPool.length > 0;
       
-      // Check if Frost runes were placed (Frost effect: freeze a runeforge)
+      // Check if Frost runes were placed (Frost effect: freeze an opponent pattern line)
       const hasFrostRunes = selectedRunes.some(rune => rune.runeType === 'Frost');
       const opponentIndex = currentPlayerIndex === 0 ? 1 : 0;
       const opponentId = state.players[opponentIndex].id;
-      const opponentActiveRuneforges = state.runeforges.filter(
-        (f) => f.ownerId === opponentId && f.runes.length > 0
+      const opponentPatternLines = state.players[opponentIndex].patternLines;
+      const frozenOpponentLines = state.frozenPatternLines[opponentId] ?? [];
+      const canTriggerFrostEffect = opponentPatternLines.some(
+        (line, index) => line.count < line.tier && !frozenOpponentLines.includes(index)
       );
-      const canTriggerFrostEffect = opponentActiveRuneforges.length > 1;
       
       // Check if round should end (all runeforges and center empty)
       const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
@@ -222,6 +222,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
           turnPhase: 'draft' as const,
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           voidEffectPending: true, // Wait for runeforge selection
+          frozenPatternLines: updatedFrozenPatternLines,
         };
       }
       
@@ -236,6 +237,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
           turnPhase: 'draft' as const,
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           frostEffectPending: true, // Wait for runeforge selection
+          frozenPatternLines: updatedFrozenPatternLines,
         };
       }
       
@@ -250,6 +252,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
+        frozenPatternLines: updatedFrozenPatternLines,
       };
     });
   },
@@ -262,6 +265,10 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       if (selectedRunes.length === 0) return state;
       
       const currentPlayer = state.players[currentPlayerIndex];
+      const updatedFrozenPatternLines = {
+        ...state.frozenPatternLines,
+        [currentPlayer.id]: [],
+      };
       
       // Add all selected runes to floor line
       const updatedFloorLine = {
@@ -295,6 +302,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
+        frozenPatternLines: updatedFrozenPatternLines,
       };
     });
   },
@@ -425,32 +433,35 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
     });
   },
   
-  freezeRuneforge: (runeforgeId: string) => {
+  freezePatternLine: (playerId: string, patternLineIndex: number) => {
     set((state) => {
-      // Frost effect: freeze the selected runeforge (opponent cannot draft from it)
+      // Frost effect: freeze the selected opponent pattern line
       if (!state.frostEffectPending) return state;
 
       const currentPlayer = state.players[state.currentPlayerIndex];
-      const targetRuneforge = state.runeforges.find((f) => f.id === runeforgeId);
-      if (!targetRuneforge) {
+      if (playerId === currentPlayer.id) {
         return state;
       }
-
-      // Only allow freezing opponent runeforges
-      if (targetRuneforge.ownerId === currentPlayer.id) {
+      const targetPlayer = state.players.find((player) => player.id === playerId);
+      if (!targetPlayer) {
         return state;
       }
-
-      if (targetRuneforge.runes.length === 0) {
+      const targetLine = targetPlayer.patternLines[patternLineIndex];
+      if (!targetLine) {
+        return state;
+      }
+      const isLineFull = targetLine.count >= targetLine.tier;
+      const currentFrozen = state.frozenPatternLines[playerId] ?? [];
+      if (isLineFull || currentFrozen.includes(patternLineIndex)) {
         return state;
       }
       
-      // Add runeforge to frozen list
-      const updatedFrozenRuneforges = state.frozenRuneforges.includes(runeforgeId)
-        ? state.frozenRuneforges
-        : [...state.frozenRuneforges, runeforgeId];
+      const updatedFrozenPatternLines = {
+        ...state.frozenPatternLines,
+        [playerId]: [...currentFrozen, patternLineIndex],
+      };
       
-      // Switch to next player after runeforge is frozen
+      // Switch to next player after pattern line is frozen
       const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
       
       // Check if round should end
@@ -460,7 +471,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       
       return {
         ...state,
-        frozenRuneforges: updatedFrozenRuneforges,
+        frozenPatternLines: updatedFrozenPatternLines,
         frostEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),

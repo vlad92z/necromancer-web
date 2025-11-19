@@ -20,11 +20,11 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenRuneforges, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
-  const freezeRuneforge = useGameplayStore((state) => state.freezeRuneforge);
+  const freezePatternLine = useGameplayStore((state) => state.freezePatternLine);
   const endRound = useGameplayStore((state) => state.endRound);
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
   
@@ -58,16 +58,17 @@ export function GameBoard({ gameState }: GameBoardProps) {
     draftFromCenter(runeType);
   };
   
-  const handleRuneforgeClick = (runeforgeId: string) => {
-    // Handle Frost effect - clicking runeforge freezes it
-    if (frostEffectPending) {
-      const runeforge = runeforges.find(f => f.id === runeforgeId);
-      // Only allow freezing opponent runeforges with runes
-      if (runeforge && runeforge.runes.length > 0 && runeforge.ownerId !== currentPlayer.id) {
-        freezeRuneforge(runeforgeId);
-      }
+  const opponent = players[1];
+  const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
+  const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
+  const canFreezeOpponentPatternLine = frostEffectPending && currentPlayerIndex === 0;
+
+  const handleFreezePatternLine = (lineIndex: number) => {
+    if (!canFreezeOpponentPatternLine) {
       return;
     }
+
+    freezePatternLine(opponent.id, lineIndex);
   };
 
   const handleVoidRuneFromRuneforge = (runeforgeId: string, runeId: string) => {
@@ -171,6 +172,9 @@ export function GameBoard({ gameState }: GameBoardProps) {
               opponent={players[1]}
               isActive={currentPlayerIndex === 1}
               gameMode={gameMode}
+              frozenPatternLines={opponentFrozenLines}
+              freezeSelectionEnabled={canFreezeOpponentPatternLine}
+              onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
             />
           </div>
         </div>
@@ -195,7 +199,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
               currentPlayerId={currentPlayer.id}
               onRuneClick={handleRuneClick}
               onCenterRuneClick={handleCenterRuneClick}
-              onRuneforgeClick={handleRuneforgeClick}
               onVoidRuneforgeRuneSelect={handleVoidRuneFromRuneforge}
               onVoidCenterRuneSelect={handleVoidRuneFromCenter}
               isDraftPhase={isDraftPhase}
@@ -203,7 +206,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
               isAITurn={isAITurn}
               voidEffectPending={voidEffectPending}
               frostEffectPending={frostEffectPending}
-              frozenRuneforges={frozenRuneforges}
             />
             
             {/* Selected Runes Display - Overlay */}
@@ -254,6 +256,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
               onCancelSelection={cancelSelection}
               gameMode={gameMode}
+              frozenPatternLines={playerFrozenLines}
               onShowDeck={() => setShowDeckOverlay(true)}
               onShowLog={() => setShowLogOverlay(true)}
               onShowRules={() => setShowRulesOverlay(true)}

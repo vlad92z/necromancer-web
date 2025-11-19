@@ -167,7 +167,10 @@ export function initializeGame(startingHealth: number = 300): GameState {
     roundHistory: [],
     voidEffectPending: false,
     frostEffectPending: false,
-    frozenRuneforges: [],
+    frozenPatternLines: {
+      [player1.id]: [],
+      [player2.id]: [],
+    },
     shouldTriggerEndRound: false,
   };
 }

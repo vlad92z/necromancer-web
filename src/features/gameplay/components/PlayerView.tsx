@@ -14,6 +14,7 @@ interface PlayerViewProps {
   canPlace: boolean;
   onCancelSelection: () => void;
   gameMode: 'classic' | 'standard';
+  frozenPatternLines: number[];
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
@@ -28,6 +29,7 @@ export function PlayerView({
   canPlace,
   onCancelSelection,
   gameMode,
+  frozenPatternLines,
   onShowDeck,
   onShowLog,
   onShowRules,
@@ -44,6 +46,7 @@ export function PlayerView({
         onCancelSelection={onCancelSelection}
         gameMode={gameMode}
         nameColor="#0c4a6e"
+        frozenPatternLines={frozenPatternLines}
         onShowDeck={onShowDeck}
         onShowLog={onShowLog}
         onShowRules={onShowRules}

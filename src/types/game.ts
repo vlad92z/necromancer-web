@@ -149,7 +149,7 @@ export interface GameState {
   scoringPhase: ScoringPhase; // Current step in round-end scoring animation
   roundHistory: RoundScore[]; // History of completed rounds for game log
   voidEffectPending: boolean; // Whether Void effect is waiting for rune destruction selection
-  frostEffectPending: boolean; // Whether Frost effect is waiting for runeforge selection
-  frozenRuneforges: string[]; // Runeforge IDs that are frozen (opponent cannot draft from them)
+  frostEffectPending: boolean; // Whether Frost effect is waiting for pattern line selection
+  frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
 }
