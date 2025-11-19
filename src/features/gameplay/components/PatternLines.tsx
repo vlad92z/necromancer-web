@@ -106,9 +106,7 @@ export function PatternLines({
               gap: '4px',
               width: '100%',
               cursor: cursorStyle,
-              backgroundColor: isFrozen
-                ? 'rgba(168, 132, 255, 0.16)'
-                : (isDimmed ? 'rgba(15, 23, 42, 0.45)' : 'transparent'),
+              backgroundColor: 'transparent',
               border: 'none',
               padding: 0,
               borderRadius: '8px',
