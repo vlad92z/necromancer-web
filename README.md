@@ -130,12 +130,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### UI/UX Enhancements
 
-##### Status & Guidance
-- [ ] Show tooltips for health, healing, focus, essence, and spellpower
-- [ ] Clicking on Essence, Focus or Spellpower should reveal expanded details (Spellpower Explanation view)
-- [ ] Turn the focus indicator red while overloaded runes exist
-- [ ] Make the active player emphasis stronger
-
 ##### Layout & Navigation
 - [ ] Remove the “EMPTY FORGE” placeholder label
 - [ ] Increase component scale to eliminate excess padding
