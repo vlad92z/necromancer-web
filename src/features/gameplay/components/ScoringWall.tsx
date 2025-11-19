@@ -156,7 +156,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
               y1={e.y1}
               x2={e.x2}
               y2={e.y2}
-              stroke={e.connectsPending ? '#fde047' : '#35bfff'}
+              stroke={'#35bfff'}
               strokeWidth={6}
               strokeLinecap="round"
               strokeLinejoin="round"
