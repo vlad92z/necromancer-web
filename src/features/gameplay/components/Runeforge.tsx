@@ -45,6 +45,13 @@ export function Runeforge({
   const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
   const selectionActive = selectionSourceActive && Boolean(displayOverride);
   const canHighlightRunes = !selectionActive && ((!voidEffectPending && !frostEffectPending && !disabled) || canSelectRunesForVoid);
+  const runeSize = 60;
+  const runeGap = 14;
+  const containerPadding = 24;
+  const baseRuneforgeWidth = displayedRunes.length > 0
+    ? (displayedRunes.length * runeSize) + (Math.max(0, displayedRunes.length - 1) * runeGap) + containerPadding
+    : 240;
+  const runeforgeWidth = Math.min(420, Math.max(280, baseRuneforgeWidth));
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedForDisplay: boolean) => {
     e.stopPropagation();
@@ -114,9 +121,9 @@ export function Runeforge({
       style={{
         backgroundColor: backgroundColor,
         borderRadius: '16px',
-        width: 'min(32vmin, 360px)',
-        height: 'min(7.5vmin, 84px)',
-        padding: 'min(1vmin, 12px)',
+        width: `${runeforgeWidth}px`,
+        height: '96px',
+        padding: '12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -148,13 +155,13 @@ export function Runeforge({
         </div>
       ) : (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', gap: 'min(1.4vmin, 14px)', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: `${runeGap}px`, alignItems: 'center', justifyContent: 'center' }}>
             {displayedRunes.map((rune) => {
               const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
               const highlightByType = hoveredRuneType === rune.runeType && !displayOverride;
               const highlightByVoidSelection = canSelectRunesForVoid && hoveredVoidRuneId === rune.id;
               const isHighlighted = highlightByVoidSelection || highlightByType;
-              const baseSize = 'min(5.6vmin, 56px)';
+              const baseSize = `${runeSize}px`;
               const motionProps = isSelectedForDisplay
                 ? {
                     animate: { scale: [1.05, 1.12, 1.05], y: [-2, 2, -2], rotate: [-1.5, 1.5, -1.5] },

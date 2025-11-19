@@ -5,11 +5,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Rune, RuneType } from '../../../types/game';
-import fireRune from '../../../assets/runes/fire_rune.svg';
-import frostRune from '../../../assets/runes/frost_rune.svg';
-import lifeRune from '../../../assets/runes/life_rune.svg';
-import voidRune from '../../../assets/runes/void_rune.svg';
-import windRune from '../../../assets/runes/wind_rune.svg';
+import { RuneCell } from '../../../components/RuneCell';
 
 interface CenterPoolProps {
   centerPool: Rune[];
@@ -129,7 +125,7 @@ export function CenterPool({
             const glowStyle = voidSelectionActive
               ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
               : (isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none');
-            const runeSize = '60px';
+            const runeSize = 60;
             const motionProps = isSelected
               ? {
                   animate: { scale: [1.08, 1.16, 1.08], y: [-1.5, 1.5, -1.5], rotate: [-1.8, 1.8, -1.8] },
@@ -140,23 +136,12 @@ export function CenterPool({
                   transition: { duration: 0.2 }
                 };
 
-            // Map rune types to assets (kept local to avoid changing RuneCell)
-            const RUNE_ASSETS: Record<string, string> = {
-              Fire: fireRune,
-              Frost: frostRune,
-              Life: lifeRune,
-              Void: voidRune,
-              Wind: windRune,
-            };
-
-            const runeImage = RUNE_ASSETS[rune.runeType];
-
             return (
               <motion.div
                 key={`${rune.id}-${isSelected ? 'selected' : 'pool'}`}
                 style={{
-                  width: runeSize,
-                  height: runeSize,
+                  width: `${runeSize}px`,
+                  height: `${runeSize}px`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -190,11 +175,12 @@ export function CenterPool({
                 }}
                 {...motionProps}
               >
-                <img
-                    src={runeImage}
-                    alt={`${rune.runeType} rune`}
-                    style={{width: runeSize, height: runeSize}}
-                  />
+                <RuneCell
+                  rune={rune}
+                  variant="center"
+                  size="large"
+                  showEffect={false}
+                />
               </motion.div>
             );
           })}
