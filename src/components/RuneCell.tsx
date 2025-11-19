@@ -61,7 +61,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   wall: {
     border: `1px solid ${COLORS.ui.borderLight}`,
     background: '#1c0f2e',
-    backgroundOccupied: '#3f1c5c',
+    backgroundOccupied: '#46350dff',
     emptyOpacity: 0.35,
   },
   pattern: {

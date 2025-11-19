@@ -132,11 +132,9 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 ##### Pattern Lines & Scoring Wall
 - [ ] Render pattern line runes fully opaque
-- [ ] Outline completed scoring wall runes with a yellow border
-- [ ] Improve the Pattern Line Freeze visual (add a frost emoji to each frozen cell)
-- [ ] Display connected rune segments in blue
+- [ ] Improve the Pattern Line Freeze visual (add a frost emoji to each frozen cell instead of at the end of the line)
 - [ ] Apply the connected-segment styling to cells that will be filled this turn
-- [ ] Surface and apply healing for completed pattern lines as well
+- [ ] Healing counted in the Spellpower view should include scoring wall runes and completed pattern lines.
 
 ##### Status & Guidance
 - [ ] Show tooltips for health, healing, focus, essence, and spellpower; click should reveal expanded details
