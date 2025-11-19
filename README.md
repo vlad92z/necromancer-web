@@ -131,16 +131,8 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### UI/UX Enhancements
 
-##### Layout & Navigation
-- [ ] Make better use of available space. Reduce the padding/margins around player boards and drafting view. Increase the size of all UI elements.
-
-##### Theming
-- [ ] Add a Quick Play back button that returns to the main menu
-
 ##### Animation & Motion
-- [ ] Animate the end-of-round transition
 - [ ] Animate runes traveling from the center to pattern or floor lines
-- [ ] Add effect feedback animations when triggered
 
 ##### Effects & Overlays
 - [ ] Add effect indicators/tooltips on rune tokens
