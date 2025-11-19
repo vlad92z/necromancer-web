@@ -13,7 +13,7 @@ interface ScoringWallProps {
 }
 
 // Layout constants (kept in sync with RuneCell size config)
-const CELL_SIZE = 45; // large size from RuneCell
+const CELL_SIZE = 60; // matches RuneCell size="large"
 const GAP = 4; // gap used between cells in ScoringWall layout
 const GRID_SIZE = 5;
 const cellKey = (row: number, col: number) => `${row}-${col}`;

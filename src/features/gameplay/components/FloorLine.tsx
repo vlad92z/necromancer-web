@@ -44,7 +44,6 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
           cursor: isSelectable ? 'pointer' : 'default',
           backgroundColor: 'transparent',
           border: 'none',
-          padding: '8px',
           borderRadius: '8px',
           transition: 'all 0.2s'
         }}

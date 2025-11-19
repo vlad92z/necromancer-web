@@ -85,10 +85,9 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         height: '100%',
         padding: 'min(1.2vmin, 16px)',
         borderRadius: '28px',
-        border: isActive ? '1px solid rgba(168, 85, 247, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
         background: 'rgba(14, 6, 32, 0.92)',
-        boxShadow: isActive ? '0 18px 60px rgba(104, 62, 189, 0.45)' : '0 10px 40px rgba(3, 0, 18, 0.65)',
-        transition: 'border 0.2s ease, box-shadow 0.2s ease'
+        boxShadow: '0 10px 40px rgba(3, 0, 18, 0.65)',
+        transition: 'box-shadow 0.2s ease'
       }}
     >
       <div style={{ 
@@ -100,16 +99,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         height: '100%'
       }}>
         {/* Floor Line - Left side */}
-        <div style={{ 
-          flex: '0 0 min(16vmin, 180px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 'min(1vmin, 12px)',
-          borderRadius: '20px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          background: 'rgba(255, 255, 255, 0.02)'
-        }} onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           <FloorLine 
             floorLine={player.floorLine}
             onPlaceRunesInFloor={onPlaceRunesInFloor}
@@ -119,16 +109,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         </div>
         
         {/* Pattern Lines */}
-        <div style={{ 
-          flex: '1.1 1 0', 
-          display: 'flex', 
-          flexDirection: 'column',
-          justifyContent: 'center',
-          borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          background: 'rgba(255, 255, 255, 0.03)',
-          padding: 'min(1vmin, 14px)'
-        }} onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           <PatternLines 
             patternLines={player.patternLines}
             wall={player.wall}
@@ -142,18 +123,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         </div>
         
         {/* Wall */}
-        <div style={{ 
-          flex: '1.1 1 0', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          justifyContent: 'center',
-          borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          background: 'rgba(255, 255, 255, 0.03)',
-          padding: 'min(1vmin, 14px)'
-        }}>
-          <ScoringWall wall={player.wall} patternLines={player.patternLines} />
-        </div>
+        <ScoringWall wall={player.wall} patternLines={player.patternLines} />
         
         {/* Right side - Player Info and RuneScore */}
         <div style={{ 
