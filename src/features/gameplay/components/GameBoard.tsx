@@ -33,7 +33,7 @@ interface GameBoardProps {
 
 export function GameBoard({ gameState }: GameBoardProps) {
   const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource } = gameState;
-  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect } = useGameActions();
+  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect, skipFrostEffect } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
   const freezePatternLine = useGameplayStore((state) => state.freezePatternLine);
@@ -74,6 +74,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
   const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
   const canFreezeOpponentPatternLine = frostEffectPending && currentPlayerIndex === 0;
+  const canSkipFrostEffect = canFreezeOpponentPatternLine && !isAITurn;
 
   const handleFreezePatternLine = (lineIndex: number) => {
     if (!canFreezeOpponentPatternLine) {
@@ -225,6 +226,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               frozenPatternLines={opponentFrozenLines}
               freezeSelectionEnabled={canFreezeOpponentPatternLine}
               onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
+              onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
             />
           </div>
         </div>

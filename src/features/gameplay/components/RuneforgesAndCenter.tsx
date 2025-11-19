@@ -174,7 +174,7 @@ export function RuneforgesAndCenter({
               cursor: 'pointer'
             }}
           >
-            SKIP
+            Skip
           </button>
         </div>
       )}

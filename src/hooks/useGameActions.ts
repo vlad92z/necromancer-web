@@ -12,6 +12,7 @@ export function useGameActions() {
   const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
   const cancelSelection = useGameplayStore((state) => state.cancelSelection);
   const skipVoidEffect = useGameplayStore((state) => state.skipVoidEffect);
+  const skipFrostEffect = useGameplayStore((state) => state.skipFrostEffect);
   const endRound = useGameplayStore((state) => state.endRound);
   const resetGame = useGameplayStore((state) => state.resetGame);
   
@@ -22,6 +23,7 @@ export function useGameActions() {
     placeRunesInFloor,
     cancelSelection,
     skipVoidEffect,
+    skipFrostEffect,
     endRound,
     resetGame,
   };

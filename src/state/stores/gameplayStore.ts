@@ -31,6 +31,7 @@ interface GameplayStore extends GameState {
   cancelSelection: () => void;
   destroyRune: (target: VoidTarget) => void;
   skipVoidEffect: () => void;
+  skipFrostEffect: () => void;
   freezePatternLine: (playerId: string, patternLineIndex: number) => void;
   endRound: () => void;
   resetGame: () => void;
@@ -430,6 +431,26 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       return {
         ...state,
         voidEffectPending: false,
+        currentPlayerIndex: nextPlayerIndex as 0 | 1,
+        turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
+        shouldTriggerEndRound: shouldEndRound,
+      };
+    });
+  },
+  
+  skipFrostEffect: () => {
+    set((state) => {
+      // Skip Frost effect without freezing a pattern line
+      if (!state.frostEffectPending) return state;
+      
+      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
+      
+      return {
+        ...state,
+        frostEffectPending: false,
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         shouldTriggerEndRound: shouldEndRound,
