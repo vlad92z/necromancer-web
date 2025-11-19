@@ -142,7 +142,10 @@ export interface GameState {
   turnPhase: TurnPhase;
   round: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
-  draftSource: { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] } | { type: 'center' } | null; // Where the selected runes came from (and original forge state)
+  draftSource:
+    | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
+    | { type: 'center'; originalRunes: Rune[] }
+    | null; // Where the selected runes came from (and original forge state)
   firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion

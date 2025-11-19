@@ -24,6 +24,7 @@ interface CenterPoolProps {
   selectionFromCenter: boolean;
   pendingRunesFromRuneforge?: Rune[];
   onCancelSelection?: () => void;
+  displayRunesOverride?: Rune[];
 }
 
 export function CenterPool({ 
@@ -38,20 +39,32 @@ export function CenterPool({
   selectedRunes,
   selectionFromCenter,
   pendingRunesFromRuneforge = [],
-  onCancelSelection
+  onCancelSelection,
+  displayRunesOverride
 }: CenterPoolProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const [hoveredVoidRuneId, setHoveredVoidRuneId] = useState<string | null>(null);
   const pendingRunesFromRuneforgeIds = new Set(pendingRunesFromRuneforge.map((rune) => rune.id));
   const filteredCenterRunes = centerPool.filter((rune) => !pendingRunesFromRuneforgeIds.has(rune.id));
-  const centerRuneIds = new Set(filteredCenterRunes.map((rune) => rune.id));
-  const displayRunes = [
-    ...filteredCenterRunes.map((rune) => ({ rune, isSelected: false })),
-    ...(selectionFromCenter
+  const overrideRunes = displayRunesOverride?.filter((rune) => !pendingRunesFromRuneforgeIds.has(rune.id));
+  const selectedRuneIdSet = selectionFromCenter ? new Set(selectedRunes.map((rune) => rune.id)) : null;
+  const baseDisplayRunes =
+    selectionFromCenter && overrideRunes && overrideRunes.length > 0
+      ? overrideRunes
+      : filteredCenterRunes;
+  const baseDisplayRuneIds = new Set(baseDisplayRunes.map((rune) => rune.id));
+  const fallbackSelectedRunes =
+    selectionFromCenter && (!overrideRunes || overrideRunes.length === 0)
       ? selectedRunes
-          .filter((rune) => !centerRuneIds.has(rune.id))
+          .filter((rune) => !baseDisplayRuneIds.has(rune.id))
           .map((rune) => ({ rune, isSelected: true }))
-      : [])
+      : [];
+  const displayRunes = [
+    ...baseDisplayRunes.map((rune) => ({
+      rune,
+      isSelected: Boolean(selectedRuneIdSet?.has(rune.id)),
+    })),
+    ...fallbackSelectedRunes,
   ];
   const totalRunes = displayRunes.length;
   const voidSelectionActive = Boolean(voidEffectPending && onVoidRuneSelect && !isAITurn);

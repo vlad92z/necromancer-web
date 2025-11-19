@@ -102,6 +102,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         return state;
       }
 
+      const originalCenterRunes = [...state.centerPool];
       // Get all runes of selected type from center
       const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
       const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);
@@ -113,7 +114,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
-        draftSource: { type: 'center' },
+        draftSource: { type: 'center', originalRunes: originalCenterRunes },
       };
     });
   },
@@ -320,7 +321,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       if (state.draftSource.type === 'center') {
         return {
           ...state,
-          centerPool: [...state.centerPool, ...state.selectedRunes],
+          centerPool: [...state.draftSource.originalRunes],
           selectedRunes: [],
           draftSource: null,
         };

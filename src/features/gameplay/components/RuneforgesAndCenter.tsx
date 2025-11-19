@@ -61,6 +61,7 @@ export function RuneforgesAndCenter({
   const pendingRunesFromRuneforge = draftSource?.type === 'runeforge' ? draftSource.movedToCenter : [];
   const selectedRuneforgeOriginalRunes = draftSource?.type === 'runeforge' ? draftSource.originalRunes : [];
   const selectionFromCenter = draftSource?.type === 'center';
+  const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
   const selectedRuneIds = selectedRunes.map((rune) => rune.id);
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
@@ -193,6 +194,7 @@ export function RuneforgesAndCenter({
           selectionFromCenter={Boolean(selectionFromCenter)}
           onCancelSelection={selectionFromCenter ? onCancelSelection : undefined}
           pendingRunesFromRuneforge={pendingRunesFromRuneforge}
+          displayRunesOverride={centerSelectionOriginalRunes}
         />
       </div>
 
