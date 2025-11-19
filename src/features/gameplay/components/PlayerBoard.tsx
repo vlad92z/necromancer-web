@@ -34,17 +34,20 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     }
   };
 
-  const currentHealth = player.health;
-  const lifeRuneCount = gameMode === 'standard'
-    ? player.wall.flat().filter((cell) => cell.runeType === 'Life').length
-    : 0;
-  const healingAmount = lifeRuneCount * 10;
-
   // Find completed pattern lines
   const completedPatternLines = player.patternLines
     .map((line, index) => ({ line, row: index }))
     .filter(({ line }) => line.count === line.tier && line.runeType !== null)
     .map(({ line, row }) => ({ row, runeType: line.runeType! }));
+
+  const currentHealth = player.health;
+  const lifeRunesOnWall = gameMode === 'standard'
+    ? player.wall.flat().filter((cell) => cell.runeType === 'Life').length
+    : 0;
+  const lifeRunesInCompletedLines = gameMode === 'standard'
+    ? completedPatternLines.filter((line) => line.runeType === 'Life').length
+    : 0;
+  const healingAmount = (lifeRunesOnWall + lifeRunesInCompletedLines) * 10;
   
   // Wind Effect: Wind runes in pattern lines mitigate floor penalties (standard mode only)
   const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, player.patternLines, gameMode);
