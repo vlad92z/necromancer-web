@@ -135,7 +135,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Make better use of available space. Reduce the padding/margins around player boards and drafting view. Increase the size of all UI elements.
 
 ##### Theming
-- [ ] Restyle the Game End Screen to match the rest of the app
 - [ ] Add a Quick Play back button that returns to the main menu
 
 ##### Animation & Motion
