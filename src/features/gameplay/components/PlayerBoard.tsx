@@ -25,9 +25,11 @@ interface PlayerBoardProps {
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
+  hiddenSlotKeys?: Set<string>;
+  hiddenFloorSlotIndexes?: Set<number>;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onShowDeck, onShowLog, onShowRules, hiddenSlotKeys, hiddenFloorSlotIndexes }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -105,6 +107,8 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             onPlaceRunesInFloor={onPlaceRunesInFloor}
             canPlace={canPlace}
             mitigatedSlots={windRuneCount}
+            playerId={player.id}
+            hiddenSlotIndexes={hiddenFloorSlotIndexes}
           />
         </div>
         
@@ -119,6 +123,8 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             frozenLineIndexes={frozenPatternLines}
             freezeSelectionEnabled={freezeSelectionEnabled}
             onFreezeLine={onFreezePatternLine}
+            playerId={player.id}
+            hiddenSlotKeys={hiddenSlotKeys}
           />
         </div>
         
