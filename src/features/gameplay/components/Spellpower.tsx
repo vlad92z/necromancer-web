@@ -37,7 +37,7 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
 
   if (type === 'health') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
+      <svg width={size} height={size} viewBox="0 0 24 ">
         <path
           d="M12 21s-7-4.35-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.65-7 9-7 9Z"
           fill={color}
@@ -123,25 +123,22 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
         onBlur={() => setIsHovered(false)}
         onClick={onClick}
         style={{
+          fontSize: '0.2rem',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5em',
-          padding: '0.6em 0.9em',
+          padding: '2em 3em',
           background: 'rgba(8, 17, 35, 0.85)',
-          borderRadius: '0.9rem',
+          borderRadius: '0.6rem',
           border: `1px solid ${borderColor}`,
           cursor: isClickable ? 'pointer' : 'default',
           color: '#f8fafc',
-          minWidth: '7.5em',
           boxShadow: alert ? `0 0 20px rgba(248, 113, 113, 0.5)` : '0 8px 22px rgba(0,0,0,0.45)',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-          textAlign: 'left'
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease'
         }}
         aria-label={`${label}: ${tooltip}`}
       >
         <StatIcon type={type} color={color} />
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-          <span style={{ fontSize: '0.7rem', letterSpacing: '0.08em', opacity: 0.75, textTransform: 'uppercase' }}>{label}</span>
           <span style={{ fontSize: '1.15rem', fontWeight: 600 }}>{value}</span>
         </div>
       </button>
@@ -221,7 +218,7 @@ export function Spellpower({
         alignItems: 'center',
         gap: '0.9em',
         minWidth: '8em',
-        width: '100%',
+        width: '85%',
         padding: '1.25em 1em',
         borderRadius: '28px',
         border: isActive ? '1px solid rgba(168, 85, 247, 0.65)' : '1px solid rgba(255, 255, 255, 0.08)',
@@ -258,28 +255,8 @@ export function Spellpower({
       {/* Name */}
       <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.05rem' }}>{playerName}</div>
 
-      {isActive && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-12px',
-            padding: '4px 14px',
-            borderRadius: '999px',
-            background: 'rgba(250, 204, 21, 0.18)',
-            border: '1px solid rgba(250, 204, 21, 0.4)',
-            color: '#fde68a',
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase'
-          }}
-        >
-          Active Turn
-        </div>
-      )}
-
       {/* Health / Healing */}
-      <div style={{ display: 'flex', gap: '0.65em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+      <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
         <StatBadge
           type="health"
           label="Health"
@@ -299,7 +276,7 @@ export function Spellpower({
       </div>
 
       {/* Essence / Focus / Spellpower */}
-      <div style={{ display: 'flex', gap: '0.65em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+      <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
         <StatBadge
           type="essence"
           label="Essence"
