@@ -152,7 +152,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         
         {/* Right side - Player Info and RuneScore */}
         <div style={{ 
-          flex: '0 0 min(27vmin, 320px)',
+          flex: '0 1 min(27vmin, 320px)', // allow shrink
           display: 'flex', 
           flexDirection: 'column'
         }} onClick={(e) => e.stopPropagation()}>
