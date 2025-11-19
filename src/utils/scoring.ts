@@ -190,7 +190,6 @@ export function calculatePlacementScore(
 
 /**
  * Calculate floor line penalties
- * Standard Azul penalties: -1, -1, -2, -2, -2, -3, -3
  */
 export function calculateFloorPenalty(floorLineCount: number): number {
   const penalties = [0, -1, -2, -4, -6, -8, -11, -14];
@@ -224,11 +223,11 @@ export function calculateEffectiveFloorPenalty(
 
 /**
  * Find the correct column for a rune type in a given row
- * In Azul, the wall has a fixed pattern for rune placement
+ * The wall has a fixed pattern for rune placement
  * For simplicity, we'll use: each rune type can only go in specific columns per row
  */
 export function getWallColumnForRune(row: number, runeType: RuneType): number {
-  // Standard Azul pattern: each row is rotated by 1
+  // Each row is rotated by 1
   // Fire, Frost, Life, Void, Wind -> 0, 1, 2, 3, 4
   const runeTypeIndex: Record<RuneType, number> = {
     Fire: 0,

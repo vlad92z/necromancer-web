@@ -30,7 +30,8 @@ npm run lint
 ## Core Game Mechanics
 
 ### Drafting & Placement
-- Draft runes from 5 runeforges or center pool (Azul-style)
+- Draft runes from your runeforges
+- Once each players runeforges are empty, draft from the shared pool
 - Place runes in 5-tier pattern lines (capacity 1-5)
 - Complete lines transfer to 5×5 scoring wall
 - Overflow runes go to floor line (penalties)
@@ -130,32 +131,10 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### UI/UX Enhancements
 
-##### Selection & Board Interactions
-- [ ] Make void selection highlight whatever rune the cursor is over
-- [ ] Allow void selection to be cancelled before confirming
-- [ ] Match center highlighting to the runeforge style whenever it’s selectable
-
-##### Pattern Lines & Scoring Wall
-- [ ] Render pattern line runes fully opaque
-- [ ] Outline completed scoring wall runes with a yellow border
-- [ ] Improve the Pattern Line Freeze visual (add a frost emoji to each frozen cell)
-- [ ] Display connected rune segments in blue
-- [ ] Apply the connected-segment styling to cells that will be filled this turn
-- [ ] Surface and apply healing for completed pattern lines as well
-
-##### Status & Guidance
-- [ ] Show tooltips for health, healing, focus, essence, and spellpower; click should reveal expanded details
-- [ ] Turn the focus indicator red while overloaded runes exist
-- [ ] Add bottom guidance text that explains next actions and selected rune effects
-- [ ] Make the active player emphasis stronger
-- [ ] Active player indicator with pulsing dot and "Your Turn" label
-- [ ] Dim opponent's board during other player's turn
-
 ##### Layout & Navigation
-- [ ] Remove the “EMPTY FORGE” placeholder label
-- [ ] Increase component scale to eliminate excess padding
-- [ ] Restyle the Game End Screen to match the rest of the app
-- [ ] Remove the Azul-inspired description from the main screen
+- [ ] Make better use of available space. Reduce the padding/margins around player boards and drafting view. Increase the size of all UI elements.
+
+##### Theming
 - [ ] Add a Quick Play back button that returns to the main menu
 
 ##### Animation & Motion

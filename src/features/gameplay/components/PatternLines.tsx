@@ -78,9 +78,6 @@ export function PatternLines({
           : placementClickable
             ? (isPlacementTarget ? 'pointer' : 'not-allowed')
             : 'default';
-        const buttonOpacity = freezeSelectionEnabled
-          ? (canFreezeLine ? 1 : 0.4)
-          : (buttonDisabled ? 0.5 : 1);
 
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
         const ariaLabel = freezeSelectionEnabled
@@ -106,9 +103,8 @@ export function PatternLines({
               gap: '4px',
               width: '100%',
               cursor: cursorStyle,
-              backgroundColor: isFrozen ? 'rgba(168, 132, 255, 0.16)' : 'transparent',
+              backgroundColor: 'transparent',
               border: 'none',
-              opacity: buttonOpacity,
               padding: 0,
               borderRadius: '8px',
               transition: 'all 0.2s',
@@ -117,17 +113,6 @@ export function PatternLines({
             }}
             aria-label={ariaLabel}
           >
-            {isFrozen && !freezeSelectionEnabled && (
-              <div style={{
-                position: 'absolute',
-                right: '-24px',
-                fontSize: '20px',
-                color: '#0ea5e9',
-                textShadow: '0 0 6px rgba(125, 211, 252, 0.8)'
-              }}>
-                ❄️
-              </div>
-            )}
             {Array(line.tier)
               .fill(null)
               .map((_, slotIndex) => {
@@ -136,6 +121,7 @@ export function PatternLines({
                   runeType: line.runeType,
                   effect: { type: 'None' as const }
                 } : null;
+                const showFrozenOverlay = isFrozen && !freezeSelectionEnabled;
                 const cellMotionProps = showGlow
                   ? {
                       animate: { boxShadow: glowRange },
@@ -147,6 +133,7 @@ export function PatternLines({
                   <motion.div
                     key={slotIndex}
                     style={{
+                      position: 'relative',
                       boxShadow: showGlow ? (freezeSelectionEnabled ? freezeGlowRest : selectableGlowRest) : 'none',
                       borderRadius: '8px',
                       transition: 'box-shadow 0.2s'
@@ -159,6 +146,23 @@ export function PatternLines({
                       size="large"
                       showEffect={false}
                     />
+                    {showFrozenOverlay && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '18px',
+                          color: '#0ea5e9',
+                          textShadow: '0 0 6px rgba(125, 211, 252, 0.8)',
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        ❄️
+                      </div>
+                    )}
                   </motion.div>
                 );
               })}

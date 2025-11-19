@@ -23,6 +23,7 @@ interface RuneforgesAndCenterProps {
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
   onCancelSelection: () => void;
+  onCancelVoidSelection?: () => void;
 }
 
 export function RuneforgesAndCenter({ 
@@ -41,7 +42,8 @@ export function RuneforgesAndCenter({
   frostEffectPending,
   selectedRunes,
   draftSource,
-  onCancelSelection
+  onCancelSelection,
+  onCancelVoidSelection
 }: RuneforgesAndCenterProps) {
   const [player, opponent] = players;
   const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
@@ -59,6 +61,7 @@ export function RuneforgesAndCenter({
   const pendingRunesFromRuneforge = draftSource?.type === 'runeforge' ? draftSource.movedToCenter : [];
   const selectedRuneforgeOriginalRunes = draftSource?.type === 'runeforge' ? draftSource.originalRunes : [];
   const selectionFromCenter = draftSource?.type === 'center';
+  const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
   const selectedRuneIds = selectedRunes.map((rune) => rune.id);
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
@@ -92,7 +95,7 @@ export function RuneforgesAndCenter({
       <div style={{ 
         display: 'flex', 
         justifyContent: align, 
-        gap: '16px', 
+        gap: '60px', 
         flexWrap: 'wrap'
       }}>
         {ownedRuneforges.map((runeforge) => (
@@ -133,8 +136,51 @@ export function RuneforgesAndCenter({
         alignItems: 'center',
       }}
     >
+      {voidEffectPending && !isAITurn && onCancelVoidSelection && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-12px',
+            right: '0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 14px',
+            borderRadius: '999px',
+            background: 'rgba(16, 10, 32, 0.85)',
+            border: '1px solid rgba(192, 132, 252, 0.4)',
+            boxShadow: '0 12px 24px rgba(0, 0, 0, 0.35)',
+            color: '#f7f4ff',
+            fontSize: '12px',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            zIndex: 2
+          }}
+        >
+          <span style={{ opacity: 0.9 }}>Select a rune to destroy</span>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onCancelVoidSelection();
+            }}
+            style={{
+              border: 'none',
+              borderRadius: '999px',
+              background: '#c084fc',
+              color: '#0b031c',
+              fontWeight: 600,
+              fontSize: '12px',
+              padding: '4px 10px',
+              cursor: 'pointer'
+            }}
+          >
+            Skip
+          </button>
+        </div>
+      )}
       {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
-      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px', width: '100%' }}>
+      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '25px', marginTop: '25px', width: '100%' }}>
         <CenterPool 
           centerPool={centerPool}
           onRuneClick={onCenterRuneClick}
@@ -148,6 +194,7 @@ export function RuneforgesAndCenter({
           selectionFromCenter={Boolean(selectionFromCenter)}
           onCancelSelection={selectionFromCenter ? onCancelSelection : undefined}
           pendingRunesFromRuneforge={pendingRunesFromRuneforge}
+          displayRunesOverride={centerSelectionOriginalRunes}
         />
       </div>
 

@@ -49,7 +49,7 @@ export interface RuneCellProps {
 const SIZE_CONFIG = {
   small: { width: 30, height: 30, fontSize: 10, padding: 2 },
   medium: { width: 35, height: 35, fontSize: 14, padding: 2 },
-  large: { width: 45, height: 45, fontSize: 20, padding: 4 },
+  large: { width: 60, height: 60, fontSize: 20, padding: 4 },
 };
 
 const VARIANT_STYLES: Record<RuneCellVariant, {
@@ -61,7 +61,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   wall: {
     border: `1px solid ${COLORS.ui.borderLight}`,
     background: '#1c0f2e',
-    backgroundOccupied: '#3f1c5c',
+    backgroundOccupied: '#46350dff',
     emptyOpacity: 0.35,
   },
   pattern: {

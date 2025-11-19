@@ -1,6 +1,6 @@
 /**
  * Runeforge component - displays a runeforge with runes
- * Implements Azul-style drafting: click a rune type to select all of that type
+ * Implements drafting: click a rune type to select all of that type
  */
 
 import { useState } from 'react';
@@ -37,12 +37,21 @@ export function Runeforge({
   onCancelSelection
 }: RuneforgeProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
+  const [hoveredVoidRuneId, setHoveredVoidRuneId] = useState<string | null>(null);
   const canSelectRunesForVoid = Boolean(
     voidEffectPending && onVoidRuneSelect && !disabled && runeforge.runes.length > 0
   );
   const displayedRunes = displayOverride ? displayOverride.runes : runeforge.runes;
   const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
   const selectionActive = selectionSourceActive && Boolean(displayOverride);
+  const canHighlightRunes = !selectionActive && ((!voidEffectPending && !frostEffectPending && !disabled) || canSelectRunesForVoid);
+  const runeSize = 60;
+  const runeGap = 14;
+  const containerPadding = 24;
+  const baseRuneforgeWidth = displayedRunes.length > 0
+    ? (displayedRunes.length * runeSize) + (Math.max(0, displayedRunes.length - 1) * runeGap) + containerPadding
+    : 240;
+  const runeforgeWidth = Math.min(420, Math.max(280, baseRuneforgeWidth));
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedForDisplay: boolean) => {
     e.stopPropagation();
@@ -112,9 +121,9 @@ export function Runeforge({
       style={{
         backgroundColor: backgroundColor,
         borderRadius: '16px',
-        width: 'min(32vmin, 360px)',
-        height: 'min(7.5vmin, 84px)',
-        padding: 'min(1vmin, 12px)',
+        width: `${runeforgeWidth}px`,
+        height: '96px',
+        padding: '12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -142,16 +151,17 @@ export function Runeforge({
       {...glowMotionProps}
     >
       {displayedRunes.length === 0 ? (
-        <div style={{ color: '#7c8db5', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Empty Forge
+        <div>
         </div>
       ) : (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', gap: 'min(1.4vmin, 14px)', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: `${runeGap}px`, alignItems: 'center', justifyContent: 'center' }}>
             {displayedRunes.map((rune) => {
               const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
-              const isHighlighted = hoveredRuneType === rune.runeType && !displayOverride;
-              const baseSize = 'min(5.6vmin, 56px)';
+              const highlightByType = hoveredRuneType === rune.runeType && !displayOverride;
+              const highlightByVoidSelection = canSelectRunesForVoid && hoveredVoidRuneId === rune.id;
+              const isHighlighted = highlightByVoidSelection || highlightByType;
+              const baseSize = `${runeSize}px`;
               const motionProps = isSelectedForDisplay
                 ? {
                     animate: { scale: [1.05, 1.12, 1.05], y: [-2, 2, -2], rotate: [-1.5, 1.5, -1.5] },
@@ -186,11 +196,21 @@ export function Runeforge({
                   }}
                   onClick={(e) => handleRuneClick(e, rune, isSelectedForDisplay)}
                   onMouseEnter={() => {
-                    if (!disabled && !voidEffectPending && !frostEffectPending && !selectionActive) {
-                      setHoveredRuneType(rune.runeType);
+                    if (!canHighlightRunes) {
+                      return;
                     }
+                    if (canSelectRunesForVoid) {
+                      setHoveredVoidRuneId(rune.id);
+                      setHoveredRuneType(null);
+                      return;
+                    }
+                    setHoveredRuneType(rune.runeType);
+                    setHoveredVoidRuneId(null);
                   }}
-                  onMouseLeave={() => setHoveredRuneType(null)}
+                  onMouseLeave={() => {
+                    setHoveredRuneType(null);
+                    setHoveredVoidRuneId(null);
+                  }}
                   {...motionProps}
                 >
                   <RuneCell
