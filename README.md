@@ -129,12 +129,45 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 ### 🔴 Priority 1: Core Gameplay Polish (Immediate)
 
 #### UI/UX Enhancements
-- [ ] Add effect indicators/tooltips on rune tokens
-- [ ] Show active effects in game state (frozen runeforges, Life healing)
-- [ ] Add effect feedback animations when triggered
-- [ ] Update `RulesOverlay` with rune effect explanations
+
+##### Selection & Board Interactions
+- [ ] Make void selection highlight whatever rune the cursor is over
+- [ ] Allow void selection to be cancelled before confirming
+- [ ] Match center highlighting to the runeforge style whenever it’s selectable
+
+##### Pattern Lines & Scoring Wall
+- [ ] Render pattern line runes fully opaque
+- [ ] Outline completed scoring wall runes with a yellow border
+- [ ] Improve the Pattern Line Freeze visual (add a frost emoji to each frozen cell)
+- [ ] Display connected rune segments in blue
+- [ ] Apply the connected-segment styling to cells that will be filled this turn
+- [ ] Surface and apply healing for completed pattern lines as well
+
+##### Status & Guidance
+- [ ] Show tooltips for health, healing, focus, essence, and spellpower; click should reveal expanded details
+- [ ] Turn the focus indicator red while overloaded runes exist
+- [ ] Add bottom guidance text that explains next actions and selected rune effects
+- [ ] Make the active player emphasis stronger
 - [ ] Active player indicator with pulsing dot and "Your Turn" label
 - [ ] Dim opponent's board during other player's turn
+
+##### Layout & Navigation
+- [ ] Remove the “EMPTY FORGE” placeholder label
+- [ ] Increase component scale to eliminate excess padding
+- [ ] Restyle the Game End Screen to match the rest of the app
+- [ ] Remove the Azul-inspired description from the main screen
+- [ ] Add a Quick Play back button that returns to the main menu
+
+##### Animation & Motion
+- [ ] Animate the end-of-round transition
+- [ ] Animate runes traveling from the center to pattern or floor lines
+- [ ] Add effect feedback animations when triggered
+
+##### Effects & Overlays
+- [ ] Add effect indicators/tooltips on rune tokens
+- [ ] Show active effects in game state (frozen runeforges, Life healing)
+- [ ] Update `RulesOverlay` with rune effect explanations
+- [ ] Add overlay buttons for rules, deck, and the game log
 
 #### AI Improvements
 - [ ] Make AI evaluate Fire runes for scoring potential
