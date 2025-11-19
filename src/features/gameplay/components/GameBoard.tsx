@@ -33,7 +33,7 @@ interface GameBoardProps {
 
 export function GameBoard({ gameState }: GameBoardProps) {
   const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource } = gameState;
-  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } = useGameActions();
+  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
   const freezePatternLine = useGameplayStore((state) => state.freezePatternLine);
@@ -257,6 +257,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               selectedRunes={selectedRunes}
               draftSource={draftSource}
               onCancelSelection={cancelSelection}
+              onCancelVoidSelection={skipVoidEffect}
             />
             
             {/* Game Over Modal - Centered over drafting area */}

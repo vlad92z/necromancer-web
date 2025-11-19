@@ -130,11 +130,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### UI/UX Enhancements
 
-##### Selection & Board Interactions
-- [ ] Make void selection highlight whatever rune the cursor is over (same effect as when drafting)
-- [ ] Allow void selection to be cancelled before confirming
-- [ ] Highlight the center pool witht the same highlight as Runeforges when they are selectable
-
 ##### Pattern Lines & Scoring Wall
 - [ ] Render pattern line runes fully opaque
 - [ ] Outline completed scoring wall runes with a yellow border

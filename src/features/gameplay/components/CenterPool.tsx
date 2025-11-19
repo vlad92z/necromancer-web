@@ -41,6 +41,7 @@ export function CenterPool({
   onCancelSelection
 }: CenterPoolProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
+  const [hoveredVoidRuneId, setHoveredVoidRuneId] = useState<string | null>(null);
   const pendingRunesFromRuneforgeIds = new Set(pendingRunesFromRuneforge.map((rune) => rune.id));
   const filteredCenterRunes = centerPool.filter((rune) => !pendingRunesFromRuneforgeIds.has(rune.id));
   const centerRuneIds = new Set(filteredCenterRunes.map((rune) => rune.id));
@@ -55,6 +56,21 @@ export function CenterPool({
   const totalRunes = displayRunes.length;
   const voidSelectionActive = Boolean(voidEffectPending && onVoidRuneSelect && !isAITurn);
   const centerDisabled = voidSelectionActive ? false : (!isDraftPhase || hasSelectedRunes || isAITurn || !canDraftFromCenter);
+  const canHighlightRunes = (condition: { isSelected: boolean }) =>
+    !condition.isSelected &&
+    ((!centerDisabled && !voidSelectionActive) || voidSelectionActive);
+  const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
+  const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
+  const isCenterSelectable = !selectionFromCenter && !voidSelectionActive && !centerDisabled && totalRunes > 0 && Boolean(onRuneClick);
+  const baseBoxShadow = '0 25px 45px rgba(2, 6, 23, 0.6)';
+  const containerBoxShadow = isCenterSelectable ? selectableGlowRest : baseBoxShadow;
+  const containerBorder = isCenterSelectable ? '1px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.08)';
+  const containerMotionProps = isCenterSelectable
+    ? {
+        animate: { boxShadow: [selectableGlowRest, selectableGlowPeak] },
+        transition: { duration: 1.5, repeat: Infinity, repeatType: 'reverse' as const, ease: 'easeInOut' as const }
+      }
+    : {};
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedDisplay: boolean) => {
     e.stopPropagation();
@@ -78,7 +94,7 @@ export function CenterPool({
   
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: totalRunes === 0 ? 'none' : 'auto' }}>
-        <div style={{
+        <motion.div style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
@@ -90,11 +106,13 @@ export function CenterPool({
           padding: 'min(1vmin, 16px)',
           borderRadius: '28px',
           background: totalRunes === 0 ? 'transparent' : 'rgba(12, 6, 29, 0.85)',
-          border: totalRunes === 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: totalRunes === 0 ? 'none' : '0 25px 45px rgba(2, 6, 23, 0.6)',
-        }}>
+          border: totalRunes === 0 ? 'none' : containerBorder,
+          boxShadow: totalRunes === 0 ? 'none' : containerBoxShadow,
+        }} {...containerMotionProps}>
           {displayRunes.map(({ rune, isSelected }) => {
-            const isHighlighted = hoveredRuneType === rune.runeType && !isSelected;
+            const highlightByType = hoveredRuneType === rune.runeType && !isSelected;
+            const highlightByVoidSelection = voidSelectionActive && hoveredVoidRuneId === rune.id;
+            const isHighlighted = highlightByType || highlightByVoidSelection;
             const glowStyle = voidSelectionActive
               ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
               : (isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none');
@@ -141,8 +159,22 @@ export function CenterPool({
                   pointerEvents: isSelected ? 'auto' : (centerDisabled ? 'none' : 'auto')
                 }}
                 onClick={(e) => handleRuneClick(e, rune, isSelected)}
-                onMouseEnter={() => !centerDisabled && !voidSelectionActive && !isSelected && setHoveredRuneType(rune.runeType)}
-                onMouseLeave={() => setHoveredRuneType(null)}
+                onMouseEnter={() => {
+                  if (!canHighlightRunes({ isSelected })) {
+                    return;
+                  }
+                  if (voidSelectionActive) {
+                    setHoveredVoidRuneId(rune.id);
+                    setHoveredRuneType(null);
+                    return;
+                  }
+                  setHoveredRuneType(rune.runeType);
+                  setHoveredVoidRuneId(null);
+                }}
+                onMouseLeave={() => {
+                  setHoveredRuneType(null);
+                  setHoveredVoidRuneId(null);
+                }}
                 {...motionProps}
               >
                 <img
@@ -153,7 +185,7 @@ export function CenterPool({
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       
     </div>
   );
