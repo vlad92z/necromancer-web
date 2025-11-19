@@ -104,7 +104,7 @@ export function Spellpower({
   const spellpower = totalPower ?? (essence * focus);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75em', minWidth: '8em' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75em', minWidth: '8em', width: '100%' }}>
       {/* Avatar */}
       <div style={{
         width: '4em',
@@ -125,7 +125,7 @@ export function Spellpower({
       <div style={{ color: '#f5f3ff', fontWeight: 600 }}>{playerName}</div>
 
       {/* Health / Healing */}
-      <div style={{ display: 'flex', gap: '0.5em' }}>
+      <div style={{ display: 'flex', gap: '0.5em', flexWrap: 'wrap', justifyContent: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5em', padding: '0.5em 0.75em', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '0.5rem', border: '1px solid rgba(248, 113, 113, 0.3)' }}>
           <StatIcon type="health" color="#fb7185" />
           <span style={{ color: '#fff' }}>{health}</span>
@@ -137,7 +137,7 @@ export function Spellpower({
       </div>
 
       {/* Essence / Focus / Spellpower */}
-      <div style={{ display: 'flex', gap: '0.5em' }}>
+      <div style={{ display: 'flex', gap: '0.5em', flexWrap: 'wrap', justifyContent: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25em', padding: '0.5em', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '0.5rem', border: '1px solid rgba(250, 204, 21, 0.25)' }}>
           <StatIcon type="essence" color="#facc15" />
           <span style={{ color: '#fff' }}>{essence}</span>

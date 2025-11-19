@@ -72,6 +72,8 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     : 0;
   const fireRuneCount = fireRunesOnWall + fireRunesInCompletedLines;
 
+  const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
+
   return (
     <div
       onClick={handleBoardClick}
@@ -152,7 +154,10 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         
         {/* Right side - Player Info and RuneScore */}
         <div style={{ 
-          flex: '0 1 min(27vmin, 320px)', // allow shrink
+          flex: '0 0 auto',
+          width: detailPanelWidth,
+          minWidth: detailPanelWidth,
+          maxWidth: detailPanelWidth,
           display: 'flex', 
           flexDirection: 'column'
         }} onClick={(e) => e.stopPropagation()}>
