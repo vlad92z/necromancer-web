@@ -95,7 +95,7 @@ export function RuneforgesAndCenter({
       <div style={{ 
         display: 'flex', 
         justifyContent: align, 
-        gap: '16px', 
+        gap: '60px', 
         flexWrap: 'wrap'
       }}>
         {ownedRuneforges.map((runeforge) => (
@@ -180,7 +180,7 @@ export function RuneforgesAndCenter({
         </div>
       )}
       {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
-      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '12px', width: '100%' }}>
+      <div style={{ position: 'relative', minHeight: '60px', marginBottom: '25px', marginTop: '25px', width: '100%' }}>
         <CenterPool 
           centerPool={centerPool}
           onRuneClick={onCenterRuneClick}
