@@ -189,7 +189,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
+            bottom: 'calc(100% + 8px)',
             left: '50%',
             transform: 'translateX(-50%)',
             width: 'min(240px, 70vw)',
