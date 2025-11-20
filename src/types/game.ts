@@ -76,6 +76,16 @@ export interface FloorLine {
 export type PlayerType = 'human' | 'ai';
 
 /**
+ * AI difficulty levels
+ */
+export type AIDifficulty = 'easy' | 'normal' | 'hard';
+
+/**
+ * Difficulty type alias for spectator mode
+ */
+export type Difficulty = AIDifficulty;
+
+/**
  * Player state
  */
 export interface Player {
@@ -134,6 +144,8 @@ export interface AnimatingRune {
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
+  aiDifficulty: AIDifficulty; // AI behavior profile (for single AI opponent)
+  aiDifficulties?: Record<string, AIDifficulty>; // Per-player AI difficulties for spectator mode (keyed by player.id)
   players: [Player, Player]; // Player (index 0) and AI Opponent (index 1)
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)

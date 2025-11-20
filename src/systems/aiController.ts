@@ -4,16 +4,18 @@
  * All timing is handled by component useEffect hooks
  */
 
-import { makeAIMove, chooseVoidRuneTarget, choosePatternLineToFreeze } from '../utils/aiPlayer';
+import { getAIPlayerProfile } from '../utils/aiPlayer';
+import type { StoreApi } from 'zustand';
 import { useGameplayStore } from '../state/stores/gameplayStore';
+import type { GameplayStore } from '../state/stores/gameplayStore';
 
 /**
  * Execute an AI turn (draft + placement)
  * Pure function - no setTimeout, timing handled by caller
  * Returns true if a move was made
  */
-export function executeAITurn(): boolean {
-  const state = useGameplayStore.getState();
+export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore): boolean {
+  const state = store.getState();
   const currentPlayer = state.players[state.currentPlayerIndex];
   
   // Only execute if it's AI's turn and in draft phase
@@ -21,7 +23,10 @@ export function executeAITurn(): boolean {
     return false;
   }
   
-  const moveMade = makeAIMove(
+  // Get per-player difficulty if available, otherwise use global difficulty
+  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
+  const aiProfile = getAIPlayerProfile(aiDifficulty);
+  const moveMade = aiProfile.makeMove(
     state,
     state.draftRune,
     state.draftFromCenter,
@@ -36,8 +41,8 @@ export function executeAITurn(): boolean {
  * Check if AI needs to make a placement after drafting
  * Returns true if AI has selected runes and needs to place them
  */
-export function needsAIPlacement(): boolean {
-  const state = useGameplayStore.getState();
+export function needsAIPlacement(store: StoreApi<GameplayStore> = useGameplayStore): boolean {
+  const state = store.getState();
   const currentPlayer = state.players[state.currentPlayerIndex];
   
   return currentPlayer.type === 'ai' && 
@@ -49,9 +54,14 @@ export function needsAIPlacement(): boolean {
  * Execute AI Void effect (single rune destruction)
  * Pure function - no setTimeout, timing handled by caller
  */
-export function executeAIVoidEffect() {
-  const state = useGameplayStore.getState();
-  const runeTarget = chooseVoidRuneTarget(state);
+export function executeAIVoidEffect(store: StoreApi<GameplayStore> = useGameplayStore) {
+  const state = store.getState();
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  
+  // Get per-player difficulty if available, otherwise use global difficulty
+  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
+  const aiProfile = getAIPlayerProfile(aiDifficulty);
+  const runeTarget = aiProfile.chooseVoidTarget(state);
   
   if (runeTarget) {
     state.destroyRune(runeTarget);
@@ -64,14 +74,21 @@ export function executeAIVoidEffect() {
  * Execute AI Frost effect (pattern line freezing)
  * Pure function - no setTimeout, timing handled by caller
  */
-export function executeAIFrostEffect() {
-  const state = useGameplayStore.getState();
-  const patternLineToFreeze = choosePatternLineToFreeze(state);
+export function executeAIFrostEffect(store: StoreApi<GameplayStore> = useGameplayStore) {
+  const state = store.getState();
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  
+  // Get per-player difficulty if available, otherwise use global difficulty
+  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
+  const aiProfile = getAIPlayerProfile(aiDifficulty);
+  const patternLineToFreeze = aiProfile.choosePatternLineToFreeze(state);
   const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
   const opponentId = state.players[opponentIndex].id;
   
   if (patternLineToFreeze !== null) {
     state.freezePatternLine(opponentId, patternLineToFreeze);
+  } else {
+    state.skipFrostEffect();
   }
 }
 

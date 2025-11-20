@@ -4,15 +4,18 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { AIDifficulty } from '../../../types/game';
+import { getAIDifficultyLabel } from '../../../utils/aiDifficultyLabels';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
-  onStartGame: (gameMode: 'classic' | 'standard') => void;
+  onStartGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => void;
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const navigate = useNavigate();
   const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
+  const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>('normal');
   const [showRules, setShowRules] = useState(false);
   
   return (
@@ -165,9 +168,113 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
               : 'Runes have unique modifiers that affect gameplay.'}
           </div>
         </div>
+
+        {/* Difficulty Toggle */}
+        <div style={{
+          marginBottom: '20px',
+          padding: '16px',
+          backgroundColor: '#071029',
+          borderRadius: '8px',
+          border: '1px solid rgba(74,158,255,0.08)'
+        }}>
+          <div style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#cfe0ff',
+            marginBottom: '12px'
+          }}>
+            Difficulty
+          </div>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
+          }}>
+            <button
+              onClick={() => setAiDifficulty('easy')}
+              style={{
+                flex: 1,
+                padding: '10px 18px',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: aiDifficulty === 'easy' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: aiDifficulty === 'easy' ? '#4a9eff' : 'transparent',
+                color: aiDifficulty === 'easy' ? '#ffffff' : '#c7d2fe',
+                cursor: 'pointer',
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (aiDifficulty !== 'easy') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (aiDifficulty !== 'easy') e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              {getAIDifficultyLabel('easy')}
+            </button>
+            <button
+              onClick={() => setAiDifficulty('normal')}
+              style={{
+                flex: 1,
+                padding: '10px 18px',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: aiDifficulty === 'normal' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: aiDifficulty === 'normal' ? '#4a9eff' : 'transparent',
+                color: aiDifficulty === 'normal' ? '#ffffff' : '#c7d2fe',
+                cursor: 'pointer',
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (aiDifficulty !== 'normal') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (aiDifficulty !== 'normal') e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              {getAIDifficultyLabel('normal')}
+            </button>
+            <button
+              onClick={() => setAiDifficulty('hard')}
+              style={{
+                flex: 1,
+                padding: '10px 18px',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: aiDifficulty === 'hard' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: aiDifficulty === 'hard' ? '#4a9eff' : 'transparent',
+                color: aiDifficulty === 'hard' ? '#ffffff' : '#c7d2fe',
+                cursor: 'pointer',
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (aiDifficulty !== 'hard') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (aiDifficulty !== 'hard') e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              {getAIDifficultyLabel('hard')}
+            </button>
+          </div>
+          <div style={{
+            marginTop: '8px',
+            fontSize: '13px',
+            color: '#9fb7ff',
+            textAlign: 'center'
+          }}>
+            Choose how the AI will play. Tuning coming soon.
+          </div>
+        </div>
         
         <button
-          onClick={() => onStartGame(gameMode)}
+          onClick={() => onStartGame(gameMode, aiDifficulty)}
           style={{
             backgroundColor: '#4a9eff',
             color: '#ffffff',

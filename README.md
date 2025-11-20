@@ -29,19 +29,67 @@ npm run lint
 
 ## Core Game Mechanics
 
+### Player Setup
+- Each player starts with **300 HP**
+- Each player has a **personal deck of runes** (equal composition of the five rune types in Standard mode)
+- Each player has **three personal Runeforges** used to draft runes at the start of each round
+- Each player has **five Pattern Lines** (capacity 1–5)
+- Each player has one **Floor Line** that accumulates overflow runes and applies penalties
+
 ### Drafting & Placement
-- Draft runes from your runeforges
-- Once each players runeforges are empty, draft from the shared pool
-- Place runes in 5-tier pattern lines (capacity 1-5)
-- Complete lines transfer to 5×5 scoring wall
-- Overflow runes go to floor line (penalties)
+At the start of each round:
+- Populate **each player's 3 personal Runeforges** with random runes drawn from their deck
+- Once all Runeforges are filled, drafting begins
+
+Drafting:
+- The first player to take a turn is chosen randomly. Players alternate for the rest of the game.
+- On a player’s turn, they choose one of their Runeforges (or the shared pool if all Runeforges are empty)
+- They must take **all runes of a single type** from the chosen source
+- All remaining runes from that forge move into the **shared Center Pool**
+- Drafted runes must be placed immediately
+
+Pattern Lines:
+- Players must place all drafted runes into **one Pattern Line**
+- The chosen Pattern Line must either be empty or already contain the same rune type
+- If there is not enough space, excess runes spill into the **Overflow**
+- A full Pattern Line becomes eligible to transfer to the Spell Wall at the end of the round
+
+Overflow:
+- Overflow runes are placed here and generate **penalties**  
+- Penalties reduce Focus by the number of runes in Overflow
 
 ### Scoring System
-- **Essence** = total runes on wall
-- **Focus** = largest connected segment size
-- **Spellpower** = Essence × max(1, Focus - floor penalties)
-- Spellpower dealt as damage to opponent at the end of every round
-- Winner = Player with the most health once runes run out
+At the end of the round, scoring occurs in three steps:
+
+#### 1. Completing Pattern Lines
+- For each completed Pattern Line, all runes are combined into **one** and are added to the player’s **5×5 Spell Wall**
+- Runes from incomplete Pattern Lines remain until completed in later rounds
+
+#### 2. Applying Rune Effects
+After all runes are added to the Wall:
+- **Fire** increases Essence
+- **Wind** cancels Floor penalties
+- **Life** heals the player
+- **Frost** and **Void** have unique effects during drafting. They do not impact end-of-round scoring.
+  Effects resolve in this order: **Life → Fire → Wind**
+
+#### 3. Calculating Damage
+Definitions:
+- **Essence** = total number of runes on the player’s Scoring Wall  
+- **Focus** = size of the largest connected segment on the Wall. Two runes are connected if they share an edge.
+- **Focus Penalty** = number of runes in Overflow minus the number of active **Wind** runes on the player's *Spel Wall**
+
+```
+Spellpower = Essence × max(1, Focus - Focus Penalty)
+```
+
+Damage & Healing:
+- Life healing is applied before damage is dealt
+- Spellpower is dealt as **damage to the opponent**
+- If both players survive, a new round begins
+- When both decks are exhausted, the game ends
+- The player with the most HP remaining wins
+- If both players are reduced to 0HP during a round, the game ends in a draw
 
 ### Game Modes
 - **Classic**: Pure strategy without rune effects

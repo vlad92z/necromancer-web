@@ -367,7 +367,7 @@ export function Spellpower({
   const focusTooltip = hasPenalty
     ? 'Overload is reducing your Focus. Cast more Wind runes on your wall to mitigate it.'
     : hasWindMitigation
-      ? `Wind runes on your wall (${windRuneCount}) are shielding you from Overload, keeping Focus intact.`
+      ? `Wind runes (${windRuneCount}) are shielding you from Overload, keeping Focus intact.`
       : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = fireRuneCount > 0

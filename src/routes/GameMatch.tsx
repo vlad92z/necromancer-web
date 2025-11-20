@@ -4,23 +4,23 @@ import { GameBoard } from '../features/gameplay/components/GameBoard'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
 import { executeAITurn, needsAIPlacement, executeAIVoidEffect, executeAIFrostEffect } from '../systems/aiController'
+import type { AIDifficulty } from '../types/game'
 
 export function GameMatch() {
   const navigate = useNavigate()
   const gameState = useGameplayStore()
   const startGame = useGameplayStore((state) => state.startGame)
-  const resetGame = useGameplayStore((state) => state.resetGame)
 
   // Set up navigation callback for returnToStartScreen
   useEffect(() => {
     setNavigationCallback(() => navigate('/'))
     
     return () => {
-      // Cleanup: remove navigation callback and reset game state when leaving route
+      // Cleanup: remove navigation callback only (don't reset game state)
+      // Game state should persist across navigations for spectator mode
       setNavigationCallback(null)
-      resetGame()
     }
-  }, [resetGame, navigate])
+  }, [navigate])
 
   // Trigger AI turn when it's AI's turn (draft phase)
   useEffect(() => {
@@ -81,8 +81,8 @@ export function GameMatch() {
     }
   }, [gameState.gameStarted, gameState.frostEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase])
 
-  const handleStartGame = (gameMode: 'classic' | 'standard') => {
-    startGame(gameMode)
+  const handleStartGame = (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => {
+    startGame(gameMode, aiDifficulty)
   }
 
   // Show start screen if game hasn't started

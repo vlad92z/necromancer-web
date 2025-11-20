@@ -3,14 +3,19 @@
  * Handles: runeforges, turns, runes, drafting, placement, scoring
  */
 
-import { create } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget } from '../../types/game';
+import { create, type StoreApi } from 'zustand';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
+import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 
 // Helper function to count Life runes on a wall
 function countLifeRunes(wall: Player['wall']): number {
   return wall.flat().filter(cell => cell.runeType === 'Life').length;
+}
+
+function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
+  return `${baseName} (${getAIDifficultyLabel(difficulty)})`;
 }
 
 // Navigation callback registry for routing integration
@@ -20,9 +25,10 @@ export function setNavigationCallback(callback: (() => void) | null) {
   navigationCallback = callback;
 }
 
-interface GameplayStore extends GameState {
+export interface GameplayStore extends GameState {
   // Actions
-  startGame: (gameMode: 'classic' | 'standard') => void;
+  startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => void;
+  startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
@@ -38,7 +44,7 @@ interface GameplayStore extends GameState {
   processScoringStep: () => void;
 }
 
-export const useGameplayStore = create<GameplayStore>((set) => ({
+export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
   // Initial state
   ...initializeGame(),
   
@@ -726,12 +732,58 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
     });
   },
   
-  startGame: (gameMode: 'classic' | 'standard') => {
+  startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => {
     set((state) => ({
       ...state,
       gameStarted: true,
       gameMode: gameMode,
+      aiDifficulty,
+      players: [
+        state.players[0],
+        {
+          ...state.players[1],
+          type: 'ai',
+          name: getAIDisplayName('Opponent', aiDifficulty),
+        },
+      ],
     }));
+  },
+
+  startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => {
+    set((state) => {
+      // Create two AI players
+      const topPlayer = state.players[0];
+      const bottomPlayer = state.players[1];
+      
+      const updatedTopPlayer: Player = {
+        ...topPlayer,
+        type: 'ai',
+        name: getAIDisplayName('Top AI', topDifficulty),
+      };
+      
+      const updatedBottomPlayer: Player = {
+        ...bottomPlayer,
+        type: 'ai',
+        name: getAIDisplayName('Bottom AI', bottomDifficulty),
+      };
+      
+      const updatedPlayers: [Player, Player] = [updatedTopPlayer, updatedBottomPlayer];
+      
+      // Create AI difficulties map keyed by player ID
+      const aiDifficulties: Record<string, AIDifficulty> = {
+        [updatedTopPlayer.id]: topDifficulty,
+        [updatedBottomPlayer.id]: bottomDifficulty,
+      };
+      
+      return {
+        ...state,
+        gameStarted: true,
+        gameMode: 'standard' as const,
+        players: updatedPlayers,
+        aiDifficulties,
+        aiDifficulty: topDifficulty, // Keep for backwards compatibility
+      };
+    });
   },
 
   returnToStartScreen: () => {
@@ -748,4 +800,10 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
   resetGame: () => {
     set(initializeGame());
   },
-}));
+});
+
+export const useGameplayStore = create<GameplayStore>((set) => gameplayStoreConfig(set));
+
+export function createGameplayStoreInstance() {
+  return create<GameplayStore>((set) => gameplayStoreConfig(set));
+}
