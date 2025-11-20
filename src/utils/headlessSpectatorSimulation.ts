@@ -110,7 +110,7 @@ export function runHeadlessSpectatorSeries(
 export async function runHeadlessSpectatorSeriesAsync(
   topDifficulty: AIDifficulty,
   bottomDifficulty: AIDifficulty,
-  games: number = 10,
+  games: number = 100,
   onProgress?: (completed: number) => void
 ): Promise<HeadlessResult> {
   let topWins = 0;

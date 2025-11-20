@@ -22,7 +22,7 @@ export function MainMenu() {
   } | null>(null)
   const [completedSimulations, setCompletedSimulations] = useState(0)
 
-  const HEADLESS_GAME_COUNT = 10
+  const HEADLESS_GAME_COUNT = 100
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
