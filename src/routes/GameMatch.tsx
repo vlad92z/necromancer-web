@@ -4,6 +4,7 @@ import { GameBoard } from '../features/gameplay/components/GameBoard'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
 import { executeAITurn, needsAIPlacement, executeAIVoidEffect, executeAIFrostEffect } from '../systems/aiController'
+import type { AIDifficulty } from '../types/game'
 
 export function GameMatch() {
   const navigate = useNavigate()
@@ -81,8 +82,8 @@ export function GameMatch() {
     }
   }, [gameState.gameStarted, gameState.frostEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase])
 
-  const handleStartGame = (gameMode: 'classic' | 'standard') => {
-    startGame(gameMode)
+  const handleStartGame = (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => {
+    startGame(gameMode, aiDifficulty)
   }
 
   // Show start screen if game hasn't started

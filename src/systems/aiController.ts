@@ -4,7 +4,7 @@
  * All timing is handled by component useEffect hooks
  */
 
-import { makeAIMove, chooseVoidRuneTarget, choosePatternLineToFreeze } from '../utils/aiPlayer';
+import { getAIPlayerProfile } from '../utils/aiPlayer';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 
 /**
@@ -20,8 +20,8 @@ export function executeAITurn(): boolean {
   if (currentPlayer.type !== 'ai' || state.turnPhase !== 'draft') {
     return false;
   }
-  
-  const moveMade = makeAIMove(
+  const aiProfile = getAIPlayerProfile(state.aiDifficulty);
+  const moveMade = aiProfile.makeMove(
     state,
     state.draftRune,
     state.draftFromCenter,
@@ -51,7 +51,8 @@ export function needsAIPlacement(): boolean {
  */
 export function executeAIVoidEffect() {
   const state = useGameplayStore.getState();
-  const runeTarget = chooseVoidRuneTarget(state);
+  const aiProfile = getAIPlayerProfile(state.aiDifficulty);
+  const runeTarget = aiProfile.chooseVoidTarget(state);
   
   if (runeTarget) {
     state.destroyRune(runeTarget);
@@ -66,7 +67,8 @@ export function executeAIVoidEffect() {
  */
 export function executeAIFrostEffect() {
   const state = useGameplayStore.getState();
-  const patternLineToFreeze = choosePatternLineToFreeze(state);
+  const aiProfile = getAIPlayerProfile(state.aiDifficulty);
+  const patternLineToFreeze = aiProfile.choosePatternLineToFreeze(state);
   const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
   const opponentId = state.players[opponentIndex].id;
   

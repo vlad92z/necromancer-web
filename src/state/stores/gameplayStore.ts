@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 
@@ -22,7 +22,7 @@ export function setNavigationCallback(callback: (() => void) | null) {
 
 interface GameplayStore extends GameState {
   // Actions
-  startGame: (gameMode: 'classic' | 'standard') => void;
+  startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
@@ -726,11 +726,12 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
     });
   },
   
-  startGame: (gameMode: 'classic' | 'standard') => {
+  startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => {
     set((state) => ({
       ...state,
       gameStarted: true,
       gameMode: gameMode,
+      aiDifficulty,
     }));
   },
 

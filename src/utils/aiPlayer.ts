@@ -16,7 +16,7 @@
  * 9. Scoring simulation (calculate expected points for each move)
  */
 
-import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidTarget } from '../types/game';
+import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidTarget, AIDifficulty } from '../types/game';
 import { getWallColumnForRune, calculateWallPower, calculateEffectiveFloorPenalty } from './scoring';
 
 interface DraftMove {
@@ -823,4 +823,29 @@ export function makeAIMove(
   }
   
   return true;
+}
+
+export interface AIPlayerProfile {
+  id: AIDifficulty;
+  makeMove: typeof makeAIMove;
+  chooseVoidTarget: typeof chooseVoidRuneTarget;
+  choosePatternLineToFreeze: typeof choosePatternLineToFreeze;
+}
+
+const createBaseAIProfile = (id: AIDifficulty): AIPlayerProfile => ({
+  id,
+  makeMove: makeAIMove,
+  chooseVoidTarget: chooseVoidRuneTarget,
+  choosePatternLineToFreeze,
+});
+
+export const aiPlayerProfiles: Record<AIDifficulty, AIPlayerProfile> = {
+  // All difficulties currently share the base AI; tuning will differentiate them later.
+  easy: createBaseAIProfile('easy'),
+  normal: createBaseAIProfile('normal'),
+  hard: createBaseAIProfile('hard'),
+};
+
+export function getAIPlayerProfile(difficulty: AIDifficulty): AIPlayerProfile {
+  return aiPlayerProfiles[difficulty] ?? aiPlayerProfiles.normal;
 }

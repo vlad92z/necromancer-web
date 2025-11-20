@@ -152,6 +152,7 @@ export function initializeGame(startingHealth: number = 300): GameState {
   return {
     gameStarted: false,
     gameMode: 'standard', // Default to standard mode (will be set when starting game)
+    aiDifficulty: 'normal',
     players: [player1, player2],
     runeforges: filledRuneforges,
     centerPool: [],
