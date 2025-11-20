@@ -17,7 +17,7 @@
  */
 
 import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidTarget, AIDifficulty } from '../types/game';
-import { getWallColumnForRune, calculateWallPower, calculateEffectiveFloorPenalty } from './scoring';
+import { getWallColumnForRune, calculateWallPower, calculateWallPowerWithSegments, calculateEffectiveFloorPenalty } from './scoring';
 
 const RUNE_PRIORITIES: RuneType[] = ['Fire', 'Wind', 'Life', 'Void', 'Frost'];
 
@@ -28,6 +28,34 @@ const runePriorityMap: Record<RuneType, number> = {
   Void: 3,
   Frost: 4,
 };
+
+function countLifeRunes(wall: Player['wall']): number {
+  return wall.flat().filter((cell) => cell.runeType === 'Life').length;
+}
+
+function evaluateSpellpowerAndHealingValue(state: GameState, playerIndex: 0 | 1): number {
+  const player = state.players[playerIndex];
+  const predictedWall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
+
+  player.patternLines.forEach((line, lineIndex) => {
+    if (line.count === line.tier && line.runeType) {
+      const col = getWallColumnForRune(lineIndex, line.runeType);
+      predictedWall[lineIndex][col] = { runeType: line.runeType };
+    }
+  });
+
+  const floorPenalty = calculateEffectiveFloorPenalty(
+    player.floorLine.runes,
+    player.patternLines,
+    predictedWall,
+    state.gameMode
+  );
+
+  const power = calculateWallPowerWithSegments(predictedWall, floorPenalty, state.gameMode);
+  const lifeHeal = state.gameMode === 'standard' ? countLifeRunes(predictedWall) * 10 : 0;
+
+  return power.totalPower + lifeHeal;
+}
 
 interface DraftMove {
   type: 'runeforge' | 'center';
@@ -1398,6 +1426,134 @@ function chooseRandomPatternLineToFreeze(state: GameState): number | null {
   return choice.index;
 }
 
+function makeNormalAIMove(
+  state: GameState,
+  draftRune: (runeforgeId: string, runeType: RuneType) => void,
+  draftFromCenter: (runeType: RuneType) => void,
+  placeRunes: (lineIndex: number) => void,
+  placeRunesInFloor: () => void
+): boolean {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
+
+  if (state.selectedRunes.length > 0) {
+    const runeType = state.selectedRunes[0].runeType;
+    let bestValue = Number.NEGATIVE_INFINITY;
+    let bestMove: { type: 'pattern'; lineIndex: number } | { type: 'floor' } | null = null;
+
+    currentPlayer.patternLines.forEach((line, lineIndex) => {
+      if (frozenLines.includes(lineIndex)) return;
+      if (line.count >= line.tier) return;
+      if (line.runeType !== null && line.runeType !== runeType) return;
+      const col = getWallColumnForRune(lineIndex, runeType);
+      if (currentPlayer.wall[lineIndex][col].runeType !== null) return;
+
+      const availableSpace = line.tier - line.count;
+      const runesToPlace = Math.min(state.selectedRunes.length, availableSpace);
+      const overflowRunes = state.selectedRunes.slice(runesToPlace);
+
+      const nextPatternLines = currentPlayer.patternLines.map((pl, idx) =>
+        idx === lineIndex
+          ? {
+              ...pl,
+              runeType: runeType,
+              count: pl.count + runesToPlace,
+            }
+          : { ...pl }
+      );
+
+      const nextFloorLine = {
+        ...currentPlayer.floorLine,
+        runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
+      };
+
+      const nextPlayers: [Player, Player] = [...state.players] as [Player, Player];
+      nextPlayers[state.currentPlayerIndex] = {
+        ...currentPlayer,
+        patternLines: nextPatternLines,
+        floorLine: nextFloorLine,
+      };
+
+      const simulatedState: GameState = {
+        ...state,
+        players: nextPlayers,
+        selectedRunes: [],
+      };
+
+      const value = evaluateSpellpowerAndHealingValue(simulatedState, state.currentPlayerIndex);
+      if (value > bestValue) {
+        bestValue = value;
+        bestMove = { type: 'pattern', lineIndex };
+      } else if (value === bestValue && bestMove?.type === 'pattern') {
+        if (lineIndex < bestMove.lineIndex) {
+          bestMove = { type: 'pattern', lineIndex };
+        }
+      }
+    });
+
+    const floorPlayers: [Player, Player] = [...state.players] as [Player, Player];
+    floorPlayers[state.currentPlayerIndex] = {
+      ...currentPlayer,
+      floorLine: {
+        ...currentPlayer.floorLine,
+        runes: [...currentPlayer.floorLine.runes, ...state.selectedRunes],
+      },
+    };
+    const floorSimulated: GameState = {
+      ...state,
+      players: floorPlayers,
+      selectedRunes: [],
+    };
+    const floorValue = evaluateSpellpowerAndHealingValue(floorSimulated, state.currentPlayerIndex);
+    if (floorValue > bestValue) {
+      bestValue = floorValue;
+      bestMove = { type: 'floor' };
+    }
+
+    if (!bestMove) {
+      return false;
+    }
+
+    if (bestMove.type === 'floor') {
+      placeRunesInFloor();
+    } else {
+      placeRunes(bestMove.lineIndex);
+    }
+    return true;
+  }
+
+  const legalDrafts = getLegalDraftMoves(state);
+  if (legalDrafts.length === 0) {
+    return false;
+  }
+
+  const baseValue = evaluateSpellpowerAndHealingValue(state, state.currentPlayerIndex);
+  let bestDraft: DraftMove | null = null;
+  let bestValue = baseValue;
+
+  legalDrafts.forEach((move) => {
+    const value = baseValue;
+    if (value > bestValue) {
+      bestValue = value;
+      bestDraft = move;
+    } else if (value === bestValue) {
+      if (!bestDraft || runePriorityMap[move.runeType] < runePriorityMap[bestDraft.runeType]) {
+        bestDraft = move;
+      }
+    }
+  });
+
+  const chosen = bestDraft ?? legalDrafts[0];
+
+  if (chosen.type === 'runeforge' && chosen.runeforgeId) {
+    draftRune(chosen.runeforgeId, chosen.runeType);
+  } else if (chosen.type === 'center') {
+    draftFromCenter(chosen.runeType);
+  }
+
+  return true;
+}
+
 /**
  * Make a smart move for the AI player
  * Returns true if a move was made, false if no legal moves available
@@ -1445,7 +1601,7 @@ export interface AIPlayerProfile {
 
 const createBaseAIProfile = (id: AIDifficulty): AIPlayerProfile => ({
   id,
-  makeMove: makeAIMove,
+  makeMove: makeNormalAIMove,
   chooseVoidTarget: chooseVoidRuneTarget,
   choosePatternLineToFreeze,
 });
