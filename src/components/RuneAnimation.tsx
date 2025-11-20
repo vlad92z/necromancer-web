@@ -57,8 +57,8 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
             }}
             style={{
               position: 'absolute',
-              width: '48px',
-              height: '48px',
+              width: '60px',
+              height: '60px',
             }}
           >
             <RuneCell
