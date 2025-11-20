@@ -85,6 +85,8 @@ export function executeAIFrostEffect() {
   
   if (patternLineToFreeze !== null) {
     state.freezePatternLine(opponentId, patternLineToFreeze);
+  } else {
+    state.skipFrostEffect();
   }
 }
 
