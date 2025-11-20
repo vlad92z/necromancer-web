@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGameActions } from '../hooks/useGameActions'
 import { runHeadlessSpectatorSeriesAsync } from '../utils/headlessSpectatorSimulation'
+import { getAIDifficultyLabel } from '../utils/aiDifficultyLabels'
 import type { AIDifficulty } from '../types/game'
 
 export function MainMenu() {
@@ -246,9 +247,9 @@ export function MainMenu() {
                 style={selectStyle}
                 aria-label="Select difficulty for top AI player"
               >
-                <option value="easy">Easy</option>
-                <option value="normal">Normal</option>
-                <option value="hard">Hard</option>
+                <option value="easy">{getAIDifficultyLabel('easy')}</option>
+                <option value="normal">{getAIDifficultyLabel('normal')}</option>
+                <option value="hard">{getAIDifficultyLabel('hard')}</option>
               </select>
             </div>
             
@@ -263,9 +264,9 @@ export function MainMenu() {
                 style={selectStyle}
                 aria-label="Select difficulty for bottom AI player"
               >
-                <option value="easy">Easy</option>
-                <option value="normal">Normal</option>
-                <option value="hard">Hard</option>
+                <option value="easy">{getAIDifficultyLabel('easy')}</option>
+                <option value="normal">{getAIDifficultyLabel('normal')}</option>
+                <option value="hard">{getAIDifficultyLabel('hard')}</option>
               </select>
             </div>
 

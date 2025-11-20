@@ -1314,40 +1314,88 @@ function chooseHardDraftMove(state: GameState): CombinedDraftMove | null {
   };
 }
 
-function makeHardAIMove(
+function makeRandomAIMove(
   state: GameState,
   draftRune: (runeforgeId: string, runeType: RuneType) => void,
   draftFromCenter: (runeType: RuneType) => void,
   placeRunes: (lineIndex: number) => void,
   placeRunesInFloor: () => void
 ): boolean {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
+
   if (state.selectedRunes.length > 0) {
-    const placement = chooseBestPlacementMove(state);
-    if (!placement) {
-      return false;
-    }
-    if (placement.type === 'floor') {
+    const runeType = state.selectedRunes[0].runeType;
+    const availableLines = currentPlayer.patternLines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line, index }) => {
+        if (frozenLines.includes(index)) return false;
+        if (line.count >= line.tier) return false;
+        if (line.runeType !== null && line.runeType !== runeType) return false;
+        const col = getWallColumnForRune(index, runeType);
+        if (currentPlayer.wall[index][col].runeType !== null) return false;
+        return true;
+      });
+
+    if (availableLines.length === 0) {
       placeRunesInFloor();
-    } else if (placement.lineIndex !== undefined) {
-      placeRunes(placement.lineIndex);
+      return true;
     }
+
+    const choice = availableLines[Math.floor(Math.random() * availableLines.length)];
+    placeRunes(choice.index);
     return true;
   }
 
-  const chosen = chooseHardDraftMove(state);
-  if (!chosen) {
+  const draftMoves = getLegalDraftMoves(state);
+  if (draftMoves.length === 0) {
     return false;
   }
-
-  const { move } = chosen;
+  const move = draftMoves[Math.floor(Math.random() * draftMoves.length)];
   if (move.type === 'runeforge' && move.runeforgeId) {
     draftRune(move.runeforgeId, move.runeType);
   } else if (move.type === 'center') {
     draftFromCenter(move.runeType);
   }
 
-  // Placement will be handled on the next AI call with selected runes.
   return true;
+}
+
+function chooseRandomVoidRuneTarget(state: GameState): VoidTarget | null {
+  const runeforgeTargets: VoidTarget[] = state.runeforges.flatMap((forge) =>
+    forge.runes.map((rune) => ({
+      source: 'runeforge' as const,
+      runeforgeId: forge.id,
+      runeId: rune.id,
+    }))
+  );
+  const centerTargets: VoidTarget[] = state.centerPool.map((rune) => ({
+    source: 'center' as const,
+    runeId: rune.id,
+  }));
+
+  const allTargets = [...runeforgeTargets, ...centerTargets];
+  if (allTargets.length === 0) {
+    return null;
+  }
+  return allTargets[Math.floor(Math.random() * allTargets.length)];
+}
+
+function chooseRandomPatternLineToFreeze(state: GameState): number | null {
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const opponent = state.players[opponentIndex];
+  const frozen = state.frozenPatternLines[opponent.id] ?? [];
+
+  const candidates = opponent.patternLines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line, index }) => !frozen.includes(index) && line.count < line.tier);
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const choice = candidates[Math.floor(Math.random() * candidates.length)];
+  return choice.index;
 }
 
 /**
@@ -1412,9 +1460,9 @@ export const aiPlayerProfiles: Record<AIDifficulty, AIPlayerProfile> = {
   normal: createBaseAIProfile('normal'),
   hard: {
     id: 'hard',
-    makeMove: makeHardAIMove,
-    chooseVoidTarget: chooseEasyVoidRuneTarget,
-    choosePatternLineToFreeze: chooseEasyPatternLineToFreeze,
+    makeMove: makeRandomAIMove,
+    chooseVoidTarget: chooseRandomVoidRuneTarget,
+    choosePatternLineToFreeze: chooseRandomPatternLineToFreeze,
   },
 };
 

@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { AIDifficulty } from '../../../types/game';
+import { getAIDifficultyLabel } from '../../../utils/aiDifficultyLabels';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
@@ -211,7 +212,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 if (aiDifficulty !== 'easy') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Easy
+              {getAIDifficultyLabel('easy')}
             </button>
             <button
               onClick={() => setAiDifficulty('normal')}
@@ -235,7 +236,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 if (aiDifficulty !== 'normal') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Normal
+              {getAIDifficultyLabel('normal')}
             </button>
             <button
               onClick={() => setAiDifficulty('hard')}
@@ -259,7 +260,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 if (aiDifficulty !== 'hard') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Hard
+              {getAIDifficultyLabel('hard')}
             </button>
           </div>
           <div style={{

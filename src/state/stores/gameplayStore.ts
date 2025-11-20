@@ -7,6 +7,7 @@ import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
+import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 
 // Helper function to count Life runes on a wall
 function countLifeRunes(wall: Player['wall']): number {
@@ -14,12 +15,7 @@ function countLifeRunes(wall: Player['wall']): number {
 }
 
 function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
-  const labels: Record<AIDifficulty, string> = {
-    easy: 'Easy',
-    normal: 'Normal',
-    hard: 'Hard',
-  };
-  return `${baseName} (${labels[difficulty]})`;
+  return `${baseName} (${getAIDifficultyLabel(difficulty)})`;
 }
 
 // Navigation callback registry for routing integration
