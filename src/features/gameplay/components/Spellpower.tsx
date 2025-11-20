@@ -410,6 +410,13 @@ export function Spellpower({
         position: 'relative'
       }}
     >
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '1.25em 1em',
+        position: 'relative'
+      }}>
       {/* Avatar */}
       <div
         style={{
@@ -432,8 +439,8 @@ export function Spellpower({
       </div>
 
       {/* Name */}
-      <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.2rem' }}>{playerName}</div>
-
+      <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.2rem'}}>{playerName}</div>
+      </div>
       {/* Health / Healing */}
       <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
         <StatBadge
