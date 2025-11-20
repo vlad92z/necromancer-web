@@ -1242,9 +1242,10 @@ function makeNormalAIMove(
   const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
 
   if (state.selectedRunes.length > 0) {
+    const FLOOR_MOVE = -1;
     const runeType = state.selectedRunes[0].runeType;
     let bestValue = Number.NEGATIVE_INFINITY;
-    let bestMove: { type: 'pattern'; lineIndex: number } | { type: 'floor' } | null = null;
+    let bestMoveIndex: number | null = null;
 
     currentPlayer.patternLines.forEach((line, lineIndex) => {
       if (frozenLines.includes(lineIndex)) return;
@@ -1288,11 +1289,9 @@ function makeNormalAIMove(
       const value = evaluateSpellpowerAndHealingValue(simulatedState, state.currentPlayerIndex);
       if (value > bestValue) {
         bestValue = value;
-        bestMove = { type: 'pattern', lineIndex };
-      } else if (value === bestValue && bestMove?.type === 'pattern') {
-        if (lineIndex < bestMove.lineIndex) {
-          bestMove = { type: 'pattern', lineIndex };
-        }
+        bestMoveIndex = lineIndex;
+      } else if (value === bestValue && bestMoveIndex !== null && bestMoveIndex >= 0 && lineIndex < bestMoveIndex) {
+        bestMoveIndex = lineIndex;
       }
     });
 
@@ -1312,18 +1311,19 @@ function makeNormalAIMove(
     const floorValue = evaluateSpellpowerAndHealingValue(floorSimulated, state.currentPlayerIndex);
     if (floorValue > bestValue) {
       bestValue = floorValue;
-      bestMove = { type: 'floor' };
+      bestMoveIndex = FLOOR_MOVE;
     }
 
-    if (!bestMove) {
+    if (bestMoveIndex === null) {
       return false;
     }
 
-    if (bestMove.type === 'floor') {
+    if (bestMoveIndex === FLOOR_MOVE) {
       placeRunesInFloor();
-    } else {
-      placeRunes(bestMove.lineIndex);
+      return true;
     }
+
+    placeRunes(bestMoveIndex);
     return true;
   }
 
