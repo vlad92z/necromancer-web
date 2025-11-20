@@ -199,7 +199,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
             borderRadius: '12px',
             border: '1px solid rgba(255, 255, 255, 0.12)',
             color: '#cbd5f5',
-            fontSize: '0.78rem',
+            fontSize: '1rem',
             lineHeight: 1.6,
             boxShadow: '0 20px 45px rgba(0,0,0,0.55)',
             zIndex: 5
