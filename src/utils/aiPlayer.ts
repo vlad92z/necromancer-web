@@ -19,6 +19,16 @@
 import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidTarget, AIDifficulty } from '../types/game';
 import { getWallColumnForRune, calculateWallPower, calculateEffectiveFloorPenalty } from './scoring';
 
+const RUNE_PRIORITIES: RuneType[] = ['Fire', 'Wind', 'Life', 'Void', 'Frost'];
+
+const runePriorityMap: Record<RuneType, number> = {
+  Fire: 0,
+  Wind: 1,
+  Life: 2,
+  Void: 3,
+  Frost: 4,
+};
+
 interface DraftMove {
   type: 'runeforge' | 'center';
   runeforgeId?: string;
@@ -78,6 +88,51 @@ function getLegalDraftMoves(state: GameState): DraftMove[] {
     });
   }
   
+  return moves;
+}
+
+/**
+ * Get legal draft moves for any player index (used by easy AI and opponent lookahead)
+ */
+function getLegalDraftMovesForPlayer(state: GameState, playerIndex: 0 | 1): DraftMove[] {
+  const moves: DraftMove[] = [];
+  const targetPlayer = state.players[playerIndex];
+  const playerRuneforges = state.runeforges.filter((runeforge) => runeforge.ownerId === targetPlayer.id);
+  const hasAccessibleRuneforges = playerRuneforges.some((runeforge) => runeforge.runes.length > 0);
+  const centerIsEmpty = state.centerPool.length === 0;
+  const canUseOpponentRuneforges = !hasAccessibleRuneforges && centerIsEmpty;
+
+  state.runeforges.forEach((runeforge) => {
+    if (runeforge.runes.length === 0) {
+      return;
+    }
+    const ownsRuneforge = runeforge.ownerId === targetPlayer.id;
+    if (!ownsRuneforge && !canUseOpponentRuneforges) {
+      return;
+    }
+
+    const runeTypes = new Set(runeforge.runes.map((r) => r.runeType));
+    runeTypes.forEach((runeType: RuneType) => {
+      moves.push({
+        type: 'runeforge',
+        runeforgeId: runeforge.id,
+        runeType,
+        count: countRunes(runeforge.runes, runeType),
+      });
+    });
+  });
+
+  if (state.centerPool.length > 0 && !hasAccessibleRuneforges) {
+    const runeTypes = new Set(state.centerPool.map((rune) => rune.runeType));
+    runeTypes.forEach((runeType) => {
+      moves.push({
+        type: 'center',
+        runeType,
+        count: countRunes(state.centerPool, runeType),
+      });
+    });
+  }
+
   return moves;
 }
 
@@ -787,6 +842,514 @@ export function choosePatternLineToFreeze(state: GameState): number | null {
   return bestLineIndex;
 }
 
+interface EasyDraftOption {
+  move: DraftMove;
+  targetLineIndex: number;
+  spaces: number;
+  hasExistingRunes: boolean;
+  runeType: RuneType;
+}
+
+interface EasyPlacementOption {
+  targetLineIndex: number;
+  spaces: number;
+  hasExistingRunes: boolean;
+  runeType: RuneType;
+  overflow: number;
+}
+
+const compareLinePreference = (a: EasyDraftOption | EasyPlacementOption, b: EasyDraftOption | EasyPlacementOption): number => {
+  if (a.spaces !== b.spaces) {
+    return b.spaces - a.spaces; // Larger lines first
+  }
+  if (a.hasExistingRunes !== b.hasExistingRunes) {
+    return a.hasExistingRunes ? -1 : 1; // Prefer lines with existing runes
+  }
+  const priorityDiff = runePriorityMap[a.runeType] - runePriorityMap[b.runeType];
+  if (priorityDiff !== 0) {
+    return priorityDiff;
+  }
+  return a.targetLineIndex - b.targetLineIndex; // Stable tie-breaker
+};
+
+function findBestPerfectDraftOption(state: GameState): EasyDraftOption | null {
+  const moves = getLegalDraftMoves(state);
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
+  const options: EasyDraftOption[] = [];
+
+  moves.forEach((move) => {
+    currentPlayer.patternLines.forEach((line, lineIndex) => {
+      if (frozenLines.includes(lineIndex)) {
+        return;
+      }
+      const spaces = line.tier - line.count;
+      if (spaces !== move.count) {
+        return;
+      }
+      if (!canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, frozenLines)) {
+        return;
+      }
+      options.push({
+        move,
+        targetLineIndex: lineIndex,
+        spaces,
+        hasExistingRunes: line.count > 0,
+        runeType: move.runeType,
+      });
+    });
+  });
+
+  if (options.length === 0) {
+    return null;
+  }
+
+  options.sort(compareLinePreference);
+  return options[0];
+}
+
+function chooseEasyPlacementMove(state: GameState): { type: 'line' | 'floor'; lineIndex?: number } | null {
+  if (state.selectedRunes.length === 0) {
+    return null;
+  }
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
+  const runeType = state.selectedRunes[0].runeType;
+  const runeCount = state.selectedRunes.length;
+
+  const perfectOptions: EasyPlacementOption[] = [];
+  const fallbackOptions: EasyPlacementOption[] = [];
+
+  currentPlayer.patternLines.forEach((line, lineIndex) => {
+    if (frozenLines.includes(lineIndex)) {
+      return;
+    }
+    if (!canPlaceOnLine(line, runeType, currentPlayer.wall, lineIndex, frozenLines)) {
+      return;
+    }
+    const spaces = line.tier - line.count;
+    const option: EasyPlacementOption = {
+      targetLineIndex: lineIndex,
+      spaces,
+      hasExistingRunes: line.count > 0,
+      runeType,
+      overflow: Math.max(0, runeCount - spaces),
+    };
+
+    if (spaces === runeCount) {
+      perfectOptions.push(option);
+    } else {
+      fallbackOptions.push(option);
+    }
+  });
+
+  if (perfectOptions.length > 0) {
+    perfectOptions.sort(compareLinePreference);
+    return { type: 'line', lineIndex: perfectOptions[0].targetLineIndex };
+  }
+
+  if (fallbackOptions.length > 0) {
+    fallbackOptions.sort((a, b) => {
+      if (a.overflow !== b.overflow) {
+        return a.overflow - b.overflow; // Minimal waste
+      }
+      return compareLinePreference(a, b);
+    });
+    return { type: 'line', lineIndex: fallbackOptions[0].targetLineIndex };
+  }
+
+  return { type: 'floor' };
+}
+
+interface FinishableLine {
+  lineIndex: number;
+  runeType: RuneType;
+  spaces: number;
+  hasExistingRunes: boolean;
+  tier: number;
+  bestMove: DraftMove;
+  surplus: number;
+}
+
+function getFinishableLinesForPlayer(state: GameState, playerIndex: 0 | 1): FinishableLine[] {
+  const targetPlayer = state.players[playerIndex];
+  const frozenLines = state.frozenPatternLines[targetPlayer.id] ?? [];
+  const legalMoves = getLegalDraftMovesForPlayer(state, playerIndex);
+  const finishable: FinishableLine[] = [];
+
+  targetPlayer.patternLines.forEach((line, lineIndex) => {
+    if (frozenLines.includes(lineIndex)) {
+      return;
+    }
+    const spaces = line.tier - line.count;
+    if (spaces <= 0) {
+      return;
+    }
+
+    const candidateRuneTypes: RuneType[] = line.runeType ? [line.runeType] : RUNE_PRIORITIES;
+
+    candidateRuneTypes.forEach((runeType) => {
+      if (!canPlaceOnLine(line, runeType, targetPlayer.wall, lineIndex, frozenLines)) {
+        return;
+      }
+      const matchingMoves = legalMoves
+        .filter((move) => move.runeType === runeType && move.count >= spaces)
+        .sort((a, b) => a.count - b.count);
+
+      if (matchingMoves.length === 0) {
+        return;
+      }
+
+      const bestMove = matchingMoves[0];
+      finishable.push({
+        lineIndex,
+        runeType,
+        spaces,
+        hasExistingRunes: line.count > 0,
+        tier: line.tier,
+        bestMove,
+        surplus: bestMove.count - spaces,
+      });
+    });
+  });
+
+  return finishable;
+}
+
+function chooseEasyVoidRuneTarget(state: GameState): VoidTarget | null {
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const finishableLines = getFinishableLinesForPlayer(state, opponentIndex).filter((entry) => entry.surplus === 0);
+
+  if (finishableLines.length === 0) {
+    return null;
+  }
+
+  finishableLines.sort((a, b) => {
+    if (a.spaces !== b.spaces) {
+      return b.spaces - a.spaces;
+    }
+    if (a.hasExistingRunes !== b.hasExistingRunes) {
+      return a.hasExistingRunes ? -1 : 1;
+    }
+    const priorityDiff = runePriorityMap[a.runeType] - runePriorityMap[b.runeType];
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+    return a.lineIndex - b.lineIndex;
+  });
+
+  const targetLine = finishableLines[0];
+  const { bestMove } = targetLine;
+
+  if (bestMove.type === 'runeforge' && bestMove.runeforgeId) {
+    const runeforge = state.runeforges.find((forge) => forge.id === bestMove.runeforgeId);
+    const rune = runeforge?.runes.find((r) => r.runeType === targetLine.runeType);
+    if (runeforge && rune) {
+      return { source: 'runeforge', runeforgeId: runeforge.id, runeId: rune.id };
+    }
+  }
+
+  if (bestMove.type === 'center') {
+    const rune = state.centerPool.find((r) => r.runeType === targetLine.runeType);
+    if (rune) {
+      return { source: 'center', runeId: rune.id };
+    }
+  }
+
+  return null;
+}
+
+function chooseEasyPatternLineToFreeze(state: GameState): number | null {
+  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
+  const finishableLines = getFinishableLinesForPlayer(state, opponentIndex);
+
+  if (finishableLines.length === 0) {
+    return null;
+  }
+
+  finishableLines.sort((a, b) => {
+    if (a.tier !== b.tier) {
+      return b.tier - a.tier; // Biggest pattern line first
+    }
+    if (a.hasExistingRunes !== b.hasExistingRunes) {
+      return a.hasExistingRunes ? -1 : 1;
+    }
+    const priorityDiff = runePriorityMap[a.runeType] - runePriorityMap[b.runeType];
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+    return a.lineIndex - b.lineIndex;
+  });
+
+  return finishableLines[0].lineIndex;
+}
+
+function makeEasyAIMove(
+  state: GameState,
+  draftRune: (runeforgeId: string, runeType: RuneType) => void,
+  draftFromCenter: (runeType: RuneType) => void,
+  placeRunes: (lineIndex: number) => void,
+  placeRunesInFloor: () => void
+): boolean {
+  if (state.selectedRunes.length > 0) {
+    const placement = chooseEasyPlacementMove(state);
+    if (!placement) {
+      return false;
+    }
+    if (placement.type === 'floor') {
+      placeRunesInFloor();
+    } else if (placement.lineIndex !== undefined) {
+      placeRunes(placement.lineIndex);
+    }
+    return true;
+  }
+
+  const perfectOption = findBestPerfectDraftOption(state);
+  const move = perfectOption?.move ?? chooseBestDraftMove(state);
+  if (!move) {
+    return false;
+  }
+
+  if (move.type === 'runeforge' && move.runeforgeId) {
+    draftRune(move.runeforgeId, move.runeType);
+  } else if (move.type === 'center') {
+    draftFromCenter(move.runeType);
+  }
+
+  return true;
+}
+
+interface CombinedDraftMove {
+  move: DraftMove;
+  targetLineIndex: number | null;
+}
+
+const HARD_SEARCH_DEPTH = 3;
+const MAX_PLACEMENTS_PER_MOVE = 3;
+
+function evaluateBoardState(state: GameState, aiIndex: 0 | 1): number {
+  const aiPlayer = state.players[aiIndex];
+  const opponentIndex = (1 - aiIndex) as 0 | 1;
+  const opponent = state.players[opponentIndex];
+
+  const aiPenalty = calculateEffectiveFloorPenalty(
+    aiPlayer.floorLine.runes,
+    aiPlayer.patternLines,
+    aiPlayer.wall,
+    state.gameMode
+  );
+  const opponentPenalty = calculateEffectiveFloorPenalty(
+    opponent.floorLine.runes,
+    opponent.patternLines,
+    opponent.wall,
+    state.gameMode
+  );
+
+  const aiPower = calculateWallPower(aiPlayer.wall, aiPenalty, state.gameMode);
+  const opponentPower = calculateWallPower(opponent.wall, opponentPenalty, state.gameMode);
+
+  const aiFinishables = getFinishableLinesForPlayer(state, aiIndex);
+  const opponentFinishables = getFinishableLinesForPlayer(state, opponentIndex);
+
+  const finishableValue = (entry: FinishableLine): number => {
+    const base = entry.tier * 10;
+    const progress = entry.hasExistingRunes ? 12 : 4;
+    const perfect = entry.surplus === 0 ? 18 : 0;
+    const typeBias = Math.max(0, 6 - runePriorityMap[entry.runeType]);
+    return base + progress + perfect + typeBias;
+  };
+
+  const aiOpportunity =
+    aiFinishables.length === 0
+      ? 0
+      : Math.max(...aiFinishables.map(finishableValue));
+
+  const opponentThreat =
+    opponentFinishables.length === 0
+      ? 0
+      : Math.max(...opponentFinishables.map(finishableValue));
+
+  // Reward self power, subtract opponent power and their best finishing threat.
+  return (aiPower - opponentPower) + aiOpportunity * 0.5 - opponentThreat * 0.9;
+}
+
+function getPlacementCandidatesForMove(
+  state: GameState,
+  playerIndex: 0 | 1,
+  move: DraftMove
+): CombinedDraftMove[] {
+  const player = state.players[playerIndex];
+  const frozenLines = state.frozenPatternLines[player.id] ?? [];
+  const baseState: GameState = { ...state, currentPlayerIndex: playerIndex };
+
+  const placements: Array<{ targetLineIndex: number | null; score: number }> = [];
+
+  player.patternLines.forEach((line, lineIndex) => {
+    if (canPlaceOnLine(line, move.runeType, player.wall, lineIndex, frozenLines)) {
+      const score = simulateScoreGain(baseState, move, lineIndex);
+      placements.push({ targetLineIndex: lineIndex, score });
+    }
+  });
+
+  if (placements.length === 0) {
+    placements.push({ targetLineIndex: null, score: -Infinity });
+  }
+
+  placements.sort((a, b) => b.score - a.score);
+
+  return placements.slice(0, MAX_PLACEMENTS_PER_MOVE).map((placement) => ({
+    move,
+    targetLineIndex: placement.targetLineIndex,
+  }));
+}
+
+function getHardCandidateMoves(state: GameState, playerIndex: 0 | 1): CombinedDraftMove[] {
+  const moves = getLegalDraftMovesForPlayer(state, playerIndex);
+  const candidates: CombinedDraftMove[] = [];
+
+  moves.forEach((move) => {
+    const placements = getPlacementCandidatesForMove(state, playerIndex, move);
+    candidates.push(...placements);
+  });
+
+  return candidates;
+}
+
+function simulateCombinedMove(
+  state: GameState,
+  playerIndex: 0 | 1,
+  combinedMove: CombinedDraftMove
+): GameState {
+  const baseState: GameState = {
+    ...state,
+    currentPlayerIndex: playerIndex,
+  };
+
+  const simulated = simulateDraftMove(baseState, combinedMove.move, combinedMove.targetLineIndex);
+  simulated.currentPlayerIndex = playerIndex === 0 ? 1 : 0;
+  simulated.selectedRunes = [];
+  simulated.turnPhase = 'draft';
+  return simulated;
+}
+
+function minimaxSearch(
+  state: GameState,
+  depth: number,
+  aiIndex: 0 | 1,
+  currentPlayerIndex: 0 | 1,
+  alpha: number,
+  beta: number
+): { score: number; move?: CombinedDraftMove } {
+  if (depth === 0) {
+    return { score: evaluateBoardState(state, aiIndex) };
+  }
+
+  const moves = getHardCandidateMoves(state, currentPlayerIndex);
+  if (moves.length === 0) {
+    return { score: evaluateBoardState(state, aiIndex) };
+  }
+
+  const maximizingPlayer = currentPlayerIndex === aiIndex;
+  let bestScore = maximizingPlayer ? -Infinity : Infinity;
+  let bestMove: CombinedDraftMove | undefined;
+
+  for (const candidate of moves) {
+    const nextState = simulateCombinedMove(state, currentPlayerIndex, candidate);
+    const result = minimaxSearch(
+      nextState,
+      depth - 1,
+      aiIndex,
+      nextState.currentPlayerIndex,
+      alpha,
+      beta
+    );
+
+    if (maximizingPlayer) {
+      if (result.score > bestScore) {
+        bestScore = result.score;
+        bestMove = candidate;
+      }
+      alpha = Math.max(alpha, bestScore);
+      if (beta <= alpha) {
+        break;
+      }
+    } else {
+      if (result.score < bestScore) {
+        bestScore = result.score;
+        bestMove = candidate;
+      }
+      beta = Math.min(beta, bestScore);
+      if (beta <= alpha) {
+        break;
+      }
+    }
+  }
+
+  return { score: bestScore, move: bestMove };
+}
+
+function chooseHardDraftMove(state: GameState): CombinedDraftMove | null {
+  const aiIndex = state.currentPlayerIndex as 0 | 1;
+  const searchResult = minimaxSearch(
+    state,
+    HARD_SEARCH_DEPTH,
+    aiIndex,
+    aiIndex,
+    -Infinity,
+    Infinity
+  );
+
+  if (searchResult.move) {
+    return searchResult.move;
+  }
+
+  const fallbackDraft = chooseBestDraftMove(state);
+  if (!fallbackDraft) {
+    return null;
+  }
+
+  return {
+    move: fallbackDraft,
+    targetLineIndex: null,
+  };
+}
+
+function makeHardAIMove(
+  state: GameState,
+  draftRune: (runeforgeId: string, runeType: RuneType) => void,
+  draftFromCenter: (runeType: RuneType) => void,
+  placeRunes: (lineIndex: number) => void,
+  placeRunesInFloor: () => void
+): boolean {
+  if (state.selectedRunes.length > 0) {
+    const placement = chooseBestPlacementMove(state);
+    if (!placement) {
+      return false;
+    }
+    if (placement.type === 'floor') {
+      placeRunesInFloor();
+    } else if (placement.lineIndex !== undefined) {
+      placeRunes(placement.lineIndex);
+    }
+    return true;
+  }
+
+  const chosen = chooseHardDraftMove(state);
+  if (!chosen) {
+    return false;
+  }
+
+  const { move, targetLineIndex } = chosen;
+  if (move.type === 'runeforge' && move.runeforgeId) {
+    draftRune(move.runeforgeId, move.runeType);
+  } else if (move.type === 'center') {
+    draftFromCenter(move.runeType);
+  }
+
+  // Placement will be handled on the next AI call with selected runes.
+  return true;
+}
+
 /**
  * Make a smart move for the AI player
  * Returns true if a move was made, false if no legal moves available
@@ -840,10 +1403,19 @@ const createBaseAIProfile = (id: AIDifficulty): AIPlayerProfile => ({
 });
 
 export const aiPlayerProfiles: Record<AIDifficulty, AIPlayerProfile> = {
-  // All difficulties currently share the base AI; tuning will differentiate them later.
-  easy: createBaseAIProfile('easy'),
+  easy: {
+    id: 'easy',
+    makeMove: makeEasyAIMove,
+    chooseVoidTarget: chooseEasyVoidRuneTarget,
+    choosePatternLineToFreeze: chooseEasyPatternLineToFreeze,
+  },
   normal: createBaseAIProfile('normal'),
-  hard: createBaseAIProfile('hard'),
+  hard: {
+    id: 'hard',
+    makeMove: makeHardAIMove,
+    chooseVoidTarget: chooseEasyVoidRuneTarget,
+    choosePatternLineToFreeze: chooseEasyPatternLineToFreeze,
+  },
 };
 
 export function getAIPlayerProfile(difficulty: AIDifficulty): AIPlayerProfile {
