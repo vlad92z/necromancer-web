@@ -1,7 +1,13 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SpectatorModePanel } from '../components/SpectatorModePanel'
+import { useGameActions } from '../hooks/useGameActions'
+import type { Difficulty } from '../types/game'
 
 export function MainMenu() {
   const navigate = useNavigate()
+  const { startSpectatorMatch } = useGameActions()
+  const [showSpectatorPanel, setShowSpectatorPanel] = useState(false)
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -59,6 +65,19 @@ export function MainMenu() {
     navigate('/game')
   }
 
+  const handleSpectatorMode = () => {
+    setShowSpectatorPanel(!showSpectatorPanel)
+  }
+
+  const handleStartSpectator = (topDifficulty: Difficulty, bottomDifficulty: Difficulty) => {
+    startSpectatorMatch(topDifficulty, bottomDifficulty)
+    navigate('/game')
+  }
+
+  const handleCloseSpectator = () => {
+    setShowSpectatorPanel(false)
+  }
+
   return (
     <div style={containerStyle}>
       <h1 style={titleStyle}>Massive Spell: Arcane Arena</h1>
@@ -79,6 +98,28 @@ export function MainMenu() {
         >
           Quick Play
         </button>
+        
+        <button
+          style={buttonStyle}
+          onClick={handleSpectatorMode}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#5ab0ff'
+            e.currentTarget.style.transform = 'scale(1.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#4a9eff'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
+        >
+          Spectator Mode
+        </button>
+        
+        {showSpectatorPanel && (
+          <SpectatorModePanel
+            onStart={handleStartSpectator}
+            onClose={handleCloseSpectator}
+          />
+        )}
         
         <button
           style={disabledButtonStyle}

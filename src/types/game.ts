@@ -3,6 +3,11 @@
  */
 
 /**
+ * AI difficulty levels
+ */
+export type Difficulty = 'easy' | 'normal' | 'hard';
+
+/**
  * Rune types (elemental identities)
  */
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind';

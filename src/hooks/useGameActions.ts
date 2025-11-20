@@ -15,6 +15,7 @@ export function useGameActions() {
   const skipFrostEffect = useGameplayStore((state) => state.skipFrostEffect);
   const endRound = useGameplayStore((state) => state.endRound);
   const resetGame = useGameplayStore((state) => state.resetGame);
+  const startSpectatorMatch = useGameplayStore((state) => state.startSpectatorMatch);
   
   return {
     draftRune,
@@ -26,5 +27,6 @@ export function useGameActions() {
     skipFrostEffect,
     endRound,
     resetGame,
+    startSpectatorMatch,
   };
 }

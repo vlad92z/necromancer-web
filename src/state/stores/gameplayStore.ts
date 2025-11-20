@@ -4,8 +4,8 @@
  */
 
 import { create } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget } from '../../types/game';
-import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
+import type { GameState, RuneType, Player, Rune, VoidTarget, Difficulty } from '../../types/game';
+import { initializeGame, fillFactories, createEmptyFactories, createPlayer } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 
 // Helper function to count Life runes on a wall
@@ -23,6 +23,7 @@ export function setNavigationCallback(callback: (() => void) | null) {
 interface GameplayStore extends GameState {
   // Actions
   startGame: (gameMode: 'classic' | 'standard') => void;
+  startSpectatorMatch: (topDifficulty: Difficulty, bottomDifficulty: Difficulty) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
@@ -732,6 +733,51 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       gameStarted: true,
       gameMode: gameMode,
     }));
+  },
+
+  startSpectatorMatch: (topDifficulty: Difficulty, bottomDifficulty: Difficulty) => {
+    // Create two AI players for spectator mode
+    const player1 = createPlayer('player-1', `AI Top (${topDifficulty})`, 'ai', 300);
+    const player2 = createPlayer('player-2', `AI Bottom (${bottomDifficulty})`, 'ai', 300);
+    
+    // Each player gets 3 personal runeforges
+    const emptyFactories = createEmptyFactories([player1, player2], 3);
+    
+    // Fill factories and get updated decks
+    const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(emptyFactories, {
+      [player1.id]: player1.deck,
+      [player2.id]: player2.deck,
+    });
+    
+    // Update player decks with remaining runes
+    player1.deck = decksByPlayer[player1.id] ?? [];
+    player2.deck = decksByPlayer[player2.id] ?? [];
+    
+    // Initialize game state with two AI players
+    set({
+      gameStarted: true,
+      gameMode: 'standard', // Use Standard ruleset
+      players: [player1, player2],
+      runeforges: filledRuneforges,
+      centerPool: [],
+      currentPlayerIndex: 0,
+      turnPhase: 'draft',
+      round: 1,
+      selectedRunes: [],
+      draftSource: null,
+      firstPlayerToken: null,
+      animatingRunes: [],
+      pendingPlacement: null,
+      scoringPhase: null,
+      roundHistory: [],
+      voidEffectPending: false,
+      frostEffectPending: false,
+      frozenPatternLines: {
+        [player1.id]: [],
+        [player2.id]: [],
+      },
+      shouldTriggerEndRound: false,
+    });
   },
 
   returnToStartScreen: () => {
