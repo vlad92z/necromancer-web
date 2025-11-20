@@ -133,8 +133,8 @@ export function RuneCell({
     borderStyle = '2px solid #38bdf8';
   }
   
-  // Animate when rune appears in pattern lines, scoring wall, or floor line
-  const shouldAnimate = (usedVariant === 'pattern' || usedVariant === 'wall' || usedVariant === 'floor') && rune;
+  // Only animate wall placements; pattern/floor entries rely on RuneAnimation overlay
+  const shouldAnimate = usedVariant === 'wall' && Boolean(rune);
   
   const animationProps = shouldAnimate ? {
     initial: { scale: 0, opacity: 0 } as const,

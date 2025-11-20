@@ -2,7 +2,7 @@
  * GameBoard component - main game board displaying runeforges, center, player and opponent views
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import type { GameState, RuneType, AnimatingRune, Rune } from '../../../types/game';
 import { RuneforgesAndCenter } from './RuneforgesAndCenter';
 import { PlayerView } from './PlayerView';
@@ -554,7 +554,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
     };
   }, [scoringPhase, processScoringStep]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (selectedRunes.length === 0) {
       return;
     }
@@ -569,7 +569,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
     };
   }, [selectedRunes, players, currentPlayerIndex]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previousCount = previousSelectedCountRef.current;
     if (previousCount > 0 && selectedRunes.length === 0) {
       if (manualAnimationRef.current) {
