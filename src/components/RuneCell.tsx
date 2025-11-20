@@ -121,7 +121,7 @@ export function RuneCell({
   // Use occupied background for wall cells that have runes OR are pending placement
   // Use `usedVariant` for styling decisions so callers can force visuals
   // without changing semantic behavior.
-  let backgroundColor = (usedVariant === 'wall' && (rune || isPending) && variantStyle.backgroundOccupied)
+  const backgroundColor = (usedVariant === 'wall' && (rune || isPending) && variantStyle.backgroundOccupied)
     ? variantStyle.backgroundOccupied
     : variantStyle.background;
   

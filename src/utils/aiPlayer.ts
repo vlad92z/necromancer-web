@@ -1339,7 +1339,7 @@ function makeHardAIMove(
     return false;
   }
 
-  const { move, targetLineIndex } = chosen;
+  const { move } = chosen;
   if (move.type === 'runeforge' && move.runeforgeId) {
     draftRune(move.runeforgeId, move.runeType);
   } else if (move.type === 'center') {
