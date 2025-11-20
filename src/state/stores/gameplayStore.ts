@@ -13,6 +13,15 @@ function countLifeRunes(wall: Player['wall']): number {
   return wall.flat().filter(cell => cell.runeType === 'Life').length;
 }
 
+function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
+  const labels: Record<AIDifficulty, string> = {
+    easy: 'Easy',
+    normal: 'Normal',
+    hard: 'Hard',
+  };
+  return `${baseName} (${labels[difficulty]})`;
+}
+
 // Navigation callback registry for routing integration
 let navigationCallback: (() => void) | null = null;
 
@@ -733,6 +742,14 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       gameStarted: true,
       gameMode: gameMode,
       aiDifficulty,
+      players: [
+        state.players[0],
+        {
+          ...state.players[1],
+          type: 'ai',
+          name: getAIDisplayName('Opponent', aiDifficulty),
+        },
+      ],
     }));
   },
 
@@ -745,13 +762,13 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       const updatedTopPlayer: Player = {
         ...topPlayer,
         type: 'ai',
-        name: 'Top AI',
+        name: getAIDisplayName('Top AI', topDifficulty),
       };
       
       const updatedBottomPlayer: Player = {
         ...bottomPlayer,
         type: 'ai',
-        name: 'Bottom AI',
+        name: getAIDisplayName('Bottom AI', bottomDifficulty),
       };
       
       const updatedPlayers: [Player, Player] = [updatedTopPlayer, updatedBottomPlayer];
