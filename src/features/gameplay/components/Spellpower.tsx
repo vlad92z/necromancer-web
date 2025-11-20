@@ -364,20 +364,20 @@ export function Spellpower({
   const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = hasPenalty
-    ? 'Overload is cutting into your Focus until you clear the floor. Keep penalties low to restore stable channels.'
+    ? 'Overload is reducing your Focus. Cast Wind runes to mitigate.'
     : hasWindMitigation
-      ? `Wind runes (${windRuneCount}) are shielding you from overload, keeping Focus intact.`
-      : 'Largest connected cluster on your wall. Stay precise to keep the flow of power.';
+      ? `Wind runes (${windRuneCount}) are shielding you from Overload, keeping Focus intact.`
+      : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = fireRuneCount > 0
-    ? `All runes on the wall plus +${fireRuneCount} Essence from blazing Fire runes.`
-    : 'Count of runes etched into your wall. Fire runes add bonus Essence—draft aggressively to grow it.';
+    ? `Esence - cast more runes to increase spell damage. Fire runes (${fireRuneCount}) amplify your Essence.`
+    : 'Esence - cast more runes to increase spell damage.';
 
-  const spellpowerTooltip = `Essence (${essence}) × Focus (${focus}) = ${spellpower} spell damage this round. Tap for the full breakdown.`;
-  const healthTooltip = 'Remaining vitality. Drop to zero and your duel ends.';
+  const spellpowerTooltip = `Spellpower - Essence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
+  const healthTooltip = 'Health - drop to zero and your duel ends.';
   const healingTooltip = healing > 0
-    ? `Life runes will restore ${healing} HP at the end of the round.`
-    : 'No Life runes are staged—no healing queued this round.';
+    ? `Life runes will restore ${healing} health every round.`
+    : 'Healing - cast life runes to heal yourself every round.';
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);

@@ -88,15 +88,15 @@ export function WallCell({ cell, row, col, patternLine }: WallCellProps) {
 function getRuneDescription(type: RuneType) {
   switch (type) {
     case 'Fire':
-      return 'Fire — increases ⚡Essence to deal more damage.';
+      return 'Fire - increases ⚡Essence to deal more damage.';
     case 'Frost':
-      return 'Frost — placing Frost runes lets you ❄️freeze enemy pattern lines.';
+      return 'Frost - placing Frost runes lets you freeze enemy pattern lines.';
     case 'Life':
-      return 'Life — increases 🌿healing done every round.';
+      return 'Life - increases 🌿healing done every round.';
     case 'Void':
-      return 'Void — placing Void runes lets you 🌀destroy runes from the center.';
+      return 'Void - placing Void runes lets you destroy unclaimed runes.';
     case 'Wind':
-      return 'Wind — reduces Overload penalties.';
+      return 'Wind - reduces Overload penalties.';
     default:
       return `${type} rune`;
   }
