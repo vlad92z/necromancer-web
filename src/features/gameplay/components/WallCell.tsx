@@ -63,7 +63,7 @@ export function WallCell({ cell, row, col, patternLine }: WallCellProps) {
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
+            bottom: 'calc(100% + 8px)',
             left: '50%',
             transform: 'translateX(-50%)',
             width: 'min(240px, 70vw)',
