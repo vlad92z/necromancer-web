@@ -332,7 +332,6 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       } else {
         // Return to runeforge (both selected runes and the ones moved to center)
         const runeforgeId = state.draftSource.runeforgeId;
-        const movedToCenter = state.draftSource.movedToCenter;
         const originalRunes = state.draftSource.originalRunes;
         
         const updatedRuneforges = state.runeforges.map((f) =>
