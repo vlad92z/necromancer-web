@@ -14,6 +14,7 @@ import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
+import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -92,6 +93,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const isAITurn = currentPlayer.type === 'ai';
   const isAnimatingPlacement = animatingRunes.length > 0;
   const animatingRuneIds = [...animatingRunes, ...runeforgeAnimatingRunes].map((rune) => rune.id);
+  useRunePlacementSounds(players, animatingRunes);
 
   // Determine winner by highest remaining health
   const winner = isGameOver
