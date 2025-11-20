@@ -279,6 +279,7 @@ function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: n
   const currentPenalty = calculateEffectiveFloorPenalty(
     currentPlayer.floorLine.runes,
     currentPlayer.patternLines,
+    currentPlayer.wall,
     state.gameMode
   );
   const currentScore = calculateWallPower(currentPlayer.wall, currentPenalty, state.gameMode);
@@ -302,6 +303,7 @@ function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: n
   const simulatedPenalty = calculateEffectiveFloorPenalty(
     simulatedPlayer.floorLine.runes,
     simulatedPlayer.patternLines,
+    simulatedWall,
     state.gameMode
   );
   const simulatedScore = calculateWallPower(simulatedWall, simulatedPenalty, state.gameMode);

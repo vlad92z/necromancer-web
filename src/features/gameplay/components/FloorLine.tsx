@@ -13,7 +13,7 @@ interface FloorLineProps {
   canPlace?: boolean;
   /**
    * Number of floor slots to visually neutralize (render with standard/pattern-like background).
-   * This should come from Wind runes staged in pattern lines.
+   * This should come from Wind runes secured on the scoring wall (pending placements included).
    */
   mitigatedSlots?: number;
   playerId?: string;

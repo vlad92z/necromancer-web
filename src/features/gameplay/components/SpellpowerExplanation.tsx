@@ -57,7 +57,7 @@ export function SpellpowerExplanation({ onClose }: SpellpowerExplanationProps) {
           <div style={{ marginBottom: '18px' }}>
             <strong style={{ color: '#facc15' }}>Focus</strong>
             <p style={{ margin: '6px 0 0 0' }}>
-              Find the largest connected cluster of runes. That chain is your Focus. Floor penalties shrink it, but Wind runes staged in pattern lines shield you.
+              Find the largest connected cluster of runes. That chain is your Focus. Floor penalties shrink it, but Wind runes anchored to your Spell Wall shield you (completed Wind lines count immediately).
             </p>
           </div>
 
