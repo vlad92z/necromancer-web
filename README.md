@@ -52,30 +52,25 @@ npm run lint
 
 ## Rune Effects (Standard Mode)
 
-### 🔥 Fire (Power)
-**Effect**: Every active Fire rune adds +1 Essence  
-**Strategy**: Maximize Fire runes for bonus spellpower  
-**Status**: ✅ Implemented
-
-### ❄️ Frost (Control)
-**Effect**: Freeze one of the opponent's pattern lines after placing Frost runes  
-**Strategy**: Lock the line they most need so they can't place there next turn  
-**Status**: ✅ Implemented
-
 ### 💚 Life (Sustain)
 **Effect**: Active Life runes heal the player for 10 HP per active Life rune each round  
-**Strategy**: Collect Life runes for sustain and survivability  
-**Status**: ✅ Implemented
+**Strategy**: Life runes do not scale with other game mechanics, making them the simplest to use. Healing becomes less powerful in high spellpower games, and has the potential of being wasted if the player is already at full health.
 
-### 🌑 Void (Destruction)
-**Effect**: Destroy any rune on the shared board (Runeforges or Center Pool) 
-**Strategy**: Deny key runes or clear unwanted colors  
-**Status**: ✅ Implemented
+### 🔥 Fire (Power)
+**Effect**: Every active Fire rune adds +1 Essence  
+**Strategy**: Scales with Focus. Fire runes will add little Spellpower in early turns, but can deal a lot of damage when Focus is high. Extra damage is always useful and has no potential of being wasted.
 
 ### 💨 Wind (Mitigation)
 **Effect**: Wind runes placed on your scoring wall cancel floor penalties (completed Wind lines count instantly)  
-**Strategy**: Prioritize filling Wind wall slots so Overload can't shrink your Focus  
-**Status**: ✅ Implemented
+**Strategy**: Scales with Essence. Wind runes have the highest potential for increasing Spellpower, because Essence is usually higher than Focus. Especially effective in the late game, when Overloading is more common. Can be wasted, if players do not need to Overload.
+
+### ❄️ Frost (Control)
+**Effect**: Freeze one of the opponent's pattern lines after placing Frost runes  
+**Strategy**: Powerful board control tool to deny completing Pattern Lines for the opponent. Can completely ruin a turn, especially if the opponent has only one free Pattern Line or a single Runeforge remaining.
+
+### 🌑 Void (Destruction)
+**Effect**: Destroy any rune on the shared board (Runeforges or Center Pool) 
+**Strategy**: Can be used offensively to deny completing Pattern Lines to the opponent or defensively to reduce your own Overload. This is a very flexible rune that requires a lot of planning.
 
 ## Project Structure
 
