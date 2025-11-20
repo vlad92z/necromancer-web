@@ -23,6 +23,7 @@ export function setNavigationCallback(callback: (() => void) | null) {
 interface GameplayStore extends GameState {
   // Actions
   startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => void;
+  startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
@@ -733,6 +734,43 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       gameMode: gameMode,
       aiDifficulty,
     }));
+  },
+
+  startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => {
+    set((state) => {
+      // Create two AI players
+      const topPlayer = state.players[0];
+      const bottomPlayer = state.players[1];
+      
+      const updatedTopPlayer: Player = {
+        ...topPlayer,
+        type: 'ai',
+        name: 'Top AI',
+      };
+      
+      const updatedBottomPlayer: Player = {
+        ...bottomPlayer,
+        type: 'ai',
+        name: 'Bottom AI',
+      };
+      
+      const updatedPlayers: [Player, Player] = [updatedTopPlayer, updatedBottomPlayer];
+      
+      // Create AI difficulties map keyed by player ID
+      const aiDifficulties: Record<string, AIDifficulty> = {
+        [updatedTopPlayer.id]: topDifficulty,
+        [updatedBottomPlayer.id]: bottomDifficulty,
+      };
+      
+      return {
+        ...state,
+        gameStarted: true,
+        gameMode: 'standard' as const,
+        players: updatedPlayers,
+        aiDifficulties,
+        aiDifficulty: topDifficulty, // Keep for backwards compatibility
+      };
+    });
   },
 
   returnToStartScreen: () => {
