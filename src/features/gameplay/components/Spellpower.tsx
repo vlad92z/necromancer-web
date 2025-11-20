@@ -7,13 +7,13 @@ import { motion, useAnimationControls, animate } from 'framer-motion';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
 
-const HEAL_ANIMATION_DURATION_MS = 1000;
-const HEAL_TO_DAMAGE_DELAY_MS = 1000;
-const DAMAGE_ANIMATION_DURATION_MS = 1000;
+const HEAL_ANIMATION_DURATION_MS = 500;
+const HEAL_TO_DAMAGE_DELAY_MS = 250;
+const DAMAGE_ANIMATION_DURATION_MS = 500;
 const PLAYER_SEQUENCE_PADDING_MS = 500;
 const PLAYER_SEQUENCE_DURATION_MS =
   HEAL_ANIMATION_DURATION_MS + HEAL_TO_DAMAGE_DELAY_MS + DAMAGE_ANIMATION_DURATION_MS + PLAYER_SEQUENCE_PADDING_MS;
-const BASE_SEQUENCE_DELAY_MS = 1;
+const BASE_SEQUENCE_DELAY_MS = 1200;
 
 const HEALTH_PULSE_POSITIVE = '#4ade80';
 const HEALTH_PULSE_NEGATIVE = '#fb7185';
@@ -42,10 +42,10 @@ interface SpellpowerProps {
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
-  const size = 26;
+  const size = 35;
   const strokeProps = {
     stroke: color,
-    strokeWidth: 1.8,
+    strokeWidth: 2,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
     fill: 'none' as const,
@@ -53,9 +53,9 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
 
   if (type === 'health') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 ">
+      <svg width={size} height={size} viewBox="0 0 24 24">
         <path
-          d="M12 21s-7-4.35-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.65-7 9-7 9Z"
+          d="M12 19s-7-4.35-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.65-7 9-7 9Z"
           fill={color}
           opacity={0.9}
         />
@@ -86,7 +86,7 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
         <circle cx="12" cy="12" r="7" {...strokeProps} />
         <circle cx="12" cy="12" r="2.5" fill={color} opacity={0.9} />
         <path d="M12 5v2.5" {...strokeProps} />
-        <path d="M12 18.5V21" {...strokeProps} />
+        <path d="M12 18.5V17" {...strokeProps} />
         <path d="M5 12h2.5" {...strokeProps} />
         <path d="M16.5 12H19" {...strokeProps} />
       </svg>
@@ -413,8 +413,8 @@ export function Spellpower({
       {/* Avatar */}
       <div
         style={{
-          width: '4.4em',
-          height: '4.4em',
+          width: '5em',
+          height: '5em',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
@@ -432,7 +432,7 @@ export function Spellpower({
       </div>
 
       {/* Name */}
-      <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.05rem' }}>{playerName}</div>
+      <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.2rem' }}>{playerName}</div>
 
       {/* Health / Healing */}
       <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
