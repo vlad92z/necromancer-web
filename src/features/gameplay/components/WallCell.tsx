@@ -74,6 +74,7 @@ export function WallCell({ cell, row, col, patternLine }: WallCellProps) {
             color: '#cbd5f5',
             fontSize: '1rem',
             lineHeight: 1.6,
+            whiteSpace: 'pre-wrap',
             boxShadow: '0 20px 45px rgba(0,0,0,0.55)',
             zIndex: 5
           }}
