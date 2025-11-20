@@ -3,7 +3,7 @@
  * Handles: runeforges, turns, runes, drafting, placement, scoring
  */
 
-import { create } from 'zustand';
+import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
@@ -29,7 +29,7 @@ export function setNavigationCallback(callback: (() => void) | null) {
   navigationCallback = callback;
 }
 
-interface GameplayStore extends GameState {
+export interface GameplayStore extends GameState {
   // Actions
   startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => void;
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
@@ -48,7 +48,7 @@ interface GameplayStore extends GameState {
   processScoringStep: () => void;
 }
 
-export const useGameplayStore = create<GameplayStore>((set) => ({
+export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
   // Initial state
   ...initializeGame(),
   
@@ -804,4 +804,10 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
   resetGame: () => {
     set(initializeGame());
   },
-}));
+});
+
+export const useGameplayStore = create<GameplayStore>((set) => gameplayStoreConfig(set));
+
+export function createGameplayStoreInstance() {
+  return create<GameplayStore>((set) => gameplayStoreConfig(set));
+}
