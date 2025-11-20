@@ -25,6 +25,7 @@ interface RuneforgesAndCenterProps {
   onCancelSelection: () => void;
   onCancelVoidSelection?: () => void;
   animatingRuneIds?: string[];
+  hiddenCenterRuneIds?: Set<string>;
 }
 
 export function RuneforgesAndCenter({ 
@@ -45,7 +46,8 @@ export function RuneforgesAndCenter({
   draftSource,
   onCancelSelection,
   onCancelVoidSelection,
-  animatingRuneIds
+  animatingRuneIds,
+  hiddenCenterRuneIds
 }: RuneforgesAndCenterProps) {
   const [player, opponent] = players;
   const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
@@ -60,7 +62,6 @@ export function RuneforgesAndCenter({
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
   const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
-  const pendingRunesFromRuneforge = draftSource?.type === 'runeforge' ? draftSource.movedToCenter : [];
   const selectedRuneforgeOriginalRunes = draftSource?.type === 'runeforge' ? draftSource.originalRunes : [];
   const selectionFromCenter = draftSource?.type === 'center';
   const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
@@ -197,9 +198,9 @@ export function RuneforgesAndCenter({
           selectedRunes={selectionFromCenter ? selectedRunes : []}
           selectionFromCenter={Boolean(selectionFromCenter)}
           onCancelSelection={selectionFromCenter ? onCancelSelection : undefined}
-          pendingRunesFromRuneforge={pendingRunesFromRuneforge}
           displayRunesOverride={centerSelectionOriginalRunes}
           animatingRuneIds={animatingRuneIdSet}
+          hiddenRuneIds={hiddenCenterRuneIds}
         />
       </div>
 

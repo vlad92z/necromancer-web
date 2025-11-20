@@ -18,10 +18,10 @@ interface CenterPoolProps {
   voidEffectPending?: boolean;
   selectedRunes: Rune[];
   selectionFromCenter: boolean;
-  pendingRunesFromRuneforge?: Rune[];
   onCancelSelection?: () => void;
   displayRunesOverride?: Rune[];
   animatingRuneIds?: Set<string> | null;
+  hiddenRuneIds?: Set<string>;
 }
 
 export function CenterPool({ 
@@ -35,24 +35,21 @@ export function CenterPool({
   voidEffectPending = false,
   selectedRunes,
   selectionFromCenter,
-  pendingRunesFromRuneforge = [],
   onCancelSelection,
   displayRunesOverride,
-  animatingRuneIds = null
+  animatingRuneIds = null,
+  hiddenRuneIds
 }: CenterPoolProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const [hoveredVoidRuneId, setHoveredVoidRuneId] = useState<string | null>(null);
-  const pendingRunesFromRuneforgeIds = new Set(pendingRunesFromRuneforge.map((rune) => rune.id));
-  const filteredCenterRunes = centerPool.filter((rune) => !pendingRunesFromRuneforgeIds.has(rune.id));
-  const overrideRunes = displayRunesOverride?.filter((rune) => !pendingRunesFromRuneforgeIds.has(rune.id));
   const selectedRuneIdSet = selectionFromCenter ? new Set(selectedRunes.map((rune) => rune.id)) : null;
   const baseDisplayRunes =
-    selectionFromCenter && overrideRunes && overrideRunes.length > 0
-      ? overrideRunes
-      : filteredCenterRunes;
+    selectionFromCenter && displayRunesOverride && displayRunesOverride.length > 0
+      ? displayRunesOverride
+      : centerPool;
   const baseDisplayRuneIds = new Set(baseDisplayRunes.map((rune) => rune.id));
   const fallbackSelectedRunes =
-    selectionFromCenter && (!overrideRunes || overrideRunes.length === 0)
+    selectionFromCenter && (!displayRunesOverride || displayRunesOverride.length === 0)
       ? selectedRunes
           .filter((rune) => !baseDisplayRuneIds.has(rune.id))
           .map((rune) => ({ rune, isSelected: true }))
@@ -125,13 +122,15 @@ export function CenterPool({
             const highlightByVoidSelection = voidSelectionActive && hoveredVoidRuneId === rune.id;
             const isHighlighted = highlightByType || highlightByVoidSelection;
             const isAnimatingRune = animatingRuneIds?.has(rune.id) ?? false;
+            const isHiddenRune = hiddenRuneIds?.has(rune.id) ?? false;
             const glowStyle = voidSelectionActive
               ? '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)'
               : (isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none');
             const runeSize = 60;
             const isDisabledRune = (centerDisabled && !voidSelectionActive && !isSelected);
             const baseOpacity = isDisabledRune ? 0.5 : 1;
-            const opacity = isAnimatingRune ? 0 : baseOpacity;
+            const shouldHideRune = isAnimatingRune || isHiddenRune;
+            const opacity = shouldHideRune ? 0 : baseOpacity;
             const motionProps = isSelected
               ? {
                   animate: { scale: [1.08, 1.16, 1.08], y: [-1.5, 1.5, -1.5], rotate: [-1.8, 1.8, -1.8] },
@@ -163,7 +162,9 @@ export function CenterPool({
                   boxShadow: glowStyle,
                   borderRadius: '50%',
                   backgroundColor: 'rgba(9, 4, 30, 0.82)',
-                  pointerEvents: isAnimatingRune ? 'none' : (isSelected ? 'auto' : (centerDisabled ? 'none' : 'auto'))
+                  pointerEvents: shouldHideRune
+                    ? 'none'
+                    : (isSelected ? 'auto' : (centerDisabled ? 'none' : 'auto'))
                 }}
                 onClick={(e) => handleRuneClick(e, rune, isSelected)}
                 onMouseEnter={() => {

@@ -77,13 +77,9 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         f.id === runeforgeId ? { ...f, runes: [] } : f
       );
       
-      // Move remaining runes to center pool
-      const updatedCenterPool = [...state.centerPool, ...remainingRunes];
-      
       return {
         ...state,
         runeforges: updatedRuneforges,
-        centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
       };
@@ -193,6 +189,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         ...state.frozenPatternLines,
         [currentPlayer.id]: [],
       };
+      const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
+      const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       
       // Check if Void runes were placed (Void effect: destroy a single rune)
       const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
@@ -224,6 +222,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
           players: updatedPlayers,
           selectedRunes: [],
           draftSource: null,
+          centerPool: nextCenterPool,
           turnPhase: 'draft' as const,
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           voidEffectPending: true, // Wait for runeforge selection
@@ -239,6 +238,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
           players: updatedPlayers,
           selectedRunes: [],
           draftSource: null,
+          centerPool: nextCenterPool,
           turnPhase: 'draft' as const,
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           frostEffectPending: true, // Wait for runeforge selection
@@ -254,6 +254,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         players: updatedPlayers,
         selectedRunes: [],
         draftSource: null,
+        centerPool: nextCenterPool,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
@@ -291,6 +292,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
+      const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
+      const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       // Switch to next player (alternate between 0 and 1)
       const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
@@ -304,6 +307,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         players: updatedPlayers,
         selectedRunes: [],
         draftSource: null,
+        centerPool: nextCenterPool,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
@@ -331,11 +335,6 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         const movedToCenter = state.draftSource.movedToCenter;
         const originalRunes = state.draftSource.originalRunes;
         
-        // Remove the moved runes from center pool
-        const updatedCenterPool = state.centerPool.filter(
-          (rune) => !movedToCenter.some((moved) => moved.id === rune.id)
-        );
-        
         const updatedRuneforges = state.runeforges.map((f) =>
           f.id === runeforgeId
             ? { ...f, runes: originalRunes }
@@ -345,7 +344,6 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         return {
           ...state,
           runeforges: updatedRuneforges,
-          centerPool: updatedCenterPool,
           selectedRunes: [],
           draftSource: null,
         };
