@@ -10,18 +10,17 @@ export function GameMatch() {
   const navigate = useNavigate()
   const gameState = useGameplayStore()
   const startGame = useGameplayStore((state) => state.startGame)
-  const resetGame = useGameplayStore((state) => state.resetGame)
 
   // Set up navigation callback for returnToStartScreen
   useEffect(() => {
     setNavigationCallback(() => navigate('/'))
     
     return () => {
-      // Cleanup: remove navigation callback and reset game state when leaving route
+      // Cleanup: remove navigation callback only (don't reset game state)
+      // Game state should persist across navigations for spectator mode
       setNavigationCallback(null)
-      resetGame()
     }
-  }, [resetGame, navigate])
+  }, [navigate])
 
   // Trigger AI turn when it's AI's turn (draft phase)
   useEffect(() => {

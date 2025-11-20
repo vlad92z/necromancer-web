@@ -1,7 +1,15 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useGameActions } from '../hooks/useGameActions'
+import type { AIDifficulty } from '../types/game'
 
 export function MainMenu() {
   const navigate = useNavigate()
+  const { startSpectatorMatch } = useGameActions()
+  
+  const [spectatorModeOpen, setSpectatorModeOpen] = useState(false)
+  const [topAIDifficulty, setTopAIDifficulty] = useState<AIDifficulty>('normal')
+  const [bottomAIDifficulty, setBottomAIDifficulty] = useState<AIDifficulty>('normal')
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -54,8 +62,51 @@ export function MainMenu() {
     cursor: 'not-allowed',
     opacity: 0.5,
   }
+  
+  const spectatorPanelStyle: React.CSSProperties = {
+    marginTop: '16px',
+    padding: '20px',
+    backgroundColor: '#2a2a2a',
+    borderRadius: '8px',
+    width: '100%',
+  }
+  
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    marginBottom: '8px',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    color: '#aaaaaa',
+  }
+  
+  const selectStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px',
+    fontSize: '16px',
+    backgroundColor: '#1a1a1a',
+    color: '#ffffff',
+    border: '1px solid #444444',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    marginBottom: '16px',
+  }
+  
+  const startButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    width: '100%',
+    marginTop: '8px',
+  }
 
   const handleQuickPlay = () => {
+    navigate('/game')
+  }
+  
+  const handleSpectatorModeToggle = () => {
+    setSpectatorModeOpen(!spectatorModeOpen)
+  }
+  
+  const handleStartSpectator = () => {
+    startSpectatorMatch(topAIDifficulty, bottomAIDifficulty)
     navigate('/game')
   }
 
@@ -103,6 +154,76 @@ export function MainMenu() {
         >
           Matchmaking (Coming Soon)
         </button>
+        
+        <button
+          style={buttonStyle}
+          onClick={handleSpectatorModeToggle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#5ab0ff'
+            e.currentTarget.style.transform = 'scale(1.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#4a9eff'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
+          aria-label="Toggle spectator mode settings"
+        >
+          Spectator Mode {spectatorModeOpen ? '▲' : '▼'}
+        </button>
+        
+        {spectatorModeOpen && (
+          <div style={spectatorPanelStyle}>
+            <div>
+              <label htmlFor="top-ai-difficulty" style={labelStyle}>
+                Top AI Difficulty
+              </label>
+              <select
+                id="top-ai-difficulty"
+                value={topAIDifficulty}
+                onChange={(e) => setTopAIDifficulty(e.target.value as AIDifficulty)}
+                style={selectStyle}
+                aria-label="Select difficulty for top AI player"
+              >
+                <option value="easy">Easy</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="bottom-ai-difficulty" style={labelStyle}>
+                Bottom AI Difficulty
+              </label>
+              <select
+                id="bottom-ai-difficulty"
+                value={bottomAIDifficulty}
+                onChange={(e) => setBottomAIDifficulty(e.target.value as AIDifficulty)}
+                style={selectStyle}
+                aria-label="Select difficulty for bottom AI player"
+              >
+                <option value="easy">Easy</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            
+            <button
+              style={startButtonStyle}
+              onClick={handleStartSpectator}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#5ab0ff'
+                e.currentTarget.style.transform = 'scale(1.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#4a9eff'
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+              aria-label="Start spectator match"
+            >
+              Start Spectator Match
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

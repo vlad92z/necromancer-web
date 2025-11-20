@@ -20,7 +20,10 @@ export function executeAITurn(): boolean {
   if (currentPlayer.type !== 'ai' || state.turnPhase !== 'draft') {
     return false;
   }
-  const aiProfile = getAIPlayerProfile(state.aiDifficulty);
+  
+  // Get per-player difficulty if available, otherwise use global difficulty
+  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
+  const aiProfile = getAIPlayerProfile(aiDifficulty);
   const moveMade = aiProfile.makeMove(
     state,
     state.draftRune,
@@ -51,7 +54,11 @@ export function needsAIPlacement(): boolean {
  */
 export function executeAIVoidEffect() {
   const state = useGameplayStore.getState();
-  const aiProfile = getAIPlayerProfile(state.aiDifficulty);
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  
+  // Get per-player difficulty if available, otherwise use global difficulty
+  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
+  const aiProfile = getAIPlayerProfile(aiDifficulty);
   const runeTarget = aiProfile.chooseVoidTarget(state);
   
   if (runeTarget) {
@@ -67,13 +74,19 @@ export function executeAIVoidEffect() {
  */
 export function executeAIFrostEffect() {
   const state = useGameplayStore.getState();
-  const aiProfile = getAIPlayerProfile(state.aiDifficulty);
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  
+  // Get per-player difficulty if available, otherwise use global difficulty
+  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
+  const aiProfile = getAIPlayerProfile(aiDifficulty);
   const patternLineToFreeze = aiProfile.choosePatternLineToFreeze(state);
   const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
   const opponentId = state.players[opponentIndex].id;
   
   if (patternLineToFreeze !== null) {
     state.freezePatternLine(opponentId, patternLineToFreeze);
+  } else {
+    state.skipFrostEffect();
   }
 }
 
