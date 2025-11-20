@@ -108,12 +108,15 @@ export function RuneCell({
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   
-  // Highlight Wind runes in pattern lines to communicate mitigation effect.
-  // Note: use the *semantic* variant (original `variant`) to determine whether
-  // a rune is actually in a pattern line. We intentionally do not use
-  // `usedVariant` here so that forcing a 'pattern' look for a floor cell does
-  // not accidentally highlight Wind runes that are actually on the floor.
-  const isWindMitigating = variant === 'pattern' && rune?.runeType === 'Wind';
+  // Highlight Wind runes on the scoring wall to communicate mitigation effect.
+  // Note: use the *semantic* variant (original `variant`) so forced visuals do
+  // not accidentally highlight Wind runes that aren't anchored to the wall.
+  const isWindMitigating =
+    variant === 'wall' &&
+    (
+      rune?.runeType === 'Wind' ||
+      (!rune && isPending && placeholder?.runeType === 'Wind')
+    );
   
   // Use occupied background for wall cells that have runes OR are pending placement
   // Use `usedVariant` for styling decisions so callers can force visuals
@@ -122,19 +125,14 @@ export function RuneCell({
     ? variantStyle.backgroundOccupied
     : variantStyle.background;
   
-  // Override background for mitigating Wind runes in pattern lines
-  if (isWindMitigating) {
-    backgroundColor = '#1e1c48';
-  }
-  
-  // Override border for mitigating Wind runes in pattern lines
+  // Override border for mitigating Wind runes on the wall
   let borderStyle = variantStyle.border;
   if (isWindMitigating) {
     borderStyle = '2px solid #38bdf8';
   }
   
-  // Animate when rune appears in pattern lines, scoring wall, or floor line
-  const shouldAnimate = (usedVariant === 'pattern' || usedVariant === 'wall' || usedVariant === 'floor') && rune;
+  // Only animate wall placements; pattern/floor entries rely on RuneAnimation overlay
+  const shouldAnimate = usedVariant === 'wall' && Boolean(rune);
   
   const animationProps = shouldAnimate ? {
     initial: { scale: 0, opacity: 0 } as const,

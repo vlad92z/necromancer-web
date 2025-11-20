@@ -77,13 +77,9 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         f.id === runeforgeId ? { ...f, runes: [] } : f
       );
       
-      // Move remaining runes to center pool
-      const updatedCenterPool = [...state.centerPool, ...remainingRunes];
-      
       return {
         ...state,
         runeforges: updatedRuneforges,
-        centerPool: updatedCenterPool,
         selectedRunes: [...state.selectedRunes, ...selectedRunes],
         draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
       };
@@ -193,6 +189,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         ...state.frozenPatternLines,
         [currentPlayer.id]: [],
       };
+      const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
+      const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       
       // Check if Void runes were placed (Void effect: destroy a single rune)
       const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
@@ -224,6 +222,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
           players: updatedPlayers,
           selectedRunes: [],
           draftSource: null,
+          centerPool: nextCenterPool,
           turnPhase: 'draft' as const,
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           voidEffectPending: true, // Wait for runeforge selection
@@ -239,6 +238,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
           players: updatedPlayers,
           selectedRunes: [],
           draftSource: null,
+          centerPool: nextCenterPool,
           turnPhase: 'draft' as const,
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           frostEffectPending: true, // Wait for runeforge selection
@@ -254,6 +254,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         players: updatedPlayers,
         selectedRunes: [],
         draftSource: null,
+        centerPool: nextCenterPool,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
@@ -291,6 +292,8 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         floorLine: updatedFloorLine,
       };
       
+      const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
+      const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       // Switch to next player (alternate between 0 and 1)
       const nextPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
       
@@ -304,6 +307,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         players: updatedPlayers,
         selectedRunes: [],
         draftSource: null,
+        centerPool: nextCenterPool,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
@@ -328,13 +332,7 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       } else {
         // Return to runeforge (both selected runes and the ones moved to center)
         const runeforgeId = state.draftSource.runeforgeId;
-        const movedToCenter = state.draftSource.movedToCenter;
         const originalRunes = state.draftSource.originalRunes;
-        
-        // Remove the moved runes from center pool
-        const updatedCenterPool = state.centerPool.filter(
-          (rune) => !movedToCenter.some((moved) => moved.id === rune.id)
-        );
         
         const updatedRuneforges = state.runeforges.map((f) =>
           f.id === runeforgeId
@@ -345,7 +343,6 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         return {
           ...state,
           runeforges: updatedRuneforges,
-          centerPool: updatedCenterPool,
           selectedRunes: [],
           draftSource: null,
         };
@@ -554,8 +551,13 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
         
         // Calculate total wall power based on connected segments.
         // Use the player's original pattern lines (before we cleared completed lines)
-        // so Wind runes that were on completed pattern lines still mitigate penalties.
-        const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, player.patternLines, state.gameMode);
+        // so pending Wind placements still mitigate penalties immediately.
+        const floorPenaltyCount = calculateEffectiveFloorPenalty(
+          player.floorLine.runes,
+          player.patternLines,
+          updatedWall,
+          state.gameMode
+        );
         
         const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, state.gameMode);
         
@@ -586,25 +588,19 @@ export const useGameplayStore = create<GameplayStore>((set) => ({
       // Calculate and apply scores, and record round history
       
       // Calculate each player's wall power (damage they deal)
-      // Calculate each player's effective floor penalty. Pattern lines in state
-      // may already have been cleared; include Wind runes that are now on the
-      // wall so completed pattern-line Wind runes still mitigate penalties.
-      const baseP1Penalty = calculateEffectiveFloorPenalty(
+      // Calculate each player's effective floor penalty directly from the wall.
+      const player1FloorPenalty = calculateEffectiveFloorPenalty(
         state.players[0].floorLine.runes,
         state.players[0].patternLines,
+        state.players[0].wall,
         state.gameMode
       );
-      const baseP2Penalty = calculateEffectiveFloorPenalty(
+      const player2FloorPenalty = calculateEffectiveFloorPenalty(
         state.players[1].floorLine.runes,
         state.players[1].patternLines,
+        state.players[1].wall,
         state.gameMode
       );
-
-      const p1WindOnWall = state.players[0].wall.flat().filter(cell => cell.runeType === 'Wind').length;
-      const p2WindOnWall = state.players[1].wall.flat().filter(cell => cell.runeType === 'Wind').length;
-
-      const player1FloorPenalty = Math.max(0, baseP1Penalty - p1WindOnWall);
-      const player2FloorPenalty = Math.max(0, baseP2Penalty - p2WindOnWall);
 
       const player1Data = calculateWallPowerWithSegments(
         state.players[0].wall,

@@ -25,9 +25,11 @@ interface PlayerBoardProps {
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
+  hiddenSlotKeys?: Set<string>;
+  hiddenFloorSlotIndexes?: Set<number>;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onShowDeck, onShowLog, onShowRules}: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onShowDeck, onShowLog, onShowRules, hiddenSlotKeys, hiddenFloorSlotIndexes }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -49,14 +51,21 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     : 0;
   const healingAmount = (lifeRunesOnWall + lifeRunesInCompletedLines) * 10;
   
-  // Wind Effect: Wind runes in pattern lines mitigate floor penalties (standard mode only)
-  const floorPenaltyCount = calculateEffectiveFloorPenalty(player.floorLine.runes, player.patternLines, gameMode);
-  const windRuneCount = gameMode === 'standard'
-    ? player.patternLines.reduce((total, line) => (
-        line.runeType === 'Wind' ? total + line.count : total
-      ), 0)
+  // Wind Effect: Wind runes anchored to the wall mitigate floor penalties (standard mode only)
+  const floorPenaltyCount = calculateEffectiveFloorPenalty(
+    player.floorLine.runes,
+    player.patternLines,
+    player.wall,
+    gameMode
+  );
+  const windRunesOnWall = gameMode === 'standard'
+    ? player.wall.flat().filter((cell) => cell.runeType === 'Wind').length
     : 0;
-  const hasWindMitigation = gameMode === 'standard' && windRuneCount > 0;
+  const pendingWindRunes = gameMode === 'standard'
+    ? completedPatternLines.filter((line) => line.runeType === 'Wind').length
+    : 0;
+  const windMitigationCount = windRunesOnWall + pendingWindRunes;
+  const hasWindMitigation = gameMode === 'standard' && windMitigationCount > 0;
  
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
@@ -104,7 +113,9 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             floorLine={player.floorLine}
             onPlaceRunesInFloor={onPlaceRunesInFloor}
             canPlace={canPlace}
-            mitigatedSlots={windRuneCount}
+            mitigatedSlots={windMitigationCount}
+            playerId={player.id}
+            hiddenSlotIndexes={hiddenFloorSlotIndexes}
           />
         </div>
         
@@ -119,6 +130,8 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             frozenLineIndexes={frozenPatternLines}
             freezeSelectionEnabled={freezeSelectionEnabled}
             onFreezeLine={onFreezePatternLine}
+            playerId={player.id}
+            hiddenSlotKeys={hiddenSlotKeys}
           />
         </div>
         
@@ -135,6 +148,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
           flexDirection: 'column'
         }} onClick={(e) => e.stopPropagation()}>
           <Spellpower
+            playerId={player.id}
             playerName={player.name}
             isActive={isActive}
             nameColor={nameColor}
@@ -146,7 +160,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             fireRuneCount={fireRuneCount}
             hasPenalty={hasPenalty}
             hasWindMitigation={hasWindMitigation}
-            windRuneCount={windRuneCount}
+            windRuneCount={windMitigationCount}
             onShowDeck={onShowDeck}
             onShowLog={onShowLog}
             onShowRules={onShowRules}

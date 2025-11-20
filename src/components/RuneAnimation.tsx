@@ -4,16 +4,7 @@
 
 import { motion } from 'framer-motion';
 import { RuneCell } from './RuneCell';
-import type { RuneType, Rune } from '../types/game';
-
-interface AnimatingRune {
-  id: string;
-  runeType: RuneType;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-}
+import type { AnimatingRune, Rune } from '../types/game';
 
 interface RuneAnimationProps {
   animatingRunes: AnimatingRune[];
@@ -49,9 +40,9 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
               scale: 1,
             }}
             animate={{
-              x: rune.endX,
-              y: rune.endY,
-              scale: 1.2,
+              x: rune.endX + 7,
+              y: rune.endY + 7,
+              scale: 1,
             }}
             transition={{
               duration: 0.5,
@@ -66,11 +57,16 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
             }}
             style={{
               position: 'absolute',
-              width: '48px',
-              height: '48px',
+              width: '60px',
+              height: '60px',
             }}
           >
-            <RuneCell rune={runeObj} variant="selected" size="medium" />
+            <RuneCell
+              rune={runeObj}
+              variant="selected"
+              forceVariant="runeforge"
+              size="medium"
+            />
           </motion.div>
         );
       })}

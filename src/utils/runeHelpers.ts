@@ -45,7 +45,7 @@ export function getRuneEffectDescription(runeType: RuneType, isClassicMode: bool
     Frost: 'Freeze an opponent pattern line after placing',
     Life: 'Each Life rune on your wall heals you every round',
     Void: 'Destroy a single rune from any runeforge or the center when placing',
-    Wind: 'Wind runes in pattern lines cancel one floor penalty each',
+    Wind: 'Wind runes on your wall cancel one floor penalty each (completed Wind lines count immediately)',
   };
   return descriptions[runeType];
 }

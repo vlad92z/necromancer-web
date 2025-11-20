@@ -13,9 +13,11 @@ interface OpponentViewProps {
   freezeSelectionEnabled?: boolean;
   onFreezePatternLine?: (patternLineIndex: number) => void;
   onCancelFreezeSelection?: () => void;
+  hiddenSlotKeys?: Set<string>;
+  hiddenFloorSlotIndexes?: Set<number>;
 }
 
-export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onCancelFreezeSelection }: OpponentViewProps) {
+export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onCancelFreezeSelection, hiddenSlotKeys, hiddenFloorSlotIndexes }: OpponentViewProps) {
   const showCancelPill = freezeSelectionEnabled && Boolean(onCancelFreezeSelection);
   return (
     <div style={{ marginBottom: '24px', position: 'relative' }}>
@@ -78,6 +80,8 @@ export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines 
         onShowDeck={() => {}}
         onShowLog={() => {}}
         onShowRules={() => {}}
+        hiddenSlotKeys={hiddenSlotKeys}
+        hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
       />
     </div>
   );

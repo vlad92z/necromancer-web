@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
@@ -10,6 +11,7 @@ interface StartGameScreenProps {
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
+  const navigate = useNavigate();
   const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
   const [showRules, setShowRules] = useState(false);
   
@@ -33,6 +35,23 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         textAlign: 'center',
         boxShadow: '0 12px 36px rgba(2,6,23,0.6)'
       }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '8px' }}>
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#9fb7ff',
+              border: 'none',
+              fontWeight: 600,
+              cursor: 'pointer',
+              padding: '6px 10px',
+              borderRadius: '8px'
+            }}
+          >
+            ← Back
+          </button>
+        </div>
+
         <h1 style={{ 
           fontSize: '48px', 
           fontWeight: 'bold', 
