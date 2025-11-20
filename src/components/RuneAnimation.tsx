@@ -40,8 +40,8 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
               scale: 1,
             }}
             animate={{
-              x: rune.endX,
-              y: rune.endY,
+              x: rune.endX + 5,
+              y: rune.endY + 5,
               scale: 1.2,
             }}
             transition={{
