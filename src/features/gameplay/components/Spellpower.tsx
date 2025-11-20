@@ -7,13 +7,13 @@ import { motion, useAnimationControls, animate } from 'framer-motion';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
 
-const HEAL_ANIMATION_DURATION_MS = 1000;
-const HEAL_TO_DAMAGE_DELAY_MS = 1000;
-const DAMAGE_ANIMATION_DURATION_MS = 1000;
+const HEAL_ANIMATION_DURATION_MS = 500;
+const HEAL_TO_DAMAGE_DELAY_MS = 250;
+const DAMAGE_ANIMATION_DURATION_MS = 500;
 const PLAYER_SEQUENCE_PADDING_MS = 500;
 const PLAYER_SEQUENCE_DURATION_MS =
   HEAL_ANIMATION_DURATION_MS + HEAL_TO_DAMAGE_DELAY_MS + DAMAGE_ANIMATION_DURATION_MS + PLAYER_SEQUENCE_PADDING_MS;
-const BASE_SEQUENCE_DELAY_MS = 1;
+const BASE_SEQUENCE_DELAY_MS = 1200;
 
 const HEALTH_PULSE_POSITIVE = '#4ade80';
 const HEALTH_PULSE_NEGATIVE = '#fb7185';
@@ -42,10 +42,10 @@ interface SpellpowerProps {
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
-  const size = 26;
+  const size = 35;
   const strokeProps = {
     stroke: color,
-    strokeWidth: 1.8,
+    strokeWidth: 2,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
     fill: 'none' as const,
@@ -53,9 +53,9 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
 
   if (type === 'health') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 ">
+      <svg width={size} height={size} viewBox="0 0 24 24">
         <path
-          d="M12 21s-7-4.35-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.65-7 9-7 9Z"
+          d="M12 19s-7-4.35-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.65-7 9-7 9Z"
           fill={color}
           opacity={0.9}
         />
@@ -66,8 +66,7 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
   if (type === 'healing') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M12 5v14" {...strokeProps} />
-        <path d="M5 12h14" {...strokeProps} />
+        <path d="M6.8291 17.0806C13.9002 21.3232 19.557 15.6663 18.8499 5.0598C8.24352 4.35269 2.58692 10.0097 6.8291 17.0806ZM6.8291 17.0806C6.82902 17.0805 6.82918 17.0807 6.8291 17.0806ZM6.8291 17.0806L5 18.909M6.8291 17.0806L10.6569 13.2522" {...strokeProps}> </path>
       </svg>
     );
   }
@@ -86,7 +85,7 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
         <circle cx="12" cy="12" r="7" {...strokeProps} />
         <circle cx="12" cy="12" r="2.5" fill={color} opacity={0.9} />
         <path d="M12 5v2.5" {...strokeProps} />
-        <path d="M12 18.5V21" {...strokeProps} />
+        <path d="M12 18.5V17" {...strokeProps} />
         <path d="M5 12h2.5" {...strokeProps} />
         <path d="M16.5 12H19" {...strokeProps} />
       </svg>
@@ -190,7 +189,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
+            bottom: 'calc(100% + 8px)',
             left: '50%',
             transform: 'translateX(-50%)',
             width: 'min(240px, 70vw)',
@@ -199,7 +198,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
             borderRadius: '12px',
             border: '1px solid rgba(255, 255, 255, 0.12)',
             color: '#cbd5f5',
-            fontSize: '0.78rem',
+            fontSize: '1rem',
             lineHeight: 1.6,
             boxShadow: '0 20px 45px rgba(0,0,0,0.55)',
             zIndex: 5
@@ -365,20 +364,20 @@ export function Spellpower({
   const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = hasPenalty
-    ? 'Overload is cutting into your Focus until you clear the floor. Keep penalties low to restore stable channels.'
+    ? 'Overload is reducing your Focus. Cast Wind runes to mitigate.'
     : hasWindMitigation
-      ? `Wind runes (${windRuneCount}) are shielding you from overload, keeping Focus intact.`
-      : 'Largest connected cluster on your wall. Stay precise to keep the flow of power.';
+      ? `Wind runes (${windRuneCount}) are shielding you from Overload, keeping Focus intact.`
+      : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = fireRuneCount > 0
-    ? `All runes on the wall plus +${fireRuneCount} Essence from blazing Fire runes.`
-    : 'Count of runes etched into your wall. Fire runes add bonus Essence—draft aggressively to grow it.';
+    ? `Esence - cast more runes to increase spell damage. Fire runes (${fireRuneCount}) amplify your Essence.`
+    : 'Esence - cast more runes to increase spell damage.';
 
-  const spellpowerTooltip = `Essence (${essence}) × Focus (${focus}) = ${spellpower} spell damage this round. Tap for the full breakdown.`;
-  const healthTooltip = 'Remaining vitality. Drop to zero and your duel ends.';
+  const spellpowerTooltip = `Spellpower - Essence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
+  const healthTooltip = 'Health - drop to zero and your duel ends.';
   const healingTooltip = healing > 0
-    ? `Life runes will restore ${healing} HP at the end of the round.`
-    : 'No Life runes are staged—no healing queued this round.';
+    ? `Life runes will restore ${healing} health every round.`
+    : 'Healing - cast life runes to heal yourself every round.';
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);
@@ -410,11 +409,18 @@ export function Spellpower({
         position: 'relative'
       }}
     >
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '1.25em 1em',
+        position: 'relative'
+      }}>
       {/* Avatar */}
       <div
         style={{
-          width: '4.4em',
-          height: '4.4em',
+          width: '5em',
+          height: '5em',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
@@ -432,8 +438,8 @@ export function Spellpower({
       </div>
 
       {/* Name */}
-      <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.05rem' }}>{playerName}</div>
-
+      <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.2rem'}}>{playerName}</div>
+      </div>
       {/* Health / Healing */}
       <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
         <StatBadge

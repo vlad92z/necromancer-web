@@ -16,9 +16,11 @@ interface FloorLineProps {
    * This should come from Wind runes staged in pattern lines.
    */
   mitigatedSlots?: number;
+  playerId?: string;
+  hiddenSlotIndexes?: Set<number>;
 }
 
-export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedSlots = 0 }: FloorLineProps) {
+export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedSlots = 0, playerId, hiddenSlotIndexes }: FloorLineProps) {
   const isSelectable = Boolean(canPlace && onPlaceRunesInFloor);
   const selectableGlowRest = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
   const selectableGlowPeak = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
@@ -53,6 +55,7 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
           .fill(null)
           .map((_, index) => {
             const isNeutral = index < mitigatedSlots;
+            const isHidden = hiddenSlotIndexes?.has(index);
             const cellCanGlow = isSelectable && !isNeutral;
             const cellMotionProps = cellCanGlow
               ? {
@@ -60,9 +63,12 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
                   transition: cellPulseTransition
                 }
               : {};
+            const runeToDisplay = isHidden ? null : (floorLine.runes[index] || null);
             return (
               <motion.div
                 key={index}
+                data-player-id={playerId}
+                data-floor-slot-index={index}
                 style={{
                   boxShadow: cellCanGlow ? selectableGlowRest : 'none',
                   borderRadius: '8px',
@@ -71,7 +77,7 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
                 {...cellMotionProps}
               >
                 <RuneCell
-                  rune={floorLine.runes[index] || null}
+                  rune={runeToDisplay}
                   variant="floor"
                   forceVariant={isNeutral ? 'pattern' : undefined}
                   size="large"

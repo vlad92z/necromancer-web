@@ -18,6 +18,8 @@ interface PlayerViewProps {
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
+  hiddenSlotKeys?: Set<string>;
+  hiddenFloorSlotIndexes?: Set<number>;
 }
 
 export function PlayerView({
@@ -33,6 +35,8 @@ export function PlayerView({
   onShowDeck,
   onShowLog,
   onShowRules,
+  hiddenSlotKeys,
+  hiddenFloorSlotIndexes,
 }: PlayerViewProps) {
   return (
     <div>
@@ -50,6 +54,8 @@ export function PlayerView({
         onShowDeck={onShowDeck}
         onShowLog={onShowLog}
         onShowRules={onShowRules}
+        hiddenSlotKeys={hiddenSlotKeys}
+        hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
       />
     </div>
   );

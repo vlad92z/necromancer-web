@@ -18,6 +18,8 @@ interface PatternLinesProps {
   frozenLineIndexes?: number[];
   freezeSelectionEnabled?: boolean;
   onFreezeLine?: (patternLineIndex: number) => void;
+  playerId?: string;
+  hiddenSlotKeys?: Set<string>;
 }
 
 export function PatternLines({
@@ -29,6 +31,8 @@ export function PatternLines({
   frozenLineIndexes = [],
   freezeSelectionEnabled = false,
   onFreezeLine,
+  playerId,
+  hiddenSlotKeys,
 }: PatternLinesProps) {
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (!canPlace || !selectedRuneType) return false;
@@ -121,6 +125,9 @@ export function PatternLines({
                   runeType: line.runeType,
                   effect: { type: 'None' as const }
                 } : null;
+                const slotKey = `${index}-${slotIndex}`;
+                const shouldHideRune = hiddenSlotKeys?.has(slotKey);
+                const displayedRune = shouldHideRune ? null : rune;
                 const showFrozenOverlay = isFrozen && !freezeSelectionEnabled;
                 const cellMotionProps = showGlow
                   ? {
@@ -132,6 +139,9 @@ export function PatternLines({
                 return (
                   <motion.div
                     key={slotIndex}
+                    data-player-id={playerId}
+                    data-pattern-line-index={index}
+                    data-pattern-slot-index={slotIndex}
                     style={{
                       position: 'relative',
                       boxShadow: showGlow ? (freezeSelectionEnabled ? freezeGlowRest : selectableGlowRest) : 'none',
@@ -141,7 +151,7 @@ export function PatternLines({
                     {...cellMotionProps}
                   >
                     <RuneCell
-                      rune={rune}
+                      rune={displayedRune}
                       variant="pattern"
                       size="large"
                       showEffect={false}
