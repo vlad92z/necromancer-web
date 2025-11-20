@@ -106,3 +106,37 @@ export function runHeadlessSpectatorSeries(
     ties,
   };
 }
+
+export async function runHeadlessSpectatorSeriesAsync(
+  topDifficulty: AIDifficulty,
+  bottomDifficulty: AIDifficulty,
+  games: number = 10,
+  onProgress?: (completed: number) => void
+): Promise<HeadlessResult> {
+  let topWins = 0;
+  let bottomWins = 0;
+  let ties = 0;
+
+  for (let i = 0; i < games; i++) {
+    const outcome = runSingleHeadlessGame(topDifficulty, bottomDifficulty);
+    if (outcome === 'top') {
+      topWins++;
+    } else if (outcome === 'bottom') {
+      bottomWins++;
+    } else {
+      ties++;
+    }
+    if (onProgress) {
+      onProgress(i + 1);
+    }
+    // Yield to event loop so UI can update progress bar
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  return {
+    games,
+    topWins,
+    bottomWins,
+    ties,
+  };
+}

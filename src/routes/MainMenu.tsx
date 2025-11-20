@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGameActions } from '../hooks/useGameActions'
-import { runHeadlessSpectatorSeries } from '../utils/headlessSpectatorSimulation'
+import { runHeadlessSpectatorSeriesAsync } from '../utils/headlessSpectatorSimulation'
 import type { AIDifficulty } from '../types/game'
 
 export function MainMenu() {
@@ -19,6 +19,9 @@ export function MainMenu() {
     bottomWins: number;
     ties: number;
   } | null>(null)
+  const [completedSimulations, setCompletedSimulations] = useState(0)
+
+  const HEADLESS_GAME_COUNT = 10
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -132,11 +135,34 @@ export function MainMenu() {
     color: '#e5e7eb',
   }
 
-  const handleStartSpectator = () => {
+  const progressContainerStyle: React.CSSProperties = {
+    width: '100%',
+    height: '10px',
+    backgroundColor: '#111',
+    borderRadius: '999px',
+    overflow: 'hidden',
+    border: '1px solid #333',
+    marginTop: '6px',
+  }
+
+  const progressBarStyle = (progressPercent: number): React.CSSProperties => ({
+    height: '100%',
+    width: `${progressPercent}%`,
+    background: 'linear-gradient(90deg, #4a9eff, #60a5fa)',
+    transition: 'width 150ms linear',
+  })
+
+  const handleStartSpectator = async () => {
     if (headlessMode) {
       setIsSimulating(true)
       setHeadlessResult(null)
-      const result = runHeadlessSpectatorSeries(topAIDifficulty, bottomAIDifficulty)
+      setCompletedSimulations(0)
+      const result = await runHeadlessSpectatorSeriesAsync(
+        topAIDifficulty,
+        bottomAIDifficulty,
+        HEADLESS_GAME_COUNT,
+        (completed) => setCompletedSimulations(completed)
+      )
       setHeadlessResult(result)
       setIsSimulating(false)
       return
@@ -250,12 +276,21 @@ export function MainMenu() {
                 onChange={(e) => setHeadlessMode(e.target.checked)}
                 style={{ width: '16px', height: '16px' }}
               />
-              Headless Mode (simulate 100 games, no UI)
+              {`Headless Mode (simulate ${HEADLESS_GAME_COUNT} games, no UI)`}
             </label>
+            {headlessMode && (
+              <div style={{ marginBottom: '12px', color: '#ccc', fontSize: '13px' }}>
+                Progress: {completedSimulations}/{HEADLESS_GAME_COUNT}
+                <div style={progressContainerStyle}>
+                  <div style={progressBarStyle((completedSimulations / HEADLESS_GAME_COUNT) * 100)} />
+                </div>
+              </div>
+            )}
             
             <button
               style={startButtonStyle}
               onClick={handleStartSpectator}
+              disabled={isSimulating}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#5ab0ff'
                 e.currentTarget.style.transform = 'scale(1.05)'
@@ -271,7 +306,7 @@ export function MainMenu() {
 
             {headlessResult && (
               <div style={resultBoxStyle} aria-live="polite">
-                <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>Headless Results (10 games)</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>Headless Results ({HEADLESS_GAME_COUNT} games)</div>
                 <div>Top AI wins: {headlessResult.topWins}</div>
                 <div>Bottom AI wins: {headlessResult.bottomWins}</div>
                 <div>Ties: {headlessResult.ties}</div>
