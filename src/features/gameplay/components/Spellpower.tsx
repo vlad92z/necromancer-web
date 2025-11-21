@@ -15,10 +15,7 @@ const PLAYER_SEQUENCE_DURATION_MS =
   HEAL_ANIMATION_DURATION_MS + HEAL_TO_DAMAGE_DELAY_MS + DAMAGE_ANIMATION_DURATION_MS + PLAYER_SEQUENCE_PADDING_MS;
 const BASE_SEQUENCE_DELAY_MS = 1200;
 
-const HEALTH_PULSE_POSITIVE = '#4ade80';
-const HEALTH_PULSE_NEGATIVE = '#fb7185';
-const HEALING_PULSE_COLOR = '#4ade80';
-const SPELLPOWER_PULSE_COLOR = '#c084fc';
+// Simplified: no pulse colors required
 
 type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower';
 
@@ -241,9 +238,7 @@ export function Spellpower({
   const baseSeqDelay = BASE_SEQUENCE_DELAY_MS * animationScale;
   const [displayHealth, setDisplayHealth] = useState(health);
   const [isAnimatingHealth, setIsAnimatingHealth] = useState(false);
-  const [healthPulse, setHealthPulse] = useState({ key: 0, color: HEALTH_PULSE_NEGATIVE });
-  const [healingPulse, setHealingPulse] = useState({ key: 0, color: HEALING_PULSE_COLOR });
-  const [spellPulse, setSpellPulse] = useState({ key: 0, color: SPELLPOWER_PULSE_COLOR });
+  // simplified: no pulse animations
   const roundHistory = useGameplayStore((state) => state.roundHistory);
   const players = useGameplayStore((state) => state.players);
   const playerIndex = players.findIndex((player) => player.id === playerId);
@@ -288,17 +283,7 @@ export function Spellpower({
     timersRef.current.push(timer);
   };
 
-  const triggerHealthPulse = (color: string) => {
-    setHealthPulse((prev) => ({ key: prev.key + 1, color }));
-  };
-
-  const triggerHealingPulse = () => {
-    setHealingPulse((prev) => ({ key: prev.key + 1, color: HEALING_PULSE_COLOR }));
-  };
-
-  const triggerSpellPulse = () => {
-    setSpellPulse((prev) => ({ key: prev.key + 1, color: SPELLPOWER_PULSE_COLOR }));
-  };
+  // no pulse triggers in simplified mode
 
   useEffect(() => {
     if (roundCount === 0 || playerIndex === -1) {
@@ -330,22 +315,22 @@ export function Spellpower({
     setIsAnimatingHealth(true);
     setDisplayHealth(previousHealth);
 
-    const baseDelay = baseSeqDelay + playerIndex * playerSeqDuration;
+    // Start both players' healing at the same time; damage stage happens after heal
+    const baseDelay = baseSeqDelay;
     const healingStart = baseDelay;
     const damageStart = baseDelay + healAnimDuration + healToDamageDelay;
     const sequenceEnd = damageStart + (hasDamageStage ? damageAnimDuration : 0) + playerSeqPadding;
 
     if (hasHealing) {
       schedule(() => {
-        triggerHealthPulse(HEALTH_PULSE_POSITIVE);
-        triggerHealingPulse();
+        // animate healing only
         animateHealthValue(previousHealth, healTarget, healAnimDuration);
       }, healingStart);
     }
 
     if (hasDamageStage) {
       schedule(() => {
-        triggerHealthPulse(HEALTH_PULSE_NEGATIVE);
+        // animate damage only
         animateHealthValue(hasHealing ? healTarget : previousHealth, finalHealthTarget, damageAnimDuration);
       }, damageStart);
     }
@@ -355,12 +340,7 @@ export function Spellpower({
       setDisplayHealth(health);
     }, sequenceEnd);
 
-    if (outgoingDamage > 0 && opponentIndex >= 0) {
-      const opponentDamageStart = baseSeqDelay + opponentIndex * playerSeqDuration + healAnimDuration + healToDamageDelay;
-      schedule(() => {
-        triggerSpellPulse();
-      }, opponentDamageStart);
-    }
+    // no spellpower pulse or other visual effects in simplified mode
   }, [roundCount, latestRound, playerIndex, opponentIndex, health, healing, playerMaxHealth, baseSeqDelay, playerSeqDuration, healAnimDuration, healToDamageDelay, damageAnimDuration, playerSeqPadding]);
 
   useEffect(() => {
@@ -460,8 +440,6 @@ export function Spellpower({
           color="#fb7185"
           borderColor="rgba(248, 113, 113, 0.4)"
           tooltip={healthTooltip}
-          pulseKey={healthPulse.key}
-          pulseColor={healthPulse.color}
         />
         <StatBadge
           type="healing"
@@ -470,8 +448,6 @@ export function Spellpower({
           color="#4ade80"
           borderColor="rgba(74, 222, 128, 0.4)"
           tooltip={healingTooltip}
-          pulseKey={healingPulse.key}
-          pulseColor={healingPulse.color}
         />
       </div>
 
@@ -503,8 +479,6 @@ export function Spellpower({
           color="#c084fc"
           borderColor="rgba(192, 132, 252, 0.4)"
           tooltip={spellpowerTooltip}
-          pulseKey={spellPulse.key}
-          pulseColor={spellPulse.color}
           {...clickableStatCommon}
         />
       </div>
