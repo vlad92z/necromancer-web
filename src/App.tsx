@@ -5,6 +5,7 @@ import { CampaignMap } from './routes/CampaignMap'
 import { DeckBuilder } from './routes/DeckBuilder'
 import { PostMatchRewards } from './routes/PostMatchRewards'
 import { Matchmaking } from './routes/Matchmaking'
+import { Developer } from './routes/Developer'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainMenu />} />
         <Route path="/game" element={<GameMatch />} />
+        <Route path="/developer" element={<Developer />} />
         
         {/* Future feature routes - currently inaccessible stubs */}
         <Route path="/campaign" element={<CampaignMap />} />

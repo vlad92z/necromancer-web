@@ -39,6 +39,7 @@ interface SpellpowerProps {
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
+  animationScale?: number;
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
@@ -225,10 +226,19 @@ export function Spellpower({
   fireRuneCount,
   hasPenalty,
   hasWindMitigation,
-  windRuneCount
+  windRuneCount,
+  animationScale = 1
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower ?? (essence * focus);
+  
+  // Scaled animation timing constants
+  const healAnimDuration = HEAL_ANIMATION_DURATION_MS * animationScale;
+  const healToDamageDelay = HEAL_TO_DAMAGE_DELAY_MS * animationScale;
+  const damageAnimDuration = DAMAGE_ANIMATION_DURATION_MS * animationScale;
+  const playerSeqPadding = PLAYER_SEQUENCE_PADDING_MS * animationScale;
+  const playerSeqDuration = PLAYER_SEQUENCE_DURATION_MS * animationScale;
+  const baseSeqDelay = BASE_SEQUENCE_DELAY_MS * animationScale;
   const [displayHealth, setDisplayHealth] = useState(health);
   const [isAnimatingHealth, setIsAnimatingHealth] = useState(false);
   const [healthPulse, setHealthPulse] = useState({ key: 0, color: HEALTH_PULSE_NEGATIVE });
@@ -320,23 +330,23 @@ export function Spellpower({
     setIsAnimatingHealth(true);
     setDisplayHealth(previousHealth);
 
-    const baseDelay = BASE_SEQUENCE_DELAY_MS + playerIndex * PLAYER_SEQUENCE_DURATION_MS;
+    const baseDelay = baseSeqDelay + playerIndex * playerSeqDuration;
     const healingStart = baseDelay;
-    const damageStart = baseDelay + HEAL_ANIMATION_DURATION_MS + HEAL_TO_DAMAGE_DELAY_MS;
-    const sequenceEnd = damageStart + (hasDamageStage ? DAMAGE_ANIMATION_DURATION_MS : 0) + PLAYER_SEQUENCE_PADDING_MS;
+    const damageStart = baseDelay + healAnimDuration + healToDamageDelay;
+    const sequenceEnd = damageStart + (hasDamageStage ? damageAnimDuration : 0) + playerSeqPadding;
 
     if (hasHealing) {
       schedule(() => {
         triggerHealthPulse(HEALTH_PULSE_POSITIVE);
         triggerHealingPulse();
-        animateHealthValue(previousHealth, healTarget, HEAL_ANIMATION_DURATION_MS);
+        animateHealthValue(previousHealth, healTarget, healAnimDuration);
       }, healingStart);
     }
 
     if (hasDamageStage) {
       schedule(() => {
         triggerHealthPulse(HEALTH_PULSE_NEGATIVE);
-        animateHealthValue(hasHealing ? healTarget : previousHealth, finalHealthTarget, DAMAGE_ANIMATION_DURATION_MS);
+        animateHealthValue(hasHealing ? healTarget : previousHealth, finalHealthTarget, damageAnimDuration);
       }, damageStart);
     }
 
@@ -346,12 +356,12 @@ export function Spellpower({
     }, sequenceEnd);
 
     if (outgoingDamage > 0 && opponentIndex >= 0) {
-      const opponentDamageStart = BASE_SEQUENCE_DELAY_MS + opponentIndex * PLAYER_SEQUENCE_DURATION_MS + HEAL_ANIMATION_DURATION_MS + HEAL_TO_DAMAGE_DELAY_MS;
+      const opponentDamageStart = baseSeqDelay + opponentIndex * playerSeqDuration + healAnimDuration + healToDamageDelay;
       schedule(() => {
         triggerSpellPulse();
       }, opponentDamageStart);
     }
-  }, [roundCount, latestRound, playerIndex, opponentIndex, health, healing, playerMaxHealth]);
+  }, [roundCount, latestRound, playerIndex, opponentIndex, health, healing, playerMaxHealth, baseSeqDelay, playerSeqDuration, healAnimDuration, healToDamageDelay, damageAnimDuration, playerSeqPadding]);
 
   useEffect(() => {
     previousHealthRef.current = health;
