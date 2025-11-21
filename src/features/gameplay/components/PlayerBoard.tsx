@@ -6,7 +6,7 @@ import type { Player, RuneType } from '../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
-import { Spellpower } from './Spellpower';
+import { PlayerStats } from './PlayerStats';
 import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../utils/scoring';
 
 interface PlayerBoardProps {
@@ -147,7 +147,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
           display: 'flex', 
           flexDirection: 'column'
         }} onClick={(e) => e.stopPropagation()}>
-          <Spellpower
+          <PlayerStats
             playerId={player.id}
             playerName={player.name}
             isActive={isActive}

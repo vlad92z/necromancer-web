@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spellpower } from '../features/gameplay/components/Spellpower';
+import { PlayerStats } from '../features/gameplay/components/PlayerStats';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 import type { Player, RoundScore } from '../types/game';
 
@@ -341,7 +341,7 @@ export function Developer() {
     <div style={containerStyle}>
       <div style={leftPanelStyle}>
         <div style={spellpowerContainerStyle}>
-          <Spellpower
+          <PlayerStats
             playerId={currentPlayer.id}
             playerName={currentPlayer.name}
             isActive={true}

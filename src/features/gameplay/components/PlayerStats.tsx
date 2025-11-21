@@ -210,7 +210,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
   );
 }
 
-export function Spellpower({
+export function PlayerStats({
   playerId,
   playerName,
   isActive,
