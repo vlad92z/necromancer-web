@@ -3,7 +3,7 @@
  * Provides isolated demo of Spellpower component with configurable inputs
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spellpower } from '../features/gameplay/components/Spellpower';
 import { useGameplayStore } from '../state/stores/gameplayStore';
@@ -19,54 +19,78 @@ const ANIMATION_BUFFER_MS = 500;
 export function Developer() {
   const navigate = useNavigate();
   const [health, setHealth] = useState(300);
-  const [healing, setHealing] = useState(20);
-  const [opponentDamage, setOpponentDamage] = useState(0);
-  const [focus, setFocus] = useState(5);
-  const [essence, setEssence] = useState(10);
+  const [lifeRuneCount, setLifeRuneCount] = useState(2);
+  const [incomingDamage, setIncomingDamage] = useState(0);
+  const [focus] = useState(5);
+  const [essence] = useState(10);
   // Spellpower is always Essence × Focus (match real game logic)
   const computedSpellpower = essence * focus;
+  const healingAmount = lifeRuneCount * 10;
   const [animationSpeed, setAnimationSpeed] = useState(1.0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const LIFE_RUNE_POSITIONS: Array<[number, number]> = [
+    [0, 2],
+    [1, 1],
+    [1, 3],
+    [2, 2],
+    [3, 2],
+  ];
 
-  // Helper: sync current input values into the global store so the
-  // Developer view mirrors the real game state immediately.
-  const syncStore = (overrides: {
-    health?: number;
-    healing?: number;
-    essence?: number;
-    focus?: number;
-    opponentDamage?: number;
-  } = {}) => {
+  const clampHealthValue = (value: number, maxHealth?: number) => {
+    const upperBound = typeof maxHealth === 'number' ? maxHealth : Infinity;
+    return Math.max(0, Math.min(upperBound, Math.round(value)));
+  };
+
+  const buildLifeWall = (baseWall: Player['wall'], count: number): Player['wall'] => {
+    const safeCount = Math.max(0, Math.min(5, Math.round(count)));
+    const wallTemplate =
+      baseWall.length === 5 && baseWall.every((row) => row.length === 5)
+        ? baseWall.map((row) => row.map(() => ({ runeType: null })))
+        : Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => ({ runeType: null })));
+
+    LIFE_RUNE_POSITIONS.slice(0, safeCount).forEach(([row, col]) => {
+      if (wallTemplate[row]?.[col]) {
+        wallTemplate[row][col] = { runeType: 'Life' };
+      }
+    });
+
+    return wallTemplate;
+  };
+
+  const applyHealthToStore = (nextHealth: number) => {
     const store = useGameplayStore.getState();
-    const startHealth = typeof overrides.health === 'number' ? overrides.health : health;
-    const healVal = typeof overrides.healing === 'number' ? overrides.healing : healing;
-    const oppDamage = typeof overrides.opponentDamage === 'number' ? overrides.opponentDamage : opponentDamage;
-    const ess = typeof overrides.essence === 'number' ? overrides.essence : essence;
-    const foc = typeof overrides.focus === 'number' ? overrides.focus : focus;
-
     const playerMaxHealth = store.players[0]?.maxHealth ?? Infinity;
-    const rawTarget = startHealth + healVal - oppDamage;
-    const targetHealth = Math.max(0, Math.min(playerMaxHealth, Math.round(rawTarget)));
-
-    const opponentStart = store.players[1]?.health ?? 0;
-    const opponentMax = store.players[1]?.maxHealth ?? Infinity;
-    const computedSpell = ess * foc;
-    const opponentTarget = Math.max(0, Math.min(opponentMax, Math.round(opponentStart - computedSpell)));
+    const targetHealth = clampHealthValue(nextHealth, playerMaxHealth);
 
     const updatedPlayers: [Player, Player] = [
       {
         ...store.players[0],
         health: targetHealth,
       },
-      {
-        ...store.players[1],
-        health: opponentTarget,
-      },
+      store.players[1],
     ];
 
     useGameplayStore.setState({ players: updatedPlayers });
   };
+
+  const applyLifeRunesToStore = (nextCount: number) => {
+    const store = useGameplayStore.getState();
+    const updatedPlayers: [Player, Player] = [
+      {
+        ...store.players[0],
+        wall: buildLifeWall(store.players[0].wall, nextCount),
+      },
+      store.players[1],
+    ];
+
+    useGameplayStore.setState({ players: updatedPlayers });
+  };
+
+  useEffect(() => {
+    applyHealthToStore(health);
+    applyLifeRunesToStore(lifeRuneCount);
+  }, []);
 
   // Store snapshot for restoration
   const [originalState, setOriginalState] = useState<{
@@ -79,7 +103,7 @@ export function Developer() {
     setStatusMessage('Animation starting...');
 
     const store = useGameplayStore.getState();
-    
+
     // Snapshot current store state
     const snapshot = {
       players: store.players,
@@ -96,16 +120,16 @@ export function Developer() {
       playerFocus: focus,
       playerTotal: computedSpellpower,
       opponentName: store.players[1]?.name ?? 'Opponent',
-      opponentEssence: 0,
-      opponentFocus: 0,
-      opponentTotal: opponentDamage,
+      opponentEssence: incomingDamage,
+      opponentFocus: 1,
+      opponentTotal: incomingDamage,
     };
 
     // Calculate start and target healths
-    const startHealth = health;
+    const startHealth = clampHealthValue(health, store.players[0]?.maxHealth);
     const playerMaxHealth = store.players[0]?.maxHealth ?? Infinity;
-    const rawTarget = startHealth + healing - opponentDamage;
-    const targetHealth = Math.max(0, Math.min(playerMaxHealth, Math.round(rawTarget)));
+    const healedHealth = Math.min(playerMaxHealth, startHealth + healingAmount);
+    const targetHealth = Math.max(0, Math.round(healedHealth - incomingDamage));
 
     // Also compute opponent health change (player's outgoing damage reduces opponent)
     const opponentStart = store.players[1]?.health ?? 0;
@@ -117,6 +141,7 @@ export function Developer() {
       {
         ...store.players[0],
         health: startHealth,
+        wall: buildLifeWall(store.players[0].wall, lifeRuneCount),
       },
       {
         ...store.players[1],
@@ -135,6 +160,7 @@ export function Developer() {
         {
           ...store.players[0],
           health: targetHealth,
+          wall: buildLifeWall(store.players[0].wall, lifeRuneCount),
         },
         {
           ...store.players[1],
@@ -164,10 +190,10 @@ export function Developer() {
     // Apply current text-field values to the store immediately (no animations)
     const store = useGameplayStore.getState();
 
-    const startHealth = health;
+    const startHealth = clampHealthValue(health, store.players[0]?.maxHealth);
     const playerMaxHealth = store.players[0]?.maxHealth ?? Infinity;
-    const rawTarget = startHealth + healing - opponentDamage;
-    const targetHealth = Math.max(0, Math.min(playerMaxHealth, Math.round(rawTarget)));
+    const healedHealth = Math.min(playerMaxHealth, startHealth + healingAmount);
+    const targetHealth = Math.max(0, Math.round(healedHealth - incomingDamage));
 
     const opponentStart = store.players[1]?.health ?? 0;
     const opponentMax = store.players[1]?.maxHealth ?? Infinity;
@@ -177,6 +203,7 @@ export function Developer() {
       {
         ...store.players[0],
         health: targetHealth,
+        wall: buildLifeWall(store.players[0].wall, lifeRuneCount),
       },
       {
         ...store.players[1],
@@ -320,7 +347,7 @@ export function Developer() {
             isActive={true}
             nameColor="#a855f7"
             health={currentPlayer.health}
-            healing={healing}
+            healing={healingAmount}
             essence={essence}
             focus={focus}
             totalPower={computedSpellpower}
@@ -354,30 +381,11 @@ export function Developer() {
             min="1"
             max="300"
             value={health}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setHealth(v);
-                syncStore({ health: v });
-              }}
-            style={inputStyle}
-            disabled={isAnimating}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="healing-input" style={labelStyle}>
-            Healing
-          </label>
-          <input
-            id="healing-input"
-            type="number"
-            min="0"
-            max="50"
-            value={healing}
             onChange={(e) => {
               const v = Number(e.target.value);
-              setHealing(v);
-              syncStore({ healing: v });
+              const clamped = clampHealthValue(v, useGameplayStore.getState().players[0]?.maxHealth);
+              setHealth(clamped);
+              applyHealthToStore(clamped);
             }}
             style={inputStyle}
             disabled={isAnimating}
@@ -385,19 +393,42 @@ export function Developer() {
         </div>
 
         <div>
-          <label htmlFor="opponent-damage-input" style={labelStyle}>
-            Opponent damage
+          <label htmlFor="life-runes-input" style={labelStyle}>
+            Life runes (1-5)
           </label>
           <input
-            id="opponent-damage-input"
+            id="life-runes-input"
+            type="range"
+            min="1"
+            max="5"
+            step="1"
+            value={lifeRuneCount}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setLifeRuneCount(v);
+              applyLifeRunesToStore(v);
+            }}
+            style={sliderStyle}
+            disabled={isAnimating}
+          />
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '-8px', marginBottom: '16px' }}>
+            {lifeRuneCount} Life rune{lifeRuneCount === 1 ? '' : 's'} ({healingAmount} healing before damage)
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="incoming-damage-input" style={labelStyle}>
+            Incoming damage (applied after healing)
+          </label>
+          <input
+            id="incoming-damage-input"
             type="number"
             min="0"
             max="9999"
-            value={opponentDamage}
+            value={incomingDamage}
             onChange={(e) => {
               const v = Number(e.target.value);
-              setOpponentDamage(v);
-              syncStore({ opponentDamage: v });
+              setIncomingDamage(Math.max(0, v));
             }}
             style={inputStyle}
             disabled={isAnimating}
@@ -405,43 +436,20 @@ export function Developer() {
         </div>
 
         <div>
-          <label htmlFor="essence-input" style={labelStyle}>
-            Essence
-          </label>
-          <input
-            id="essence-input"
-            type="number"
-            min="0"
-            max="50"
-            value={essence}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setEssence(v);
-              syncStore({ essence: v });
+          <label style={labelStyle}>Spellpower (static)</label>
+          <div
+            style={{
+              padding: '10px',
+              borderRadius: '6px',
+              border: '1px solid #333',
+              backgroundColor: '#1a1a1a',
+              marginBottom: '16px',
+              color: '#e0e0e0',
+              fontSize: '14px',
             }}
-            style={inputStyle}
-            disabled={isAnimating}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="focus-input" style={labelStyle}>
-            Focus
-          </label>
-          <input
-            id="focus-input"
-            type="number"
-            min="0"
-            max="50"
-            value={focus}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setFocus(v);
-              syncStore({ focus: v });
-            }}
-            style={inputStyle}
-            disabled={isAnimating}
-          />
+          >
+            Essence {essence} × Focus {focus} = <span style={{ fontWeight: 700 }}>{computedSpellpower}</span>
+          </div>
         </div>
 
         <div>
