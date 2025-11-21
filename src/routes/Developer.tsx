@@ -18,11 +18,13 @@ const ANIMATION_BUFFER_MS = 500;
 
 export function Developer() {
   const navigate = useNavigate();
-  const [health, setHealth] = useState(100);
-  const [spellpower, setSpellpower] = useState(50);
+  const [health, setHealth] = useState(300);
   const [healing, setHealing] = useState(20);
+  const [opponentDamage, setOpponentDamage] = useState(0);
   const [focus, setFocus] = useState(5);
   const [essence, setEssence] = useState(10);
+  // Spellpower is always Essence × Focus (match real game logic)
+  const computedSpellpower = essence * focus;
   const [animationSpeed, setAnimationSpeed] = useState(1.0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -44,6 +46,7 @@ export function Developer() {
       players: store.players,
       roundHistory: store.roundHistory,
     };
+    // Keep a local copy for deterministic restore after async waits
     setOriginalState(snapshot);
 
     // Create synthetic round data
@@ -52,43 +55,66 @@ export function Developer() {
       playerName: store.players[0].name,
       playerEssence: essence,
       playerFocus: focus,
-      playerTotal: spellpower,
+      playerTotal: computedSpellpower,
       opponentName: store.players[1]?.name ?? 'Opponent',
       opponentEssence: 0,
       opponentFocus: 0,
-      opponentTotal: 0,
+      opponentTotal: opponentDamage,
     };
 
-    // Calculate target health (current + healing - damage from opponent)
-    // For demo, we'll simulate damage by setting final health to the configured value
-    const targetHealth = health;
+    // Calculate start and target healths
+    const startHealth = health;
+    const playerMaxHealth = store.players[0]?.maxHealth ?? Infinity;
+    const rawTarget = startHealth + healing - opponentDamage;
+    const targetHealth = Math.max(0, Math.min(playerMaxHealth, Math.round(rawTarget)));
 
-    // Update store with demo data
-    const updatedPlayers: [Player, Player] = [
+    // Also compute opponent health change (player's outgoing damage reduces opponent)
+    const opponentStart = store.players[1]?.health ?? 0;
+    const opponentMax = store.players[1]?.maxHealth ?? Infinity;
+    const opponentTarget = Math.max(0, Math.min(opponentMax, Math.round(opponentStart - computedSpellpower)));
+
+    // 1) Set players to the START health so UI reflects pre-round state
+    const updatedPlayersStart: [Player, Player] = [
       {
         ...store.players[0],
-        health: targetHealth,
+        health: startHealth,
       },
-      store.players[1],
+      {
+        ...store.players[1],
+        health: opponentStart,
+      },
     ];
 
-    useGameplayStore.setState({
-      players: updatedPlayers,
-      roundHistory: [...store.roundHistory, demoRound],
-    });
+    useGameplayStore.setState({ players: updatedPlayersStart });
+
+    // 2) Append the demo round so components can read incoming/outgoing totals
+    useGameplayStore.setState({ roundHistory: [...store.roundHistory, demoRound] });
+
+    // 3) On next frame, set final healths to trigger the heal -> damage animation
+    setTimeout(() => {
+      const updatedPlayersFinal: [Player, Player] = [
+        {
+          ...store.players[0],
+          health: targetHealth,
+        },
+        {
+          ...store.players[1],
+          health: opponentTarget,
+        },
+      ];
+      useGameplayStore.setState({ players: updatedPlayersFinal });
+    }, 0);
 
     // Wait for animation to complete (scaled by animation speed)
     const animationDuration = BASE_ANIMATION_DURATION_MS * animationSpeed + ANIMATION_BUFFER_MS;
     
     await new Promise((resolve) => setTimeout(resolve, animationDuration));
 
-    // Restore original state
-    if (originalState) {
-      useGameplayStore.setState({
-        players: originalState.players,
-        roundHistory: originalState.roundHistory,
-      });
-    }
+    // NOTE: do NOT automatically restore the original store here.
+    // We intentionally leave the demo state in the store after the
+    // animation completes so the Developer view reflects the final
+    // round-end state. Manual `Reset` or `Back` will restore the
+    // previously saved snapshot if the user requests it.
 
     setIsAnimating(false);
     setStatusMessage('Animation complete');
@@ -96,23 +122,36 @@ export function Developer() {
   };
 
   const handleReset = () => {
-    setHealth(100);
-    setSpellpower(50);
-    setHealing(20);
-    setFocus(5);
-    setEssence(10);
-    setAnimationSpeed(1.0);
-    setStatusMessage('Controls reset');
-    
-    // Restore store state if we have a snapshot
-    if (originalState) {
-      useGameplayStore.setState({
-        players: originalState.players,
-        roundHistory: originalState.roundHistory,
-      });
-      setOriginalState(null);
-    }
-    
+    // Apply current text-field values to the store immediately (no animations)
+    const store = useGameplayStore.getState();
+
+    const startHealth = health;
+    const playerMaxHealth = store.players[0]?.maxHealth ?? Infinity;
+    const rawTarget = startHealth + healing - opponentDamage;
+    const targetHealth = Math.max(0, Math.min(playerMaxHealth, Math.round(rawTarget)));
+
+    const opponentStart = store.players[1]?.health ?? 0;
+    const opponentMax = store.players[1]?.maxHealth ?? Infinity;
+    const opponentTarget = Math.max(0, Math.min(opponentMax, Math.round(opponentStart - computedSpellpower)));
+
+    const updatedPlayersFinal: [Player, Player] = [
+      {
+        ...store.players[0],
+        health: targetHealth,
+      },
+      {
+        ...store.players[1],
+        health: opponentTarget,
+      },
+    ];
+
+    // Restore roundHistory to the original snapshot if available to avoid
+    // triggering the round-end animations; otherwise leave it as-is.
+    const desiredRoundHistory = originalState ? originalState.roundHistory : store.roundHistory;
+
+    useGameplayStore.setState({ players: updatedPlayersFinal, roundHistory: desiredRoundHistory });
+
+    setStatusMessage('State applied (no animation)');
     setTimeout(() => setStatusMessage(''), 2000);
   };
 
@@ -149,29 +188,30 @@ export function Developer() {
     width: '360px',
     backgroundColor: '#2a2a2a',
     borderRadius: '12px',
-    padding: '24px',
+    padding: '8px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    justifyContent: 'center',
+    gap: '5px',
   };
 
   const titleStyle: React.CSSProperties = {
-    fontSize: '24px',
+    fontSize: '20px',
     fontWeight: 'bold',
-    marginBottom: '8px',
+    marginBottom: '4px',
   };
 
   const labelStyle: React.CSSProperties = {
     display: 'block',
-    marginBottom: '8px',
-    fontSize: '14px',
+    marginBottom: '4px',
+    fontSize: '12px',
     fontWeight: 'bold',
     color: '#aaaaaa',
   };
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '10px',
+    padding: '5px',
     fontSize: '16px',
     backgroundColor: '#1a1a1a',
     color: '#ffffff',
@@ -244,7 +284,7 @@ export function Developer() {
             healing={healing}
             essence={essence}
             focus={focus}
-            totalPower={spellpower}
+            totalPower={computedSpellpower}
             fireRuneCount={0}
             hasPenalty={false}
             hasWindMitigation={false}
@@ -260,7 +300,7 @@ export function Developer() {
       <div style={rightPanelStyle}>
         <div>
           <h2 style={titleStyle}>Developer Controls</h2>
-          <p style={{ fontSize: '14px', color: '#888', marginBottom: '20px' }}>
+          <p style={{ fontSize: '14px', color: '#888'}}>
             Configure and preview Spellpower animations
           </p>
         </div>
@@ -272,26 +312,10 @@ export function Developer() {
           <input
             id="health-input"
             type="number"
-            min="0"
-            max="200"
+            min="1"
+            max="300"
             value={health}
             onChange={(e) => setHealth(Number(e.target.value))}
-            style={inputStyle}
-            disabled={isAnimating}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="spellpower-input" style={labelStyle}>
-            Spellpower
-          </label>
-          <input
-            id="spellpower-input"
-            type="number"
-            min="0"
-            max="9999"
-            value={spellpower}
-            onChange={(e) => setSpellpower(Number(e.target.value))}
             style={inputStyle}
             disabled={isAnimating}
           />
@@ -305,7 +329,7 @@ export function Developer() {
             id="healing-input"
             type="number"
             min="0"
-            max="200"
+            max="50"
             value={healing}
             onChange={(e) => setHealing(Number(e.target.value))}
             style={inputStyle}
@@ -314,16 +338,16 @@ export function Developer() {
         </div>
 
         <div>
-          <label htmlFor="focus-input" style={labelStyle}>
-            Focus
+          <label htmlFor="opponent-damage-input" style={labelStyle}>
+            Opponent damage
           </label>
           <input
-            id="focus-input"
+            id="opponent-damage-input"
             type="number"
             min="0"
-            max="50"
-            value={focus}
-            onChange={(e) => setFocus(Number(e.target.value))}
+            max="9999"
+            value={opponentDamage}
+            onChange={(e) => setOpponentDamage(Number(e.target.value))}
             style={inputStyle}
             disabled={isAnimating}
           />
@@ -340,6 +364,22 @@ export function Developer() {
             max="50"
             value={essence}
             onChange={(e) => setEssence(Number(e.target.value))}
+            style={inputStyle}
+            disabled={isAnimating}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="focus-input" style={labelStyle}>
+            Focus
+          </label>
+          <input
+            id="focus-input"
+            type="number"
+            min="0"
+            max="50"
+            value={focus}
+            onChange={(e) => setFocus(Number(e.target.value))}
             style={inputStyle}
             disabled={isAnimating}
           />
