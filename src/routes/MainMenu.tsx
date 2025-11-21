@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useClickSound } from '../hooks/useClickSound'
 import { useGameActions } from '../hooks/useGameActions'
 import { runHeadlessSpectatorSeriesAsync } from '../utils/headlessSpectatorSimulation'
 import { getAIDifficultyLabel } from '../utils/aiDifficultyLabels'
@@ -8,6 +9,7 @@ import type { AIDifficulty } from '../types/game'
 export function MainMenu() {
   const navigate = useNavigate()
   const { startSpectatorMatch } = useGameActions()
+  const playClickSound = useClickSound()
   
   const [spectatorModeOpen, setSpectatorModeOpen] = useState(false)
   const [topAIDifficulty, setTopAIDifficulty] = useState<AIDifficulty>('normal')
@@ -111,6 +113,7 @@ export function MainMenu() {
   }
 
   const handleQuickPlay = () => {
+    playClickSound()
     navigate('/game')
   }
   

@@ -3,6 +3,7 @@
  */
 
 import type { Player } from '../../../types/game';
+import { useClickSound } from '../../../hooks/useClickSound';
 
 interface GameOverModalProps {
   players: [Player, Player];
@@ -11,6 +12,7 @@ interface GameOverModalProps {
 }
 
 export function GameOverModal({ players, winner, onReturnToStart }: GameOverModalProps) {
+  const playClickSound = useClickSound();
   const winnerId = winner?.id ?? null;
   const playerIsWinner = winnerId === players[0].id;
   const opponentIsWinner = winnerId === players[1].id;
@@ -38,7 +40,7 @@ export function GameOverModal({ players, winner, onReturnToStart }: GameOverModa
         padding: '16px 20px',
         borderRadius: '18px',
         border: `1px solid ${isWinner ? 'rgba(52, 211, 153, 0.5)' : 'rgba(148, 163, 184, 0.25)'}`,
-        background: isWinner
+      background: isWinner
           ? 'linear-gradient(120deg, rgba(6, 78, 59, 0.55), rgba(5, 32, 45, 0.75))'
           : 'rgba(9, 12, 33, 0.85)',
         boxShadow: isWinner ? '0 12px 28px rgba(16, 185, 129, 0.25)' : 'none',
@@ -94,7 +96,12 @@ export function GameOverModal({ players, winner, onReturnToStart }: GameOverModa
 
       <button
         type="button"
-        onClick={onReturnToStart}
+        onClick={() => {
+          playClickSound();
+          if (onReturnToStart) {
+            onReturnToStart();
+          }
+        }}
         style={{
           width: '100%',
           padding: '14px 18px',
