@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, AnimatingRune, Rune } from '../../../types/game';
 import { RuneforgesAndCenter } from './RuneforgesAndCenter';
 import { PlayerView } from './PlayerView';
@@ -14,6 +15,11 @@ import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
+import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
+import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
+import { useFreezeSound } from '../../../hooks/useFreezeSound';
+import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
+import { useUIStore } from '../../../state/stores/uiStore';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -66,10 +72,18 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const freezePatternLine = useGameplayStore((state) => state.freezePatternLine);
   const endRound = useGameplayStore((state) => state.endRound);
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
+  const soundVolume = useUIStore((state) => state.soundVolume);
+  const setSoundVolume = useUIStore((state) => state.setSoundVolume);
   
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showLogOverlay, setShowLogOverlay] = useState(false);
+  const [isMusicMuted, setIsMusicMuted] = useState<boolean>(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.localStorage.getItem('musicMuted') === 'true';
+  });
   const [animatingRunes, setAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [pendingPlacementTarget, setPendingPlacementTarget] = useState<PendingPlacementTarget>(null);
@@ -92,6 +106,17 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const isAITurn = currentPlayer.type === 'ai';
   const isAnimatingPlacement = animatingRunes.length > 0;
   const animatingRuneIds = [...animatingRunes, ...runeforgeAnimatingRunes].map((rune) => rune.id);
+  useRunePlacementSounds(players, animatingRunes, soundVolume);
+  useBackgroundMusic(!isMusicMuted, soundVolume);
+  useFreezeSound(frozenPatternLines);
+  useVoidEffectSound(voidEffectPending, runeforges, centerPool);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.localStorage.setItem('musicMuted', isMusicMuted ? 'true' : 'false');
+  }, [isMusicMuted]);
 
   // Determine winner by highest remaining health
   const winner = isGameOver
@@ -149,6 +174,18 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const handleBackgroundClick = () => {
     // Background click handler - no longer needed since PlayerBoard handles it
     // Keeping for potential future use with empty space clicks
+  };
+
+  const handleToggleMusic = () => {
+    setIsMusicMuted((prev) => !prev);
+  };
+
+  const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextValue = Number.parseFloat(event.currentTarget.value);
+    if (!Number.isFinite(nextValue)) {
+      return;
+    }
+    setSoundVolume(nextValue / 100);
   };
 
   const hidePatternSlots = useCallback((playerId: string, slotKeys: string[]) => {
@@ -472,155 +509,14 @@ export function GameBoard({ gameState }: GameBoardProps) {
     if (isAnimatingPlacement) {
       return;
     }
-    if (currentPlayerIndex !== 0 || selectedRunes.length === 0) {
-      placeRunesInFloor();
-      return;
-    }
-    if (typeof window === 'undefined') {
-      placeRunesInFloor();
-      return;
-    }
-    const player = players[0];
-    const floorLine = player.floorLine;
-    const floorStartIndex = floorLine.runes.length;
-    if (floorStartIndex + selectedRunes.length > floorLine.maxCapacity) {
-      placeRunesInFloor();
-      return;
-    }
-    const sourceElements = selectedRunes.map((rune) =>
-      document.querySelector<HTMLElement>(`[data-selected-rune="true"][data-rune-id="${rune.id}"]`)
-    );
-    const targetElements = selectedRunes.map((_, idx) =>
-      document.querySelector<HTMLElement>(
-        `[data-player-id="${player.id}"][data-floor-slot-index="${floorStartIndex + idx}"]`
-      )
-    );
-    if (sourceElements.some((el) => !el) || targetElements.some((el) => !el)) {
-      placeRunesInFloor();
-      return;
-    }
-    const newAnimatingRunes = selectedRunes.map((rune, idx) => {
-      const startRect = sourceElements[idx]!.getBoundingClientRect();
-      const targetRect = targetElements[idx]!.getBoundingClientRect();
-      const startX = startRect.left + startRect.width / 2 - OVERLAY_RUNE_SIZE / 2;
-      const startY = startRect.top + startRect.height / 2 - OVERLAY_RUNE_SIZE / 2;
-      const endX = targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2;
-      const endY = targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2;
-      return {
-        id: rune.id,
-        runeType: rune.runeType,
-        startX,
-        startY,
-        endX,
-        endY,
-      };
-    });
-    manualAnimationRef.current = true;
-    setAnimatingRunes(newAnimatingRunes);
-    setPendingPlacementTarget({ type: 'floor' });
+    placeRunesInFloor();
   };
 
   const handlePatternLinePlacement = (patternLineIndex: number) => {
     if (isAnimatingPlacement) {
       return;
     }
-    if (currentPlayerIndex !== 0) {
-      placeRunes(patternLineIndex);
-      return;
-    }
-    const player = players[0];
-    const patternLine = player.patternLines[patternLineIndex];
-    if (!patternLine || selectedRunes.length === 0) {
-      placeRunes(patternLineIndex);
-      return;
-    }
-    const availableSpace = patternLine.tier - patternLine.count;
-    const runesToPlace = Math.min(selectedRunes.length, availableSpace);
-    if (runesToPlace <= 0) {
-      placeRunes(patternLineIndex);
-      return;
-    }
-    if (typeof window === 'undefined') {
-      placeRunes(patternLineIndex);
-      return;
-    }
-    const floorLine = player.floorLine;
-    const patternRunes = selectedRunes.slice(0, runesToPlace);
-    const overflowRunes = selectedRunes.slice(runesToPlace);
-    if (floorLine.runes.length + overflowRunes.length > floorLine.maxCapacity) {
-      placeRunes(patternLineIndex);
-      return;
-    }
-    const patternSourceElements = patternRunes.map((rune) =>
-      document.querySelector<HTMLElement>(`[data-selected-rune="true"][data-rune-id="${rune.id}"]`)
-    );
-    const overflowSourceElements = overflowRunes.map((rune) =>
-      document.querySelector<HTMLElement>(`[data-selected-rune="true"][data-rune-id="${rune.id}"]`)
-    );
-    const playerId = player.id;
-    const patternTargetElements = Array.from({ length: runesToPlace }, (_, offset) => {
-      const slotIndex = patternLine.count + offset;
-      return document.querySelector<HTMLElement>(
-        `[data-player-id="${playerId}"][data-pattern-line-index="${patternLineIndex}"][data-pattern-slot-index="${slotIndex}"]`
-      );
-    });
-    const floorStartIndex = floorLine.runes.length;
-    const floorTargetElements = overflowRunes.map((_, idx) =>
-      document.querySelector<HTMLElement>(
-        `[data-player-id="${playerId}"][data-floor-slot-index="${floorStartIndex + idx}"]`
-      )
-    );
-
-    if (
-      patternSourceElements.some((el) => !el) ||
-      patternTargetElements.some((el) => !el) ||
-      overflowSourceElements.some((el) => !el) ||
-      floorTargetElements.some((el) => !el)
-    ) {
-      placeRunes(patternLineIndex);
-      return;
-    }
-
-    const newAnimatingRunes: AnimatingRune[] = [];
-    patternRunes.forEach((rune, idx) => {
-      const startRect = patternSourceElements[idx]!.getBoundingClientRect();
-      const targetRect = patternTargetElements[idx]!.getBoundingClientRect();
-      const startX = startRect.left + startRect.width / 2 - OVERLAY_RUNE_SIZE / 2;
-      const startY = startRect.top + startRect.height / 2 - OVERLAY_RUNE_SIZE / 2;
-      const endX = targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2;
-      const endY = targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2;
-      newAnimatingRunes.push({
-        id: rune.id,
-        runeType: rune.runeType,
-        startX,
-        startY,
-        endX,
-        endY,
-      });
-    });
-    overflowRunes.forEach((rune, idx) => {
-      const startRect = overflowSourceElements[idx]?.getBoundingClientRect();
-      const targetRect = floorTargetElements[idx]?.getBoundingClientRect();
-      if (!startRect || !targetRect) {
-        return;
-      }
-      const startX = startRect.left + startRect.width / 2 - OVERLAY_RUNE_SIZE / 2;
-      const startY = startRect.top + startRect.height / 2 - OVERLAY_RUNE_SIZE / 2;
-      const endX = targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2;
-      const endY = targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2;
-      newAnimatingRunes.push({
-        id: rune.id,
-        runeType: rune.runeType,
-        startX,
-        startY,
-        endX,
-        endY,
-      });
-    });
-
-    manualAnimationRef.current = true;
-    setAnimatingRunes(newAnimatingRunes);
-    setPendingPlacementTarget({ type: 'pattern', index: patternLineIndex });
+    placeRunes(patternLineIndex);
   };
 
   // Handle end-of-round trigger
@@ -778,10 +674,109 @@ export function GameBoard({ gameState }: GameBoardProps) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px 16px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        position: 'relative'
       }}
       onClick={handleBackgroundClick}
     >
+      <div
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          pointerEvents: 'none',
+          zIndex: 12
+        }}
+      >
+        <div
+          style={{
+            pointerEvents: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '10px 12px',
+            borderRadius: '999px',
+            border: '1px solid rgba(148, 163, 184, 0.4)',
+            background: 'rgba(12, 10, 24, 0.75)',
+            boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '200px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#c7d2fe', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
+                Volume
+              </span>
+              <span style={{ color: '#e2e8f0', fontSize: '12px', fontWeight: 700 }}>
+                {Math.round(soundVolume * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={Math.round(soundVolume * 100)}
+              onChange={handleVolumeChange}
+              aria-label="Sound volume"
+              style={{
+                width: '100%',
+                accentColor: '#7c3aed',
+                cursor: 'pointer'
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleToggleMusic}
+            aria-pressed={isMusicMuted}
+            style={{
+              pointerEvents: 'auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 16px',
+              borderRadius: '999px',
+              border: '1px solid rgba(148, 163, 184, 0.4)',
+              background: isMusicMuted
+                ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(127, 29, 29, 0.35))'
+                : 'linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(124, 58, 237, 0.35))',
+              color: '#e2e8f0',
+              fontWeight: 700,
+              fontSize: '13px',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
+              transition: 'transform 120ms ease, box-shadow 120ms ease',
+            }}
+            onMouseEnter={(event) => {
+              event.currentTarget.style.transform = 'translateY(-1px)';
+              event.currentTarget.style.boxShadow = '0 18px 42px rgba(0, 0, 0, 0.6)';
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.style.transform = 'translateY(0)';
+              event.currentTarget.style.boxShadow = '0 14px 36px rgba(0, 0, 0, 0.45)';
+            }}
+          >
+            <span
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: isMusicMuted ? '#f87171' : '#34d399',
+                boxShadow: '0 0 12px rgba(255, 255, 255, 0.35)'
+              }}
+              aria-hidden={true}
+            />
+            {isMusicMuted ? 'Music Muted' : 'Music On'}
+          </button>
+        </div>
+      </div>
+
       <div style={{ width: `${scaledBoardSize}px`, height: `${scaledBoardSize}px`, position: 'relative' }}>
         <div
           style={{

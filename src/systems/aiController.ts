@@ -81,10 +81,36 @@ export function executeAIFrostEffect(store: StoreApi<GameplayStore> = useGamepla
   // Get per-player difficulty if available, otherwise use global difficulty
   const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
   const aiProfile = getAIPlayerProfile(aiDifficulty);
-  const patternLineToFreeze = aiProfile.choosePatternLineToFreeze(state);
+  // Primary chooser
+  let patternLineToFreeze = aiProfile.choosePatternLineToFreeze(state);
   const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
   const opponentId = state.players[opponentIndex].id;
-  
+
+  // Fallbacks: if primary chooser returns null, try simpler/random strategies
+  if (patternLineToFreeze === null) {
+    // Try easy fallback (prioritize finishable lines)
+    try {
+      // Importing specific fallback selectors from aiPlayer via the profile might not be available,
+      // so attempt a safer random selection next.
+      const { choosePatternLineToFreeze: fallback } = getAIPlayerProfile('easy');
+      patternLineToFreeze = fallback(state);
+    } catch (e) {
+      console.log(e);
+      patternLineToFreeze = null;
+    }
+  }
+
+  if (patternLineToFreeze === null) {
+    // Last resort: pick a random available pattern line to freeze
+    try {
+      const { choosePatternLineToFreeze: randomFallback } = getAIPlayerProfile('hard');
+      patternLineToFreeze = randomFallback(state);
+    } catch (e) {
+      console.log(e);
+      patternLineToFreeze = null;
+    }
+  }
+
   if (patternLineToFreeze !== null) {
     state.freezePatternLine(opponentId, patternLineToFreeze);
   } else {
