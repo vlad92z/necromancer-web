@@ -179,5 +179,6 @@ export function initializeGame(startingHealth: number = 300): GameState {
       [player2.id]: [],
     },
     shouldTriggerEndRound: false,
+    scoringSnapshot: null,
   };
 }

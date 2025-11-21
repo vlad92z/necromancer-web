@@ -342,7 +342,6 @@ export function Developer() {
       <div style={leftPanelStyle}>
         <div style={spellpowerContainerStyle}>
           <PlayerStats
-            playerId={currentPlayer.id}
             playerName={currentPlayer.name}
             isActive={true}
             nameColor="#a855f7"
@@ -358,7 +357,6 @@ export function Developer() {
             onShowDeck={() => {}}
             onShowLog={() => {}}
             onShowRules={() => {}}
-            animationScale={animationSpeed}
           />
         </div>
       </div>

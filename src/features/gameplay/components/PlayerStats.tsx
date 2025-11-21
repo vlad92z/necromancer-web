@@ -1,19 +1,13 @@
 /**
- * Spellpower component - displays player vitals, scoring stats, and helpful tooltips
+ * PlayerStats component - displays vitals and rune stats without animations
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { motion, useAnimationControls, animate } from 'framer-motion';
-import { useGameplayStore } from '../../../state/stores/gameplayStore';
+import { useState } from 'react';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
-import { ANIMATION } from '../../../styles/tokens';
-
-// Simplified: no pulse colors required
 
 type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower';
 
 interface SpellpowerProps {
-  playerId: string;
   playerName: string;
   isActive: boolean;
   nameColor: string;
@@ -29,7 +23,6 @@ interface SpellpowerProps {
   onShowDeck: () => void;
   onShowLog: () => void;
   onShowRules: () => void;
-  animationScale?: number;
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
@@ -107,55 +100,28 @@ interface StatBadgeProps {
   tooltip: string;
   onClick?: () => void;
   alert?: boolean;
-  pulseKey?: number;
-  pulseColor?: string;
 }
 
-function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, alert, pulseKey = 0, pulseColor }: StatBadgeProps) {
+function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, alert }: StatBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
   const isClickable = typeof onClick === 'function';
-  const controls = useAnimationControls();
-  const baseShadow = alert ? '0 0 20px rgba(248, 113, 113, 0.5)' : '0 8px 22px rgba(0,0,0,0.45)';
-
-  useEffect(() => {
-    controls.set({ scale: 1, boxShadow: baseShadow });
-  }, [controls, baseShadow]);
-
-  useEffect(() => {
-    if (!pulseKey) {
-      return;
-    }
-    controls.start({
-      scale: [1, 1.08, 1],
-      boxShadow: [
-        baseShadow,
-        `0 0 30px ${pulseColor ?? borderColor}`,
-        baseShadow
-      ],
-      transition: {
-        duration: 0.6,
-        times: [0, 0.5, 1],
-        ease: 'easeOut'
-      }
-    });
-  }, [pulseKey, controls, pulseColor, baseShadow, borderColor]);
+  const baseShadow = alert ? '0 0 16px rgba(248, 113, 113, 0.4)' : '0 10px 26px rgba(0,0,0,0.45)';
 
   return (
     <div
       style={{
         position: 'relative',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
       }}
     >
-      <motion.button
+      <button
         type="button"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onFocus={() => setIsHovered(true)}
         onBlur={() => setIsHovered(false)}
         onClick={onClick}
-        animate={controls}
         style={{
           fontSize: '0.2rem',
           display: 'flex',
@@ -167,15 +133,15 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
           cursor: isClickable ? 'pointer' : 'default',
           color: '#f8fafc',
           boxShadow: baseShadow,
-          transition: 'transform 0.2s ease'
+          transition: 'box-shadow 0.2s ease',
         }}
         aria-label={`${label}: ${tooltip}`}
       >
         <StatIcon type={type} color={color} />
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, marginLeft: '0.5rem' }}>
           <span style={{ fontSize: '1.15rem', fontWeight: 600 }}>{value}</span>
         </div>
-      </motion.button>
+      </button>
       {isHovered && (
         <div
           style={{
@@ -193,7 +159,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap',
             boxShadow: '0 20px 45px rgba(0,0,0,0.55)',
-            zIndex: 5
+            zIndex: 5,
           }}
         >
           {tooltip}
@@ -204,7 +170,6 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
 }
 
 export function PlayerStats({
-  playerId,
   playerName,
   isActive,
   nameColor,
@@ -217,134 +182,13 @@ export function PlayerStats({
   hasPenalty,
   hasWindMitigation,
   windRuneCount,
-  animationScale = 1
+  onShowDeck,
+  onShowLog,
+  onShowRules,
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower ?? (essence * focus);
-  
-  // Scaled animation timing constants (sourced from tokens)
-  const healAnimDuration = ANIMATION.HEAL_ANIMATION_DURATION_MS * animationScale;
-  const healToDamageDelay = ANIMATION.HEAL_TO_DAMAGE_DELAY_MS * animationScale;
-  const damageAnimDuration = ANIMATION.DAMAGE_ANIMATION_DURATION_MS * animationScale;
-  const playerSeqPadding = ANIMATION.PLAYER_SEQUENCE_PADDING_MS * animationScale;
-  const playerSeqDuration = (ANIMATION.HEAL_ANIMATION_DURATION_MS + ANIMATION.HEAL_TO_DAMAGE_DELAY_MS + ANIMATION.DAMAGE_ANIMATION_DURATION_MS + ANIMATION.PLAYER_SEQUENCE_PADDING_MS) * animationScale;
-  const baseSeqDelay = ANIMATION.BASE_SEQUENCE_DELAY_MS * animationScale;
-  const [displayHealth, setDisplayHealth] = useState(health);
-  const [isAnimatingHealth, setIsAnimatingHealth] = useState(false);
-  // simplified: no pulse animations
-  const roundHistory = useGameplayStore((state) => state.roundHistory);
-  const players = useGameplayStore((state) => state.players);
-  const playerIndex = players.findIndex((player) => player.id === playerId);
-  const opponentIndex = playerIndex === 0 ? 1 : 0;
-  const roundCount = roundHistory.length;
-  const latestRound = roundHistory[roundCount - 1];
-  const playerMaxHealth = players[playerIndex]?.maxHealth ?? players[playerIndex]?.health ?? health;
-  const previousHealthRef = useRef(health);
-  const previousRoundCountRef = useRef(roundCount);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const healthTweenRef = useRef<ReturnType<typeof animate> | null>(null);
 
-  const clearScheduledAnimations = () => {
-    timersRef.current.forEach((timer) => clearTimeout(timer));
-    timersRef.current = [];
-    if (healthTweenRef.current) {
-      healthTweenRef.current.stop();
-      healthTweenRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      clearScheduledAnimations();
-    };
-  }, []);
-
-  const animateHealthValue = (from: number, to: number, durationMs: number) => {
-    healthTweenRef.current?.stop();
-    healthTweenRef.current = animate(from, to, {
-      duration: durationMs / 1000,
-      ease: 'easeInOut',
-      onUpdate: (value) => setDisplayHealth(Math.round(value)),
-      onComplete: () => setDisplayHealth(Math.round(to))
-    });
-  };
-
-  const schedule = (callback: () => void, delay: number) => {
-    const timer = setTimeout(() => {
-      callback();
-    }, delay);
-    timersRef.current.push(timer);
-  };
-
-  // no pulse triggers in simplified mode
-
-  useEffect(() => {
-    if (roundCount === 0 || playerIndex === -1) {
-      previousRoundCountRef.current = roundCount;
-      return;
-    }
-
-    if (roundCount <= previousRoundCountRef.current) {
-      return;
-    }
-
-    previousRoundCountRef.current = roundCount;
-    const previousHealth = previousHealthRef.current ?? health;
-
-    const healPotential = Math.max(0, Math.min(healing, Math.max(0, playerMaxHealth - previousHealth)));
-    const healTarget = previousHealth + healPotential;
-    const incomingDamage = playerIndex === 0 ? latestRound?.opponentTotal ?? 0 : latestRound?.playerTotal ?? 0;
-    const outgoingDamage = playerIndex === 0 ? latestRound?.playerTotal ?? 0 : latestRound?.opponentTotal ?? 0;
-    const finalHealthTarget = health;
-    const hasHealing = healPotential > 0;
-    const hasDamageStage = incomingDamage > 0 || finalHealthTarget < healTarget;
-
-    if (!hasHealing && !hasDamageStage && outgoingDamage === 0) {
-      setDisplayHealth(health);
-      return;
-    }
-
-    clearScheduledAnimations();
-    setIsAnimatingHealth(true);
-    setDisplayHealth(previousHealth);
-
-    // Start both players' healing at the same time; damage stage happens after heal
-    const baseDelay = baseSeqDelay;
-    const healingStart = baseDelay;
-    const damageStart = baseDelay + healAnimDuration + healToDamageDelay;
-    const sequenceEnd = damageStart + (hasDamageStage ? damageAnimDuration : 0) + playerSeqPadding;
-
-    if (hasHealing) {
-      schedule(() => {
-        // animate healing only
-        animateHealthValue(previousHealth, healTarget, healAnimDuration);
-      }, healingStart);
-    }
-
-    if (hasDamageStage) {
-      schedule(() => {
-        // animate damage only
-        animateHealthValue(hasHealing ? healTarget : previousHealth, finalHealthTarget, damageAnimDuration);
-      }, damageStart);
-    }
-
-    schedule(() => {
-      setIsAnimatingHealth(false);
-      setDisplayHealth(health);
-    }, sequenceEnd);
-
-    // no spellpower pulse or other visual effects in simplified mode
-  }, [roundCount, latestRound, playerIndex, opponentIndex, health, healing, playerMaxHealth, baseSeqDelay, playerSeqDuration, healAnimDuration, healToDamageDelay, damageAnimDuration, playerSeqPadding]);
-
-  useEffect(() => {
-    previousHealthRef.current = health;
-  }, [health]);
-
-  useEffect(() => {
-    if (!isAnimatingHealth) {
-      setDisplayHealth(health);
-    }
-  }, [health, isAnimatingHealth]);
   const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = hasPenalty
@@ -367,116 +211,161 @@ export function PlayerStats({
   const closeExplanation = () => setShowExplanation(false);
 
   const clickableStatCommon = {
-    onClick: openExplanation
+    onClick: openExplanation,
   };
 
   return (
     <>
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.9em',
-        minWidth: '8em',
-        width: '100%',
-        height: '100%',
-        padding: '1.25em 1em',
-        borderRadius: '28px',
-        border: isActive ? '1px solid rgba(168, 85, 247, 0.65)' : '1px solid rgba(255, 255, 255, 0.08)',
-        background: isActive
-          ? 'linear-gradient(180deg, rgba(76, 29, 149, 0.55) 0%, rgba(17, 24, 39, 0.85) 100%)'
-          : 'rgba(5, 8, 20, 0.85)',
-        boxShadow: isActive
-          ? '0 25px 55px rgba(147, 51, 234, 0.35)'
-          : '0 18px 35px rgba(2, 0, 12, 0.7)',
-        position: 'relative'
-      }}
-    >
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '1.25em 1em',
-        position: 'relative'
-      }}>
-      {/* Avatar */}
       <div
         style={{
-          width: '5em',
-          height: '5em',
-          borderRadius: '50%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          border: `2px solid ${nameColor}`,
-          background: `radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(15,23,42,0.9) 60%)`,
-          color: '#f5f3ff',
-          fontWeight: 700,
-          fontSize: '18px',
-          textTransform: 'uppercase',
-          boxShadow: isActive ? '0 0 25px rgba(129, 140, 248, 0.45)' : 'none'
+          gap: '0.9em',
+          minWidth: '8em',
+          width: '100%',
+          height: '100%',
+          padding: '1.25em 1em',
+          borderRadius: '28px',
+          border: isActive ? '1px solid rgba(168, 85, 247, 0.65)' : '1px solid rgba(255, 255, 255, 0.08)',
+          background: isActive
+            ? 'linear-gradient(180deg, rgba(76, 29, 149, 0.55) 0%, rgba(17, 24, 39, 0.85) 100%)'
+            : 'rgba(5, 8, 20, 0.85)',
+          boxShadow: isActive
+            ? '0 25px 55px rgba(147, 51, 234, 0.35)'
+            : '0 18px 35px rgba(2, 0, 12, 0.7)',
+          position: 'relative',
         }}
       >
-        {playerName.slice(0,1)}
-      </div>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '1.25em 1em',
+          position: 'relative',
+        }}>
+          <div
+            style={{
+              width: '5em',
+              height: '5em',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `2px solid ${nameColor}`,
+              background: `radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(15,23,42,0.9) 60%)`,
+              color: '#f5f3ff',
+              fontWeight: 700,
+              fontSize: '18px',
+              textTransform: 'uppercase',
+              boxShadow: isActive ? '0 0 25px rgba(129, 140, 248, 0.45)' : 'none',
+            }}
+          >
+            {playerName.slice(0, 1)}
+          </div>
 
-      {/* Name */}
-      <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.2rem'}}>{playerName}</div>
-      </div>
-      {/* Health / Healing */}
-      <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-        <StatBadge
-          type="health"
-          label="Health"
-          value={displayHealth}
-          color="#fb7185"
-          borderColor="rgba(248, 113, 113, 0.4)"
-          tooltip={healthTooltip}
-        />
-        <StatBadge
-          type="healing"
-          label="Healing"
-          value={healing}
-          color="#4ade80"
-          borderColor="rgba(74, 222, 128, 0.4)"
-          tooltip={healingTooltip}
-        />
-      </div>
+          <div style={{ color: '#f5f3ff', fontWeight: 600, fontSize: '1.2rem' }}>{playerName}</div>
+        </div>
 
-      {/* Essence / Focus / Spellpower */}
-      <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-        <StatBadge
-          type="essence"
-          label="Essence"
-          value={essence}
-          color="#facc15"
-          borderColor="rgba(250, 204, 21, 0.35)"
-          tooltip={essenceTooltip}
-          {...clickableStatCommon}
-        />
-        <StatBadge
-          type="focus"
-          label="Focus"
-          value={focus}
-          color={focusColor}
-          borderColor={focusBorder}
-          tooltip={focusTooltip}
-          alert={hasPenalty}
-          {...clickableStatCommon}
-        />
-        <StatBadge
-          type="spellpower"
-          label="Spellpower"
-          value={spellpower}
-          color="#c084fc"
-          borderColor="rgba(192, 132, 252, 0.4)"
-          tooltip={spellpowerTooltip}
-          {...clickableStatCommon}
-        />
+        <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+          <StatBadge
+            type="health"
+            label="Health"
+            value={health}
+            color="#fb7185"
+            borderColor="rgba(248, 113, 113, 0.4)"
+            tooltip={healthTooltip}
+          />
+          <StatBadge
+            type="healing"
+            label="Healing"
+            value={healing}
+            color="#4ade80"
+            borderColor="rgba(74, 222, 128, 0.4)"
+            tooltip={healingTooltip}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+          <StatBadge
+            type="essence"
+            label="Essence"
+            value={essence}
+            color="#facc15"
+            borderColor="rgba(250, 204, 21, 0.35)"
+            tooltip={essenceTooltip}
+            {...clickableStatCommon}
+          />
+          <StatBadge
+            type="focus"
+            label="Focus"
+            value={focus}
+            color={focusColor}
+            borderColor={focusBorder}
+            tooltip={focusTooltip}
+            alert={hasPenalty}
+            {...clickableStatCommon}
+          />
+          <StatBadge
+            type="spellpower"
+            label="Spellpower"
+            value={spellpower}
+            color="#c084fc"
+            borderColor="rgba(192, 132, 252, 0.4)"
+            tooltip={spellpowerTooltip}
+            {...clickableStatCommon}
+          />
+        </div>
+
+        {/* <div style={{ display: 'flex', gap: '0.25em', marginTop: '0.75em' }}> */}
+          {/* <button
+            type="button"
+            onClick={onShowDeck}
+            style={{
+              background: 'transparent',
+              color: '#9fb7ff',
+              border: '1px solid rgba(159, 183, 255, 0.6)',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+            }}
+          >
+            Deck
+          </button>
+          <button
+            type="button"
+            onClick={onShowLog}
+            style={{
+              background: 'transparent',
+              color: '#9fb7ff',
+              border: '1px solid rgba(159, 183, 255, 0.6)',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+            }}
+          >
+            Log
+          </button>
+          <button
+            type="button"
+            onClick={onShowRules}
+            style={{
+              background: 'transparent',
+              color: '#9fb7ff',
+              border: '1px solid rgba(159, 183, 255, 0.6)',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+            }}
+          >
+            Rules
+          </button> */}
+        {/* </div> */}
       </div>
-    </div>
-    {showExplanation && <SpellpowerExplanation onClose={closeExplanation} />}
+      {showExplanation && <SpellpowerExplanation onClose={closeExplanation} />}
     </>
   );
 }

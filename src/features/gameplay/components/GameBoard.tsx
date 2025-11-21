@@ -539,22 +539,22 @@ export function GameBoard({ gameState }: GameBoardProps) {
     let timer: ReturnType<typeof setTimeout>;
 
     if (scoringPhase === 'moving-to-wall') {
-      // Wait 1.5 seconds, then process scoring step
       timer = setTimeout(() => {
         processScoringStep();
       }, 1500);
-    } else if (scoringPhase === 'calculating-score') {
-      // Wait 2 seconds, then process next step
-      timer = setTimeout(() => {
-        processScoringStep();
-      }, 2000);
     } else if (scoringPhase === 'clearing-floor') {
-      // Wait 1.5 seconds, then complete
       timer = setTimeout(() => {
         processScoringStep();
       }, 1500);
+    } else if (scoringPhase === 'healing') {
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1600);
+    } else if (scoringPhase === 'damage') {
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1600);
     } else if (scoringPhase === 'complete') {
-      // Wait briefly, then process final step (start next round or game over)
       timer = setTimeout(() => {
         processScoringStep();
       }, 500);

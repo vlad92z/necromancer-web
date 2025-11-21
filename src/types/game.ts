@@ -130,7 +130,25 @@ export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-o
 /**
  * Scoring phase steps for visual feedback
  */
-export type ScoringPhase = 'moving-to-wall' | 'calculating-score' | 'clearing-floor' | 'complete' | null;
+export type ScoringPhase = 'moving-to-wall' | 'clearing-floor' | 'healing' | 'damage' | 'complete' | null;
+
+/**
+ * Wall power details recorded during scoring
+ */
+export interface WallPowerStats {
+  essence: number;
+  focus: number;
+  totalPower: number;
+}
+
+/**
+ * Snapshot of scoring data preserved between phases
+ */
+export interface ScoringSnapshot {
+  floorPenalties: [number, number];
+  wallPowerStats: [WallPowerStats, WallPowerStats];
+  lifeCounts: [number, number];
+}
 
 /**
  * Round history entry for game log
@@ -187,4 +205,5 @@ export interface GameState {
   frostEffectPending: boolean; // Whether Frost effect is waiting for pattern line selection
   frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
+  scoringSnapshot: ScoringSnapshot | null; // Cached scoring data across phases
 }

@@ -4,9 +4,9 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
-import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
+import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 
 // Helper function to count Life runes on a wall
@@ -510,225 +510,254 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   endRound: () => {
-    set((state) => {
-      console.log('End of round - starting scoring animation...');
-      
-      // Start scoring animation sequence
-      return {
-        ...state,
-        scoringPhase: 'moving-to-wall' as const,
-        shouldTriggerEndRound: false,
-      };
-    });
+    set((state) => ({
+      ...state,
+      scoringPhase: 'moving-to-wall' as const,
+      shouldTriggerEndRound: false,
+      scoringSnapshot: null,
+    }));
   },
   
   processScoringStep: () => {
     set((state) => {
       const currentPhase = state.scoringPhase;
-      
+      if (!currentPhase) {
+        return state;
+      }
+
       if (currentPhase === 'moving-to-wall') {
         console.log('Scoring: Moving runes to wall...');
-        
-        // Score both players - Move completed lines to wall
-        const updatedPlayersArray = state.players.map((player) => {
-        const updatedPatternLines = [...player.patternLines];
-        const updatedWall = player.wall.map((row) => [...row]);
-        
-        // Process completed pattern lines - move runes to wall
-        player.patternLines.forEach((line, lineIndex) => {
-          if (line.count === line.tier && line.runeType) {
-            // Line is complete - move one rune to wall
-            const row = lineIndex;
-            const col = getWallColumnForRune(row, line.runeType);
-            
-            // Place rune on wall
-            updatedWall[row][col] = { runeType: line.runeType };
-            
-            console.log(`Player ${player.id}: Line ${lineIndex + 1} complete, placed ${line.runeType} at (${row},${col})`);
-            
-            // Clear the pattern line
-            updatedPatternLines[lineIndex] = {
-              tier: line.tier,
-              runeType: null,
-              count: 0,
-            };
-          }
-        });
-        
-        // Calculate total wall power based on connected segments.
-        // Use the player's original pattern lines (before we cleared completed lines)
-        // so pending Wind placements still mitigate penalties immediately.
-        const floorPenaltyCount = calculateEffectiveFloorPenalty(
-          player.floorLine.runes,
-          player.patternLines,
-          updatedWall,
-          state.gameMode
-        );
-        
-        const wallPower = calculateWallPower(updatedWall, floorPenaltyCount, state.gameMode);
-        
-        // Add wall power to existing score (minimum 0)
-        const newHealth = player.health;
 
-        console.log(`Player ${player.id}: Wall power ${wallPower} (with ${floorPenaltyCount} floor penalties), Health remains ${newHealth}`);
+        const moveRunesToWall = (player: Player): Player => {
+          const updatedPatternLines = [...player.patternLines];
+          const updatedWall = player.wall.map((row) => [...row]);
 
-        return {
-          ...player,
-          patternLines: updatedPatternLines,
-          wall: updatedWall,
-          health: player.health,
-          floorLine: player.floorLine,
+          player.patternLines.forEach((line, lineIndex) => {
+            if (line.count === line.tier && line.runeType) {
+              const row = lineIndex;
+              const col = getWallColumnForRune(row, line.runeType);
+              updatedWall[row][col] = { runeType: line.runeType };
+              console.log(`Player ${player.id}: Line ${lineIndex + 1} complete, placed ${line.runeType} at (${row},${col})`);
+              updatedPatternLines[lineIndex] = {
+                tier: line.tier,
+                runeType: null,
+                count: 0,
+              };
+            }
+          });
+
+          return {
+            ...player,
+            patternLines: updatedPatternLines,
+            wall: updatedWall,
+          };
         };
-      });
-      
-      const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
-      
-      return {
-        ...state,
-        players: updatedPlayers,
-        scoringPhase: 'calculating-score' as const,
-      };
-    } else if (currentPhase === 'calculating-score') {
-      console.log('Scoring: Calculating scores...');
-      
-      // Calculate and apply scores, and record round history
-      
-      // Calculate each player's wall power (damage they deal)
-      // Calculate each player's effective floor penalty directly from the wall.
-      const player1FloorPenalty = calculateEffectiveFloorPenalty(
-        state.players[0].floorLine.runes,
-        state.players[0].patternLines,
-        state.players[0].wall,
-        state.gameMode
-      );
-      const player2FloorPenalty = calculateEffectiveFloorPenalty(
-        state.players[1].floorLine.runes,
-        state.players[1].patternLines,
-        state.players[1].wall,
-        state.gameMode
-      );
 
-      const player1Data = calculateWallPowerWithSegments(
-        state.players[0].wall,
-        player1FloorPenalty,
-        state.gameMode
-      );
-      const player2Data = calculateWallPowerWithSegments(
-        state.players[1].wall,
-        player2FloorPenalty,
-        state.gameMode
-      );
+        const updatedPlayersArray: [Player, Player] = [
+          moveRunesToWall(state.players[0]),
+          moveRunesToWall(state.players[1]),
+        ];
 
-      // Life Effect: Count Life runes and heal players by 10 HP per active Life rune (only in standard mode)
-      const player1LifeCount = state.gameMode === 'standard' ? countLifeRunes(state.players[0].wall) : 0;
-      const player2LifeCount = state.gameMode === 'standard' ? countLifeRunes(state.players[1].wall) : 0;
-      
-      const player1Healing = player1LifeCount * 10;
-      const player2Healing = player2LifeCount * 10;
+        const floorPenalties: [number, number] = [
+          calculateEffectiveFloorPenalty(
+            updatedPlayersArray[0].floorLine.runes,
+            updatedPlayersArray[0].patternLines,
+            updatedPlayersArray[0].wall,
+            state.gameMode
+          ),
+          calculateEffectiveFloorPenalty(
+            updatedPlayersArray[1].floorLine.runes,
+            updatedPlayersArray[1].patternLines,
+            updatedPlayersArray[1].wall,
+            state.gameMode
+          ),
+        ];
 
-      // Apply healing from Life runes first (capped at player's maxHealth), then apply damage dealt by opponent
-      const p1Max = state.players[0].maxHealth ?? state.players[0].health;
-      const p2Max = state.players[1].maxHealth ?? state.players[1].health;
+        const wallPowerStats: [WallPowerStats, WallPowerStats] = [
+          calculateWallPowerWithSegments(
+            updatedPlayersArray[0].wall,
+            floorPenalties[0],
+            state.gameMode
+          ),
+          calculateWallPowerWithSegments(
+            updatedPlayersArray[1].wall,
+            floorPenalties[1],
+            state.gameMode
+          ),
+        ];
 
-      const player1Healed = Math.min(state.players[0].health + player1Healing, p1Max);
-      const player2Healed = Math.min(state.players[1].health + player2Healing, p2Max);
+        const lifeCounts: [number, number] = [
+          state.gameMode === 'standard' ? countLifeRunes(updatedPlayersArray[0].wall) : 0,
+          state.gameMode === 'standard' ? countLifeRunes(updatedPlayersArray[1].wall) : 0,
+        ];
 
-      const player1NewHealth = Math.max(0, player1Healed - player2Data.totalPower);
-      const player2NewHealth = Math.max(0, player2Healed - player1Data.totalPower);
+        const scoringSnapshot: ScoringSnapshot = {
+          floorPenalties,
+          wallPowerStats,
+          lifeCounts,
+        };
 
-      const updatedPlayers: [Player, Player] = [
-        { ...state.players[0], health: player1NewHealth },
-        { ...state.players[1], health: player2NewHealth }
-      ];
-
-      const roundScore = {
-        round: state.round,
-        playerName: updatedPlayers[0].name,
-        playerEssence: player1Data.essence,
-        playerFocus: player1Data.focus,
-        playerTotal: player1Data.totalPower,
-        opponentName: updatedPlayers[1].name,
-        opponentEssence: player2Data.essence,
-        opponentFocus: player2Data.focus,
-        opponentTotal: player2Data.totalPower,
-      };
-
-      return {
-        ...state,
-        players: updatedPlayers,
-        roundHistory: [...state.roundHistory, roundScore],
-        scoringPhase: 'clearing-floor' as const,
-      };
-    } else if (currentPhase === 'clearing-floor') {
-      console.log('Scoring: Clearing floor lines...');
-      
-      // Clear floor lines
-      const updatedPlayersArray = state.players.map((player) => ({
-        ...player,
-        floorLine: {
-          ...player.floorLine,
-          runes: [],
-        },
-      }));
-      
-      const updatedPlayers: [Player, Player] = [updatedPlayersArray[0], updatedPlayersArray[1]];
-      
-      return {
-        ...state,
-        players: updatedPlayers,
-        scoringPhase: 'complete' as const,
-      };
-    } else if (currentPhase === 'complete') {
-      console.log('Scoring: Complete, checking game over...');
-      
-      // Check if either player has run out of runes
-      const player1HasEnough = state.players[0].deck.length >= 10;
-      const player2HasEnough = state.players[1].deck.length >= 10;
-      
-      if (!player1HasEnough || !player2HasEnough) {
-        console.log('Game over! A player has run out of runes.');
-        console.log(`Player 1 runes: ${state.players[0].deck.length}, Player 2 runes: ${state.players[1].deck.length}`);
-        
         return {
           ...state,
-          runeforges: [],
-          centerPool: [],
-          turnPhase: 'game-over',
-          round: state.round,
-          scoringPhase: null,
+          players: updatedPlayersArray,
+          scoringPhase: 'clearing-floor' as const,
+          scoringSnapshot,
         };
       }
-      
-      // Prepare for next round
-      const emptyFactories = createEmptyFactories(state.players, 3);
-      const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
-        emptyFactories,
-        {
-          [state.players[0].id]: state.players[0].deck,
-          [state.players[1].id]: state.players[1].deck,
+
+      if (currentPhase === 'clearing-floor') {
+        console.log('Scoring: Clearing floor lines...');
+
+        const updatedPlayersArray: [Player, Player] = [
+          {
+            ...state.players[0],
+            floorLine: {
+              ...state.players[0].floorLine,
+              runes: [],
+            },
+          },
+          {
+            ...state.players[1],
+            floorLine: {
+              ...state.players[1].floorLine,
+              runes: [],
+            },
+          },
+        ];
+
+        return {
+          ...state,
+          players: updatedPlayersArray,
+          scoringPhase: 'healing' as const,
+        };
+      }
+
+      if (currentPhase === 'healing') {
+        if (!state.scoringSnapshot) {
+          return state;
         }
-      );
-      
-      // Update player decks with remaining runes after filling runeforges
-      const finalPlayers: [Player, Player] = [
-        { ...state.players[0], deck: decksByPlayer[state.players[0].id] ?? [] },
-        { ...state.players[1], deck: decksByPlayer[state.players[1].id] ?? [] }
-      ];
-      
-      console.log('Round complete! Starting next round...');
-      
-      return {
-        ...state,
-        players: finalPlayers,
-        runeforges: filledRuneforges,
-        centerPool: [],
-        turnPhase: 'draft',
-        round: state.round + 1,
-        scoringPhase: null,
-      };
-    }
-    
-    return state;
+
+        const healingAmounts: [number, number] = [
+          state.scoringSnapshot.lifeCounts[0] * 10,
+          state.scoringSnapshot.lifeCounts[1] * 10,
+        ];
+
+        const applyHealing = (player: Player, amount: number): Player => {
+          const maxHealth = player.maxHealth ?? player.health;
+          return {
+            ...player,
+            health: Math.min(maxHealth, player.health + amount),
+          };
+        };
+
+        const healedPlayers: [Player, Player] = [
+          applyHealing(state.players[0], healingAmounts[0]),
+          applyHealing(state.players[1], healingAmounts[1]),
+        ];
+
+        console.log('Scoring: Applied healing stage', healingAmounts);
+
+        return {
+          ...state,
+          players: healedPlayers,
+          scoringPhase: 'damage' as const,
+        };
+      }
+
+      if (currentPhase === 'damage') {
+        if (!state.scoringSnapshot) {
+          return state;
+        }
+
+        const snapshot = state.scoringSnapshot;
+        const updatedPlayers: [Player, Player] = [
+          {
+            ...state.players[0],
+            health: Math.max(
+              0,
+              state.players[0].health - snapshot.wallPowerStats[1].totalPower
+            ),
+          },
+          {
+            ...state.players[1],
+            health: Math.max(
+              0,
+              state.players[1].health - snapshot.wallPowerStats[0].totalPower
+            ),
+          },
+        ];
+
+        const roundScore = {
+          round: state.round,
+          playerName: updatedPlayers[0].name,
+          playerEssence: snapshot.wallPowerStats[0].essence,
+          playerFocus: snapshot.wallPowerStats[0].focus,
+          playerTotal: snapshot.wallPowerStats[0].totalPower,
+          opponentName: updatedPlayers[1].name,
+          opponentEssence: snapshot.wallPowerStats[1].essence,
+          opponentFocus: snapshot.wallPowerStats[1].focus,
+          opponentTotal: snapshot.wallPowerStats[1].totalPower,
+        };
+
+        return {
+          ...state,
+          players: updatedPlayers,
+          roundHistory: [...state.roundHistory, roundScore],
+          scoringPhase: 'complete' as const,
+          scoringSnapshot: null,
+        };
+      }
+
+      if (currentPhase === 'complete') {
+        console.log('Scoring: Complete, checking game over...');
+
+        const player1HasEnough = state.players[0].deck.length >= 10;
+        const player2HasEnough = state.players[1].deck.length >= 10;
+
+        if (!player1HasEnough || !player2HasEnough) {
+          console.log('Game over! A player has run out of runes.');
+          console.log(`Player 1 runes: ${state.players[0].deck.length}, Player 2 runes: ${state.players[1].deck.length}`);
+
+          return {
+            ...state,
+            runeforges: [],
+            centerPool: [],
+            turnPhase: 'game-over',
+            round: state.round,
+            scoringPhase: null,
+            scoringSnapshot: null,
+          };
+        }
+
+        const emptyFactories = createEmptyFactories(state.players, 3);
+        const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
+          emptyFactories,
+          {
+            [state.players[0].id]: state.players[0].deck,
+            [state.players[1].id]: state.players[1].deck,
+          }
+        );
+
+        const finalPlayers: [Player, Player] = [
+          { ...state.players[0], deck: decksByPlayer[state.players[0].id] ?? [] },
+          { ...state.players[1], deck: decksByPlayer[state.players[1].id] ?? [] },
+        ];
+
+        console.log('Round complete! Starting next round...');
+
+        return {
+          ...state,
+          players: finalPlayers,
+          runeforges: filledRuneforges,
+          centerPool: [],
+          turnPhase: 'draft',
+          round: state.round + 1,
+          scoringPhase: null,
+          scoringSnapshot: null,
+        };
+      }
+
+      return state;
     });
   },
   
