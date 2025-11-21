@@ -6,14 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useAnimationControls, animate } from 'framer-motion';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
-
-const HEAL_ANIMATION_DURATION_MS = 500;
-const HEAL_TO_DAMAGE_DELAY_MS = 250;
-const DAMAGE_ANIMATION_DURATION_MS = 500;
-const PLAYER_SEQUENCE_PADDING_MS = 500;
-const PLAYER_SEQUENCE_DURATION_MS =
-  HEAL_ANIMATION_DURATION_MS + HEAL_TO_DAMAGE_DELAY_MS + DAMAGE_ANIMATION_DURATION_MS + PLAYER_SEQUENCE_PADDING_MS;
-const BASE_SEQUENCE_DELAY_MS = 1200;
+import { ANIMATION } from '../../../styles/tokens';
 
 // Simplified: no pulse colors required
 
@@ -229,13 +222,13 @@ export function PlayerStats({
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower ?? (essence * focus);
   
-  // Scaled animation timing constants
-  const healAnimDuration = HEAL_ANIMATION_DURATION_MS * animationScale;
-  const healToDamageDelay = HEAL_TO_DAMAGE_DELAY_MS * animationScale;
-  const damageAnimDuration = DAMAGE_ANIMATION_DURATION_MS * animationScale;
-  const playerSeqPadding = PLAYER_SEQUENCE_PADDING_MS * animationScale;
-  const playerSeqDuration = PLAYER_SEQUENCE_DURATION_MS * animationScale;
-  const baseSeqDelay = BASE_SEQUENCE_DELAY_MS * animationScale;
+  // Scaled animation timing constants (sourced from tokens)
+  const healAnimDuration = ANIMATION.HEAL_ANIMATION_DURATION_MS * animationScale;
+  const healToDamageDelay = ANIMATION.HEAL_TO_DAMAGE_DELAY_MS * animationScale;
+  const damageAnimDuration = ANIMATION.DAMAGE_ANIMATION_DURATION_MS * animationScale;
+  const playerSeqPadding = ANIMATION.PLAYER_SEQUENCE_PADDING_MS * animationScale;
+  const playerSeqDuration = (ANIMATION.HEAL_ANIMATION_DURATION_MS + ANIMATION.HEAL_TO_DAMAGE_DELAY_MS + ANIMATION.DAMAGE_ANIMATION_DURATION_MS + ANIMATION.PLAYER_SEQUENCE_PADDING_MS) * animationScale;
+  const baseSeqDelay = ANIMATION.BASE_SEQUENCE_DELAY_MS * animationScale;
   const [displayHealth, setDisplayHealth] = useState(health);
   const [isAnimatingHealth, setIsAnimatingHealth] = useState(false);
   // simplified: no pulse animations
