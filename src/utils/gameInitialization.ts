@@ -14,6 +14,12 @@ import type {
 } from '../types/game';
 
 /**
+ * Game configuration constants
+ */
+export const RUNEFORGES_PER_PLAYER = 4;
+export const RUNES_PER_RUNEFORGE = 3;
+
+/**
  * Create an empty 5x5 scoring wall
  */
 export function createEmptyWall(): ScoringWall {
@@ -102,7 +108,7 @@ export function createEmptyFactories(players: [Player, Player], perPlayerCount: 
 export function fillFactories(
   runeforges: Runeforge[],
   playerDecks: Record<string, Rune[]>,
-  runesPerRuneforge: number = 4
+  runesPerRuneforge: number = RUNES_PER_RUNEFORGE
 ): { runeforges: Runeforge[]; decksByPlayer: Record<string, Rune[]> } {
   const shuffledDecks: Record<string, Rune[]> = {};
 
@@ -136,8 +142,8 @@ export function initializeGame(startingHealth: number = 300): GameState {
   const player1 = createPlayer('player-1', 'Player', 'human', startingHealth);
   const player2 = createPlayer('player-2', 'Opponent', 'ai', startingHealth);
   
-  // Each player gets 3 personal runeforges
-  const emptyFactories = createEmptyFactories([player1, player2], 3);
+  // Each player gets 4 personal runeforges
+  const emptyFactories = createEmptyFactories([player1, player2], RUNEFORGES_PER_PLAYER);
   
   // Fill factories and get updated decks
   const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(emptyFactories, {
