@@ -4,10 +4,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { GameState } from '../types/game';
 import freezeSoundUrl from '../assets/sounds/freeze.mp3';
+import { useUIStore } from '../state/stores/uiStore';
 
 type FrozenPatternLines = GameState['frozenPatternLines'];
 
 export function useFreezeSound(frozenPatternLines: FrozenPatternLines): void {
+  const soundVolume = useUIStore((state) => state.soundVolume);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const previousFrozenKeysRef = useRef<string[]>([]);
 
@@ -27,8 +29,12 @@ export function useFreezeSound(frozenPatternLines: FrozenPatternLines): void {
     }
     if (!audioRef.current) {
       audioRef.current = new Audio(freezeSoundUrl);
+      audioRef.current.volume = soundVolume;
     }
-  }, []);
+    if (audioRef.current) {
+      audioRef.current.volume = soundVolume;
+    }
+  }, [soundVolume]);
 
   useEffect(() => {
     if (typeof Audio === 'undefined') {

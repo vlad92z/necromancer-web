@@ -3,8 +3,10 @@
  */
 import { useCallback, useEffect, useRef } from 'react';
 import clickSoundUrl from '../assets/sounds/click.mp3';
+import { useUIStore } from '../state/stores/uiStore';
 
 export function useClickSound(): () => void {
+  const soundVolume = useUIStore((state) => state.soundVolume);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -14,7 +16,10 @@ export function useClickSound(): () => void {
     if (!audioRef.current) {
       audioRef.current = new Audio(clickSoundUrl);
     }
-  }, []);
+    if (audioRef.current) {
+      audioRef.current.volume = soundVolume;
+    }
+  }, [soundVolume]);
 
   return useCallback(() => {
     if (typeof Audio === 'undefined') {
@@ -30,10 +35,11 @@ export function useClickSound(): () => void {
       return;
     }
 
+    audioElement.volume = soundVolume;
     audioElement.currentTime = 0;
     const playPromise = audioElement.play();
     if (playPromise) {
       void playPromise.catch(() => {});
     }
-  }, []);
+  }, [soundVolume]);
 }

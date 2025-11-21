@@ -51,7 +51,7 @@ const countRunePlacements = (players: Player[]): RuneCountMap =>
     };
   }, createEmptyCountMap(0));
 
-export function useRunePlacementSounds(players: Player[], animatingRunes: AnimatingRune[]) {
+export function useRunePlacementSounds(players: Player[], animatingRunes: AnimatingRune[], soundVolume: number) {
   const placementsByType = useMemo(() => countRunePlacements(players), [players]);
   const previousCountsRef = useRef<RuneCountMap>(placementsByType);
   const audioRefs = useRef<Record<RuneType, HTMLAudioElement | null>>({
@@ -100,12 +100,17 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
       if (!audioRefs.current[runeType]) {
         audioRefs.current[runeType] = new Audio(SOUND_SOURCES[runeType]);
       }
+      const audio = audioRefs.current[runeType];
+      if (audio) {
+        audio.volume = soundVolume;
+      }
     });
-  }, []);
+  }, [soundVolume]);
 
   const playSound = (runeType: RuneType) => {
     const audioElement = audioRefs.current[runeType];
     if (audioElement) {
+      audioElement.volume = soundVolume;
       audioElement.currentTime = 0;
       const playPromise = audioElement.play();
       if (playPromise) {

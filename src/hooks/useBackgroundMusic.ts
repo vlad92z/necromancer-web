@@ -8,6 +8,7 @@ const AUDIO_OVERLAP_SECONDS = 0.2;
 const FALLBACK_DURATION_SECONDS = 31;
 
 export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): void {
+  const normalizedVolume = Math.min(Math.max(volume, 0), 1);
   const [isBufferReady, setIsBufferReady] = useState(false);
   const useWebAudioRef = useRef(true);
 
@@ -63,7 +64,7 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
 
     const context = new AudioContextClass();
     const gainNode = context.createGain();
-    gainNode.gain.value = volume;
+    gainNode.gain.value = normalizedVolume;
     gainNode.connect(context.destination);
 
     audioContextRef.current = context;
@@ -110,16 +111,16 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
 
     if (!useWebAudioRef.current) {
       fallbackAudiosRef.current.forEach((audio) => {
-        audio.volume = volume;
+        audio.volume = normalizedVolume;
       });
       return;
     }
 
     const gainNode = gainNodeRef.current;
     if (gainNode) {
-      gainNode.gain.value = volume;
+      gainNode.gain.value = normalizedVolume;
     }
-  }, [isBufferReady, volume]);
+  }, [isBufferReady, normalizedVolume]);
 
   useEffect(() => {
     if (!isBufferReady) {
@@ -135,12 +136,12 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
           const second = new Audio(backgroundMusicUrl);
           [first, second].forEach((audio) => {
             audio.loop = false;
-            audio.volume = volume;
+            audio.volume = normalizedVolume;
           });
           fallbackAudiosRef.current = [first, second];
         } else {
           fallbackAudiosRef.current.forEach((audio) => {
-            audio.volume = volume;
+            audio.volume = normalizedVolume;
             audio.pause();
             audio.currentTime = 0;
           });
@@ -231,5 +232,5 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
     return () => {
       stopWebAudioPlayback();
     };
-  }, [isBufferReady, isEnabled, volume]);
+  }, [isBufferReady, isEnabled, normalizedVolume]);
 }

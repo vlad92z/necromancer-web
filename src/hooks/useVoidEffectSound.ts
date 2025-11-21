@@ -4,12 +4,14 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { Rune, Runeforge } from '../types/game';
 import banishSoundUrl from '../assets/sounds/banish.mp3';
+import { useUIStore } from '../state/stores/uiStore';
 
 export function useVoidEffectSound(
   voidEffectPending: boolean,
   runeforges: Runeforge[],
   centerPool: Rune[]
 ): void {
+  const soundVolume = useUIStore((state) => state.soundVolume);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const previousPendingRef = useRef(false);
   const pendingPoolCountRef = useRef<number | null>(null);
@@ -25,8 +27,12 @@ export function useVoidEffectSound(
     }
     if (!audioRef.current) {
       audioRef.current = new Audio(banishSoundUrl);
+      audioRef.current.volume = soundVolume;
     }
-  }, []);
+    if (audioRef.current) {
+      audioRef.current.volume = soundVolume;
+    }
+  }, [soundVolume]);
 
   useEffect(() => {
     if (typeof Audio === 'undefined') {
@@ -40,6 +46,7 @@ export function useVoidEffectSound(
       if (previousCount !== null && availableRuneCount < previousCount) {
         const audioElement = audioRef.current ?? new Audio(banishSoundUrl);
         audioRef.current = audioElement;
+        audioElement.volume = soundVolume;
         audioElement.currentTime = 0;
         const playPromise = audioElement.play();
         if (playPromise) {
@@ -49,5 +56,5 @@ export function useVoidEffectSound(
     }
 
     previousPendingRef.current = voidEffectPending;
-  }, [availableRuneCount, voidEffectPending]);
+  }, [availableRuneCount, soundVolume, voidEffectPending]);
 }
