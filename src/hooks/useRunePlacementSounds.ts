@@ -69,6 +69,11 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
     Wind: ''
   });
 
+  const soundVolumeRef = useRef(soundVolume);
+  useEffect(() => {
+    soundVolumeRef.current = soundVolume;
+  }, [soundVolume]);
+
   const animationKeys = useMemo(() => {
     const idsByType: Record<RuneType, string[]> = {
       Fire: [],
@@ -107,24 +112,24 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
     });
   }, [soundVolume]);
 
-  const playSound = (runeType: RuneType) => {
+  const playSound = useRef((runeType: RuneType) => {
     const audioElement = audioRefs.current[runeType];
     if (audioElement) {
-      audioElement.volume = soundVolume;
+      audioElement.volume = soundVolumeRef.current;
       audioElement.currentTime = 0;
       const playPromise = audioElement.play();
       if (playPromise) {
         void playPromise.catch(() => {});
       }
     }
-  };
+  });
 
   useEffect(() => {
     (Object.keys(animationKeys) as RuneType[]).forEach((runeType) => {
       const currentKey = animationKeys[runeType];
       const previousKey = previousAnimationKeysRef.current[runeType];
       if (currentKey && currentKey !== previousKey) {
-        playSound(runeType);
+        playSound.current(runeType);
         previousAnimationKeysRef.current[runeType] = currentKey;
       } else if (!currentKey) {
         previousAnimationKeysRef.current[runeType] = '';
@@ -137,7 +142,7 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
       const currentCount = placementsByType[runeType];
       const previousCount = previousCountsRef.current[runeType];
       if (currentCount > previousCount) {
-        playSound(runeType);
+        playSound.current(runeType);
       }
       previousCountsRef.current[runeType] = currentCount;
     });

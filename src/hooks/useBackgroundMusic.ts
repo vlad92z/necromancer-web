@@ -64,7 +64,6 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
 
     const context = new AudioContextClass();
     const gainNode = context.createGain();
-    gainNode.gain.value = normalizedVolume;
     gainNode.connect(context.destination);
 
     audioContextRef.current = context;
@@ -137,12 +136,10 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
           const second = new Audio(backgroundMusicUrl);
           [first, second].forEach((audio) => {
             audio.loop = false;
-            audio.volume = normalizedVolume;
           });
           fallbackAudiosRef.current = [first, second];
         } else {
           fallbackAudiosRef.current.forEach((audio) => {
-            audio.volume = normalizedVolume;
             audio.pause();
             audio.currentTime = 0;
           });
