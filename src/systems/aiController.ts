@@ -95,6 +95,7 @@ export function executeAIFrostEffect(store: StoreApi<GameplayStore> = useGamepla
       const { choosePatternLineToFreeze: fallback } = getAIPlayerProfile('easy');
       patternLineToFreeze = fallback(state);
     } catch (e) {
+      console.log(e);
       patternLineToFreeze = null;
     }
   }
@@ -105,6 +106,7 @@ export function executeAIFrostEffect(store: StoreApi<GameplayStore> = useGamepla
       const { choosePatternLineToFreeze: randomFallback } = getAIPlayerProfile('hard');
       patternLineToFreeze = randomFallback(state);
     } catch (e) {
+      console.log(e);
       patternLineToFreeze = null;
     }
   }

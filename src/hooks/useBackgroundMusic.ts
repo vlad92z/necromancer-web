@@ -80,6 +80,7 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
           setIsBufferReady(true);
         }
       } catch (error) {
+        console.log(error);
         if (!cancelled) {
           useWebAudioRef.current = false;
           setIsBufferReady(true);
