@@ -232,5 +232,5 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
     return () => {
       stopWebAudioPlayback();
     };
-  }, [isBufferReady, isEnabled, normalizedVolume]);
+  }, [isBufferReady, isEnabled]);
 }
