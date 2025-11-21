@@ -47,13 +47,13 @@ export function Runeforge({
   const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
   const selectionActive = selectionSourceActive && Boolean(displayOverride);
   const canHighlightRunes = !selectionActive && ((!voidEffectPending && !frostEffectPending && !disabled) || canSelectRunesForVoid);
-  const runeSize = 60;
-  const runeGap = 14;
-  const containerPadding = 24;
+  const runeSize = 48;
+  const runeGap = 10;
+  const containerPadding = 20;
   const baseRuneforgeWidth = displayedRunes.length > 0
     ? (displayedRunes.length * runeSize) + (Math.max(0, displayedRunes.length - 1) * runeGap) + containerPadding
-    : 240;
-  const runeforgeWidth = Math.min(420, Math.max(280, baseRuneforgeWidth));
+    : 200;
+  const runeforgeWidth = Math.min(350, Math.max(220, baseRuneforgeWidth));
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedForDisplay: boolean) => {
     e.stopPropagation();
@@ -122,10 +122,10 @@ export function Runeforge({
       disabled={buttonDisabled}
       style={{
         backgroundColor: backgroundColor,
-        borderRadius: '16px',
+        borderRadius: '12px',
         width: `${runeforgeWidth}px`,
-        height: '96px',
-        padding: '12px',
+        height: '76px',
+        padding: '10px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -99,7 +99,7 @@ export function RuneforgesAndCenter({
       <div style={{ 
         display: 'flex', 
         justifyContent: align, 
-        gap: '60px', 
+        gap: '24px', 
         flexWrap: 'wrap'
       }}>
         {ownedRuneforges.map((runeforge) => (
