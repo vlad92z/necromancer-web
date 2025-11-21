@@ -1,57 +1,235 @@
 /**
- * useBackgroundMusic - plays and manages looping background music when enabled.
+ * useBackgroundMusic - plays looping background music with overlapped restarts for seamless playback (Web Audio first, HTMLAudio fallback).
  */
-import { useEffect, useRef } from 'react';
-import backgroundMusic from '../assets/sounds/background.mp3';
+import { useEffect, useRef, useState } from 'react';
+import backgroundMusicUrl from '../assets/sounds/background.mp3';
+
+const AUDIO_OVERLAP_SECONDS = 0.22;
+const FALLBACK_DURATION_SECONDS = 31;
 
 export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): void {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isBufferReady, setIsBufferReady] = useState(false);
+  const useWebAudioRef = useRef(true);
+
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const bufferRef = useRef<AudioBuffer | null>(null);
+  const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const loopTimeoutRef = useRef<number | null>(null);
+
+  const fallbackAudiosRef = useRef<HTMLAudioElement[]>([]);
+  const fallbackLoopTimeoutRef = useRef<number | null>(null);
+  const fallbackIndexRef = useRef(0);
+
+  const stopWebAudioPlayback = () => {
+    if (loopTimeoutRef.current !== null) {
+      window.clearTimeout(loopTimeoutRef.current);
+      loopTimeoutRef.current = null;
+    }
+    activeSourcesRef.current.forEach((source) => {
+      source.stop();
+      source.disconnect();
+    });
+    activeSourcesRef.current = [];
+  };
+
+  const stopFallbackPlayback = () => {
+    if (fallbackLoopTimeoutRef.current !== null) {
+      window.clearTimeout(fallbackLoopTimeoutRef.current);
+      fallbackLoopTimeoutRef.current = null;
+    }
+    fallbackAudiosRef.current.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+  };
 
   useEffect(() => {
-    if (typeof Audio === 'undefined') {
+    if (typeof window === 'undefined') {
       return;
     }
 
-    const audioElement = new Audio(backgroundMusic);
-    audioElement.loop = true;
-    audioElement.volume = volume;
-    audioRef.current = audioElement;
+    let cancelled = false;
+    const AudioContextClass =
+      window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+    if (!AudioContextClass) {
+      useWebAudioRef.current = false;
+      setIsBufferReady(true);
+      return () => {
+        stopFallbackPlayback();
+      };
+    }
+
+    const context = new AudioContextClass();
+    const gainNode = context.createGain();
+    gainNode.gain.value = volume;
+    gainNode.connect(context.destination);
+
+    audioContextRef.current = context;
+    gainNodeRef.current = gainNode;
+
+    const loadBuffer = async () => {
+      try {
+        const response = await fetch(backgroundMusicUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = await context.decodeAudioData(arrayBuffer);
+        if (!cancelled) {
+          bufferRef.current = buffer;
+          setIsBufferReady(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          useWebAudioRef.current = false;
+          setIsBufferReady(true);
+        }
+      }
+    };
+
+    void loadBuffer();
 
     return () => {
-      const audioElement = audioRef.current;
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
+      cancelled = true;
+      stopWebAudioPlayback();
+      const gain = gainNodeRef.current;
+      if (gain) {
+        gain.disconnect();
       }
-      audioRef.current = null;
+      context.close().catch(() => {});
+      audioContextRef.current = null;
+      gainNodeRef.current = null;
+      bufferRef.current = null;
+      stopFallbackPlayback();
     };
   }, []);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
-  useEffect(() => {
-    const audioElement = audioRef.current;
-    if (!audioElement) {
+    if (!isBufferReady) {
       return;
     }
 
-    if (isEnabled) {
-      const playPromise = audioElement.play();
-      if (playPromise) {
-        void playPromise.catch(() => {});
+    if (!useWebAudioRef.current) {
+      fallbackAudiosRef.current.forEach((audio) => {
+        audio.volume = volume;
+      });
+      return;
+    }
+
+    const gainNode = gainNodeRef.current;
+    if (gainNode) {
+      gainNode.gain.value = volume;
+    }
+  }, [isBufferReady, volume]);
+
+  useEffect(() => {
+    if (!isBufferReady) {
+      return;
+    }
+
+    if (!useWebAudioRef.current) {
+      stopFallbackPlayback();
+
+      const ensureFallbackAudios = () => {
+        if (fallbackAudiosRef.current.length === 0) {
+          const first = new Audio(backgroundMusicUrl);
+          const second = new Audio(backgroundMusicUrl);
+          [first, second].forEach((audio) => {
+            audio.loop = false;
+            audio.volume = volume;
+          });
+          fallbackAudiosRef.current = [first, second];
+        } else {
+          fallbackAudiosRef.current.forEach((audio) => {
+            audio.volume = volume;
+            audio.pause();
+            audio.currentTime = 0;
+          });
+        }
+      };
+
+      const startFallbackLoop = () => {
+        const audios = fallbackAudiosRef.current;
+        if (audios.length === 0) {
+          return;
+        }
+
+        fallbackIndexRef.current = 0;
+
+        const playAtIndex = (index: number) => {
+          const audio = audios[index];
+          audio.currentTime = 0;
+          const playPromise = audio.play();
+          if (playPromise) {
+            void playPromise.catch(() => {});
+          }
+        };
+
+        const scheduleNext = () => {
+          const currentAudio = audios[fallbackIndexRef.current];
+          const durationSeconds = Number.isFinite(currentAudio.duration) && currentAudio.duration > 0
+            ? currentAudio.duration
+            : FALLBACK_DURATION_SECONDS;
+          const waitMs = Math.max((durationSeconds - AUDIO_OVERLAP_SECONDS) * 1000, 0);
+          fallbackLoopTimeoutRef.current = window.setTimeout(() => {
+            fallbackIndexRef.current = (fallbackIndexRef.current + 1) % audios.length;
+            playAtIndex(fallbackIndexRef.current);
+            scheduleNext();
+          }, waitMs);
+        };
+
+        playAtIndex(0);
+        scheduleNext();
+      };
+
+      if (isEnabled) {
+        ensureFallbackAudios();
+        startFallbackLoop();
+      } else {
+        stopFallbackPlayback();
       }
+
+      return () => {
+        stopFallbackPlayback();
+      };
+    }
+
+    const context = audioContextRef.current;
+    const buffer = bufferRef.current;
+    const gainNode = gainNodeRef.current;
+
+    if (!context || !buffer || !gainNode) {
+      return;
+    }
+
+    stopWebAudioPlayback();
+
+    const startBufferSource = () => {
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(gainNode);
+      source.start(0);
+      source.onended = () => {
+        const remaining = activeSourcesRef.current.filter((item) => item !== source);
+        activeSourcesRef.current = remaining;
+      };
+      activeSourcesRef.current.push(source);
+
+      const waitMs = Math.max((buffer.duration - AUDIO_OVERLAP_SECONDS) * 1000, 0);
+      loopTimeoutRef.current = window.setTimeout(() => {
+        startBufferSource();
+      }, waitMs);
+    };
+
+    if (isEnabled) {
+      void context.resume().then(() => {
+        startBufferSource();
+      }).catch(() => {});
     } else {
-      audioElement.pause();
-      audioElement.currentTime = 0;
+      stopWebAudioPlayback();
     }
 
     return () => {
-      audioElement.pause();
-      audioElement.currentTime = 0;
+      stopWebAudioPlayback();
     };
-  }, [isEnabled]);
+  }, [isBufferReady, isEnabled, volume]);
 }
