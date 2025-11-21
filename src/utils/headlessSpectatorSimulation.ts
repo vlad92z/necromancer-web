@@ -6,6 +6,7 @@ import type { AIDifficulty } from '../types/game';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { createGameplayStoreInstance } from '../state/stores/gameplayStore';
 import { executeAITurn, needsAIPlacement, executeAIVoidEffect, executeAIFrostEffect } from '../systems/aiController';
+import { getControllerForIndex } from './playerControllers';
 
 const MAX_STEPS_PER_GAME = 8000;
 
@@ -43,8 +44,9 @@ function runSingleHeadlessGame(
       break;
     }
 
-    const currentPlayer = state.players[state.currentPlayerIndex];
-    if (currentPlayer.type !== 'ai') {
+    const controller = getControllerForIndex(state, state.currentPlayerIndex);
+
+    if (controller.type !== 'computer') {
       break;
     }
 
@@ -65,8 +67,8 @@ function runSingleHeadlessGame(
   }
 
   const finalState = store.getState();
-  const top = finalState.players[0];
-  const bottom = finalState.players[1];
+  const bottom = finalState.players[0];
+  const top = finalState.players[1];
 
   if (steps >= MAX_STEPS_PER_GAME) {
     return 'tie';

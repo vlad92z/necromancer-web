@@ -71,14 +71,36 @@ export interface FloorLine {
 }
 
 /**
- * Player type (human or AI)
+ * Player type (human or computer-controlled)
  */
-export type PlayerType = 'human' | 'ai';
+export type PlayerType = 'human' | 'computer';
 
 /**
  * AI difficulty levels
  */
 export type AIDifficulty = 'easy' | 'normal' | 'hard';
+
+/**
+ * Player side on the board
+ */
+export type PlayerSide = 'top' | 'bottom';
+
+/**
+ * Controller type for a player seat
+ */
+export type PlayerController =
+  | { type: 'human' }
+  | { type: 'computer'; difficulty: AIDifficulty };
+
+/**
+ * Controller configuration for both player seats
+ */
+export type PlayerControllers = Record<PlayerSide, PlayerController>;
+
+/**
+ * Quick play opponent selection
+ */
+export type QuickPlayOpponent = AIDifficulty | 'human';
 
 /**
  * Difficulty type alias for spectator mode
@@ -144,9 +166,8 @@ export interface AnimatingRune {
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
-  aiDifficulty: AIDifficulty; // AI behavior profile (for single AI opponent)
-  aiDifficulties?: Record<string, AIDifficulty>; // Per-player AI difficulties for spectator mode (keyed by player.id)
-  players: [Player, Player]; // Player (index 0) and AI Opponent (index 1)
+  playerControllers: PlayerControllers; // Controller assignments for top and bottom players
+  players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   currentPlayerIndex: 0 | 1;

@@ -20,6 +20,7 @@ import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
+import { getControllerForIndex } from '../../../utils/playerControllers';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -103,7 +104,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
-  const isAITurn = currentPlayer.type === 'ai';
+  const currentController = getControllerForIndex(gameState, currentPlayerIndex);
+  const isAITurn = currentController.type === 'computer';
   const isAnimatingPlacement = animatingRunes.length > 0;
   const animatingRuneIds = [...animatingRunes, ...runeforgeAnimatingRunes].map((rune) => rune.id);
   useRunePlacementSounds(players, animatingRunes, soundVolume);

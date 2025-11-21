@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
@@ -27,7 +27,7 @@ export function setNavigationCallback(callback: (() => void) | null) {
 
 export interface GameplayStore extends GameState {
   // Actions
-  startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => void;
+  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent) => void;
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
@@ -732,56 +732,61 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  startGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => {
-    set((state) => ({
-      ...state,
-      gameStarted: true,
-      gameMode: gameMode,
-      aiDifficulty,
-      players: [
-        state.players[0],
+  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent) => {
+    set((state) => {
+      const updatedControllers: PlayerControllers = {
+        bottom: { type: 'human' },
+        top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },
+      };
+
+      const updatedPlayers: [Player, Player] = [
+        { ...state.players[0], type: 'human' },
         {
           ...state.players[1],
-          type: 'ai',
-          name: getAIDisplayName('Opponent', aiDifficulty),
+          type: updatedControllers.top.type,
+          name:
+            updatedControllers.top.type === 'computer'
+              ? getAIDisplayName('Opponent', updatedControllers.top.difficulty)
+              : 'Player 2',
         },
-      ],
-    }));
+      ];
+
+      return {
+        ...state,
+        gameStarted: true,
+        gameMode: gameMode,
+        playerControllers: updatedControllers,
+        players: updatedPlayers,
+      };
+    });
   },
 
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => {
     set((state) => {
-      // Create two AI players
-      const topPlayer = state.players[0];
-      const bottomPlayer = state.players[1];
-      
-      const updatedTopPlayer: Player = {
-        ...topPlayer,
-        type: 'ai',
-        name: getAIDisplayName('Top AI', topDifficulty),
+      const playerControllers: PlayerControllers = {
+        bottom: { type: 'computer', difficulty: bottomDifficulty },
+        top: { type: 'computer', difficulty: topDifficulty },
       };
-      
-      const updatedBottomPlayer: Player = {
-        ...bottomPlayer,
-        type: 'ai',
-        name: getAIDisplayName('Bottom AI', bottomDifficulty),
-      };
-      
-      const updatedPlayers: [Player, Player] = [updatedTopPlayer, updatedBottomPlayer];
-      
-      // Create AI difficulties map keyed by player ID
-      const aiDifficulties: Record<string, AIDifficulty> = {
-        [updatedTopPlayer.id]: topDifficulty,
-        [updatedBottomPlayer.id]: bottomDifficulty,
-      };
-      
+
+      const updatedPlayers: [Player, Player] = [
+        {
+          ...state.players[0],
+          type: 'computer',
+          name: getAIDisplayName('Bottom AI', bottomDifficulty),
+        },
+        {
+          ...state.players[1],
+          type: 'computer',
+          name: getAIDisplayName('Top AI', topDifficulty),
+        },
+      ];
+
       return {
         ...state,
         gameStarted: true,
         gameMode: 'standard' as const,
         players: updatedPlayers,
-        aiDifficulties,
-        aiDifficulty: topDifficulty, // Keep for backwards compatibility
+        playerControllers,
       };
     });
   },

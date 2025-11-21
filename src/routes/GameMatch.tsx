@@ -4,7 +4,8 @@ import { GameBoard } from '../features/gameplay/components/GameBoard'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
 import { executeAITurn, needsAIPlacement, executeAIVoidEffect, executeAIFrostEffect } from '../systems/aiController'
-import type { AIDifficulty } from '../types/game'
+import type { QuickPlayOpponent } from '../types/game'
+import { getControllerForIndex } from '../utils/playerControllers'
 
 export function GameMatch() {
   const navigate = useNavigate()
@@ -26,8 +27,8 @@ export function GameMatch() {
   useEffect(() => {
     if (!gameState.gameStarted) return;
     
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex]
-    if (currentPlayer.type === 'ai' && 
+    const controller = getControllerForIndex(gameState, gameState.currentPlayerIndex)
+    if (controller.type === 'computer' && 
         gameState.turnPhase === 'draft' &&
         gameState.selectedRunes.length === 0 &&
         !gameState.voidEffectPending &&
@@ -38,7 +39,7 @@ export function GameMatch() {
       
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.currentPlayerIndex, gameState.turnPhase, gameState.players, gameState.selectedRunes.length, gameState.voidEffectPending, gameState.frostEffectPending])
+  }, [gameState.gameStarted, gameState.currentPlayerIndex, gameState.turnPhase, gameState.players, gameState.selectedRunes.length, gameState.voidEffectPending, gameState.frostEffectPending, gameState.playerControllers])
   
   // Handle AI placement after drafting
   useEffect(() => {
@@ -51,38 +52,38 @@ export function GameMatch() {
       
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.currentPlayerIndex, gameState.players, gameState.selectedRunes.length, gameState.turnPhase])
+  }, [gameState.gameStarted, gameState.currentPlayerIndex, gameState.players, gameState.selectedRunes.length, gameState.turnPhase, gameState.playerControllers])
   
   // Handle Void effect for AI (when AI's turn and voidEffectPending)
   useEffect(() => {
     if (!gameState.gameStarted) return;
     
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex]
-    if (currentPlayer.type === 'ai' && gameState.voidEffectPending && gameState.turnPhase === 'draft') {
+    const controller = getControllerForIndex(gameState, gameState.currentPlayerIndex)
+    if (controller.type === 'computer' && gameState.voidEffectPending && gameState.turnPhase === 'draft') {
       const delayTimer = setTimeout(() => {
         executeAIVoidEffect()
       }, 1500) // 1.5 second delay for Void effect
       
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.voidEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase])
+  }, [gameState.gameStarted, gameState.voidEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase, gameState.playerControllers])
   
   // Handle Frost effect for AI (when AI's turn and frostEffectPending)
   useEffect(() => {
     if (!gameState.gameStarted) return;
     
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex]
-    if (currentPlayer.type === 'ai' && gameState.frostEffectPending && gameState.turnPhase === 'draft') {
+    const controller = getControllerForIndex(gameState, gameState.currentPlayerIndex)
+    if (controller.type === 'computer' && gameState.frostEffectPending && gameState.turnPhase === 'draft') {
       const delayTimer = setTimeout(() => {
         executeAIFrostEffect()
       }, 1500) // 1.5 second delay for Frost effect
       
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.frostEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase])
+  }, [gameState.gameStarted, gameState.frostEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase, gameState.playerControllers])
 
-  const handleStartGame = (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => {
-    startGame(gameMode, aiDifficulty)
+  const handleStartGame = (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent) => {
+    startGame(gameMode, topController)
   }
 
   // Show start screen if game hasn't started

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayerStats } from '../features/gameplay/components/PlayerStats';
 import { useGameplayStore } from '../state/stores/gameplayStore';
-import type { Player, RoundScore } from '../types/game';
+import type { Player, RoundScore, ScoringWall } from '../types/game';
 
 // Base animation duration from Spellpower component timing constants
 // HEAL_ANIMATION_DURATION_MS (500) + HEAL_TO_DAMAGE_DELAY_MS (250) + 
@@ -44,7 +44,7 @@ export function Developer() {
 
   const buildLifeWall = (baseWall: Player['wall'], count: number): Player['wall'] => {
     const safeCount = Math.max(0, Math.min(5, Math.round(count)));
-    const wallTemplate =
+    const wallTemplate: ScoringWall =
       baseWall.length === 5 && baseWall.every((row) => row.length === 5)
         ? baseWall.map((row) => row.map(() => ({ runeType: null })))
         : Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => ({ runeType: null })));

@@ -4,6 +4,7 @@
 
 import type {
   GameState,
+  PlayerControllers,
   Player,
   Runeforge,
   PatternLine,
@@ -133,8 +134,13 @@ export function fillFactories(
  * Always creates a PvE game (Player vs AI Opponent)
  */
 export function initializeGame(startingHealth: number = 300): GameState {
+  const playerControllers: PlayerControllers = {
+    bottom: { type: 'human' },
+    top: { type: 'computer', difficulty: 'normal' },
+  };
+
   const player1 = createPlayer('player-1', 'Player', 'human', startingHealth);
-  const player2 = createPlayer('player-2', 'Opponent', 'ai', startingHealth);
+  const player2 = createPlayer('player-2', 'Opponent', 'computer', startingHealth);
   
   // Each player gets 3 personal runeforges
   const emptyFactories = createEmptyFactories([player1, player2], 3);
@@ -152,7 +158,7 @@ export function initializeGame(startingHealth: number = 300): GameState {
   return {
     gameStarted: false,
     gameMode: 'standard', // Default to standard mode (will be set when starting game)
-    aiDifficulty: 'normal',
+    playerControllers,
     players: [player1, player2],
     runeforges: filledRuneforges,
     centerPool: [],
