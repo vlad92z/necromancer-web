@@ -5,7 +5,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty } from '../../types/game';
-import { initializeGame, fillFactories, createEmptyFactories, RUNEFORGES_PER_PLAYER } from '../../utils/gameInitialization';
+import { initializeGame, fillFactories, createEmptyFactories, RUNEFORGES_PER_PLAYER, RUNES_PER_RUNEFORGE } from '../../utils/gameInitialization';
 import { calculateWallPower, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 
@@ -683,7 +683,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       
       // Check if either player has run out of runes
       // Need at least RUNEFORGES_PER_PLAYER * RUNES_PER_RUNEFORGE runes to continue
-      const minRunesNeeded = RUNEFORGES_PER_PLAYER * 3; // 12 runes
+      const minRunesNeeded = RUNEFORGES_PER_PLAYER * RUNES_PER_RUNEFORGE;
       const player1HasEnough = state.players[0].deck.length >= minRunesNeeded;
       const player2HasEnough = state.players[1].deck.length >= minRunesNeeded;
       
