@@ -29,6 +29,45 @@ export function Developer() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
+  // Helper: sync current input values into the global store so the
+  // Developer view mirrors the real game state immediately.
+  const syncStore = (overrides: {
+    health?: number;
+    healing?: number;
+    essence?: number;
+    focus?: number;
+    opponentDamage?: number;
+  } = {}) => {
+    const store = useGameplayStore.getState();
+    const startHealth = typeof overrides.health === 'number' ? overrides.health : health;
+    const healVal = typeof overrides.healing === 'number' ? overrides.healing : healing;
+    const oppDamage = typeof overrides.opponentDamage === 'number' ? overrides.opponentDamage : opponentDamage;
+    const ess = typeof overrides.essence === 'number' ? overrides.essence : essence;
+    const foc = typeof overrides.focus === 'number' ? overrides.focus : focus;
+
+    const playerMaxHealth = store.players[0]?.maxHealth ?? Infinity;
+    const rawTarget = startHealth + healVal - oppDamage;
+    const targetHealth = Math.max(0, Math.min(playerMaxHealth, Math.round(rawTarget)));
+
+    const opponentStart = store.players[1]?.health ?? 0;
+    const opponentMax = store.players[1]?.maxHealth ?? Infinity;
+    const computedSpell = ess * foc;
+    const opponentTarget = Math.max(0, Math.min(opponentMax, Math.round(opponentStart - computedSpell)));
+
+    const updatedPlayers: [Player, Player] = [
+      {
+        ...store.players[0],
+        health: targetHealth,
+      },
+      {
+        ...store.players[1],
+        health: opponentTarget,
+      },
+    ];
+
+    useGameplayStore.setState({ players: updatedPlayers });
+  };
+
   // Store snapshot for restoration
   const [originalState, setOriginalState] = useState<{
     players: [Player, Player];
@@ -315,7 +354,11 @@ export function Developer() {
             min="1"
             max="300"
             value={health}
-            onChange={(e) => setHealth(Number(e.target.value))}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setHealth(v);
+                syncStore({ health: v });
+              }}
             style={inputStyle}
             disabled={isAnimating}
           />
@@ -331,7 +374,11 @@ export function Developer() {
             min="0"
             max="50"
             value={healing}
-            onChange={(e) => setHealing(Number(e.target.value))}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setHealing(v);
+              syncStore({ healing: v });
+            }}
             style={inputStyle}
             disabled={isAnimating}
           />
@@ -347,7 +394,11 @@ export function Developer() {
             min="0"
             max="9999"
             value={opponentDamage}
-            onChange={(e) => setOpponentDamage(Number(e.target.value))}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setOpponentDamage(v);
+              syncStore({ opponentDamage: v });
+            }}
             style={inputStyle}
             disabled={isAnimating}
           />
@@ -363,7 +414,11 @@ export function Developer() {
             min="0"
             max="50"
             value={essence}
-            onChange={(e) => setEssence(Number(e.target.value))}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setEssence(v);
+              syncStore({ essence: v });
+            }}
             style={inputStyle}
             disabled={isAnimating}
           />
@@ -379,7 +434,11 @@ export function Developer() {
             min="0"
             max="50"
             value={focus}
-            onChange={(e) => setFocus(Number(e.target.value))}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setFocus(v);
+              syncStore({ focus: v });
+            }}
             style={inputStyle}
             disabled={isAnimating}
           />
