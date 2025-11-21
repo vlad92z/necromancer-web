@@ -3,11 +3,11 @@
  */
 import { useEffect, useMemo, useRef } from 'react';
 import type { AnimatingRune, Player, RuneType } from '../types/game';
-import fireRuneSound from '../assets/sounds/fire.wav';
-import frostRuneSound from '../assets/sounds/frost.wav';
-import lifeRuneSound from '../assets/sounds/life.wav';
-import voidRuneSound from '../assets/sounds/void.wav';
-import windRuneSound from '../assets/sounds/wind.wav';
+import fireRuneSound from '../assets/sounds/fire.mp3';
+import frostRuneSound from '../assets/sounds/frost.mp3';
+import lifeRuneSound from '../assets/sounds/life.mp3';
+import voidRuneSound from '../assets/sounds/void.mp3';
+import windRuneSound from '../assets/sounds/wind.mp3';
 
 type RuneSoundMap = Record<RuneType, string>;
 type RuneCountMap = Record<RuneType, number>;

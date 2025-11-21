@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import backgroundMusicUrl from '../assets/sounds/background.mp3';
 
-const AUDIO_OVERLAP_SECONDS = 0.22;
+const AUDIO_OVERLAP_SECONDS = 0.2;
 const FALLBACK_DURATION_SECONDS = 31;
 
 export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): void {
