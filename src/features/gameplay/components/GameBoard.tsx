@@ -17,6 +17,7 @@ import { RuneAnimation } from '../../../components/RuneAnimation';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useFreezeSound } from '../../../hooks/useFreezeSound';
+import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -104,6 +105,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   useRunePlacementSounds(players, animatingRunes);
   useBackgroundMusic(!isMusicMuted);
   useFreezeSound(frozenPatternLines);
+  useVoidEffectSound(voidEffectPending, runeforges, centerPool);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
