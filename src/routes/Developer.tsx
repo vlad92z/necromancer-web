@@ -9,6 +9,13 @@ import { Spellpower } from '../features/gameplay/components/Spellpower';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 import type { Player, RoundScore } from '../types/game';
 
+// Base animation duration from Spellpower component timing constants
+// HEAL_ANIMATION_DURATION_MS (500) + HEAL_TO_DAMAGE_DELAY_MS (250) + 
+// DAMAGE_ANIMATION_DURATION_MS (500) + PLAYER_SEQUENCE_PADDING_MS (500) +
+// BASE_SEQUENCE_DELAY_MS (1200) = 2950ms total for full sequence
+const BASE_ANIMATION_DURATION_MS = 2950;
+const ANIMATION_BUFFER_MS = 500;
+
 export function Developer() {
   const navigate = useNavigate();
   const [health, setHealth] = useState(100);
@@ -71,8 +78,7 @@ export function Developer() {
     });
 
     // Wait for animation to complete (scaled by animation speed)
-    // Base animation duration from Spellpower: ~2450ms for full sequence
-    const animationDuration = 2450 * animationSpeed + 500; // Add buffer
+    const animationDuration = BASE_ANIMATION_DURATION_MS * animationSpeed + ANIMATION_BUFFER_MS;
     
     await new Promise((resolve) => setTimeout(resolve, animationDuration));
 
@@ -341,7 +347,7 @@ export function Developer() {
 
         <div>
           <label htmlFor="animation-speed" style={labelStyle}>
-            Animation speed ({animationSpeed.toFixed(2)}x = normal)
+            Animation speed (1.0x = normal)
           </label>
           <input
             id="animation-speed"
