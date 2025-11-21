@@ -73,6 +73,12 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showLogOverlay, setShowLogOverlay] = useState(false);
+  const [isMusicMuted, setIsMusicMuted] = useState<boolean>(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.localStorage.getItem('musicMuted') === 'true';
+  });
   const [animatingRunes, setAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [pendingPlacementTarget, setPendingPlacementTarget] = useState<PendingPlacementTarget>(null);
@@ -96,8 +102,15 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const isAnimatingPlacement = animatingRunes.length > 0;
   const animatingRuneIds = [...animatingRunes, ...runeforgeAnimatingRunes].map((rune) => rune.id);
   useRunePlacementSounds(players, animatingRunes);
-  useBackgroundMusic(true);
+  useBackgroundMusic(!isMusicMuted);
   useFreezeSound(frozenPatternLines);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.localStorage.setItem('musicMuted', isMusicMuted ? 'true' : 'false');
+  }, [isMusicMuted]);
 
   // Determine winner by highest remaining health
   const winner = isGameOver
@@ -155,6 +168,10 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const handleBackgroundClick = () => {
     // Background click handler - no longer needed since PlayerBoard handles it
     // Keeping for potential future use with empty space clicks
+  };
+
+  const handleToggleMusic = () => {
+    setIsMusicMuted((prev) => !prev);
   };
 
   const hidePatternSlots = useCallback((playerId: string, slotKeys: string[]) => {
@@ -643,10 +660,70 @@ export function GameBoard({ gameState }: GameBoardProps) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px 16px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        position: 'relative'
       }}
       onClick={handleBackgroundClick}
     >
+      <div
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          pointerEvents: 'none',
+          zIndex: 12
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleToggleMusic}
+          aria-pressed={isMusicMuted}
+          style={{
+            pointerEvents: 'auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 16px',
+            borderRadius: '999px',
+            border: '1px solid rgba(148, 163, 184, 0.4)',
+            background: isMusicMuted
+              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(127, 29, 29, 0.35))'
+              : 'linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(124, 58, 237, 0.35))',
+            color: '#e2e8f0',
+            fontWeight: 700,
+            fontSize: '13px',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
+            transition: 'transform 120ms ease, box-shadow 120ms ease',
+          }}
+          onMouseEnter={(event) => {
+            event.currentTarget.style.transform = 'translateY(-1px)';
+            event.currentTarget.style.boxShadow = '0 18px 42px rgba(0, 0, 0, 0.6)';
+          }}
+          onMouseLeave={(event) => {
+            event.currentTarget.style.transform = 'translateY(0)';
+            event.currentTarget.style.boxShadow = '0 14px 36px rgba(0, 0, 0, 0.45)';
+          }}
+        >
+          <span
+            style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              backgroundColor: isMusicMuted ? '#f87171' : '#34d399',
+              boxShadow: '0 0 12px rgba(255, 255, 255, 0.35)'
+            }}
+            aria-hidden={true}
+          />
+          {isMusicMuted ? 'Music Muted' : 'Music On'}
+        </button>
+      </div>
+
       <div style={{ width: `${scaledBoardSize}px`, height: `${scaledBoardSize}px`, position: 'relative' }}>
         <div
           style={{
