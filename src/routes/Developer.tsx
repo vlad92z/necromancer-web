@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spellpower } from '../features/gameplay/components/Spellpower';
 import { useGameplayStore } from '../state/stores/gameplayStore';
-import type { Player, RoundScore } from '../types/game';
+import type { Player, RoundScore, RuneType } from '../types/game';
 
 // Base animation duration from Spellpower component timing constants
 // HEAL_ANIMATION_DURATION_MS (500) + HEAL_TO_DAMAGE_DELAY_MS (250) + 
@@ -46,12 +46,12 @@ export function Developer() {
     const safeCount = Math.max(0, Math.min(5, Math.round(count)));
     const wallTemplate =
       baseWall.length === 5 && baseWall.every((row) => row.length === 5)
-        ? baseWall.map((row) => row.map(() => ({ runeType: null })))
+        ? baseWall.map((row) => row.map((cell) => ({ runeType: cell.runeType })))
         : Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => ({ runeType: null })));
 
     LIFE_RUNE_POSITIONS.slice(0, safeCount).forEach(([row, col]) => {
       if (wallTemplate[row]?.[col]) {
-        wallTemplate[row][col] = { runeType: 'Life' };
+        wallTemplate[row][col] = { runeType: 'Life' as RuneType };
       }
     });
 
