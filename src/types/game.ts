@@ -193,6 +193,9 @@ export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
   runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
+  factoriesPerPlayer: number; // Runeforge count per player (quick play config)
+  totalRunesPerPlayer: number; // Deck size for the quick play packet
+  runesPerRuneforge: number; // Number of runes dealt into each runeforge
   playerControllers: PlayerControllers; // Controller assignments for top and bottom players
   players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
   runeforges: Runeforge[];

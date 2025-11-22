@@ -55,16 +55,47 @@ export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
   }
 }
 
+const DEFAULT_RUNES_PER_RUNEFORGE = 4;
+
+export interface QuickPlayConfig {
+  factoriesPerPlayer: number;
+  totalRunesPerPlayer: number;
+  runesPerRuneforge: number;
+}
+
+/**
+ * Derive quick play sizing for factories and rune pool based on wall size.
+ */
+export function getQuickPlayConfig(runeTypeCount: RuneTypeCount): QuickPlayConfig {
+  const factoriesPerPlayer = Math.max(1, runeTypeCount - 2);
+  const totalRunesPerPlayer = 12 * factoriesPerPlayer;
+  return {
+    factoriesPerPlayer,
+    totalRunesPerPlayer,
+    runesPerRuneforge: DEFAULT_RUNES_PER_RUNEFORGE,
+  };
+}
+
 /**
  * Create a mock player deck (for now, just basic runes)
  */
-export function createMockDeck(playerId: string, runeTypeCount: RuneTypeCount = 5): Rune[] {
+export function createMockDeck(
+  playerId: string,
+  runeTypeCount: RuneTypeCount = 5,
+  totalRunesPerPlayer?: number
+): Rune[] {
   const deck: Rune[] = [];
   const runeTypes = getRuneTypesForCount(runeTypeCount);
-  
-  // Create 8 of each rune type (24/32/40 total per player depending on rune type count)
+  const runesToGenerate = totalRunesPerPlayer ?? runeTypes.length * 8;
+  const baseRunesPerType = Math.floor(runesToGenerate / runeTypes.length);
+  let remainder = runesToGenerate - baseRunesPerType * runeTypes.length;
+
   runeTypes.forEach((runeType) => {
-    for (let i = 0; i < 8; i++) {
+    const extra = remainder > 0 ? 1 : 0;
+    const typeCount = baseRunesPerType + extra;
+    remainder -= extra;
+
+    for (let i = 0; i < typeCount; i++) {
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
         runeType,
@@ -79,7 +110,14 @@ export function createMockDeck(playerId: string, runeTypeCount: RuneTypeCount = 
 /**
  * Create a player
  */
-export function createPlayer(id: string, name: string, type: PlayerType = 'human', startingHealth: number = 300, runeTypeCount: RuneTypeCount = 5): Player {
+export function createPlayer(
+  id: string,
+  name: string,
+  type: PlayerType = 'human',
+  startingHealth: number = 300,
+  runeTypeCount: RuneTypeCount = 5,
+  totalRunesPerPlayer?: number
+): Player {
   return {
     id,
     name,
@@ -92,7 +130,7 @@ export function createPlayer(id: string, name: string, type: PlayerType = 'human
     },
     health: startingHealth,
     maxHealth: startingHealth,
-    deck: createMockDeck(id, runeTypeCount),
+    deck: createMockDeck(id, runeTypeCount, totalRunesPerPlayer),
   };
 }
 
@@ -154,17 +192,37 @@ export function initializeGame(startingHealth: number = 300, runeTypeCount: Rune
     top: { type: 'computer', difficulty: 'normal' },
   };
 
-  const player1 = createPlayer('player-1', 'Player', 'human', startingHealth, runeTypeCount);
-  const player2 = createPlayer('player-2', 'Opponent', 'computer', startingHealth, runeTypeCount);
+  const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
+
+  const player1 = createPlayer(
+    'player-1',
+    'Player',
+    'human',
+    startingHealth,
+    runeTypeCount,
+    quickPlayConfig.totalRunesPerPlayer
+  );
+  const player2 = createPlayer(
+    'player-2',
+    'Opponent',
+    'computer',
+    startingHealth,
+    runeTypeCount,
+    quickPlayConfig.totalRunesPerPlayer
+  );
   
-  // Each player gets 3 personal runeforges
-  const emptyFactories = createEmptyFactories([player1, player2], 3);
+  // Each player gets the configured number of personal runeforges
+  const emptyFactories = createEmptyFactories([player1, player2], quickPlayConfig.factoriesPerPlayer);
   
   // Fill factories and get updated decks
-  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(emptyFactories, {
-    [player1.id]: player1.deck,
-    [player2.id]: player2.deck,
-  });
+  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
+    emptyFactories,
+    {
+      [player1.id]: player1.deck,
+      [player2.id]: player2.deck,
+    },
+    quickPlayConfig.runesPerRuneforge
+  );
   
   // Update player decks with remaining runes
   player1.deck = decksByPlayer[player1.id] ?? [];
@@ -174,6 +232,9 @@ export function initializeGame(startingHealth: number = 300, runeTypeCount: Rune
     gameStarted: false,
     gameMode: 'standard', // Default to standard mode (will be set when starting game)
     runeTypeCount,
+    factoriesPerPlayer: quickPlayConfig.factoriesPerPlayer,
+    totalRunesPerPlayer: quickPlayConfig.totalRunesPerPlayer,
+    runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
     playerControllers,
     players: [player1, player2],
     runeforges: filledRuneforges,

@@ -712,13 +712,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       if (currentPhase === 'complete') {
         console.log('Scoring: Complete, checking game over...');
+        const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
 
-        const player1HasEnough = state.players[0].deck.length >= 10;
-        const player2HasEnough = state.players[1].deck.length >= 10;
+        const player1HasEnough = state.players[0].deck.length >= runesNeededForRound;
+        const player2HasEnough = state.players[1].deck.length >= runesNeededForRound;
 
         if (!player1HasEnough || !player2HasEnough) {
           console.log('Game over! A player has run out of runes.');
-          console.log(`Player 1 runes: ${state.players[0].deck.length}, Player 2 runes: ${state.players[1].deck.length}`);
+          console.log(
+            `Player 1 runes: ${state.players[0].deck.length}, Player 2 runes: ${state.players[1].deck.length} (need at least ${runesNeededForRound} for the next round)`
+          );
 
           return {
             ...state,
@@ -731,13 +734,14 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           };
         }
 
-        const emptyFactories = createEmptyFactories(state.players, 3);
+        const emptyFactories = createEmptyFactories(state.players, state.factoriesPerPlayer);
         const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
           emptyFactories,
           {
             [state.players[0].id]: state.players[0].deck,
             [state.players[1].id]: state.players[1].deck,
-          }
+          },
+          state.runesPerRuneforge
         );
 
         const finalPlayers: [Player, Player] = [
