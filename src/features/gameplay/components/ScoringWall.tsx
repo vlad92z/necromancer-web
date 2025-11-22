@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../types/game';
 import { getWallColumnForRune } from '../../../utils/scoring';
 import { WallCell } from './WallCell';
+import type { RuneType } from '../../../types/game';
 
 interface ScoringWallProps {
   wall: ScoringWallType;
@@ -131,6 +132,13 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   }, [wall, patternLines]);
 
   const gridSize = wall.length;
+  // Available rune types depend on wall size (3, 4 or 5)
+  const availableRuneTypes: RuneType[] =
+    gridSize === 3
+      ? ['Fire', 'Life', 'Wind']
+      : gridSize === 4
+      ? ['Fire', 'Life', 'Wind', 'Frost']
+      : ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
   const totalWidth = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
   const totalHeight = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
 
@@ -192,6 +200,8 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
                 row={rowIndex}
                 col={colIndex}
                 patternLine={patternLines[rowIndex]}
+                wallSize={gridSize}
+                availableRuneTypes={availableRuneTypes}
               />
             ))}
           </div>
