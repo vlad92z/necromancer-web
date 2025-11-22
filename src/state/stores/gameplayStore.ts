@@ -771,7 +771,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => {
       // If rune type count changed, reinitialize the game with new configuration
       if (state.runeTypeCount !== runeTypeCount) {
-        const newState = initializeGame(300, runeTypeCount);
+        const newState = initializeGame(runeTypeCount);
         const updatedControllers: PlayerControllers = {
           bottom: { type: 'human' },
           top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },
@@ -860,7 +860,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   returnToStartScreen: () => {
     set((state) => ({
-      ...initializeGame(300, state.runeTypeCount),
+      ...initializeGame(state.runeTypeCount),
       gameStarted: false,
     }));
     // Call navigation callback if registered (for router integration)
@@ -870,7 +870,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   resetGame: () => {
-    set((state) => initializeGame(300, state.runeTypeCount));
+    set((state) => initializeGame(state.runeTypeCount));
   },
 });
 

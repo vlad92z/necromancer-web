@@ -196,6 +196,8 @@ export interface GameState {
   factoriesPerPlayer: number; // Runeforge count per player (quick play config)
   totalRunesPerPlayer: number; // Deck size for the quick play packet
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
+  startingHealth: number; // Health pool per player for the current configuration
+  overflowCapacity: number; // Floor line capacity that determines overflow penalties
   playerControllers: PlayerControllers; // Controller assignments for top and bottom players
   players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
   runeforges: Runeforge[];

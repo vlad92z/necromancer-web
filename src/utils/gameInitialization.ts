@@ -61,17 +61,23 @@ export interface QuickPlayConfig {
   factoriesPerPlayer: number;
   totalRunesPerPlayer: number;
   runesPerRuneforge: number;
+  startingHealth: number;
+  overflowCapacity: number;
 }
 
 /**
  * Derive quick play sizing for factories and rune pool based on wall size.
  */
 export function getQuickPlayConfig(runeTypeCount: RuneTypeCount): QuickPlayConfig {
-  const factoriesPerPlayer = Math.max(1, runeTypeCount - 2);
-  const totalRunesPerPlayer = 12 * factoriesPerPlayer;
+  const sizingByBoardSize: Record<RuneTypeCount, { factoriesPerPlayer: number; totalRunesPerPlayer: number; startingHealth: number; overflowCapacity: number }> = {
+    3: { factoriesPerPlayer: 1, totalRunesPerPlayer: 12, startingHealth: 25, overflowCapacity: 6 },
+    4: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 50, overflowCapacity: 8 },
+    5: { factoriesPerPlayer: 3, totalRunesPerPlayer: 36, startingHealth: 100, overflowCapacity: 10 },
+  };
+
+  const baseSizing = sizingByBoardSize[runeTypeCount];
   return {
-    factoriesPerPlayer,
-    totalRunesPerPlayer,
+    ...baseSizing,
     runesPerRuneforge: DEFAULT_RUNES_PER_RUNEFORGE,
   };
 }
@@ -116,7 +122,8 @@ export function createPlayer(
   type: PlayerType = 'human',
   startingHealth: number = 300,
   runeTypeCount: RuneTypeCount = 5,
-  totalRunesPerPlayer?: number
+  totalRunesPerPlayer?: number,
+  overflowCapacity?: number
 ): Player {
   return {
     id,
@@ -126,7 +133,7 @@ export function createPlayer(
     wall: createEmptyWall(runeTypeCount),
     floorLine: {
       runes: [],
-      maxCapacity: 10,
+      maxCapacity: overflowCapacity ?? 10,
     },
     health: startingHealth,
     maxHealth: startingHealth,
@@ -186,7 +193,7 @@ export function fillFactories(
  * Initialize a new game state with filled factories
  * Always creates a PvE game (Player vs AI Opponent)
  */
-export function initializeGame(startingHealth: number = 300, runeTypeCount: RuneTypeCount = 5): GameState {
+export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
   const playerControllers: PlayerControllers = {
     bottom: { type: 'human' },
     top: { type: 'computer', difficulty: 'normal' },
@@ -198,17 +205,19 @@ export function initializeGame(startingHealth: number = 300, runeTypeCount: Rune
     'player-1',
     'Player',
     'human',
-    startingHealth,
+    quickPlayConfig.startingHealth,
     runeTypeCount,
-    quickPlayConfig.totalRunesPerPlayer
+    quickPlayConfig.totalRunesPerPlayer,
+    quickPlayConfig.overflowCapacity
   );
   const player2 = createPlayer(
     'player-2',
     'Opponent',
     'computer',
-    startingHealth,
+    quickPlayConfig.startingHealth,
     runeTypeCount,
-    quickPlayConfig.totalRunesPerPlayer
+    quickPlayConfig.totalRunesPerPlayer,
+    quickPlayConfig.overflowCapacity
   );
   
   // Each player gets the configured number of personal runeforges
@@ -235,6 +244,8 @@ export function initializeGame(startingHealth: number = 300, runeTypeCount: Rune
     factoriesPerPlayer: quickPlayConfig.factoriesPerPlayer,
     totalRunesPerPlayer: quickPlayConfig.totalRunesPerPlayer,
     runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
+    startingHealth: quickPlayConfig.startingHealth,
+    overflowCapacity: quickPlayConfig.overflowCapacity,
     playerControllers,
     players: [player1, player2],
     runeforges: filledRuneforges,
