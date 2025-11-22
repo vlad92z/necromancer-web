@@ -73,9 +73,10 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   // Also compute short neighbor-to-neighbor edges (right + down) to avoid duplicates
   const overlay = useMemo(() => {
     const pendingCells = new Set<string>();
+    const wallSize = wall.length;
     patternLines.forEach((line, rowIndex) => {
       if (line.count === line.tier && line.runeType) {
-        const col = getWallColumnForRune(rowIndex, line.runeType);
+        const col = getWallColumnForRune(rowIndex, line.runeType, wallSize);
         if (!wall[rowIndex][col].runeType) {
           pendingCells.add(cellKey(rowIndex, col));
         }

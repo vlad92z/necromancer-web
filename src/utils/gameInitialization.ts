@@ -11,43 +11,58 @@ import type {
   ScoringWall,
   Rune,
   RuneType,
+  RuneTypeCount,
   PlayerType,
 } from '../types/game';
 
 /**
- * Create an empty 5x5 scoring wall
+ * Create an empty scoring wall (3x3, 4x4, or 5x5)
  */
-export function createEmptyWall(): ScoringWall {
-  return Array(5)
+export function createEmptyWall(size: number = 5): ScoringWall {
+  return Array(size)
     .fill(null)
     .map(() =>
-      Array(5)
+      Array(size)
         .fill(null)
         .map(() => ({ runeType: null }))
     );
 }
 
 /**
- * Create initial pattern lines (5 lines, capacities 1-5)
+ * Create initial pattern lines (3, 4, or 5 lines, capacities 1-N)
  */
-export function createPatternLines(): PatternLine[] {
-  return [
-    { tier: 1, runeType: null, count: 0 },
-    { tier: 2, runeType: null, count: 0 },
-    { tier: 3, runeType: null, count: 0 },
-    { tier: 4, runeType: null, count: 0 },
-    { tier: 5, runeType: null, count: 0 },
-  ];
+export function createPatternLines(count: number = 5): PatternLine[] {
+  const lines: PatternLine[] = [];
+  for (let i = 1; i <= count; i++) {
+    lines.push({ tier: i as 1 | 2 | 3 | 4 | 5, runeType: null, count: 0 });
+  }
+  return lines;
+}
+
+/**
+ * Get the rune types for a given rune type count
+ * 3 types: Fire, Life, Wind
+ * 4 types: Fire, Life, Wind, Frost
+ * 5 types: Fire, Life, Wind, Frost, Void (note: Void is NOT included in 5-type according to issue)
+ */
+export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
+  if (count === 3) {
+    return ['Fire', 'Life', 'Wind'];
+  } else if (count === 4) {
+    return ['Fire', 'Life', 'Wind', 'Frost'];
+  } else {
+    return ['Fire', 'Life', 'Wind', 'Frost', 'Void'];
+  }
 }
 
 /**
  * Create a mock player deck (for now, just basic runes)
  */
-export function createMockDeck(playerId: string): Rune[] {
+export function createMockDeck(playerId: string, runeTypeCount: RuneTypeCount = 5): Rune[] {
   const deck: Rune[] = [];
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const runeTypes = getRuneTypesForCount(runeTypeCount);
   
-  // Create 4 of each rune type (20 total per player)
+  // Create 8 of each rune type (24/32/40 total per player depending on rune type count)
   runeTypes.forEach((runeType) => {
     for (let i = 0; i < 8; i++) {
       deck.push({
@@ -64,20 +79,20 @@ export function createMockDeck(playerId: string): Rune[] {
 /**
  * Create a player
  */
-export function createPlayer(id: string, name: string, type: PlayerType = 'human', startingHealth: number = 300): Player {
+export function createPlayer(id: string, name: string, type: PlayerType = 'human', startingHealth: number = 300, runeTypeCount: RuneTypeCount = 5): Player {
   return {
     id,
     name,
     type,
-    patternLines: createPatternLines(),
-    wall: createEmptyWall(),
+    patternLines: createPatternLines(runeTypeCount),
+    wall: createEmptyWall(runeTypeCount),
     floorLine: {
       runes: [],
       maxCapacity: 10,
     },
     health: startingHealth,
     maxHealth: startingHealth,
-    deck: createMockDeck(id),
+    deck: createMockDeck(id, runeTypeCount),
   };
 }
 
@@ -133,14 +148,14 @@ export function fillFactories(
  * Initialize a new game state with filled factories
  * Always creates a PvE game (Player vs AI Opponent)
  */
-export function initializeGame(startingHealth: number = 300): GameState {
+export function initializeGame(startingHealth: number = 300, runeTypeCount: RuneTypeCount = 5): GameState {
   const playerControllers: PlayerControllers = {
     bottom: { type: 'human' },
     top: { type: 'computer', difficulty: 'normal' },
   };
 
-  const player1 = createPlayer('player-1', 'Player', 'human', startingHealth);
-  const player2 = createPlayer('player-2', 'Opponent', 'computer', startingHealth);
+  const player1 = createPlayer('player-1', 'Player', 'human', startingHealth, runeTypeCount);
+  const player2 = createPlayer('player-2', 'Opponent', 'computer', startingHealth, runeTypeCount);
   
   // Each player gets 3 personal runeforges
   const emptyFactories = createEmptyFactories([player1, player2], 3);
@@ -158,6 +173,7 @@ export function initializeGame(startingHealth: number = 300): GameState {
   return {
     gameStarted: false,
     gameMode: 'standard', // Default to standard mode (will be set when starting game)
+    runeTypeCount,
     playerControllers,
     players: [player1, player2],
     runeforges: filledRuneforges,

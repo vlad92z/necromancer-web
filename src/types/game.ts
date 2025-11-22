@@ -8,6 +8,14 @@
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind';
 
 /**
+ * Number of rune types in the game
+ * 3 types: Fire, Life, Wind (3x3 wall, 3 pattern lines)
+ * 4 types: Fire, Life, Wind, Frost (4x4 wall, 4 pattern lines)
+ * 5 types: Fire, Life, Wind, Frost, Void (5x5 wall, 5 pattern lines)
+ */
+export type RuneTypeCount = 3 | 4 | 5;
+
+/**
  * Rune effect modifiers
  */
 export type RuneEffect =
@@ -184,6 +192,7 @@ export interface AnimatingRune {
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
+  runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
   playerControllers: PlayerControllers; // Controller assignments for top and bottom players
   players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
   runeforges: Runeforge[];
