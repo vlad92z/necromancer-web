@@ -197,14 +197,24 @@ function canPlaceOnLine(
  */
 function calculateConnectionScore(wall: ScoringWall, row: number, col: number): number {
   let connections = 0;
-  
+  const getCell = (r: number, c: number) => {
+    const targetRow = wall[r];
+    if (!targetRow) return null;
+    return targetRow[c] ?? null;
+  };
+
+  const hasRune = (r: number, c: number) => {
+    const cell = getCell(r, c);
+    return cell?.runeType !== null;
+  };
+
   // Check horizontal connections
-  if (col > 0 && wall[row][col - 1].runeType !== null) connections++;
-  if (col < 4 && wall[row][col + 1].runeType !== null) connections++;
-  
+  if (col > 0 && hasRune(row, col - 1)) connections++;
+  if (hasRune(row, col + 1)) connections++;
+
   // Check vertical connections
-  if (row > 0 && wall[row - 1][col].runeType !== null) connections++;
-  if (row < 4 && wall[row + 1][col].runeType !== null) connections++;
+  if (row > 0 && hasRune(row - 1, col)) connections++;
+  if (hasRune(row + 1, col)) connections++;
   
   return connections;
 }
@@ -1129,6 +1139,10 @@ function makeEasyAIMove(
   if (state.selectedRunes.length > 0) {
     const placement = chooseEasyPlacementMove(state);
     if (!placement) {
+      console.log('Easy AI: no placement options for selected runes', {
+        playerId: state.players[state.currentPlayerIndex].id,
+        runeCount: state.selectedRunes.length,
+      });
       return false;
     }
     if (placement.type === 'floor') {
@@ -1142,6 +1156,10 @@ function makeEasyAIMove(
   const perfectOption = findBestPerfectDraftOption(state);
   const move = perfectOption?.move ?? chooseBestDraftMove(state);
   if (!move) {
+    console.log('Easy AI: no draft options available', {
+      playerId: state.players[state.currentPlayerIndex].id,
+      selectedRunes: state.selectedRunes.length,
+    });
     return false;
   }
 
@@ -1324,6 +1342,11 @@ function makeNormalAIMove(
     }
 
     if (bestMoveIndex === null) {
+      console.log('AI evaluate: no placement line found for selected runes', {
+        playerId: state.players[state.currentPlayerIndex].id,
+        runeType,
+        runeCount: state.selectedRunes.length,
+      });
       return false;
     }
 
@@ -1338,6 +1361,11 @@ function makeNormalAIMove(
 
   const legalDrafts = getLegalDraftMoves(state);
   if (legalDrafts.length === 0) {
+    console.log('AI evaluate: no legal draft moves remaining', {
+      playerId: state.players[state.currentPlayerIndex].id,
+      round: state.round,
+      turnPhase: state.turnPhase,
+    });
     return false;
   }
 

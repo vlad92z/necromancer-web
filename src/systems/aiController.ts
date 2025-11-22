@@ -25,13 +25,41 @@ export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore)
   }
   
   const aiProfile = getAIPlayerProfile(controller.difficulty);
-  const moveMade = aiProfile.makeMove(
+  console.log(
+    `AI turn start (${controller.type}.${aiProfile.id}): runeforges=${state.runeforges
+      .map((forge) => forge.runes.length)
+      .join(',')}, center=${state.centerPool.length}`
+  )
+  let moveMade = aiProfile.makeMove(
     state,
     state.draftRune,
     state.draftFromCenter,
     state.placeRunes,
     state.placeRunesInFloor
   );
+
+  if (!moveMade) {
+    const weakProfile = getAIPlayerProfile('hard');
+    if (weakProfile !== aiProfile) {
+      console.log(`AI fallback: invoking weak profile (${weakProfile.id})`);
+      moveMade = weakProfile.makeMove(
+        state,
+        state.draftRune,
+        state.draftFromCenter,
+        state.placeRunes,
+        state.placeRunesInFloor
+      );
+    }
+  }
+
+  if (!moveMade && state.selectedRunes.length > 0) {
+    console.log('AI forced floor placement to unblock', {
+      runeCount: state.selectedRunes.length,
+      currentPlayerId: state.players[state.currentPlayerIndex].id,
+    });
+    state.placeRunesInFloor();
+    moveMade = true;
+  }
 
   if (
     !moveMade &&
@@ -42,6 +70,7 @@ export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore)
       state.runeforges.some((forge) => forge.runes.length > 0) ||
       state.centerPool.length > 0;
     if (!hasDraftableRunes) {
+      console.log('AI triggerRoundEnd: no draftable runes remaining');
       state.triggerRoundEnd();
     }
   }
