@@ -70,7 +70,7 @@ export interface QuickPlayConfig {
  */
 export function getQuickPlayConfig(runeTypeCount: RuneTypeCount): QuickPlayConfig {
   const sizingByBoardSize: Record<RuneTypeCount, { factoriesPerPlayer: number; totalRunesPerPlayer: number; startingHealth: number; overflowCapacity: number }> = {
-    3: { factoriesPerPlayer: 1, totalRunesPerPlayer: 12, startingHealth: 25, overflowCapacity: 6 },
+    3: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 25, overflowCapacity: 6 },
     4: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 50, overflowCapacity: 8 },
     5: { factoriesPerPlayer: 3, totalRunesPerPlayer: 36, startingHealth: 100, overflowCapacity: 10 },
   };

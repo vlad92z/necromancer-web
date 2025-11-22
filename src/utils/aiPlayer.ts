@@ -169,12 +169,15 @@ function getLegalDraftMovesForPlayer(state: GameState, playerIndex: 0 | 1): Draf
  * Check if a pattern line can accept a specific rune type
  */
 function canPlaceOnLine(
-  line: PatternLine,
+  line: PatternLine | undefined,
   runeType: RuneType,
   wall: ScoringWall,
   lineIndex: number,
   frozenLineIndexes: number[] = []
 ): boolean {
+  if (!line) {
+    return false;
+  }
   if (frozenLineIndexes.includes(lineIndex)) {
     return false;
   }

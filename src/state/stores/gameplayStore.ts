@@ -718,6 +718,22 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           opponentTotal: snapshot.wallPowerStats[1].totalPower,
         };
 
+        const eitherPlayerDead = updatedPlayers.some((player) => player.health === 0);
+        if (eitherPlayerDead) {
+          console.log('Game over! A player reached 0 health at end of round.');
+          return {
+            ...state,
+            players: updatedPlayers,
+            roundHistory: [...state.roundHistory, roundScore],
+            scoringPhase: null,
+            scoringSnapshot: null,
+            runeforges: [],
+            centerPool: [],
+            turnPhase: 'game-over',
+            shouldTriggerEndRound: false,
+          };
+        }
+
         return {
           ...state,
           players: updatedPlayers,
