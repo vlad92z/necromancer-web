@@ -765,6 +765,37 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   
   startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => {
     set((state) => {
+      // If rune type count changed, reinitialize the game with new configuration
+      if (state.runeTypeCount !== runeTypeCount) {
+        const newState = initializeGame(300, runeTypeCount);
+        const updatedControllers: PlayerControllers = {
+          bottom: { type: 'human' },
+          top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },
+        };
+
+        const updatedPlayers: [Player, Player] = [
+          { ...newState.players[0], type: 'human' },
+          {
+            ...newState.players[1],
+            type: updatedControllers.top.type,
+            name:
+              updatedControllers.top.type === 'computer'
+                ? getAIDisplayName('Opponent', updatedControllers.top.difficulty)
+                : 'Player 2',
+          },
+        ];
+
+        return {
+          ...newState,
+          gameStarted: true,
+          gameMode: gameMode,
+          runeTypeCount: runeTypeCount,
+          playerControllers: updatedControllers,
+          players: updatedPlayers,
+        };
+      }
+
+      // Otherwise just update the existing state
       const updatedControllers: PlayerControllers = {
         bottom: { type: 'human' },
         top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },

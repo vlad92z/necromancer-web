@@ -15,16 +15,16 @@ interface ScoringWallProps {
 // Layout constants (kept in sync with RuneCell size config)
 const CELL_SIZE = 60; // matches RuneCell size="large"
 const GAP = 4; // gap used between cells in ScoringWall layout
-const GRID_SIZE = 5;
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
 function getLargestConnectedComponent(wall: ScoringWallType, pendingCells: Set<string>) {
-  const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
+  const gridSize = wall.length;
+  const visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
   const components: { nodes: { row: number; col: number }[] }[] = [];
-  const isOccupied = (row: number, col: number) => Boolean(wall[row][col].runeType) || pendingCells.has(cellKey(row, col));
+  const isOccupied = (row: number, col: number) => Boolean(wall[row]?.[col]?.runeType) || pendingCells.has(cellKey(row, col));
 
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
       if (visited[r][c]) continue;
       if (!isOccupied(r, c)) {
         visited[r][c] = true;
@@ -48,7 +48,7 @@ function getLargestConnectedComponent(wall: ScoringWallType, pendingCells: Set<s
         ];
 
         for (const nb of neighbors) {
-          if (nb.row < 0 || nb.row >= GRID_SIZE || nb.col < 0 || nb.col >= GRID_SIZE) continue;
+          if (nb.row < 0 || nb.row >= gridSize || nb.col < 0 || nb.col >= gridSize) continue;
           if (visited[nb.row][nb.col]) continue;
           if (!isOccupied(nb.row, nb.col)) {
             visited[nb.row][nb.col] = true;
@@ -130,8 +130,9 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     return { points, edges };
   }, [wall, patternLines]);
 
-  const totalWidth = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP;
-  const totalHeight = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP;
+  const gridSize = wall.length;
+  const totalWidth = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
+  const totalHeight = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
 
   return (
     <div style={{ position: 'relative', width: `${totalWidth}px`, height: `${totalHeight}px` }}>
