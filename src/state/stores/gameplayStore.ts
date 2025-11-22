@@ -41,6 +41,7 @@ export interface GameplayStore extends GameState {
   freezePatternLine: (playerId: string, patternLineIndex: number) => void;
   endRound: () => void;
   resetGame: () => void;
+  triggerRoundEnd: () => void;
   processScoringStep: () => void;
 }
 
@@ -506,6 +507,22 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         turnPhase: shouldEndRound ? ('scoring' as const) : ('draft' as const),
         shouldTriggerEndRound: shouldEndRound,
+      };
+    });
+  },
+
+  triggerRoundEnd: () => {
+    set((state) => {
+      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      if (!allRuneforgesEmpty || !centerEmpty || state.selectedRunes.length > 0 || state.turnPhase === 'scoring') {
+        return state;
+      }
+
+      return {
+        ...state,
+        turnPhase: 'scoring' as const,
+        shouldTriggerEndRound: true,
       };
     });
   },
