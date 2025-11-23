@@ -9,8 +9,16 @@ import { getControllerForIndex } from '../utils/playerControllers'
 
 export function GameMatch() {
   const navigate = useNavigate()
-  const gameState = useGameplayStore()
   const startGame = useGameplayStore((state) => state.startGame)
+  const gameStarted = useGameplayStore((s) => s.gameStarted)
+  const currentPlayerIndex = useGameplayStore((s) => s.currentPlayerIndex)
+  const turnPhase = useGameplayStore((s) => s.turnPhase)
+  const selectedRunesLength = useGameplayStore((s) => s.selectedRunes.length)
+  const voidEffectPending = useGameplayStore((s) => s.voidEffectPending)
+  const frostEffectPending = useGameplayStore((s) => s.frostEffectPending)
+  const players = useGameplayStore((s) => s.players)
+  const playerControllers = useGameplayStore((s) => s.playerControllers)
+  const wholeGameState = useGameplayStore()
 
   // Set up navigation callback for returnToStartScreen
   useEffect(() => {
@@ -25,71 +33,73 @@ export function GameMatch() {
 
   // Trigger AI turn when it's AI's turn (draft phase)
   useEffect(() => {
-    if (!gameState.gameStarted) return;
-    
-    const controller = getControllerForIndex(gameState, gameState.currentPlayerIndex)
-    if (controller.type === 'computer' && 
-        gameState.turnPhase === 'draft' &&
-        gameState.selectedRunes.length === 0 &&
-        !gameState.voidEffectPending &&
-        !gameState.frostEffectPending) {
+    if (!gameStarted) return;
+
+    const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
+    if (
+      controller.type === 'computer' &&
+      turnPhase === 'draft' &&
+      selectedRunesLength === 0 &&
+      !voidEffectPending &&
+      !frostEffectPending
+    ) {
       const delayTimer = setTimeout(() => {
         executeAITurn()
       }, 2000) // 2 second delay before AI starts
-      
+
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.currentPlayerIndex, gameState.turnPhase, gameState.players, gameState.selectedRunes.length, gameState.voidEffectPending, gameState.frostEffectPending, gameState.playerControllers])
+  }, [gameStarted, currentPlayerIndex, turnPhase, players, selectedRunesLength, voidEffectPending, frostEffectPending, playerControllers])
   
   // Handle AI placement after drafting
   useEffect(() => {
-    if (!gameState.gameStarted) return;
-    
+    if (!gameStarted) return;
+
     if (needsAIPlacement()) {
       const delayTimer = setTimeout(() => {
         executeAITurn()
       }, 2000) // 2 second delay before AI places runes
-      
+
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.currentPlayerIndex, gameState.players, gameState.selectedRunes.length, gameState.turnPhase, gameState.playerControllers])
+  }, [gameStarted, currentPlayerIndex, players, selectedRunesLength, turnPhase, playerControllers])
   
   // Handle Void effect for AI (when AI's turn and voidEffectPending)
   useEffect(() => {
-    if (!gameState.gameStarted) return;
-    
-    const controller = getControllerForIndex(gameState, gameState.currentPlayerIndex)
-    if (controller.type === 'computer' && gameState.voidEffectPending && gameState.turnPhase === 'draft') {
+    if (!gameStarted) return;
+
+    const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
+    if (controller.type === 'computer' && voidEffectPending && turnPhase === 'draft') {
       const delayTimer = setTimeout(() => {
         executeAIVoidEffect()
       }, 1500) // 1.5 second delay for Void effect
-      
+
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.voidEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase, gameState.playerControllers])
+  }, [gameStarted, voidEffectPending, currentPlayerIndex, players, turnPhase, playerControllers])
   
   // Handle Frost effect for AI (when AI's turn and frostEffectPending)
   useEffect(() => {
-    if (!gameState.gameStarted) return;
-    
-    const controller = getControllerForIndex(gameState, gameState.currentPlayerIndex)
-    if (controller.type === 'computer' && gameState.frostEffectPending && gameState.turnPhase === 'draft') {
+    if (!gameStarted) return;
+
+    const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
+    if (controller.type === 'computer' && frostEffectPending && turnPhase === 'draft') {
       const delayTimer = setTimeout(() => {
         executeAIFrostEffect()
       }, 1500) // 1.5 second delay for Frost effect
-      
+
       return () => clearTimeout(delayTimer)
     }
-  }, [gameState.gameStarted, gameState.frostEffectPending, gameState.currentPlayerIndex, gameState.players, gameState.turnPhase, gameState.playerControllers])
+  }, [gameStarted, frostEffectPending, currentPlayerIndex, players, turnPhase, playerControllers])
 
   const handleStartGame = (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../types/game').RuneTypeCount) => {
     startGame(gameMode, topController, runeTypeCount)
   }
 
   // Show start screen if game hasn't started
-  if (!gameState.gameStarted) {
+  if (!wholeGameState.gameStarted) {
     return <StartGameScreen onStartGame={handleStartGame} />
   }
 
-  return <GameBoard gameState={gameState} />
+  return <GameBoard gameState={wholeGameState} />
 }

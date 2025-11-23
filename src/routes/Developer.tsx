@@ -3,11 +3,11 @@
  * Provides isolated demo of Spellpower component with configurable inputs
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayerStats } from '../features/gameplay/components/PlayerStats';
 import { useGameplayStore } from '../state/stores/gameplayStore';
-import type { Player, RoundScore, ScoringWall } from '../types/game';
+import type { Player, RoundScore } from '../types/game';
 
 // Base animation duration from Spellpower component timing constants
 // HEAL_ANIMATION_DURATION_MS (500) + HEAL_TO_DAMAGE_DELAY_MS (250) + 
@@ -15,6 +15,35 @@ import type { Player, RoundScore, ScoringWall } from '../types/game';
 // BASE_SEQUENCE_DELAY_MS (1200) = 2950ms total for full sequence
 const BASE_ANIMATION_DURATION_MS = 2950;
 const ANIMATION_BUFFER_MS = 500;
+
+const LIFE_RUNE_POSITIONS: Array<[number, number]> = [
+  [0, 2],
+  [1, 1],
+  [1, 3],
+  [2, 2],
+  [3, 2],
+];
+
+const clampHealthValue = (value: number, maxHealth?: number) => {
+  const upperBound = typeof maxHealth === 'number' ? maxHealth : Infinity;
+  return Math.max(0, Math.min(upperBound, Math.round(value)));
+};
+
+const buildLifeWall = (baseWall: import('../types/game').Player['wall'], count: number): import('../types/game').Player['wall'] => {
+  const safeCount = Math.max(0, Math.min(5, Math.round(count)));
+  const wallTemplate: import('../types/game').ScoringWall =
+    baseWall.length === 5 && baseWall.every((row) => row.length === 5)
+      ? baseWall.map((row) => row.map(() => ({ runeType: null })))
+      : Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => ({ runeType: null })));
+
+  LIFE_RUNE_POSITIONS.slice(0, safeCount).forEach(([row, col]) => {
+    if (wallTemplate[row]?.[col]) {
+      wallTemplate[row][col] = { runeType: 'Life' };
+    }
+  });
+
+  return wallTemplate;
+};
 
 export function Developer() {
   const navigate = useNavigate();
@@ -29,36 +58,8 @@ export function Developer() {
   const [animationSpeed, setAnimationSpeed] = useState(1.0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  const LIFE_RUNE_POSITIONS: Array<[number, number]> = [
-    [0, 2],
-    [1, 1],
-    [1, 3],
-    [2, 2],
-    [3, 2],
-  ];
-
-  const clampHealthValue = (value: number, maxHealth?: number) => {
-    const upperBound = typeof maxHealth === 'number' ? maxHealth : Infinity;
-    return Math.max(0, Math.min(upperBound, Math.round(value)));
-  };
-
-  const buildLifeWall = (baseWall: Player['wall'], count: number): Player['wall'] => {
-    const safeCount = Math.max(0, Math.min(5, Math.round(count)));
-    const wallTemplate: ScoringWall =
-      baseWall.length === 5 && baseWall.every((row) => row.length === 5)
-        ? baseWall.map((row) => row.map(() => ({ runeType: null })))
-        : Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => ({ runeType: null })));
-
-    LIFE_RUNE_POSITIONS.slice(0, safeCount).forEach(([row, col]) => {
-      if (wallTemplate[row]?.[col]) {
-        wallTemplate[row][col] = { runeType: 'Life' };
-      }
-    });
-
-    return wallTemplate;
-  };
-
-  const applyHealthToStore = (nextHealth: number) => {
+  // Apply initial developer-controlled values into the store.
+  const applyHealthToStore = useCallback((nextHealth: number) => {
     const store = useGameplayStore.getState();
     const playerMaxHealth = store.players[0]?.maxHealth ?? Infinity;
     const targetHealth = clampHealthValue(nextHealth, playerMaxHealth);
@@ -72,9 +73,9 @@ export function Developer() {
     ];
 
     useGameplayStore.setState({ players: updatedPlayers });
-  };
+  }, []);
 
-  const applyLifeRunesToStore = (nextCount: number) => {
+  const applyLifeRunesToStore = useCallback((nextCount: number) => {
     const store = useGameplayStore.getState();
     const updatedPlayers: [Player, Player] = [
       {
@@ -85,12 +86,12 @@ export function Developer() {
     ];
 
     useGameplayStore.setState({ players: updatedPlayers });
-  };
+  }, []);
 
   useEffect(() => {
     applyHealthToStore(health);
     applyLifeRunesToStore(lifeRuneCount);
-  }, []);
+  }, [applyHealthToStore, applyLifeRunesToStore, health, lifeRuneCount]);
 
   // Store snapshot for restoration
   const [originalState, setOriginalState] = useState<{
