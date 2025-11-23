@@ -14,7 +14,7 @@ interface StartGameScreenProps {
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const navigate = useNavigate();
-  const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
+  const [gameMode] = useState<'classic' | 'standard'>('standard');
   const [opponentSetting, setOpponentSetting] = useState<QuickPlayOpponent>('normal');
   const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(5);
   const [showRules, setShowRules] = useState(false);

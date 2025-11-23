@@ -76,10 +76,6 @@ export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines 
         frozenPatternLines={frozenPatternLines}
         freezeSelectionEnabled={freezeSelectionEnabled}
         onFreezePatternLine={onFreezePatternLine}
-        // Dummy overlay handlers (opponent doesn't need these)
-        onShowDeck={() => {}}
-        onShowLog={() => {}}
-        onShowRules={() => {}}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
       />

@@ -896,9 +896,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
               onCancelSelection={handleCancelSelection}
               gameMode={gameMode}
               frozenPatternLines={playerFrozenLines}
-              onShowDeck={() => setShowDeckOverlay(true)}
-              onShowLog={() => setShowLogOverlay(true)}
-              onShowRules={() => setShowRulesOverlay(true)}
               hiddenSlotKeys={playerHiddenPatternSlots}
               hiddenFloorSlotIndexes={playerHiddenFloorSlots}
             />

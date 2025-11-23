@@ -22,14 +22,11 @@ interface PlayerBoardProps {
   frozenPatternLines?: number[];
   freezeSelectionEnabled?: boolean;
   onFreezePatternLine?: (patternLineIndex: number) => void;
-  onShowDeck: () => void;
-  onShowLog: () => void;
-  onShowRules: () => void;
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onShowDeck, onShowLog, onShowRules, hiddenSlotKeys, hiddenFloorSlotIndexes }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -160,9 +157,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             hasPenalty={hasPenalty}
             hasWindMitigation={hasWindMitigation}
             windRuneCount={windMitigationCount}
-            onShowDeck={onShowDeck}
-            onShowLog={onShowLog}
-            onShowRules={onShowRules}
           />
         </div>
       </div>

@@ -15,9 +15,6 @@ interface PlayerViewProps {
   onCancelSelection: () => void;
   gameMode: 'classic' | 'standard';
   frozenPatternLines: number[];
-  onShowDeck: () => void;
-  onShowLog: () => void;
-  onShowRules: () => void;
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
 }
@@ -32,9 +29,6 @@ export function PlayerView({
   onCancelSelection,
   gameMode,
   frozenPatternLines,
-  onShowDeck,
-  onShowLog,
-  onShowRules,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
 }: PlayerViewProps) {
@@ -51,9 +45,6 @@ export function PlayerView({
         gameMode={gameMode}
         nameColor="#0c4a6e"
         frozenPatternLines={frozenPatternLines}
-        onShowDeck={onShowDeck}
-        onShowLog={onShowLog}
-        onShowRules={onShowRules}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
       />

@@ -354,9 +354,6 @@ export function Developer() {
             hasPenalty={false}
             hasWindMitigation={false}
             windRuneCount={0}
-            onShowDeck={() => {}}
-            onShowLog={() => {}}
-            onShowRules={() => {}}
           />
         </div>
       </div>
