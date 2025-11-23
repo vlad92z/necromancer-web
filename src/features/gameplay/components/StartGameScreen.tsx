@@ -4,18 +4,19 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { QuickPlayOpponent } from '../../../types/game';
+import type { QuickPlayOpponent, RuneTypeCount } from '../../../types/game';
 import { getAIDifficultyLabel } from '../../../utils/aiDifficultyLabels';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
-  onStartGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent) => void;
+  onStartGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: RuneTypeCount) => void;
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const navigate = useNavigate();
-  const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
+  const [gameMode] = useState<'classic' | 'standard'>('standard');
   const [opponentSetting, setOpponentSetting] = useState<QuickPlayOpponent>('normal');
+  const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(5);
   const [showRules, setShowRules] = useState(false);
   
   return (
@@ -86,8 +87,8 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             Complete your Spellcasting Lines and place runes on your Spell Wall to unleash devastating combos!
           </p>
         </div>
-        
-        {/* Game Mode Toggle */}
+
+        {/* Rune Type Count Toggle */}
         <div style={{ 
           marginBottom: '20px', 
           padding: '16px',
@@ -101,7 +102,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             color: '#cfe0ff',
             marginBottom: '12px'
           }}>
-            Game Mode
+            Rune Types
           </div>
           <div style={{
             display: 'flex',
@@ -109,7 +110,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             justifyContent: 'center'
           }}>
             <button
-              onClick={() => setGameMode('classic')}
+              onClick={() => setRuneTypeCount(3)}
               style={{
                 flex: 1,
                 padding: '10px 18px',
@@ -117,23 +118,23 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: gameMode === 'classic' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: gameMode === 'classic' ? '#4a9eff' : 'transparent',
-                color: gameMode === 'classic' ? '#ffffff' : '#c7d2fe',
+                borderColor: runeTypeCount === 3 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: runeTypeCount === 3 ? '#4a9eff' : 'transparent',
+                color: runeTypeCount === 3 ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
                 transition: 'all 0.12s'
               }}
               onMouseEnter={(e) => {
-                if (gameMode !== 'classic') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+                if (runeTypeCount !== 3) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
               }}
               onMouseLeave={(e) => {
-                if (gameMode !== 'classic') e.currentTarget.style.backgroundColor = 'transparent';
+                if (runeTypeCount !== 3) e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Classic
+              3 Types
             </button>
             <button
-              onClick={() => setGameMode('standard')}
+              onClick={() => setRuneTypeCount(4)}
               style={{
                 flex: 1,
                 padding: '10px 18px',
@@ -141,20 +142,44 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: gameMode === 'standard' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: gameMode === 'standard' ? '#4a9eff' : 'transparent',
-                color: gameMode === 'standard' ? '#ffffff' : '#c7d2fe',
+                borderColor: runeTypeCount === 4 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: runeTypeCount === 4 ? '#4a9eff' : 'transparent',
+                color: runeTypeCount === 4 ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
                 transition: 'all 0.12s'
               }}
               onMouseEnter={(e) => {
-                if (gameMode !== 'standard') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+                if (runeTypeCount !== 4) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
               }}
               onMouseLeave={(e) => {
-                if (gameMode !== 'standard') e.currentTarget.style.backgroundColor = 'transparent';
+                if (runeTypeCount !== 4) e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Standard
+              4 Types
+            </button>
+            <button
+              onClick={() => setRuneTypeCount(5)}
+              style={{
+                flex: 1,
+                padding: '10px 18px',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: runeTypeCount === 5 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: runeTypeCount === 5 ? '#4a9eff' : 'transparent',
+                color: runeTypeCount === 5 ? '#ffffff' : '#c7d2fe',
+                cursor: 'pointer',
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (runeTypeCount !== 5) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (runeTypeCount !== 5) e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              5 Types
             </button>
           </div>
           <div style={{
@@ -163,9 +188,9 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             color: '#9fb7ff',
             textAlign: 'center'
           }}>
-            {gameMode === 'classic' 
-              ? 'Simpler version of the game. All runes are the same.' 
-              : 'Runes have unique modifiers that affect gameplay.'}
+            {runeTypeCount === 3 && '3 rune types (Fire, Life, Wind) with 3x3 wall and 3 pattern lines'}
+            {runeTypeCount === 4 && '4 rune types (Fire, Life, Wind, Frost) with 4x4 wall and 4 pattern lines'}
+            {runeTypeCount === 5 && '5 rune types (Fire, Life, Wind, Frost, Void) with 5x5 wall and 5 pattern lines'}
           </div>
         </div>
 
@@ -298,7 +323,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         </div>
         
         <button
-          onClick={() => onStartGame(gameMode, opponentSetting)}
+          onClick={() => onStartGame(gameMode, opponentSetting, runeTypeCount)}
           style={{
             backgroundColor: '#4a9eff',
             color: '#ffffff',

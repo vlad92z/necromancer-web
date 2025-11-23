@@ -27,7 +27,7 @@ export function setNavigationCallback(callback: (() => void) | null) {
 
 export interface GameplayStore extends GameState {
   // Actions
-  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent) => void;
+  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
@@ -41,6 +41,7 @@ export interface GameplayStore extends GameState {
   freezePatternLine: (playerId: string, patternLineIndex: number) => void;
   endRound: () => void;
   resetGame: () => void;
+  triggerRoundEnd: () => void;
   processScoringStep: () => void;
 }
 
@@ -154,7 +155,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       
       // Validation: Check if this rune type is already on the wall in this row
       const row = patternLineIndex;
-      const col = getWallColumnForRune(row, runeType);
+      const wallSize = currentPlayer.wall.length;
+      const col = getWallColumnForRune(row, runeType, wallSize);
       if (currentPlayer.wall[row][col].runeType !== null) {
         // Invalid placement - rune type already on wall in this row
         return state;
@@ -508,6 +510,22 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
     });
   },
+
+  triggerRoundEnd: () => {
+    set((state) => {
+      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
+      const centerEmpty = state.centerPool.length === 0;
+      if (!allRuneforgesEmpty || !centerEmpty || state.selectedRunes.length > 0 || state.turnPhase === 'scoring') {
+        return state;
+      }
+
+      return {
+        ...state,
+        turnPhase: 'scoring' as const,
+        shouldTriggerEndRound: true,
+      };
+    });
+  },
   
   endRound: () => {
     set((state) => ({
@@ -531,11 +549,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const moveRunesToWall = (player: Player): Player => {
           const updatedPatternLines = [...player.patternLines];
           const updatedWall = player.wall.map((row) => [...row]);
+          const wallSize = player.wall.length;
 
           player.patternLines.forEach((line, lineIndex) => {
             if (line.count === line.tier && line.runeType) {
               const row = lineIndex;
-              const col = getWallColumnForRune(row, line.runeType);
+              const col = getWallColumnForRune(row, line.runeType, wallSize);
               updatedWall[row][col] = { runeType: line.runeType };
               console.log(`Player ${player.id}: Line ${lineIndex + 1} complete, placed ${line.runeType} at (${row},${col})`);
               updatedPatternLines[lineIndex] = {
@@ -699,6 +718,22 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           opponentTotal: snapshot.wallPowerStats[1].totalPower,
         };
 
+        const eitherPlayerDead = updatedPlayers.some((player) => player.health === 0);
+        if (eitherPlayerDead) {
+          console.log('Game over! A player reached 0 health at end of round.');
+          return {
+            ...state,
+            players: updatedPlayers,
+            roundHistory: [...state.roundHistory, roundScore],
+            scoringPhase: null,
+            scoringSnapshot: null,
+            runeforges: [],
+            centerPool: [],
+            turnPhase: 'game-over',
+            shouldTriggerEndRound: false,
+          };
+        }
+
         return {
           ...state,
           players: updatedPlayers,
@@ -710,13 +745,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       if (currentPhase === 'complete') {
         console.log('Scoring: Complete, checking game over...');
+        const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
 
-        const player1HasEnough = state.players[0].deck.length >= 10;
-        const player2HasEnough = state.players[1].deck.length >= 10;
+        const player1HasEnough = state.players[0].deck.length >= runesNeededForRound;
+        const player2HasEnough = state.players[1].deck.length >= runesNeededForRound;
 
         if (!player1HasEnough || !player2HasEnough) {
           console.log('Game over! A player has run out of runes.');
-          console.log(`Player 1 runes: ${state.players[0].deck.length}, Player 2 runes: ${state.players[1].deck.length}`);
+          console.log(
+            `Player 1 runes: ${state.players[0].deck.length}, Player 2 runes: ${state.players[1].deck.length} (need at least ${runesNeededForRound} for the next round)`
+          );
 
           return {
             ...state,
@@ -729,13 +767,14 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           };
         }
 
-        const emptyFactories = createEmptyFactories(state.players, 3);
+        const emptyFactories = createEmptyFactories(state.players, state.factoriesPerPlayer);
         const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
           emptyFactories,
           {
             [state.players[0].id]: state.players[0].deck,
             [state.players[1].id]: state.players[1].deck,
-          }
+          },
+          state.runesPerRuneforge
         );
 
         const finalPlayers: [Player, Player] = [
@@ -761,8 +800,39 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent) => {
+  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => {
     set((state) => {
+      // If rune type count changed, reinitialize the game with new configuration
+      if (state.runeTypeCount !== runeTypeCount) {
+        const newState = initializeGame(runeTypeCount);
+        const updatedControllers: PlayerControllers = {
+          bottom: { type: 'human' },
+          top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },
+        };
+
+        const updatedPlayers: [Player, Player] = [
+          { ...newState.players[0], type: 'human' },
+          {
+            ...newState.players[1],
+            type: updatedControllers.top.type,
+            name:
+              updatedControllers.top.type === 'computer'
+                ? getAIDisplayName('Opponent', updatedControllers.top.difficulty)
+                : 'Player 2',
+          },
+        ];
+
+        return {
+          ...newState,
+          gameStarted: true,
+          gameMode: gameMode,
+          runeTypeCount: runeTypeCount,
+          playerControllers: updatedControllers,
+          players: updatedPlayers,
+        };
+      }
+
+      // Otherwise just update the existing state
       const updatedControllers: PlayerControllers = {
         bottom: { type: 'human' },
         top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },
@@ -784,6 +854,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         gameStarted: true,
         gameMode: gameMode,
+        runeTypeCount: runeTypeCount,
         playerControllers: updatedControllers,
         players: updatedPlayers,
       };
@@ -821,10 +892,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   returnToStartScreen: () => {
-    set({
-      ...initializeGame(),
+    set((state) => ({
+      ...initializeGame(state.runeTypeCount),
       gameStarted: false,
-    });
+    }));
     // Call navigation callback if registered (for router integration)
     if (navigationCallback) {
       navigationCallback();
@@ -832,7 +903,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   resetGame: () => {
-    set(initializeGame());
+    set((state) => initializeGame(state.runeTypeCount));
   },
 });
 
