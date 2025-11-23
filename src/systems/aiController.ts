@@ -32,7 +32,20 @@ export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore)
     state.placeRunes,
     state.placeRunesInFloor
   );
-  
+
+  if (
+    !moveMade &&
+    state.turnPhase === 'draft' &&
+    state.selectedRunes.length === 0
+  ) {
+    const hasDraftableRunes =
+      state.runeforges.some((forge) => forge.runes.length > 0) ||
+      state.centerPool.length > 0;
+    if (!hasDraftableRunes) {
+      state.triggerRoundEnd();
+    }
+  }
+
   return moveMade;
 }
 

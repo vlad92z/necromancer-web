@@ -20,7 +20,8 @@ export function calculateWallPower(
   floorPenaltyCount: number = 0, 
   gameMode: 'classic' | 'standard' = 'standard'
 ): number {
-  const visited = Array(5).fill(null).map(() => Array(5).fill(false));
+  const wallSize = wall.length;
+  const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
   let fireRuneCount = 0;
@@ -28,7 +29,7 @@ export function calculateWallPower(
   // Flood fill to find each connected segment
   function floodFill(row: number, col: number): number {
     // Out of bounds or already visited or empty cell
-    if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
+    if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || 
         visited[row][col] || wall[row][col].runeType === null) {
       return 0;
     }
@@ -46,8 +47,8 @@ export function calculateWallPower(
   }
   
   // Find all segments and track the largest, count Fire runes
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
+  for (let row = 0; row < wallSize; row++) {
+    for (let col = 0; col < wallSize; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
         const segmentSize = floodFill(row, col);
         totalRunes += segmentSize;
@@ -83,13 +84,14 @@ export function calculateWallPowerWithSegments(
   floorPenaltyCount: number = 0,
   gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
-  const visited = Array(5).fill(null).map(() => Array(5).fill(false));
+  const wallSize = wall.length;
+  const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
   let fireRuneCount = 0;
   
   function floodFill(row: number, col: number): number {
-    if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
+    if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || 
         visited[row][col] || wall[row][col].runeType === null) {
       return 0;
     }
@@ -105,8 +107,8 @@ export function calculateWallPowerWithSegments(
     return count;
   }
   
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
+  for (let row = 0; row < wallSize; row++) {
+    for (let col = 0; col < wallSize; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
         const segmentSize = floodFill(row, col);
         totalRunes += segmentSize;
@@ -138,6 +140,7 @@ export function calculatePlacementScore(
   row: number,
   col: number
 ): number {
+  const wallSize = wall.length;
   let score = 0;
   
   // Count horizontal adjacent runes
@@ -151,7 +154,7 @@ export function calculatePlacementScore(
     }
   }
   
-  for (let c = col + 1; c < 5; c++) {
+  for (let c = col + 1; c < wallSize; c++) {
     if (wall[row][c].runeType !== null) {
       horizontalCount++;
     } else {
@@ -170,7 +173,7 @@ export function calculatePlacementScore(
     }
   }
   
-  for (let r = row + 1; r < 5; r++) {
+  for (let r = row + 1; r < wallSize; r++) {
     if (wall[r][col].runeType !== null) {
       verticalCount++;
     } else {
@@ -217,11 +220,12 @@ export function calculateEffectiveFloorPenalty(
   ), 0);
 
   // Completed Wind pattern lines count as pending placements (if the wall slot is still empty)
+  const wallSize = wall.length;
   const pendingWindPlacements = patternLines.reduce((total, line, rowIndex) => {
     if (line.runeType !== 'Wind' || line.count !== line.tier) {
       return total;
     }
-    const col = getWallColumnForRune(rowIndex, 'Wind');
+    const col = getWallColumnForRune(rowIndex, 'Wind', wallSize);
     const alreadyPlaced = wall[rowIndex][col]?.runeType === 'Wind';
     return alreadyPlaced ? total : total + 1;
   }, 0);
@@ -235,21 +239,24 @@ export function calculateEffectiveFloorPenalty(
  * Find the correct column for a rune type in a given row
  * The wall has a fixed pattern for rune placement
  * For simplicity, we'll use: each rune type can only go in specific columns per row
+ * The modulo is based on the wall size (3, 4, or 5)
  */
-export function getWallColumnForRune(row: number, runeType: RuneType): number {
+export function getWallColumnForRune(row: number, runeType: RuneType, wallSize: number = 5): number {
   // Each row is rotated by 1
   // Fire, Frost, Life, Void, Wind -> 0, 1, 2, 3, 4
+  // For 3 types: Fire, Life, Wind -> 0, 1, 2
+  // For 4 types: Fire, Life, Wind, Frost -> 0, 1, 2, 3
   const runeTypeIndex: Record<RuneType, number> = {
     Fire: 0,
-    Frost: 1,
-    Life: 2,
-    Void: 3,
-    Wind: 4,
+    Frost: 3,  // Only used when wallSize >= 4
+    Life: 1,
+    Void: 4,   // Only used when wallSize === 5
+    Wind: 2,
   };
   
   const baseIndex = runeTypeIndex[runeType];
-  // Rotate based on row
-  return (baseIndex + row) % 5;
+  // Rotate based on row, use wall size for modulo
+  return (baseIndex + row) % wallSize;
 }
 
 /**
@@ -329,22 +336,23 @@ export function calculateProjectedPower(
   gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
   // Create a simulated wall with pattern line runes placed
+  const wallSize = wall.length;
   const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
   
   // Place runes from completed pattern lines
   for (const { row, runeType } of completedPatternLines) {
-    const col = getWallColumnForRune(row, runeType);
+    const col = getWallColumnForRune(row, runeType, wallSize);
     simulatedWall[row][col] = { runeType };
   }
   
   // Calculate essence and focus for simulated wall
-  const visited = Array(5).fill(null).map(() => Array(5).fill(false));
+  const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
   let fireRuneCount = 0;
   
   function floodFill(row: number, col: number): number {
-    if (row < 0 || row >= 5 || col < 0 || col >= 5 || 
+    if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || 
         visited[row][col] || simulatedWall[row][col].runeType === null) {
       return 0;
     }
@@ -361,8 +369,8 @@ export function calculateProjectedPower(
   }
   
   // Find all segments and track largest, count Fire runes
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
+  for (let row = 0; row < wallSize; row++) {
+    for (let col = 0; col < wallSize; col++) {
       if (!visited[row][col] && simulatedWall[row][col].runeType !== null) {
         const segmentSize = floodFill(row, col);
         totalRunes += segmentSize;

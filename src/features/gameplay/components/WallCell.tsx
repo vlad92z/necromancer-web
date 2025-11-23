@@ -5,24 +5,41 @@
 import { useState } from 'react';
 import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
+import { getWallColumnForRune } from '../../../utils/scoring';
 
 interface WallCellProps {
   cell: WallCellType;
   row: number;
   col: number;
   patternLine: PatternLine;
+  // Number of columns/rows of the scoring wall (3, 4 or 5)
+  wallSize: number;
+  // Rune types available for this wall size (ordered)
+  availableRuneTypes: RuneType[];
 }
 
 // Calculate which rune type belongs in this cell based on Azul pattern
-function getExpectedRuneType(row: number, col: number): RuneType {
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
-  // Reverse the rotation: subtract row from col to find the base index
-  const baseIndex = (col - row + 5) % 5;
-  return runeTypes[baseIndex];
+function getExpectedRuneType(
+  row: number,
+  col: number,
+  wallSize: number,
+  availableRuneTypes: RuneType[]
+): RuneType {
+  // Try to find which rune type maps to this (row, col) using the
+  // same rotation logic as `getWallColumnForRune`.
+  for (const t of availableRuneTypes) {
+    const c = getWallColumnForRune(row, t, wallSize);
+    if (c === col) return t;
+  }
+
+  // Fallback: if nothing matched (shouldn't happen), pick from a full list
+  const fallback: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const baseIndex = (col - row + fallback.length) % fallback.length;
+  return fallback[baseIndex];
 }
 
-export function WallCell({ cell, row, col, patternLine }: WallCellProps) {
-  const expectedRuneType = getExpectedRuneType(row, col);
+export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneTypes }: WallCellProps) {
+  const expectedRuneType = getExpectedRuneType(row, col, wallSize, availableRuneTypes);
   const [isHovered, setIsHovered] = useState(false);
   
   // Check if the pattern line is full and matches this cell's expected rune type

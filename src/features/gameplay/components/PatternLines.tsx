@@ -45,7 +45,8 @@ export function PatternLines({
     const notFull = line.count < line.tier;
     
     const row = lineIndex;
-    const col = getWallColumnForRune(row, selectedRuneType);
+    const wallSize = wall.length;
+    const col = getWallColumnForRune(row, selectedRuneType, wallSize);
     const notOnWall = wall[row][col].runeType === null;
     
     return matchesType && notFull && notOnWall;

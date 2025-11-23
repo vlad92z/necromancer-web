@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../types/game';
 import { getWallColumnForRune } from '../../../utils/scoring';
 import { WallCell } from './WallCell';
+import type { RuneType } from '../../../types/game';
 
 interface ScoringWallProps {
   wall: ScoringWallType;
@@ -15,16 +16,16 @@ interface ScoringWallProps {
 // Layout constants (kept in sync with RuneCell size config)
 const CELL_SIZE = 60; // matches RuneCell size="large"
 const GAP = 4; // gap used between cells in ScoringWall layout
-const GRID_SIZE = 5;
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
 function getLargestConnectedComponent(wall: ScoringWallType, pendingCells: Set<string>) {
-  const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
+  const gridSize = wall.length;
+  const visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
   const components: { nodes: { row: number; col: number }[] }[] = [];
-  const isOccupied = (row: number, col: number) => Boolean(wall[row][col].runeType) || pendingCells.has(cellKey(row, col));
+  const isOccupied = (row: number, col: number) => Boolean(wall[row]?.[col]?.runeType) || pendingCells.has(cellKey(row, col));
 
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
       if (visited[r][c]) continue;
       if (!isOccupied(r, c)) {
         visited[r][c] = true;
@@ -48,7 +49,7 @@ function getLargestConnectedComponent(wall: ScoringWallType, pendingCells: Set<s
         ];
 
         for (const nb of neighbors) {
-          if (nb.row < 0 || nb.row >= GRID_SIZE || nb.col < 0 || nb.col >= GRID_SIZE) continue;
+          if (nb.row < 0 || nb.row >= gridSize || nb.col < 0 || nb.col >= gridSize) continue;
           if (visited[nb.row][nb.col]) continue;
           if (!isOccupied(nb.row, nb.col)) {
             visited[nb.row][nb.col] = true;
@@ -73,9 +74,10 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   // Also compute short neighbor-to-neighbor edges (right + down) to avoid duplicates
   const overlay = useMemo(() => {
     const pendingCells = new Set<string>();
+    const wallSize = wall.length;
     patternLines.forEach((line, rowIndex) => {
       if (line.count === line.tier && line.runeType) {
-        const col = getWallColumnForRune(rowIndex, line.runeType);
+        const col = getWallColumnForRune(rowIndex, line.runeType, wallSize);
         if (!wall[rowIndex][col].runeType) {
           pendingCells.add(cellKey(rowIndex, col));
         }
@@ -129,8 +131,16 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     return { points, edges };
   }, [wall, patternLines]);
 
-  const totalWidth = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP;
-  const totalHeight = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP;
+  const gridSize = wall.length;
+  // Available rune types depend on wall size (3, 4 or 5)
+  const availableRuneTypes: RuneType[] =
+    gridSize === 3
+      ? ['Fire', 'Life', 'Wind']
+      : gridSize === 4
+      ? ['Fire', 'Life', 'Wind', 'Frost']
+      : ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const totalWidth = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
+  const totalHeight = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
 
   return (
     <div style={{ position: 'relative', width: `${totalWidth}px`, height: `${totalHeight}px` }}>
@@ -190,6 +200,8 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
                 row={rowIndex}
                 col={colIndex}
                 patternLine={patternLines[rowIndex]}
+                wallSize={gridSize}
+                availableRuneTypes={availableRuneTypes}
               />
             ))}
           </div>

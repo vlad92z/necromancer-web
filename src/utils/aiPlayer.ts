@@ -36,10 +36,11 @@ function countLifeRunes(wall: Player['wall']): number {
 function evaluateSpellpowerAndHealingValue(state: GameState, playerIndex: 0 | 1): number {
   const player = state.players[playerIndex];
   const predictedWall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
+  const wallSize = player.wall.length;
 
   player.patternLines.forEach((line, lineIndex) => {
     if (line.count === line.tier && line.runeType) {
-      const col = getWallColumnForRune(lineIndex, line.runeType);
+      const col = getWallColumnForRune(lineIndex, line.runeType, wallSize);
       predictedWall[lineIndex][col] = { runeType: line.runeType };
     }
   });
@@ -184,7 +185,8 @@ function canPlaceOnLine(
   if (line.runeType !== null && line.runeType !== runeType) return false;
   
   // Check if this rune type is already on the wall in this row
-  const col = getWallColumnForRune(lineIndex, runeType);
+  const wallSize = wall.length;
+  const col = getWallColumnForRune(lineIndex, runeType, wallSize);
   if (wall[lineIndex][col].runeType !== null) return false;
   
   return true;
@@ -373,12 +375,13 @@ function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: n
   
   // Calculate potential wall state after this line completes
   const simulatedWall = simulatedPlayer.wall.map(row => row.map(cell => ({ ...cell })));
+  const wallSize = simulatedPlayer.wall.length;
   
   // If we're completing a pattern line, simulate adding it to the wall
   if (targetLineIndex !== null && targetLineIndex >= 0) {
     const line = simulatedPlayer.patternLines[targetLineIndex];
     if (line.count === line.tier && line.runeType !== null) {
-      const col = getWallColumnForRune(targetLineIndex, line.runeType);
+      const col = getWallColumnForRune(targetLineIndex, line.runeType, wallSize);
       simulatedWall[targetLineIndex][col].runeType = line.runeType;
     }
   }
@@ -460,6 +463,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   // Find best line this move could fill
   let bestLineValue = 0;
   let minWaste = move.count;
+  const wallSize = currentPlayer.wall.length;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
     if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, currentPlayerFrozenLines)) {
@@ -469,7 +473,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
       // Strategy 1: Prioritize completing lines
       if (move.count >= spacesNeeded) {
         // Calculate connection bonus for this placement
-        const col = getWallColumnForRune(lineIndex, move.runeType);
+        const col = getWallColumnForRune(lineIndex, move.runeType, wallSize);
         const connectionBonus = calculateConnectionScore(currentPlayer.wall, lineIndex, col);
         
         // MEDIUM: Tier 5 lines worth significantly more (exponential scaling)
@@ -648,7 +652,8 @@ function scorePlacementMove(
   // Strategy 2: Prefer completing lines
   if (runeCount >= spacesAvailable) {
     const runeType = state.selectedRunes[0].runeType;
-    const col = getWallColumnForRune(lineIndex, runeType);
+    const wallSize = currentPlayer.wall.length;
+    const col = getWallColumnForRune(lineIndex, runeType, wallSize);
     const connectionBonus = calculateConnectionScore(currentPlayer.wall, lineIndex, col);
     score += 50 + (connectionBonus * 15); // Bonus for completion + connections
   }
@@ -724,6 +729,7 @@ function chooseBestPlacementMove(state: GameState): { type: 'line' | 'floor', li
  */
 function calculateOpponentNeedForRune(opponent: Player, runeType: RuneType): number {
   let bestScore = 0;
+  const wallSize = opponent.wall.length;
 
   opponent.patternLines.forEach((line, lineIndex) => {
     // Skip lines that cannot take this rune type
@@ -735,7 +741,7 @@ function calculateOpponentNeedForRune(opponent: Player, runeType: RuneType): num
       return;
     }
 
-    const col = getWallColumnForRune(lineIndex, runeType);
+    const col = getWallColumnForRune(lineIndex, runeType, wallSize);
     if (opponent.wall[lineIndex][col].runeType !== null) {
       return;
     }
@@ -823,6 +829,7 @@ export function choosePatternLineToFreeze(state: GameState): number | null {
   
   let bestLineIndex: number | null = null;
   let bestScore = -Infinity;
+  const wallSize = opponent.wall.length;
   
   opponent.patternLines.forEach((line, index) => {
     if (line.count >= line.tier) {
@@ -835,7 +842,7 @@ export function choosePatternLineToFreeze(state: GameState): number | null {
     const spacesRemaining = line.tier - line.count;
     const row = index;
     const runeType = line.runeType;
-    const columnOccupied = runeType ? opponent.wall[row][getWallColumnForRune(row, runeType)].runeType !== null : false;
+    const columnOccupied = runeType ? opponent.wall[row][getWallColumnForRune(row, runeType, wallSize)].runeType !== null : false;
     if (columnOccupied) {
       return;
     }
@@ -1156,6 +1163,7 @@ function makeRandomAIMove(
 ): boolean {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
+  const wallSize = currentPlayer.wall.length;
 
   if (state.selectedRunes.length > 0) {
     const runeType = state.selectedRunes[0].runeType;
@@ -1165,7 +1173,7 @@ function makeRandomAIMove(
         if (frozenLines.includes(index)) return false;
         if (line.count >= line.tier) return false;
         if (line.runeType !== null && line.runeType !== runeType) return false;
-        const col = getWallColumnForRune(index, runeType);
+        const col = getWallColumnForRune(index, runeType, wallSize);
         if (currentPlayer.wall[index][col].runeType !== null) return false;
         return true;
       });
@@ -1240,6 +1248,7 @@ function makeNormalAIMove(
 ): boolean {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
+  const wallSize = currentPlayer.wall.length;
 
   if (state.selectedRunes.length > 0) {
     const FLOOR_MOVE = -1;
@@ -1251,7 +1260,7 @@ function makeNormalAIMove(
       if (frozenLines.includes(lineIndex)) return;
       if (line.count >= line.tier) return;
       if (line.runeType !== null && line.runeType !== runeType) return;
-      const col = getWallColumnForRune(lineIndex, runeType);
+      const col = getWallColumnForRune(lineIndex, runeType, wallSize);
       if (currentPlayer.wall[lineIndex][col].runeType !== null) return;
 
       const availableSpace = line.tier - line.count;
