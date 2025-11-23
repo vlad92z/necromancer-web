@@ -4,18 +4,19 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { AIDifficulty } from '../../../types/game';
+import type { QuickPlayOpponent, RuneTypeCount } from '../../../types/game';
 import { getAIDifficultyLabel } from '../../../utils/aiDifficultyLabels';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
-  onStartGame: (gameMode: 'classic' | 'standard', aiDifficulty: AIDifficulty) => void;
+  onStartGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: RuneTypeCount) => void;
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const navigate = useNavigate();
-  const [gameMode, setGameMode] = useState<'classic' | 'standard'>('standard');
-  const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>('normal');
+  const [gameMode] = useState<'classic' | 'standard'>('standard');
+  const [opponentSetting, setOpponentSetting] = useState<QuickPlayOpponent>('normal');
+  const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(5);
   const [showRules, setShowRules] = useState(false);
   
   return (
@@ -86,10 +87,10 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             Complete your Spellcasting Lines and place runes on your Spell Wall to unleash devastating combos!
           </p>
         </div>
-        
-        {/* Game Mode Toggle */}
-        <div style={{
-          marginBottom: '20px',
+
+        {/* Rune Type Count Toggle */}
+        <div style={{ 
+          marginBottom: '20px', 
           padding: '16px',
           backgroundColor: '#071029',
           borderRadius: '8px',
@@ -101,7 +102,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             color: '#cfe0ff',
             marginBottom: '12px'
           }}>
-            Game Mode
+            Rune Types
           </div>
           <div style={{
             display: 'flex',
@@ -109,7 +110,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             justifyContent: 'center'
           }}>
             <button
-              onClick={() => setGameMode('classic')}
+              onClick={() => setRuneTypeCount(3)}
               style={{
                 flex: 1,
                 padding: '10px 18px',
@@ -117,23 +118,23 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: gameMode === 'classic' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: gameMode === 'classic' ? '#4a9eff' : 'transparent',
-                color: gameMode === 'classic' ? '#ffffff' : '#c7d2fe',
+                borderColor: runeTypeCount === 3 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: runeTypeCount === 3 ? '#4a9eff' : 'transparent',
+                color: runeTypeCount === 3 ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
                 transition: 'all 0.12s'
               }}
               onMouseEnter={(e) => {
-                if (gameMode !== 'classic') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+                if (runeTypeCount !== 3) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
               }}
               onMouseLeave={(e) => {
-                if (gameMode !== 'classic') e.currentTarget.style.backgroundColor = 'transparent';
+                if (runeTypeCount !== 3) e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Classic
+              3 Types
             </button>
             <button
-              onClick={() => setGameMode('standard')}
+              onClick={() => setRuneTypeCount(4)}
               style={{
                 flex: 1,
                 padding: '10px 18px',
@@ -141,20 +142,44 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: gameMode === 'standard' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: gameMode === 'standard' ? '#4a9eff' : 'transparent',
-                color: gameMode === 'standard' ? '#ffffff' : '#c7d2fe',
+                borderColor: runeTypeCount === 4 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: runeTypeCount === 4 ? '#4a9eff' : 'transparent',
+                color: runeTypeCount === 4 ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
                 transition: 'all 0.12s'
               }}
               onMouseEnter={(e) => {
-                if (gameMode !== 'standard') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+                if (runeTypeCount !== 4) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
               }}
               onMouseLeave={(e) => {
-                if (gameMode !== 'standard') e.currentTarget.style.backgroundColor = 'transparent';
+                if (runeTypeCount !== 4) e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Standard
+              4 Types
+            </button>
+            <button
+              onClick={() => setRuneTypeCount(5)}
+              style={{
+                flex: 1,
+                padding: '10px 18px',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: runeTypeCount === 5 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: runeTypeCount === 5 ? '#4a9eff' : 'transparent',
+                color: runeTypeCount === 5 ? '#ffffff' : '#c7d2fe',
+                cursor: 'pointer',
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (runeTypeCount !== 5) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (runeTypeCount !== 5) e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              5 Types
             </button>
           </div>
           <div style={{
@@ -163,9 +188,9 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             color: '#9fb7ff',
             textAlign: 'center'
           }}>
-            {gameMode === 'classic' 
-              ? 'Simpler version of the game. All runes are the same.' 
-              : 'Runes have unique modifiers that affect gameplay.'}
+            {runeTypeCount === 3 && '3 rune types (Fire, Life, Wind) with 3x3 wall and 3 pattern lines'}
+            {runeTypeCount === 4 && '4 rune types (Fire, Life, Wind, Frost) with 4x4 wall and 4 pattern lines'}
+            {runeTypeCount === 5 && '5 rune types (Fire, Life, Wind, Frost, Void) with 5x5 wall and 5 pattern lines'}
           </div>
         </div>
 
@@ -191,7 +216,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             justifyContent: 'center'
           }}>
             <button
-              onClick={() => setAiDifficulty('easy')}
+              onClick={() => setOpponentSetting('human')}
               style={{
                 flex: 1,
                 padding: '10px 18px',
@@ -199,23 +224,47 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: aiDifficulty === 'easy' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: aiDifficulty === 'easy' ? '#4a9eff' : 'transparent',
-                color: aiDifficulty === 'easy' ? '#ffffff' : '#c7d2fe',
+                borderColor: opponentSetting === 'human' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: opponentSetting === 'human' ? '#4a9eff' : 'transparent',
+                color: opponentSetting === 'human' ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
                 transition: 'all 0.12s'
               }}
               onMouseEnter={(e) => {
-                if (aiDifficulty !== 'easy') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+                if (opponentSetting !== 'human') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
               }}
               onMouseLeave={(e) => {
-                if (aiDifficulty !== 'easy') e.currentTarget.style.backgroundColor = 'transparent';
+                if (opponentSetting !== 'human') e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              Human
+            </button>
+            <button
+              onClick={() => setOpponentSetting('easy')}
+              style={{
+                flex: 1,
+                padding: '10px 18px',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                border: '2px solid',
+                borderColor: opponentSetting === 'easy' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: opponentSetting === 'easy' ? '#4a9eff' : 'transparent',
+                color: opponentSetting === 'easy' ? '#ffffff' : '#c7d2fe',
+                cursor: 'pointer',
+                transition: 'all 0.12s'
+              }}
+              onMouseEnter={(e) => {
+                if (opponentSetting !== 'easy') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                if (opponentSetting !== 'easy') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               {getAIDifficultyLabel('easy')}
             </button>
             <button
-              onClick={() => setAiDifficulty('normal')}
+              onClick={() => setOpponentSetting('normal')}
               style={{
                 flex: 1,
                 padding: '10px 18px',
@@ -223,23 +272,23 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: aiDifficulty === 'normal' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: aiDifficulty === 'normal' ? '#4a9eff' : 'transparent',
-                color: aiDifficulty === 'normal' ? '#ffffff' : '#c7d2fe',
+                borderColor: opponentSetting === 'normal' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: opponentSetting === 'normal' ? '#4a9eff' : 'transparent',
+                color: opponentSetting === 'normal' ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
                 transition: 'all 0.12s'
               }}
               onMouseEnter={(e) => {
-                if (aiDifficulty !== 'normal') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+                if (opponentSetting !== 'normal') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
               }}
               onMouseLeave={(e) => {
-                if (aiDifficulty !== 'normal') e.currentTarget.style.backgroundColor = 'transparent';
+                if (opponentSetting !== 'normal') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               {getAIDifficultyLabel('normal')}
             </button>
             <button
-              onClick={() => setAiDifficulty('hard')}
+              onClick={() => setOpponentSetting('hard')}
               style={{
                 flex: 1,
                 padding: '10px 18px',
@@ -247,17 +296,17 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                 fontSize: '15px',
                 fontWeight: '600',
                 border: '2px solid',
-                borderColor: aiDifficulty === 'hard' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: aiDifficulty === 'hard' ? '#4a9eff' : 'transparent',
-                color: aiDifficulty === 'hard' ? '#ffffff' : '#c7d2fe',
+                borderColor: opponentSetting === 'hard' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
+                backgroundColor: opponentSetting === 'hard' ? '#4a9eff' : 'transparent',
+                color: opponentSetting === 'hard' ? '#ffffff' : '#c7d2fe',
                 cursor: 'pointer',
                 transition: 'all 0.12s'
               }}
               onMouseEnter={(e) => {
-                if (aiDifficulty !== 'hard') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
+                if (opponentSetting !== 'hard') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
               }}
               onMouseLeave={(e) => {
-                if (aiDifficulty !== 'hard') e.currentTarget.style.backgroundColor = 'transparent';
+                if (opponentSetting !== 'hard') e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               {getAIDifficultyLabel('hard')}
@@ -269,12 +318,12 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
             color: '#9fb7ff',
             textAlign: 'center'
           }}>
-            Choose how the AI will play. Tuning coming soon.
+            Choose who controls the top player. Selecting Human lets one person play both sides.
           </div>
         </div>
         
         <button
-          onClick={() => onStartGame(gameMode, aiDifficulty)}
+          onClick={() => onStartGame(gameMode, opponentSetting, runeTypeCount)}
           style={{
             backgroundColor: '#4a9eff',
             color: '#ffffff',

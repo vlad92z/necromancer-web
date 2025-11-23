@@ -20,6 +20,7 @@ import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
+import { getControllerForIndex } from '../../../utils/playerControllers';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -103,7 +104,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
-  const isAITurn = currentPlayer.type === 'ai';
+  const currentController = getControllerForIndex(gameState, currentPlayerIndex);
+  const isAITurn = currentController.type === 'computer';
   const isAnimatingPlacement = animatingRunes.length > 0;
   const animatingRuneIds = [...animatingRunes, ...runeforgeAnimatingRunes].map((rune) => rune.id);
   useRunePlacementSounds(players, animatingRunes, soundVolume);
@@ -537,22 +539,22 @@ export function GameBoard({ gameState }: GameBoardProps) {
     let timer: ReturnType<typeof setTimeout>;
 
     if (scoringPhase === 'moving-to-wall') {
-      // Wait 1.5 seconds, then process scoring step
       timer = setTimeout(() => {
         processScoringStep();
       }, 1500);
-    } else if (scoringPhase === 'calculating-score') {
-      // Wait 2 seconds, then process next step
-      timer = setTimeout(() => {
-        processScoringStep();
-      }, 2000);
     } else if (scoringPhase === 'clearing-floor') {
-      // Wait 1.5 seconds, then complete
       timer = setTimeout(() => {
         processScoringStep();
       }, 1500);
+    } else if (scoringPhase === 'healing') {
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1600);
+    } else if (scoringPhase === 'damage') {
+      timer = setTimeout(() => {
+        processScoringStep();
+      }, 1600);
     } else if (scoringPhase === 'complete') {
-      // Wait briefly, then process final step (start next round or game over)
       timer = setTimeout(() => {
         processScoringStep();
       }, 500);
@@ -894,9 +896,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
               onCancelSelection={handleCancelSelection}
               gameMode={gameMode}
               frozenPatternLines={playerFrozenLines}
-              onShowDeck={() => setShowDeckOverlay(true)}
-              onShowLog={() => setShowLogOverlay(true)}
-              onShowRules={() => setShowRulesOverlay(true)}
               hiddenSlotKeys={playerHiddenPatternSlots}
               hiddenFloorSlotIndexes={playerHiddenFloorSlots}
             />

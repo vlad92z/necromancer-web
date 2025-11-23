@@ -8,6 +8,14 @@
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind';
 
 /**
+ * Number of rune types in the game
+ * 3 types: Fire, Life, Wind (3x3 wall, 3 pattern lines)
+ * 4 types: Fire, Life, Wind, Frost (4x4 wall, 4 pattern lines)
+ * 5 types: Fire, Life, Wind, Frost, Void (5x5 wall, 5 pattern lines)
+ */
+export type RuneTypeCount = 3 | 4 | 5;
+
+/**
  * Rune effect modifiers
  */
 export type RuneEffect =
@@ -71,14 +79,36 @@ export interface FloorLine {
 }
 
 /**
- * Player type (human or AI)
+ * Player type (human or computer-controlled)
  */
-export type PlayerType = 'human' | 'ai';
+export type PlayerType = 'human' | 'computer';
 
 /**
  * AI difficulty levels
  */
 export type AIDifficulty = 'easy' | 'normal' | 'hard';
+
+/**
+ * Player side on the board
+ */
+export type PlayerSide = 'top' | 'bottom';
+
+/**
+ * Controller type for a player seat
+ */
+export type PlayerController =
+  | { type: 'human' }
+  | { type: 'computer'; difficulty: AIDifficulty };
+
+/**
+ * Controller configuration for both player seats
+ */
+export type PlayerControllers = Record<PlayerSide, PlayerController>;
+
+/**
+ * Quick play opponent selection
+ */
+export type QuickPlayOpponent = AIDifficulty | 'human';
 
 /**
  * Difficulty type alias for spectator mode
@@ -108,7 +138,25 @@ export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-o
 /**
  * Scoring phase steps for visual feedback
  */
-export type ScoringPhase = 'moving-to-wall' | 'calculating-score' | 'clearing-floor' | 'complete' | null;
+export type ScoringPhase = 'moving-to-wall' | 'clearing-floor' | 'healing' | 'damage' | 'complete' | null;
+
+/**
+ * Wall power details recorded during scoring
+ */
+export interface WallPowerStats {
+  essence: number;
+  focus: number;
+  totalPower: number;
+}
+
+/**
+ * Snapshot of scoring data preserved between phases
+ */
+export interface ScoringSnapshot {
+  floorPenalties: [number, number];
+  wallPowerStats: [WallPowerStats, WallPowerStats];
+  lifeCounts: [number, number];
+}
 
 /**
  * Round history entry for game log
@@ -144,9 +192,14 @@ export interface AnimatingRune {
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
-  aiDifficulty: AIDifficulty; // AI behavior profile (for single AI opponent)
-  aiDifficulties?: Record<string, AIDifficulty>; // Per-player AI difficulties for spectator mode (keyed by player.id)
-  players: [Player, Player]; // Player (index 0) and AI Opponent (index 1)
+  runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
+  factoriesPerPlayer: number; // Runeforge count per player (quick play config)
+  totalRunesPerPlayer: number; // Deck size for the quick play packet
+  runesPerRuneforge: number; // Number of runes dealt into each runeforge
+  startingHealth: number; // Health pool per player for the current configuration
+  overflowCapacity: number; // Floor line capacity that determines overflow penalties
+  playerControllers: PlayerControllers; // Controller assignments for top and bottom players
+  players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   currentPlayerIndex: 0 | 1;
@@ -166,4 +219,5 @@ export interface GameState {
   frostEffectPending: boolean; // Whether Frost effect is waiting for pattern line selection
   frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
+  scoringSnapshot: ScoringSnapshot | null; // Cached scoring data across phases
 }

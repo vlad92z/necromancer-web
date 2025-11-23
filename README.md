@@ -98,6 +98,9 @@ Damage & Healing:
 - **Campaign** (planned): Progress through boss encounters
 - **PvP** (planned): Online multiplayer
 
+### Developer Mode
+Access the Developer Mode from the main menu to preview and test Spellpower animations in isolation. Configure health, spellpower, healing, focus, essence, and animation speed to demo the visual behavior of the Spellpower component without playing a full game. Changes are non-destructive and do not affect game state.
+
 ## Rune Effects (Standard Mode)
 
 ### 💚 Life (Sustain)

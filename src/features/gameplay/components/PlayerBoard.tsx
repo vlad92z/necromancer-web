@@ -6,7 +6,7 @@ import type { Player, RuneType } from '../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
-import { Spellpower } from './Spellpower';
+import { PlayerStats } from './PlayerStats';
 import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../utils/scoring';
 
 interface PlayerBoardProps {
@@ -22,14 +22,11 @@ interface PlayerBoardProps {
   frozenPatternLines?: number[];
   freezeSelectionEnabled?: boolean;
   onFreezePatternLine?: (patternLineIndex: number) => void;
-  onShowDeck: () => void;
-  onShowLog: () => void;
-  onShowRules: () => void;
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onShowDeck, onShowLog, onShowRules, hiddenSlotKeys, hiddenFloorSlotIndexes }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -147,8 +144,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
           display: 'flex', 
           flexDirection: 'column'
         }} onClick={(e) => e.stopPropagation()}>
-          <Spellpower
-            playerId={player.id}
+          <PlayerStats
             playerName={player.name}
             isActive={isActive}
             nameColor={nameColor}
@@ -161,9 +157,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             hasPenalty={hasPenalty}
             hasWindMitigation={hasWindMitigation}
             windRuneCount={windMitigationCount}
-            onShowDeck={onShowDeck}
-            onShowLog={onShowLog}
-            onShowRules={onShowRules}
           />
         </div>
       </div>

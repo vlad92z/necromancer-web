@@ -8,6 +8,7 @@ import { getAIPlayerProfile } from '../utils/aiPlayer';
 import type { StoreApi } from 'zustand';
 import { useGameplayStore } from '../state/stores/gameplayStore';
 import type { GameplayStore } from '../state/stores/gameplayStore';
+import { getControllerForIndex } from '../utils/playerControllers';
 
 /**
  * Execute an AI turn (draft + placement)
@@ -16,24 +17,64 @@ import type { GameplayStore } from '../state/stores/gameplayStore';
  */
 export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore): boolean {
   const state = store.getState();
-  const currentPlayer = state.players[state.currentPlayerIndex];
+  const controller = getControllerForIndex(state, state.currentPlayerIndex);
   
   // Only execute if it's AI's turn and in draft phase
-  if (currentPlayer.type !== 'ai' || state.turnPhase !== 'draft') {
+  if (controller.type !== 'computer' || state.turnPhase !== 'draft') {
     return false;
   }
   
-  // Get per-player difficulty if available, otherwise use global difficulty
-  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
-  const aiProfile = getAIPlayerProfile(aiDifficulty);
-  const moveMade = aiProfile.makeMove(
+  const aiProfile = getAIPlayerProfile(controller.difficulty);
+  console.log(
+    `AI turn start (${controller.type}.${aiProfile.id}): runeforges=${state.runeforges
+      .map((forge) => forge.runes.length)
+      .join(',')}, center=${state.centerPool.length}`
+  )
+  let moveMade = aiProfile.makeMove(
     state,
     state.draftRune,
     state.draftFromCenter,
     state.placeRunes,
     state.placeRunesInFloor
   );
-  
+
+  if (!moveMade) {
+    const weakProfile = getAIPlayerProfile('hard');
+    if (weakProfile !== aiProfile) {
+      console.log(`AI fallback: invoking weak profile (${weakProfile.id})`);
+      moveMade = weakProfile.makeMove(
+        state,
+        state.draftRune,
+        state.draftFromCenter,
+        state.placeRunes,
+        state.placeRunesInFloor
+      );
+    }
+  }
+
+  if (!moveMade && state.selectedRunes.length > 0) {
+    console.log('AI forced floor placement to unblock', {
+      runeCount: state.selectedRunes.length,
+      currentPlayerId: state.players[state.currentPlayerIndex].id,
+    });
+    state.placeRunesInFloor();
+    moveMade = true;
+  }
+
+  if (
+    !moveMade &&
+    state.turnPhase === 'draft' &&
+    state.selectedRunes.length === 0
+  ) {
+    const hasDraftableRunes =
+      state.runeforges.some((forge) => forge.runes.length > 0) ||
+      state.centerPool.length > 0;
+    if (!hasDraftableRunes) {
+      console.log('AI triggerRoundEnd: no draftable runes remaining');
+      state.triggerRoundEnd();
+    }
+  }
+
   return moveMade;
 }
 
@@ -43,9 +84,9 @@ export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore)
  */
 export function needsAIPlacement(store: StoreApi<GameplayStore> = useGameplayStore): boolean {
   const state = store.getState();
-  const currentPlayer = state.players[state.currentPlayerIndex];
+  const controller = getControllerForIndex(state, state.currentPlayerIndex);
   
-  return currentPlayer.type === 'ai' && 
+  return controller.type === 'computer' && 
          state.selectedRunes.length > 0 &&
          state.turnPhase === 'draft';
 }
@@ -56,11 +97,13 @@ export function needsAIPlacement(store: StoreApi<GameplayStore> = useGameplaySto
  */
 export function executeAIVoidEffect(store: StoreApi<GameplayStore> = useGameplayStore) {
   const state = store.getState();
-  const currentPlayer = state.players[state.currentPlayerIndex];
+  const controller = getControllerForIndex(state, state.currentPlayerIndex);
+
+  if (controller.type !== 'computer') {
+    return;
+  }
   
-  // Get per-player difficulty if available, otherwise use global difficulty
-  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
-  const aiProfile = getAIPlayerProfile(aiDifficulty);
+  const aiProfile = getAIPlayerProfile(controller.difficulty);
   const runeTarget = aiProfile.chooseVoidTarget(state);
   
   if (runeTarget) {
@@ -76,11 +119,13 @@ export function executeAIVoidEffect(store: StoreApi<GameplayStore> = useGameplay
  */
 export function executeAIFrostEffect(store: StoreApi<GameplayStore> = useGameplayStore) {
   const state = store.getState();
-  const currentPlayer = state.players[state.currentPlayerIndex];
+  const controller = getControllerForIndex(state, state.currentPlayerIndex);
+
+  if (controller.type !== 'computer') {
+    return;
+  }
   
-  // Get per-player difficulty if available, otherwise use global difficulty
-  const aiDifficulty = state.aiDifficulties?.[currentPlayer.id] ?? state.aiDifficulty;
-  const aiProfile = getAIPlayerProfile(aiDifficulty);
+  const aiProfile = getAIPlayerProfile(controller.difficulty);
   // Primary chooser
   let patternLineToFreeze = aiProfile.choosePatternLineToFreeze(state);
   const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;

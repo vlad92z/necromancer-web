@@ -237,6 +237,25 @@ export function MainMenu() {
           Spectator Mode {spectatorModeOpen ? '▲' : '▼'}
         </button>
         
+        <button
+          style={buttonStyle}
+          onClick={() => {
+            playClickSound()
+            navigate('/developer')
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#5ab0ff'
+            e.currentTarget.style.transform = 'scale(1.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#4a9eff'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
+          aria-label="Open developer mode"
+        >
+          Developer Mode
+        </button>
+        
         {spectatorModeOpen && (
           <div style={spectatorPanelStyle}>
             <div>

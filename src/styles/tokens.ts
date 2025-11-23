@@ -89,6 +89,14 @@ export const TRANSITIONS = {
   spring: '350ms cubic-bezier(0.68, -0.55, 0.265, 1.55)',
 } as const;
 
+export const ANIMATION = {
+  HEAL_ANIMATION_DURATION_MS: 500,
+  HEAL_TO_DAMAGE_DELAY_MS: 250,
+  DAMAGE_ANIMATION_DURATION_MS: 500,
+  PLAYER_SEQUENCE_PADDING_MS: 500,
+  BASE_SEQUENCE_DELAY_MS: 1200,
+} as const;
+
 export const BREAKPOINTS = {
   mobile: 640,
   tablet: 768,
