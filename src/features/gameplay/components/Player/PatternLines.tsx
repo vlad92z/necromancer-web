@@ -5,9 +5,9 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import type { PatternLine, RuneType, ScoringWall } from '../../../types/game';
-import { getWallColumnForRune } from '../../../utils/scoring';
-import { RuneCell } from '../../../components/RuneCell';
+import type { PatternLine, RuneType, ScoringWall } from '../../../../types/game';
+import { getWallColumnForRune } from '../../../../utils/scoring';
+import { RuneCell } from '../../../../components/RuneCell';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];

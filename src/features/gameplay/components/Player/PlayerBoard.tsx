@@ -2,12 +2,12 @@
  * PlayerBoard component - displays a player's board (pattern lines, wall, floor line)
  */
 
-import type { Player, RuneType } from '../../../types/game';
+import type { Player, RuneType } from '../../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
-import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../utils/scoring';
+import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../../utils/scoring';
 
 interface PlayerBoardProps {
   player: Player;

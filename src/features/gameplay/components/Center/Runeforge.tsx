@@ -5,8 +5,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { Runeforge as RuneforgeType, RuneType, Rune } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import type { Runeforge as RuneforgeType, RuneType, Rune } from '../../../../types/game';
+import { RuneCell } from '../../../../components/RuneCell';
 
 interface SelectedDisplayOverride {
   runes: Rune[];

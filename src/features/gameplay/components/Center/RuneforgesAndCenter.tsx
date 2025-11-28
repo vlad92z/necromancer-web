@@ -2,7 +2,7 @@
  * RuneforgesAndCenter component - displays runeforges and center pool
  */
 
-import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../types/game';
+import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
 

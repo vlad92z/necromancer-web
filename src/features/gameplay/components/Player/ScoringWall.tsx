@@ -3,10 +3,10 @@
  */
 
 import { useMemo } from 'react';
-import type { ScoringWall as ScoringWallType, PatternLine } from '../../../types/game';
-import { getWallColumnForRune } from '../../../utils/scoring';
-import { WallCell } from './WallCell';
-import type { RuneType } from '../../../types/game';
+import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
+import { getWallColumnForRune } from '../../../../utils/scoring';
+import { WallCell } from '../WallCell';
+import type { RuneType } from '../../../../types/game';
 
 interface ScoringWallProps {
   wall: ScoringWallType;

@@ -4,8 +4,8 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import type { FloorLine as FloorLineType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import type { FloorLine as FloorLineType } from '../../../../types/game';
+import { RuneCell } from '../../../../components/RuneCell';
 
 interface FloorLineProps {
   floorLine: FloorLineType;

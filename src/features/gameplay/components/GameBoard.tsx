@@ -5,9 +5,9 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, AnimatingRune, Rune } from '../../../types/game';
-import { RuneforgesAndCenter } from './RuneforgesAndCenter';
-import { PlayerView } from './PlayerView';
-import { OpponentView } from './OpponentView';
+import { RuneforgesAndCenter } from './Center/RuneforgesAndCenter';
+import { PlayerView } from './Player/PlayerView';
+import { OpponentView } from './Player/OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';

@@ -2,7 +2,7 @@
  * PlayerView component - displays the human player's board
  */
 
-import type { Player, RuneType } from '../../../types/game';
+import type { Player, RuneType } from '../../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
 
 interface PlayerViewProps {
