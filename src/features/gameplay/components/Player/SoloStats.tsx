@@ -397,6 +397,14 @@ export function SoloStats({
               borderColor="rgba(74, 222, 128, 0.4)"
               tooltip={healingTooltip}
             />
+            <StatBadge
+              type="runePower"
+              label="Rune Power"
+              value={runePowerTotal}
+              color="#facc15"
+              borderColor="rgba(250, 204, 21, 0.3)"
+              tooltip={runePowerTooltip}
+            />
           </div>
 
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -427,14 +435,6 @@ export function SoloStats({
               borderColor="rgba(192, 132, 252, 0.4)"
               tooltip={spellpowerTooltip}
               {...clickableStatCommon}
-            />
-            <StatBadge
-              type="runePower"
-              label="Rune Power"
-              value={runePowerTotal}
-              color="#facc15"
-              borderColor="rgba(250, 204, 21, 0.3)"
-              tooltip={runePowerTooltip}
             />
           </div>
 
