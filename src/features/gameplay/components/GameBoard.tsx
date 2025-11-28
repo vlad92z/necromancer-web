@@ -880,22 +880,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
         >
         {isSoloMode ? (
           <>
-            {/* Solo Top: Status and Player Stats */}
-            <div style={{ 
-              flex: 1, 
-              padding: `${sectionPadding}px`,
-              borderBottom: `1px solid ${borderColor}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'stretch', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
-
-                { soloPlayerStats &&  <PlayerStats {...soloPlayerStats} /> }
-              </div>
-            </div>
-
-            {/* Solo Middle: Player Board */}
+            {/* Solo Top: Player Board */}
             <div style={{ 
               flex: 1, 
               padding: `${sectionPadding}px`,
@@ -923,7 +908,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               </div>
             </div>
 
-            {/* Solo Bottom: Drafting Table */}
+            {/* Solo Middle: Drafting Table */}
             <div style={{ 
               flex: 1, 
               padding: `${sectionPadding}px`,
@@ -975,6 +960,20 @@ export function GameBoard({ gameState }: GameBoardProps) {
                     />
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Solo Bottom: Status and Player Stats */}
+            <div style={{ 
+              flex: 1, 
+              padding: `${sectionPadding}px`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
+
+                {soloPlayerStats && <PlayerStats {...soloPlayerStats} />}
               </div>
             </div>
           </>
