@@ -890,28 +890,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
               justifyContent: 'center'
             }}>
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'stretch', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
-                {/* <SoloStatusBar
-                  health={players[0].health}
-                  maxHealth={playerMaxHealth}
-                  runePowerTotal={runePowerTotal}
-                  overloadPenalty={overloadPenalty}
-                  overloadMultiplier={overloadMultiplier}
-                  overloadDamage={overloadDamagePreview}
-                  round={round}
-                /> */}
-                {soloPlayerStats && (
-                  <div 
-                  // style={{ 
-                  //   flex: '0 0 clamp(320px, 30vmin, 420px)',
-                  //   minWidth: 'clamp(320px, 30vmin, 420px)',
-                  //   maxWidth: 'clamp(320px, 30vmin, 420px)',
-                  //   display: 'flex',
-                  //   alignItems: 'stretch'
-                  // }}
-                  >
-                    <PlayerStats {...soloPlayerStats} />
-                  </div>
-                )}
+
+                { soloPlayerStats &&  <PlayerStats {...soloPlayerStats} /> }
               </div>
             </div>
 
