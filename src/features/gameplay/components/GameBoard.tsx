@@ -66,7 +66,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round } = gameState;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect, skipFrostEffect } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
@@ -820,6 +820,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
               hiddenSlotKeys={opponentHiddenPatternSlots}
               hiddenFloorSlotIndexes={opponentHiddenFloorSlots}
+              round={round}
             />
           </div>
         </div>
@@ -898,6 +899,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               frozenPatternLines={playerFrozenLines}
               hiddenSlotKeys={playerHiddenPatternSlots}
               hiddenFloorSlotIndexes={playerHiddenFloorSlots}
+              round={round}
             />
           </div>
         </div>

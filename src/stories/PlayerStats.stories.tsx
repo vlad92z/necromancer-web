@@ -28,6 +28,7 @@ export const Default: Story = {
     hasPenalty: false,
     hasWindMitigation: false,
     windRuneCount: 0,
+    round: 1,
   },
 };
 
@@ -45,6 +46,7 @@ export const ActiveWithPenalty: Story = {
     hasPenalty: true,
     hasWindMitigation: false,
     windRuneCount: 0,
+    round: 1,
   },
 };
 
@@ -62,5 +64,6 @@ export const HighSpellpower: Story = {
     hasPenalty: false,
     hasWindMitigation: true,
     windRuneCount: 3,
+    round: 1,
   },
 };

@@ -1,8 +1,10 @@
 /**
- * PlayerStats component - displays vitals and rune stats without animations
+ * PlayerStats component - displays vitals and rune stats with subtle Framer Motion animations
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { animate } from 'framer-motion';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
 
 type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower';
@@ -20,6 +22,7 @@ interface SpellpowerProps {
   hasPenalty: boolean;
   hasWindMitigation: boolean;
   windRuneCount: number;
+  round: number;
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
@@ -88,10 +91,91 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
   );
 }
 
+interface AnimatedHealthValueProps {
+  target: number;
+}
+
+function AnimatedHealthValue({ target }: AnimatedHealthValueProps) {
+  const [displayValue, setDisplayValue] = useState(target);
+  const previousValue = useRef(target);
+
+  useEffect(() => {
+    const fromValue = previousValue.current;
+    if (fromValue === target) {
+      return;
+    }
+
+    previousValue.current = target;
+    const duration = Math.min(0.85, Math.max(0.3, Math.abs(target - fromValue) * 0.05));
+
+    const controls = animate(fromValue, target, {
+      duration,
+      ease: 'easeOut',
+      onUpdate(latest) {
+        setDisplayValue(Math.round(latest));
+      },
+      onComplete() {
+        setDisplayValue(target);
+      },
+    });
+
+    return () => controls.stop();
+  }, [target]);
+
+  return <>{displayValue}</>;
+}
+
+interface AnimatedHealingValueProps {
+  baseValue: number;
+  consumed: number;
+  round: number;
+}
+
+function AnimatedHealingValue({ baseValue, consumed, round }: AnimatedHealingValueProps) {
+  const [displayValue, setDisplayValue] = useState(baseValue);
+  const animationControls = useRef<ReturnType<typeof animate> | null>(null);
+  const displayValueRef = useRef(baseValue);
+
+  useEffect(() => {
+    displayValueRef.current = displayValue;
+  }, [displayValue]);
+
+  useEffect(() => {
+    animationControls.current?.stop();
+    setDisplayValue(baseValue);
+  }, [round, baseValue]);
+
+  useEffect(() => {
+    if (consumed <= 0) {
+      return;
+    }
+
+    const targetValue = Math.max(0, Math.round(baseValue - consumed));
+    const duration = Math.min(0.85, Math.max(0.3, consumed * 0.05));
+
+    animationControls.current?.stop();
+    const controls = animate(displayValueRef.current, targetValue, {
+      duration,
+      ease: 'easeOut',
+      onUpdate(latest) {
+        setDisplayValue(Math.round(latest));
+      },
+      onComplete() {
+        setDisplayValue(targetValue);
+      },
+    });
+
+    animationControls.current = controls;
+    return () => controls.stop();
+  }, [consumed, baseValue]);
+
+  return <>{displayValue}</>;
+}
+
 interface StatBadgeProps {
   type: StatIconType;
   label: string;
-  value: number | string;
+  value: ReactNode;
   color: string;
   borderColor: string;
   tooltip: string;
@@ -178,10 +262,17 @@ export function PlayerStats({
   fireRuneCount,
   hasPenalty,
   hasWindMitigation,
-  windRuneCount
+  windRuneCount,
+  round
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower ?? (essence * focus);
+  const previousHealthRef = useRef(health);
+  const healedAmount = Math.max(0, health - previousHealthRef.current);
+
+  useEffect(() => {
+    previousHealthRef.current = health;
+  }, [health]);
 
   const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
@@ -265,7 +356,7 @@ export function PlayerStats({
           <StatBadge
             type="health"
             label="Health"
-            value={health}
+            value={<AnimatedHealthValue target={health} />}
             color="#fb7185"
             borderColor="rgba(248, 113, 113, 0.4)"
             tooltip={healthTooltip}
@@ -273,7 +364,7 @@ export function PlayerStats({
           <StatBadge
             type="healing"
             label="Healing"
-            value={healing}
+            value={<AnimatedHealingValue baseValue={healing} consumed={healedAmount} round={round} />}
             color="#4ade80"
             borderColor="rgba(74, 222, 128, 0.4)"
             tooltip={healingTooltip}

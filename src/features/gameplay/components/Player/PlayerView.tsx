@@ -17,6 +17,7 @@ interface PlayerViewProps {
   frozenPatternLines: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
+  round: number;
 }
 
 export function PlayerView({
@@ -31,6 +32,7 @@ export function PlayerView({
   frozenPatternLines,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
+  round,
 }: PlayerViewProps) {
   return (
     <div>
@@ -47,6 +49,7 @@ export function PlayerView({
         frozenPatternLines={frozenPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
+        round={round}
       />
     </div>
   );
