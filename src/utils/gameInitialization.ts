@@ -58,6 +58,8 @@ export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
 const SOLO_STARTING_HEALTH = 100;
 const SOLO_MAX_HEALTH = 1000;
+const SOLO_FACTORIES_PER_PLAYER = 4;
+const SOLO_DECK_MULTIPLIER = 2;
 
 export interface QuickPlayConfig {
   factoriesPerPlayer: number;
@@ -300,6 +302,8 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState 
   };
 
   const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
+  const soloRuneforgeCount = SOLO_FACTORIES_PER_PLAYER;
+  const soloDeckSize = quickPlayConfig.totalRunesPerPlayer * SOLO_DECK_MULTIPLIER;
 
   const soloPlayer = createPlayer(
     'player-1',
@@ -307,7 +311,7 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState 
     'human',
     SOLO_STARTING_HEALTH,
     runeTypeCount,
-    quickPlayConfig.totalRunesPerPlayer,
+    soloDeckSize,
     quickPlayConfig.overflowCapacity,
     SOLO_MAX_HEALTH
   );
@@ -324,7 +328,7 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState 
   );
   echoPlayer.deck = [];
 
-  const soloFactories = createSoloFactories(soloPlayer, quickPlayConfig.factoriesPerPlayer);
+  const soloFactories = createSoloFactories(soloPlayer, soloRuneforgeCount);
   const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
     soloFactories,
     {
@@ -340,8 +344,8 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState 
     matchType: 'solo',
     gameMode: 'standard',
     runeTypeCount,
-    factoriesPerPlayer: quickPlayConfig.factoriesPerPlayer,
-    totalRunesPerPlayer: quickPlayConfig.totalRunesPerPlayer,
+    factoriesPerPlayer: soloRuneforgeCount,
+    totalRunesPerPlayer: soloDeckSize,
     runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
     startingHealth: SOLO_STARTING_HEALTH,
     overflowCapacity: quickPlayConfig.overflowCapacity,
