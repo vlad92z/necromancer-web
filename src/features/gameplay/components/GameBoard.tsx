@@ -9,6 +9,8 @@ import { RuneforgesAndCenter } from './Center/RuneforgesAndCenter';
 import { PlayerView } from './Player/PlayerView';
 import { OpponentView } from './Player/OpponentView';
 import { GameOverModal } from './GameOverModal';
+import { SoloGameOverModal } from './SoloGameOverModal';
+import { SoloStatusBar } from './SoloStatusBar';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
@@ -21,6 +23,7 @@ import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
+import { calculateEffectiveFloorPenalty } from '../../../utils/scoring';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -67,6 +70,9 @@ interface GameBoardProps {
 
 export function GameBoard({ gameState }: GameBoardProps) {
   const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round } = gameState;
+  const isSoloMode = gameState.matchType === 'solo';
+  const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
+  const runePowerTotal = gameState.runePowerTotal;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect, skipFrostEffect } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
@@ -121,13 +127,25 @@ export function GameBoard({ gameState }: GameBoardProps) {
   }, [isMusicMuted]);
 
   // Determine winner by highest remaining health
-  const winner = isGameOver
+  const winner = !isSoloMode && isGameOver
     ? players[0].health > players[1].health
       ? players[0]
       : players[1].health > players[0].health
         ? players[1]
         : null
     : null;
+
+  const overloadPenalty = isSoloMode
+    ? calculateEffectiveFloorPenalty(
+        players[0].floorLine.runes,
+        players[0].patternLines,
+        players[0].wall,
+        gameMode
+      )
+    : 0;
+  const overloadMultiplier = isSoloMode ? Math.pow(2, Math.max(0, round - 1)) : 0;
+  const overloadDamagePreview = overloadPenalty * overloadMultiplier;
+  const playerMaxHealth = players[0].maxHealth ?? players[0].health;
   
   const handleRuneClick = (runeforgeId: string, runeType: RuneType) => {
     // Direct rune click always drafts that rune type
@@ -146,7 +164,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const opponentHiddenFloorSlots = hiddenFloorSlots[opponent.id];
   const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
   const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
-  const canFreezeOpponentPatternLine = frostEffectPending && currentPlayerIndex === 0;
+  const canFreezeOpponentPatternLine = !isSoloMode && frostEffectPending && currentPlayerIndex === 0;
   const canSkipFrostEffect = canFreezeOpponentPatternLine && !isAITurn;
 
   const handleFreezePatternLine = (lineIndex: number) => {
@@ -810,18 +828,30 @@ export function GameBoard({ gameState }: GameBoardProps) {
           justifyContent: 'center'
         }}>
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <OpponentView
-              opponent={players[1]}
-              isActive={currentPlayerIndex === 1}
-              gameMode={gameMode}
-              frozenPatternLines={opponentFrozenLines}
-              freezeSelectionEnabled={canFreezeOpponentPatternLine}
-              onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
-              onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
-              hiddenSlotKeys={opponentHiddenPatternSlots}
-              hiddenFloorSlotIndexes={opponentHiddenFloorSlots}
-              round={round}
-            />
+            {isSoloMode ? (
+              <SoloStatusBar
+                health={players[0].health}
+                maxHealth={playerMaxHealth}
+                runePowerTotal={runePowerTotal}
+                overloadPenalty={overloadPenalty}
+                overloadMultiplier={overloadMultiplier}
+                overloadDamage={overloadDamagePreview}
+                round={round}
+              />
+            ) : (
+              <OpponentView
+                opponent={players[1]}
+                isActive={currentPlayerIndex === 1}
+                gameMode={gameMode}
+                frozenPatternLines={opponentFrozenLines}
+                freezeSelectionEnabled={canFreezeOpponentPatternLine}
+                onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
+                onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
+                hiddenSlotKeys={opponentHiddenPatternSlots}
+                hiddenFloorSlotIndexes={opponentHiddenFloorSlots}
+                round={round}
+              />
+            )}
           </div>
         </div>
 
@@ -856,6 +886,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
               onCancelVoidSelection={skipVoidEffect}
               animatingRuneIds={animatingRuneIds}
               hiddenCenterRuneIds={hiddenCenterRuneIds}
+              hideOpponentRow={isSoloMode}
             />
             
             {/* Game Over Modal - Centered over drafting area */}
@@ -868,11 +899,21 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 zIndex: 100,
                 width: 'auto'
               }}>
-                <GameOverModal
-                  players={players}
-                  winner={winner}
-                  onReturnToStart={returnToStartScreen}
-                />
+                {isSoloMode ? (
+                  <SoloGameOverModal
+                    player={players[0]}
+                    outcome={soloOutcome}
+                    runePowerTotal={runePowerTotal}
+                    round={round}
+                    onReturnToStart={returnToStartScreen}
+                  />
+                ) : (
+                  <GameOverModal
+                    players={players}
+                    winner={winner}
+                    onReturnToStart={returnToStartScreen}
+                  />
+                )}
               </div>
             )}
           </div>

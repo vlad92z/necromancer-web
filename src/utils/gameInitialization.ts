@@ -56,6 +56,8 @@ export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
 }
 
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
+const SOLO_STARTING_HEALTH = 100;
+const SOLO_MAX_HEALTH = 1000;
 
 export interface QuickPlayConfig {
   factoriesPerPlayer: number;
@@ -123,7 +125,8 @@ export function createPlayer(
   startingHealth: number = 300,
   runeTypeCount: RuneTypeCount = 5,
   totalRunesPerPlayer?: number,
-  overflowCapacity?: number
+  overflowCapacity?: number,
+  maxHealthOverride?: number
 ): Player {
   return {
     id,
@@ -136,7 +139,7 @@ export function createPlayer(
       maxCapacity: overflowCapacity ?? 10,
     },
     health: startingHealth,
-    maxHealth: startingHealth,
+    maxHealth: maxHealthOverride ?? startingHealth,
     deck: createMockDeck(id, runeTypeCount, totalRunesPerPlayer),
   };
 }
@@ -154,6 +157,19 @@ export function createEmptyFactories(players: [Player, Player], perPlayerCount: 
         runes: [],
       }))
   );
+}
+
+/**
+ * Create runeforges for a solo run (only the human player gets runeforges)
+ */
+export function createSoloFactories(player: Player, perPlayerCount: number): Runeforge[] {
+  return Array(perPlayerCount)
+    .fill(null)
+    .map((_, index) => ({
+      id: `${player.id}-runeforge-${index + 1}`,
+      ownerId: player.id,
+      runes: [],
+    }));
 }
 
 /**
@@ -239,6 +255,7 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
   
   return {
     gameStarted: false,
+    matchType: 'versus',
     gameMode: 'standard', // Default to standard mode (will be set when starting game)
     runeTypeCount,
     factoriesPerPlayer: quickPlayConfig.factoriesPerPlayer,
@@ -268,5 +285,89 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     },
     shouldTriggerEndRound: false,
     scoringSnapshot: null,
+    runePowerTotal: 0,
+    soloOutcome: null,
+  };
+}
+
+/**
+ * Initialize a solo run with the same board sizing options as quick play
+ */
+export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState {
+  const playerControllers: PlayerControllers = {
+    bottom: { type: 'human' },
+    top: { type: 'human' },
+  };
+
+  const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
+
+  const soloPlayer = createPlayer(
+    'player-1',
+    'Solo Arcanist',
+    'human',
+    SOLO_STARTING_HEALTH,
+    runeTypeCount,
+    quickPlayConfig.totalRunesPerPlayer,
+    quickPlayConfig.overflowCapacity,
+    SOLO_MAX_HEALTH
+  );
+
+  const echoPlayer = createPlayer(
+    'solo-echo',
+    'Echo',
+    'human',
+    SOLO_STARTING_HEALTH,
+    runeTypeCount,
+    0,
+    quickPlayConfig.overflowCapacity,
+    SOLO_MAX_HEALTH
+  );
+  echoPlayer.deck = [];
+
+  const soloFactories = createSoloFactories(soloPlayer, quickPlayConfig.factoriesPerPlayer);
+  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
+    soloFactories,
+    {
+      [soloPlayer.id]: soloPlayer.deck,
+    },
+    quickPlayConfig.runesPerRuneforge
+  );
+
+  soloPlayer.deck = decksByPlayer[soloPlayer.id] ?? [];
+
+  return {
+    gameStarted: false,
+    matchType: 'solo',
+    gameMode: 'standard',
+    runeTypeCount,
+    factoriesPerPlayer: quickPlayConfig.factoriesPerPlayer,
+    totalRunesPerPlayer: quickPlayConfig.totalRunesPerPlayer,
+    runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
+    startingHealth: SOLO_STARTING_HEALTH,
+    overflowCapacity: quickPlayConfig.overflowCapacity,
+    playerControllers,
+    players: [soloPlayer, echoPlayer],
+    runeforges: filledRuneforges,
+    centerPool: [],
+    currentPlayerIndex: 0,
+    turnPhase: 'draft',
+    round: 1,
+    selectedRunes: [],
+    draftSource: null,
+    firstPlayerToken: null,
+    animatingRunes: [],
+    pendingPlacement: null,
+    scoringPhase: null,
+    roundHistory: [],
+    voidEffectPending: false,
+    frostEffectPending: false,
+    frozenPatternLines: {
+      [soloPlayer.id]: [],
+      [echoPlayer.id]: [],
+    },
+    shouldTriggerEndRound: false,
+    scoringSnapshot: null,
+    runePowerTotal: 0,
+    soloOutcome: null,
   };
 }

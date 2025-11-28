@@ -95,8 +95,18 @@ Damage & Healing:
 - **Classic**: Pure strategy without rune effects
 - **Standard**: Includes rune special effects (see Rune Effects below)
 - **PvE**: Play against AI opponent
+- **Solo**: Draft alone, starting at 100 HP (max 1000). Draft only from your runeforges, then the center. Overload damage doubles every round (1x, 2x, 4x, 8x...). Frost control is disabled, and each round's spellpower is added to your total Rune Power score.
 - **Campaign** (planned): Progress through boss encounters
 - **PvP** (planned): Online multiplayer
+
+### Solo Mode Rules
+- Board sizes: 3x3, 4x4, or 5x5 (matches Quick Play sizing)
+- Health: Start at 100 HP with a 1000 HP max cap
+- Drafting: Only from your runeforges, then the center pool once personal forges are empty
+- Round end: Take overload damage equal to your floor penalty multiplied by a doubling round multiplier (1, 2, 4, 8...)
+- Scoring: Each round's spellpower (essence × focus) is added to your total Rune Power
+- Win/Lose: Victory when you cannot start a new round due to rune shortage; defeat at 0 HP
+- Frost runes: Control effect is disabled in Solo mode
 
 ### Developer Mode
 Access the Developer Mode from the main menu to preview and test Spellpower animations in isolation. Configure health, spellpower, healing, focus, essence, and animation speed to demo the visual behavior of the Spellpower component without playing a full game. Changes are non-destructive and do not affect game state.

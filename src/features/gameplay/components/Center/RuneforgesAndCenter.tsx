@@ -26,6 +26,7 @@ interface RuneforgesAndCenterProps {
   onCancelVoidSelection?: () => void;
   animatingRuneIds?: string[];
   hiddenCenterRuneIds?: Set<string>;
+  hideOpponentRow?: boolean;
 }
 
 export function RuneforgesAndCenter({ 
@@ -47,7 +48,8 @@ export function RuneforgesAndCenter({
   onCancelSelection,
   onCancelVoidSelection,
   animatingRuneIds,
-  hiddenCenterRuneIds
+  hiddenCenterRuneIds,
+  hideOpponentRow = false
 }: RuneforgesAndCenterProps) {
   const [player, opponent] = players;
   const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
@@ -184,7 +186,7 @@ export function RuneforgesAndCenter({
           </button>
         </div>
       )}
-      {renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
+      {!hideOpponentRow && renderRuneforgeRow(opponent, opponentRuneforges, 'center')}
       <div style={{ position: 'relative', minHeight: '60px', marginBottom: '25px', marginTop: '25px', width: '100%' }}>
         <CenterPool 
           centerPool={centerPool}

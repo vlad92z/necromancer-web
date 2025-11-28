@@ -94,6 +94,11 @@ export type AIDifficulty = 'easy' | 'normal' | 'hard';
 export type PlayerSide = 'top' | 'bottom';
 
 /**
+ * Game match type
+ */
+export type MatchType = 'versus' | 'solo';
+
+/**
  * Controller type for a player seat
  */
 export type PlayerController =
@@ -114,6 +119,11 @@ export type QuickPlayOpponent = AIDifficulty | 'human';
  * Difficulty type alias for spectator mode
  */
 export type Difficulty = AIDifficulty;
+
+/**
+ * Solo game ending state
+ */
+export type SoloOutcome = 'victory' | 'defeat' | null;
 
 /**
  * Player state
@@ -191,6 +201,7 @@ export interface AnimatingRune {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
+  matchType: MatchType; // Game variant: traditional duel or solo run
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
   runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
   factoriesPerPlayer: number; // Runeforge count per player (quick play config)
@@ -220,4 +231,6 @@ export interface GameState {
   frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
   scoringSnapshot: ScoringSnapshot | null; // Cached scoring data across phases
+  runePowerTotal: number; // Solo score accumulator (essence × focus per round)
+  soloOutcome: SoloOutcome; // Solo result (victory/defeat)
 }
