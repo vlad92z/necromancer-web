@@ -98,44 +98,53 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       }}
     >
       <div style={{ 
-        display: 'flex', 
-        alignItems: 'stretch', 
-        justifyContent: 'space-between', 
+        display: 'flex',
+        alignItems: 'stretch',
+        justifyContent: 'space-between',
         gap: 'min(1.5vmin, 18px)',
         width: '100%',
         height: '100%'
       }}>
-        {/* Floor Line - Left side */}
-        <div onClick={(e) => e.stopPropagation()}>
-          <FloorLine 
-            floorLine={player.floorLine}
-            onPlaceRunesInFloor={onPlaceRunesInFloor}
-            canPlace={canPlace}
-            mitigatedSlots={windMitigationCount}
-            playerId={player.id}
-            hiddenSlotIndexes={hiddenFloorSlotIndexes}
-          />
+        <div style={{ 
+          flex: '1 1 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'min(1.2vmin, 12px)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'min(1.2vmin, 14px)' }}>
+            {/* Pattern Lines */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <PatternLines 
+                patternLines={player.patternLines}
+                wall={player.wall}
+                onPlaceRunes={onPlaceRunes}
+                selectedRuneType={selectedRuneType}
+                canPlace={canPlace}
+                frozenLineIndexes={frozenPatternLines}
+                freezeSelectionEnabled={freezeSelectionEnabled}
+                onFreezeLine={onFreezePatternLine}
+                playerId={player.id}
+                hiddenSlotKeys={hiddenSlotKeys}
+              />
+            </div>
+            
+            {/* Wall */}
+            <ScoringWall wall={player.wall} patternLines={player.patternLines} />
+          </div>
+
+          {/* Floor Line - spans beneath pattern lines and wall */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <FloorLine 
+              floorLine={player.floorLine}
+              onPlaceRunesInFloor={onPlaceRunesInFloor}
+              canPlace={canPlace}
+              mitigatedSlots={windMitigationCount}
+              playerId={player.id}
+              hiddenSlotIndexes={hiddenFloorSlotIndexes}
+            />
+          </div>
         </div>
-        
-        {/* Pattern Lines */}
-        <div onClick={(e) => e.stopPropagation()}>
-          <PatternLines 
-            patternLines={player.patternLines}
-            wall={player.wall}
-            onPlaceRunes={onPlaceRunes}
-            selectedRuneType={selectedRuneType}
-            canPlace={canPlace}
-            frozenLineIndexes={frozenPatternLines}
-            freezeSelectionEnabled={freezeSelectionEnabled}
-            onFreezeLine={onFreezePatternLine}
-            playerId={player.id}
-            hiddenSlotKeys={hiddenSlotKeys}
-          />
-        </div>
-        
-        {/* Wall */}
-        <ScoringWall wall={player.wall} patternLines={player.patternLines} />
-        
+
         {/* Right side - Player Info and RuneScore */}
         <div style={{ 
           flex: '0 0 auto',
