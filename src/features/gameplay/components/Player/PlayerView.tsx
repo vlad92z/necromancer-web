@@ -18,6 +18,7 @@ interface PlayerViewProps {
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
+  hideStatsPanel?: boolean;
 }
 
 export function PlayerView({
@@ -33,6 +34,7 @@ export function PlayerView({
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
   round,
+  hideStatsPanel = false,
 }: PlayerViewProps) {
   return (
     <div>
@@ -50,6 +52,7 @@ export function PlayerView({
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
         round={round}
+        hideStatsPanel={hideStatsPanel}
       />
     </div>
   );

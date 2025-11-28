@@ -304,7 +304,7 @@ export function PlayerStats({
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
           alignItems: 'center',
           gap: '0.9em',
           minWidth: '8em',
@@ -369,9 +369,6 @@ export function PlayerStats({
             borderColor="rgba(74, 222, 128, 0.4)"
             tooltip={healingTooltip}
           />
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
           <StatBadge
             type="essence"
             label="Essence"

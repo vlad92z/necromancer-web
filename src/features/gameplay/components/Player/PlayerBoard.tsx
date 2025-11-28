@@ -25,9 +25,10 @@ interface PlayerBoardProps {
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
+  hideStatsPanel?: boolean;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -146,30 +147,32 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         </div>
 
         {/* Right side - Player Info and RuneScore */}
-        <div style={{ 
-          flex: '0 0 auto',
-          width: detailPanelWidth,
-          minWidth: detailPanelWidth,
-          maxWidth: detailPanelWidth,
-          display: 'flex', 
-          flexDirection: 'column'
-        }} onClick={(e) => e.stopPropagation()}>
-          <PlayerStats
-            playerName={player.name}
-            isActive={isActive}
-            nameColor={nameColor}
-            health={currentHealth}
-            healing={healingAmount}
-            essence={essence}
-            focus={focus}
-            totalPower={totalPower}
-            fireRuneCount={fireRuneCount}
-            hasPenalty={hasPenalty}
-            hasWindMitigation={hasWindMitigation}
-            windRuneCount={windMitigationCount}
-            round={round}
-          />
-        </div>
+        {!hideStatsPanel && (
+          <div style={{ 
+            flex: '0 0 auto',
+            width: detailPanelWidth,
+            minWidth: detailPanelWidth,
+            maxWidth: detailPanelWidth,
+            display: 'flex', 
+            flexDirection: 'column'
+          }} onClick={(e) => e.stopPropagation()}>
+            <PlayerStats
+              playerName={player.name}
+              isActive={isActive}
+              nameColor={nameColor}
+              health={currentHealth}
+              healing={healingAmount}
+              essence={essence}
+              focus={focus}
+              totalPower={totalPower}
+              fireRuneCount={fireRuneCount}
+              hasPenalty={hasPenalty}
+              hasWindMitigation={hasWindMitigation}
+              windRuneCount={windMitigationCount}
+              round={round}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
