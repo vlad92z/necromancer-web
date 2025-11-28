@@ -964,13 +964,13 @@ export function GameBoard({ gameState }: GameBoardProps) {
 
             {/* Solo Bottom: Status and Player Stats */}
             <div style={{ 
-              flex: 1, 
+              flex: 0.2, 
               padding: `${sectionPadding}px`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
 
                 {soloStats && <SoloStats {...soloStats} />}
               </div>
