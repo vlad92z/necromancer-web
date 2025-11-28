@@ -109,11 +109,11 @@ function getRuneDescription(type: RuneType) {
     case 'Fire':
       return 'Fire - increases ⚡Essence to deal more damage.';
     case 'Frost':
-      return 'Frost - placing Frost runes lets you freeze enemy pattern lines.';
+      return 'Frost - each rune dampens next round\'s strain growth by 10%.';
     case 'Life':
       return 'Life - increases 🌿healing done every round.';
     case 'Void':
-      return 'Void - placing Void runes lets you destroy unclaimed runes.';
+      return 'Void - each rune converts 10% of projected incoming damage into spellpower.';
     case 'Wind':
       return 'Wind - reduces Overload penalties.';
     default:

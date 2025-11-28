@@ -19,9 +19,11 @@ export type RuneTypeCount = 3 | 4 | 5;
  * Rune effect modifiers
  */
 export type PassiveRuneEffect =
+  | { type: 'DamageToSpellpower'; amount: number }
   | { type: 'EssenceBonus'; amount: number }
+  | { type: 'FloorPenaltyMitigation'; amount: number }
   | { type: 'Healing'; amount: number }
-  | { type: 'FloorPenaltyMitigation'; amount: number };
+  | { type: 'StrainMitigation'; amount: number };
 
 export type ActiveRuneEffect =
   | { type: 'DestroyRune' }

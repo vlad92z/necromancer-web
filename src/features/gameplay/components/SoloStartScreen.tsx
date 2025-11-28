@@ -72,9 +72,9 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
           }}
         >
           <RuleCard title="Health" description="Start at 100 HP with a max of 1000. Healing is capped at max health." />
-          <RuleCard title="Overload" description="Overflow runes become overload. Damage doubles every round (1x, 2x, 4x, 8x...)." />
+          <RuleCard title="Overload" description="Overflow runes become overload. Strain grows each round (base ×2) but Frost can slow the increase." />
           <RuleCard title="Rune Power" description="Each round, your spellpower (essence × focus) is added to total Rune Power." />
-          <RuleCard title="Frost" description="Frost control is disabled in Solo. All other rune effects remain." />
+          <RuleCard title="Frost" description="Each Frost rune on your wall softens the next strain increase by 10%." />
         </div>
 
         <div

@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
 import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
@@ -13,6 +13,44 @@ import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiv
 // Helper function to count Life runes on a wall
 function calculateHealingAmount(wall: Player['wall']): number {
   return wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0);
+}
+
+function calculatePassiveEffectForWall(
+  wall: Player['wall'],
+  effectType: PassiveRuneEffect['type']
+): number {
+  return wall.flat().reduce(
+    (total, cell) => total + getPassiveEffectValue(cell.effects, effectType),
+    0
+  );
+}
+
+function calculateVoidDamageBonus(
+  wall: Player['wall'],
+  projectedDamageTaken: number,
+  gameMode: GameState['gameMode']
+): number {
+  if (gameMode === 'classic') {
+    return 0;
+  }
+  const conversionRate = calculatePassiveEffectForWall(wall, 'DamageToSpellpower');
+  return projectedDamageTaken * conversionRate;
+}
+
+function calculateNextStrainMultiplier(
+  players: [Player, Player],
+  gameMode: GameState['gameMode'],
+  baseMultiplier: number
+): number {
+  if (gameMode === 'classic') {
+    return baseMultiplier;
+  }
+  const frostMitigation = players.reduce(
+    (total, player) => total + calculatePassiveEffectForWall(player.wall, 'StrainMitigation'),
+    0
+  );
+  const mitigationFactor = Math.max(0, 1 - frostMitigation);
+  return Math.max(0, baseMultiplier * mitigationFactor);
 }
 
 function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
@@ -105,12 +143,18 @@ function processSoloScoringPhase(state: GameState): GameState {
       floorPenalty,
       state.gameMode
     );
+    const projectedDamageTaken = floorPenalty * state.strain;
+    const voidBonus = calculateVoidDamageBonus(updatedPlayer.wall, projectedDamageTaken, state.gameMode);
+    const adjustedWallPowerStats: WallPowerStats = {
+      ...wallPowerStats,
+      totalPower: wallPowerStats.totalPower + voidBonus,
+    };
 
     const healingTotal = state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayer.wall) : 0;
 
     const scoringSnapshot: ScoringSnapshot = {
       floorPenalties: [floorPenalty, 0],
-      wallPowerStats: [wallPowerStats, emptyWallStats],
+      wallPowerStats: [adjustedWallPowerStats, emptyWallStats],
       healingTotals: [healingTotal, 0],
     };
 
@@ -258,6 +302,12 @@ function processSoloScoringPhase(state: GameState): GameState {
       deck: decksByPlayer[state.players[0].id] ?? [],
     };
 
+    const nextStrainMultiplier = calculateNextStrainMultiplier(
+      [updatedPlayer, state.players[1]],
+      state.gameMode,
+      DEFAULT_STRAIN_MULTIPLIER
+    );
+
     return {
       ...state,
       players: [updatedPlayer, state.players[1]],
@@ -267,7 +317,7 @@ function processSoloScoringPhase(state: GameState): GameState {
       round: state.round + 1,
       // multiply strain at end of round so it applies next round
       strain: state.strain * state.strainMultiplier,
-      strainMultiplier: state.strainMultiplier,
+      strainMultiplier: nextStrainMultiplier,
       scoringPhase: null,
       scoringSnapshot: null,
       soloOutcome: null,
@@ -856,7 +906,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ),
         ];
 
-        const wallPowerStats: [WallPowerStats, WallPowerStats] = [
+        const baseWallPowerStats: [WallPowerStats, WallPowerStats] = [
           calculateWallPowerWithSegments(
             updatedPlayersArray[0].wall,
             floorPenalties[0],
@@ -867,6 +917,24 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             floorPenalties[1],
             state.gameMode
           ),
+        ];
+        const projectedDamageTaken: [number, number] = [
+          baseWallPowerStats[1].totalPower,
+          baseWallPowerStats[0].totalPower,
+        ];
+        const voidBonuses: [number, number] = [
+          calculateVoidDamageBonus(updatedPlayersArray[0].wall, projectedDamageTaken[0], state.gameMode),
+          calculateVoidDamageBonus(updatedPlayersArray[1].wall, projectedDamageTaken[1], state.gameMode),
+        ];
+        const wallPowerStats: [WallPowerStats, WallPowerStats] = [
+          {
+            ...baseWallPowerStats[0],
+            totalPower: baseWallPowerStats[0].totalPower + voidBonuses[0],
+          },
+          {
+            ...baseWallPowerStats[1],
+            totalPower: baseWallPowerStats[1].totalPower + voidBonuses[1],
+          },
         ];
 
         const healingTotals: [number, number] = [
@@ -1042,6 +1110,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           { ...state.players[0], deck: decksByPlayer[state.players[0].id] ?? [] },
           { ...state.players[1], deck: decksByPlayer[state.players[1].id] ?? [] },
         ];
+        const nextStrainMultiplier = calculateNextStrainMultiplier(
+          finalPlayers,
+          state.gameMode,
+          DEFAULT_STRAIN_MULTIPLIER
+        );
 
         console.log('Round complete! Starting next round...');
 
@@ -1054,7 +1127,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           round: state.round + 1,
           // multiply strain at end of round so it applies next round
           strain: state.strain * state.strainMultiplier,
-          strainMultiplier: state.strainMultiplier,
+          strainMultiplier: nextStrainMultiplier,
           scoringPhase: null,
           scoringSnapshot: null,
         };

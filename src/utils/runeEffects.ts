@@ -4,22 +4,36 @@
 
 import type { ActiveRuneEffect, PassiveRuneEffect, RuneEffects, RuneType } from '../types/game';
 
+/**
+ * Legacy rune effects preserved for future use.
+ */
+export const LEGACY_RUNE_EFFECTS: Pick<Record<RuneType, RuneEffects>, 'Frost' | 'Void'> = {
+  Frost: {
+    passive: [],
+    active: [{ type: 'FreezePatternLine' }],
+  },
+  Void: {
+    passive: [],
+    active: [{ type: 'DestroyRune' }],
+  },
+};
+
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: {
     passive: [{ type: 'EssenceBonus', amount: 1 }],
     active: [],
   },
   Frost: {
-    passive: [],
-    active: [{ type: 'FreezePatternLine' }],
+    passive: [{ type: 'StrainMitigation', amount: 0.1 }],
+    active: [],
   },
   Life: {
     passive: [{ type: 'Healing', amount: 10 }],
     active: [],
   },
   Void: {
-    passive: [],
-    active: [{ type: 'DestroyRune' }],
+    passive: [{ type: 'DamageToSpellpower', amount: 0.1 }],
+    active: [],
   },
   Wind: {
     passive: [{ type: 'FloorPenaltyMitigation', amount: 1 }],

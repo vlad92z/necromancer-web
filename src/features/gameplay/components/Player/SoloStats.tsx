@@ -5,9 +5,21 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { animate } from 'framer-motion';
+import { DEFAULT_STRAIN_MULTIPLIER } from '../../../../utils/gameInitialization';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
 
-type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower' | 'overload' | 'strain' | 'runePower' | 'damage';
+type StatIconType =
+  | 'health'
+  | 'healing'
+  | 'essence'
+  | 'focus'
+  | 'spellpower'
+  | 'overload'
+  | 'strain'
+  | 'runePower'
+  | 'damage'
+  | 'voidPower'
+  | 'fatigue';
 
 interface SpellpowerProps {
   isActive: boolean;
@@ -25,6 +37,8 @@ interface SpellpowerProps {
   overloadMultiplier: number;
   overloadDamagePreview: number;
   round: number;
+  frostRuneCount: number;
+  voidRuneCount: number;
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
@@ -124,6 +138,30 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
         <path d="M21 3 3 21" {...strokeProps} />
         <circle cx="10" cy="10" r="1.8" fill={color} opacity={0.92} />
         <circle cx="14" cy="14" r="1.8" fill={color} opacity={0.92} />
+      </svg>
+    );
+  }
+
+  if (type === 'voidPower') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8" {...strokeProps} />
+        <path d="M8 12a4 4 0 0 1 8 0" {...strokeProps} />
+        <path d="M12 6v2" {...strokeProps} />
+        <path d="M12 16v2" {...strokeProps} />
+        <circle cx="12" cy="12" r="2.2" fill={color} opacity={0.9} />
+      </svg>
+    );
+  }
+
+  if (type === 'fatigue') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <path d="M5 12a7 7 0 0 1 14 0" {...strokeProps} />
+        <path d="M12 5v3" {...strokeProps} />
+        <path d="M12 12v5" {...strokeProps} />
+        <path d="M9 17h6" {...strokeProps} />
+        <circle cx="12" cy="12" r="1.4" fill={color} opacity={0.92} />
       </svg>
     );
   }
@@ -310,12 +348,17 @@ export function SoloStats({
   overloadPenalty,
   overloadMultiplier,
   overloadDamagePreview,
-  round
+  round,
+  frostRuneCount,
+  voidRuneCount
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower ?? (essence * focus);
   const previousHealthRef = useRef(health);
   const healedAmount = Math.max(0, health - previousHealthRef.current);
+  const voidPowerRaw = overloadDamagePreview * voidRuneCount * 0.1;
+  const voidPower = Math.max(0, Math.round(voidPowerRaw * 10) / 10);
+  const fatigueMultiplier = Math.max(0, Math.round((DEFAULT_STRAIN_MULTIPLIER - frostRuneCount * 0.1) * 10) / 10);
 
   useEffect(() => {
     previousHealthRef.current = health;
@@ -344,6 +387,8 @@ export function SoloStats({
   const strainTooltip = `Strain ×${overloadMultiplier} applied to Overload each round. Current damage preview: ${overloadDamagePreview}.`;
   const runePowerTooltip = 'Rune Power - total spellpower accumulated across the duel.';
   const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}) × Strain (${overloadMultiplier}) = ${overloadDamagePreview}.`;
+  const voidPowerTooltip = `Void Power - Damage (${overloadDamagePreview}) × Void runes (${voidRuneCount}) × 10% = ${voidPower}. Adds to Spell Power at round end.`;
+  const fatigueTooltip = `Fatigue - Strain multiplier for next round. Base 200% minus Frost runes (${frostRuneCount}) × 10% = ×${fatigueMultiplier}.`;
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);
@@ -375,7 +420,7 @@ export function SoloStats({
           position: 'relative',
         }}
       >
-        <div style={{ display: 'flex', gap: '5em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+        <div style={{ display: 'flex', gap: '2em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
               type="health"
@@ -460,6 +505,26 @@ export function SoloStats({
               borderColor="rgba(249, 115, 22, 0.4)"
               tooltip={damageTooltip}
               alert={overloadDamagePreview > 0}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <StatBadge
+              type="voidPower"
+              label="Void Power"
+              value={voidPower}
+              color="#a855f7"
+              borderColor="rgba(168, 85, 247, 0.35)"
+              tooltip={voidPowerTooltip}
+              alert={voidPower > 0}
+            />
+            <StatBadge
+              type="fatigue"
+              label="Fatigue"
+              value={`×${fatigueMultiplier}`}
+              color="#7dd3fc"
+              borderColor="rgba(125, 211, 252, 0.35)"
+              tooltip={fatigueTooltip}
             />
           </div>
         </div>

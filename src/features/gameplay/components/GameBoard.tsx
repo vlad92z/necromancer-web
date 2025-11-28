@@ -183,6 +183,21 @@ export function GameBoard({ gameState }: GameBoardProps) {
             completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
           : 0;
 
+        const countRunesOfType = (runeType: RuneType): number => {
+          const wallCount = player.wall.flat().reduce((total, cell) => (
+            cell.runeType === runeType ? total + 1 : total
+          ), 0);
+
+          const pendingCount = completedPatternLines.reduce((total, line) => (
+            line.runeType === runeType ? total + 1 : total
+          ), 0);
+
+          return wallCount + pendingCount;
+        };
+
+        const frostRuneCount = gameMode === 'standard' ? countRunesOfType('Frost') : 0;
+        const voidRuneCount = gameMode === 'standard' ? countRunesOfType('Void') : 0;
+
         return {
           isActive: currentPlayerIndex === 0,
           health: player.health,
@@ -199,6 +214,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
           overloadMultiplier,
           overloadDamagePreview,
           round,
+          frostRuneCount,
+          voidRuneCount,
         };
       })()
     : null;
