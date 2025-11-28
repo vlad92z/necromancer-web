@@ -197,10 +197,14 @@ export function GameBoard({ gameState }: GameBoardProps) {
           essence,
           focus,
           totalPower,
+          runePowerTotal,
           fireRuneCount,
           hasPenalty,
           hasWindMitigation,
           windRuneCount: windMitigationCount,
+          overloadPenalty: floorPenaltyCount,
+          overloadMultiplier,
+          overloadDamagePreview,
           round,
         };
       })()

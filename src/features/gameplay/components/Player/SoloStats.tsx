@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { animate } from 'framer-motion';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
 
-type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower';
+type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower' | 'overload' | 'strain' | 'runePower' | 'damage';
 
 interface SpellpowerProps {
   playerName: string;
@@ -18,10 +18,14 @@ interface SpellpowerProps {
   essence: number;
   focus: number;
   totalPower: number;
+  runePowerTotal: number;
   fireRuneCount: number;
   hasPenalty: boolean;
   hasWindMitigation: boolean;
   windRuneCount: number;
+  overloadPenalty: number;
+  overloadMultiplier: number;
+  overloadDamagePreview: number;
   round: number;
 }
 
@@ -76,17 +80,60 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
     );
   }
 
+  if (type === 'overload') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <path d="M12 3 3 21h18L12 3Z" {...strokeProps} />
+        <path d="M12 9v4" {...strokeProps} />
+        <circle cx="12" cy="16" r="1.6" fill={color} opacity={0.92} />
+      </svg>
+    );
+  }
+
+  if (type === 'strain') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <path d="M4 12h16" {...strokeProps} />
+        <path d="M8 8h4l-3-3" {...strokeProps} />
+        <path d="M16 16h-4l3 3" {...strokeProps} />
+        <path d="M9.5 12h5" {...strokeProps} />
+        <circle cx="12" cy="12" r="2.5" fill={color} opacity={0.9} />
+      </svg>
+    );
+  }
+
+  if (type === 'spellpower' || type === 'runePower') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <path d="M12 3v4" {...strokeProps} />
+        <path d="M12 17v4" {...strokeProps} />
+        <path d="M4 12h4" {...strokeProps} />
+        <path d="M16 12h4" {...strokeProps} />
+        <path d="m7 7 2.5 2.5" {...strokeProps} />
+        <path d="m14.5 14.5 2.5 2.5" {...strokeProps} />
+        <path d="m7 17 2.5-2.5" {...strokeProps} />
+        <path d="m14.5 9.5 2.5-2.5" {...strokeProps} />
+        <circle cx="12" cy="12" r="2" fill={color} opacity={0.95} />
+      </svg>
+    );
+  }
+
+  if (type === 'damage') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <path d="M4 5h7v7H4z" {...strokeProps} />
+        <path d="M13 12h7v7h-7z" {...strokeProps} />
+        <path d="M21 3 3 21" {...strokeProps} />
+        <circle cx="10" cy="10" r="1.8" fill={color} opacity={0.92} />
+        <circle cx="14" cy="14" r="1.8" fill={color} opacity={0.92} />
+      </svg>
+    );
+  }
+
   return (
     <svg width={size} height={size} viewBox="0 0 24 24">
-      <path d="M12 3v4" {...strokeProps} />
-      <path d="M12 17v4" {...strokeProps} />
-      <path d="M4 12h4" {...strokeProps} />
-      <path d="M16 12h4" {...strokeProps} />
-      <path d="m7 7 2.5 2.5" {...strokeProps} />
-      <path d="m14.5 14.5 2.5 2.5" {...strokeProps} />
-      <path d="m7 17 2.5-2.5" {...strokeProps} />
-      <path d="m14.5 9.5 2.5-2.5" {...strokeProps} />
-      <circle cx="12" cy="12" r="2" fill={color} opacity={0.95} />
+      <circle cx="12" cy="12" r="7.5" {...strokeProps} />
+      <circle cx="12" cy="12" r="3" fill={color} opacity={0.9} />
     </svg>
   );
 }
@@ -259,10 +306,14 @@ export function SoloStats({
   essence,
   focus,
   totalPower,
+  runePowerTotal,
   fireRuneCount,
   hasPenalty,
   hasWindMitigation,
   windRuneCount,
+  overloadPenalty,
+  overloadMultiplier,
+  overloadDamagePreview,
   round
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
@@ -283,14 +334,20 @@ export function SoloStats({
       : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = fireRuneCount > 0
-    ? `Esence - cast more runes to increase spell damage. Fire runes (${fireRuneCount}) amplify your Essence.`
-    : 'Esence - cast more runes to increase spell damage.';
+    ? `Essence - cast more runes to increase spell damage. Fire runes (${fireRuneCount}) amplify your Essence.`
+    : 'Essence - cast more runes to increase spell damage.';
 
   const spellpowerTooltip = `Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
   const healthTooltip = 'Health - drop to zero and your duel ends.';
   const healingTooltip = healing > 0
     ? `Life runes will restore ${healing} health every round.`
     : 'Healing - cast life runes to heal yourself every round.';
+  const overloadTooltip = overloadPenalty > 0
+    ? `Overload (${overloadPenalty}) reduces Focus and will be multiplied at round end.`
+    : 'Overload - avoid floor penalties to keep Focus intact.';
+  const strainTooltip = `Strain ×${overloadMultiplier} applied to Overload each round. Current damage preview: ${overloadDamagePreview}.`;
+  const runePowerTooltip = 'Rune Power - total spellpower accumulated across the duel.';
+  const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}) × Strain (${overloadMultiplier}) = ${overloadDamagePreview}.`;
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);
@@ -322,55 +379,96 @@ export function SoloStats({
           position: 'relative',
         }}
       >
-        <div style={{ display: 'flex', gap: '0.25em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-          <StatBadge
-            type="health"
-            label="Health"
-            value={<AnimatedHealthValue target={health} />}
-            color="#fb7185"
-            borderColor="rgba(248, 113, 113, 0.4)"
-            tooltip={healthTooltip}
-          />
-          <StatBadge
-            type="healing"
-            label="Healing"
-            value={<AnimatedHealingValue baseValue={healing} consumed={healedAmount} round={round} />}
-            color="#4ade80"
-            borderColor="rgba(74, 222, 128, 0.4)"
-            tooltip={healingTooltip}
-          />
-          <StatBadge
-            type="essence"
-            label="Essence"
-            value={essence}
-            color="#facc15"
-            borderColor="rgba(250, 204, 21, 0.35)"
-            tooltip={essenceTooltip}
-            {...clickableStatCommon}
-          />
-          <StatBadge
-            type="focus"
-            label="Focus"
-            value={focus}
-            color={focusColor}
-            borderColor={focusBorder}
-            tooltip={focusTooltip}
-            alert={hasPenalty}
-            {...clickableStatCommon}
-          />
-          <StatBadge
-            type="spellpower"
-            label="Spellpower"
-            value={spellpower}
-            color="#c084fc"
-            borderColor="rgba(192, 132, 252, 0.4)"
-            tooltip={spellpowerTooltip}
-            {...clickableStatCommon}
-          />
+        <div style={{ display: 'flex', gap: '5em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <StatBadge
+              type="health"
+              label="Health"
+              value={<AnimatedHealthValue target={health} />}
+              color="#fb7185"
+              borderColor="rgba(248, 113, 113, 0.4)"
+              tooltip={healthTooltip}
+            />
+            <StatBadge
+              type="healing"
+              label="Healing"
+              value={<AnimatedHealingValue baseValue={healing} consumed={healedAmount} round={round} />}
+              color="#4ade80"
+              borderColor="rgba(74, 222, 128, 0.4)"
+              tooltip={healingTooltip}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <StatBadge
+              type="essence"
+              label="Essence"
+              value={essence}
+              color="#facc15"
+              borderColor="rgba(250, 204, 21, 0.35)"
+              tooltip={essenceTooltip}
+              {...clickableStatCommon}
+            />
+            <StatBadge
+              type="focus"
+              label="Focus"
+              value={focus}
+              color={focusColor}
+              borderColor={focusBorder}
+              tooltip={focusTooltip}
+              alert={hasPenalty}
+              {...clickableStatCommon}
+            />
+            <StatBadge
+              type="spellpower"
+              label="Spell Power"
+              value={spellpower}
+              color="#c084fc"
+              borderColor="rgba(192, 132, 252, 0.4)"
+              tooltip={spellpowerTooltip}
+              {...clickableStatCommon}
+            />
+            <StatBadge
+              type="runePower"
+              label="Rune Power"
+              value={runePowerTotal}
+              color="#facc15"
+              borderColor="rgba(250, 204, 21, 0.3)"
+              tooltip={runePowerTooltip}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <StatBadge
+              type="overload"
+              label="Overload"
+              value={overloadPenalty}
+              color="#fb7185"
+              borderColor="rgba(248, 113, 113, 0.45)"
+              tooltip={overloadTooltip}
+              alert={overloadPenalty > 0}
+            />
+            <StatBadge
+              type="strain"
+              label="Strain"
+              value={`×${overloadMultiplier}`}
+              color="#38bdf8"
+              borderColor="rgba(56, 189, 248, 0.35)"
+              tooltip={strainTooltip}
+            />
+            <StatBadge
+              type="damage"
+              label="Damage"
+              value={overloadDamagePreview}
+              color="#f97316"
+              borderColor="rgba(249, 115, 22, 0.4)"
+              tooltip={damageTooltip}
+              alert={overloadDamagePreview > 0}
+            />
+          </div>
         </div>
       </div>
       {showExplanation && <SpellpowerExplanation onClose={closeExplanation} />}
     </>
   );
 }
-
