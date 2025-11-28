@@ -24,6 +24,7 @@ import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
 import { calculateEffectiveFloorPenalty, calculateProjectedPower } from '../../../utils/scoring';
+import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -145,31 +146,28 @@ export function GameBoard({ gameState }: GameBoardProps) {
     : 0;
   const overloadMultiplier = isSoloMode ? strain : 0;
   const overloadDamagePreview = overloadPenalty * overloadMultiplier;
-  const playerMaxHealth = players[0].maxHealth ?? players[0].health;
   const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
         const completedPatternLines = player.patternLines
           .map((line, index) => ({ line, row: index }))
           .filter(({ line }) => line.count === line.tier && line.runeType !== null)
-          .map(({ line, row }) => ({ row, runeType: line.runeType! }));
+          .map(({ line, row }) => ({
+            row,
+            runeType: line.runeType!,
+            effects: copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType!)),
+          }));
 
-        const lifeRunesOnWall = gameMode === 'standard'
-          ? player.wall.flat().filter((cell) => cell.runeType === 'Life').length
+        const healingAmount = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
           : 0;
-        const lifeRunesInCompletedLines = gameMode === 'standard'
-          ? completedPatternLines.filter((line) => line.runeType === 'Life').length
-          : 0;
-        const healingAmount = (lifeRunesOnWall + lifeRunesInCompletedLines) * 10;
 
         const floorPenaltyCount = overloadPenalty;
-        const windRunesOnWall = gameMode === 'standard'
-          ? player.wall.flat().filter((cell) => cell.runeType === 'Wind').length
+        const windMitigationCount = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
           : 0;
-        const pendingWindRunes = gameMode === 'standard'
-          ? completedPatternLines.filter((line) => line.runeType === 'Wind').length
-          : 0;
-        const windMitigationCount = windRunesOnWall + pendingWindRunes;
         const hasWindMitigation = gameMode === 'standard' && windMitigationCount > 0;
        
         const { essence, focus, totalPower } = calculateProjectedPower(
@@ -180,18 +178,13 @@ export function GameBoard({ gameState }: GameBoardProps) {
         );
         const hasPenalty = floorPenaltyCount > 0;
 
-        const fireRunesOnWall = gameMode === 'standard' 
-          ? player.wall.flat().filter(cell => cell.runeType === 'Fire').length 
+        const fireRuneCount = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
           : 0;
-        const fireRunesInCompletedLines = gameMode === 'standard'
-          ? completedPatternLines.filter(line => line.runeType === 'Fire').length
-          : 0;
-        const fireRuneCount = fireRunesOnWall + fireRunesInCompletedLines;
 
         return {
-          playerName: player.name,
           isActive: currentPlayerIndex === 0,
-          nameColor: '#0c4a6e',
           health: player.health,
           healing: healingAmount,
           essence,

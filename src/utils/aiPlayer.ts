@@ -18,6 +18,7 @@
 
 import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidTarget, AIDifficulty } from '../types/game';
 import { getWallColumnForRune, calculateWallPower, calculateWallPowerWithSegments, calculateEffectiveFloorPenalty } from './scoring';
+import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
 
 const RUNE_PRIORITIES: RuneType[] = ['Fire', 'Wind', 'Life', 'Void', 'Frost'];
 
@@ -29,8 +30,8 @@ const runePriorityMap: Record<RuneType, number> = {
   Frost: 4,
 };
 
-function countLifeRunes(wall: Player['wall']): number {
-  return wall.flat().filter((cell) => cell.runeType === 'Life').length;
+function calculateHealingAmountForWall(wall: Player['wall']): number {
+  return wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0);
 }
 
 function evaluateSpellpowerAndHealingValue(state: GameState, playerIndex: 0 | 1): number {
@@ -41,7 +42,8 @@ function evaluateSpellpowerAndHealingValue(state: GameState, playerIndex: 0 | 1)
   player.patternLines.forEach((line, lineIndex) => {
     if (line.count === line.tier && line.runeType) {
       const col = getWallColumnForRune(lineIndex, line.runeType, wallSize);
-      predictedWall[lineIndex][col] = { runeType: line.runeType };
+      const effects = line.firstRuneEffects ?? getRuneEffectsForType(line.runeType);
+      predictedWall[lineIndex][col] = { runeType: line.runeType, effects: copyRuneEffects(effects) };
     }
   });
 
@@ -53,7 +55,7 @@ function evaluateSpellpowerAndHealingValue(state: GameState, playerIndex: 0 | 1)
   );
 
   const power = calculateWallPowerWithSegments(predictedWall, floorPenalty, state.gameMode);
-  const lifeHeal = state.gameMode === 'standard' ? countLifeRunes(predictedWall) * 10 : 0;
+  const lifeHeal = state.gameMode === 'standard' ? calculateHealingAmountForWall(predictedWall) : 0;
 
   return power.totalPower + lifeHeal;
 }
@@ -355,13 +357,13 @@ function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: n
     if (overflow > 0) {
       // Add overflow to floor line (simplified)
       for (let i = 0; i < overflow && currentPlayer.floorLine.runes.length < currentPlayer.floorLine.maxCapacity; i++) {
-        currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effect: { type: 'None' } });
+        currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effects: getRuneEffectsForType(move.runeType) });
       }
     }
   } else {
     // All to floor line
     for (let i = 0; i < runesToPlace.length && currentPlayer.floorLine.runes.length < currentPlayer.floorLine.maxCapacity; i++) {
-      currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effect: { type: 'None' } });
+      currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effects: getRuneEffectsForType(move.runeType) });
     }
   }
   

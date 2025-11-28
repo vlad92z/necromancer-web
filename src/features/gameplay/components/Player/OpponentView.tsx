@@ -2,7 +2,7 @@
  * OpponentView component - displays the AI opponent's board (read-only view)
  */
 
-import type { Player } from '../../../types/game';
+import type { Player } from '../../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
 
 interface OpponentViewProps {

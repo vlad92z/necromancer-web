@@ -107,6 +107,7 @@ export function RuneCell({
   
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
+  const hasEffect = showEffect && Boolean(rune && (rune.effects.passive.length > 0 || rune.effects.active.length > 0));
   
   // Highlight Wind runes on the scoring wall to communicate mitigation effect.
   // Note: use the *semantic* variant (original `variant`) so forced visuals do
@@ -190,7 +191,7 @@ export function RuneCell({
       )}
       
       {/* Effect indicator - will be expanded when effects are implemented */}
-      {showEffect && rune?.effect.type !== 'None' && (
+      {hasEffect && (
         <div style={{
           position: 'absolute',
           top: '-4px',

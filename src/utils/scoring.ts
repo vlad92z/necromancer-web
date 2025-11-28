@@ -3,17 +3,16 @@
  * Implements connected segment scoring
  */
 
-import type { PatternLine, ScoringWall, RuneType } from '../types/game';
+import type { PatternLine, RuneEffects, RuneType, ScoringWall } from '../types/game';
+import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
 
 /**
  * Calculate total wall power using simplified scoring
- * Essence = total number of active runes on the wall + Fire bonus
+ * Essence = total runes on the wall + passive essence bonuses
  * Focus = size of the largest connected segment (reduced by floor penalty)
  * Power = Essence × Focus
  * Runes are connected if they share an edge (not diagonal)
- * Fire Effect: Each Fire rune adds +1 to Essence
- * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
- * Wind Effect: Wind runes anchored to the scoring wall cancel floor penalties one-for-one
+ * Healing and other passives are handled elsewhere via the wall cell effects.
  */
 export function calculateWallPower(
   wall: ScoringWall, 
@@ -24,7 +23,7 @@ export function calculateWallPower(
   const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
-  let fireRuneCount = 0;
+  let essenceBonus = 0;
   
   // Flood fill to find each connected segment
   function floodFill(row: number, col: number): number {
@@ -54,15 +53,14 @@ export function calculateWallPower(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
-      // Count Fire runes separately for bonus (only in standard mode)
-      if (gameMode === 'standard' && wall[row][col].runeType === 'Fire') {
-        fireRuneCount++;
+      if (gameMode === 'standard') {
+        essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
       }
     }
   }
   
   // Calculate essence with Fire bonus (only in standard mode)
-  const essence = totalRunes + (gameMode === 'standard' ? fireRuneCount : 0);
+  const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
   
   // Apply floor penalty to focus (minimum 1)
   const focus = Math.max(1, largestSegment - floorPenaltyCount);
@@ -74,10 +72,8 @@ export function calculateWallPower(
 /**
  * Calculate wall power and return detailed information
  * Used for game log display
- * Returns essence (total runes + Fire bonus) and focus (largest segment)
- * Fire Effect: Each Fire rune adds +1 to Essence (only in standard mode)
- * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
- * Wind Effect: Wind runes anchored to the scoring wall cancel floor penalties one-for-one (only in standard mode)
+ * Returns essence (total runes + passive essence bonuses) and focus (largest segment)
+ * Passive bonuses come from wall cell effects; floor penalties are provided by caller.
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
@@ -88,7 +84,7 @@ export function calculateWallPowerWithSegments(
   const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
   let totalRunes = 0;
   let largestSegment = 0;
-  let fireRuneCount = 0;
+  let essenceBonus = 0;
   
   function floodFill(row: number, col: number): number {
     if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || 
@@ -114,15 +110,14 @@ export function calculateWallPowerWithSegments(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
-      // Count Fire runes separately for bonus (only in standard mode)
-      if (gameMode === 'standard' && wall[row][col].runeType === 'Fire') {
-        fireRuneCount++;
+      if (gameMode === 'standard') {
+        essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
       }
     }
   }
   
   // Calculate essence with Fire bonus (only in standard mode)
-  const essence = totalRunes + (gameMode === 'standard' ? fireRuneCount : 0);
+  const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
   
   // Apply floor penalty to focus (minimum 1)
   const focus = Math.max(1, largestSegment - floorPenaltyCount);
@@ -205,8 +200,8 @@ export function calculateFloorPenalty(floorLineCount: number): number {
  * Completed Wind pattern lines count as "pending" wall placements and mitigate immediately.
  */
 export function calculateEffectiveFloorPenalty(
-  floorRunes: Array<{ runeType: RuneType | null }>,
-  patternLines: Pick<PatternLine, 'runeType' | 'count' | 'tier'>[],
+  floorRunes: Array<{ runeType: RuneType | null; effects?: RuneEffects | null }>,
+  patternLines: Pick<PatternLine, 'runeType' | 'count' | 'tier' | 'firstRuneEffects'>[],
   wall: ScoringWall,
   gameMode: 'classic' | 'standard' = 'standard'
 ): number {
@@ -216,18 +211,23 @@ export function calculateEffectiveFloorPenalty(
   }
 
   const windRunesOnWall = wall.flat().reduce((total, cell) => (
-    cell.runeType === 'Wind' ? total + 1 : total
+    total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation')
   ), 0);
 
   // Completed Wind pattern lines count as pending placements (if the wall slot is still empty)
   const wallSize = wall.length;
   const pendingWindPlacements = patternLines.reduce((total, line, rowIndex) => {
-    if (line.runeType !== 'Wind' || line.count !== line.tier) {
+    if (line.count !== line.tier || line.runeType === null) {
       return total;
     }
-    const col = getWallColumnForRune(rowIndex, 'Wind', wallSize);
-    const alreadyPlaced = wall[rowIndex][col]?.runeType === 'Wind';
-    return alreadyPlaced ? total : total + 1;
+    const effects = line.firstRuneEffects ?? getRuneEffectsForType(line.runeType);
+    const mitigation = getPassiveEffectValue(effects, 'FloorPenaltyMitigation');
+    if (mitigation === 0) {
+      return total;
+    }
+    const col = getWallColumnForRune(rowIndex, line.runeType, wallSize);
+    const alreadyPlaced = wall[rowIndex][col]?.runeType === line.runeType;
+    return alreadyPlaced ? total : total + mitigation;
   }, 0);
 
   const mitigatingWindRunes = windRunesOnWall + pendingWindPlacements;
@@ -325,70 +325,24 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
 /**
  * Calculate projected power for the end of current turn
  * Shows what essence and focus will be after placing completed pattern lines
- * Fire Effect: Each Fire rune adds +1 to Essence
- * Life Effect: Each active Life rune heals 10 HP per round (handled in store)
- * Wind Effect: Wind runes anchored to the wall cancel floor penalties one-for-one
+ * Passive effects are inherited from the first rune placed on a pattern line.
  */
 export function calculateProjectedPower(
   wall: ScoringWall,
-  completedPatternLines: Array<{ row: number; runeType: RuneType }>,
+  completedPatternLines: Array<{ row: number; runeType: RuneType; effects?: RuneEffects | null }>,
   floorPenaltyCount: number,
   gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
-  // Create a simulated wall with pattern line runes placed
   const wallSize = wall.length;
-  const simulatedWall: ScoringWall = wall.map(row => row.map(cell => ({ ...cell })));
-  
-  // Place runes from completed pattern lines
-  for (const { row, runeType } of completedPatternLines) {
+  const simulatedWall: ScoringWall = wall.map((row) => row.map((cell) => ({ ...cell })));
+
+  for (const { row, runeType, effects } of completedPatternLines) {
     const col = getWallColumnForRune(row, runeType, wallSize);
-    simulatedWall[row][col] = { runeType };
+    simulatedWall[row][col] = {
+      runeType,
+      effects: effects ? copyRuneEffects(effects) : getRuneEffectsForType(runeType),
+    };
   }
-  
-  // Calculate essence and focus for simulated wall
-  const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
-  let totalRunes = 0;
-  let largestSegment = 0;
-  let fireRuneCount = 0;
-  
-  function floodFill(row: number, col: number): number {
-    if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || 
-        visited[row][col] || simulatedWall[row][col].runeType === null) {
-      return 0;
-    }
-    
-    visited[row][col] = true;
-    let count = 1;
-    
-    count += floodFill(row - 1, col);
-    count += floodFill(row + 1, col);
-    count += floodFill(row, col - 1);
-    count += floodFill(row, col + 1);
-    
-    return count;
-  }
-  
-  // Find all segments and track largest, count Fire runes
-  for (let row = 0; row < wallSize; row++) {
-    for (let col = 0; col < wallSize; col++) {
-      if (!visited[row][col] && simulatedWall[row][col].runeType !== null) {
-        const segmentSize = floodFill(row, col);
-        totalRunes += segmentSize;
-        largestSegment = Math.max(largestSegment, segmentSize);
-      }
-      // Count Fire runes separately for bonus (only in standard mode)
-      if (gameMode === 'standard' && simulatedWall[row][col].runeType === 'Fire') {
-        fireRuneCount++;
-      }
-    }
-  }
-  
-  // Calculate essence with Fire bonus (only in standard mode)
-  const essence = totalRunes + (gameMode === 'standard' ? fireRuneCount : 0);
-  
-  // Apply floor penalty to focus (minimum 1)
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
-  const totalPower = essence * focus;
-  
-  return { essence, focus, totalPower };
+
+  return calculateWallPowerWithSegments(simulatedWall, floorPenaltyCount, gameMode);
 }

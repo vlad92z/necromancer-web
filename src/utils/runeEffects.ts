@@ -1,0 +1,64 @@
+/**
+ * runeEffects - helpers for rune effect definitions and accessors.
+ */
+
+import type { ActiveRuneEffect, PassiveRuneEffect, RuneEffects, RuneType } from '../types/game';
+
+const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
+  Fire: {
+    passive: [{ type: 'EssenceBonus', amount: 1 }],
+    active: [],
+  },
+  Frost: {
+    passive: [],
+    active: [{ type: 'FreezePatternLine' }],
+  },
+  Life: {
+    passive: [{ type: 'Healing', amount: 10 }],
+    active: [],
+  },
+  Void: {
+    passive: [],
+    active: [{ type: 'DestroyRune' }],
+  },
+  Wind: {
+    passive: [{ type: 'FloorPenaltyMitigation', amount: 1 }],
+    active: [],
+  },
+};
+
+function cloneEffects(effects: RuneEffects): RuneEffects {
+  return {
+    passive: effects.passive.map((effect) => ({ ...effect })),
+    active: effects.active.map((effect) => ({ ...effect })),
+  };
+}
+
+export function getRuneEffectsForType(runeType: RuneType): RuneEffects {
+  return cloneEffects(BASE_RUNE_EFFECTS[runeType]);
+}
+
+export function copyRuneEffects(effects: RuneEffects | null | undefined): RuneEffects {
+  if (!effects) {
+    return { passive: [], active: [] };
+  }
+  return cloneEffects(effects);
+}
+
+export function getPassiveEffectValue(
+  effects: RuneEffects | null | undefined,
+  type: PassiveRuneEffect['type']
+): number {
+  if (!effects) return 0;
+  return effects.passive.reduce((total, effect) => {
+    return effect.type === type ? total + effect.amount : total;
+  }, 0);
+}
+
+export function hasActiveEffect(
+  effects: RuneEffects | null | undefined,
+  type: ActiveRuneEffect['type']
+): boolean {
+  if (!effects) return false;
+  return effects.active.some((effect) => effect.type === type);
+}

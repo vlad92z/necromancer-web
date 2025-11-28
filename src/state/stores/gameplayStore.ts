@@ -5,17 +5,14 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome } from '../../types/game';
-import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories } from '../../utils/gameInitialization';
+import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
 import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
-
-// Default strain configuration (tune these values to change behaviour)
-export const DEFAULT_STARTING_STRAIN = 5;
-export const DEFAULT_STRAIN_MULTIPLIER = 2;
+import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
 
 // Helper function to count Life runes on a wall
-function countLifeRunes(wall: Player['wall']): number {
-  return wall.flat().filter(cell => cell.runeType === 'Life').length;
+function calculateHealingAmount(wall: Player['wall']): number {
+  return wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0);
 }
 
 function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
@@ -75,11 +72,14 @@ function processSoloScoringPhase(state: GameState): GameState {
         if (line.count === line.tier && line.runeType) {
           const row = lineIndex;
           const col = getWallColumnForRune(row, line.runeType, wallSize);
-          updatedWall[row][col] = { runeType: line.runeType };
+          const effects = line.firstRuneEffects ?? getRuneEffectsForType(line.runeType);
+          updatedWall[row][col] = { runeType: line.runeType, effects: copyRuneEffects(effects) };
           updatedPatternLines[lineIndex] = {
             tier: line.tier,
             runeType: null,
             count: 0,
+            firstRuneId: null,
+            firstRuneEffects: null,
           };
         }
       });
@@ -106,12 +106,12 @@ function processSoloScoringPhase(state: GameState): GameState {
       state.gameMode
     );
 
-    const lifeCount = state.gameMode === 'standard' ? countLifeRunes(updatedPlayer.wall) : 0;
+    const healingTotal = state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayer.wall) : 0;
 
     const scoringSnapshot: ScoringSnapshot = {
       floorPenalties: [floorPenalty, 0],
       wallPowerStats: [wallPowerStats, emptyWallStats],
-      lifeCounts: [lifeCount, 0],
+      healingTotals: [healingTotal, 0],
     };
 
     return {
@@ -152,7 +152,7 @@ function processSoloScoringPhase(state: GameState): GameState {
       return state;
     }
 
-    const healingAmount = state.scoringSnapshot.lifeCounts[0] * 10;
+    const healingAmount = state.scoringSnapshot.healingTotals[0];
     const applyHealing = (player: Player, amount: number): Player => {
       const maxHealth = player.maxHealth ?? player.health;
       return {
@@ -411,6 +411,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const availableSpace = patternLine.tier - patternLine.count;
       const runesToPlace = Math.min(selectedRunes.length, availableSpace);
       const overflowRunes = selectedRunes.slice(runesToPlace);
+
+      const primaryRune = selectedRunes[0];
+      const nextFirstRuneId = patternLine.firstRuneId ?? primaryRune.id;
+      const nextFirstRuneEffects = patternLine.firstRuneEffects ?? copyRuneEffects(primaryRune.effects);
       
       // Update pattern line
       const updatedPatternLines = [...currentPlayer.patternLines];
@@ -418,6 +422,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...patternLine,
         runeType,
         count: patternLine.count + runesToPlace,
+        firstRuneId: nextFirstRuneId,
+        firstRuneEffects: nextFirstRuneEffects,
       };
       
       // Add overflow runes to floor line
@@ -446,11 +452,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       
       // Check if Void runes were placed (Void effect: destroy a single rune)
-      const hasVoidRunes = selectedRunes.some(rune => rune.runeType === 'Void');
+      const hasVoidRunes = selectedRunes.some((rune) => hasActiveEffect(rune.effects, 'DestroyRune'));
       const hasVoidTargets = state.runeforges.some(f => f.runes.length > 0) || state.centerPool.length > 0;
       
       // Check if Frost runes were placed (Frost effect: freeze an opponent pattern line)
-      const hasFrostRunes = !isSoloMode && selectedRunes.some(rune => rune.runeType === 'Frost');
+      const hasFrostRunes = !isSoloMode && selectedRunes.some((rune) => hasActiveEffect(rune.effects, 'FreezePatternLine'));
       const opponentIndex = currentPlayerIndex === 0 ? 1 : 0;
       const opponentId = state.players[opponentIndex].id;
       const opponentPatternLines = state.players[opponentIndex].patternLines;
@@ -810,12 +816,15 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             if (line.count === line.tier && line.runeType) {
               const row = lineIndex;
               const col = getWallColumnForRune(row, line.runeType, wallSize);
-              updatedWall[row][col] = { runeType: line.runeType };
+              const effects = line.firstRuneEffects ?? getRuneEffectsForType(line.runeType);
+              updatedWall[row][col] = { runeType: line.runeType, effects: copyRuneEffects(effects) };
               console.log(`Player ${player.id}: Line ${lineIndex + 1} complete, placed ${line.runeType} at (${row},${col})`);
               updatedPatternLines[lineIndex] = {
                 tier: line.tier,
                 runeType: null,
                 count: 0,
+                firstRuneId: null,
+                firstRuneEffects: null,
               };
             }
           });
@@ -860,15 +869,15 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ),
         ];
 
-        const lifeCounts: [number, number] = [
-          state.gameMode === 'standard' ? countLifeRunes(updatedPlayersArray[0].wall) : 0,
-          state.gameMode === 'standard' ? countLifeRunes(updatedPlayersArray[1].wall) : 0,
+        const healingTotals: [number, number] = [
+          state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayersArray[0].wall) : 0,
+          state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayersArray[1].wall) : 0,
         ];
 
         const scoringSnapshot: ScoringSnapshot = {
           floorPenalties,
           wallPowerStats,
-          lifeCounts,
+          healingTotals,
         };
 
         return {
@@ -911,10 +920,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           return state;
         }
 
-        const healingAmounts: [number, number] = [
-          state.scoringSnapshot.lifeCounts[0] * 10,
-          state.scoringSnapshot.lifeCounts[1] * 10,
-        ];
+        const healingAmounts: [number, number] = state.scoringSnapshot.healingTotals;
 
         const applyHealing = (player: Player, amount: number): Player => {
           const maxHealth = player.maxHealth ?? player.health;

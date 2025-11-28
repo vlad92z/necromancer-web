@@ -3,8 +3,8 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Rune, RuneType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import type { Rune, RuneType } from '../../../../types/game';
+import { RuneCell } from '../../../../components/RuneCell';
 
 interface RuneforgeOverlayProps {
   runes: Rune[];
@@ -29,13 +29,13 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
   };
 
   // Group runes by type for organized display
-  const runesByType = runes.reduce((acc, rune) => {
+  const runesByType = runes.reduce<Record<RuneType, Rune[]>>((acc, rune) => {
     if (!acc[rune.runeType]) {
       acc[rune.runeType] = [];
     }
     acc[rune.runeType].push(rune);
     return acc;
-  }, {} as Record<RuneType, Rune[]>);
+  }, { Fire: [], Frost: [], Life: [], Void: [], Wind: [] });
 
   const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
   const availableTypes = runeTypes.filter(type => runesByType[type]?.length > 0);

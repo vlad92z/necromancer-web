@@ -8,6 +8,7 @@ import type { Transition } from 'framer-motion';
 import type { PatternLine, RuneType, ScoringWall } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
+import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
@@ -121,10 +122,13 @@ export function PatternLines({
             {Array(line.tier)
               .fill(null)
               .map((_, slotIndex) => {
+                const runeEffects = line.runeType
+                  ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
+                  : { passive: [], active: [] };
                 const rune = slotIndex < line.count && line.runeType ? {
                   id: `pattern-${index}-${slotIndex}`,
                   runeType: line.runeType,
-                  effect: { type: 'None' as const }
+                  effects: runeEffects,
                 } : null;
                 const slotKey = `${index}-${slotIndex}`;
                 const shouldHideRune = hiddenSlotKeys?.has(slotKey);

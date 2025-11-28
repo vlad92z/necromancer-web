@@ -18,11 +18,21 @@ export type RuneTypeCount = 3 | 4 | 5;
 /**
  * Rune effect modifiers
  */
-export type RuneEffect =
-  | { type: 'PlusOne'; target: 'placement' }
-  | { type: 'Double'; target: 'scoring' }
-  | { type: 'MinusCost'; amount: number }
-  | { type: 'None' };
+export type PassiveRuneEffect =
+  | { type: 'EssenceBonus'; amount: number }
+  | { type: 'Healing'; amount: number }
+  | { type: 'FloorPenaltyMitigation'; amount: number };
+
+export type ActiveRuneEffect =
+  | { type: 'DestroyRune' }
+  | { type: 'FreezePatternLine' };
+
+export type RuneEffect = PassiveRuneEffect | ActiveRuneEffect;
+
+export interface RuneEffects {
+  passive: PassiveRuneEffect[];
+  active: ActiveRuneEffect[];
+}
 
 /**
  * A rune in the game
@@ -30,7 +40,7 @@ export type RuneEffect =
 export interface Rune {
   id: string;
   runeType: RuneType;
-  effect: RuneEffect;
+  effects: RuneEffects;
 }
 
 /**
@@ -56,6 +66,8 @@ export interface PatternLine {
   tier: 1 | 2 | 3 | 4 | 5; // Line capacity (1, 2, 3, 4, or 5 runes)
   runeType: RuneType | null; // Type of rune in this line (null if empty)
   count: number; // Current number of runes in the line
+  firstRuneId: string | null; // ID of the first rune placed on this line
+  firstRuneEffects: RuneEffects | null; // Effects inherited by wall placement
 }
 
 /**
@@ -63,6 +75,7 @@ export interface PatternLine {
  */
 export interface WallCell {
   runeType: RuneType | null; // null if empty
+  effects: RuneEffects | null; // Effects inherited from the pattern line's first rune
 }
 
 /**
@@ -165,7 +178,7 @@ export interface WallPowerStats {
 export interface ScoringSnapshot {
   floorPenalties: [number, number];
   wallPowerStats: [WallPowerStats, WallPowerStats];
-  lifeCounts: [number, number];
+  healingTotals: [number, number];
 }
 
 /**

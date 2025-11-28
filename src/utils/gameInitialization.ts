@@ -14,6 +14,7 @@ import type {
   RuneTypeCount,
   PlayerType,
 } from '../types/game';
+import { getRuneEffectsForType } from './runeEffects';
 
 /**
  * Create an empty scoring wall (3x3, 4x4, or 5x5)
@@ -24,7 +25,7 @@ export function createEmptyWall(size: number = 5): ScoringWall {
     .map(() =>
       Array(size)
         .fill(null)
-        .map(() => ({ runeType: null }))
+        .map(() => ({ runeType: null, effects: null }))
     );
 }
 
@@ -34,7 +35,13 @@ export function createEmptyWall(size: number = 5): ScoringWall {
 export function createPatternLines(count: number = 5): PatternLine[] {
   const lines: PatternLine[] = [];
   for (let i = 1; i <= count; i++) {
-    lines.push({ tier: i as 1 | 2 | 3 | 4 | 5, runeType: null, count: 0 });
+    lines.push({
+      tier: i as 1 | 2 | 3 | 4 | 5,
+      runeType: null,
+      count: 0,
+      firstRuneId: null,
+      firstRuneEffects: null,
+    });
   }
   return lines;
 }
@@ -56,6 +63,8 @@ export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
 }
 
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
+export const DEFAULT_STARTING_STRAIN = 5;
+export const DEFAULT_STRAIN_MULTIPLIER = 2;
 const SOLO_STARTING_HEALTH = 100;
 const SOLO_MAX_HEALTH = 1000;
 const SOLO_FACTORIES_PER_PLAYER = 4;
@@ -109,7 +118,7 @@ export function createMockDeck(
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
         runeType,
-        effect: { type: 'None' },
+        effects: getRuneEffectsForType(runeType),
       });
     }
   });
@@ -265,6 +274,8 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
     startingHealth: quickPlayConfig.startingHealth,
     overflowCapacity: quickPlayConfig.overflowCapacity,
+    strain: DEFAULT_STARTING_STRAIN,
+    strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
     playerControllers,
     players: [player1, player2],
     runeforges: filledRuneforges,
@@ -349,6 +360,8 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState 
     runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
     startingHealth: SOLO_STARTING_HEALTH,
     overflowCapacity: quickPlayConfig.overflowCapacity,
+    strain: DEFAULT_STARTING_STRAIN,
+    strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
     playerControllers,
     players: [soloPlayer, echoPlayer],
     runeforges: filledRuneforges,

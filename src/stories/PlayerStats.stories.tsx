@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { PlayerStats } from '../features/gameplay/components/PlayerStats';
+import { PlayerStats } from '../features/gameplay/components/Player/PlayerStats';
 
 const meta = {
   title: 'Gameplay/PlayerStats',

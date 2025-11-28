@@ -8,6 +8,7 @@ import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
 import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../../utils/scoring';
+import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../../utils/runeEffects';
 
 interface PlayerBoardProps {
   player: Player;
@@ -39,16 +40,17 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
   const completedPatternLines = player.patternLines
     .map((line, index) => ({ line, row: index }))
     .filter(({ line }) => line.count === line.tier && line.runeType !== null)
-    .map(({ line, row }) => ({ row, runeType: line.runeType! }));
+    .map(({ line, row }) => ({
+      row,
+      runeType: line.runeType!,
+      effects: copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType!)),
+    }));
 
   const currentHealth = player.health;
-  const lifeRunesOnWall = gameMode === 'standard'
-    ? player.wall.flat().filter((cell) => cell.runeType === 'Life').length
+  const healingAmount = gameMode === 'standard'
+    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
+      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
     : 0;
-  const lifeRunesInCompletedLines = gameMode === 'standard'
-    ? completedPatternLines.filter((line) => line.runeType === 'Life').length
-    : 0;
-  const healingAmount = (lifeRunesOnWall + lifeRunesInCompletedLines) * 10;
   
   // Wind Effect: Wind runes anchored to the wall mitigate floor penalties (standard mode only)
   const floorPenaltyCount = calculateEffectiveFloorPenalty(
@@ -57,13 +59,10 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     player.wall,
     gameMode
   );
-  const windRunesOnWall = gameMode === 'standard'
-    ? player.wall.flat().filter((cell) => cell.runeType === 'Wind').length
+  const windMitigationCount = gameMode === 'standard'
+    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
+      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
     : 0;
-  const pendingWindRunes = gameMode === 'standard'
-    ? completedPatternLines.filter((line) => line.runeType === 'Wind').length
-    : 0;
-  const windMitigationCount = windRunesOnWall + pendingWindRunes;
   const hasWindMitigation = gameMode === 'standard' && windMitigationCount > 0;
  
   const { essence, focus, totalPower } = calculateProjectedPower(
@@ -75,13 +74,10 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
   const hasPenalty = floorPenaltyCount > 0;
   
   // Count Fire runes: current wall + completed pattern lines (only in standard mode)
-  const fireRunesOnWall = gameMode === 'standard' 
-    ? player.wall.flat().filter(cell => cell.runeType === 'Fire').length 
+  const fireRuneCount = gameMode === 'standard'
+    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
+      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
     : 0;
-  const fireRunesInCompletedLines = gameMode === 'standard'
-    ? completedPatternLines.filter(line => line.runeType === 'Fire').length
-    : 0;
-  const fireRuneCount = fireRunesOnWall + fireRunesInCompletedLines;
 
   const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
 

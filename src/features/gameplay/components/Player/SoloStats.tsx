@@ -10,9 +10,7 @@ import { SpellpowerExplanation } from './SpellpowerExplanation';
 type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower' | 'overload' | 'strain' | 'runePower' | 'damage';
 
 interface SpellpowerProps {
-  playerName: string;
   isActive: boolean;
-  nameColor: string;
   health: number;
   healing: number;
   essence: number;
@@ -298,9 +296,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
 }
 
 export function SoloStats({
-  playerName,
   isActive,
-  nameColor,
   health,
   healing,
   essence,

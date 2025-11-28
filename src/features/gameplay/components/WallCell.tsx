@@ -6,6 +6,7 @@ import { useState } from 'react';
 import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getWallColumnForRune } from '../../../utils/scoring';
+import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 interface WallCellProps {
   cell: WallCellType;
@@ -51,7 +52,7 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
   const rune = cell.runeType ? {
     id: `wall-${row}-${col}`,
     runeType: cell.runeType,
-    effect: { type: 'None' as const }
+    effects: copyRuneEffects(cell.effects ?? getRuneEffectsForType(cell.runeType)),
   } : null;
   
   return (
