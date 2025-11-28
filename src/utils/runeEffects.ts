@@ -4,6 +4,12 @@
 
 import type { ActiveRuneEffect, PassiveRuneEffect, RuneEffects, RuneType } from '../types/game';
 
+export interface RuneEffectTuning {
+  lifeHealing?: number;
+  frostMitigation?: number;
+  voidConversion?: number;
+}
+
 /**
  * Legacy rune effects preserved for future use.
  */
@@ -48,8 +54,33 @@ function cloneEffects(effects: RuneEffects): RuneEffects {
   };
 }
 
-export function getRuneEffectsForType(runeType: RuneType): RuneEffects {
-  return cloneEffects(BASE_RUNE_EFFECTS[runeType]);
+export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTuning): RuneEffects {
+  const baseEffects = BASE_RUNE_EFFECTS[runeType];
+
+  if (!tuning) {
+    return cloneEffects(baseEffects);
+  }
+
+  const tunedPassive = baseEffects.passive.map((effect) => {
+    if (effect.type === 'Healing' && tuning.lifeHealing !== undefined) {
+      return { ...effect, amount: tuning.lifeHealing };
+    }
+
+    if (effect.type === 'StrainMitigation' && tuning.frostMitigation !== undefined) {
+      return { ...effect, amount: tuning.frostMitigation };
+    }
+
+    if (effect.type === 'DamageToSpellpower' && tuning.voidConversion !== undefined) {
+      return { ...effect, amount: tuning.voidConversion };
+    }
+
+    return effect;
+  });
+
+  return cloneEffects({
+    ...baseEffects,
+    passive: tunedPassive,
+  });
 }
 
 export function copyRuneEffects(effects: RuneEffects | null | undefined): RuneEffects {

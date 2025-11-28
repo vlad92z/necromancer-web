@@ -2,17 +2,33 @@
  * SoloStartScreen - entry screen for Solo mode setup
  */
 
+import type React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { RuneTypeCount } from '../../../types/game';
+import type { RuneTypeCount, SoloRunConfig } from '../../../types/game';
+import { DEFAULT_SOLO_CONFIG, normalizeSoloConfig } from '../../../utils/gameInitialization';
 
 interface SoloStartScreenProps {
-  onStartSolo: (runeTypeCount: RuneTypeCount) => void;
+  onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
 }
 
 export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
   const navigate = useNavigate();
   const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(5);
+  const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
+
+  const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: number) => {
+    setSoloConfig((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleNumberInput = (key: keyof SoloRunConfig, clamp?: (value: number) => number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = Number(event.target.value);
+    const parsedValue = Number.isNaN(rawValue) ? 0 : rawValue;
+    const nextValue = clamp ? clamp(parsedValue) : parsedValue;
+    updateConfigValue(key, nextValue);
+  };
+
+  const normalizedConfig = normalizeSoloConfig(soloConfig);
 
   return (
     <div
@@ -71,10 +87,125 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
             marginBottom: '22px',
           }}
         >
-          <RuleCard title="Health" description="Start at 100 HP with a max of 1000. Healing is capped at max health." />
-          <RuleCard title="Overload" description="Overflow runes become overload. Stress grows each round (base ×2) and Frost runes shave 10% off current stress." />
+          <RuleCard title="Health" description="Start at your chosen HP; healing is capped by the current max health." />
+          <RuleCard title="Overload" description="Overflow runes become overload. Fatigue scales each round using your multiplier and Frost mitigation." />
           <RuleCard title="Rune Power" description="Each round, your spellpower (essence × focus) is added to total Rune Power." />
-          <RuleCard title="Frost" description="Each Frost rune on your wall reduces stress by 10% before overload damage applies." />
+          <RuleCard title="Frost" description="Each Frost rune on your wall reduces strain before overload damage applies based on your protection setting." />
+        </div>
+
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: '#0b1433',
+            borderRadius: '10px',
+            border: '1px solid rgba(148, 163, 184, 0.18)',
+          }}
+        >
+          <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe', marginBottom: '10px' }}>Run Setup</div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '12px',
+            }}
+          >
+            <ConfigField label="Starting Health" description="Health pool when the run begins.">
+              <input
+                type="number"
+                min={1}
+                value={soloConfig.startingHealth}
+                onChange={handleNumberInput('startingHealth', (value) => Math.max(1, value))}
+                style={inputStyle}
+              />
+            </ConfigField>
+            <ConfigField label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={soloConfig.startingStrain}
+                onChange={handleNumberInput('startingStrain', (value) => Math.max(0, value))}
+                style={inputStyle}
+              />
+            </ConfigField>
+            <ConfigField label="Fatigue Multiplier" description="Round-by-round growth applied to fatigue.">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <input
+                  type="range"
+                  min={1}
+                  max={2}
+                  step={0.1}
+                  value={soloConfig.strainMultiplier}
+                  onChange={(event) => updateConfigValue('strainMultiplier', Number(event.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.strainMultiplier.toFixed(1)}x fatigue growth</div>
+              </div>
+            </ConfigField>
+            <ConfigField label="Life Rune Healing" description="Healing per Life rune that lands on your wall.">
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={soloConfig.lifeRuneHealing}
+                onChange={handleNumberInput('lifeRuneHealing', (value) => Math.max(0, value))}
+                style={inputStyle}
+              />
+            </ConfigField>
+            <ConfigField label="Frost Rune Protection" description="Percent stress reduction per Frost rune on the wall.">
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={soloConfig.frostMitigationPercent}
+                onChange={handleNumberInput('frostMitigationPercent', (value) => Math.max(0, value))}
+                style={inputStyle}
+              />
+              <div style={{ color: '#93c5fd', fontSize: '13px', marginTop: '6px' }}>Currently {soloConfig.frostMitigationPercent}% per rune</div>
+            </ConfigField>
+            <ConfigField label="Void Rune Damage" description="Percent of damage converted to spellpower per Void rune.">
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={soloConfig.voidConversionPercent}
+                onChange={handleNumberInput('voidConversionPercent', (value) => Math.max(0, value))}
+                style={inputStyle}
+              />
+              <div style={{ color: '#93c5fd', fontSize: '13px', marginTop: '6px' }}>Currently {soloConfig.voidConversionPercent}% per rune</div>
+            </ConfigField>
+            <ConfigField label="Runeforges" description="How many personal factories deal into your pool.">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <input
+                  type="range"
+                  min={1}
+                  max={6}
+                  step={1}
+                  value={soloConfig.factoriesPerPlayer}
+                  onChange={(event) => updateConfigValue('factoriesPerPlayer', Number(event.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.factoriesPerPlayer} runeforges</div>
+              </div>
+            </ConfigField>
+            <ConfigField label="Deck Size" description="How many of each rune type appear in your deck.">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <input
+                  type="range"
+                  min={1}
+                  max={30}
+                  step={1}
+                  value={soloConfig.deckRunesPerType}
+                  onChange={(event) => updateConfigValue('deckRunesPerType', Number(event.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ color: '#cbd5e1', fontSize: '13px' }}>
+                  {soloConfig.deckRunesPerType} of each rune ({soloConfig.deckRunesPerType * runeTypeCount} total)
+                </div>
+              </div>
+            </ConfigField>
+          </div>
         </div>
 
         <div
@@ -128,7 +259,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
 
         <button
           type="button"
-          onClick={() => onStartSolo(runeTypeCount)}
+          onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
           style={{
             width: '100%',
             padding: '16px',
@@ -162,6 +293,12 @@ interface RuleCardProps {
   description: string;
 }
 
+interface ConfigFieldProps {
+  label: string;
+  description: string;
+  children: React.ReactNode;
+}
+
 function RuleCard({ title, description }: RuleCardProps) {
   return (
     <div
@@ -177,3 +314,34 @@ function RuleCard({ title, description }: RuleCardProps) {
     </div>
   );
 }
+
+function ConfigField({ label, description, children }: ConfigFieldProps) {
+  return (
+    <div
+      style={{
+        padding: '12px',
+        borderRadius: '12px',
+        border: '1px solid rgba(148, 163, 184, 0.2)',
+        background: 'rgba(255, 255, 255, 0.02)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+      }}
+    >
+      <div style={{ fontWeight: 700, color: '#e0f2fe', fontSize: '15px' }}>{label}</div>
+      <div style={{ color: '#cbd5e1', fontSize: '13px', lineHeight: 1.4 }}>{description}</div>
+      {children}
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px',
+  borderRadius: '8px',
+  border: '1px solid rgba(148, 163, 184, 0.4)',
+  backgroundColor: '#0f172a',
+  color: '#e2e8f0',
+  fontSize: '14px',
+  outline: 'none',
+};

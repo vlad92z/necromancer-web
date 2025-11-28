@@ -114,6 +114,20 @@ export type PlayerSide = 'top' | 'bottom';
 export type MatchType = 'versus' | 'solo';
 
 /**
+ * Solo run configuration values entered on the start screen
+ */
+export interface SoloRunConfig {
+  startingHealth: number;
+  startingStrain: number;
+  strainMultiplier: number;
+  lifeRuneHealing: number;
+  frostMitigationPercent: number;
+  voidConversionPercent: number;
+  factoriesPerPlayer: number;
+  deckRunesPerType: number;
+}
+
+/**
  * Controller type for a player seat
  */
 export type PlayerController =

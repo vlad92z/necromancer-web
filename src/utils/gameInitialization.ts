@@ -13,8 +13,10 @@ import type {
   RuneType,
   RuneTypeCount,
   PlayerType,
+  SoloRunConfig,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
+import type { RuneEffectTuning } from './runeEffects';
 
 /**
  * Create an empty scoring wall (3x3, 4x4, or 5x5)
@@ -68,8 +70,18 @@ export const DEFAULT_STRAIN_MULTIPLIER = 2;
 const SOLO_STARTING_HEALTH = 100;
 const SOLO_MAX_HEALTH = 1000;
 const SOLO_FACTORIES_PER_PLAYER = 5;
-const SOLO_DECK_MULTIPLIER = 2;
-const SOLO_DECK_BONUS = 16;
+const DEFAULT_SOLO_RUNES_PER_TYPE = 8;
+
+export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
+  startingHealth: SOLO_STARTING_HEALTH,
+  startingStrain: DEFAULT_STARTING_STRAIN,
+  strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
+  lifeRuneHealing: 10,
+  frostMitigationPercent: 10,
+  voidConversionPercent: 10,
+  factoriesPerPlayer: SOLO_FACTORIES_PER_PLAYER,
+  deckRunesPerType: DEFAULT_SOLO_RUNES_PER_TYPE,
+};
 
 export interface QuickPlayConfig {
   factoriesPerPlayer: number;
@@ -77,6 +89,21 @@ export interface QuickPlayConfig {
   runesPerRuneforge: number;
   startingHealth: number;
   overflowCapacity: number;
+}
+
+export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunConfig {
+  const merged = { ...DEFAULT_SOLO_CONFIG, ...config };
+
+  return {
+    startingHealth: Math.max(1, merged.startingHealth),
+    startingStrain: Math.max(0, merged.startingStrain),
+    strainMultiplier: Math.max(1, Math.min(2, merged.strainMultiplier)),
+    lifeRuneHealing: Math.max(0, merged.lifeRuneHealing),
+    frostMitigationPercent: Math.max(0, merged.frostMitigationPercent),
+    voidConversionPercent: Math.max(0, merged.voidConversionPercent),
+    factoriesPerPlayer: Math.min(6, Math.max(1, Math.round(merged.factoriesPerPlayer))),
+    deckRunesPerType: Math.min(10, Math.max(1, Math.round(merged.deckRunesPerType))),
+  };
 }
 
 /**
@@ -102,7 +129,8 @@ export function getQuickPlayConfig(runeTypeCount: RuneTypeCount): QuickPlayConfi
 export function createMockDeck(
   playerId: string,
   runeTypeCount: RuneTypeCount = 5,
-  totalRunesPerPlayer?: number
+  totalRunesPerPlayer?: number,
+  runeEffectTuning?: RuneEffectTuning
 ): Rune[] {
   const deck: Rune[] = [];
   const runeTypes = getRuneTypesForCount(runeTypeCount);
@@ -119,7 +147,7 @@ export function createMockDeck(
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
         runeType,
-        effects: getRuneEffectsForType(runeType),
+        effects: getRuneEffectsForType(runeType, runeEffectTuning),
       });
     }
   });
@@ -138,7 +166,8 @@ export function createPlayer(
   runeTypeCount: RuneTypeCount = 5,
   totalRunesPerPlayer?: number,
   overflowCapacity?: number,
-  maxHealthOverride?: number
+  maxHealthOverride?: number,
+  runeEffectTuning?: RuneEffectTuning
 ): Player {
   return {
     id,
@@ -152,7 +181,7 @@ export function createPlayer(
     },
     health: startingHealth,
     maxHealth: maxHealthOverride ?? startingHealth,
-    deck: createMockDeck(id, runeTypeCount, totalRunesPerPlayer),
+    deck: createMockDeck(id, runeTypeCount, totalRunesPerPlayer, runeEffectTuning),
   };
 }
 
@@ -307,36 +336,45 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
 /**
  * Initialize a solo run with the same board sizing options as quick play
  */
-export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState {
+export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Partial<SoloRunConfig>): GameState {
   const playerControllers: PlayerControllers = {
     bottom: { type: 'human' },
     top: { type: 'human' },
   };
 
+  const soloConfig = normalizeSoloConfig(config);
   const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
-  const soloRuneforgeCount = SOLO_FACTORIES_PER_PLAYER;
-  const soloDeckSize = quickPlayConfig.totalRunesPerPlayer * SOLO_DECK_MULTIPLIER + SOLO_DECK_BONUS;
+  const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
+  const soloDeckSize = soloConfig.deckRunesPerType * runeTypeCount;
+  const runeEffectTuning: RuneEffectTuning = {
+    lifeHealing: soloConfig.lifeRuneHealing,
+    frostMitigation: soloConfig.frostMitigationPercent / 100,
+    voidConversion: soloConfig.voidConversionPercent / 100,
+  };
+  const soloMaxHealth = Math.max(SOLO_MAX_HEALTH, soloConfig.startingHealth);
 
   const soloPlayer = createPlayer(
     'player-1',
     'Solo Arcanist',
     'human',
-    SOLO_STARTING_HEALTH,
+    soloConfig.startingHealth,
     runeTypeCount,
     soloDeckSize,
     quickPlayConfig.overflowCapacity,
-    SOLO_MAX_HEALTH
+    soloMaxHealth,
+    runeEffectTuning
   );
 
   const echoPlayer = createPlayer(
     'solo-echo',
     'Echo',
     'human',
-    SOLO_STARTING_HEALTH,
+    soloConfig.startingHealth,
     runeTypeCount,
     0,
     quickPlayConfig.overflowCapacity,
-    SOLO_MAX_HEALTH
+    soloMaxHealth,
+    runeEffectTuning
   );
   echoPlayer.deck = [];
 
@@ -359,10 +397,10 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState 
     factoriesPerPlayer: soloRuneforgeCount,
     totalRunesPerPlayer: soloDeckSize,
     runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
-    startingHealth: SOLO_STARTING_HEALTH,
+    startingHealth: soloConfig.startingHealth,
     overflowCapacity: quickPlayConfig.overflowCapacity,
-    strain: DEFAULT_STARTING_STRAIN,
-    strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
+    strain: soloConfig.startingStrain,
+    strainMultiplier: soloConfig.strainMultiplier,
     playerControllers,
     players: [soloPlayer, echoPlayer],
     runeforges: filledRuneforges,

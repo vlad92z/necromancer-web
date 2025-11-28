@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { GameBoard } from '../features/gameplay/components/GameBoard';
 import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
-import type { RuneTypeCount } from '../types/game';
+import type { RuneTypeCount, SoloRunConfig } from '../types/game';
 
 export function Solo() {
   const navigate = useNavigate();
@@ -29,8 +29,8 @@ export function Solo() {
     };
   }, [navigate, matchType, prepareSoloMode, runeTypeCount]);
 
-  const handleStartSolo = (runeTypeCount: RuneTypeCount) => {
-    startSoloRun(runeTypeCount);
+  const handleStartSolo = (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => {
+    startSoloRun(runeTypeCount, config);
   };
 
   if (!gameStarted || matchType !== 'solo') {

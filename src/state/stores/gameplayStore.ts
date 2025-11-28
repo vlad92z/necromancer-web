@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
 import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
@@ -66,8 +66,8 @@ export interface GameplayStore extends GameState {
   // Actions
   startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
-  startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount) => void;
-  prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount) => void;
+  startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
+  prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
   draftFromCenter: (runeType: RuneType) => void;
@@ -1239,25 +1239,21 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount) => {
+  startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => {
     set(() => {
-      const baseState = initializeSoloGame(runeTypeCount);
+      const baseState = initializeSoloGame(runeTypeCount, config);
       return {
         ...baseState,
         gameStarted: true,
-        strain: DEFAULT_STARTING_STRAIN,
-        strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
       };
     });
   },
 
-  prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount) => {
+  prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => {
     set((state) => {
       const targetRuneTypeCount = runeTypeCount ?? state.runeTypeCount;
       return {
-        ...initializeSoloGame(targetRuneTypeCount),
-        strain: DEFAULT_STARTING_STRAIN,
-        strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
+        ...initializeSoloGame(targetRuneTypeCount, config),
         gameStarted: false,
       };
     });
