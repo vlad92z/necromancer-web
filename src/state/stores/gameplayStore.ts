@@ -6,7 +6,7 @@
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
+import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
 
@@ -38,19 +38,11 @@ function calculateVoidDamageBonus(
 }
 
 function calculateNextStrainMultiplier(
-  players: [Player, Player],
-  gameMode: GameState['gameMode'],
+  _players: [Player, Player],
+  _gameMode: GameState['gameMode'],
   baseMultiplier: number
 ): number {
-  if (gameMode === 'classic') {
-    return baseMultiplier;
-  }
-  const frostMitigation = players.reduce(
-    (total, player) => total + calculatePassiveEffectForWall(player.wall, 'StrainMitigation'),
-    0
-  );
-  const mitigationFactor = Math.max(0, 1 - frostMitigation);
-  return Math.max(0, baseMultiplier * mitigationFactor);
+  return baseMultiplier;
 }
 
 function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
@@ -224,7 +216,10 @@ function processSoloScoringPhase(state: GameState): GameState {
 
     const snapshot = state.scoringSnapshot;
     const overloadValue = snapshot.floorPenalties[0];
-    const overloadMultiplier = state.strain;
+    const frostMitigation = state.gameMode === 'standard'
+      ? calculatePassiveEffectForWall(state.players[0].wall, 'StrainMitigation')
+      : 0;
+    const overloadMultiplier = applyStressMitigation(state.strain, frostMitigation);
     const overloadDamage = overloadValue * overloadMultiplier;
 
     const updatedPlayer: Player = {

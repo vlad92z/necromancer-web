@@ -5,7 +5,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { animate } from 'framer-motion';
-import { DEFAULT_STRAIN_MULTIPLIER } from '../../../../utils/gameInitialization';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
 
 type StatIconType =
@@ -39,6 +38,7 @@ interface SpellpowerProps {
   round: number;
   frostRuneCount: number;
   voidRuneCount: number;
+  fatigueMultiplier: number;
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
@@ -350,7 +350,8 @@ export function SoloStats({
   overloadDamagePreview,
   round,
   frostRuneCount,
-  voidRuneCount
+  voidRuneCount,
+  fatigueMultiplier
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower ?? (essence * focus);
@@ -358,7 +359,7 @@ export function SoloStats({
   const healedAmount = Math.max(0, health - previousHealthRef.current);
   const voidPowerRaw = overloadDamagePreview * voidRuneCount * 0.1;
   const voidPower = Math.max(0, Math.round(voidPowerRaw * 10) / 10);
-  const fatigueMultiplier = Math.max(0, Math.round((DEFAULT_STRAIN_MULTIPLIER - frostRuneCount * 0.1) * 10) / 10);
+  const displayFatigueMultiplier = Math.max(0, Math.round(fatigueMultiplier * 10) / 10);
 
   useEffect(() => {
     previousHealthRef.current = health;
@@ -367,9 +368,9 @@ export function SoloStats({
   const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = hasPenalty
-    ? 'Overload is reducing your Focus. Cast more Wind runes on your wall to mitigate it.'
+    ? 'Overload is building damage, but Focus stays steady. Clear the floor to avoid health loss.'
     : hasWindMitigation
-      ? `Wind runes (${windRuneCount}) are shielding you from Overload, keeping Focus intact.`
+      ? `Wind runes (${windRuneCount}) are trimming overload penalties, keeping your wall safer.`
       : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = fireRuneCount > 0
@@ -382,13 +383,15 @@ export function SoloStats({
     ? `Life runes will restore ${healing} health every round.`
     : 'Healing - cast life runes to heal yourself every round.';
   const overloadTooltip = overloadPenalty > 0
-    ? `Overload (${overloadPenalty}) reduces Focus and will be multiplied at round end.`
-    : 'Overload - avoid floor penalties to keep Focus intact.';
-  const strainTooltip = `Strain ×${overloadMultiplier} applied to Overload each round. Current damage preview: ${overloadDamagePreview}.`;
+    ? `Overload (${overloadPenalty}) will hit your health at round end. Wind runes can offset these floor penalties.`
+    : 'Overload - keep the floor clear to avoid end-of-round damage.';
+  const strainTooltip = frostRuneCount > 0
+    ? `Stress ×${overloadMultiplier} after Frost relief (10% per Frost rune). Current damage preview: ${overloadDamagePreview}.`
+    : `Stress ×${overloadMultiplier} scales Overload each round. Current damage preview: ${overloadDamagePreview}.`;
   const runePowerTooltip = 'Rune Power - total spellpower accumulated across the duel.';
-  const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}) × Strain (${overloadMultiplier}) = ${overloadDamagePreview}.`;
+  const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}) × Stress (${overloadMultiplier}) = ${overloadDamagePreview}.`;
   const voidPowerTooltip = `Void Power - Damage (${overloadDamagePreview}) × Void runes (${voidRuneCount}) × 10% = ${voidPower}. Adds to Spell Power at round end.`;
-  const fatigueTooltip = `Fatigue - Strain multiplier for next round. Base 200% minus Frost runes (${frostRuneCount}) × 10% = ×${fatigueMultiplier}.`;
+  const fatigueTooltip = `Fatigue - Stress growth for next round. Base ×${displayFatigueMultiplier}. Frost runes no longer change fatigue.`;
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);
@@ -491,7 +494,7 @@ export function SoloStats({
             />
             <StatBadge
               type="strain"
-              label="Strain"
+              label="Stress"
               value={`×${overloadMultiplier}`}
               color="#38bdf8"
               borderColor="rgba(56, 189, 248, 0.35)"
@@ -521,7 +524,7 @@ export function SoloStats({
             <StatBadge
               type="fatigue"
               label="Fatigue"
-              value={`×${fatigueMultiplier}`}
+              value={`×${displayFatigueMultiplier}`}
               color="#7dd3fc"
               borderColor="rgba(125, 211, 252, 0.35)"
               tooltip={fatigueTooltip}

@@ -109,7 +109,7 @@ function getRuneDescription(type: RuneType) {
     case 'Fire':
       return 'Fire - increases ⚡Essence to deal more damage.';
     case 'Frost':
-      return 'Frost - each rune dampens next round\'s strain growth by 10%.';
+      return 'Frost - each rune reduces stress by 10% before overload hits.';
     case 'Life':
       return 'Life - increases 🌿healing done every round.';
     case 'Void':

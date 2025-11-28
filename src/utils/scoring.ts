@@ -9,14 +9,14 @@ import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '.
 /**
  * Calculate total wall power using simplified scoring
  * Essence = total runes on the wall + passive essence bonuses
- * Focus = size of the largest connected segment (reduced by floor penalty)
+ * Focus = size of the largest connected segment (floor penalties no longer reduce focus)
  * Power = Essence × Focus
  * Runes are connected if they share an edge (not diagonal)
  * Healing and other passives are handled elsewhere via the wall cell effects.
  */
 export function calculateWallPower(
   wall: ScoringWall, 
-  floorPenaltyCount: number = 0, 
+  _floorPenaltyCount: number = 0, 
   gameMode: 'classic' | 'standard' = 'standard'
 ): number {
   const wallSize = wall.length;
@@ -62,8 +62,8 @@ export function calculateWallPower(
   // Calculate essence with Fire bonus (only in standard mode)
   const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
   
-  // Apply floor penalty to focus (minimum 1)
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  // Focus is no longer reduced by overload penalties
+  const focus = Math.max(1, largestSegment);
   const totalPower = essence * focus;
   
   return totalPower;
@@ -77,7 +77,7 @@ export function calculateWallPower(
  */
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
-  floorPenaltyCount: number = 0,
+  _floorPenaltyCount: number = 0,
   gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
   const wallSize = wall.length;
@@ -119,8 +119,8 @@ export function calculateWallPowerWithSegments(
   // Calculate essence with Fire bonus (only in standard mode)
   const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
   
-  // Apply floor penalty to focus (minimum 1)
-  const focus = Math.max(1, largestSegment - floorPenaltyCount);
+  // Focus is no longer reduced by overload penalties
+  const focus = Math.max(1, largestSegment);
   const totalPower = essence * focus;
   
   return { essence, focus, totalPower };
@@ -233,6 +233,15 @@ export function calculateEffectiveFloorPenalty(
   const mitigatingWindRunes = windRunesOnWall + pendingWindPlacements;
   const effectivePenalty = floorRunes.length - mitigatingWindRunes;
   return Math.max(0, effectivePenalty);
+}
+
+/**
+ * Apply Frost mitigation to strain/stress (10% per mitigation point)
+ */
+export function applyStressMitigation(strain: number, mitigation: number): number {
+  const mitigationFactor = Math.max(0, 1 - mitigation);
+  const mitigatedStrain = strain * mitigationFactor;
+  return Math.max(0, Math.round(mitigatedStrain * 10) / 10);
 }
 
 /**

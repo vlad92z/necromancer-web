@@ -277,14 +277,14 @@ export function PlayerStats({
   const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = hasPenalty
-    ? 'Overload is reducing your Focus. Cast more Wind runes on your wall to mitigate it.'
+    ? 'Overload is building damage, but Focus stays steady. Clear the floor to avoid health loss.'
     : hasWindMitigation
-      ? `Wind runes (${windRuneCount}) are shielding you from Overload, keeping Focus intact.`
+      ? `Wind runes (${windRuneCount}) are trimming overload penalties, keeping your wall safer.`
       : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = fireRuneCount > 0
-    ? `Esence - cast more runes to increase spell damage. Fire runes (${fireRuneCount}) amplify your Essence.`
-    : 'Esence - cast more runes to increase spell damage.';
+    ? `Essence - cast more runes to increase spell damage. Fire runes (${fireRuneCount}) amplify your Essence.`
+    : 'Essence - cast more runes to increase spell damage.';
 
   const spellpowerTooltip = `Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
   const healthTooltip = 'Health - drop to zero and your duel ends.';

@@ -23,7 +23,7 @@ import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
-import { calculateEffectiveFloorPenalty, calculateProjectedPower } from '../../../utils/scoring';
+import { calculateEffectiveFloorPenalty, calculateProjectedPower, applyStressMitigation } from '../../../utils/scoring';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 const BOARD_BASE_SIZE = 1200;
@@ -70,7 +70,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain, strainMultiplier } = gameState;
   const isSoloMode = gameState.matchType === 'solo';
   const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
   const runePowerTotal = gameState.runePowerTotal;
@@ -144,8 +144,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
         gameMode
       )
     : 0;
-  const overloadMultiplier = isSoloMode ? strain : 0;
-  const overloadDamagePreview = overloadPenalty * overloadMultiplier;
   const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
@@ -197,6 +195,12 @@ export function GameBoard({ gameState }: GameBoardProps) {
 
         const frostRuneCount = gameMode === 'standard' ? countRunesOfType('Frost') : 0;
         const voidRuneCount = gameMode === 'standard' ? countRunesOfType('Void') : 0;
+        const strainMitigation = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'StrainMitigation'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'StrainMitigation'), 0)
+          : 0;
+        const overloadMultiplier = applyStressMitigation(strain, strainMitigation);
+        const overloadDamagePreview = overloadPenalty * overloadMultiplier;
 
         return {
           isActive: currentPlayerIndex === 0,
@@ -216,6 +220,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           round,
           frostRuneCount,
           voidRuneCount,
+          fatigueMultiplier: strainMultiplier,
         };
       })()
     : null;

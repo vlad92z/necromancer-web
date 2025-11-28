@@ -67,8 +67,9 @@ export const DEFAULT_STARTING_STRAIN = 5;
 export const DEFAULT_STRAIN_MULTIPLIER = 2;
 const SOLO_STARTING_HEALTH = 100;
 const SOLO_MAX_HEALTH = 1000;
-const SOLO_FACTORIES_PER_PLAYER = 4;
+const SOLO_FACTORIES_PER_PLAYER = 5;
 const SOLO_DECK_MULTIPLIER = 2;
+const SOLO_DECK_BONUS = 16;
 
 export interface QuickPlayConfig {
   factoriesPerPlayer: number;
@@ -314,7 +315,7 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5): GameState 
 
   const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
   const soloRuneforgeCount = SOLO_FACTORIES_PER_PLAYER;
-  const soloDeckSize = quickPlayConfig.totalRunesPerPlayer * SOLO_DECK_MULTIPLIER;
+  const soloDeckSize = quickPlayConfig.totalRunesPerPlayer * SOLO_DECK_MULTIPLIER + SOLO_DECK_BONUS;
 
   const soloPlayer = createPlayer(
     'player-1',
