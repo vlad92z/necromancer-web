@@ -10,11 +10,10 @@ import { PlayerView } from './Player/PlayerView';
 import { OpponentView } from './Player/OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { SoloGameOverModal } from './SoloGameOverModal';
-import { SoloStatusBar } from './SoloStatusBar';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
-import { PlayerStats } from './Player/PlayerStats';
+import { SoloStats } from './Player/SoloStats';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -147,7 +146,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const overloadMultiplier = isSoloMode ? Math.pow(2, Math.max(0, round - 1)) : 0;
   const overloadDamagePreview = overloadPenalty * overloadMultiplier;
   const playerMaxHealth = players[0].maxHealth ?? players[0].health;
-  const soloPlayerStats = isSoloMode
+  const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
         const completedPatternLines = player.patternLines
@@ -973,7 +972,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             }}>
               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
 
-                {soloPlayerStats && <PlayerStats {...soloPlayerStats} />}
+                {soloStats && <SoloStats {...soloStats} />}
               </div>
             </div>
           </>
