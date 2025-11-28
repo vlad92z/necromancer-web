@@ -69,7 +69,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain } = gameState;
   const isSoloMode = gameState.matchType === 'solo';
   const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
   const runePowerTotal = gameState.runePowerTotal;
@@ -143,7 +143,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
         gameMode
       )
     : 0;
-  const overloadMultiplier = isSoloMode ? Math.pow(2, Math.max(0, round - 1)) : 0;
+  const overloadMultiplier = isSoloMode ? strain : 0;
   const overloadDamagePreview = overloadPenalty * overloadMultiplier;
   const playerMaxHealth = players[0].maxHealth ?? players[0].health;
   const soloStats = isSoloMode

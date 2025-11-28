@@ -9,6 +9,10 @@ import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame
 import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 
+// Default strain configuration (tune these values to change behaviour)
+export const DEFAULT_STARTING_STRAIN = 5;
+export const DEFAULT_STRAIN_MULTIPLIER = 2;
+
 // Helper function to count Life runes on a wall
 function countLifeRunes(wall: Player['wall']): number {
   return wall.flat().filter(cell => cell.runeType === 'Life').length;
@@ -18,9 +22,8 @@ function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
   return `${baseName} (${getAIDifficultyLabel(difficulty)})`;
 }
 
-function getOverloadMultiplier(round: number): number {
-  return Math.pow(2, Math.max(0, round - 1));
-}
+// NOTE: overload multiplier is now stored in state.strain and adjusted at
+// round end. The old getOverloadMultiplier(round) helper is no longer used.
 
 // Navigation callback registry for routing integration
 let navigationCallback: (() => void) | null = null;
@@ -177,7 +180,7 @@ function processSoloScoringPhase(state: GameState): GameState {
 
     const snapshot = state.scoringSnapshot;
     const overloadValue = snapshot.floorPenalties[0];
-    const overloadMultiplier = getOverloadMultiplier(state.round);
+    const overloadMultiplier = state.strain;
     const overloadDamage = overloadValue * overloadMultiplier;
 
     const updatedPlayer: Player = {
@@ -262,6 +265,9 @@ function processSoloScoringPhase(state: GameState): GameState {
       centerPool: [],
       turnPhase: 'draft',
       round: state.round + 1,
+      // multiply strain at end of round so it applies next round
+      strain: state.strain * state.strainMultiplier,
+      strainMultiplier: state.strainMultiplier,
       scoringPhase: null,
       scoringSnapshot: null,
       soloOutcome: null,
@@ -274,6 +280,9 @@ function processSoloScoringPhase(state: GameState): GameState {
 export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
   // Initial state
   ...initializeGame(),
+  // Strain configuration - starting value and multiplier factor (tune here)
+  strain: DEFAULT_STARTING_STRAIN,
+  strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
   
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType) => {
@@ -1037,6 +1046,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           centerPool: [],
           turnPhase: 'draft',
           round: state.round + 1,
+          // multiply strain at end of round so it applies next round
+          strain: state.strain * state.strainMultiplier,
+          strainMultiplier: state.strainMultiplier,
           scoringPhase: null,
           scoringSnapshot: null,
         };
@@ -1079,6 +1091,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           players: updatedPlayers,
           runePowerTotal: 0,
           soloOutcome: null,
+          // ensure strain defaults are present when creating a fresh game
+          strain: DEFAULT_STARTING_STRAIN,
+          strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
         };
       }
 
@@ -1144,6 +1159,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         playerControllers,
         runePowerTotal: 0,
         soloOutcome: null,
+        strain: DEFAULT_STARTING_STRAIN,
+        strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
       };
     });
   },
@@ -1154,6 +1171,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return {
         ...baseState,
         gameStarted: true,
+        strain: DEFAULT_STARTING_STRAIN,
+        strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
       };
     });
   },
@@ -1163,6 +1182,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const targetRuneTypeCount = runeTypeCount ?? state.runeTypeCount;
       return {
         ...initializeSoloGame(targetRuneTypeCount),
+        strain: DEFAULT_STARTING_STRAIN,
+        strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
         gameStarted: false,
       };
     });

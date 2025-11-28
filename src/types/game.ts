@@ -216,6 +216,16 @@ export interface GameState {
   currentPlayerIndex: 0 | 1;
   turnPhase: TurnPhase;
   round: number;
+  /**
+   * Strain multiplier applied to overload at round end (configurable)
+   * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
+   */
+  strain: number;
+  /**
+   * Factor used to multiply `strain` at the end of each round. Kept in state
+   * so it can be tuned or modified by runes in the future.
+   */
+  strainMultiplier: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
   draftSource:
     | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
