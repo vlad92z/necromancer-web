@@ -453,14 +453,6 @@ export function SoloStats({
               borderColor="rgba(74, 222, 128, 0.4)"
               tooltip={healingTooltip}
             />
-            <StatBadge
-              type="runePower"
-              label="Rune Power"
-              value={runePowerTotal}
-              color="#facc15"
-              borderColor="rgba(250, 204, 21, 0.3)"
-              tooltip={runePowerTooltip}
-            />
           </div>
 
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -507,7 +499,7 @@ export function SoloStats({
             <StatBadge
               type="strain"
               label="Stress"
-              value={`×${overloadMultiplier}`}
+              value={overloadMultiplier}
               color="#38bdf8"
               borderColor="rgba(56, 189, 248, 0.35)"
               tooltip={strainTooltip}
@@ -525,29 +517,12 @@ export function SoloStats({
 
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
-              type="voidPower"
-              label="Void Essence"
-              value={voidPower}
-              color="#a855f7"
-              borderColor="rgba(168, 85, 247, 0.35)"
-              tooltip={voidPowerTooltip}
-              alert={voidPower > 0}
-            />
-            <StatBadge
               type="deck"
               label="Deck"
               value={deckCount ?? 0}
               color="#60a5fa"
               borderColor="rgba(96, 165, 250, 0.35)"
               tooltip={`Runes left in deck: ${deckCount ?? 0}`}
-            />
-            <StatBadge
-              type="fatigue"
-              label="Fatigue"
-              value={`×${displayFatigueMultiplier}`}
-              color="#7dd3fc"
-              borderColor="rgba(125, 211, 252, 0.35)"
-              tooltip={fatigueTooltip}
             />
           </div>
         </div>
