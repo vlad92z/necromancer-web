@@ -16,6 +16,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
   const navigate = useNavigate();
   const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(6);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: number) => {
     setSoloConfig((prev) => ({ ...prev, [key]: value }));
@@ -79,157 +80,170 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
           Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
         </p>
 
-        <div
-          style={{
-            marginBottom: '20px',
-            padding: '16px',
-            backgroundColor: '#0b1433',
-            borderRadius: '10px',
-            border: '1px solid rgba(148, 163, 184, 0.18)',
-          }}
-        >
-          <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe', marginBottom: '10px' }}>Run Setup</div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-              gap: '12px',
-            }}
-          >
-            <ConfigField label="Starting Health" description="Health pool when the run begins.">
-              <input
-                type="number"
-                min={1}
-                value={soloConfig.startingHealth}
-                onChange={handleNumberInput('startingHealth', (value) => Math.max(1, value))}
-                style={inputStyle}
-              />
-            </ConfigField>
-            <ConfigField label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={soloConfig.startingStrain}
-                onChange={handleNumberInput('startingStrain', (value) => Math.max(0, value))}
-                style={inputStyle}
-              />
-            </ConfigField>
-            <ConfigField label="Fatigue Multiplier" description="Round-by-round growth applied to fatigue.">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <input
-                  type="range"
-                  min={1}
-                  max={2}
-                  step={0.1}
-                  value={soloConfig.strainMultiplier}
-                  onChange={(event) => updateConfigValue('strainMultiplier', Number(event.target.value))}
-                  style={{ width: '100%' }}
-                />
-                <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.strainMultiplier.toFixed(1)}x fatigue growth</div>
-              </div>
-            </ConfigField>
-            <ConfigField label="Healing per Rune" description="Healing per Life, Wind, or Frost rune that lands on your wall.">
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={soloConfig.lifeRuneHealing}
-                onChange={handleNumberInput('lifeRuneHealing', (value) => Math.max(0, value))}
-                style={inputStyle}
-              />
-            </ConfigField>
-            <ConfigField label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
-              <input
-                type="number"
-                min={1}
-                step={10}
-                value={soloConfig.targetRuneScore}
-                onChange={handleNumberInput('targetRuneScore', (value) => Math.max(1, value))}
-                style={inputStyle}
-              />
-            </ConfigField>
-            <ConfigField label="Runeforges" description="How many personal factories deal into your pool.">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <input
-                  type="range"
-                  min={2}
-                  max={6}
-                  step={1}
-                  value={soloConfig.factoriesPerPlayer}
-                  onChange={(event) => updateConfigValue('factoriesPerPlayer', Number(event.target.value))}
-                  style={{ width: '100%' }}
-                />
-                <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.factoriesPerPlayer} runeforges</div>
-              </div>
-            </ConfigField>
-            <ConfigField label="Deck Size" description="How many of each rune type appear in your deck.">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <input
-                  type="range"
-                  min={8}
-                  max={30}
-                  step={1}
-                  value={soloConfig.deckRunesPerType}
-                  onChange={(event) => updateConfigValue('deckRunesPerType', Number(event.target.value))}
-                  style={{ width: '100%' }}
-                />
-                <div style={{ color: '#cbd5e1', fontSize: '13px' }}>
-                  {soloConfig.deckRunesPerType} of each rune ({soloConfig.deckRunesPerType * runeTypeCount} total)
-                </div>
-              </div>
-            </ConfigField>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe' }}>Run Setup</div>
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((s) => !s)}
+              style={{
+                background: 'transparent',
+                color: '#93c5fd',
+                border: '1px solid rgba(148, 163, 184, 0.12)',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              {showAdvanced ? 'Hide Advanced' : 'Advanced Options'}
+            </button>
           </div>
-        </div>
 
-        <div
-          style={{
-            marginBottom: '20px',
-            padding: '16px',
-            backgroundColor: '#0b1433',
-            borderRadius: '10px',
-            border: '1px solid rgba(148, 163, 184, 0.18)',
-          }}
-        >
-          <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe', marginBottom: '10px' }}>Board Size</div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            {[4, 6].map((count) => (
-              <button
-                key={count}
-                onClick={() => setRuneTypeCount(count as RuneTypeCount)}
+          {showAdvanced && (
+            <div
+              style={{
+                padding: '16px',
+                backgroundColor: '#0b1433',
+                borderRadius: '10px',
+                border: '1px solid rgba(148, 163, 184, 0.18)',
+              }}
+            >
+              <div
                 style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: '2px solid',
-                  borderColor: runeTypeCount === count ? '#38bdf8' : 'rgba(148, 163, 184, 0.25)',
-                  background: runeTypeCount === count ? 'linear-gradient(135deg, #38bdf8, #818cf8)' : 'transparent',
-                  color: runeTypeCount === count ? '#0b1024' : '#e2e8f0',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 120ms ease',
-                }}
-                onMouseEnter={(event) => {
-                  if (runeTypeCount !== count) {
-                    event.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.12)';
-                  }
-                }}
-                onMouseLeave={(event) => {
-                  if (runeTypeCount !== count) {
-                    event.currentTarget.style.backgroundColor = 'transparent';
-                  }
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  gap: '12px',
                 }}
               >
-                {count}x{count}
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop: '8px', color: '#93c5fd', fontSize: '13px' }}>
-            {runeTypeCount === 3 && '3 rune types, 3x3 Spell Wall, light overload pressure.'}
-            {runeTypeCount === 4 && '4 rune types, 4x4 Spell Wall, balanced Solo pace.'}
-            {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, extended run with heavy pressure.'}
-            {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning joins for maximal Essence scaling.'}
-          </div>
+                <ConfigField label="Starting Health" description="Health pool when the run begins.">
+                  <input
+                    type="number"
+                    min={1}
+                    value={soloConfig.startingHealth}
+                    onChange={handleNumberInput('startingHealth', (value) => Math.max(1, value))}
+                    style={inputStyle}
+                  />
+                </ConfigField>
+                <ConfigField label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={soloConfig.startingStrain}
+                    onChange={handleNumberInput('startingStrain', (value) => Math.max(0, value))}
+                    style={inputStyle}
+                  />
+                </ConfigField>
+                <ConfigField label="Fatigue Multiplier" description="Round-by-round growth applied to fatigue.">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <input
+                      type="range"
+                      min={1}
+                      max={2}
+                      step={0.1}
+                      value={soloConfig.strainMultiplier}
+                      onChange={(event) => updateConfigValue('strainMultiplier', Number(event.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.strainMultiplier.toFixed(1)}x fatigue growth</div>
+                  </div>
+                </ConfigField>
+                <ConfigField label="Healing per Rune" description="Healing per Life, Wind, or Frost rune that lands on your wall.">
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={soloConfig.lifeRuneHealing}
+                    onChange={handleNumberInput('lifeRuneHealing', (value) => Math.max(0, value))}
+                    style={inputStyle}
+                  />
+                </ConfigField>
+                <ConfigField label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
+                  <input
+                    type="number"
+                    min={1}
+                    step={10}
+                    value={soloConfig.targetRuneScore}
+                    onChange={handleNumberInput('targetRuneScore', (value) => Math.max(1, value))}
+                    style={inputStyle}
+                  />
+                </ConfigField>
+                <ConfigField label="Runeforges" description="How many personal factories deal into your pool.">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <input
+                      type="range"
+                      min={2}
+                      max={6}
+                      step={1}
+                      value={soloConfig.factoriesPerPlayer}
+                      onChange={(event) => updateConfigValue('factoriesPerPlayer', Number(event.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.factoriesPerPlayer} runeforges</div>
+                  </div>
+                </ConfigField>
+                <ConfigField label="Deck Size" description="How many of each rune type appear in your deck.">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <input
+                      type="range"
+                      min={8}
+                      max={30}
+                      step={1}
+                      value={soloConfig.deckRunesPerType}
+                      onChange={(event) => updateConfigValue('deckRunesPerType', Number(event.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ color: '#cbd5e1', fontSize: '13px' }}>
+                      {soloConfig.deckRunesPerType} of each rune ({soloConfig.deckRunesPerType * runeTypeCount} total)
+                    </div>
+                  </div>
+                </ConfigField>
+              </div>
+
+              <div style={{ marginTop: '16px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe', marginBottom: '10px' }}>Board Size</div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {[4, 6].map((count) => (
+                    <button
+                      key={count}
+                      onClick={() => setRuneTypeCount(count as RuneTypeCount)}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        borderRadius: '10px',
+                        border: '2px solid',
+                        borderColor: runeTypeCount === count ? '#38bdf8' : 'rgba(148, 163, 184, 0.25)',
+                        background: runeTypeCount === count ? 'linear-gradient(135deg, #38bdf8, #818cf8)' : 'transparent',
+                        color: runeTypeCount === count ? '#0b1024' : '#e2e8f0',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 120ms ease',
+                      }}
+                      onMouseEnter={(event) => {
+                        if (runeTypeCount !== count) {
+                          event.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.12)';
+                        }
+                      }}
+                      onMouseLeave={(event) => {
+                        if (runeTypeCount !== count) {
+                          event.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
+                    >
+                      {count}x{count}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ marginTop: '8px', color: '#93c5fd', fontSize: '13px' }}>
+                  {runeTypeCount === 3 && '3 rune types, 3x3 Spell Wall, light overload pressure.'}
+                  {runeTypeCount === 4 && '4 rune types, 4x4 Spell Wall, balanced Solo pace.'}
+                  {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, extended run with heavy pressure.'}
+                  {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning joins for maximal Essence scaling.'}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <button
@@ -263,31 +277,10 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
   );
 }
 
-interface RuleCardProps {
-  title: string;
-  description: string;
-}
-
 interface ConfigFieldProps {
   label: string;
   description: string;
   children: React.ReactNode;
-}
-
-function RuleCard({ title, description }: RuleCardProps) {
-  return (
-    <div
-      style={{
-        padding: '14px',
-        borderRadius: '12px',
-        border: '1px solid rgba(148, 163, 184, 0.2)',
-        background: 'rgba(255, 255, 255, 0.02)',
-      }}
-    >
-      <div style={{ fontWeight: 700, color: '#e0f2fe', marginBottom: '8px' }}>{title}</div>
-      <div style={{ color: '#cbd5e1', fontSize: '14px', lineHeight: 1.5 }}>{description}</div>
-    </div>
-  );
 }
 
 function ConfigField({ label, description, children }: ConfigFieldProps) {
