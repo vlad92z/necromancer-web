@@ -24,8 +24,6 @@ const RUNE_ASSETS = {
   Lightning: lightningRune,
 };
 
-const HEALING_RUNE_TYPES: RuneType[] = ['Wind', 'Life', 'Frost'];
-
 export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
 
 export interface RuneCellProps {
@@ -113,16 +111,6 @@ export function RuneCell({
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   const hasEffect = showEffect && Boolean(rune && (rune.effects.passive.length > 0 || rune.effects.active.length > 0));
   
-  // Highlight healing-focused runes on the scoring wall to communicate their effect.
-  // Note: use the *semantic* variant (original `variant`) so forced visuals do
-  // not accidentally highlight runes that aren't anchored to the wall.
-  const isHealingWallRune =
-    variant === 'wall' &&
-    (
-      (runeType !== undefined && HEALING_RUNE_TYPES.includes(runeType)) ||
-      (!rune && isPending && placeholder?.runeType && HEALING_RUNE_TYPES.includes(placeholder.runeType))
-    );
-  
   // Use occupied background for wall cells that have runes OR are pending placement
   // Use `usedVariant` for styling decisions so callers can force visuals
   // without changing semantic behavior.
@@ -131,7 +119,7 @@ export function RuneCell({
     : variantStyle.background;
   
   // Override border for healing runes on the wall
-  let borderStyle = variantStyle.border;
+  const borderStyle = variantStyle.border;
   
   // Only animate wall placements; pattern/floor entries rely on RuneAnimation overlay
   const shouldAnimate = usedVariant === 'wall' && Boolean(rune);
