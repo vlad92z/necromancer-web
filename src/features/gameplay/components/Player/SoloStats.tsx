@@ -338,11 +338,9 @@ export function SoloStats({
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower;
 
-  const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
-  const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
-  const focusTooltip = hasPenalty
-    ? 'Overload is building damage, but Focus stays steady. Clear the floor to avoid health loss.'
-    : 'Focus - connect more runes to increase your multiplier.';
+  const focusColor = '#38bdf8';
+  const focusBorder = 'rgba(56, 189, 248, 0.35)';
+  const focusTooltip = 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = essenceRuneCount > 0
     ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
@@ -424,7 +422,6 @@ export function SoloStats({
               color={focusColor}
               borderColor={focusBorder}
               tooltip={focusTooltip}
-              alert={hasPenalty}
               {...clickableStatCommon}
             />
             <StatBadge
