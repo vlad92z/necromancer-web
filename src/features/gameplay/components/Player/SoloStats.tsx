@@ -1,5 +1,5 @@
 /**
- * PlayerStats component - displays vitals and rune stats with subtle Framer Motion animations
+ * SoloStats component - displays vitals and rune stats with subtle Framer Motion animations
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -16,19 +16,7 @@ import fatigueSvg from '../../../../assets/stats/fatigue.svg';
 import stressSvg from '../../../../assets/stats/stress.svg';
 import deckSvg from '../../../../assets/stats/deck.svg';
 
-type StatIconType =
-  | 'health'
-  | 'healing'
-  | 'essence'
-  | 'focus'
-  | 'spellpower'
-  | 'overload'
-  | 'strain'
-  | 'runePower'
-  | 'damage'
-  | 'voidPower'
-  | 'deck'
-  | 'fatigue';
+type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower' | 'overload' | 'strain' | 'damage' | 'deck';
 
 interface SpellpowerProps {
   isActive: boolean;
@@ -37,7 +25,6 @@ interface SpellpowerProps {
   essence: number;
   focus: number;
   totalPower: number;
-  runePowerTotal: number;
   essenceRuneCount: number;
   hasPenalty: boolean;
   hasWindMitigation: boolean;
@@ -47,8 +34,6 @@ interface SpellpowerProps {
   overloadDamagePreview: number;
   round: number;
   frostRuneCount: number;
-  voidRuneCount: number;
-  fatigueMultiplier: number;
   deckCount?: number;
 }
 
@@ -128,16 +113,7 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
     );
   }
 
-  if (type === 'spellpower' || type === 'runePower') {
-    return (
-      <img
-        src={spellpowerSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
+  
 
   if (type === 'damage') {
     return (
@@ -150,15 +126,14 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
     );
   }
 
-  if (type === 'voidPower') {
+  if (type === 'spellpower') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="8" {...strokeProps} />
-        <path d="M8 12a4 4 0 0 1 8 0" {...strokeProps} />
-        <path d="M12 6v2" {...strokeProps} />
-        <path d="M12 16v2" {...strokeProps} />
-        <circle cx="12" cy="12" r="2.2" fill={color} opacity={0.9} />
-      </svg>
+      <img
+        src={spellpowerSvg}
+        alt=""
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+      />
     );
   }
 
@@ -173,17 +148,7 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
     );
   }
 
-  if (type === 'fatigue') {
-    return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M5 12a7 7 0 0 1 14 0" {...strokeProps} />
-        <path d="M12 5v3" {...strokeProps} />
-        <path d="M12 12v5" {...strokeProps} />
-        <path d="M9 17h6" {...strokeProps} />
-        <circle cx="12" cy="12" r="1.4" fill={color} opacity={0.92} />
-      </svg>
-    );
-  }
+  /* 'fatigue' and 'voidPower' icon variants were removed as they were not used by this component */
 
   return (
     <svg width={size} height={size} viewBox="0 0 24 24">
@@ -359,7 +324,6 @@ export function SoloStats({
   essence,
   focus,
   totalPower,
-  runePowerTotal,
   essenceRuneCount,
   hasPenalty,
   hasWindMitigation,
@@ -369,20 +333,10 @@ export function SoloStats({
   overloadDamagePreview,
   round,
   frostRuneCount,
-  voidRuneCount,
-  fatigueMultiplier
-  , deckCount
+  deckCount,
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
-  const spellpower = totalPower ?? (essence * focus);
-  const previousHealthRef = useRef(health);
-  const healedAmount = Math.max(0, health - previousHealthRef.current);
-  const voidPower = voidRuneCount;
-  const displayFatigueMultiplier = Math.max(0, Math.round(fatigueMultiplier * 10) / 10);
-
-  useEffect(() => {
-    previousHealthRef.current = health;
-  }, [health]);
+  const spellpower = totalPower;
 
   const focusColor = hasPenalty ? '#f87171' : '#38bdf8';
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
@@ -405,19 +359,12 @@ export function SoloStats({
   const strainTooltip = frostRuneCount > 0
     ? `Stress ×${overloadMultiplier}. Frost runes now add healing instead of reducing stress. Current damage preview: ${overloadDamagePreview}.`
     : `Stress ×${overloadMultiplier} scales Overload each round. Current damage preview: ${overloadDamagePreview}.`;
-  const runePowerTooltip = 'Rune Power - total spellpower accumulated across the duel.';
   const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}) × Stress (${overloadMultiplier}) = ${overloadDamagePreview}.`;
-  const voidPowerTooltip = voidPower > 0
-    ? `Void Essence - Void runes (${voidRuneCount}) add +1 Essence each.`
-    : 'Void Essence - collect Void runes to add more Essence.';
-  const fatigueTooltip = `Fatigue - Stress growth for next round. Base ×${displayFatigueMultiplier}.`;
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);
 
-  const clickableStatCommon = {
-    onClick: openExplanation,
-  };
+  const clickableStatCommon = { onClick: openExplanation };
 
   return (
     <>
@@ -455,7 +402,7 @@ export function SoloStats({
             <StatBadge
               type="healing"
               label="Healing"
-              value={<AnimatedHealingValue baseValue={healing} consumed={healedAmount} round={round} />}
+              value={<AnimatedHealingValue baseValue={healing} consumed={0} round={round} />}
               color="#4ade80"
               borderColor="rgba(74, 222, 128, 0.4)"
               tooltip={healingTooltip}
