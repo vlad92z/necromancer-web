@@ -78,12 +78,6 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore }: SoloRuneScor
             }}
           />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Current</span>
-          <span style={{ color: reachedTarget ? '#34d399' : '#e2e8f0', fontSize: '12px', fontWeight: 700 }}>
-            {progressPercent}% toward target
-          </span>
-        </div>
       </div>
     </div>
   );

@@ -16,8 +16,6 @@ import fatigueSvg from '../../../../assets/stats/fatigue.svg';
 import stressSvg from '../../../../assets/stats/stress.svg';
 import deckSvg from '../../../../assets/stats/deck.svg';
 
-type StatIconType = 'health' | 'healing' | 'essence' | 'focus' | 'spellpower' | 'overload' | 'strain' | 'damage' | 'deck';
-
 interface SpellpowerProps {
   isActive: boolean;
   health: number;
@@ -37,125 +35,15 @@ interface SpellpowerProps {
   deckCount?: number;
 }
 
-function StatIcon({ type, color }: { type: StatIconType; color: string }) {
-  const size = 35;
-  const strokeProps = {
-    stroke: color,
-    strokeWidth: 2,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    fill: 'none' as const,
-  };
-
-  if (type === 'health') {
-    return (
-      <img
-        src={healthSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  if (type === 'healing') {
-    return (
-      <img
-        src={healingSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  if (type === 'essence') {
-    return (
-      <img
-        src={essenceSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  if (type === 'focus') {
-    return (
-      <img
-        src={focusSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  if (type === 'overload') {
-    return (
-      <img
-        src={overloadSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  if (type === 'strain') {
-    return (
-      <img
-        src={fatigueSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  
-
-  if (type === 'damage') {
-    return (
-      <img
-        src={stressSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  if (type === 'spellpower') {
-    return (
-      <img
-        src={spellpowerSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  if (type === 'deck') {
-    return (
-      <img
-        src={deckSvg}
-        alt=""
-        aria-hidden
-        style={{ display: 'inline-flex', width: size, height: size }}
-      />
-    );
-  }
-
-  /* 'fatigue' and 'voidPower' icon variants were removed as they were not used by this component */
-
+function StatIcon({ name }: { name: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="7.5" {...strokeProps} />
-      <circle cx="12" cy="12" r="3" fill={color} opacity={0.9} />
-    </svg>
-  );
+      <img
+        src={name}
+        alt=""
+        aria-hidden
+        style={{ display: 'inline-flex', width: 35, height: 35 }}
+      />
+    );
 }
 
 interface AnimatedHealthValueProps {
@@ -240,17 +128,17 @@ function AnimatedHealingValue({ baseValue, consumed, round }: AnimatedHealingVal
 }
 
 interface StatBadgeProps {
-  type: StatIconType;
   label: string;
   value: ReactNode;
   color: string;
   borderColor: string;
   tooltip: string;
+  image: string
   onClick?: () => void;
   alert?: boolean;
 }
 
-function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, alert }: StatBadgeProps) {
+function StatBadge({ label, value, borderColor, tooltip, image, onClick, alert }: StatBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
   const isClickable = typeof onClick === 'function';
   const baseShadow = alert ? '0 0 16px rgba(248, 113, 113, 0.4)' : '0 10px 26px rgba(0,0,0,0.45)';
@@ -285,7 +173,7 @@ function StatBadge({ type, label, value, color, borderColor, tooltip, onClick, a
         }}
         aria-label={`${label}: ${tooltip}`}
       >
-        <StatIcon type={type} color={color} />
+        <StatIcon name={image}/>
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, marginLeft: '0.5rem' }}>
           <span style={{ fontSize: '1.15rem', fontWeight: 600 }}>{value}</span>
         </div>
@@ -326,13 +214,10 @@ export function SoloStats({
   totalPower,
   essenceRuneCount,
   hasOverload,
-  hasWindMitigation,
-  windRuneCount,
   overloadPenalty,
   overloadMultiplier,
   overloadDamagePreview,
   round,
-  frostRuneCount,
   deckCount,
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
@@ -382,90 +267,90 @@ export function SoloStats({
         <div style={{ display: 'flex', gap: '2em', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
-              type="health"
               label="Health"
               value={<AnimatedHealthValue target={health} />}
               color="#fb7185"
               borderColor="rgba(248, 113, 113, 0.4)"
               tooltip={healthTooltip}
+              image={healthSvg}
             />
             <StatBadge
-              type="healing"
               label="Healing"
               value={<AnimatedHealingValue baseValue={healing} consumed={0} round={round} />}
               color="#4ade80"
               borderColor="rgba(74, 222, 128, 0.4)"
               tooltip={healingTooltip}
+              image={healingSvg}
             />
           </div>
 
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
-              type="essence"
               label="Essence"
               value={essence}
               color="#facc15"
               borderColor="rgba(250, 204, 21, 0.35)"
               tooltip={essenceTooltip}
+              image={essenceSvg}
               {...clickableStatCommon}
             />
             <StatBadge
-              type="focus"
               label="Focus"
               value={focus}
               color='#38bdf8'
               borderColor='rgba(56, 189, 248, 0.35)'
               tooltip={focusTooltip}
+              image={focusSvg}
               {...clickableStatCommon}
             />
             <StatBadge
-              type="spellpower"
               label="Spell Power"
               value={spellpower}
               color="#c084fc"
               borderColor="rgba(192, 132, 252, 0.4)"
               tooltip={spellpowerTooltip}
+              image={spellpowerSvg}
               {...clickableStatCommon}
             />
           </div>
 
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
-              type="overload"
               label="Overload"
               value={overloadPenalty}
               color="#fb7185"
               borderColor="rgba(248, 113, 113, 0.45)"
               tooltip={overloadTooltip}
+              image={overloadSvg}
               alert={hasOverload}
             />
             <StatBadge
-              type="strain"
               label="Stress"
               value={overloadMultiplier}
               color="#38bdf8"
               borderColor="rgba(56, 189, 248, 0.35)"
               tooltip={strainTooltip}
+              image={fatigueSvg}
             />
             <StatBadge
-              type="damage"
               label="Damage"
               value={overloadDamagePreview}
               color="#f97316"
               borderColor="rgba(249, 115, 22, 0.4)"
               tooltip={damageTooltip}
               alert={overloadDamagePreview > 0}
+              image={stressSvg}
             />
           </div>
 
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
-              type="deck"
               label="Deck"
               value={deckCount ?? 0}
               color="#60a5fa"
               borderColor="rgba(96, 165, 250, 0.35)"
               tooltip={`Runes left in deck: ${deckCount ?? 0}`}
+              image={deckSvg}
             />
           </div>
         </div>
