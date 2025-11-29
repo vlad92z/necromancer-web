@@ -34,7 +34,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         border: '2px solid rgba(74,158,255,0.12)',
         borderRadius: '12px', 
         padding: '36px 28px', 
-        maxWidth: '700px',
+        maxWidth: '640px',
         width: '100%',
         textAlign: 'center',
         boxShadow: '0 12px 36px rgba(2,6,23,0.6)'

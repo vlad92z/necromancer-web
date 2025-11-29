@@ -47,7 +47,7 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
           backgroundColor: '#1e293b',
           borderRadius: '16px',
           padding: '32px',
-          maxWidth: '600px',
+          maxWidth: '540px',
           width: '100%',
           maxHeight: '80vh',
           overflow: 'auto',
@@ -82,7 +82,7 @@ export function VoidEffectOverlay({ factories, onSelectFactory, onSkip, isVisibl
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
             gap: '16px',
             marginBottom: '24px',
           }}

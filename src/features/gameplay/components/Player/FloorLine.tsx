@@ -53,7 +53,7 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
           borderRadius: '10px',
           transition: 'all 0.2s',
           width: '100%',
-          maxWidth: '720px'
+          maxWidth: '680px'
         }}
         aria-label="Place runes in floor line (take penalties)"
       >

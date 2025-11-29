@@ -2,7 +2,7 @@
  * GameBoard component - main game board displaying runeforges, center, player and opponent views
  */
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, AnimatingRune, Rune } from '../../../types/game';
 import { RuneforgesAndCenter } from './Center/RuneforgesAndCenter';
@@ -115,9 +115,13 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const currentPlayer = players[currentPlayerIndex];
   const currentController = getControllerForIndex(gameState, currentPlayerIndex);
   const isAITurn = currentController.type === 'computer';
+  const activeAnimatingRunes = useMemo(
+    () => [...animatingRunes, ...runeforgeAnimatingRunes],
+    [animatingRunes, runeforgeAnimatingRunes]
+  );
   const isAnimatingPlacement = animatingRunes.length > 0;
-  const animatingRuneIds = [...animatingRunes, ...runeforgeAnimatingRunes].map((rune) => rune.id);
-  useRunePlacementSounds(players, animatingRunes, soundVolume);
+  const animatingRuneIds = activeAnimatingRunes.map((rune) => rune.id);
+  useRunePlacementSounds(players, activeAnimatingRunes, soundVolume);
   useBackgroundMusic(!isMusicMuted, soundVolume);
   useFreezeSound(frozenPatternLines);
   useVoidEffectSound(voidEffectPending, runeforges, centerPool);

@@ -1,5 +1,5 @@
 /**
- * useRunePlacementSounds - plays elemental rune audio when runes begin animating toward pattern lines or the floor (with placement fallback).
+ * useRunePlacementSounds - plays elemental rune audio when runes begin animating toward their destinations (pattern lines, floor, or center) with placement fallback detection.
  */
 import { useEffect, useMemo, useRef } from 'react';
 import type { AnimatingRune, Player, RuneType } from '../types/game';
@@ -49,7 +49,8 @@ const countRunePlacements = (players: Player[]): RuneCountMap =>
       Frost: totals.Frost + patternTotals.Frost + floorTotals.Frost,
       Life: totals.Life + patternTotals.Life + floorTotals.Life,
       Void: totals.Void + patternTotals.Void + floorTotals.Void,
-      Wind: totals.Wind + patternTotals.Wind + floorTotals.Wind
+      Wind: totals.Wind + patternTotals.Wind + floorTotals.Wind,
+      Lightning: totals.Lightning + patternTotals.Lightning + floorTotals.Lightning
     };
   }, createEmptyCountMap(0));
 

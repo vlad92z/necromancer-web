@@ -27,7 +27,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           backgroundColor: '#ffffff',
           borderRadius: '12px',
           padding: '32px',
-          maxWidth: '600px',
+          maxWidth: '540px',
           width: '100%',
           color: '#1e293b',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'

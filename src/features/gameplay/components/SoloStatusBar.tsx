@@ -53,7 +53,7 @@ export function SoloStatusBar({
     <div
       style={{
         width: '100%',
-        maxWidth: '880px',
+        maxWidth: '820px',
         display: 'flex',
         gap: '18px',
         alignItems: 'center',

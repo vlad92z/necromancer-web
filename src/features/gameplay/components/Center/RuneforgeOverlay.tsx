@@ -77,7 +77,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
             backgroundColor: 'white',
             borderRadius: '16px',
             padding: '32px',
-            maxWidth: '500px', //TODO'100%'?
+            maxWidth: '460px', // slightly narrower
             maxHeight: '90vh',
             overflow: 'auto',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',

@@ -61,7 +61,7 @@ export function SoloGameOverModal({ player, outcome, runePowerTotal, round, targ
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
           gap: '12px',
           marginBottom: '20px',
         }}

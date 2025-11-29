@@ -45,7 +45,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
       <div
         style={{
           width: '100%',
-          maxWidth: '820px',
+          maxWidth: '760px',
           background: 'linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(30, 41, 59, 0.85))',
           borderRadius: '16px',
           border: '1px solid rgba(148, 163, 184, 0.25)',
@@ -92,7 +92,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
               gap: '12px',
             }}
           >
