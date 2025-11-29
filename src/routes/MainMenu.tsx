@@ -189,21 +189,6 @@ export function MainMenu() {
       <div style={menuStyle}>
         <button
           style={buttonStyle}
-          onClick={handleQuickPlay}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#5ab0ff'
-            e.currentTarget.style.transform = 'scale(1.05)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#4a9eff'
-            e.currentTarget.style.transform = 'scale(1)'
-          }}
-        >
-          Quick Play
-        </button>
-
-        <button
-          style={buttonStyle}
           onClick={handleSolo}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#5ab0ff'
@@ -216,7 +201,20 @@ export function MainMenu() {
         >
           Solo
         </button>
-        
+        <button
+          style={buttonStyle}
+          onClick={handleQuickPlay}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#5ab0ff'
+            e.currentTarget.style.transform = 'scale(1.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#4a9eff'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
+        >
+          Quick Play
+        </button>
         <button
           style={disabledButtonStyle}
           disabled
