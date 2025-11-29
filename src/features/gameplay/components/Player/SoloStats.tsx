@@ -8,6 +8,8 @@ import { animate } from 'framer-motion';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
 import healthSvg from '../../../../assets/stats/health.svg?raw';
 import healingSvg from '../../../../assets/stats/healing.svg?raw';
+import essenceSvg from '../../../../assets/stats/essence.svg?raw';
+import focusSvg from '../../../../assets/stats/focus.svg?raw';
 
 type StatIconType =
   | 'health'
@@ -88,23 +90,37 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
   }
 
   if (type === 'essence') {
+    const sanitizedSvg = essenceSvg
+      .replace(/<\\?xml.*?\\?>\\s*/u, '')
+      .replace(/<!DOCTYPE[^>]*>\\s*/iu, '')
+      .replace(/width="[^"]*"/u, `width="${size}"`)
+      .replace(/height="[^"]*"/u, `height="${size}"`)
+      .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
+
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M13 2 3 14h6l-1 8 10-12h-6l1-8Z" fill={color} opacity={0.85} />
-      </svg>
+      <span
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
+      />
     );
   }
 
   if (type === 'focus') {
+    const sanitizedSvg = focusSvg
+      .replace(/<\\?xml.*?\\?>\\s*/u, '')
+      .replace(/<!DOCTYPE[^>]*>\\s*/iu, '')
+      .replace(/width="[^"]*"/u, `width="${size}"`)
+      .replace(/height="[^"]*"/u, `height="${size}"`)
+      .replace(/fill="[^"]*"/gu, `fill="${color}"`)
+      .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
+
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="7" {...strokeProps} />
-        <circle cx="12" cy="12" r="2.5" fill={color} opacity={0.9} />
-        <path d="M12 5v2.5" {...strokeProps} />
-        <path d="M12 18.5V17" {...strokeProps} />
-        <path d="M5 12h2.5" {...strokeProps} />
-        <path d="M16.5 12H19" {...strokeProps} />
-      </svg>
+      <span
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
+      />
     );
   }
 
