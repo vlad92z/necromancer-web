@@ -35,6 +35,11 @@ export interface RuneCellProps {
    * variant (so Wind-in-floor logic still treats it as a floor rune).
    */
   forceVariant?: RuneCellVariant;
+  /**
+   * Optional icon to display when the cell is empty (no rune and no text placeholder).
+   * Useful for showing contextual markers like the overload indicator in floor cells.
+   */
+  emptyIcon?: string;
   size?: 'small' | 'medium' | 'large';
   placeholder?: {
     type: 'rune' | 'text';
@@ -92,6 +97,7 @@ export function RuneCell({
   rune,
   variant,
   forceVariant,
+  emptyIcon,
   size = 'medium',
   placeholder,
   clickable = false,
@@ -177,6 +183,20 @@ export function RuneCell({
         }}>
           {placeholder.text}
         </div>
+      )}
+      {!rune && !hasTextPlaceholder && emptyIcon && (
+        <img
+          src={emptyIcon}
+          alt=""
+          aria-hidden
+          style={{
+            width: '60%',
+            height: '60%',
+            objectFit: 'contain',
+            opacity: 0.95,
+            pointerEvents: 'none',
+          }}
+        />
       )}
       
       {/* Effect indicator - will be expanded when effects are implemented */}
