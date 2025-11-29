@@ -63,7 +63,7 @@ export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
 }
 
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
-export const DEFAULT_STARTING_STRAIN = 5;
+export const DEFAULT_STARTING_STRAIN = 2;
 export const DEFAULT_STRAIN_MULTIPLIER = 2;
 const SOLO_STARTING_HEALTH = 100;
 const SOLO_MAX_HEALTH = 1000;

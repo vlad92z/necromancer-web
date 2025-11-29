@@ -24,7 +24,7 @@ import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
-import { calculateEffectiveFloorPenalty, calculateProjectedPower, applyStressMitigation } from '../../../utils/scoring';
+import { calculateEffectiveFloorPenalty, calculateOverloadPenalty, calculateProjectedPower, applyStressMitigation } from '../../../utils/scoring';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 const BOARD_BASE_SIZE = 1200;
@@ -138,13 +138,16 @@ export function GameBoard({ gameState }: GameBoardProps) {
         : null
     : null;
 
-  const overloadPenalty = isSoloMode
+  const baseOverloadPenalty = isSoloMode
     ? calculateEffectiveFloorPenalty(
         players[0].floorLine.runes,
         players[0].patternLines,
         players[0].wall,
         gameMode
       )
+    : 0;
+  const overloadPenalty = isSoloMode
+    ? calculateOverloadPenalty(baseOverloadPenalty, round)
     : 0;
   const soloStats = isSoloMode
     ? (() => {
@@ -163,7 +166,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
           : 0;
 
-        const floorPenaltyCount = overloadPenalty;
+        const basePenaltyCount = baseOverloadPenalty;
         const windMitigationCount = gameMode === 'standard'
           ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
             completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
@@ -172,10 +175,10 @@ export function GameBoard({ gameState }: GameBoardProps) {
         const { essence, focus, totalPower } = calculateProjectedPower(
           player.wall,
           completedPatternLines,
-          floorPenaltyCount,
+          basePenaltyCount,
           gameMode
         );
-        const hasPenalty = floorPenaltyCount > 0;
+        const hasPenalty = overloadPenalty > 0;
 
         const essenceRuneCount = gameMode === 'standard'
           ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
@@ -217,7 +220,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           hasPenalty,
           hasWindMitigation,
           windRuneCount,
-          overloadPenalty: floorPenaltyCount,
+          overloadPenalty,
           overloadMultiplier,
           overloadDamagePreview,
           round,

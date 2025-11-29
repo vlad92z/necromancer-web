@@ -245,6 +245,15 @@ export function calculateEffectiveFloorPenalty(
 }
 
 /**
+ * Calculate overload by adding the current round number to the effective penalty.
+ */
+export function calculateOverloadPenalty(effectivePenalty: number, round: number): number {
+  const normalizedPenalty = Math.max(0, effectivePenalty);
+  const normalizedRound = Math.max(0, round);
+  return normalizedPenalty + normalizedRound;
+}
+
+/**
  * Apply Frost mitigation to strain/stress (10% per mitigation point)
  */
 export function applyStressMitigation(strain: number, mitigation: number): number {

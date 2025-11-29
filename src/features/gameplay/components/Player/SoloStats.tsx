@@ -353,13 +353,11 @@ export function SoloStats({
   const healingTooltip = healing > 0
     ? `Healing - Life, Wind, and Frost runes on your wall will restore ${healing} health during scoring${hasWindMitigation ? ` (Wind runes: ${windRuneCount})` : ''}.`
     : 'Healing - secure Life, Wind, or Frost runes to heal yourself during scoring.';
-  const overloadTooltip = overloadPenalty > 0
-    ? `Overload (${overloadPenalty}) will hit your health at round end. Clear overflow to avoid damage.`
-    : 'Overload - keep the floor clear to avoid end-of-round damage.';
+  const overloadTooltip = `Overload (${overloadPenalty}) = overflow + round bonus (${round}). Clear overflow to reduce damage; the round bonus always applies.`;
   const strainTooltip = frostRuneCount > 0
     ? `Stress ×${overloadMultiplier}. Frost runes now add healing instead of reducing stress. Current damage preview: ${overloadDamagePreview}.`
     : `Stress ×${overloadMultiplier} scales Overload each round. Current damage preview: ${overloadDamagePreview}.`;
-  const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}) × Stress (${overloadMultiplier}) = ${overloadDamagePreview}.`;
+  const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}, includes round ${round}) × Stress (${overloadMultiplier}) = ${overloadDamagePreview}.`;
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);

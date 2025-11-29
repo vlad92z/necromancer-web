@@ -6,7 +6,7 @@
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
+import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation, calculateOverloadPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
 
@@ -215,7 +215,7 @@ function processSoloScoringPhase(state: GameState): GameState {
     }
 
     const snapshot = state.scoringSnapshot;
-    const overloadValue = snapshot.floorPenalties[0];
+    const overloadValue = calculateOverloadPenalty(snapshot.floorPenalties[0], state.round);
     const frostMitigation = state.gameMode === 'standard'
       ? calculatePassiveEffectForWall(state.players[0].wall, 'StrainMitigation')
       : 0;
