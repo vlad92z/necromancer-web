@@ -338,8 +338,6 @@ export function SoloStats({
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower;
 
-  const focusColor = '#38bdf8';
-  const focusBorder = 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = essenceRuneCount > 0
@@ -419,8 +417,8 @@ export function SoloStats({
               type="focus"
               label="Focus"
               value={focus}
-              color={focusColor}
-              borderColor={focusBorder}
+              color='#38bdf8'
+              borderColor='rgba(56, 189, 248, 0.35)'
               tooltip={focusTooltip}
               {...clickableStatCommon}
             />
