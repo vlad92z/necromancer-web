@@ -13,6 +13,7 @@ import frostRune from '../assets/runes/frost_rune.svg';
 import lifeRune from '../assets/runes/life_rune.svg';
 import voidRune from '../assets/runes/void_rune.svg';
 import windRune from '../assets/runes/wind_rune.svg';
+import lightningRune from '../assets/runes/lightning_rune.svg';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
@@ -20,6 +21,7 @@ const RUNE_ASSETS = {
   Life: lifeRune,
   Void: voidRune,
   Wind: windRune,
+  Lightning: lightningRune,
 };
 
 export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
@@ -107,16 +109,7 @@ export function RuneCell({
   
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
-  
-  // Highlight Wind runes on the scoring wall to communicate mitigation effect.
-  // Note: use the *semantic* variant (original `variant`) so forced visuals do
-  // not accidentally highlight Wind runes that aren't anchored to the wall.
-  const isWindMitigating =
-    variant === 'wall' &&
-    (
-      rune?.runeType === 'Wind' ||
-      (!rune && isPending && placeholder?.runeType === 'Wind')
-    );
+  const hasEffect = showEffect && Boolean(rune && (rune.effects.passive.length > 0 || rune.effects.active.length > 0));
   
   // Use occupied background for wall cells that have runes OR are pending placement
   // Use `usedVariant` for styling decisions so callers can force visuals
@@ -125,11 +118,8 @@ export function RuneCell({
     ? variantStyle.backgroundOccupied
     : variantStyle.background;
   
-  // Override border for mitigating Wind runes on the wall
-  let borderStyle = variantStyle.border;
-  if (isWindMitigating) {
-    borderStyle = '2px solid #38bdf8';
-  }
+  // Override border for healing runes on the wall
+  const borderStyle = variantStyle.border;
   
   // Only animate wall placements; pattern/floor entries rely on RuneAnimation overlay
   const shouldAnimate = usedVariant === 'wall' && Boolean(rune);
@@ -190,7 +180,7 @@ export function RuneCell({
       )}
       
       {/* Effect indicator - will be expanded when effects are implemented */}
-      {showEffect && rune?.effect.type !== 'None' && (
+      {hasEffect && (
         <div style={{
           position: 'absolute',
           top: '-4px',

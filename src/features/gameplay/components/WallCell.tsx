@@ -5,7 +5,8 @@
 import { useState } from 'react';
 import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
-import { getWallColumnForRune } from '../../../utils/scoring';
+import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
+import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 interface WallCellProps {
   cell: WallCellType;
@@ -33,7 +34,7 @@ function getExpectedRuneType(
   }
 
   // Fallback: if nothing matched (shouldn't happen), pick from a full list
-  const fallback: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const fallback = getRuneOrderForSize(wallSize);
   const baseIndex = (col - row + fallback.length) % fallback.length;
   return fallback[baseIndex];
 }
@@ -51,7 +52,7 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
   const rune = cell.runeType ? {
     id: `wall-${row}-${col}`,
     runeType: cell.runeType,
-    effect: { type: 'None' as const }
+    effects: copyRuneEffects(cell.effects ?? getRuneEffectsForType(cell.runeType)),
   } : null;
   
   return (
@@ -107,14 +108,16 @@ function getRuneDescription(type: RuneType) {
   switch (type) {
     case 'Fire':
       return 'Fire - increases ⚡Essence to deal more damage.';
-    case 'Frost':
-      return 'Frost - placing Frost runes lets you freeze enemy pattern lines.';
-    case 'Life':
-      return 'Life - increases 🌿healing done every round.';
     case 'Void':
-      return 'Void - placing Void runes lets you destroy unclaimed runes.';
+      return 'Void - fuels ⚡Essence just like Fire and Lightning.';
+    case 'Lightning':
+      return 'Lightning - supercharges ⚡Essence just like Fire runes.';
+    case 'Frost':
+      return 'Frost - each rune restores 10 health during scoring.';
+    case 'Life':
+      return 'Life - each rune restores 10 health during scoring.';
     case 'Wind':
-      return 'Wind - reduces Overload penalties.';
+      return 'Wind - each rune restores 10 health during scoring.';
     default:
       return `${type} rune`;
   }

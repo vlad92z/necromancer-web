@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="800px"
+   height="800px"
+   viewBox="0 0 24 24"
+   id="Line_Color"
+   data-name="Line Color"
+   version="1.1"
+   sodipodi:docname="overload.svg"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.98875"
+     inkscape:cx="399.49431"
+     inkscape:cy="400"
+     inkscape:window-width="1920"
+     inkscape:window-height="940"
+     inkscape:window-x="1080"
+     inkscape:window-y="351"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Line_Color" />
+  <path
+     id="primary"
+     d="M12,21c3.9,0,7-2,7-7S14,9,14,3c-3,2-4.37,4.1-5,8A5,5,0,0,1,7,8c-1,1-2,4-2,6C5,17.14,6.28,21,12,21Z"
+     style="fill:none;stroke:#ff5709;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px;stroke-opacity:1" />
+</svg>

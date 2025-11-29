@@ -3,8 +3,8 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Rune, RuneType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import type { Rune, RuneType } from '../../../../types/game';
+import { RuneCell } from '../../../../components/RuneCell';
 
 interface RuneforgeOverlayProps {
   runes: Rune[];
@@ -20,24 +20,25 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
     
     const descriptions: Record<RuneType, string> = {
       Fire: '+1 Essence per Fire rune on your Spell Wall',
-      Frost: 'Freeze one of the opponent\'s pattern lines for their next turn',
-      Life: 'Heal 10 HP per active Life rune each round',
-      Void: 'Destroy one rune from any Runeforge or the center when placed',
-      Wind: 'Anchor Wind runes on your Spell Wall to reduce the Focus penalty (completed lines count instantly)',
+      Frost: '+10 healing per Frost rune during scoring',
+      Life: '+10 healing per Life rune during scoring',
+      Void: '+1 Essence per Void rune on your Spell Wall',
+      Wind: '+10 healing per Wind rune during scoring',
+      Lightning: '+1 Essence per Lightning rune on your Spell Wall',
     };
     return descriptions[runeType];
   };
 
   // Group runes by type for organized display
-  const runesByType = runes.reduce((acc, rune) => {
+  const runesByType = runes.reduce<Record<RuneType, Rune[]>>((acc, rune) => {
     if (!acc[rune.runeType]) {
       acc[rune.runeType] = [];
     }
     acc[rune.runeType].push(rune);
     return acc;
-  }, {} as Record<RuneType, Rune[]>);
+  }, { Fire: [], Frost: [], Life: [], Void: [], Wind: [], Lightning: [] });
 
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
   const availableTypes = runeTypes.filter(type => runesByType[type]?.length > 0);
 
   const handleRuneTypeClick = (runeType: RuneType) => {
@@ -76,7 +77,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
             backgroundColor: 'white',
             borderRadius: '16px',
             padding: '32px',
-            maxWidth: '500px', //TODO'100%'?
+            maxWidth: '460px', // slightly narrower
             maxHeight: '90vh',
             overflow: 'auto',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',

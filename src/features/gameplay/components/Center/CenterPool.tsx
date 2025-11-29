@@ -4,8 +4,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { Rune, RuneType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import type { Rune, RuneType } from '../../../../types/game';
+import { RuneCell } from '../../../../components/RuneCell';
 
 interface CenterPoolProps {
   centerPool: Rune[];

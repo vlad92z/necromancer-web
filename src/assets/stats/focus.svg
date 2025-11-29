@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="35"
+   height="35"
+   viewBox="0 0 24 24"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="focus.svg"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="22.6"
+     inkscape:cx="12.544248"
+     inkscape:cy="10.420354"
+     inkscape:window-width="1920"
+     inkscape:window-height="940"
+     inkscape:window-x="1080"
+     inkscape:window-y="351"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg5" />
+  <circle
+     cx="12"
+     cy="12"
+     r="2.5"
+     fill="#ffffff"
+     opacity="0.9"
+     id="circle2"
+     style="fill:#00b1ee;fill-opacity:1" />
+  <path
+     d="m 12,4.0397714 v 2.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path2"
+     style="fill:#00b1ee;fill-opacity:1;stroke:#00b1ee;stroke-opacity:1" />
+  <path
+     d="m 12,19.459771 v -1.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path3"
+     style="fill:#00b1ee;fill-opacity:1;stroke:#00b1ee;stroke-opacity:1" />
+  <path
+     d="m 4.0397714,12 h 2.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path4"
+     style="fill:#00b1ee;fill-opacity:1;stroke:#00b1ee;stroke-opacity:1" />
+  <path
+     d="m 17.459886,12 h 2.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path5"
+     style="fill:#00b1ee;fill-opacity:1;stroke:#00b1ee;stroke-opacity:1" />
+  <path
+     id="circle1"
+     style="fill:#00b1ee;fill-opacity:1"
+     d="M 12 2.7428571 A 9.257143 9.257143 0 0 0 2.7428571 12 A 9.257143 9.257143 0 0 0 12 21.257143 A 9.257143 9.257143 0 0 0 21.257143 12 A 9.257143 9.257143 0 0 0 12 2.7428571 z M 12 4.9995536 A 7 7 0 0 1 19.000446 12 A 7 7 0 0 1 12 19.000446 A 7 7 0 0 1 4.9995536 12 A 7 7 0 0 1 12 4.9995536 z " />
+</svg>

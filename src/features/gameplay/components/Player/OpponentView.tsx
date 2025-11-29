@@ -2,7 +2,7 @@
  * OpponentView component - displays the AI opponent's board (read-only view)
  */
 
-import type { Player } from '../../../types/game';
+import type { Player } from '../../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
 
 interface OpponentViewProps {
@@ -15,9 +15,10 @@ interface OpponentViewProps {
   onCancelFreezeSelection?: () => void;
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
+  round: number;
 }
 
-export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onCancelFreezeSelection, hiddenSlotKeys, hiddenFloorSlotIndexes }: OpponentViewProps) {
+export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onCancelFreezeSelection, hiddenSlotKeys, hiddenFloorSlotIndexes, round }: OpponentViewProps) {
   const showCancelPill = freezeSelectionEnabled && Boolean(onCancelFreezeSelection);
   return (
     <div style={{ marginBottom: '24px', position: 'relative' }}>
@@ -78,6 +79,7 @@ export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines 
         onFreezePatternLine={onFreezePatternLine}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
+        round={round}
       />
     </div>
   );

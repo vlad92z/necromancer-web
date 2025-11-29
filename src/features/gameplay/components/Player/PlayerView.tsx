@@ -2,7 +2,7 @@
  * PlayerView component - displays the human player's board
  */
 
-import type { Player, RuneType } from '../../../types/game';
+import type { Player, RuneType } from '../../../../types/game';
 import { PlayerBoard } from './PlayerBoard';
 
 interface PlayerViewProps {
@@ -17,6 +17,8 @@ interface PlayerViewProps {
   frozenPatternLines: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
+  round: number;
+  hideStatsPanel?: boolean;
 }
 
 export function PlayerView({
@@ -31,6 +33,8 @@ export function PlayerView({
   frozenPatternLines,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
+  round,
+  hideStatsPanel = false,
 }: PlayerViewProps) {
   return (
     <div>
@@ -47,6 +51,8 @@ export function PlayerView({
         frozenPatternLines={frozenPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
+        round={round}
+        hideStatsPanel={hideStatsPanel}
       />
     </div>
   );

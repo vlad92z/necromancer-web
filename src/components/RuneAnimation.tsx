@@ -5,6 +5,7 @@
 import { motion } from 'framer-motion';
 import { RuneCell } from './RuneCell';
 import type { AnimatingRune, Rune } from '../types/game';
+import { getRuneEffectsForType } from '../utils/runeEffects';
 
 interface RuneAnimationProps {
   animatingRunes: AnimatingRune[];
@@ -28,7 +29,7 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
         const runeObj: Rune = {
           id: rune.id,
           runeType: rune.runeType,
-          effect: { type: 'None' },
+          effects: getRuneEffectsForType(rune.runeType),
         };
         
         return (

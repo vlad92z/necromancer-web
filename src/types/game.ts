@@ -5,24 +5,37 @@
 /**
  * Rune types (elemental identities)
  */
-export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind';
+export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
 
 /**
  * Number of rune types in the game
  * 3 types: Fire, Life, Wind (3x3 wall, 3 pattern lines)
  * 4 types: Fire, Life, Wind, Frost (4x4 wall, 4 pattern lines)
  * 5 types: Fire, Life, Wind, Frost, Void (5x5 wall, 5 pattern lines)
+ * 6 types: Fire, Life, Wind, Frost, Void, Lightning (6x6 wall, 6 pattern lines)
  */
-export type RuneTypeCount = 3 | 4 | 5;
+export type RuneTypeCount = 3 | 4 | 5 | 6;
 
 /**
  * Rune effect modifiers
  */
-export type RuneEffect =
-  | { type: 'PlusOne'; target: 'placement' }
-  | { type: 'Double'; target: 'scoring' }
-  | { type: 'MinusCost'; amount: number }
-  | { type: 'None' };
+export type PassiveRuneEffect =
+  | { type: 'DamageToSpellpower'; amount: number }
+  | { type: 'EssenceBonus'; amount: number }
+  | { type: 'FloorPenaltyMitigation'; amount: number }
+  | { type: 'Healing'; amount: number }
+  | { type: 'StrainMitigation'; amount: number };
+
+export type ActiveRuneEffect =
+  | { type: 'DestroyRune' }
+  | { type: 'FreezePatternLine' };
+
+export type RuneEffect = PassiveRuneEffect | ActiveRuneEffect;
+
+export interface RuneEffects {
+  passive: PassiveRuneEffect[];
+  active: ActiveRuneEffect[];
+}
 
 /**
  * A rune in the game
@@ -30,7 +43,7 @@ export type RuneEffect =
 export interface Rune {
   id: string;
   runeType: RuneType;
-  effect: RuneEffect;
+  effects: RuneEffects;
 }
 
 /**
@@ -53,9 +66,11 @@ export type VoidTarget =
  * Pattern line (1-5 tiers, each requiring matching runes to complete)
  */
 export interface PatternLine {
-  tier: 1 | 2 | 3 | 4 | 5; // Line capacity (1, 2, 3, 4, or 5 runes)
+  tier: 1 | 2 | 3 | 4 | 5 | 6; // Line capacity (1-6 runes)
   runeType: RuneType | null; // Type of rune in this line (null if empty)
   count: number; // Current number of runes in the line
+  firstRuneId: string | null; // ID of the first rune placed on this line
+  firstRuneEffects: RuneEffects | null; // Effects inherited by wall placement
 }
 
 /**
@@ -63,10 +78,11 @@ export interface PatternLine {
  */
 export interface WallCell {
   runeType: RuneType | null; // null if empty
+  effects: RuneEffects | null; // Effects inherited from the pattern line's first rune
 }
 
 /**
- * The 5x5 scoring grid/wall
+ * The scoring grid/wall
  */
 export type ScoringWall = WallCell[][];
 
@@ -94,6 +110,26 @@ export type AIDifficulty = 'easy' | 'normal' | 'hard';
 export type PlayerSide = 'top' | 'bottom';
 
 /**
+ * Game match type
+ */
+export type MatchType = 'versus' | 'solo';
+
+/**
+ * Solo run configuration values entered on the start screen
+ */
+export interface SoloRunConfig {
+  startingHealth: number;
+  startingStrain: number;
+  strainMultiplier: number;
+  lifeRuneHealing: number;
+  frostMitigationPercent: number;
+  voidConversionPercent: number;
+  factoriesPerPlayer: number;
+  deckRunesPerType: number;
+  targetRuneScore: number;
+}
+
+/**
  * Controller type for a player seat
  */
 export type PlayerController =
@@ -114,6 +150,11 @@ export type QuickPlayOpponent = AIDifficulty | 'human';
  * Difficulty type alias for spectator mode
  */
 export type Difficulty = AIDifficulty;
+
+/**
+ * Solo game ending state
+ */
+export type SoloOutcome = 'victory' | 'defeat' | null;
 
 /**
  * Player state
@@ -155,7 +196,7 @@ export interface WallPowerStats {
 export interface ScoringSnapshot {
   floorPenalties: [number, number];
   wallPowerStats: [WallPowerStats, WallPowerStats];
-  lifeCounts: [number, number];
+  healingTotals: [number, number];
 }
 
 /**
@@ -191,6 +232,7 @@ export interface AnimatingRune {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
+  matchType: MatchType; // Game variant: traditional duel or solo run
   gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
   runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
   factoriesPerPlayer: number; // Runeforge count per player (quick play config)
@@ -205,6 +247,16 @@ export interface GameState {
   currentPlayerIndex: 0 | 1;
   turnPhase: TurnPhase;
   round: number;
+  /**
+   * Strain multiplier applied to overload at round end (configurable)
+   * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
+   */
+  strain: number;
+  /**
+   * Factor used to multiply `strain` at the end of each round. Kept in state
+   * so it can be tuned or modified by runes in the future.
+   */
+  strainMultiplier: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
   draftSource:
     | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
@@ -220,4 +272,7 @@ export interface GameState {
   frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
   scoringSnapshot: ScoringSnapshot | null; // Cached scoring data across phases
+  runePowerTotal: number; // Solo score accumulator (essence × focus per round)
+  soloTargetScore: number; // Solo target score required for victory
+  soloOutcome: SoloOutcome; // Solo result (victory/defeat)
 }

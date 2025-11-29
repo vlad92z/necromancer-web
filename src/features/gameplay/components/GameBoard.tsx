@@ -2,16 +2,19 @@
  * GameBoard component - main game board displaying runeforges, center, player and opponent views
  */
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, AnimatingRune, Rune } from '../../../types/game';
-import { RuneforgesAndCenter } from './RuneforgesAndCenter';
-import { PlayerView } from './PlayerView';
-import { OpponentView } from './OpponentView';
+import { RuneforgesAndCenter } from './Center/RuneforgesAndCenter';
+import { PlayerView } from './Player/PlayerView';
+import { OpponentView } from './Player/OpponentView';
 import { GameOverModal } from './GameOverModal';
+import { SoloGameOverModal } from './SoloGameOverModal';
 import { RulesOverlay } from './RulesOverlay';
+import { SoloRuneScoreOverlay } from './SoloRuneScoreOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
+import { SoloStats } from './Player/SoloStats';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -21,6 +24,8 @@ import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
+import { calculateEffectiveFloorPenalty, calculateOverloadPenalty, calculateProjectedPower, applyStressMitigation } from '../../../utils/scoring';
+import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 const BOARD_BASE_SIZE = 1200;
 const BOARD_PADDING = 80;
@@ -66,7 +71,11 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain, strainMultiplier } = gameState;
+  const isSoloMode = gameState.matchType === 'solo';
+  const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
+  const runePowerTotal = gameState.runePowerTotal;
+  const soloTargetScore = gameState.soloTargetScore;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect, skipFrostEffect } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
@@ -106,9 +115,13 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const currentPlayer = players[currentPlayerIndex];
   const currentController = getControllerForIndex(gameState, currentPlayerIndex);
   const isAITurn = currentController.type === 'computer';
+  const activeAnimatingRunes = useMemo(
+    () => [...animatingRunes, ...runeforgeAnimatingRunes],
+    [animatingRunes, runeforgeAnimatingRunes]
+  );
   const isAnimatingPlacement = animatingRunes.length > 0;
-  const animatingRuneIds = [...animatingRunes, ...runeforgeAnimatingRunes].map((rune) => rune.id);
-  useRunePlacementSounds(players, animatingRunes, soundVolume);
+  const animatingRuneIds = activeAnimatingRunes.map((rune) => rune.id);
+  useRunePlacementSounds(players, activeAnimatingRunes, soundVolume);
   useBackgroundMusic(!isMusicMuted, soundVolume);
   useFreezeSound(frozenPatternLines);
   useVoidEffectSound(voidEffectPending, runeforges, centerPool);
@@ -121,12 +134,106 @@ export function GameBoard({ gameState }: GameBoardProps) {
   }, [isMusicMuted]);
 
   // Determine winner by highest remaining health
-  const winner = isGameOver
+  const winner = !isSoloMode && isGameOver
     ? players[0].health > players[1].health
       ? players[0]
       : players[1].health > players[0].health
         ? players[1]
         : null
+    : null;
+
+  const baseOverloadPenalty = isSoloMode
+    ? calculateEffectiveFloorPenalty(
+        players[0].floorLine.runes,
+        players[0].patternLines,
+        players[0].wall,
+        gameMode
+      )
+    : 0;
+  const overloadPenalty = isSoloMode
+    ? calculateOverloadPenalty(baseOverloadPenalty, round)
+    : 0;
+  const soloStats = isSoloMode
+    ? (() => {
+        const player = players[0];
+        const completedPatternLines = player.patternLines
+          .map((line, index) => ({ line, row: index }))
+          .filter(({ line }) => line.count === line.tier && line.runeType !== null)
+          .map(({ line, row }) => ({
+            row,
+            runeType: line.runeType!,
+            effects: copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType!)),
+          }));
+
+        const healingAmount = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
+          : 0;
+
+        const basePenaltyCount = baseOverloadPenalty;
+        const windMitigationCount = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
+          : 0;
+       
+        const { essence, focus, totalPower } = calculateProjectedPower(
+          player.wall,
+          completedPatternLines,
+          basePenaltyCount,
+          gameMode
+        );
+        const hasPenalty = overloadPenalty > 0;
+
+        const essenceRuneCount = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
+          : 0;
+
+        const countRunesOfType = (runeType: RuneType): number => {
+          const wallCount = player.wall.flat().reduce((total, cell) => (
+            cell.runeType === runeType ? total + 1 : total
+          ), 0);
+
+          const pendingCount = completedPatternLines.reduce((total, line) => (
+            line.runeType === runeType ? total + 1 : total
+          ), 0);
+
+          return wallCount + pendingCount;
+        };
+
+        const frostRuneCount = gameMode === 'standard' ? countRunesOfType('Frost') : 0;
+        const windRuneCount = gameMode === 'standard' ? countRunesOfType('Wind') : 0;
+        const voidRuneCount = gameMode === 'standard' ? countRunesOfType('Void') : 0;
+        const hasWindMitigation = gameMode === 'standard' && (windMitigationCount > 0 || windRuneCount > 0);
+        const strainMitigation = gameMode === 'standard'
+          ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'StrainMitigation'), 0) +
+            completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'StrainMitigation'), 0)
+          : 0;
+        const overloadMultiplier = applyStressMitigation(strain, strainMitigation);
+        const overloadDamagePreview = overloadPenalty * overloadMultiplier;
+
+        return {
+          isActive: currentPlayerIndex === 0,
+          health: player.health,
+          healing: healingAmount,
+          essence,
+          focus,
+          totalPower,
+          runePowerTotal,
+          essenceRuneCount,
+          hasPenalty,
+          hasWindMitigation,
+          windRuneCount,
+          overloadPenalty,
+          overloadMultiplier,
+          overloadDamagePreview,
+          round,
+          frostRuneCount,
+          voidRuneCount,
+          fatigueMultiplier: strainMultiplier,
+          deckCount: player.deck.length,
+        };
+      })()
     : null;
   
   const handleRuneClick = (runeforgeId: string, runeType: RuneType) => {
@@ -146,7 +253,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const opponentHiddenFloorSlots = hiddenFloorSlots[opponent.id];
   const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
   const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
-  const canFreezeOpponentPatternLine = frostEffectPending && currentPlayerIndex === 0;
+  const canFreezeOpponentPatternLine = !isSoloMode && frostEffectPending && currentPlayerIndex === 0;
   const canSkipFrostEffect = canFreezeOpponentPatternLine && !isAITurn;
 
   const handleFreezePatternLine = (lineIndex: number) => {
@@ -681,6 +788,22 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }}
       onClick={handleBackgroundClick}
     >
+      {isSoloMode && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '16px',
+            left: '16px',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'flex-start',
+            pointerEvents: 'none',
+            zIndex: 12,
+          }}
+        >
+          <SoloRuneScoreOverlay currentScore={runePowerTotal} targetScore={soloTargetScore} />
+        </div>
+      )}
       <div
         style={{
           position: 'absolute',
@@ -800,107 +923,214 @@ export function GameBoard({ gameState }: GameBoardProps) {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-        {/* Opponent View - Top */}
-        <div style={{ 
-          flex: 1, 
-          padding: `${sectionPadding}px`,
-          borderBottom: `1px solid ${borderColor}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <OpponentView
-              opponent={players[1]}
-              isActive={currentPlayerIndex === 1}
-              gameMode={gameMode}
-              frozenPatternLines={opponentFrozenLines}
-              freezeSelectionEnabled={canFreezeOpponentPatternLine}
-              onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
-              onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
-              hiddenSlotKeys={opponentHiddenPatternSlots}
-              hiddenFloorSlotIndexes={opponentHiddenFloorSlots}
-            />
-          </div>
-        </div>
-
-        {/* Drafting Table (Runeforges and Center) - Middle */}
-        <div style={{ 
-          flex: 1, 
-          padding: `${sectionPadding}px`,
-          borderBottom: `1px solid ${borderColor}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative'
-        }}>
-          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            <RuneforgesAndCenter
-              runeforges={runeforges}
-              centerPool={centerPool}
-              players={players}
-              currentPlayerId={currentPlayer.id}
-              onRuneClick={handleRuneClick}
-              onCenterRuneClick={handleCenterRuneClick}
-              onVoidRuneforgeRuneSelect={handleVoidRuneFromRuneforge}
-              onVoidCenterRuneSelect={handleVoidRuneFromCenter}
-              isDraftPhase={isDraftPhase}
-              hasSelectedRunes={hasSelectedRunes}
-              isAITurn={isAITurn}
-              voidEffectPending={voidEffectPending}
-              frostEffectPending={frostEffectPending}
-              selectedRunes={selectedRunes}
-              draftSource={draftSource}
-              onCancelSelection={handleCancelSelection}
-              onCancelVoidSelection={skipVoidEffect}
-              animatingRuneIds={animatingRuneIds}
-              hiddenCenterRuneIds={hiddenCenterRuneIds}
-            />
-            
-            {/* Game Over Modal - Centered over drafting area */}
-            {isGameOver && (
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 100,
-                width: 'auto'
-              }}>
-                <GameOverModal
-                  players={players}
-                  winner={winner}
-                  onReturnToStart={returnToStartScreen}
+        {isSoloMode ? (
+          <>
+            {/* Solo Top: Player Board */}
+            <div style={{ 
+              flex: 1, 
+              padding: `${sectionPadding}px`,
+              borderBottom: `1px solid ${borderColor}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PlayerView
+                  player={players[0]}
+                  isActive={currentPlayerIndex === 0}
+                  onPlaceRunes={currentPlayerIndex === 0 ? handlePatternLinePlacement : undefined}
+                  onPlaceRunesInFloor={currentPlayerIndex === 0 ? handlePlaceRunesInFloorWrapper : undefined}
+                  selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+                  canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+                  onCancelSelection={handleCancelSelection}
+                  gameMode={gameMode}
+                  frozenPatternLines={playerFrozenLines}
+                  hiddenSlotKeys={playerHiddenPatternSlots}
+                  hiddenFloorSlotIndexes={playerHiddenFloorSlots}
+                  round={round}
+                  hideStatsPanel={true}
                 />
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Player View - Bottom */}
-        <div style={{ 
-          flex: 1, 
-          padding: `${sectionPadding}px`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <PlayerView
-              player={players[0]}
-              isActive={currentPlayerIndex === 0}
-              onPlaceRunes={currentPlayerIndex === 0 ? handlePatternLinePlacement : undefined}
-              onPlaceRunesInFloor={currentPlayerIndex === 0 ? handlePlaceRunesInFloorWrapper : undefined}
-              selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-              canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
-              onCancelSelection={handleCancelSelection}
-              gameMode={gameMode}
-              frozenPatternLines={playerFrozenLines}
-              hiddenSlotKeys={playerHiddenPatternSlots}
-              hiddenFloorSlotIndexes={playerHiddenFloorSlots}
-            />
-          </div>
-        </div>
+            {/* Solo Middle: Drafting Table */}
+            <div style={{ 
+              flex: 1, 
+              padding: `${sectionPadding}px`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                <RuneforgesAndCenter
+                  runeforges={runeforges}
+                  centerPool={centerPool}
+                  players={players}
+                  currentPlayerId={currentPlayer.id}
+                  onRuneClick={handleRuneClick}
+                  onCenterRuneClick={handleCenterRuneClick}
+                  onVoidRuneforgeRuneSelect={handleVoidRuneFromRuneforge}
+                  onVoidCenterRuneSelect={handleVoidRuneFromCenter}
+                  isDraftPhase={isDraftPhase}
+                  hasSelectedRunes={hasSelectedRunes}
+                  isAITurn={isAITurn}
+                  voidEffectPending={voidEffectPending}
+                  frostEffectPending={frostEffectPending}
+                  selectedRunes={selectedRunes}
+                  draftSource={draftSource}
+                  onCancelSelection={handleCancelSelection}
+                  onCancelVoidSelection={skipVoidEffect}
+                  animatingRuneIds={animatingRuneIds}
+                  hiddenCenterRuneIds={hiddenCenterRuneIds}
+                  hideOpponentRow={true}
+                />
+                
+                {/* Game Over Modal - Centered over drafting area */}
+                {isGameOver && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 100,
+                    width: 'auto'
+                  }}>
+                    <SoloGameOverModal
+                      player={players[0]}
+                      outcome={soloOutcome}
+                      runePowerTotal={runePowerTotal}
+                      round={round}
+                      targetScore={soloTargetScore}
+                      onReturnToStart={returnToStartScreen}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Solo Bottom: Status and Player Stats */}
+            <div style={{ 
+              flex: 0.2, 
+              padding: `${sectionPadding}px`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
+
+                {soloStats && <SoloStats {...soloStats} />}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Opponent View - Top */}
+            <div style={{ 
+              flex: 1, 
+              padding: `${sectionPadding}px`,
+              borderBottom: `1px solid ${borderColor}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <OpponentView
+                  opponent={players[1]}
+                  isActive={currentPlayerIndex === 1}
+                  gameMode={gameMode}
+                  frozenPatternLines={opponentFrozenLines}
+                  freezeSelectionEnabled={canFreezeOpponentPatternLine}
+                  onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
+                  onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
+                  hiddenSlotKeys={opponentHiddenPatternSlots}
+                  hiddenFloorSlotIndexes={opponentHiddenFloorSlots}
+                  round={round}
+                />
+              </div>
+            </div>
+
+            {/* Drafting Table (Runeforges and Center) - Middle */}
+            <div style={{ 
+              flex: 1, 
+              padding: `${sectionPadding}px`,
+              borderBottom: `1px solid ${borderColor}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                <RuneforgesAndCenter
+                  runeforges={runeforges}
+                  centerPool={centerPool}
+                  players={players}
+                  currentPlayerId={currentPlayer.id}
+                  onRuneClick={handleRuneClick}
+                  onCenterRuneClick={handleCenterRuneClick}
+                  onVoidRuneforgeRuneSelect={handleVoidRuneFromRuneforge}
+                  onVoidCenterRuneSelect={handleVoidRuneFromCenter}
+                  isDraftPhase={isDraftPhase}
+                  hasSelectedRunes={hasSelectedRunes}
+                  isAITurn={isAITurn}
+                  voidEffectPending={voidEffectPending}
+                  frostEffectPending={frostEffectPending}
+                  selectedRunes={selectedRunes}
+                  draftSource={draftSource}
+                  onCancelSelection={handleCancelSelection}
+                  onCancelVoidSelection={skipVoidEffect}
+                  animatingRuneIds={animatingRuneIds}
+                  hiddenCenterRuneIds={hiddenCenterRuneIds}
+                  hideOpponentRow={isSoloMode}
+                />
+                
+                {/* Game Over Modal - Centered over drafting area */}
+                {isGameOver && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 100,
+                    width: 'auto'
+                  }}>
+                    <GameOverModal
+                      players={players}
+                      winner={winner}
+                      onReturnToStart={returnToStartScreen}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Player View - Bottom */}
+            <div style={{ 
+              flex: 1, 
+              padding: `${sectionPadding}px`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PlayerView
+                  player={players[0]}
+                  isActive={currentPlayerIndex === 0}
+                  onPlaceRunes={currentPlayerIndex === 0 ? handlePatternLinePlacement : undefined}
+                  onPlaceRunesInFloor={currentPlayerIndex === 0 ? handlePlaceRunesInFloorWrapper : undefined}
+                  selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
+                  canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+                  onCancelSelection={handleCancelSelection}
+                  gameMode={gameMode}
+                  frozenPatternLines={playerFrozenLines}
+                  hiddenSlotKeys={playerHiddenPatternSlots}
+                  hiddenFloorSlotIndexes={playerHiddenFloorSlots}
+                  round={round}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
       </div>
       

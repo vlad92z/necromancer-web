@@ -42,7 +42,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
             backgroundColor: 'white',
             borderRadius: '16px',
             padding: '32px',
-            maxWidth: '600px',
+            maxWidth: '540px',
             maxHeight: '90vh',
             overflow: 'auto',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',

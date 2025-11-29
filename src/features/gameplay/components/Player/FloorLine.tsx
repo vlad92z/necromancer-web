@@ -4,8 +4,8 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import type { FloorLine as FloorLineType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import type { FloorLine as FloorLineType } from '../../../../types/game';
+import { RuneCell } from '../../../../components/RuneCell';
 
 interface FloorLineProps {
   floorLine: FloorLineType;
@@ -13,7 +13,7 @@ interface FloorLineProps {
   canPlace?: boolean;
   /**
    * Number of floor slots to visually neutralize (render with standard/pattern-like background).
-   * This should come from Wind runes secured on the scoring wall (pending placements included).
+   * This should come from any FloorPenaltyMitigation effects secured on the scoring wall (pending placements included).
    */
   mitigatedSlots?: number;
   playerId?: string;
@@ -34,20 +34,26 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
   };
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+    >
       <button
         onClick={onPlaceRunesInFloor}
         disabled={!isSelectable}
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gridTemplateRows: 'repeat(5, 1fr)',
-          gap: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          padding: '4px 6px',
           cursor: isSelectable ? 'pointer' : 'default',
           backgroundColor: 'transparent',
           border: 'none',
-          borderRadius: '8px',
-          transition: 'all 0.2s'
+          borderRadius: '10px',
+          transition: 'all 0.2s',
+          width: '100%',
+          maxWidth: '680px'
         }}
         aria-label="Place runes in floor line (take penalties)"
       >

@@ -14,6 +14,7 @@ export function getRuneGlyph(runeType: RuneType): string {
     Life: '💚',
     Void: '🌀',
     Wind: '💨',
+    Lightning: '⚡',
   };
   return glyphs[runeType];
 }
@@ -28,6 +29,7 @@ export function getRuneColorClass(runeType: RuneType): string {
     Life: 'bg-green-500',
     Void: 'bg-purple-700',
     Wind: 'bg-yellow-400',
+    Lightning: 'bg-cyan-300',
   };
   return colors[runeType];
 }
@@ -42,10 +44,11 @@ export function getRuneEffectDescription(runeType: RuneType, isClassicMode: bool
   
   const descriptions: Record<RuneType, string> = {
     Fire: 'Each Fire rune on your wall adds +1 Essence',
-    Frost: 'Freeze an opponent pattern line after placing',
-    Life: 'Each Life rune on your wall heals you every round',
-    Void: 'Destroy a single rune from any runeforge or the center when placing',
-    Wind: 'Wind runes on your wall cancel one floor penalty each (completed Wind lines count immediately)',
+    Frost: 'Each Frost rune on your wall restores 10 health during scoring',
+    Life: 'Each Life rune on your wall restores 10 health during scoring',
+    Void: 'Each Void rune on your wall adds +1 Essence',
+    Wind: 'Each Wind rune on your wall restores 10 health during scoring',
+    Lightning: 'Each Lightning rune on your wall adds +1 Essence',
   };
   return descriptions[runeType];
 }

@@ -17,6 +17,8 @@ export function useGameActions() {
   const endRound = useGameplayStore((state) => state.endRound);
   const resetGame = useGameplayStore((state) => state.resetGame);
   const startSpectatorMatch = useGameplayStore((state) => state.startSpectatorMatch);
+  const startSoloRun = useGameplayStore((state) => state.startSoloRun);
+  const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
   
   return {
     draftRune,
@@ -29,6 +31,8 @@ export function useGameActions() {
     endRound,
     resetGame,
     startSpectatorMatch,
+    startSoloRun,
+    prepareSoloMode,
   };
 }
 
