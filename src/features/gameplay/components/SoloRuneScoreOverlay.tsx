@@ -2,8 +2,6 @@
  * SoloRuneScoreOverlay - displays the solo target and current rune score
  */
 
-import type React from 'react';
-
 interface SoloRuneScoreOverlayProps {
   currentScore: number;
   targetScore: number;
