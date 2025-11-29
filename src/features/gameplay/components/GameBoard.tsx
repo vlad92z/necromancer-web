@@ -166,7 +166,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
           ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
             completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
           : 0;
-        const hasWindMitigation = gameMode === 'standard' && windMitigationCount > 0;
        
         const { essence, focus, totalPower } = calculateProjectedPower(
           player.wall,
@@ -194,7 +193,9 @@ export function GameBoard({ gameState }: GameBoardProps) {
         };
 
         const frostRuneCount = gameMode === 'standard' ? countRunesOfType('Frost') : 0;
+        const windRuneCount = gameMode === 'standard' ? countRunesOfType('Wind') : 0;
         const voidRuneCount = gameMode === 'standard' ? countRunesOfType('Void') : 0;
+        const hasWindMitigation = gameMode === 'standard' && (windMitigationCount > 0 || windRuneCount > 0);
         const strainMitigation = gameMode === 'standard'
           ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'StrainMitigation'), 0) +
             completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'StrainMitigation'), 0)
@@ -213,7 +214,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           essenceRuneCount,
           hasPenalty,
           hasWindMitigation,
-          windRuneCount: windMitigationCount,
+          windRuneCount,
           overloadPenalty: floorPenaltyCount,
           overloadMultiplier,
           overloadDamagePreview,

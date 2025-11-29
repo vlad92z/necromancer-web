@@ -278,19 +278,17 @@ export function PlayerStats({
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = hasPenalty
     ? 'Overload is building damage, but Focus stays steady. Clear the floor to avoid health loss.'
-    : hasWindMitigation
-      ? `Wind runes (${windRuneCount}) are trimming overload penalties, keeping your wall safer.`
-      : 'Focus - connect more runes to increase your multiplier.';
+    : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = essenceRuneCount > 0
-    ? `Essence - cast more runes to increase spell damage. Fire and Lightning runes (${essenceRuneCount}) amplify your Essence.`
+    ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
     : 'Essence - cast more runes to increase spell damage.';
 
   const spellpowerTooltip = `Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
   const healthTooltip = 'Health - drop to zero and your duel ends.';
   const healingTooltip = healing > 0
-    ? `Life runes will restore ${healing} health every round.`
-    : 'Healing - cast life runes to heal yourself every round.';
+    ? `Healing - Life, Wind, and Frost runes on your wall will restore ${healing} health during scoring${hasWindMitigation ? ` (Wind runes: ${windRuneCount})` : ''}.`
+    : 'Healing - secure Life, Wind, or Frost runes on your wall to restore health.';
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);

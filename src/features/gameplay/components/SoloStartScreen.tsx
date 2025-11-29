@@ -88,9 +88,9 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
           }}
         >
           <RuleCard title="Health" description="Start at your chosen HP; healing is capped by the current max health." />
-          <RuleCard title="Overload" description="Overflow runes become overload. Fatigue scales each round using your multiplier and Frost mitigation." />
+          <RuleCard title="Overload" description="Overflow runes become overload. Fatigue scales each round using your multiplier." />
           <RuleCard title="Rune Power" description="Each round, your spellpower (essence × focus) is added to total Rune Power." />
-          <RuleCard title="Frost" description="Each Frost rune on your wall reduces strain before overload damage applies based on your protection setting." />
+          <RuleCard title="Frost" description="Each Frost rune on your wall restores 10 health during scoring." />
         </div>
 
         <div
@@ -143,7 +143,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                 <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.strainMultiplier.toFixed(1)}x fatigue growth</div>
               </div>
             </ConfigField>
-            <ConfigField label="Life Rune Healing" description="Healing per Life rune that lands on your wall.">
+            <ConfigField label="Healing per Rune" description="Healing per Life, Wind, or Frost rune that lands on your wall.">
               <input
                 type="number"
                 min={0}
@@ -153,7 +153,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                 style={inputStyle}
               />
             </ConfigField>
-            <ConfigField label="Frost Rune Protection" description="Percent stress reduction per Frost rune on the wall.">
+            <ConfigField label="Frost Rune Protection" description="Legacy: percent stress reduction per Frost rune (kept for variants).">
               <input
                 type="number"
                 min={0}
@@ -164,7 +164,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
               />
               <div style={{ color: '#93c5fd', fontSize: '13px', marginTop: '6px' }}>Currently {soloConfig.frostMitigationPercent}% per rune</div>
             </ConfigField>
-            <ConfigField label="Void Rune Damage" description="Percent of damage converted to spellpower per Void rune.">
+            <ConfigField label="Void Rune Damage" description="Legacy: percent of damage converted to spellpower per Void rune (kept for variants).">
               <input
                 type="number"
                 min={0}

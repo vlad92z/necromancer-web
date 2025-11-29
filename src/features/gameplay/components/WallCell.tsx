@@ -108,16 +108,16 @@ function getRuneDescription(type: RuneType) {
   switch (type) {
     case 'Fire':
       return 'Fire - increases ⚡Essence to deal more damage.';
+    case 'Void':
+      return 'Void - fuels ⚡Essence just like Fire and Lightning.';
     case 'Lightning':
       return 'Lightning - supercharges ⚡Essence just like Fire runes.';
     case 'Frost':
-      return 'Frost - each rune reduces stress by 10% before overload hits.';
+      return 'Frost - each rune restores 10 health during scoring.';
     case 'Life':
-      return 'Life - increases 🌿healing done every round.';
-    case 'Void':
-      return 'Void - each rune converts 10% of projected incoming damage into spellpower.';
+      return 'Life - each rune restores 10 health during scoring.';
     case 'Wind':
-      return 'Wind - reduces Overload penalties.';
+      return 'Wind - each rune restores 10 health during scoring.';
     default:
       return `${type} rune`;
   }

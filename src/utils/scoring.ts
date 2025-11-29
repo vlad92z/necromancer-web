@@ -204,9 +204,9 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 }
 
 /**
- * Calculate effective floor penalty count after Wind mitigation.
- * Wind Effect: Only Wind runes anchored to the scoring wall cancel penalties.
- * Completed Wind pattern lines count as "pending" wall placements and mitigate immediately.
+ * Calculate effective floor penalty count after mitigation effects.
+ * FloorPenaltyMitigation is preserved for variants (legacy Wind effect); default rune sets do not apply it.
+ * Completed pattern lines count as "pending" wall placements and mitigate immediately when present.
  */
 export function calculateEffectiveFloorPenalty(
   floorRunes: Array<{ runeType: RuneType | null; effects?: RuneEffects | null }>,
@@ -214,7 +214,7 @@ export function calculateEffectiveFloorPenalty(
   wall: ScoringWall,
   gameMode: 'classic' | 'standard' = 'standard'
 ): number {
-  // In classic mode, no Wind mitigation - all floor runes count as penalties
+  // In classic mode, all floor runes count as penalties
   if (gameMode === 'classic') {
     return floorRunes.length;
   }

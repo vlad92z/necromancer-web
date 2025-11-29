@@ -52,7 +52,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
     : 0;
   
-  // Wind Effect: Wind runes anchored to the wall mitigate floor penalties (standard mode only)
+  // Floor mitigation is applied only when runes grant FloorPenaltyMitigation (legacy Wind effect).
   const floorPenaltyCount = calculateEffectiveFloorPenalty(
     player.floorLine.runes,
     player.patternLines,
@@ -63,7 +63,11 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
       completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
     : 0;
-  const hasWindMitigation = gameMode === 'standard' && windMitigationCount > 0;
+  const windRuneCount = gameMode === 'standard'
+    ? player.wall.flat().reduce((total, cell) => (cell.runeType === 'Wind' ? total + 1 : total), 0) +
+      completedPatternLines.reduce((total, line) => (line.runeType === 'Wind' ? total + 1 : total), 0)
+    : 0;
+  const hasWindMitigation = gameMode === 'standard' && (windMitigationCount > 0 || windRuneCount > 0);
  
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
@@ -164,7 +168,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               essenceRuneCount={essenceRuneCount}
               hasPenalty={hasPenalty}
               hasWindMitigation={hasWindMitigation}
-              windRuneCount={windMitigationCount}
+              windRuneCount={windRuneCount}
               round={round}
             />
           </div>

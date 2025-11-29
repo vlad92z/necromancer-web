@@ -24,31 +24,25 @@ export const LEGACY_RUNE_EFFECTS: Pick<Record<RuneType, RuneEffects>, 'Frost' | 
   },
 };
 
+/**
+ * Archived complex effects kept for future variants.
+ */
+export const ADVANCED_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
+  Fire: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
+  Frost: { passive: [{ type: 'StrainMitigation', amount: 0.1 }], active: [] },
+  Life: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
+  Void: { passive: [{ type: 'DamageToSpellpower', amount: 0.1 }], active: [] },
+  Wind: { passive: [{ type: 'FloorPenaltyMitigation', amount: 1 }], active: [] },
+  Lightning: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
+};
+
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: {
-    passive: [{ type: 'EssenceBonus', amount: 1 }],
-    active: [],
-  },
-  Frost: {
-    passive: [{ type: 'StrainMitigation', amount: 0.1 }],
-    active: [],
-  },
-  Life: {
-    passive: [{ type: 'Healing', amount: 10 }],
-    active: [],
-  },
-  Void: {
-    passive: [{ type: 'DamageToSpellpower', amount: 0.1 }],
-    active: [],
-  },
-  Wind: {
-    passive: [{ type: 'FloorPenaltyMitigation', amount: 1 }],
-    active: [],
-  },
-  Lightning: {
-    passive: [{ type: 'EssenceBonus', amount: 1 }],
-    active: [],
-  },
+  Fire: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
+  Frost: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
+  Life: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
+  Void: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
+  Wind: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
+  Lightning: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {

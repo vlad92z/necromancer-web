@@ -44,10 +44,10 @@ export function getRuneEffectDescription(runeType: RuneType, isClassicMode: bool
   
   const descriptions: Record<RuneType, string> = {
     Fire: 'Each Fire rune on your wall adds +1 Essence',
-    Frost: 'Each Frost rune on your wall reduces next round\'s strain growth by 10%',
-    Life: 'Each Life rune on your wall heals you every round',
-    Void: 'Each Void rune adds 10% of projected incoming damage to your spellpower',
-    Wind: 'Wind runes on your wall cancel one floor penalty each (completed Wind lines count immediately)',
+    Frost: 'Each Frost rune on your wall restores 10 health during scoring',
+    Life: 'Each Life rune on your wall restores 10 health during scoring',
+    Void: 'Each Void rune on your wall adds +1 Essence',
+    Wind: 'Each Wind rune on your wall restores 10 health during scoring',
     Lightning: 'Each Lightning rune on your wall adds +1 Essence',
   };
   return descriptions[runeType];

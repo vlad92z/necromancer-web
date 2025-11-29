@@ -20,10 +20,10 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
     
     const descriptions: Record<RuneType, string> = {
       Fire: '+1 Essence per Fire rune on your Spell Wall',
-      Frost: 'Each Frost rune on your wall reduces stress by 10% before overload damage',
-      Life: 'Heal 10 HP per active Life rune each round',
-      Void: 'Each Void rune converts 10% of projected incoming damage into spellpower',
-      Wind: 'Anchor Wind runes on your Spell Wall to cancel overload penalties (completed lines count instantly)',
+      Frost: '+10 healing per Frost rune during scoring',
+      Life: '+10 healing per Life rune during scoring',
+      Void: '+1 Essence per Void rune on your Spell Wall',
+      Wind: '+10 healing per Wind rune during scoring',
       Lightning: '+1 Essence per Lightning rune on your Spell Wall',
     };
     return descriptions[runeType];

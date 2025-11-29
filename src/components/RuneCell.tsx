@@ -24,6 +24,8 @@ const RUNE_ASSETS = {
   Lightning: lightningRune,
 };
 
+const HEALING_RUNE_TYPES: RuneType[] = ['Wind', 'Life', 'Frost'];
+
 export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
 
 export interface RuneCellProps {
@@ -111,14 +113,14 @@ export function RuneCell({
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   const hasEffect = showEffect && Boolean(rune && (rune.effects.passive.length > 0 || rune.effects.active.length > 0));
   
-  // Highlight Wind runes on the scoring wall to communicate mitigation effect.
+  // Highlight healing-focused runes on the scoring wall to communicate their effect.
   // Note: use the *semantic* variant (original `variant`) so forced visuals do
-  // not accidentally highlight Wind runes that aren't anchored to the wall.
-  const isWindMitigating =
+  // not accidentally highlight runes that aren't anchored to the wall.
+  const isHealingWallRune =
     variant === 'wall' &&
     (
-      rune?.runeType === 'Wind' ||
-      (!rune && isPending && placeholder?.runeType === 'Wind')
+      (runeType !== undefined && HEALING_RUNE_TYPES.includes(runeType)) ||
+      (!rune && isPending && placeholder?.runeType && HEALING_RUNE_TYPES.includes(placeholder.runeType))
     );
   
   // Use occupied background for wall cells that have runes OR are pending placement
@@ -128,10 +130,10 @@ export function RuneCell({
     ? variantStyle.backgroundOccupied
     : variantStyle.background;
   
-  // Override border for mitigating Wind runes on the wall
+  // Override border for healing runes on the wall
   let borderStyle = variantStyle.border;
-  if (isWindMitigating) {
-    borderStyle = '2px solid #38bdf8';
+  if (isHealingWallRune) {
+    borderStyle = `2px solid ${COLORS.status.success}`;
   }
   
   // Only animate wall placements; pattern/floor entries rely on RuneAnimation overlay

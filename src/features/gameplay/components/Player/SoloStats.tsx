@@ -357,8 +357,7 @@ export function SoloStats({
   const spellpower = totalPower ?? (essence * focus);
   const previousHealthRef = useRef(health);
   const healedAmount = Math.max(0, health - previousHealthRef.current);
-  const voidPowerRaw = overloadDamagePreview * voidRuneCount * 0.1;
-  const voidPower = Math.max(0, Math.round(voidPowerRaw * 10) / 10);
+  const voidPower = voidRuneCount;
   const displayFatigueMultiplier = Math.max(0, Math.round(fatigueMultiplier * 10) / 10);
 
   useEffect(() => {
@@ -369,29 +368,29 @@ export function SoloStats({
   const focusBorder = hasPenalty ? 'rgba(248, 113, 113, 0.55)' : 'rgba(56, 189, 248, 0.35)';
   const focusTooltip = hasPenalty
     ? 'Overload is building damage, but Focus stays steady. Clear the floor to avoid health loss.'
-    : hasWindMitigation
-      ? `Wind runes (${windRuneCount}) are trimming overload penalties, keeping your wall safer.`
-      : 'Focus - connect more runes to increase your multiplier.';
+    : 'Focus - connect more runes to increase your multiplier.';
 
   const essenceTooltip = essenceRuneCount > 0
-    ? `Essence - cast more runes to increase spell damage. Fire and Lightning runes (${essenceRuneCount}) amplify your Essence.`
+    ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
     : 'Essence - cast more runes to increase spell damage.';
 
   const spellpowerTooltip = `Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
   const healthTooltip = 'Health - drop to zero and your duel ends.';
   const healingTooltip = healing > 0
-    ? `Life runes will restore ${healing} health every round.`
-    : 'Healing - cast life runes to heal yourself every round.';
+    ? `Healing - Life, Wind, and Frost runes on your wall will restore ${healing} health during scoring${hasWindMitigation ? ` (Wind runes: ${windRuneCount})` : ''}.`
+    : 'Healing - secure Life, Wind, or Frost runes to heal yourself during scoring.';
   const overloadTooltip = overloadPenalty > 0
-    ? `Overload (${overloadPenalty}) will hit your health at round end. Wind runes can offset these floor penalties.`
+    ? `Overload (${overloadPenalty}) will hit your health at round end. Clear overflow to avoid damage.`
     : 'Overload - keep the floor clear to avoid end-of-round damage.';
   const strainTooltip = frostRuneCount > 0
-    ? `Stress ×${overloadMultiplier} after Frost relief (10% per Frost rune). Current damage preview: ${overloadDamagePreview}.`
+    ? `Stress ×${overloadMultiplier}. Frost runes now add healing instead of reducing stress. Current damage preview: ${overloadDamagePreview}.`
     : `Stress ×${overloadMultiplier} scales Overload each round. Current damage preview: ${overloadDamagePreview}.`;
   const runePowerTooltip = 'Rune Power - total spellpower accumulated across the duel.';
   const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}) × Stress (${overloadMultiplier}) = ${overloadDamagePreview}.`;
-  const voidPowerTooltip = `Void Power - Damage (${overloadDamagePreview}) × Void runes (${voidRuneCount}) × 10% = ${voidPower}. Adds to Spell Power at round end.`;
-  const fatigueTooltip = `Fatigue - Stress growth for next round. Base ×${displayFatigueMultiplier}. Frost runes no longer change fatigue.`;
+  const voidPowerTooltip = voidPower > 0
+    ? `Void Essence - Void runes (${voidRuneCount}) add +1 Essence each.`
+    : 'Void Essence - collect Void runes to add more Essence.';
+  const fatigueTooltip = `Fatigue - Stress growth for next round. Base ×${displayFatigueMultiplier}.`;
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);
@@ -514,7 +513,7 @@ export function SoloStats({
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
               type="voidPower"
-              label="Void Power"
+              label="Void Essence"
               value={voidPower}
               color="#a855f7"
               borderColor="rgba(168, 85, 247, 0.35)"

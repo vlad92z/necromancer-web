@@ -50,14 +50,14 @@ export function SpellpowerExplanation({ onClose }: SpellpowerExplanationProps) {
           <div style={{ marginBottom: '18px' }}>
             <strong style={{ color: '#38bdf8' }}>Essence</strong>
             <p style={{ margin: '6px 0 0 0' }}>
-              Count every rune on your Spell Wall, then add +1 Essence for each blazing Fire or crackling Lightning rune. More Essence means more raw energy.
+              Count every rune on your Spell Wall, then add +1 Essence for each blazing Fire, crackling Lightning, or swirling Void rune. More Essence means more raw energy.
             </p>
           </div>
 
           <div style={{ marginBottom: '18px' }}>
             <strong style={{ color: '#facc15' }}>Focus</strong>
             <p style={{ margin: '6px 0 0 0' }}>
-              Find the largest connected cluster of runes. That chain is your Focus. Floor penalties shrink it, but Wind runes anchored to your Spell Wall shield you (completed Wind lines count immediately).
+              Find the largest connected cluster of runes. That chain is your Focus. Floor penalties shrink it, so keep overflow low to preserve your multiplier.
             </p>
           </div>
 
