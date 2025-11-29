@@ -1,56 +1,82 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-
 <svg
-   fill="#000000"
+   width="35"
+   height="35"
+   viewBox="0 0 24 24"
    version="1.1"
-   id="Capa_1"
-   width="800px"
-   height="800px"
-   viewBox="0 0 45.492 45.492"
-   xml:space="preserve"
-   sodipodi:docname="focus.svg"
+   id="svg5"
+   sodipodi:docname="target_icon.svg"
    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><defs
-   id="defs2" /><sodipodi:namedview
-   id="namedview2"
-   pagecolor="#ffffff"
-   bordercolor="#000000"
-   borderopacity="0.25"
-   inkscape:showpageshadow="2"
-   inkscape:pageopacity="0.0"
-   inkscape:pagecheckerboard="0"
-   inkscape:deskcolor="#d1d1d1"
-   inkscape:zoom="0.98875"
-   inkscape:cx="399.49431"
-   inkscape:cy="400"
-   inkscape:window-width="1920"
-   inkscape:window-height="940"
-   inkscape:window-x="1080"
-   inkscape:window-y="351"
-   inkscape:window-maximized="1"
-   inkscape:current-layer="g1" />
-<g
-   id="g2"
-   style="stroke-width:0.352563;stroke-dasharray:none">
-	<g
-   id="g1"
-   style="stroke-width:0.352563;stroke-dasharray:none">
-		<path
-   d="M22.746,0C10.203,0,0,10.204,0,22.746s10.203,22.746,22.746,22.746c12.543,0,22.747-10.204,22.747-22.746    S35.289,0,22.746,0z M25.52,37.512v-1.369c0-1.524-1.229-2.76-2.753-2.76c-1.524,0-2.752,1.235-2.752,2.76v1.369    c-6.115-1.134-10.9-5.92-12.033-12.035h1.105c1.525,0,2.76-1.228,2.76-2.751s-1.234-2.751-2.76-2.751H7.982    C9.115,13.936,13.9,9.115,20.015,7.982v1.369c0,1.524,1.228,2.759,2.752,2.759c1.523,0,2.753-1.235,2.753-2.759V7.982    c6.036,1.133,10.858,5.954,11.991,11.992h-1.104c-1.525,0-2.76,1.227-2.76,2.751s1.233,2.751,2.76,2.751h1.104    C36.378,31.592,31.556,36.378,25.52,37.512z"
-   id="path1"
-   style="stroke-width:0.352563;stroke-dasharray:none"
-   inkscape:label="outer_circle" />
-		<circle
-   cx="22.746"
-   cy="22.747"
-   r="4.446"
-   id="circle1"
-   style="stroke-width:0.352563;stroke-dasharray:none"
-   inkscape:label="inner_dot" />
-	</g>
-</g>
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="22.6"
+     inkscape:cx="12.522124"
+     inkscape:cy="10.420354"
+     inkscape:window-width="1200"
+     inkscape:window-height="968"
+     inkscape:window-x="0"
+     inkscape:window-y="31"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg5" />
+  <circle
+     cx="12"
+     cy="12"
+     r="2.5"
+     fill="#ffffff"
+     opacity="0.9"
+     id="circle2"
+     style="fill:#000000;fill-opacity:1" />
+  <path
+     d="m 12,4.0397714 v 2.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path2"
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+  <path
+     d="m 12,19.459771 v -1.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path3"
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+  <path
+     d="m 4.0397714,12 h 2.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path4"
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+  <path
+     d="m 17.459886,12 h 2.5"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     fill="none"
+     id="path5"
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+  <path
+     id="circle1"
+     style="fill:#000000;fill-opacity:1"
+     d="M 12 2.7428571 A 9.257143 9.257143 0 0 0 2.7428571 12 A 9.257143 9.257143 0 0 0 12 21.257143 A 9.257143 9.257143 0 0 0 21.257143 12 A 9.257143 9.257143 0 0 0 12 2.7428571 z M 12 4.9995536 A 7 7 0 0 1 19.000446 12 A 7 7 0 0 1 12 19.000446 A 7 7 0 0 1 4.9995536 12 A 7 7 0 0 1 12 4.9995536 z " />
 </svg>

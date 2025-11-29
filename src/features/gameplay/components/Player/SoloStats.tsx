@@ -112,8 +112,8 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
       .replace(/<!DOCTYPE[^>]*>\\s*/iu, '')
       .replace(/width="[^"]*"/u, `width="${size}"`)
       .replace(/height="[^"]*"/u, `height="${size}"`)
-      .replace(/fill="[^"]*"/gu, `fill="${color}"`)
-      .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
+      // .replace(/fill="[^"]*"/gu, `fill="${color}"`)
+      // .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
 
     return (
       <span
