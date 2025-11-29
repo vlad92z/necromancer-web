@@ -150,9 +150,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
         gameMode
       )
     : 0;
-  const overloadPenalty = isSoloMode
-    ? calculateOverloadPenalty(baseOverloadPenalty, round)
-    : 0;
+  const overloadPenalty = isSoloMode ? calculateOverloadPenalty(baseOverloadPenalty, round) : 0;
   const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
@@ -182,7 +180,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           basePenaltyCount,
           gameMode
         );
-        const hasPenalty = overloadPenalty > 0;
+        const hasPenalty = overloadPenalty - round > 0;
 
         const essenceRuneCount = gameMode === 'standard'
           ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +

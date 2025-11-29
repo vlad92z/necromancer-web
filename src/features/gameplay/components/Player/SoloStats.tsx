@@ -26,7 +26,7 @@ interface SpellpowerProps {
   focus: number;
   totalPower: number;
   essenceRuneCount: number;
-  hasPenalty: boolean;
+  hasOverload: boolean;
   hasWindMitigation: boolean;
   windRuneCount: number;
   overloadPenalty: number;
@@ -325,7 +325,7 @@ export function SoloStats({
   focus,
   totalPower,
   essenceRuneCount,
-  hasPenalty,
+  hasOverload,
   hasWindMitigation,
   windRuneCount,
   overloadPenalty,
@@ -345,15 +345,11 @@ export function SoloStats({
     : 'Essence - cast more runes to increase spell damage.';
 
   const spellpowerTooltip = `Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
-  const healthTooltip = 'Health - drop to zero and your duel ends.';
-  const healingTooltip = healing > 0
-    ? `Healing - Life, Wind, and Frost runes on your wall will restore ${healing} health during scoring${hasWindMitigation ? ` (Wind runes: ${windRuneCount})` : ''}.`
-    : 'Healing - secure Life, Wind, or Frost runes to heal yourself during scoring.';
-  const overloadTooltip = `Overload (${overloadPenalty}) = overflow + round bonus (${round}). Clear overflow to reduce damage; the round bonus always applies.`;
-  const strainTooltip = frostRuneCount > 0
-    ? `Stress ×${overloadMultiplier}. Frost runes now add healing instead of reducing stress. Current damage preview: ${overloadDamagePreview}.`
-    : `Stress ×${overloadMultiplier} scales Overload each round. Current damage preview: ${overloadDamagePreview}.`;
-  const damageTooltip = `Damage - projected health loss at round end: Overload (${overloadPenalty}, includes round ${round}) × Stress (${overloadMultiplier}) = ${overloadDamagePreview}.`;
+  const healthTooltip = 'Health - drop to zero and your game ends.';
+  const healingTooltip = `Healing (${healing}) - Life, Wind, and Frost runes heal you every round.`
+  const overloadTooltip = `Overload (${overloadPenalty}) - overloaded runes increase Stress damage every round`;
+  const strainTooltip = `Fatigue (${overloadMultiplier}) - accumulates as the game progresses.`;
+  const damageTooltip = `Stress - damage taken every round. Stress (${overloadDamagePreview}) = Overload (${overloadPenalty}) × Fatigue (${overloadMultiplier})`;
 
   const openExplanation = () => setShowExplanation(true);
   const closeExplanation = () => setShowExplanation(false);
@@ -441,7 +437,7 @@ export function SoloStats({
               color="#fb7185"
               borderColor="rgba(248, 113, 113, 0.45)"
               tooltip={overloadTooltip}
-              alert={overloadPenalty > 0}
+              alert={hasOverload}
             />
             <StatBadge
               type="strain"
