@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { animate } from 'framer-motion';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
+import healthSvg from '../../../../assets/stats/health.svg?raw';
+import healingSvg from '../../../../assets/stats/healing.svg?raw';
 
 type StatIconType =
   | 'health'
@@ -54,22 +56,34 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
   };
 
   if (type === 'health') {
+    const sanitizedSvg = healthSvg
+      .replace(/<\\?xml.*?\\?>\\s*/u, '')
+      .replace(/width="[^"]*"/u, `width="${size}"`)
+      .replace(/height="[^"]*"/u, `height="${size}"`)
+      .replace(/fill="[^"]*"/gu, `fill="${color}"`);
+
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path
-          d="M12 19s-7-4.35-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.65-7 9-7 9Z"
-          fill={color}
-          opacity={0.9}
-        />
-      </svg>
+      <span
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
+      />
     );
   }
 
   if (type === 'healing') {
+    const sanitizedSvg = healingSvg
+      .replace(/<\\?xml.*?\\?>\\s*/u, '')
+      .replace(/width="[^"]*"/u, `width="${size}"`)
+      .replace(/height="[^"]*"/u, `height="${size}"`)
+      .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
+
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M6.8291 17.0806C13.9002 21.3232 19.557 15.6663 18.8499 5.0598C8.24352 4.35269 2.58692 10.0097 6.8291 17.0806ZM6.8291 17.0806C6.82902 17.0805 6.82918 17.0807 6.8291 17.0806ZM6.8291 17.0806L5 18.909M6.8291 17.0806L10.6569 13.2522" {...strokeProps}> </path>
-      </svg>
+      <span
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
+      />
     );
   }
 
