@@ -6,10 +6,15 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { animate } from 'framer-motion';
 import { SpellpowerExplanation } from './SpellpowerExplanation';
-import healthSvg from '../../../../assets/stats/health.svg?raw';
-import healingSvg from '../../../../assets/stats/healing.svg?raw';
-import essenceSvg from '../../../../assets/stats/essence.svg?raw';
-import focusSvg from '../../../../assets/stats/focus.svg?raw';
+import healthSvg from '../../../../assets/stats/health.svg';
+import healingSvg from '../../../../assets/stats/healing.svg';
+import essenceSvg from '../../../../assets/stats/essence.svg';
+import focusSvg from '../../../../assets/stats/focus.svg';
+import spellpowerSvg from '../../../../assets/stats/spellpower.svg';
+import overloadSvg from '../../../../assets/stats/overload.svg';
+import fatigueSvg from '../../../../assets/stats/fatigue.svg';
+import stressSvg from '../../../../assets/stats/stress.svg';
+import deckSvg from '../../../../assets/stats/deck.svg';
 
 type StatIconType =
   | 'health'
@@ -58,119 +63,90 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
   };
 
   if (type === 'health') {
-    const sanitizedSvg = healthSvg
-      .replace(/<\\?xml.*?\\?>\\s*/u, '')
-      .replace(/width="[^"]*"/u, `width="${size}"`)
-      .replace(/height="[^"]*"/u, `height="${size}"`)
-      .replace(/fill="[^"]*"/gu, `fill="${color}"`);
-
     return (
-      <span
+      <img
+        src={healthSvg}
+        alt=""
         aria-hidden
         style={{ display: 'inline-flex', width: size, height: size }}
-        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
       />
     );
   }
 
   if (type === 'healing') {
-    const sanitizedSvg = healingSvg
-      .replace(/<\\?xml.*?\\?>\\s*/u, '')
-      .replace(/width="[^"]*"/u, `width="${size}"`)
-      .replace(/height="[^"]*"/u, `height="${size}"`)
-      .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
-
     return (
-      <span
+      <img
+        src={healingSvg}
+        alt=""
         aria-hidden
         style={{ display: 'inline-flex', width: size, height: size }}
-        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
       />
     );
   }
 
   if (type === 'essence') {
-    const sanitizedSvg = essenceSvg
-      .replace(/<\\?xml.*?\\?>\\s*/u, '')
-      .replace(/<!DOCTYPE[^>]*>\\s*/iu, '')
-      .replace(/width="[^"]*"/u, `width="${size}"`)
-      .replace(/height="[^"]*"/u, `height="${size}"`)
-      .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
-
     return (
-      <span
+      <img
+        src={essenceSvg}
+        alt=""
         aria-hidden
         style={{ display: 'inline-flex', width: size, height: size }}
-        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
       />
     );
   }
 
   if (type === 'focus') {
-    const sanitizedSvg = focusSvg
-      .replace(/<\\?xml.*?\\?>\\s*/u, '')
-      .replace(/<!DOCTYPE[^>]*>\\s*/iu, '')
-      .replace(/width="[^"]*"/u, `width="${size}"`)
-      .replace(/height="[^"]*"/u, `height="${size}"`)
-      // .replace(/fill="[^"]*"/gu, `fill="${color}"`)
-      // .replace(/stroke="[^"]*"/gu, `stroke="${color}"`);
-
     return (
-      <span
+      <img
+        src={focusSvg}
+        alt=""
         aria-hidden
         style={{ display: 'inline-flex', width: size, height: size }}
-        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
       />
     );
   }
 
   if (type === 'overload') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M12 3 3 21h18L12 3Z" {...strokeProps} />
-        <path d="M12 9v4" {...strokeProps} />
-        <circle cx="12" cy="16" r="1.6" fill={color} opacity={0.92} />
-      </svg>
+      <img
+        src={overloadSvg}
+        alt=""
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+      />
     );
   }
 
   if (type === 'strain') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M4 12h16" {...strokeProps} />
-        <path d="M8 8h4l-3-3" {...strokeProps} />
-        <path d="M16 16h-4l3 3" {...strokeProps} />
-        <path d="M9.5 12h5" {...strokeProps} />
-        <circle cx="12" cy="12" r="2.5" fill={color} opacity={0.9} />
-      </svg>
+      <img
+        src={fatigueSvg}
+        alt=""
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+      />
     );
   }
 
   if (type === 'spellpower' || type === 'runePower') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M12 3v4" {...strokeProps} />
-        <path d="M12 17v4" {...strokeProps} />
-        <path d="M4 12h4" {...strokeProps} />
-        <path d="M16 12h4" {...strokeProps} />
-        <path d="m7 7 2.5 2.5" {...strokeProps} />
-        <path d="m14.5 14.5 2.5 2.5" {...strokeProps} />
-        <path d="m7 17 2.5-2.5" {...strokeProps} />
-        <path d="m14.5 9.5 2.5-2.5" {...strokeProps} />
-        <circle cx="12" cy="12" r="2" fill={color} opacity={0.95} />
-      </svg>
+      <img
+        src={spellpowerSvg}
+        alt=""
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+      />
     );
   }
 
   if (type === 'damage') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <path d="M4 5h7v7H4z" {...strokeProps} />
-        <path d="M13 12h7v7h-7z" {...strokeProps} />
-        <path d="M21 3 3 21" {...strokeProps} />
-        <circle cx="10" cy="10" r="1.8" fill={color} opacity={0.92} />
-        <circle cx="14" cy="14" r="1.8" fill={color} opacity={0.92} />
-      </svg>
+      <img
+        src={stressSvg}
+        alt=""
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+      />
     );
   }
 
@@ -188,11 +164,12 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
 
   if (type === 'deck') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24">
-        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" {...strokeProps} />
-        <path d="M3 9h18" {...strokeProps} />
-        <circle cx="7" cy="12" r="1.6" fill={color} opacity={0.95} />
-      </svg>
+      <img
+        src={deckSvg}
+        alt=""
+        aria-hidden
+        style={{ display: 'inline-flex', width: size, height: size }}
+      />
     );
   }
 

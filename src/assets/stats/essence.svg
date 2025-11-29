@@ -26,23 +26,23 @@
      inkscape:zoom="0.98875"
      inkscape:cx="399.49431"
      inkscape:cy="400"
-     inkscape:window-width="1200"
-     inkscape:window-height="968"
-     inkscape:window-x="0"
-     inkscape:window-y="31"
+     inkscape:window-width="1192"
+     inkscape:window-height="940"
+     inkscape:window-x="1360"
+     inkscape:window-y="351"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg1" />
   <g
      clip-path="url(#clip0_429_11034)"
      id="g1"
-     style="fill-opacity:1;fill:#fed804">
+     style="fill-opacity:1;fill:#f6ce00;stroke:#f6ce00;stroke-opacity:1">
     <path
        d="M6 14L13 2V10H18L11 22V14H6Z"
        stroke="#292929"
        stroke-width="2.5"
        stroke-linejoin="round"
        id="path1"
-       style="fill-opacity:1;fill:#fed804" />
+       style="fill-opacity:1;fill:#f6ce00;stroke:#f6ce00;stroke-opacity:1" />
   </g>
   <defs
      id="defs1">
