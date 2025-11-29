@@ -11,8 +11,8 @@ interface RuneforgesAndCenterProps {
   centerPool: Rune[];
   players: [Player, Player];
   currentPlayerId: Player['id'];
-  onRuneClick: (runeforgeId: string, runeType: RuneType) => void;
-  onCenterRuneClick: (runeType: RuneType) => void;
+  onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
+  onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onVoidRuneforgeRuneSelect: (runeforgeId: string, runeId: string) => void;
   onVoidCenterRuneSelect: (runeId: string) => void;
   isDraftPhase: boolean;

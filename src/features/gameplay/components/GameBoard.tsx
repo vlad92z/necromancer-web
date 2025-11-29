@@ -234,14 +234,14 @@ export function GameBoard({ gameState }: GameBoardProps) {
       })()
     : null;
   
-  const handleRuneClick = (runeforgeId: string, runeType: RuneType) => {
+  const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
     // Direct rune click always drafts that rune type
-    draftRune(runeforgeId, runeType);
+    draftRune(runeforgeId, runeType, runeId);
   };
   
-  const handleCenterRuneClick = (runeType: RuneType) => {
+  const handleCenterRuneClick = (runeType: RuneType, runeId: string) => {
     // Direct center rune click drafts that rune type from center
-    draftFromCenter(runeType);
+    draftFromCenter(runeType, runeId);
   };
   
   const opponent = players[1];

@@ -122,16 +122,18 @@ export function PatternLines({
             {Array(line.tier)
               .fill(null)
               .map((_, slotIndex) => {
-                const runeEffects = line.runeType
+                const slotKey = `${index}-${slotIndex}`;
+                const shouldHideRune = hiddenSlotKeys?.has(slotKey);
+                const hasRuneInSlot = slotIndex < line.count && line.runeType !== null;
+                const isPrimaryRuneSlot = hasRuneInSlot && slotIndex === 0 && !shouldHideRune;
+                const runeEffects = isPrimaryRuneSlot && line.runeType
                   ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
                   : { passive: [], active: [] };
-                const rune = slotIndex < line.count && line.runeType ? {
+                const rune = hasRuneInSlot && line.runeType ? {
                   id: `pattern-${index}-${slotIndex}`,
                   runeType: line.runeType,
                   effects: runeEffects,
                 } : null;
-                const slotKey = `${index}-${slotIndex}`;
-                const shouldHideRune = hiddenSlotKeys?.has(slotKey);
                 const displayedRune = shouldHideRune ? null : rune;
                 const showFrozenOverlay = isFrozen && !freezeSelectionEnabled;
                 const cellMotionProps = showGlow
@@ -161,6 +163,18 @@ export function PatternLines({
                       size="large"
                       showEffect={false}
                     />
+                    {isPrimaryRuneSlot && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: '-4px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(192, 132, 252, 0.8)',
+                          boxShadow: '0 0 18px rgba(192, 132, 252, 0.55)',
+                          pointerEvents: 'none'
+                        }}
+                      />
+                    )}
                     {showFrozenOverlay && (
                       <div
                         style={{

@@ -9,7 +9,7 @@ import { RuneCell } from '../../../../components/RuneCell';
 
 interface CenterPoolProps {
   centerPool: Rune[];
-  onRuneClick?: (runeType: RuneType) => void;
+  onRuneClick?: (runeType: RuneType, runeId: string) => void;
   onVoidRuneSelect?: (runeId: string) => void;
   isDraftPhase: boolean;
   hasSelectedRunes: boolean;
@@ -91,7 +91,7 @@ export function CenterPool({
       return;
     }
     if (!centerDisabled && onRuneClick) {
-      onRuneClick(rune.runeType);
+      onRuneClick(rune.runeType, rune.id);
     }
   };
   

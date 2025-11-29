@@ -1133,8 +1133,8 @@ function chooseEasyPatternLineToFreeze(state: GameState): number | null {
 
 function makeEasyAIMove(
   state: GameState,
-  draftRune: (runeforgeId: string, runeType: RuneType) => void,
-  draftFromCenter: (runeType: RuneType) => void,
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void,
+  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void,
   placeRunes: (lineIndex: number) => void,
   placeRunesInFloor: () => void
 ): boolean {
@@ -1176,8 +1176,8 @@ function makeEasyAIMove(
 
 function makeRandomAIMove(
   state: GameState,
-  draftRune: (runeforgeId: string, runeType: RuneType) => void,
-  draftFromCenter: (runeType: RuneType) => void,
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void,
+  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void,
   placeRunes: (lineIndex: number) => void,
   placeRunesInFloor: () => void
 ): boolean {
@@ -1261,8 +1261,8 @@ function chooseRandomPatternLineToFreeze(state: GameState): number | null {
 
 function makeNormalAIMove(
   state: GameState,
-  draftRune: (runeforgeId: string, runeType: RuneType) => void,
-  draftFromCenter: (runeType: RuneType) => void,
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void,
+  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void,
   placeRunes: (lineIndex: number) => void,
   placeRunesInFloor: () => void
 ): boolean {
@@ -1404,8 +1404,8 @@ function makeNormalAIMove(
  */
 export function makeAIMove(
   state: GameState,
-  draftRune: (runeforgeId: string, runeType: RuneType) => void,
-  draftFromCenter: (runeType: RuneType) => void,
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void,
+  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void,
   placeRunes: (lineIndex: number) => void,
   placeRunesInFloor: () => void
 ): boolean {

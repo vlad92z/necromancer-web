@@ -49,6 +49,17 @@ function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
   return `${baseName} (${getAIDifficultyLabel(difficulty)})`;
 }
 
+function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
+  if (!primaryRuneId) {
+    return runes;
+  }
+  const primaryRune = runes.find((rune) => rune.id === primaryRuneId);
+  if (!primaryRune) {
+    return runes;
+  }
+  return [primaryRune, ...runes.filter((rune) => rune.id !== primaryRuneId)];
+}
+
 // NOTE: overload multiplier is now stored in state.strain and adjusted at
 // round end. The old getOverloadMultiplier(round) helper is no longer used.
 
@@ -69,8 +80,8 @@ export interface GameplayStore extends GameState {
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   returnToStartScreen: () => void;
-  draftRune: (runeforgeId: string, runeType: RuneType) => void;
-  draftFromCenter: (runeType: RuneType) => void;
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
+  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void;
   placeRunes: (patternLineIndex: number) => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
@@ -349,7 +360,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
   
   // Actions
-  draftRune: (runeforgeId: string, runeType: RuneType) => {
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
       const currentPlayer = state.players[state.currentPlayerIndex];
       const isSoloMode = state.matchType === 'solo';
@@ -383,6 +394,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
+      const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
       
       // Capture original order before clearing for display restoration
       const originalRunes = runeforge.runes;
@@ -395,13 +407,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return {
         ...state,
         runeforges: updatedRuneforges,
-        selectedRunes: [...state.selectedRunes, ...selectedRunes],
+        selectedRunes: [...state.selectedRunes, ...orderedRunes],
         draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
       };
     });
   },
   
-  draftFromCenter: (runeType: RuneType) => {
+  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
       const currentPlayer = state.players[state.currentPlayerIndex];
       const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
@@ -420,11 +432,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
+      const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
       
       return {
         ...state,
         centerPool: remainingRunes,
-        selectedRunes: [...state.selectedRunes, ...selectedRunes],
+        selectedRunes: [...state.selectedRunes, ...orderedRunes],
         draftSource: { type: 'center', originalRunes: originalCenterRunes },
       };
     });
