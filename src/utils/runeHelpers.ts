@@ -14,6 +14,7 @@ export function getRuneGlyph(runeType: RuneType): string {
     Life: '💚',
     Void: '🌀',
     Wind: '💨',
+    Lightning: '⚡',
   };
   return glyphs[runeType];
 }
@@ -28,6 +29,7 @@ export function getRuneColorClass(runeType: RuneType): string {
     Life: 'bg-green-500',
     Void: 'bg-purple-700',
     Wind: 'bg-yellow-400',
+    Lightning: 'bg-cyan-300',
   };
   return colors[runeType];
 }
@@ -46,6 +48,7 @@ export function getRuneEffectDescription(runeType: RuneType, isClassicMode: bool
     Life: 'Each Life rune on your wall heals you every round',
     Void: 'Each Void rune adds 10% of projected incoming damage to your spellpower',
     Wind: 'Wind runes on your wall cancel one floor penalty each (completed Wind lines count immediately)',
+    Lightning: 'Each Lightning rune on your wall adds +1 Essence',
   };
   return descriptions[runeType];
 }

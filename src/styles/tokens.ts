@@ -10,6 +10,7 @@ export const COLORS = {
     Life: '#32CD32',
     Void: '#8B008B',
     Wind: '#F0E68C',
+    Lightning: '#7dd3fc',
   },
   ui: {
     background: '#0c051c',
@@ -36,6 +37,7 @@ export const COLORS = {
     lifeGlow: 'rgba(74, 222, 128, 0.35)',
     voidGlow: 'rgba(217, 70, 239, 0.35)',
     windGlow: 'rgba(250, 204, 21, 0.35)',
+    lightningGlow: 'rgba(125, 211, 252, 0.35)',
   },
   overlay: {
     backdrop: 'rgba(0, 0, 0, 0.7)',
@@ -116,13 +118,14 @@ export const Z_INDEX = {
 /**
  * Helper function to get rune-specific glow color
  */
-export function getRuneGlow(runeType: 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind'): string {
+export function getRuneGlow(runeType: 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning'): string {
   const glowMap = {
     Fire: COLORS.effects.fireGlow,
     Frost: COLORS.effects.frostGlow,
     Life: COLORS.effects.lifeGlow,
     Void: COLORS.effects.voidGlow,
     Wind: COLORS.effects.windGlow,
+    Lightning: COLORS.effects.lightningGlow,
   };
   return glowMap[runeType];
 }

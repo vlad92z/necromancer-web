@@ -6,6 +6,13 @@
 import type { PatternLine, RuneEffects, RuneType, ScoringWall } from '../types/game';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
 
+const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+
+export function getRuneOrderForSize(wallSize: number): RuneType[] {
+  const size = Math.max(1, Math.min(RUNE_ORDER.length, wallSize));
+  return RUNE_ORDER.slice(0, size);
+}
+
 /**
  * Calculate total wall power using simplified scoring
  * Essence = total runes on the wall + passive essence bonuses
@@ -19,6 +26,7 @@ export function calculateWallPower(
   _floorPenaltyCount: number = 0, 
   gameMode: 'classic' | 'standard' = 'standard'
 ): number {
+  void _floorPenaltyCount;
   const wallSize = wall.length;
   const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
   let totalRunes = 0;
@@ -45,7 +53,7 @@ export function calculateWallPower(
     return count;
   }
   
-  // Find all segments and track the largest, count Fire runes
+  // Find all segments and track the largest, count essence-boosting runes
   for (let row = 0; row < wallSize; row++) {
     for (let col = 0; col < wallSize; col++) {
       if (!visited[row][col] && wall[row][col].runeType !== null) {
@@ -59,7 +67,7 @@ export function calculateWallPower(
     }
   }
   
-  // Calculate essence with Fire bonus (only in standard mode)
+  // Calculate essence with rune essence bonuses (only in standard mode)
   const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
   
   // Focus is no longer reduced by overload penalties
@@ -80,6 +88,7 @@ export function calculateWallPowerWithSegments(
   _floorPenaltyCount: number = 0,
   gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
+  void _floorPenaltyCount;
   const wallSize = wall.length;
   const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
   let totalRunes = 0;
@@ -116,7 +125,7 @@ export function calculateWallPowerWithSegments(
     }
   }
   
-  // Calculate essence with Fire bonus (only in standard mode)
+  // Calculate essence with rune essence bonuses (only in standard mode)
   const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
   
   // Focus is no longer reduced by overload penalties
@@ -248,53 +257,43 @@ export function applyStressMitigation(strain: number, mitigation: number): numbe
  * Find the correct column for a rune type in a given row
  * The wall has a fixed pattern for rune placement
  * For simplicity, we'll use: each rune type can only go in specific columns per row
- * The modulo is based on the wall size (3, 4, or 5)
+ * The modulo is based on the wall size (3-6)
  */
 export function getWallColumnForRune(row: number, runeType: RuneType, wallSize: number = 5): number {
-  // Each row is rotated by 1
-  // Fire, Frost, Life, Void, Wind -> 0, 1, 2, 3, 4
-  // For 3 types: Fire, Life, Wind -> 0, 1, 2
-  // For 4 types: Fire, Life, Wind, Frost -> 0, 1, 2, 3
-  const runeTypeIndex: Record<RuneType, number> = {
-    Fire: 0,
-    Frost: 3,  // Only used when wallSize >= 4
-    Life: 1,
-    Void: 4,   // Only used when wallSize === 5
-    Wind: 2,
-  };
-  
-  const baseIndex = runeTypeIndex[runeType];
+  const runeOrder = getRuneOrderForSize(wallSize);
+  const baseIndex = runeOrder.indexOf(runeType);
+  const normalizedIndex = baseIndex === -1 ? 0 : baseIndex;
   // Rotate based on row, use wall size for modulo
-  return (baseIndex + row) % wallSize;
+  return (normalizedIndex + row) % wallSize;
 }
 
 /**
- * Check if a row is complete (all 5 positions filled)
+ * Check if a row is complete (all positions filled)
  */
 export function isRowComplete(wall: ScoringWall, row: number): boolean {
   return wall[row].every((cell) => cell.runeType !== null);
 }
 
 /**
- * Check if a column is complete (all 5 positions filled)
+ * Check if a column is complete (all positions filled)
  */
 export function isColumnComplete(wall: ScoringWall, col: number): boolean {
   return wall.every((row) => row[col].runeType !== null);
 }
 
 /**
- * Check if all cells of a specific rune type are placed (5 total)
+ * Check if all cells of a specific rune type are placed (wall-size total)
  */
 export function isRuneTypeComplete(wall: ScoringWall, runeType: RuneType): boolean {
   let count = 0;
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
+  for (let row = 0; row < wall.length; row++) {
+    for (let col = 0; col < wall[row].length; col++) {
       if (wall[row][col].runeType === runeType) {
         count++;
       }
     }
   }
-  return count === 5;
+  return count === wall.length;
 }
 
 /**
@@ -307,21 +306,21 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
   let bonus = 0;
   
   // Complete rows
-  for (let row = 0; row < 5; row++) {
+  for (let row = 0; row < wall.length; row++) {
     if (isRowComplete(wall, row)) {
       bonus += 2;
     }
   }
   
   // Complete columns
-  for (let col = 0; col < 5; col++) {
+  for (let col = 0; col < wall.length; col++) {
     if (isColumnComplete(wall, col)) {
       bonus += 7;
     }
   }
   
   // Complete rune types
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const runeTypes = getRuneOrderForSize(wall.length);
   for (const runeType of runeTypes) {
     if (isRuneTypeComplete(wall, runeType)) {
       bonus += 10;

@@ -5,15 +5,16 @@
 /**
  * Rune types (elemental identities)
  */
-export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind';
+export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
 
 /**
  * Number of rune types in the game
  * 3 types: Fire, Life, Wind (3x3 wall, 3 pattern lines)
  * 4 types: Fire, Life, Wind, Frost (4x4 wall, 4 pattern lines)
  * 5 types: Fire, Life, Wind, Frost, Void (5x5 wall, 5 pattern lines)
+ * 6 types: Fire, Life, Wind, Frost, Void, Lightning (6x6 wall, 6 pattern lines)
  */
-export type RuneTypeCount = 3 | 4 | 5;
+export type RuneTypeCount = 3 | 4 | 5 | 6;
 
 /**
  * Rune effect modifiers
@@ -65,7 +66,7 @@ export type VoidTarget =
  * Pattern line (1-5 tiers, each requiring matching runes to complete)
  */
 export interface PatternLine {
-  tier: 1 | 2 | 3 | 4 | 5; // Line capacity (1, 2, 3, 4, or 5 runes)
+  tier: 1 | 2 | 3 | 4 | 5 | 6; // Line capacity (1-6 runes)
   runeType: RuneType | null; // Type of rune in this line (null if empty)
   count: number; // Current number of runes in the line
   firstRuneId: string | null; // ID of the first rune placed on this line
@@ -81,7 +82,7 @@ export interface WallCell {
 }
 
 /**
- * The 5x5 scoring grid/wall
+ * The scoring grid/wall
  */
 export type ScoringWall = WallCell[][];
 

@@ -17,7 +17,8 @@ const SOUND_SOURCES: RuneSoundMap = {
   Frost: frostRuneSound,
   Life: lifeRuneSound,
   Void: voidRuneSound,
-  Wind: windRuneSound
+  Wind: windRuneSound,
+  Lightning: fireRuneSound
 };
 
 const createEmptyCountMap = (initialValue: number): RuneCountMap => ({
@@ -25,7 +26,8 @@ const createEmptyCountMap = (initialValue: number): RuneCountMap => ({
   Frost: initialValue,
   Life: initialValue,
   Void: initialValue,
-  Wind: initialValue
+  Wind: initialValue,
+  Lightning: initialValue
 });
 
 const countRunePlacements = (players: Player[]): RuneCountMap =>
@@ -59,14 +61,16 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
     Frost: null,
     Life: null,
     Void: null,
-    Wind: null
+    Wind: null,
+    Lightning: null
   });
   const previousAnimationKeysRef = useRef<Record<RuneType, string>>({
     Fire: '',
     Frost: '',
     Life: '',
     Void: '',
-    Wind: ''
+    Wind: '',
+    Lightning: ''
   });
 
   const soundVolumeRef = useRef(soundVolume);
@@ -80,7 +84,8 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
       Frost: [],
       Life: [],
       Void: [],
-      Wind: []
+      Wind: [],
+      Lightning: []
     };
 
     animatingRunes.forEach((rune) => {
@@ -92,7 +97,8 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
       Frost: idsByType.Frost.length ? idsByType.Frost.sort().join('|') : '',
       Life: idsByType.Life.length ? idsByType.Life.sort().join('|') : '',
       Void: idsByType.Void.length ? idsByType.Void.sort().join('|') : '',
-      Wind: idsByType.Wind.length ? idsByType.Wind.sort().join('|') : ''
+      Wind: idsByType.Wind.length ? idsByType.Wind.sort().join('|') : '',
+      Lightning: idsByType.Lightning.length ? idsByType.Lightning.sort().join('|') : ''
     };
   }, [animatingRunes]);
 

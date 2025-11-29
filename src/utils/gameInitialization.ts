@@ -18,8 +18,10 @@ import type {
 import { getRuneEffectsForType } from './runeEffects';
 import type { RuneEffectTuning } from './runeEffects';
 
+const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+
 /**
- * Create an empty scoring wall (3x3, 4x4, or 5x5)
+ * Create an empty scoring wall (3x3 up to 6x6)
  */
 export function createEmptyWall(size: number = 5): ScoringWall {
   return Array(size)
@@ -38,7 +40,7 @@ export function createPatternLines(count: number = 5): PatternLine[] {
   const lines: PatternLine[] = [];
   for (let i = 1; i <= count; i++) {
     lines.push({
-      tier: i as 1 | 2 | 3 | 4 | 5,
+      tier: i as PatternLine['tier'],
       runeType: null,
       count: 0,
       firstRuneId: null,
@@ -52,16 +54,12 @@ export function createPatternLines(count: number = 5): PatternLine[] {
  * Get the rune types for a given rune type count
  * 3 types: Fire, Life, Wind
  * 4 types: Fire, Life, Wind, Frost
- * 5 types: Fire, Life, Wind, Frost, Void (note: Void is NOT included in 5-type according to issue)
+ * 5 types: Fire, Life, Wind, Frost, Void
+ * 6 types: Fire, Life, Wind, Frost, Void, Lightning
  */
 export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
-  if (count === 3) {
-    return ['Fire', 'Life', 'Wind'];
-  } else if (count === 4) {
-    return ['Fire', 'Life', 'Wind', 'Frost'];
-  } else {
-    return ['Fire', 'Life', 'Wind', 'Frost', 'Void'];
-  }
+  const clampedCount = Math.min(RUNE_ORDER.length, Math.max(3, count));
+  return RUNE_ORDER.slice(0, clampedCount) as RuneType[];
 }
 
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
@@ -114,6 +112,7 @@ export function getQuickPlayConfig(runeTypeCount: RuneTypeCount): QuickPlayConfi
     3: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 25, overflowCapacity: 6 },
     4: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 50, overflowCapacity: 8 },
     5: { factoriesPerPlayer: 3, totalRunesPerPlayer: 36, startingHealth: 100, overflowCapacity: 10 },
+    6: { factoriesPerPlayer: 4, totalRunesPerPlayer: 48, startingHealth: 150, overflowCapacity: 12 },
   };
 
   const baseSizing = sizingByBoardSize[runeTypeCount];

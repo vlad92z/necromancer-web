@@ -24,6 +24,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
       Life: 'Heal 10 HP per active Life rune each round',
       Void: 'Each Void rune converts 10% of projected incoming damage into spellpower',
       Wind: 'Anchor Wind runes on your Spell Wall to cancel overload penalties (completed lines count instantly)',
+      Lightning: '+1 Essence per Lightning rune on your Spell Wall',
     };
     return descriptions[runeType];
   };
@@ -35,9 +36,9 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
     }
     acc[rune.runeType].push(rune);
     return acc;
-  }, { Fire: [], Frost: [], Life: [], Void: [], Wind: [] });
+  }, { Fire: [], Frost: [], Life: [], Void: [], Wind: [], Lightning: [] });
 
-  const runeTypes: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
   const availableTypes = runeTypes.filter(type => runesByType[type]?.length > 0);
 
   const handleRuneTypeClick = (runeType: RuneType) => {

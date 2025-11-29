@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
-import { getWallColumnForRune } from '../../../utils/scoring';
+import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 interface WallCellProps {
@@ -34,7 +34,7 @@ function getExpectedRuneType(
   }
 
   // Fallback: if nothing matched (shouldn't happen), pick from a full list
-  const fallback: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind'];
+  const fallback = getRuneOrderForSize(wallSize);
   const baseIndex = (col - row + fallback.length) % fallback.length;
   return fallback[baseIndex];
 }
@@ -108,6 +108,8 @@ function getRuneDescription(type: RuneType) {
   switch (type) {
     case 'Fire':
       return 'Fire - increases ⚡Essence to deal more damage.';
+    case 'Lightning':
+      return 'Lightning - supercharges ⚡Essence just like Fire runes.';
     case 'Frost':
       return 'Frost - each rune reduces stress by 10% before overload hits.';
     case 'Life':

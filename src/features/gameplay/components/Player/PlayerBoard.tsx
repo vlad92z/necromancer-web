@@ -73,8 +73,8 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
   );
   const hasPenalty = floorPenaltyCount > 0;
   
-  // Count Fire runes: current wall + completed pattern lines (only in standard mode)
-  const fireRuneCount = gameMode === 'standard'
+  // Count Essence-boosting runes: current wall + completed pattern lines (only in standard mode)
+  const essenceRuneCount = gameMode === 'standard'
     ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
       completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
     : 0;
@@ -161,7 +161,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               essence={essence}
               focus={focus}
               totalPower={totalPower}
-              fireRuneCount={fireRuneCount}
+              essenceRuneCount={essenceRuneCount}
               hasPenalty={hasPenalty}
               hasWindMitigation={hasWindMitigation}
               windRuneCount={windMitigationCount}

@@ -45,6 +45,10 @@ const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
     passive: [{ type: 'FloorPenaltyMitigation', amount: 1 }],
     active: [],
   },
+  Lightning: {
+    passive: [{ type: 'EssenceBonus', amount: 1 }],
+    active: [],
+  },
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {

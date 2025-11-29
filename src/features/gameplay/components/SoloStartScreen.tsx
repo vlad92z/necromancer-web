@@ -219,7 +219,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
         >
           <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe', marginBottom: '10px' }}>Board Size</div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            {[3, 4, 5].map((count) => (
+            {[3, 4, 5, 6].map((count) => (
               <button
                 key={count}
                 onClick={() => setRuneTypeCount(count as RuneTypeCount)}
@@ -253,7 +253,8 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
           <div style={{ marginTop: '8px', color: '#93c5fd', fontSize: '13px' }}>
             {runeTypeCount === 3 && '3 rune types, 3x3 Spell Wall, light overload pressure.'}
             {runeTypeCount === 4 && '4 rune types, 4x4 Spell Wall, balanced Solo pace.'}
-            {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, longest and riskiest run.'}
+            {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, extended run with heavy pressure.'}
+            {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning joins for maximal Essence scaling.'}
           </div>
         </div>
 

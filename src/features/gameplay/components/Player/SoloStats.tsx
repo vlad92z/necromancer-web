@@ -28,7 +28,7 @@ interface SpellpowerProps {
   focus: number;
   totalPower: number;
   runePowerTotal: number;
-  fireRuneCount: number;
+  essenceRuneCount: number;
   hasPenalty: boolean;
   hasWindMitigation: boolean;
   windRuneCount: number;
@@ -341,7 +341,7 @@ export function SoloStats({
   focus,
   totalPower,
   runePowerTotal,
-  fireRuneCount,
+  essenceRuneCount,
   hasPenalty,
   hasWindMitigation,
   windRuneCount,
@@ -373,8 +373,8 @@ export function SoloStats({
       ? `Wind runes (${windRuneCount}) are trimming overload penalties, keeping your wall safer.`
       : 'Focus - connect more runes to increase your multiplier.';
 
-  const essenceTooltip = fireRuneCount > 0
-    ? `Essence - cast more runes to increase spell damage. Fire runes (${fireRuneCount}) amplify your Essence.`
+  const essenceTooltip = essenceRuneCount > 0
+    ? `Essence - cast more runes to increase spell damage. Fire and Lightning runes (${essenceRuneCount}) amplify your Essence.`
     : 'Essence - cast more runes to increase spell damage.';
 
   const spellpowerTooltip = `Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;

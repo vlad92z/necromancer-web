@@ -176,7 +176,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
         );
         const hasPenalty = floorPenaltyCount > 0;
 
-        const fireRuneCount = gameMode === 'standard'
+        const essenceRuneCount = gameMode === 'standard'
           ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
             completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
           : 0;
@@ -210,7 +210,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           focus,
           totalPower,
           runePowerTotal,
-          fireRuneCount,
+          essenceRuneCount,
           hasPenalty,
           hasWindMitigation,
           windRuneCount: windMitigationCount,

@@ -50,7 +50,7 @@ export function SpellpowerExplanation({ onClose }: SpellpowerExplanationProps) {
           <div style={{ marginBottom: '18px' }}>
             <strong style={{ color: '#38bdf8' }}>Essence</strong>
             <p style={{ margin: '6px 0 0 0' }}>
-              Count every rune on your Spell Wall, then add +1 Essence for each blazing Fire rune. More Essence means more raw energy.
+              Count every rune on your Spell Wall, then add +1 Essence for each blazing Fire or crackling Lightning rune. More Essence means more raw energy.
             </p>
           </div>
 

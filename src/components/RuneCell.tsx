@@ -13,6 +13,7 @@ import frostRune from '../assets/runes/frost_rune.svg';
 import lifeRune from '../assets/runes/life_rune.svg';
 import voidRune from '../assets/runes/void_rune.svg';
 import windRune from '../assets/runes/wind_rune.svg';
+import lightningRune from '../assets/runes/lightning_rune.svg';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
@@ -20,6 +21,7 @@ const RUNE_ASSETS = {
   Life: lifeRune,
   Void: voidRune,
   Wind: windRune,
+  Lightning: lightningRune,
 };
 
 export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';

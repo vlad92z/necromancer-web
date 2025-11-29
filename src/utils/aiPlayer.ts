@@ -20,15 +20,12 @@ import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidT
 import { getWallColumnForRune, calculateWallPower, calculateWallPowerWithSegments, calculateEffectiveFloorPenalty } from './scoring';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
 
-const RUNE_PRIORITIES: RuneType[] = ['Fire', 'Wind', 'Life', 'Void', 'Frost'];
+const RUNE_PRIORITIES: RuneType[] = ['Fire', 'Lightning', 'Wind', 'Life', 'Void', 'Frost'];
 
-const runePriorityMap: Record<RuneType, number> = {
-  Fire: 0,
-  Wind: 1,
-  Life: 2,
-  Void: 3,
-  Frost: 4,
-};
+const runePriorityMap: Record<RuneType, number> = RUNE_PRIORITIES.reduce((acc, runeType, index) => {
+  acc[runeType] = index;
+  return acc;
+}, {} as Record<RuneType, number>);
 
 function calculateHealingAmountForWall(wall: Player['wall']): number {
   return wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0);
