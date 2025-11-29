@@ -126,6 +126,7 @@ export interface SoloRunConfig {
   voidConversionPercent: number;
   factoriesPerPlayer: number;
   deckRunesPerType: number;
+  targetRuneScore: number;
 }
 
 /**
@@ -272,5 +273,6 @@ export interface GameState {
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
   scoringSnapshot: ScoringSnapshot | null; // Cached scoring data across phases
   runePowerTotal: number; // Solo score accumulator (essence × focus per round)
+  soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
 }

@@ -139,6 +139,16 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                 style={inputStyle}
               />
             </ConfigField>
+            <ConfigField label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
+              <input
+                type="number"
+                min={1}
+                step={10}
+                value={soloConfig.targetRuneScore}
+                onChange={handleNumberInput('targetRuneScore', (value) => Math.max(1, value))}
+                style={inputStyle}
+              />
+            </ConfigField>
             <ConfigField label="Runeforges" description="How many personal factories deal into your pool.">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <input

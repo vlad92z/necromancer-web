@@ -18,6 +18,7 @@ type StatIconType =
   | 'runePower'
   | 'damage'
   | 'voidPower'
+  | 'deck'
   | 'fatigue';
 
 interface SpellpowerProps {
@@ -39,6 +40,7 @@ interface SpellpowerProps {
   frostRuneCount: number;
   voidRuneCount: number;
   fatigueMultiplier: number;
+  deckCount?: number;
 }
 
 function StatIcon({ type, color }: { type: StatIconType; color: string }) {
@@ -150,6 +152,16 @@ function StatIcon({ type, color }: { type: StatIconType; color: string }) {
         <path d="M12 6v2" {...strokeProps} />
         <path d="M12 16v2" {...strokeProps} />
         <circle cx="12" cy="12" r="2.2" fill={color} opacity={0.9} />
+      </svg>
+    );
+  }
+
+  if (type === 'deck') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" {...strokeProps} />
+        <path d="M3 9h18" {...strokeProps} />
+        <circle cx="7" cy="12" r="1.6" fill={color} opacity={0.95} />
       </svg>
     );
   }
@@ -352,6 +364,7 @@ export function SoloStats({
   frostRuneCount,
   voidRuneCount,
   fatigueMultiplier
+  , deckCount
 }: SpellpowerProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const spellpower = totalPower ?? (essence * focus);
@@ -519,6 +532,14 @@ export function SoloStats({
               borderColor="rgba(168, 85, 247, 0.35)"
               tooltip={voidPowerTooltip}
               alert={voidPower > 0}
+            />
+            <StatBadge
+              type="deck"
+              label="Deck"
+              value={deckCount ?? 0}
+              color="#60a5fa"
+              borderColor="rgba(96, 165, 250, 0.35)"
+              tooltip={`Runes left in deck: ${deckCount ?? 0}`}
             />
             <StatBadge
               type="fatigue"

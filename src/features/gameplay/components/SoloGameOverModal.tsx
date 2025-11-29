@@ -10,17 +10,21 @@ interface SoloGameOverModalProps {
   outcome: SoloOutcome;
   runePowerTotal: number;
   round: number;
+  targetScore?: number;
   onReturnToStart?: () => void;
 }
 
-export function SoloGameOverModal({ player, outcome, runePowerTotal, round, onReturnToStart }: SoloGameOverModalProps) {
+export function SoloGameOverModal({ player, outcome, runePowerTotal, round, targetScore, onReturnToStart }: SoloGameOverModalProps) {
   const playClickSound = useClickSound();
   const heading = outcome === 'victory' ? 'Solo Victory' : outcome === 'defeat' ? 'Defeat' : 'Run Complete';
+  const missedTarget = typeof targetScore === 'number' ? runePowerTotal < targetScore : false;
   const subline =
     outcome === 'victory'
       ? 'No runes remain to start a new round'
       : outcome === 'defeat'
-        ? 'Your channel collapsed under overload'
+        ? missedTarget
+          ? 'Rune power fell short of the target'
+          : 'Your channel collapsed under overload'
         : 'The arena falls silent';
   const accentColor = outcome === 'victory' ? '#34d399' : outcome === 'defeat' ? '#f87171' : '#facc15';
 
@@ -64,7 +68,7 @@ export function SoloGameOverModal({ player, outcome, runePowerTotal, round, onRe
       >
         <StatCard label="Health" value={`${player.health}/${player.maxHealth ?? player.health}`} accent="#34d399" />
         <StatCard label="Rounds Cleared" value={round} accent="#60a5fa" />
-        <StatCard label="Rune Power" value={runePowerTotal} accent="#facc15" />
+        <StatCard label="Rune Power" value={targetScore ? `${runePowerTotal} / ${targetScore}` : runePowerTotal} accent="#facc15" />
         <StatCard label="Player" value={player.name} accent="#a5b4fc" />
       </div>
 

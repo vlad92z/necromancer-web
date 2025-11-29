@@ -11,6 +11,7 @@ import { OpponentView } from './Player/OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { RulesOverlay } from './RulesOverlay';
+import { SoloRuneScoreOverlay } from './SoloRuneScoreOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
 import { SoloStats } from './Player/SoloStats';
@@ -74,6 +75,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const isSoloMode = gameState.matchType === 'solo';
   const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
   const runePowerTotal = gameState.runePowerTotal;
+  const soloTargetScore = gameState.soloTargetScore;
   const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect, skipFrostEffect } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const destroyRune = useGameplayStore((state) => state.destroyRune);
@@ -222,6 +224,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           frostRuneCount,
           voidRuneCount,
           fatigueMultiplier: strainMultiplier,
+          deckCount: player.deck.length,
         };
       })()
     : null;
@@ -778,6 +781,22 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }}
       onClick={handleBackgroundClick}
     >
+      {isSoloMode && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '16px',
+            left: '16px',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'flex-start',
+            pointerEvents: 'none',
+            zIndex: 12,
+          }}
+        >
+          <SoloRuneScoreOverlay currentScore={runePowerTotal} targetScore={soloTargetScore} />
+        </div>
+      )}
       <div
         style={{
           position: 'absolute',
@@ -975,6 +994,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                       outcome={soloOutcome}
                       runePowerTotal={runePowerTotal}
                       round={round}
+                      targetScore={soloTargetScore}
                       onReturnToStart={returnToStartScreen}
                     />
                   </div>

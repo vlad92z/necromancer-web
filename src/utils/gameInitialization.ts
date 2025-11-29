@@ -69,6 +69,7 @@ const SOLO_STARTING_HEALTH = 100;
 const SOLO_MAX_HEALTH = 1000;
 const SOLO_FACTORIES_PER_PLAYER = 5;
 const DEFAULT_SOLO_RUNES_PER_TYPE = 30;
+const DEFAULT_SOLO_TARGET_SCORE = 300;
 
 export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
   startingHealth: SOLO_STARTING_HEALTH,
@@ -79,6 +80,7 @@ export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
   voidConversionPercent: 10,
   factoriesPerPlayer: SOLO_FACTORIES_PER_PLAYER,
   deckRunesPerType: DEFAULT_SOLO_RUNES_PER_TYPE,
+  targetRuneScore: DEFAULT_SOLO_TARGET_SCORE,
 };
 
 export interface QuickPlayConfig {
@@ -100,7 +102,8 @@ export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunCon
     frostMitigationPercent: Math.max(0, merged.frostMitigationPercent),
     voidConversionPercent: Math.max(0, merged.voidConversionPercent),
     factoriesPerPlayer: Math.min(6, Math.max(1, Math.round(merged.factoriesPerPlayer))),
-    deckRunesPerType: Math.min(10, Math.max(1, Math.round(merged.deckRunesPerType))),
+    deckRunesPerType: Math.max(1, Math.round(merged.deckRunesPerType)),
+    targetRuneScore: Math.max(1, Math.round(merged.targetRuneScore)),
   };
 }
 
@@ -328,6 +331,7 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     shouldTriggerEndRound: false,
     scoringSnapshot: null,
     runePowerTotal: 0,
+    soloTargetScore: 0,
     soloOutcome: null,
   };
 }
@@ -423,6 +427,7 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
     shouldTriggerEndRound: false,
     scoringSnapshot: null,
     runePowerTotal: 0,
+    soloTargetScore: soloConfig.targetRuneScore,
     soloOutcome: null,
   };
 }

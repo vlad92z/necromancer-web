@@ -257,6 +257,24 @@ function processSoloScoringPhase(state: GameState): GameState {
       };
     }
 
+    // Check if the updated rune power meets or exceeds the solo target score — end run with victory
+    const achievedTargetNow = runePowerTotal >= state.soloTargetScore;
+    if (achievedTargetNow) {
+      return {
+        ...state,
+        players: [updatedPlayer, state.players[1]],
+        roundHistory: [...state.roundHistory, roundScore],
+        runePowerTotal,
+        scoringPhase: null,
+        scoringSnapshot: null,
+        runeforges: [],
+        centerPool: [],
+        turnPhase: 'game-over',
+        shouldTriggerEndRound: false,
+        soloOutcome: 'victory' as SoloOutcome,
+      };
+    }
+
     return {
       ...state,
       players: [updatedPlayer, state.players[1]],
@@ -272,6 +290,7 @@ function processSoloScoringPhase(state: GameState): GameState {
     const playerHasEnough = state.players[0].deck.length >= runesNeededForRound;
 
     if (!playerHasEnough) {
+      const achievedTarget = state.runePowerTotal >= state.soloTargetScore;
       return {
         ...state,
         runeforges: [],
@@ -280,7 +299,7 @@ function processSoloScoringPhase(state: GameState): GameState {
         round: state.round,
         scoringPhase: null,
         scoringSnapshot: null,
-        soloOutcome: 'victory' as SoloOutcome,
+        soloOutcome: achievedTarget ? ('victory' as SoloOutcome) : ('defeat' as SoloOutcome),
         shouldTriggerEndRound: false,
       };
     }
