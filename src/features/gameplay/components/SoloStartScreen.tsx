@@ -14,7 +14,7 @@ interface SoloStartScreenProps {
 
 export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
   const navigate = useNavigate();
-  const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(5);
+  const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(6);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
 
   const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: number) => {
@@ -81,20 +81,6 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
 
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '14px',
-            marginBottom: '22px',
-          }}
-        >
-          <RuleCard title="Health" description="Start at your chosen HP; healing is capped by the current max health." />
-          <RuleCard title="Overload" description="Overflow runes become overload. Fatigue scales each round using your multiplier." />
-          <RuleCard title="Rune Power" description="Each round, your spellpower (essence × focus) is added to total Rune Power." />
-          <RuleCard title="Frost" description="Each Frost rune on your wall restores 10 health during scoring." />
-        </div>
-
-        <div
-          style={{
             marginBottom: '20px',
             padding: '16px',
             backgroundColor: '#0b1433',
@@ -153,33 +139,11 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                 style={inputStyle}
               />
             </ConfigField>
-            <ConfigField label="Frost Rune Protection" description="Legacy: percent stress reduction per Frost rune (kept for variants).">
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={soloConfig.frostMitigationPercent}
-                onChange={handleNumberInput('frostMitigationPercent', (value) => Math.max(0, value))}
-                style={inputStyle}
-              />
-              <div style={{ color: '#93c5fd', fontSize: '13px', marginTop: '6px' }}>Currently {soloConfig.frostMitigationPercent}% per rune</div>
-            </ConfigField>
-            <ConfigField label="Void Rune Damage" description="Legacy: percent of damage converted to spellpower per Void rune (kept for variants).">
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={soloConfig.voidConversionPercent}
-                onChange={handleNumberInput('voidConversionPercent', (value) => Math.max(0, value))}
-                style={inputStyle}
-              />
-              <div style={{ color: '#93c5fd', fontSize: '13px', marginTop: '6px' }}>Currently {soloConfig.voidConversionPercent}% per rune</div>
-            </ConfigField>
             <ConfigField label="Runeforges" description="How many personal factories deal into your pool.">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <input
                   type="range"
-                  min={1}
+                  min={2}
                   max={6}
                   step={1}
                   value={soloConfig.factoriesPerPlayer}
@@ -193,7 +157,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <input
                   type="range"
-                  min={1}
+                  min={8}
                   max={30}
                   step={1}
                   value={soloConfig.deckRunesPerType}
@@ -219,7 +183,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
         >
           <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe', marginBottom: '10px' }}>Board Size</div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            {[3, 4, 5, 6].map((count) => (
+            {[4, 6].map((count) => (
               <button
                 key={count}
                 onClick={() => setRuneTypeCount(count as RuneTypeCount)}

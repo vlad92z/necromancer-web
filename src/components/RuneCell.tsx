@@ -132,9 +132,6 @@ export function RuneCell({
   
   // Override border for healing runes on the wall
   let borderStyle = variantStyle.border;
-  if (isHealingWallRune) {
-    borderStyle = `2px solid ${COLORS.status.success}`;
-  }
   
   // Only animate wall placements; pattern/floor entries rely on RuneAnimation overlay
   const shouldAnimate = usedVariant === 'wall' && Boolean(rune);
