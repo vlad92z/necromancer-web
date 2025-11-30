@@ -2,13 +2,17 @@
  * RuneforgesAndCenter component - displays runeforges and center pool
  */
 
-import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
+import { useMemo } from 'react';
+import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType, RuneTypeCount } from '../../../../types/game';
+import { getRuneTypesForCount } from '../../../../utils/gameInitialization';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
+import { RuneTypeTotals } from './RuneTypeTotals';
 
 interface RuneforgesAndCenterProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
+  runeTypeCount: RuneTypeCount;
   players: [Player, Player];
   currentPlayerId: Player['id'];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
@@ -32,6 +36,7 @@ interface RuneforgesAndCenterProps {
 export function RuneforgesAndCenter({ 
   runeforges, 
   centerPool, 
+  runeTypeCount,
   players,
   currentPlayerId,
   onRuneClick,
@@ -69,6 +74,22 @@ export function RuneforgesAndCenter({
   const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
   const selectedRuneIds = selectedRunes.map((rune) => rune.id);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
+  const runeTypes = useMemo(() => getRuneTypesForCount(runeTypeCount), [runeTypeCount]);
+  const runeCounts = useMemo(() => {
+    const counts: Record<RuneType, number> = { Fire: 0, Frost: 0, Life: 0, Void: 0, Wind: 0, Lightning: 0 };
+    const relevantRuneforges = hideOpponentRow ? playerRuneforges : runeforges;
+
+    relevantRuneforges.forEach((forge) => {
+      forge.runes.forEach((rune) => {
+        counts[rune.runeType] = (counts[rune.runeType] ?? 0) + 1;
+      });
+    });
+    centerPool.forEach((rune) => {
+      counts[rune.runeType] = (counts[rune.runeType] ?? 0) + 1;
+    });
+
+    return counts;
+  }, [centerPool, hideOpponentRow, playerRuneforges, runeforges]);
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
     const selectionMatchesForge = selectedFromRuneforgeId === forge.id;
@@ -172,6 +193,7 @@ export function RuneforgesAndCenter({
         {renderRuneforgeRow(player, topRuneforges, 'center', 'top')}
         {renderCenterSection()}
         {renderRuneforgeRow(player, bottomRuneforges, 'center', 'bottom')}
+        <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
       </>
     );
   };

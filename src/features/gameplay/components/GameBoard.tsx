@@ -969,6 +969,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   runeforges={runeforges}
                   centerPool={centerPool}
                   players={players}
+                  runeTypeCount={gameState.runeTypeCount}
                   currentPlayerId={currentPlayer.id}
                   onRuneClick={handleRuneClick}
                   onCenterRuneClick={handleCenterRuneClick}
@@ -1053,6 +1054,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   runeforges={runeforges}
                   centerPool={centerPool}
                   players={players}
+                  runeTypeCount={gameState.runeTypeCount}
                   currentPlayerId={currentPlayer.id}
                   onRuneClick={handleRuneClick}
                   onCenterRuneClick={handleCenterRuneClick}
