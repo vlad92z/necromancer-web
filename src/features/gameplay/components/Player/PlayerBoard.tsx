@@ -9,6 +9,9 @@ import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
 import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../../utils/scoring';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../../utils/runeEffects';
+import { StatBadge } from '../../../../components/StatBadge';
+import essenceSvg from '../../../../assets/stats/essence.svg';
+import focusSvg from '../../../../assets/stats/focus.svg';
 
 interface PlayerBoardProps {
   player: Player;
@@ -84,6 +87,10 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     : 0;
 
   const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
+  const focusTooltip = 'Focus - connect more runes to increase your multiplier.';
+  const essenceTooltip = essenceRuneCount > 0
+    ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
+    : 'Essence - cast more runes to increase spell damage.';
 
   return (
     <div
@@ -112,9 +119,50 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
           flexDirection: 'column',
           gap: 'min(1.2vmin, 12px)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'min(1.2vmin, 14px)' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'auto auto',
+              gridTemplateRows: hideStatsPanel ? 'auto auto' : 'auto',
+              alignItems: 'start',
+              gap: 'min(1.2vmin, 14px)'
+            }}
+          >
+            {hideStatsPanel && (
+              <div
+                style={{
+                  gridColumn: 2,
+                  gridRow: 1,
+                  display: 'flex',
+                  gap: '0.35em',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <StatBadge
+                  label="Essence"
+                  value={essence}
+                  color="#facc15"
+                  borderColor="rgba(250, 204, 21, 0.35)"
+                  tooltip={essenceTooltip}
+                  image={essenceSvg}
+                />
+                <StatBadge
+                  label="Focus"
+                  value={focus}
+                  color="#38bdf8"
+                  borderColor="rgba(56, 189, 248, 0.35)"
+                  tooltip={focusTooltip}
+                  image={focusSvg}
+                />
+              </div>
+            )}
             {/* Pattern Lines */}
-            <div onClick={(e) => e.stopPropagation()}>
+            <div
+              style={{ gridColumn: 1, gridRow: hideStatsPanel ? 2 : 1 }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <PatternLines 
                 patternLines={player.patternLines}
                 wall={player.wall}
@@ -130,7 +178,18 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             </div>
             
             {/* Wall */}
-            <ScoringWall wall={player.wall} patternLines={player.patternLines} />
+            <div
+              style={{
+                gridColumn: 2,
+                gridRow: hideStatsPanel ? 2 : 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 'min(0.7vmin, 12px)'
+              }}
+            >
+              <ScoringWall wall={player.wall} patternLines={player.patternLines} />
+            </div>
           </div>
 
           {/* Floor Line - spans beneath pattern lines and wall */}
