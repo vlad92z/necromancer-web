@@ -37,12 +37,12 @@ export const ADVANCED_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 };
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
-  Frost: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
-  Life: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
-  Void: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
-  Wind: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
-  Lightning: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
+  Fire: { passive: [], active: [] },
+  Frost: { passive: [], active: [] },
+  Life: { passive: [], active: [] },
+  Void: { passive: [], active: [] },
+  Wind: { passive: [], active: [] },
+  Lightning: { passive: [], active: [] },
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {
