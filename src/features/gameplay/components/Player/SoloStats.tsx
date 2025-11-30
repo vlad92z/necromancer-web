@@ -194,35 +194,14 @@ export function SoloStats({
               tooltip={healingTooltip}
               image={healingSvg}
             />
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>
             <StatBadge
-              label="Essence"
-              value={essence}
-              color="#facc15"
-              borderColor="rgba(250, 204, 21, 0.35)"
-              tooltip={essenceTooltip}
-              image={essenceSvg}
-              {...clickableStatCommon}
-            />
-            <StatBadge
-              label="Focus"
-              value={focus}
-              color='#38bdf8'
-              borderColor='rgba(56, 189, 248, 0.35)'
-              tooltip={focusTooltip}
-              image={focusSvg}
-              {...clickableStatCommon}
-            />
-            <StatBadge
-              label="Spell Power"
-              value={spellpower}
-              color="#c084fc"
-              borderColor="rgba(192, 132, 252, 0.4)"
-              tooltip={spellpowerTooltip}
-              image={spellpowerSvg}
-              {...clickableStatCommon}
+              label="Damage"
+              value={overloadDamagePreview}
+              color="#f97316"
+              borderColor="rgba(249, 115, 22, 0.4)"
+              tooltip={damageTooltip}
+              alert={overloadDamagePreview > 0}
+              image={stressSvg}
             />
           </div>
 
@@ -244,15 +223,7 @@ export function SoloStats({
               tooltip={strainTooltip}
               image={fatigueSvg}
             />
-            <StatBadge
-              label="Damage"
-              value={overloadDamagePreview}
-              color="#f97316"
-              borderColor="rgba(249, 115, 22, 0.4)"
-              tooltip={damageTooltip}
-              alert={overloadDamagePreview > 0}
-              image={stressSvg}
-            />
+            
           </div>
 
           <div style={{ display: 'flex', gap: '0.35em', flexWrap: 'wrap', justifyContent: 'center' }}>

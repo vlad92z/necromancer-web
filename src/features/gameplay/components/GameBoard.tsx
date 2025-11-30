@@ -801,7 +801,13 @@ export function GameBoard({ gameState }: GameBoardProps) {
             zIndex: 12,
           }}
         >
-          <SoloRuneScoreOverlay currentScore={runePowerTotal} targetScore={soloTargetScore} spellpower={spellpower} />
+          <SoloRuneScoreOverlay
+            currentScore={runePowerTotal}
+            targetScore={soloTargetScore}
+            spellpower={spellpower}
+            essence={soloStats?.essence ?? 0}
+            focus={soloStats?.focus ?? 0}
+          />
         </div>
       )}
       <div
