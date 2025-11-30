@@ -14,7 +14,6 @@ import { RulesOverlay } from './RulesOverlay';
 import { SoloRuneScoreOverlay } from './SoloRuneScoreOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
-import { SoloStats } from './Player/SoloStats';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -234,7 +233,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
         };
       })()
     : null;
-  const spellpower = soloStats?.totalPower ?? 0;
   
   const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
     // Direct rune click always drafts that rune type
@@ -788,7 +786,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }}
       onClick={handleBackgroundClick}
     >
-      {isSoloMode && (
+      {isSoloMode && soloStats && (
         <div
           style={{
             position: 'absolute',
@@ -804,9 +802,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           <SoloRuneScoreOverlay
             currentScore={runePowerTotal}
             targetScore={soloTargetScore}
-            spellpower={spellpower}
-            essence={soloStats?.essence ?? 0}
-            focus={soloStats?.focus ?? 0}
+            stats={soloStats}
           />
         </div>
       )}
@@ -1012,20 +1008,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
                     />
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Solo Bottom: Status and Player Stats */}
-            <div style={{ 
-              flex: 0.2, 
-              padding: `${sectionPadding}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
-
-                {soloStats && <SoloStats {...soloStats} />}
               </div>
             </div>
           </>

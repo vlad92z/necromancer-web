@@ -3,40 +3,39 @@
  */
 
 import { useState } from 'react';
+import { SoloStats } from './Player/SoloStats';
+import type { SoloStatsProps } from './Player/SoloStats';
 
 interface SoloRuneScoreOverlayProps {
   currentScore: number;
   targetScore: number;
-  spellpower: number;
-  essence?: number;
-  focus?: number;
+  stats: SoloStatsProps;
 }
 
-export function SoloRuneScoreOverlay({ currentScore, targetScore, spellpower, essence = 0, focus = 0 }: SoloRuneScoreOverlayProps) {
+export function SoloRuneScoreOverlay({ currentScore, targetScore, stats }: SoloRuneScoreOverlayProps) {
   const [isSpellpowerHovered, setIsSpellpowerHovered] = useState(false);
   const progress = targetScore > 0 ? Math.min(1, currentScore / targetScore) : 0;
   const progressPercent = Math.round(progress * 100);
   const reachedTarget = currentScore >= targetScore;
+  const spellpower = stats.totalPower;
 
   return (
     <div
       style={{
         pointerEvents: 'auto',
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: '14px',
-        padding: '12px 14px',
-        borderRadius: '14px',
+        flexDirection: 'column',
+        gap: '12px',
+        padding: '14px',
+        borderRadius: '16px',
         border: '1px solid rgba(148, 163, 184, 0.4)',
-        background: 'rgba(12, 10, 24, 0.78)',
+        background: 'rgba(12, 10, 24, 0.82)',
         boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
         backdropFilter: 'blur(10px)',
-        // minWidth: '260px',
-        flexDirection: 'column'
+        maxWidth: '100%',
       }}
     >
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
           <div style={{ color: '#cbd5e1', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
             Rune Score
@@ -68,22 +67,20 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore, spellpower, es
             }}
           />
         </div>
-      </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-        <div 
-            onMouseEnter={() => setIsSpellpowerHovered(true)}
-            onMouseLeave={() => setIsSpellpowerHovered(false)}
-            onFocus={() => setIsSpellpowerHovered(true)}
-            onBlur={() => setIsSpellpowerHovered(false)}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', position: 'relative' }}>
+        <div
+          onMouseEnter={() => setIsSpellpowerHovered(true)}
+          onMouseLeave={() => setIsSpellpowerHovered(false)}
+          onFocus={() => setIsSpellpowerHovered(true)}
+          onBlur={() => setIsSpellpowerHovered(false)}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', position: 'relative' }}
+        >
           <div style={{ color: '#cbd5e1', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
             spell power
           </div>
           <div
-            
             tabIndex={0}
             role="img"
-            aria-label={`Spellpower. Essence (${essence}) × Focus (${focus}) = ${spellpower}`}
+            aria-label={`Spellpower. Essence (${stats.essence}) × Focus (${stats.focus}) = ${spellpower}`}
             style={{ color: '#31b2d9ff', fontWeight: 800, fontSize: '16px', outline: 'none', cursor: 'default' }}
           >
             {spellpower}
@@ -108,12 +105,12 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore, spellpower, es
                 zIndex: 40,
               }}
             >
-              {`Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`}
+              {`Spellpower\nEssence (${stats.essence}) × Focus (${stats.focus}) = ${spellpower}. Increase spellpower to deal more damage.`}
             </div>
           )}
         </div>
       </div>
+      <SoloStats {...stats} />
     </div>
-    
   );
 }
