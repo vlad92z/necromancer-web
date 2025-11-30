@@ -6,7 +6,7 @@
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation, calculateOverloadPenalty } from '../../utils/scoring';
+import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
 
@@ -43,6 +43,39 @@ function calculateNextStrainMultiplier(
   baseMultiplier: number
 ): number {
   return baseMultiplier;
+}
+
+function calculateImmediateOverloadDamage(
+  previousFloorRunes: Player['floorLine']['runes'],
+  nextFloorRunes: Player['floorLine']['runes'],
+  previousPatternLines: Player['patternLines'],
+  nextPatternLines: Player['patternLines'],
+  wall: Player['wall'],
+  strain: number,
+  gameMode: GameState['gameMode']
+): number {
+  const previousPenalty = calculateEffectiveFloorPenalty(
+    previousFloorRunes,
+    previousPatternLines,
+    wall,
+    gameMode
+  );
+  const nextPenalty = calculateEffectiveFloorPenalty(
+    nextFloorRunes,
+    nextPatternLines,
+    wall,
+    gameMode
+  );
+  const addedPenalty = Math.max(0, nextPenalty - previousPenalty);
+  if (addedPenalty === 0) {
+    return 0;
+  }
+
+  const frostMitigation = gameMode === 'standard'
+    ? calculatePassiveEffectForWall(wall, 'StrainMitigation')
+    : 0;
+  const overloadMultiplier = applyStressMitigation(strain, frostMitigation);
+  return addedPenalty * overloadMultiplier;
 }
 
 function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
@@ -226,54 +259,25 @@ function processSoloScoringPhase(state: GameState): GameState {
     }
 
     const snapshot = state.scoringSnapshot;
-    const overloadValue = calculateOverloadPenalty(snapshot.floorPenalties[0], state.round);
-    const frostMitigation = state.gameMode === 'standard'
-      ? calculatePassiveEffectForWall(state.players[0].wall, 'StrainMitigation')
-      : 0;
-    const overloadMultiplier = applyStressMitigation(state.strain, frostMitigation);
-    const overloadDamage = overloadValue * overloadMultiplier;
-
-    const updatedPlayer: Player = {
-      ...state.players[0],
-      health: Math.max(0, state.players[0].health - overloadDamage),
-    };
-
     const roundScore = {
       round: state.round,
-      playerName: updatedPlayer.name,
+      playerName: state.players[0].name,
       playerEssence: snapshot.wallPowerStats[0].essence,
       playerFocus: snapshot.wallPowerStats[0].focus,
       playerTotal: snapshot.wallPowerStats[0].totalPower,
       opponentName: 'Overload',
-      opponentEssence: overloadValue,
-      opponentFocus: overloadMultiplier,
-      opponentTotal: overloadDamage,
+      opponentEssence: 0,
+      opponentFocus: 0,
+      opponentTotal: 0,
     };
 
     const runePowerTotal = state.runePowerTotal + snapshot.wallPowerStats[0].totalPower;
-    const playerDefeated = updatedPlayer.health === 0;
-    if (playerDefeated) {
-      return {
-        ...state,
-        players: [updatedPlayer, state.players[1]],
-        roundHistory: [...state.roundHistory, roundScore],
-        runePowerTotal,
-        scoringPhase: null,
-        scoringSnapshot: null,
-        runeforges: [],
-        centerPool: [],
-        turnPhase: 'game-over',
-        shouldTriggerEndRound: false,
-        soloOutcome: 'defeat' as SoloOutcome,
-      };
-    }
 
     // Check if the updated rune power meets or exceeds the solo target score — end run with victory
     const achievedTargetNow = runePowerTotal >= state.soloTargetScore;
     if (achievedTargetNow) {
       return {
         ...state,
-        players: [updatedPlayer, state.players[1]],
         roundHistory: [...state.roundHistory, roundScore],
         runePowerTotal,
         scoringPhase: null,
@@ -288,7 +292,6 @@ function processSoloScoringPhase(state: GameState): GameState {
 
     return {
       ...state,
-      players: [updatedPlayer, state.players[1]],
       roundHistory: [...state.roundHistory, roundScore],
       runePowerTotal,
       scoringPhase: 'complete' as const,
@@ -508,6 +511,21 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...currentPlayer.floorLine,
         runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
       };
+
+      const overloadDamage = isSoloMode && currentPlayerIndex === 0
+        ? calculateImmediateOverloadDamage(
+            currentPlayer.floorLine.runes,
+            updatedFloorLine.runes,
+            currentPlayer.patternLines,
+            updatedPatternLines,
+            currentPlayer.wall,
+            state.strain,
+            state.gameMode
+          )
+        : 0;
+      const nextHealth = isSoloMode && currentPlayerIndex === 0
+        ? Math.max(0, currentPlayer.health - overloadDamage)
+        : currentPlayer.health;
       
       // Update player
       const updatedPlayers: [typeof currentPlayer, typeof currentPlayer] = [
@@ -518,6 +536,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...currentPlayer,
         patternLines: updatedPatternLines,
         floorLine: updatedFloorLine,
+        health: nextHealth,
       };
       
       // Clear any frozen lines affecting this player after they complete placement
@@ -527,6 +546,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
       const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
+      const defeatedByOverload = isSoloMode && currentPlayerIndex === 0 && nextHealth === 0;
+      if (defeatedByOverload) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          selectedRunes: [],
+          draftSource: null,
+          centerPool: nextCenterPool,
+          turnPhase: 'game-over' as const,
+          shouldTriggerEndRound: false,
+          scoringPhase: null,
+          scoringSnapshot: null,
+          soloOutcome: 'defeat' as SoloOutcome,
+          voidEffectPending: false,
+          frostEffectPending: false,
+        };
+      }
       
       // Check if Void runes were placed (Void effect: destroy a single rune)
       const hasVoidRunes = selectedRunes.some((rune) => hasActiveEffect(rune.effects, 'DestroyRune'));
@@ -618,6 +654,21 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...currentPlayer.floorLine,
         runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
       };
+
+      const overloadDamage = isSoloMode && currentPlayerIndex === 0
+        ? calculateImmediateOverloadDamage(
+            currentPlayer.floorLine.runes,
+            updatedFloorLine.runes,
+            currentPlayer.patternLines,
+            currentPlayer.patternLines,
+            currentPlayer.wall,
+            state.strain,
+            state.gameMode
+          )
+        : 0;
+      const nextHealth = isSoloMode && currentPlayerIndex === 0
+        ? Math.max(0, currentPlayer.health - overloadDamage)
+        : currentPlayer.health;
       
       // Update player
       const updatedPlayers: [typeof currentPlayer, typeof currentPlayer] = [
@@ -627,12 +678,30 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       updatedPlayers[currentPlayerIndex] = {
         ...currentPlayer,
         floorLine: updatedFloorLine,
+        health: nextHealth,
       };
       
       const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       // Switch to next player (alternate between 0 and 1)
       const nextPlayerIndex = isSoloMode ? currentPlayerIndex : currentPlayerIndex === 0 ? 1 : 0;
+      const defeatedByOverload = isSoloMode && currentPlayerIndex === 0 && nextHealth === 0;
+      if (defeatedByOverload) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          selectedRunes: [],
+          draftSource: null,
+          centerPool: nextCenterPool,
+          turnPhase: 'game-over' as const,
+          shouldTriggerEndRound: false,
+          scoringPhase: null,
+          scoringSnapshot: null,
+          soloOutcome: 'defeat' as SoloOutcome,
+          voidEffectPending: false,
+          frostEffectPending: false,
+        };
+      }
       
       // Check if round should end (all runeforges and center empty)
       const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);

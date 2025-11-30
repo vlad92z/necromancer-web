@@ -70,7 +70,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             <p style={{ margin: 0 }}>
               • Each line holds 1-5 runes<br/>
               • A line can only hold one type of rune<br/>
-              • Surplus runes cause overload (end-of-round damage)<br/>
+              • Surplus runes cause overload damage (Solo triggers immediately)<br/>
               • Complete a line to add that rune to your wall<br/>
               • Runes are connected if they share an edge (not diagonal)
             </p>
@@ -85,7 +85,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               • <strong>Focus</strong>: Size of your largest connected rune segment<br/>
               • <strong>Spellpower</strong>: Essence × Focus<br/>
               • Each round, deal Spellpower damage to your opponent<br/>
-              • Overload builds damage at round end (Focus stays steady)<br/>
+              • In Solo runs, overload damage applies the moment you overflow to the floor<br/>
               • Build large connected segments to maximize damage!
             </p>
           </section>
