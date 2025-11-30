@@ -134,8 +134,9 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 style={{
                   gridColumn: 2,
                   gridRow: 1,
+                  width: '100%',
                   display: 'flex',
-                  gap: '0.35em',
+                  gap: '1em',
                   flexWrap: 'wrap',
                   justifyContent: 'center'
                 }}

@@ -77,7 +77,7 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
         isPending={isPending}
       />
 
-      {isHovered && (
+      {isHovered && rune && (
         <div
           style={{
             position: 'absolute',
@@ -97,7 +97,7 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
             zIndex: 5
           }}
         >
-          {getRuneDescription(expectedRuneType)}
+          {getRuneDescription(rune.runeType)}
         </div>
       )}
     </div>
