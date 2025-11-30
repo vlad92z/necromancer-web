@@ -74,17 +74,6 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore, stats }: SoloR
           onBlur={() => setIsSpellpowerHovered(false)}
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', position: 'relative' }}
         >
-          <div style={{ color: '#cbd5e1', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
-            spell power
-          </div>
-          <div
-            tabIndex={0}
-            role="img"
-            aria-label={`Spellpower. Essence (${stats.essence}) × Focus (${stats.focus}) = ${spellpower}`}
-            style={{ color: '#31b2d9ff', fontWeight: 800, fontSize: '16px', outline: 'none', cursor: 'default' }}
-          >
-            {spellpower}
-          </div>
 
           {isSpellpowerHovered && (
             <div

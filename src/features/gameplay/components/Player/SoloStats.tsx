@@ -159,7 +159,7 @@ export function SoloStats({
               color="#fa6060ff"
               borderColor="rgba(154, 147, 23, 0.35)"
               tooltip={`Overloading runes immediately deals ${overloadMultiplier} damage`}
-              image={overloadSvg}
+              image={fatigueSvg}
             />
             <StatBadge
               label="Deck"
