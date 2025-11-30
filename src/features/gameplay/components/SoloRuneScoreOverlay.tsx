@@ -5,9 +5,10 @@
 interface SoloRuneScoreOverlayProps {
   currentScore: number;
   targetScore: number;
+  spellpower: number;
 }
 
-export function SoloRuneScoreOverlay({ currentScore, targetScore }: SoloRuneScoreOverlayProps) {
+export function SoloRuneScoreOverlay({ currentScore, targetScore, spellpower }: SoloRuneScoreOverlayProps) {
   const progress = targetScore > 0 ? Math.min(1, currentScore / targetScore) : 0;
   const progressPercent = Math.round(progress * 100);
   const reachedTarget = currentScore >= targetScore;
@@ -69,7 +70,7 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore }: SoloRuneScor
             spell power
           </div>
           <div style={{ color: '#31b2d9ff', fontWeight: 800, fontSize: '16px' }}>
-            {currentScore}
+            {spellpower}
           </div>
         </div>
         <div

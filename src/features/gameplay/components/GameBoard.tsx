@@ -220,6 +220,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           runePowerTotal,
           essenceRuneCount,
           hasPenalty,
+          hasOverload: hasPenalty,
           hasWindMitigation,
           windRuneCount,
           overloadPenalty,
@@ -233,6 +234,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
         };
       })()
     : null;
+  const spellpower = soloStats?.totalPower ?? 0;
   
   const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
     // Direct rune click always drafts that rune type
@@ -799,7 +801,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
             zIndex: 12,
           }}
         >
-          <SoloRuneScoreOverlay currentScore={runePowerTotal} targetScore={soloTargetScore} />
+          <SoloRuneScoreOverlay currentScore={runePowerTotal} targetScore={soloTargetScore} spellpower={spellpower} />
         </div>
       )}
       <div
