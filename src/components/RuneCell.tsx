@@ -170,7 +170,7 @@ export function RuneCell({
             width: '100%', 
             height: '100%', 
             objectFit: 'contain',
-            opacity: isWallPlaceholder ? variantStyle.emptyOpacity : 1,
+            opacity: (isWallPlaceholder && !isPending) ? variantStyle.emptyOpacity : 1,
           }}
         />
       )}
