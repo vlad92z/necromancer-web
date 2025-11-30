@@ -125,7 +125,7 @@ export function PatternLines({
                 const slotKey = `${index}-${slotIndex}`;
                 const shouldHideRune = hiddenSlotKeys?.has(slotKey);
                 const hasRuneInSlot = slotIndex < line.count && line.runeType !== null;
-                const isPrimaryRuneSlot = hasRuneInSlot && slotIndex === 0 && !shouldHideRune;
+                const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
                 const runeEffects = isPrimaryRuneSlot && line.runeType
                   ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
                   : { passive: [], active: [] };
@@ -167,7 +167,7 @@ export function PatternLines({
                       <div
                         style={{
                           position: 'absolute',
-                          inset: '-4px',
+                          inset: '-1px',
                           borderRadius: '12px',
                           border: '1px solid rgba(192, 132, 252, 0.8)',
                           boxShadow: '0 0 18px rgba(192, 132, 252, 0.55)',
