@@ -4,8 +4,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { animate } from 'framer-motion';
+import { SpellpowerExplanation } from './SpellpowerExplanation';
 import { StatBadge } from '../../../../components/StatBadge';
 import healthSvg from '../../../../assets/stats/health.svg';
+import healingSvg from '../../../../assets/stats/healing.svg';
+import essenceSvg from '../../../../assets/stats/essence.svg';
+import focusSvg from '../../../../assets/stats/focus.svg';
+import spellpowerSvg from '../../../../assets/stats/spellpower.svg';
+import overloadSvg from '../../../../assets/stats/overload.svg';
+import fatigueSvg from '../../../../assets/stats/fatigue.svg';
+import stressSvg from '../../../../assets/stats/stress.svg';
 import deckSvg from '../../../../assets/stats/deck.svg';
 
 export interface SoloStatsProps {
@@ -110,21 +118,23 @@ function AnimatedHealingValue({ baseValue, consumed, round }: AnimatedHealingVal
 
 
 export function SoloStats({
-  isActive,
   health,
   healing,
   essence,
   focus,
   totalPower,
   essenceRuneCount,
-  hasOverload,
   overloadPenalty,
   overloadMultiplier,
   overloadDamagePreview,
   round,
   deckCount,
 }: SoloStatsProps) {
+
+
   const healthTooltip = 'Health - drop to zero and your game ends.';
+
+
 
   return (
     <div
@@ -142,6 +152,14 @@ export function SoloStats({
               borderColor="rgba(248, 113, 113, 0.4)"
               tooltip={healthTooltip}
               image={healthSvg}
+            />
+            <StatBadge
+              label="Strain"
+              value={overloadMultiplier ?? 0}
+              color="#fa6060ff"
+              borderColor="rgba(154, 147, 23, 0.35)"
+              tooltip={`Runes left in deck: ${deckCount ?? 0}`}
+              image={overloadSvg}
             />
             <StatBadge
               label="Deck"
