@@ -2,6 +2,7 @@
  * RuneTypeTotals - displays rune icons with their total counts on the drafting table
  */
 import type { RuneType } from '../../../../types/game';
+import { COLORS, RADIUS } from '../../../../styles/tokens';
 import fireRune from '../../../../assets/runes/fire_rune.svg';
 import frostRune from '../../../../assets/runes/frost_rune.svg';
 import lifeRune from '../../../../assets/runes/life_rune.svg';
