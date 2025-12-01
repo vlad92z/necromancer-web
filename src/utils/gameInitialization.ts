@@ -63,13 +63,13 @@ export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
 }
 
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
-export const DEFAULT_STARTING_STRAIN = 2;
+export const DEFAULT_STARTING_STRAIN = 1;
 export const DEFAULT_STRAIN_MULTIPLIER = 2;
 const SOLO_STARTING_HEALTH = 100;
 const SOLO_MAX_HEALTH = 1000;
 const SOLO_FACTORIES_PER_PLAYER = 5;
 const DEFAULT_SOLO_RUNES_PER_TYPE = 15;
-const DEFAULT_SOLO_TARGET_SCORE = 300;
+const DEFAULT_SOLO_TARGET_SCORE = 200;
 
 export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
   startingHealth: SOLO_STARTING_HEALTH,
