@@ -18,60 +18,13 @@ const CELL_SIZE = 60; // matches RuneCell size="large"
 const GAP = 4; // gap used between cells in ScoringWall layout
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
-function getLargestConnectedComponent(wall: ScoringWallType, pendingCells: Set<string>) {
-  const gridSize = wall.length;
-  const visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
-  const components: { nodes: { row: number; col: number }[] }[] = [];
-  const isOccupied = (row: number, col: number) => Boolean(wall[row]?.[col]?.runeType) || pendingCells.has(cellKey(row, col));
-
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (visited[r][c]) continue;
-      if (!isOccupied(r, c)) {
-        visited[r][c] = true;
-        continue;
-      }
-
-      // BFS for this component
-      const queue: { row: number; col: number }[] = [{ row: r, col: c }];
-      const compNodes: { row: number; col: number }[] = [];
-      visited[r][c] = true;
-
-      while (queue.length) {
-        const cur = queue.shift()!;
-        compNodes.push(cur);
-
-        const neighbors = [
-          { row: cur.row - 1, col: cur.col },
-          { row: cur.row + 1, col: cur.col },
-          { row: cur.row, col: cur.col - 1 },
-          { row: cur.row, col: cur.col + 1 },
-        ];
-
-        for (const nb of neighbors) {
-          if (nb.row < 0 || nb.row >= gridSize || nb.col < 0 || nb.col >= gridSize) continue;
-          if (visited[nb.row][nb.col]) continue;
-          if (!isOccupied(nb.row, nb.col)) {
-            visited[nb.row][nb.col] = true;
-            continue;
-          }
-          visited[nb.row][nb.col] = true;
-          queue.push(nb);
-        }
-      }
-
-      components.push({ nodes: compNodes });
-    }
-  }
-
-  if (components.length === 0) return { nodes: [] };
-  // return the component with maximum nodes
-  return components.reduce((a, b) => (a.nodes.length >= b.nodes.length ? a : b));
-}
+// We no longer compute the largest connected component. Instead we connect
+// every occupied or pending cell to its orthogonal neighbors (right + down).
 
 export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
-  // Compute largest connected set of occupied cells and their pixel centers
-  // Also compute short neighbor-to-neighbor edges (right + down) to avoid duplicates
+  // Compute pixel centers for all occupied or pending cells and short
+  // neighbor-to-neighbor edges (right + down) so every adjacent pair is
+  // connected by a single line segment.
   const overlay = useMemo(() => {
     const pendingCells = new Set<string>();
     const wallSize = wall.length;
@@ -84,50 +37,33 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
       }
     });
 
-    const comp = getLargestConnectedComponent(wall, pendingCells);
-    if (!comp.nodes.length) return null;
-
     const pointsMap = new Map<string, { x: number; y: number; row: number; col: number; isPending: boolean }>();
-    for (const { row, col } of comp.nodes) {
-      const x = col * (CELL_SIZE + GAP) + CELL_SIZE / 2;
-      const y = row * (CELL_SIZE + GAP) + CELL_SIZE / 2;
-      const key = cellKey(row, col);
-      pointsMap.set(key, { x, y, row, col, isPending: pendingCells.has(key) });
+    for (let r = 0; r < wallSize; r++) {
+      for (let c = 0; c < wallSize; c++) {
+        const key = cellKey(r, c);
+        const occupied = Boolean(wall[r]?.[c]?.runeType) || pendingCells.has(key);
+        if (!occupied) continue;
+        const x = c * (CELL_SIZE + GAP) + CELL_SIZE / 2;
+        const y = r * (CELL_SIZE + GAP) + CELL_SIZE / 2;
+        pointsMap.set(key, { x, y, row: r, col: c, isPending: pendingCells.has(key) });
+      }
     }
+
+    if (pointsMap.size === 0) return null;
 
     const edges: { x1: number; y1: number; x2: number; y2: number; connectsPending: boolean }[] = [];
-
-    for (const { row, col } of comp.nodes) {
-      // only check right and down neighbors to avoid duplicate lines
-      const right = pointsMap.get(cellKey(row, col + 1));
+    for (const [, a] of pointsMap) {
+      const right = pointsMap.get(cellKey(a.row, a.col + 1));
       if (right) {
-        const a = pointsMap.get(cellKey(row, col))!;
-        edges.push({
-          x1: a.x,
-          y1: a.y,
-          x2: right.x,
-          y2: right.y,
-          connectsPending: a.isPending || right.isPending
-        });
+        edges.push({ x1: a.x, y1: a.y, x2: right.x, y2: right.y, connectsPending: a.isPending || right.isPending });
       }
-      const down = pointsMap.get(cellKey(row + 1, col));
+      const down = pointsMap.get(cellKey(a.row + 1, a.col));
       if (down) {
-        const a = pointsMap.get(cellKey(row, col))!;
-        edges.push({
-          x1: a.x,
-          y1: a.y,
-          x2: down.x,
-          y2: down.y,
-          connectsPending: a.isPending || down.isPending
-        });
+        edges.push({ x1: a.x, y1: a.y, x2: down.x, y2: down.y, connectsPending: a.isPending || down.isPending });
       }
     }
 
-    const points = Array.from(pointsMap.values()).map(p => ({
-      x: p.x,
-      y: p.y,
-      isPending: p.isPending
-    }));
+    const points = Array.from(pointsMap.values()).map(p => ({ x: p.x, y: p.y, isPending: p.isPending }));
     return { points, edges };
   }, [wall, patternLines]);
 

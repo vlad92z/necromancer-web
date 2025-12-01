@@ -14,7 +14,6 @@ import { RulesOverlay } from './RulesOverlay';
 import { SoloRuneScoreOverlay } from './SoloRuneScoreOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
-import { SoloStats } from './Player/SoloStats';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -24,7 +23,7 @@ import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
-import { calculateEffectiveFloorPenalty, calculateOverloadPenalty, calculateProjectedPower, applyStressMitigation } from '../../../utils/scoring';
+import { calculateEffectiveFloorPenalty, calculateProjectedPower, applyStressMitigation } from '../../../utils/scoring';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 const BOARD_BASE_SIZE = 1200;
@@ -71,7 +70,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain, strainMultiplier } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, lockedPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain, strainMultiplier } = gameState;
   const isSoloMode = gameState.matchType === 'solo';
   const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
   const runePowerTotal = gameState.runePowerTotal;
@@ -150,9 +149,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
         gameMode
       )
     : 0;
-  const overloadPenalty = isSoloMode
-    ? calculateOverloadPenalty(baseOverloadPenalty, round)
-    : 0;
+  const overloadPenalty = isSoloMode ? baseOverloadPenalty : 0;
   const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
@@ -222,6 +219,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
           runePowerTotal,
           essenceRuneCount,
           hasPenalty,
+          hasOverload: hasPenalty,
           hasWindMitigation,
           windRuneCount,
           overloadPenalty,
@@ -236,14 +234,14 @@ export function GameBoard({ gameState }: GameBoardProps) {
       })()
     : null;
   
-  const handleRuneClick = (runeforgeId: string, runeType: RuneType) => {
+  const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
     // Direct rune click always drafts that rune type
-    draftRune(runeforgeId, runeType);
+    draftRune(runeforgeId, runeType, runeId);
   };
   
-  const handleCenterRuneClick = (runeType: RuneType) => {
+  const handleCenterRuneClick = (runeType: RuneType, runeId: string) => {
     // Direct center rune click drafts that rune type from center
-    draftFromCenter(runeType);
+    draftFromCenter(runeType, runeId);
   };
   
   const opponent = players[1];
@@ -253,6 +251,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const opponentHiddenFloorSlots = hiddenFloorSlots[opponent.id];
   const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
   const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
+  const playerLockedLines = lockedPatternLines[players[0].id] ?? [];
+  const opponentLockedLines = lockedPatternLines[opponent.id] ?? [];
   const canFreezeOpponentPatternLine = !isSoloMode && frostEffectPending && currentPlayerIndex === 0;
   const canSkipFrostEffect = canFreezeOpponentPatternLine && !isAITurn;
 
@@ -788,7 +788,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }}
       onClick={handleBackgroundClick}
     >
-      {isSoloMode && (
+      {isSoloMode && soloStats && (
         <div
           style={{
             position: 'absolute',
@@ -801,7 +801,11 @@ export function GameBoard({ gameState }: GameBoardProps) {
             zIndex: 12,
           }}
         >
-          <SoloRuneScoreOverlay currentScore={runePowerTotal} targetScore={soloTargetScore} />
+          <SoloRuneScoreOverlay
+            currentScore={runePowerTotal}
+            targetScore={soloTargetScore}
+            stats={soloStats}
+          />
         </div>
       )}
       <div
@@ -945,6 +949,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   onCancelSelection={handleCancelSelection}
                   gameMode={gameMode}
                   frozenPatternLines={playerFrozenLines}
+                  lockedPatternLines={playerLockedLines}
                   hiddenSlotKeys={playerHiddenPatternSlots}
                   hiddenFloorSlotIndexes={playerHiddenFloorSlots}
                   round={round}
@@ -967,6 +972,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   runeforges={runeforges}
                   centerPool={centerPool}
                   players={players}
+                  runeTypeCount={gameState.runeTypeCount}
                   currentPlayerId={currentPlayer.id}
                   onRuneClick={handleRuneClick}
                   onCenterRuneClick={handleCenterRuneClick}
@@ -1008,20 +1014,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
                 )}
               </div>
             </div>
-
-            {/* Solo Bottom: Status and Player Stats */}
-            <div style={{ 
-              flex: 0.2, 
-              padding: `${sectionPadding}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'min(1.4vmin, 16px)' }}>
-
-                {soloStats && <SoloStats {...soloStats} />}
-              </div>
-            </div>
           </>
         ) : (
           <>
@@ -1040,6 +1032,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   isActive={currentPlayerIndex === 1}
                   gameMode={gameMode}
                   frozenPatternLines={opponentFrozenLines}
+                  lockedPatternLines={opponentLockedLines}
                   freezeSelectionEnabled={canFreezeOpponentPatternLine}
                   onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
                   onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
@@ -1065,6 +1058,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   runeforges={runeforges}
                   centerPool={centerPool}
                   players={players}
+                  runeTypeCount={gameState.runeTypeCount}
                   currentPlayerId={currentPlayer.id}
                   onRuneClick={handleRuneClick}
                   onCenterRuneClick={handleCenterRuneClick}
@@ -1123,6 +1117,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   onCancelSelection={handleCancelSelection}
                   gameMode={gameMode}
                   frozenPatternLines={playerFrozenLines}
+                  lockedPatternLines={playerLockedLines}
                   hiddenSlotKeys={playerHiddenPatternSlots}
                   hiddenFloorSlotIndexes={playerHiddenFloorSlots}
                   round={round}

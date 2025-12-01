@@ -2,17 +2,21 @@
  * RuneforgesAndCenter component - displays runeforges and center pool
  */
 
-import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
+import { useMemo } from 'react';
+import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType, RuneTypeCount } from '../../../../types/game';
+import { getRuneTypesForCount } from '../../../../utils/gameInitialization';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
+import { RuneTypeTotals } from './RuneTypeTotals';
 
 interface RuneforgesAndCenterProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
+  runeTypeCount: RuneTypeCount;
   players: [Player, Player];
   currentPlayerId: Player['id'];
-  onRuneClick: (runeforgeId: string, runeType: RuneType) => void;
-  onCenterRuneClick: (runeType: RuneType) => void;
+  onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
+  onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onVoidRuneforgeRuneSelect: (runeforgeId: string, runeId: string) => void;
   onVoidCenterRuneSelect: (runeId: string) => void;
   isDraftPhase: boolean;
@@ -32,6 +36,7 @@ interface RuneforgesAndCenterProps {
 export function RuneforgesAndCenter({ 
   runeforges, 
   centerPool, 
+  runeTypeCount,
   players,
   currentPlayerId,
   onRuneClick,
@@ -64,11 +69,62 @@ export function RuneforgesAndCenter({
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
   const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
-  const selectedRuneforgeOriginalRunes = draftSource?.type === 'runeforge' ? draftSource.originalRunes : [];
+  const selectedRuneforgeOriginalRunes = useMemo(
+    () => (draftSource?.type === 'runeforge' ? draftSource.originalRunes : []),
+    [draftSource]
+  );
   const selectionFromCenter = draftSource?.type === 'center';
   const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
   const selectedRuneIds = selectedRunes.map((rune) => rune.id);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
+  const runeTypes = useMemo(() => getRuneTypesForCount(runeTypeCount), [runeTypeCount]);
+  const runeCounts = useMemo(() => {
+    const counts: Record<RuneType, number> = { Fire: 0, Frost: 0, Life: 0, Void: 0, Wind: 0, Lightning: 0 };
+    const countedIds = new Set<string>();
+    const relevantRuneforges = hideOpponentRow ? playerRuneforges : runeforges;
+    const centerRunesForCount = selectionFromCenter && centerSelectionOriginalRunes
+      ? centerSelectionOriginalRunes
+      : centerPool;
+
+    const countRune = (rune: Rune) => {
+      counts[rune.runeType] = (counts[rune.runeType] ?? 0) + 1;
+      countedIds.add(rune.id);
+    };
+
+    relevantRuneforges.forEach((forge) => {
+      const forgeRunes =
+        draftSource?.type === 'runeforge' && draftSource.runeforgeId === forge.id && selectedRuneforgeOriginalRunes.length > 0
+          ? selectedRuneforgeOriginalRunes
+          : forge.runes;
+
+      forgeRunes.forEach((rune) => {
+        if (countedIds.has(rune.id)) return;
+        countRune(rune);
+      });
+    });
+
+    centerRunesForCount.forEach((rune) => {
+      if (countedIds.has(rune.id)) return;
+      countRune(rune);
+    });
+
+    selectedRunes.forEach((rune) => {
+      if (countedIds.has(rune.id)) return;
+      countRune(rune);
+    });
+
+    return counts;
+  }, [
+    centerPool,
+    centerSelectionOriginalRunes,
+    draftSource,
+    hideOpponentRow,
+    playerRuneforges,
+    runeforges,
+    selectedRuneforgeOriginalRunes,
+    selectedRunes,
+    selectionFromCenter,
+  ]);
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
     const selectionMatchesForge = selectedFromRuneforgeId === forge.id;
@@ -172,6 +228,7 @@ export function RuneforgesAndCenter({
         {renderRuneforgeRow(player, topRuneforges, 'center', 'top')}
         {renderCenterSection()}
         {renderRuneforgeRow(player, bottomRuneforges, 'center', 'bottom')}
+        <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
       </>
     );
   };

@@ -48,7 +48,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               🎯 Goal
             </h3>
             <p style={{ margin: 0 }}>
-              Build spellpower to deal damage to your opponent each round. The player with the most health wins!
+              Finish pattern lines to strike immediately. Each placement deals damage based on the segment it connects to. The player with the most health wins!
             </p>
           </section>
           
@@ -70,8 +70,8 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             <p style={{ margin: 0 }}>
               • Each line holds 1-5 runes<br/>
               • A line can only hold one type of rune<br/>
-              • Surplus runes cause overload (end-of-round damage)<br/>
-              • Complete a line to add that rune to your wall<br/>
+              • Surplus runes cause overload damage (Solo triggers immediately)<br/>
+              • Complete a line to add that rune to your wall and clear the line<br/>
               • Runes are connected if they share an edge (not diagonal)
             </p>
           </section>
@@ -81,12 +81,10 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
               ⚔️ Dealing Damage
             </h3>
             <p style={{ margin: 0 }}>
-              • <strong>Essence</strong>: Total number of active runes on your wall<br/>
-              • <strong>Focus</strong>: Size of your largest connected rune segment<br/>
-              • <strong>Spellpower</strong>: Essence × Focus<br/>
-              • Each round, deal Spellpower damage to your opponent<br/>
-              • Overload builds damage at round end (Focus stays steady)<br/>
-              • Build large connected segments to maximize damage!
+              • When a pattern line fills, its rune moves to your wall immediately<br/>
+              • That rune deals damage right away equal to the size of the connected segment it joins (minimum 1)<br/>
+              • Build dense clusters so every future placement hits harder<br/>
+              • In Solo runs, overload damage still applies the moment you overflow to the floor
             </p>
           </section>
           

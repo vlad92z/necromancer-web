@@ -2,12 +2,18 @@
  * SoloRuneScoreOverlay - displays the solo target and current rune score
  */
 
+import { useState } from 'react';
+import { SoloStats } from './Player/SoloStats';
+import type { SoloStatsProps } from './Player/SoloStats';
+
 interface SoloRuneScoreOverlayProps {
   currentScore: number;
   targetScore: number;
+  stats: SoloStatsProps;
 }
 
-export function SoloRuneScoreOverlay({ currentScore, targetScore }: SoloRuneScoreOverlayProps) {
+export function SoloRuneScoreOverlay({ currentScore, targetScore, stats }: SoloRuneScoreOverlayProps) {
+  const [isSpellpowerHovered, setIsSpellpowerHovered] = useState(false);
   const progress = targetScore > 0 ? Math.min(1, currentScore / targetScore) : 0;
   const progressPercent = Math.round(progress * 100);
   const reachedTarget = currentScore >= targetScore;
@@ -17,37 +23,19 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore }: SoloRuneScor
       style={{
         pointerEvents: 'auto',
         display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        padding: '12px 14px',
-        borderRadius: '14px',
+        flexDirection: 'column',
+        gap: '12px',
+        padding: '14px',
+        borderRadius: '16px',
         border: '1px solid rgba(148, 163, 184, 0.4)',
-        background: 'rgba(12, 10, 24, 0.78)',
+        background: 'rgba(12, 10, 24, 0.82)',
         boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
         backdropFilter: 'blur(10px)',
-        minWidth: '260px',
+        maxWidth: '100%',
       }}
     >
-      <div
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: '12px',
-          background: reachedTarget ? 'linear-gradient(135deg, #34d399, #10b981)' : 'linear-gradient(135deg, #818cf8, #38bdf8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#0b1024',
-          fontWeight: 800,
-          fontSize: '18px',
-          boxShadow: '0 10px 24px rgba(0, 0, 0, 0.3)',
-        }}
-      >
-        {reachedTarget ? 'OK' : 'RP'}
-      </div>
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
           <div style={{ color: '#cbd5e1', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
             Rune Score
           </div>
@@ -78,13 +66,39 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore }: SoloRuneScor
             }}
           />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Current</span>
-          <span style={{ color: reachedTarget ? '#34d399' : '#e2e8f0', fontSize: '12px', fontWeight: 700 }}>
-            {progressPercent}% toward target
-          </span>
+        <div
+          onMouseEnter={() => setIsSpellpowerHovered(true)}
+          onMouseLeave={() => setIsSpellpowerHovered(false)}
+          onFocus={() => setIsSpellpowerHovered(true)}
+          onBlur={() => setIsSpellpowerHovered(false)}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', position: 'relative' }}
+        >
+
+          {isSpellpowerHovered && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                left: 0,
+                width: 'min(260px, 70vw)',
+                padding: '10px 12px',
+                background: 'rgba(3, 7, 18, 0.95)',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#cbd5f5',
+                fontSize: '12px',
+                lineHeight: 1.4,
+                whiteSpace: 'pre-wrap',
+                boxShadow: '0 14px 36px rgba(0,0,0,0.55)',
+                zIndex: 40,
+              }}
+            >
+              Finish a pattern line to place its rune immediately. That placement deals damage equal to the connected segment it joins (minimum 1), and your Rune Score increases right away.
+            </div>
+          )}
         </div>
       </div>
+      <SoloStats {...stats} />
     </div>
   );
 }

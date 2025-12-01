@@ -15,7 +15,7 @@ interface SelectedDisplayOverride {
 
 interface RuneforgeProps {
   runeforge: RuneforgeType;
-  onRuneClick?: (runeforgeId: string, runeType: RuneType) => void;
+  onRuneClick?: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onVoidRuneSelect?: (runeforgeId: string, runeId: string) => void;
   disabled?: boolean;
   voidEffectPending?: boolean;
@@ -69,7 +69,7 @@ export function Runeforge({
       return;
     }
     if (!disabled && onRuneClick && !voidEffectPending && !frostEffectPending) {
-      onRuneClick(runeforge.id, rune.runeType);
+      onRuneClick(runeforge.id, rune.runeType, rune.id);
     }
   };
   

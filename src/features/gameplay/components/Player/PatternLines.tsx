@@ -17,6 +17,7 @@ interface PatternLinesProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   frozenLineIndexes?: number[];
+  lockedLineIndexes?: number[];
   freezeSelectionEnabled?: boolean;
   onFreezeLine?: (patternLineIndex: number) => void;
   playerId?: string;
@@ -30,6 +31,7 @@ export function PatternLines({
   selectedRuneType,
   canPlace,
   frozenLineIndexes = [],
+  lockedLineIndexes = [],
   freezeSelectionEnabled = false,
   onFreezeLine,
   playerId,
@@ -70,8 +72,9 @@ export function PatternLines({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       {patternLines.map((line, index) => {
         const isFrozen = frozenLineIndexes.includes(index);
+        const isLocked = lockedLineIndexes.includes(index);
         const canFreezeLine = freezeSelectionEnabled && !isFrozen && line.count < line.tier;
-        const isPlacementTarget = isPlacementValid(line, index);
+        const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         const placementClickable = Boolean(canPlace && onPlaceRunes);
         const freezeClickable = freezeSelectionEnabled && Boolean(onFreezeLine);
         const showGlow = freezeSelectionEnabled ? canFreezeLine : isPlacementTarget;
@@ -115,23 +118,26 @@ export function PatternLines({
               borderRadius: '8px',
               transition: 'all 0.2s',
               marginBottom: '4px',
-              position: 'relative'
+              position: 'relative',
+              opacity: isLocked ? 0.15 : 1,
             }}
             aria-label={ariaLabel}
           >
             {Array(line.tier)
               .fill(null)
               .map((_, slotIndex) => {
-                const runeEffects = line.runeType
+                const slotKey = `${index}-${slotIndex}`;
+                const shouldHideRune = hiddenSlotKeys?.has(slotKey);
+                const hasRuneInSlot = slotIndex < line.count && line.runeType !== null;
+                const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
+                const runeEffects = isPrimaryRuneSlot && line.runeType
                   ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
                   : { passive: [], active: [] };
-                const rune = slotIndex < line.count && line.runeType ? {
+                const rune = hasRuneInSlot && line.runeType ? {
                   id: `pattern-${index}-${slotIndex}`,
                   runeType: line.runeType,
                   effects: runeEffects,
                 } : null;
-                const slotKey = `${index}-${slotIndex}`;
-                const shouldHideRune = hiddenSlotKeys?.has(slotKey);
                 const displayedRune = shouldHideRune ? null : rune;
                 const showFrozenOverlay = isFrozen && !freezeSelectionEnabled;
                 const cellMotionProps = showGlow
@@ -161,6 +167,18 @@ export function PatternLines({
                       size="large"
                       showEffect={false}
                     />
+                    {isPrimaryRuneSlot && !isLocked && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: '-1px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(192, 132, 252, 0.8)',
+                          boxShadow: '0 0 18px rgba(192, 132, 252, 0.55)',
+                          pointerEvents: 'none'
+                        }}
+                      />
+                    )}
                     {showFrozenOverlay && (
                       <div
                         style={{

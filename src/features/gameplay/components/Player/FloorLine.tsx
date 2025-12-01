@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
 import type { FloorLine as FloorLineType } from '../../../../types/game';
 import { RuneCell } from '../../../../components/RuneCell';
+import overloadSvg from '../../../../assets/stats/overload.svg';
 
 interface FloorLineProps {
   floorLine: FloorLineType;
@@ -85,7 +86,8 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
                 <RuneCell
                   rune={runeToDisplay}
                   variant="floor"
-                  forceVariant={isNeutral ? 'pattern' : undefined}
+                    forceVariant={isNeutral ? 'pattern' : undefined}
+                    emptyIcon={!runeToDisplay && !isNeutral && !isHidden ? overloadSvg : undefined}
                   size="large"
                   showEffect={false}
                 />

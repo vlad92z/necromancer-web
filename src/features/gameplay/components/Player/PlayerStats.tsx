@@ -284,7 +284,7 @@ export function PlayerStats({
     ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
     : 'Essence - cast more runes to increase spell damage.';
 
-  const spellpowerTooltip = `Spellpower\nEssence (${essence}) × Focus (${focus}) = ${spellpower}. Increase spellpower to deal more damage.`;
+  const spellpowerTooltip = 'Damage now applies the moment you complete a pattern line. The placed rune hits for the size of the connected segment it joins (minimum 1), so dense clusters make every placement stronger.';
   const healthTooltip = 'Health - drop to zero and your duel ends.';
   const healingTooltip = healing > 0
     ? `Healing - Life, Wind, and Frost runes on your wall will restore ${healing} health during scoring${hasWindMitigation ? ` (Wind runes: ${windRuneCount})` : ''}.`
@@ -388,7 +388,7 @@ export function PlayerStats({
           />
           <StatBadge
             type="spellpower"
-            label="Spellpower"
+            label="Segment Damage"
             value={spellpower}
             color="#c084fc"
             borderColor="rgba(192, 132, 252, 0.4)"

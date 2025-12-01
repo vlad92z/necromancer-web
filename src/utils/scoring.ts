@@ -136,6 +136,55 @@ export function calculateWallPowerWithSegments(
 }
 
 /**
+ * Calculate the size of the connected segment that includes a specific cell.
+ * Counts all orthogonally-adjacent runes regardless of type; returns 0 if empty.
+ */
+export function calculateSegmentSize(
+  wall: ScoringWall,
+  row: number,
+  col: number
+): number {
+  const wallSize = wall.length;
+  if (row < 0 || row >= wallSize || col < 0 || col >= wallSize) {
+    return 0;
+  }
+
+  if (wall[row][col].runeType === null) {
+    return 0;
+  }
+
+  const visited = Array(wallSize)
+    .fill(null)
+    .map(() => Array(wallSize).fill(false));
+  const stack: Array<[number, number]> = [[row, col]];
+  let count = 0;
+
+  while (stack.length > 0) {
+    const [r, c] = stack.pop() as [number, number];
+    if (
+      r < 0 ||
+      r >= wallSize ||
+      c < 0 ||
+      c >= wallSize ||
+      visited[r][c] ||
+      wall[r][c].runeType === null
+    ) {
+      continue;
+    }
+
+    visited[r][c] = true;
+    count += 1;
+
+    stack.push([r - 1, c]);
+    stack.push([r + 1, c]);
+    stack.push([r, c - 1]);
+    stack.push([r, c + 1]);
+  }
+
+  return count;
+}
+
+/**
  * Legacy function for placement scoring (no longer used for end-of-round scoring)
  * Kept for backwards compatibility if needed
  */

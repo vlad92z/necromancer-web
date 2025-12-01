@@ -15,6 +15,7 @@ interface PlayerViewProps {
   onCancelSelection: () => void;
   gameMode: 'classic' | 'standard';
   frozenPatternLines: number[];
+  lockedPatternLines?: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
@@ -31,6 +32,7 @@ export function PlayerView({
   onCancelSelection,
   gameMode,
   frozenPatternLines,
+  lockedPatternLines,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
   round,
@@ -49,6 +51,7 @@ export function PlayerView({
         gameMode={gameMode}
         nameColor="#0c4a6e"
         frozenPatternLines={frozenPatternLines}
+        lockedPatternLines={lockedPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
         round={round}
