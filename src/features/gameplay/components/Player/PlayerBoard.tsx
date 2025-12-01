@@ -9,10 +9,6 @@ import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
 import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../../utils/scoring';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../../utils/runeEffects';
-import { StatBadge } from '../../../../components/StatBadge';
-import essenceSvg from '../../../../assets/stats/essence.svg';
-import focusSvg from '../../../../assets/stats/focus.svg';
-import spellpowerSvg from '../../../../assets/stats/spellpower.svg';
 
 interface PlayerBoardProps {
   player: Player;
@@ -131,45 +127,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               gap: 'min(1.2vmin, 14px)'
             }}
           >
-            {hideStatsPanel && (
-              <div
-                style={{
-                  gridColumn: 2,
-                  gridRow: 1,
-                  width: '100%',
-                  display: 'flex',
-                  gap: '1em',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center'
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <StatBadge
-                  label="Essence"
-                  value={essence}
-                  color="#facc15"
-                  borderColor="rgba(250, 204, 21, 0.35)"
-                  tooltip={essenceTooltip}
-                  image={essenceSvg}
-                />
-                <StatBadge
-                  label="Focus"
-                  value={focus}
-                  color="#38bdf8"
-                  borderColor="rgba(56, 189, 248, 0.35)"
-                  tooltip={focusTooltip}
-                  image={focusSvg}
-                />
-                <StatBadge
-                  label="Segment Damage"
-                  value={totalPower}
-                  color="#9d17efff"
-                  borderColor="rgba(157, 23, 255, 0.35)"
-                  tooltip={segmentDamageTooltip}
-                  image={spellpowerSvg}
-                />
-              </div>
-            )}
             {/* Pattern Lines */}
             <div
               style={{ gridColumn: 1, gridRow: hideStatsPanel ? 2 : 1 }}
