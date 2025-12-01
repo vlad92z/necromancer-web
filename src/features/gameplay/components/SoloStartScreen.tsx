@@ -149,16 +149,6 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                     <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.strainMultiplier.toFixed(1)}x fatigue growth</div>
                   </div>
                 </ConfigField>
-                <ConfigField label="Healing per Rune" description="Healing per Life, Wind, or Frost rune that lands on your wall.">
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={soloConfig.lifeRuneHealing}
-                    onChange={handleNumberInput('lifeRuneHealing', (value) => Math.max(0, value))}
-                    style={inputStyle}
-                  />
-                </ConfigField>
                 <ConfigField label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
                   <input
                     type="number"
