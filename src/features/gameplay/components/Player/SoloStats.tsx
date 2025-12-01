@@ -6,14 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { animate } from 'framer-motion';
 import { StatBadge } from '../../../../components/StatBadge';
 import healthSvg from '../../../../assets/stats/health.svg';
-import healingSvg from '../../../../assets/stats/healing.svg';
-import essenceSvg from '../../../../assets/stats/essence.svg';
-import focusSvg from '../../../../assets/stats/focus.svg';
-import spellpowerSvg from '../../../../assets/stats/spellpower.svg';
-import overloadSvg from '../../../../assets/stats/overload.svg';
-import fatigueSvg from '../../../../assets/stats/fatigue.svg';
-import stressSvg from '../../../../assets/stats/stress.svg';
 import deckSvg from '../../../../assets/stats/deck.svg';
+import fatigueSvg from '../../../../assets/stats/fatigue.svg';
 
 export interface SoloStatsProps {
   isActive: boolean;
@@ -68,72 +62,14 @@ function AnimatedHealthValue({ target }: AnimatedHealthValueProps) {
   return <>{displayValue}</>;
 }
 
-interface AnimatedHealingValueProps {
-  baseValue: number;
-  consumed: number;
-  round: number;
-}
-
-function AnimatedHealingValue({ baseValue, consumed, round }: AnimatedHealingValueProps) {
-  const [displayValue, setDisplayValue] = useState(baseValue);
-  const animationControls = useRef<ReturnType<typeof animate> | null>(null);
-  const displayValueRef = useRef(baseValue);
-
-  useEffect(() => {
-    displayValueRef.current = displayValue;
-  }, [displayValue]);
-
-  useEffect(() => {
-    animationControls.current?.stop();
-    setDisplayValue(baseValue);
-  }, [round, baseValue]);
-
-  useEffect(() => {
-    if (consumed <= 0) {
-      return;
-    }
-
-    const targetValue = Math.max(0, Math.round(baseValue - consumed));
-    const duration = Math.min(0.85, Math.max(0.3, consumed * 0.05));
-
-    animationControls.current?.stop();
-    const controls = animate(displayValueRef.current, targetValue, {
-      duration,
-      ease: 'easeOut',
-      onUpdate(latest) {
-        setDisplayValue(Math.round(latest));
-      },
-      onComplete() {
-        setDisplayValue(targetValue);
-      },
-    });
-
-    animationControls.current = controls;
-    return () => controls.stop();
-  }, [consumed, baseValue]);
-
-  return <>{displayValue}</>;
-}
-
-
 export function SoloStats({
   health,
-  healing,
-  essence,
-  focus,
-  totalPower,
-  essenceRuneCount,
-  overloadPenalty,
   overloadMultiplier,
-  overloadDamagePreview,
-  round,
   deckCount,
 }: SoloStatsProps) {
 
 
   const healthTooltip = 'Health - drop to zero and your game ends.';
-
-
 
   return (
     <div

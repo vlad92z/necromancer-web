@@ -69,7 +69,10 @@ export function RuneforgesAndCenter({
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
   const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
-  const selectedRuneforgeOriginalRunes = draftSource?.type === 'runeforge' ? draftSource.originalRunes : [];
+  const selectedRuneforgeOriginalRunes = useMemo(
+    () => (draftSource?.type === 'runeforge' ? draftSource.originalRunes : []),
+    [draftSource]
+  );
   const selectionFromCenter = draftSource?.type === 'center';
   const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
   const selectedRuneIds = selectedRunes.map((rune) => rune.id);
