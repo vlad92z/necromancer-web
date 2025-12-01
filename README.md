@@ -1,16 +1,15 @@
 # Massive Spell: Arcane Arena
 
-An Azul-inspired roguelite deck-building 1v1 duel game where players draft magical runes, build spell patterns, and compete in tactical duels.
+An Roguelite deck-building game where players draft magical runes, balancing increasing magical powers against increasingly difficult arcane overload.
 
 ## Tech Stack
 
 - **React 19** + **TypeScript** (strict mode)
-- **Vite 7** - dev server and build
-- **Zustand** - state management
-- **Framer Motion** - animations
-- **React Router** - navigation
-- **Inline CSS** - styling approach
-- Mobile-first responsive design
+- **Vite 7** for dev/build
+- **Zustand 5** for state
+- **Framer Motion 12** for animation
+- **React Router** for screens (main menu, solo, dev sandbox)
+- **Inline style objects** for styling
 
 ## Quick Start
 
@@ -27,132 +26,65 @@ npm run build
 npm run lint
 ```
 
-## Core Game Mechanics
+## Game Modes
+- **Solo**: Draft from your own runeforges and survive increasing overload while chasing a target Rune Power score.
+- **Quick Play (WIP)**: Human bottom seat vs configurable AI/human top seat. Board size and health scale with rune count (3x3 to 6x6 walls; 2-4 runeforges per player).
+- **Spectator**: Watch AI vs AI on any board size.
 
-### Player Setup
-- Each player starts with **300 HP**
-- Each player has a **personal deck of runes** (equal composition of the five rune types in Standard mode)
-- Each player has **three personal Runeforges** used to draft runes at the start of each round
-- Each player has **five Pattern Lines** (capacity 1–5)
-- Each player has one **Floor Line** that accumulates overflow runes and applies penalties
+## Gameplay Rules (current build)
 
-### Drafting & Placement
-At the start of each round:
-- Populate **each player's 3 personal Runeforges** with random runes drawn from their deck
-- Once all Runeforges are filled, drafting begins
+### Board & Setup
+- Board sizes track rune variety: 3-6 rune types map to 3x3-6x6 walls with matching pattern lines (tiers 1-6).
+- Each player has personal runeforges; quick play deals 2-4 per player based on board size, with health scaling from 25-150.
+- The center pool only opens once you clear your own runeforges. 
+- In quick play, opponent runeforges are not draftable. Players only get access to enemy runes once they have moved to the shared center pool.
 
-Drafting:
-- The first player to take a turn is chosen randomly. Players alternate for the rest of the game.
-- On a player’s turn, they choose one of their Runeforges (or the shared pool if all Runeforges are empty)
-- They must take **all runes of a single type** from the chosen source
-- All remaining runes from that forge move into the **shared Center Pool**
-- Drafted runes must be placed immediately
+### Draft & Place
+- On your turn, take all runes of one type from a runeforge (leftovers drop to the center).
+- Once all your Runeforges are empty - draft from the shared center pool.
+- Place all drafted runes on a single pattern line that is empty or already holds that type. You cannot place a rune type in a row where it already sits on your wall.
+- Overflow goes to the floor, damaging the player. This damage scales every round.
 
-Pattern Lines:
-- Players must place all drafted runes into **one Pattern Line**
-- The chosen Pattern Line must either be empty or already contain the same rune type
-- If there is not enough space, excess runes spill into the **Overflow**
-- A full Pattern Line becomes eligible to transfer to the Spell Wall at the end of the round
+### Segment Damage (instant scoring)
+- When a pattern line fills, the first rune jumps to your wall immediately and clears that line.
+- The placement deals instant damage equal to the size of the connected segment it joins (orthogonal adjacency, minimum 1). Build dense clusters so every later placement hits harder.
+- In Solo, that hit also increases your cumulative Rune Power score.
 
-Overflow:
-- Overflow runes are placed here and generate **penalties**  
-- Penalties reduce Focus by the number of runes in Overflow
-
-### Scoring System
-At the end of the round, scoring occurs in three steps:
-
-#### 1. Completing Pattern Lines
-- For each completed Pattern Line, all runes are combined into **one** and are added to the player’s **5×5 Spell Wall**
-- Runes from incomplete Pattern Lines remain until completed in later rounds
-
-#### 2. Applying Rune Effects
-After all runes are added to the Wall:
-- **Fire** increases Essence
-- **Wind** cancels Floor penalties
-- **Life** heals the player
-- **Frost** and **Void** have unique effects during drafting. They do not impact end-of-round scoring.
-  Effects resolve in this order: **Life → Fire → Wind**
-
-#### 3. Calculating Damage
-Definitions:
-- **Essence** = total number of runes on the player’s Scoring Wall  
-- **Focus** = size of the largest connected segment on the Wall. Two runes are connected if they share an edge.
-- **Focus Penalty** = number of runes in Overflow minus the number of active **Wind** runes on the player's *Spel Wall**
-
-```
-Spellpower = Essence × max(1, Focus - Focus Penalty)
-```
-
-Damage & Healing:
-- Life healing is applied before damage is dealt
-- Spellpower is dealt as **damage to the opponent**
-- If both players survive, a new round begins
-- When both decks are exhausted, the game ends
-- The player with the most HP remaining wins
-- If both players are reduced to 0HP during a round, the game ends in a draw
-
-### Game Modes
-- **Classic**: Pure strategy without rune effects
-- **Standard**: Includes rune special effects (see Rune Effects below)
-- **PvE**: Play against AI opponent
-- **Solo**: Draft alone, starting at 100 HP (max 1000). Draft only from your runeforges, then the center. Overload damage doubles every round (1x, 2x, 4x, 8x...). Frost control is disabled, and each round's spellpower is added to your total Rune Power score.
-- **Campaign** (planned): Progress through boss encounters
-- **PvP** (planned): Online multiplayer
-
-### Solo Mode Rules
-- Board sizes: 3x3, 4x4, or 5x5 (matches Quick Play sizing)
-- Health: Start at 100 HP with a 1000 HP max cap
-- Drafting: Only from your runeforges, then the center pool once personal forges are empty
-- Round end: Take overload damage equal to your floor penalty multiplied by a doubling round multiplier (1, 2, 4, 8...)
-- Scoring: Each round's spellpower (essence × focus) is added to your total Rune Power
-- Win/Lose: Victory when you cannot start a new round due to rune shortage; defeat at 0 HP
-- Frost runes: Control effect is disabled in Solo mode
-
-### Developer Mode
-Access the Developer Mode from the main menu to preview and test Spellpower animations in isolation. Configure health, spellpower, healing, focus, essence, and animation speed to demo the visual behavior of the Spellpower component without playing a full game. Changes are non-destructive and do not affect game state.
+### Round End & Victory
+- A round ends when all runeforges and the center are empt. 
+- Resolve any end of round effects.
+- Unlock empty pattern lines.
+- Clears floor runes.
+- Strain (overload multiplier) grows each round.
+- Game over triggers at 0 HP or when a player lacks enough runes to refill runeforges. The survivor or higher-health player wins; Solo checks Rune Power against the target score when the deck runs dry.
 
 ## Rune Effects (Standard Mode)
 
-### 💚 Life (Sustain)
-**Effect**: Active Life runes heal the player for 10 HP per active Life rune each round  
-**Strategy**: Life runes do not scale with other game mechanics, making them the simplest to use. Healing becomes less powerful in high spellpower games, and has the potential of being wasted if the player is already at full health.
+Currently runes have no active or passive effects applied. These will be unlocked as deck building is implemented.
 
-### 🔥 Fire (Power)
-**Effect**: Every active Fire rune adds +1 Essence  
-**Strategy**: Scales with Focus. Fire runes will add little Spellpower in early turns, but can deal a lot of damage when Focus is high. Extra damage is always useful and has no potential of being wasted.
-
-### 💨 Wind (Mitigation)
-**Effect**: Wind runes placed on your scoring wall cancel floor penalties (completed Wind lines count instantly)  
-**Strategy**: Scales with Essence. Wind runes have the highest potential for increasing Spellpower, because Essence is usually higher than Focus. Especially effective in the late game, when Overloading is more common. Can be wasted, if players do not need to Overload.
-
-### ❄️ Frost (Control)
-**Effect**: Freeze one of the opponent's pattern lines after placing Frost runes  
-**Strategy**: Powerful board control tool to deny completing Pattern Lines for the opponent. Can completely ruin a turn, especially if the opponent has only one free Pattern Line or a single Runeforge remaining.
-
-### 🌑 Void (Destruction)
-**Effect**: Destroy any rune on the shared board (Runeforges or Center Pool) 
-**Strategy**: Can be used offensively to deny completing Pattern Lines to the opponent or defensively to reduce your own Overload. This is a very flexible rune that requires a lot of planning.
+## Solo Mode
+- **Objective**: Accumulate Rune Power (total segment damage from placements) to reach the target score before you run out of runes or health.
+- **Drafting**: Only from your own runeforges until they are empty; then from the center. Opponent runeforges are disabled.
+- **Overload & Strain**: Overflowing to the floor immediately deals overload damage equal to added penalty x current strain. Strain starts at 1x by default and multiplies each round (configurable 1.0-2.0x); Frost mitigation hooks reduce it.
+- **Healing & Effects**: Life/Wind/Frost runes heal when they land on the wall. Healing amount, strain, and rune counts are adjustable on the Solo start screen.
+- **Config Defaults**: 100 HP (cap 1000), 5 personal runeforges, 15 of each rune type, 5 healing per support rune, 200 Rune Power target, pattern-line locking enabled (cleared between rounds).
+- **Victory/Defeat**: Victory when Rune Power meets the target before the deck runs dry; defeat at 0 HP or by failing to hit the target once no new round can start.
 
 ## Project Structure
 
 ```
 src/
-├── assets/runes/       # SVG rune graphics
-├── components/         # Reusable UI components
-│   ├── layout/        # Layout primitives (Button, Card, Grid, Modal, Stack)
-│   ├── RuneAnimation.tsx
-│   ├── RuneCell.tsx
-│   └── RuneToken.tsx
-├── examples/          # Design system examples
-├── features/gameplay/ # Gameplay components
-│   └── components/    # GameBoard, PlayerView, OpponentView, overlays, etc.
-├── hooks/             # Custom React hooks
-├── routes/            # React Router routes (MainMenu, GameMatch, etc.)
-├── state/stores/      # Zustand stores (gameplayStore, uiStore)
-├── styles/            # Design tokens (colors, spacing, typography)
-├── systems/           # Game systems (aiController)
-├── types/             # TypeScript definitions
-├── utils/             # Utility functions (scoring, AI, initialization)
+├── assets/                 # SVGs and rune art
+├── components/             # Reusable UI (layout primitives, runes, stats)
+├── features/gameplay/      # Gameboard, overlays, Solo UI
+├── hooks/                  # Zustand selector/action hooks
+├── routes/                 # MainMenu, GameMatch, Solo, Developer, etc.
+├── state/stores/           # Zustand stores (gameplay, UI)
+├── styles/                 # Design tokens and global styles
+├── systems/aiController.ts # AI driver for automated turns
+├── types/                  # Domain types (game, rune, controllers)
+├── utils/                  # Pure logic (scoring, init, AI helpers, rune effects)
+├── stories/                # Storybook-like design previews
 ├── App.tsx
 └── main.tsx
 ```
