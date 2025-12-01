@@ -4,7 +4,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { animate } from 'framer-motion';
-import { SpellpowerExplanation } from './SpellpowerExplanation';
 import { StatBadge } from '../../../../components/StatBadge';
 import healthSvg from '../../../../assets/stats/health.svg';
 import healingSvg from '../../../../assets/stats/healing.svg';

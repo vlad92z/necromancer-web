@@ -70,7 +70,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                 color: '#64748b',
                 margin: '4px 0 0 0',
               }}>
-                Round-by-round scoring history
+                Round-by-round damage history
               </p>
             </div>
             <button
@@ -147,14 +147,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                     <span style={{ fontWeight: 'bold', color: '#059669' }}>
                       {round.playerName}:
                     </span>{' '}
-                    {round.playerEssence > 0 ? (
-                      <>
-                        {round.playerEssence}×{round.playerFocus} = {' '}
-                        <span style={{ fontWeight: 'bold' }}>{round.playerTotal}</span>
-                      </>
-                    ) : (
-                      <span style={{ fontWeight: 'bold' }}>0</span>
-                    )}
+                    <span style={{ fontWeight: 'bold' }}>{round.playerTotal}</span> dmg
                   </div>
 
                   {/* Opponent Score */}
@@ -166,14 +159,7 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                     <span style={{ fontWeight: 'bold', color: '#dc2626' }}>
                       {round.opponentName}:
                     </span>{' '}
-                    {round.opponentEssence > 0 ? (
-                      <>
-                        {round.opponentEssence}×{round.opponentFocus} = {' '}
-                        <span style={{ fontWeight: 'bold' }}>{round.opponentTotal}</span>
-                      </>
-                    ) : (
-                      <span style={{ fontWeight: 'bold' }}>0</span>
-                    )}
+                    <span style={{ fontWeight: 'bold' }}>{round.opponentTotal}</span> dmg
                   </div>
 
                   {/* Separator (not on last item) */}

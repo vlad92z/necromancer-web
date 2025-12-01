@@ -43,28 +43,28 @@ export function SpellpowerExplanation({ onClose }: SpellpowerExplanationProps) {
           letterSpacing: '0.1em',
           textTransform: 'uppercase'
         }}>
-          Spellpower
+          Segment Damage
         </h2>
 
         <div style={{ fontSize: '15px', lineHeight: 1.7, color: '#d3cffa' }}>
           <div style={{ marginBottom: '18px' }}>
-            <strong style={{ color: '#38bdf8' }}>Essence</strong>
+            <strong style={{ color: '#38bdf8' }}>Immediate Hits</strong>
             <p style={{ margin: '6px 0 0 0' }}>
-              Count every rune on your Spell Wall, then add +1 Essence for each blazing Fire, crackling Lightning, or swirling Void rune. More Essence means more raw energy.
+              Finish a pattern line and its rune jumps to your wall right away. That placement deals damage instantly based on the connected segment it joins.
             </p>
           </div>
 
           <div style={{ marginBottom: '18px' }}>
-            <strong style={{ color: '#facc15' }}>Focus</strong>
+            <strong style={{ color: '#facc15' }}>Segment Size</strong>
             <p style={{ margin: '6px 0 0 0' }}>
-              Find the largest connected cluster of runes. That chain is your Focus. Floor penalties shrink it, so keep overflow low to preserve your multiplier.
+              Count every rune touching the new placement (up, down, left, right). That count is the damage dealt, with a minimum hit of 1 even when isolated.
             </p>
           </div>
 
           <div style={{ marginBottom: '18px' }}>
-            <strong style={{ color: '#c084fc' }}>Spellpower = Essence × Focus</strong>
+            <strong style={{ color: '#c084fc' }}>Building Power</strong>
             <p style={{ margin: '6px 0 0 0' }}>
-              Your final damage for the round. Push Essence high, keep Focus intact, and unleash devastating bursts.
+              Bigger clusters mean every future placement into that segment hits harder. Stack runes together to ramp up damage, and watch overload damage in Solo when you spill to the floor.
             </p>
           </div>
         </div>

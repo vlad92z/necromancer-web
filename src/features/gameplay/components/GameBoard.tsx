@@ -70,7 +70,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameState }: GameBoardProps) {
-  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain, strainMultiplier } = gameState;
+  const { players, runeforges, centerPool, currentPlayerIndex, selectedRunes, turnPhase, voidEffectPending, frostEffectPending, frozenPatternLines, lockedPatternLines, gameMode, shouldTriggerEndRound, scoringPhase, draftSource, round, strain, strainMultiplier } = gameState;
   const isSoloMode = gameState.matchType === 'solo';
   const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
   const runePowerTotal = gameState.runePowerTotal;
@@ -251,6 +251,8 @@ export function GameBoard({ gameState }: GameBoardProps) {
   const opponentHiddenFloorSlots = hiddenFloorSlots[opponent.id];
   const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
   const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
+  const playerLockedLines = lockedPatternLines[players[0].id] ?? [];
+  const opponentLockedLines = lockedPatternLines[opponent.id] ?? [];
   const canFreezeOpponentPatternLine = !isSoloMode && frostEffectPending && currentPlayerIndex === 0;
   const canSkipFrostEffect = canFreezeOpponentPatternLine && !isAITurn;
 
@@ -947,6 +949,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   onCancelSelection={handleCancelSelection}
                   gameMode={gameMode}
                   frozenPatternLines={playerFrozenLines}
+                  lockedPatternLines={playerLockedLines}
                   hiddenSlotKeys={playerHiddenPatternSlots}
                   hiddenFloorSlotIndexes={playerHiddenFloorSlots}
                   round={round}
@@ -1029,6 +1032,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   isActive={currentPlayerIndex === 1}
                   gameMode={gameMode}
                   frozenPatternLines={opponentFrozenLines}
+                  lockedPatternLines={opponentLockedLines}
                   freezeSelectionEnabled={canFreezeOpponentPatternLine}
                   onFreezePatternLine={canFreezeOpponentPatternLine ? handleFreezePatternLine : undefined}
                   onCancelFreezeSelection={canSkipFrostEffect ? skipFrostEffect : undefined}
@@ -1113,6 +1117,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   onCancelSelection={handleCancelSelection}
                   gameMode={gameMode}
                   frozenPatternLines={playerFrozenLines}
+                  lockedPatternLines={playerLockedLines}
                   hiddenSlotKeys={playerHiddenPatternSlots}
                   hiddenFloorSlotIndexes={playerHiddenFloorSlots}
                   round={round}

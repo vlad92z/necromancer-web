@@ -6,7 +6,7 @@
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
+import { calculateSegmentSize, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
 
@@ -249,57 +249,32 @@ function processSoloScoringPhase(state: GameState): GameState {
     return {
       ...state,
       players: healedPlayers,
-      scoringPhase: 'damage' as const,
+      scoringPhase: 'complete' as const,
     };
   }
 
   if (currentPhase === 'damage') {
-    if (!state.scoringSnapshot) {
-      return state;
-    }
-
-    const snapshot = state.scoringSnapshot;
-    const roundScore = {
-      round: state.round,
-      playerName: state.players[0].name,
-      playerEssence: snapshot.wallPowerStats[0].essence,
-      playerFocus: snapshot.wallPowerStats[0].focus,
-      playerTotal: snapshot.wallPowerStats[0].totalPower,
-      opponentName: 'Overload',
-      opponentEssence: 0,
-      opponentFocus: 0,
-      opponentTotal: 0,
-    };
-
-    const runePowerTotal = state.runePowerTotal + snapshot.wallPowerStats[0].totalPower;
-
-    // Check if the updated rune power meets or exceeds the solo target score — end run with victory
-    const achievedTargetNow = runePowerTotal >= state.soloTargetScore;
-    if (achievedTargetNow) {
-      return {
-        ...state,
-        roundHistory: [...state.roundHistory, roundScore],
-        runePowerTotal,
-        scoringPhase: null,
-        scoringSnapshot: null,
-        runeforges: [],
-        centerPool: [],
-        turnPhase: 'game-over',
-        shouldTriggerEndRound: false,
-        soloOutcome: 'victory' as SoloOutcome,
-      };
-    }
-
     return {
       ...state,
-      roundHistory: [...state.roundHistory, roundScore],
-      runePowerTotal,
       scoringPhase: 'complete' as const,
       scoringSnapshot: null,
     };
   }
 
   if (currentPhase === 'complete') {
+    const roundDamage = state.roundDamage ?? [0, 0];
+      const roundScore = {
+        round: state.round,
+        playerName: state.players[0].name,
+        playerEssence: roundDamage[0],
+        playerFocus: 1,
+      playerTotal: roundDamage[0],
+      opponentName: 'Overload',
+      opponentEssence: 0,
+      opponentFocus: 0,
+      opponentTotal: 0,
+      };
+      const roundHistory = [...state.roundHistory, roundScore];
     const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
     const playerHasEnough = state.players[0].deck.length >= runesNeededForRound;
 
@@ -307,6 +282,7 @@ function processSoloScoringPhase(state: GameState): GameState {
       const achievedTarget = state.runePowerTotal >= state.soloTargetScore;
       return {
         ...state,
+        roundHistory,
         runeforges: [],
         centerPool: [],
         turnPhase: 'game-over',
@@ -315,6 +291,11 @@ function processSoloScoringPhase(state: GameState): GameState {
         scoringSnapshot: null,
         soloOutcome: achievedTarget ? ('victory' as SoloOutcome) : ('defeat' as SoloOutcome),
         shouldTriggerEndRound: false,
+        roundDamage: [0, 0],
+        lockedPatternLines: {
+          [state.players[0].id]: [],
+          [state.players[1].id]: [],
+        },
       };
     }
 
@@ -349,6 +330,12 @@ function processSoloScoringPhase(state: GameState): GameState {
       scoringPhase: null,
       scoringSnapshot: null,
       soloOutcome: null,
+      roundDamage: [0, 0],
+      roundHistory,
+      lockedPatternLines: {
+        [updatedPlayer.id]: [],
+        [state.players[1].id]: [],
+      },
     };
   }
 
@@ -460,8 +447,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
       const frozenLinesForPlayer = state.frozenPatternLines[currentPlayer.id] ?? [];
-      if (frozenLinesForPlayer.includes(patternLineIndex)) {
-        console.log(`Pattern line ${patternLineIndex + 1} is frozen - cannot place runes`);
+      const lockedLinesForPlayer = state.lockedPatternLines[currentPlayer.id] ?? [];
+      if (frozenLinesForPlayer.includes(patternLineIndex) || lockedLinesForPlayer.includes(patternLineIndex)) {
+        console.log(`Pattern line ${patternLineIndex + 1} is unavailable - cannot place runes`);
         return state;
       }
       const runeType = selectedRunes[0].runeType;
@@ -526,7 +514,52 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextHealth = isSoloMode && currentPlayerIndex === 0
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
-      
+
+      const updatedWall = currentPlayer.wall.map((rowCells) => [...rowCells]);
+      const roundDamage = state.roundDamage ?? [0, 0];
+      let updatedRoundDamage: [number, number] = [...roundDamage] as [number, number];
+      const updatedLockedPatternLines: Record<Player['id'], number[]> = { ...state.lockedPatternLines };
+      let nextRunePowerTotal = state.runePowerTotal;
+      let damageDealt = 0;
+      let opponentHealth: number | null = null;
+      let soloOutcome: SoloOutcome = state.soloOutcome;
+
+      const completedLine = updatedPatternLines[patternLineIndex].count === updatedPatternLines[patternLineIndex].tier;
+      if (completedLine) {
+        updatedWall[row][col] = {
+          runeType,
+          effects: copyRuneEffects(nextFirstRuneEffects),
+        };
+        updatedPatternLines[patternLineIndex] = {
+          tier: patternLine.tier,
+          runeType: null,
+          count: 0,
+          firstRuneId: null,
+          firstRuneEffects: null,
+        };
+        damageDealt = Math.max(1, calculateSegmentSize(updatedWall, row, col));
+        if (state.matchType === 'solo' && state.soloPatternLineLock) {
+          const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
+          updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(patternLineIndex)
+            ? existingLocked
+            : [...existingLocked, patternLineIndex];
+        }
+
+        if (isSoloMode && currentPlayerIndex === 0) {
+          nextRunePowerTotal += damageDealt;
+          updatedRoundDamage = [updatedRoundDamage[0] + damageDealt, updatedRoundDamage[1]];
+          if (nextRunePowerTotal >= state.soloTargetScore) {
+            soloOutcome = 'victory';
+          }
+        } else {
+          const opponent = state.players[opponentIndex];
+          opponentHealth = Math.max(0, opponent.health - damageDealt);
+          updatedRoundDamage = currentPlayerIndex === 0
+            ? [updatedRoundDamage[0] + damageDealt, updatedRoundDamage[1]]
+            : [updatedRoundDamage[0], updatedRoundDamage[1] + damageDealt];
+        }
+      }
+
       // Update player
       const updatedPlayers: [typeof currentPlayer, typeof currentPlayer] = [
         ...state.players,
@@ -536,8 +569,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...currentPlayer,
         patternLines: updatedPatternLines,
         floorLine: updatedFloorLine,
+        wall: updatedWall,
         health: nextHealth,
       };
+      if (!isSoloMode && opponentHealth !== null) {
+        const opponentPlayer = state.players[opponentIndex];
+        updatedPlayers[opponentIndex] = {
+          ...opponentPlayer,
+          health: opponentHealth,
+        };
+      }
       
       // Clear any frozen lines affecting this player after they complete placement
       const updatedFrozenPatternLines = {
@@ -547,6 +588,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       const defeatedByOverload = isSoloMode && currentPlayerIndex === 0 && nextHealth === 0;
+      const opponentDefeated = !isSoloMode && opponentHealth === 0 && damageDealt > 0;
+      const soloVictoryAchieved = isSoloMode && soloOutcome === 'victory';
       if (defeatedByOverload) {
         return {
           ...state,
@@ -559,6 +602,29 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           scoringPhase: null,
           scoringSnapshot: null,
           soloOutcome: 'defeat' as SoloOutcome,
+          runePowerTotal: nextRunePowerTotal,
+          roundDamage: updatedRoundDamage,
+          lockedPatternLines: updatedLockedPatternLines,
+          voidEffectPending: false,
+          frostEffectPending: false,
+        };
+      }
+
+      if (opponentDefeated || soloVictoryAchieved) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          selectedRunes: [],
+          draftSource: null,
+          centerPool: nextCenterPool,
+          turnPhase: 'game-over' as const,
+          shouldTriggerEndRound: false,
+          scoringPhase: null,
+          scoringSnapshot: null,
+          soloOutcome,
+          runePowerTotal: nextRunePowerTotal,
+          roundDamage: updatedRoundDamage,
+          lockedPatternLines: updatedLockedPatternLines,
           voidEffectPending: false,
           frostEffectPending: false,
         };
@@ -599,6 +665,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           voidEffectPending: true, // Wait for runeforge selection
           frozenPatternLines: updatedFrozenPatternLines,
+          runePowerTotal: nextRunePowerTotal,
+          roundDamage: updatedRoundDamage,
+          lockedPatternLines: updatedLockedPatternLines,
         };
       }
       
@@ -615,6 +684,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
           frostEffectPending: true, // Wait for runeforge selection
           frozenPatternLines: updatedFrozenPatternLines,
+          runePowerTotal: nextRunePowerTotal,
+          roundDamage: updatedRoundDamage,
+          lockedPatternLines: updatedLockedPatternLines,
         };
       }
       
@@ -631,6 +703,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
         frozenPatternLines: updatedFrozenPatternLines,
+        runePowerTotal: nextRunePowerTotal,
+        roundDamage: updatedRoundDamage,
+        lockedPatternLines: updatedLockedPatternLines,
       };
     });
   },
@@ -1104,65 +1179,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return {
           ...state,
           players: healedPlayers,
-          scoringPhase: 'damage' as const,
+          scoringPhase: 'complete' as const,
         };
       }
 
       if (currentPhase === 'damage') {
-        if (!state.scoringSnapshot) {
-          return state;
-        }
-
-        const snapshot = state.scoringSnapshot;
-        const updatedPlayers: [Player, Player] = [
-          {
-            ...state.players[0],
-            health: Math.max(
-              0,
-              state.players[0].health - snapshot.wallPowerStats[1].totalPower
-            ),
-          },
-          {
-            ...state.players[1],
-            health: Math.max(
-              0,
-              state.players[1].health - snapshot.wallPowerStats[0].totalPower
-            ),
-          },
-        ];
-
-        const roundScore = {
-          round: state.round,
-          playerName: updatedPlayers[0].name,
-          playerEssence: snapshot.wallPowerStats[0].essence,
-          playerFocus: snapshot.wallPowerStats[0].focus,
-          playerTotal: snapshot.wallPowerStats[0].totalPower,
-          opponentName: updatedPlayers[1].name,
-          opponentEssence: snapshot.wallPowerStats[1].essence,
-          opponentFocus: snapshot.wallPowerStats[1].focus,
-          opponentTotal: snapshot.wallPowerStats[1].totalPower,
-        };
-
-        const eitherPlayerDead = updatedPlayers.some((player) => player.health === 0);
-        if (eitherPlayerDead) {
-          console.log('Game over! A player reached 0 health at end of round.');
-          return {
-            ...state,
-            players: updatedPlayers,
-            roundHistory: [...state.roundHistory, roundScore],
-            scoringPhase: null,
-            scoringSnapshot: null,
-            runeforges: [],
-            centerPool: [],
-            turnPhase: 'game-over',
-            shouldTriggerEndRound: false,
-          };
-        }
-
         return {
           ...state,
-          players: updatedPlayers,
-          roundHistory: [...state.roundHistory, roundScore],
           scoringPhase: 'complete' as const,
           scoringSnapshot: null,
         };
@@ -1170,6 +1193,19 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       if (currentPhase === 'complete') {
         console.log('Scoring: Complete, checking game over...');
+        const roundDamage = state.roundDamage ?? [0, 0];
+        const roundScore = {
+          round: state.round,
+          playerName: state.players[0].name,
+          playerEssence: roundDamage[0],
+          playerFocus: 1,
+          playerTotal: roundDamage[0],
+          opponentName: state.players[1].name,
+          opponentEssence: roundDamage[1],
+          opponentFocus: 1,
+          opponentTotal: roundDamage[1],
+        };
+        const roundHistory = [...state.roundHistory, roundScore];
         const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
 
         const player1HasEnough = state.players[0].deck.length >= runesNeededForRound;
@@ -1189,6 +1225,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             round: state.round,
             scoringPhase: null,
             scoringSnapshot: null,
+            roundHistory,
+            roundDamage: [0, 0],
+            lockedPatternLines: {
+              [state.players[0].id]: [],
+              [state.players[1].id]: [],
+            },
           };
         }
 
@@ -1226,6 +1268,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           strainMultiplier: nextStrainMultiplier,
           scoringPhase: null,
           scoringSnapshot: null,
+          roundHistory,
+          roundDamage: [0, 0],
+          lockedPatternLines: {
+            [state.players[0].id]: [],
+            [state.players[1].id]: [],
+          },
         };
       }
 

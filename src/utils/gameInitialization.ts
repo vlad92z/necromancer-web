@@ -81,6 +81,7 @@ export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
   factoriesPerPlayer: SOLO_FACTORIES_PER_PLAYER,
   deckRunesPerType: DEFAULT_SOLO_RUNES_PER_TYPE,
   targetRuneScore: DEFAULT_SOLO_TARGET_SCORE,
+  patternLinesLockOnComplete: true,
 };
 
 export interface QuickPlayConfig {
@@ -104,6 +105,7 @@ export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunCon
     factoriesPerPlayer: Math.min(6, Math.max(1, Math.round(merged.factoriesPerPlayer))),
     deckRunesPerType: Math.max(1, Math.round(merged.deckRunesPerType)),
     targetRuneScore: Math.max(1, Math.round(merged.targetRuneScore)),
+    patternLinesLockOnComplete: Boolean(merged.patternLinesLockOnComplete),
   };
 }
 
@@ -322,9 +324,14 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     pendingPlacement: null,
     scoringPhase: null,
     roundHistory: [],
+    roundDamage: [0, 0],
     voidEffectPending: false,
     frostEffectPending: false,
     frozenPatternLines: {
+      [player1.id]: [],
+      [player2.id]: [],
+    },
+    lockedPatternLines: {
       [player1.id]: [],
       [player2.id]: [],
     },
@@ -333,6 +340,7 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     runePowerTotal: 0,
     soloTargetScore: 0,
     soloOutcome: null,
+    soloPatternLineLock: false,
   };
 }
 
@@ -418,9 +426,14 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
     pendingPlacement: null,
     scoringPhase: null,
     roundHistory: [],
+    roundDamage: [0, 0],
     voidEffectPending: false,
     frostEffectPending: false,
     frozenPatternLines: {
+      [soloPlayer.id]: [],
+      [echoPlayer.id]: [],
+    },
+    lockedPatternLines: {
       [soloPlayer.id]: [],
       [echoPlayer.id]: [],
     },
@@ -429,5 +442,6 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
     runePowerTotal: 0,
     soloTargetScore: soloConfig.targetRuneScore,
     soloOutcome: null,
+    soloPatternLineLock: soloConfig.patternLinesLockOnComplete,
   };
 }

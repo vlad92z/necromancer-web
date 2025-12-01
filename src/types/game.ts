@@ -127,6 +127,7 @@ export interface SoloRunConfig {
   factoriesPerPlayer: number;
   deckRunesPerType: number;
   targetRuneScore: number;
+  patternLinesLockOnComplete: boolean;
 }
 
 /**
@@ -267,12 +268,15 @@ export interface GameState {
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringPhase: ScoringPhase; // Current step in round-end scoring animation
   roundHistory: RoundScore[]; // History of completed rounds for game log
+  roundDamage: [number, number]; // Damage dealt by each player during the current round
   voidEffectPending: boolean; // Whether Void effect is waiting for rune destruction selection
   frostEffectPending: boolean; // Whether Frost effect is waiting for pattern line selection
   frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
+  lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
   scoringSnapshot: ScoringSnapshot | null; // Cached scoring data across phases
   runePowerTotal: number; // Solo score accumulator (essence × focus per round)
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
+  soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
 }

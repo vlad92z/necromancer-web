@@ -25,6 +25,7 @@ interface PlayerBoardProps {
   gameMode: 'classic' | 'standard';
   nameColor: string;
   frozenPatternLines?: number[];
+  lockedPatternLines?: number[];
   freezeSelectionEnabled?: boolean;
   onFreezePatternLine?: (patternLineIndex: number) => void;
   hiddenSlotKeys?: Set<string>;
@@ -33,7 +34,7 @@ interface PlayerBoardProps {
   hideStatsPanel?: boolean;
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -89,6 +90,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
 
   const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
   const focusTooltip = 'Focus - connect more runes to increase your multiplier.';
+  const segmentDamageTooltip = 'Complete a pattern line to strike immediately. The placed rune deals damage equal to the connected segment it joins (minimum 1).';
   const essenceTooltip = essenceRuneCount > 0
     ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
     : 'Essence - cast more runes to increase spell damage.';
@@ -159,11 +161,11 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                   image={focusSvg}
                 />
                 <StatBadge
-                  label="Spellpower"
+                  label="Segment Damage"
                   value={totalPower}
                   color="#9d17efff"
                   borderColor="rgba(157, 23, 255, 0.35)"
-                  tooltip={focusTooltip}
+                  tooltip={segmentDamageTooltip}
                   image={spellpowerSvg}
                 />
               </div>
@@ -180,6 +182,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 selectedRuneType={selectedRuneType}
                 canPlace={canPlace}
                 frozenLineIndexes={frozenPatternLines}
+                lockedLineIndexes={lockedPatternLines}
                 freezeSelectionEnabled={freezeSelectionEnabled}
                 onFreezeLine={onFreezePatternLine}
                 playerId={player.id}

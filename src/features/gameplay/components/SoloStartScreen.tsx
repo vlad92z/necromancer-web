@@ -18,7 +18,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: number) => {
+  const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: SoloRunConfig[K]) => {
     setSoloConfig((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -26,7 +26,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
     const rawValue = Number(event.target.value);
     const parsedValue = Number.isNaN(rawValue) ? 0 : rawValue;
     const nextValue = clamp ? clamp(parsedValue) : parsedValue;
-    updateConfigValue(key, nextValue);
+    updateConfigValue(key, nextValue as SoloRunConfig[typeof key]);
   };
 
   const normalizedConfig = normalizeSoloConfig(soloConfig);
@@ -198,6 +198,30 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                       {soloConfig.deckRunesPerType} of each rune ({soloConfig.deckRunesPerType * runeTypeCount} total)
                     </div>
                   </div>
+                </ConfigField>
+                <ConfigField
+                  label="Lock Completed Lines"
+                  description="When a pattern line scores, keep that line blocked until the next round (Solo only)."
+                >
+                  <button
+                    type="button"
+                    onClick={() => updateConfigValue('patternLinesLockOnComplete', !soloConfig.patternLinesLockOnComplete)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(148, 163, 184, 0.4)',
+                      background: soloConfig.patternLinesLockOnComplete
+                        ? 'linear-gradient(135deg, #38bdf8, #6366f1)'
+                        : 'rgba(255,255,255,0.03)',
+                      color: soloConfig.patternLinesLockOnComplete ? '#0b1024' : '#e2e8f0',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    {soloConfig.patternLinesLockOnComplete ? 'Enabled' : 'Disabled'}
+                  </button>
                 </ConfigField>
               </div>
 

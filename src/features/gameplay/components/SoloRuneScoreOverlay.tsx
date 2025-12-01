@@ -17,7 +17,6 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore, stats }: SoloR
   const progress = targetScore > 0 ? Math.min(1, currentScore / targetScore) : 0;
   const progressPercent = Math.round(progress * 100);
   const reachedTarget = currentScore >= targetScore;
-  const spellpower = stats.totalPower;
 
   return (
     <div
@@ -94,7 +93,7 @@ export function SoloRuneScoreOverlay({ currentScore, targetScore, stats }: SoloR
                 zIndex: 40,
               }}
             >
-              {`Spellpower\nEssence (${stats.essence}) × Focus (${stats.focus}) = ${spellpower}. Increase spellpower to deal more damage.`}
+              Finish a pattern line to place its rune immediately. That placement deals damage equal to the connected segment it joins (minimum 1), and your Rune Score increases right away.
             </div>
           )}
         </div>

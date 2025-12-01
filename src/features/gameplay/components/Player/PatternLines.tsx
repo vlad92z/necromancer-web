@@ -17,6 +17,7 @@ interface PatternLinesProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   frozenLineIndexes?: number[];
+  lockedLineIndexes?: number[];
   freezeSelectionEnabled?: boolean;
   onFreezeLine?: (patternLineIndex: number) => void;
   playerId?: string;
@@ -30,6 +31,7 @@ export function PatternLines({
   selectedRuneType,
   canPlace,
   frozenLineIndexes = [],
+  lockedLineIndexes = [],
   freezeSelectionEnabled = false,
   onFreezeLine,
   playerId,
@@ -70,8 +72,9 @@ export function PatternLines({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       {patternLines.map((line, index) => {
         const isFrozen = frozenLineIndexes.includes(index);
+        const isLocked = lockedLineIndexes.includes(index);
         const canFreezeLine = freezeSelectionEnabled && !isFrozen && line.count < line.tier;
-        const isPlacementTarget = isPlacementValid(line, index);
+        const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         const placementClickable = Boolean(canPlace && onPlaceRunes);
         const freezeClickable = freezeSelectionEnabled && Boolean(onFreezeLine);
         const showGlow = freezeSelectionEnabled ? canFreezeLine : isPlacementTarget;
@@ -115,7 +118,8 @@ export function PatternLines({
               borderRadius: '8px',
               transition: 'all 0.2s',
               marginBottom: '4px',
-              position: 'relative'
+              position: 'relative',
+              opacity: isLocked ? 0.15 : 1,
             }}
             aria-label={ariaLabel}
           >
@@ -163,7 +167,7 @@ export function PatternLines({
                       size="large"
                       showEffect={false}
                     />
-                    {isPrimaryRuneSlot && (
+                    {isPrimaryRuneSlot && !isLocked && (
                       <div
                         style={{
                           position: 'absolute',
