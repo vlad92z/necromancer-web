@@ -4,9 +4,10 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SoloGameBoard } from '../features/gameplay/components/SoloGameBoard';
+import { SoloBoardContent } from '../features/gameplay/components/SoloGameBoard';
 import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
+import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { RuneTypeCount, SoloRunConfig } from '../types/game';
 
 export function Solo() {
@@ -37,5 +38,14 @@ export function Solo() {
     return <SoloStartScreen onStartSolo={handleStartSolo} />;
   }
 
-  return <SoloGameBoard gameState={gameState} />;
+  return <GameBoardFrame
+        gameState={gameState}
+        variant="solo"
+        renderContent={(shared, variantData) => {
+          if (variantData.type !== 'solo') {
+            return null;
+          }
+          return <SoloBoardContent shared={shared} variantData={variantData} />;
+        }}
+      />;
 }

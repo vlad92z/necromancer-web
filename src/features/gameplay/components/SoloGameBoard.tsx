@@ -2,8 +2,7 @@
  * SoloGameBoard - solo mode game board layout
  */
 
-import type { GameBoardProps, GameBoardSharedProps, SoloVariantData } from './GameBoardFrame';
-import { GameBoardFrame } from './GameBoardFrame';
+import type { GameBoardSharedProps, SoloVariantData } from './GameBoardFrame';
 import { RuneforgesAndCenter } from './Center/RuneforgesAndCenter';
 import { PlayerView } from './Player/PlayerView';
 import { SoloStats } from './Player/SoloStats';
@@ -14,7 +13,7 @@ interface SoloBoardContentProps {
   variantData: SoloVariantData;
 }
 
-function SoloBoardContent({ shared, variantData }: SoloBoardContentProps) {
+export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps) {
   const {
     borderColor,
     sectionPadding,
@@ -170,20 +169,5 @@ function SoloBoardContent({ shared, variantData }: SoloBoardContentProps) {
         </div>
       </div>
     </>
-  );
-}
-
-export function SoloGameBoard({ gameState }: GameBoardProps) {
-  return (
-    <GameBoardFrame
-      gameState={gameState}
-      variant="solo"
-      renderContent={(shared, variantData) => {
-        if (variantData.type !== 'solo') {
-          return null;
-        }
-        return <SoloBoardContent shared={shared} variantData={variantData} />;
-      }}
-    />
   );
 }
