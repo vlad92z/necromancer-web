@@ -2,12 +2,14 @@
  * SoloStartScreen - entry screen for Solo mode setup
  */
 
-import type { ChangeEvent, ReactNode } from 'react';
+import type { ChangeEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { RuneTypeCount, SoloRunConfig } from '../../../types/game';
 import { DEFAULT_SOLO_CONFIG, normalizeSoloConfig } from '../../../utils/gameInitialization';
 import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
+import { FieldConfig } from '../../../components/FieldConfig';
+import { SliderConfig } from '../../../components/SliderConfig';
 
 interface SoloStartScreenProps {
   onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
@@ -87,16 +89,16 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
           {showAdvanced && (
             <div className="space-y-4 rounded-2xl border border-slate-600/40 bg-slate-900/50 p-4 backdrop-blur">
               <div className="grid gap-3 md:grid-cols-2">
-                <ConfigField label="Starting Health" description="Health pool when the run begins.">
-                  <input
+              <FieldConfig label="Starting Health" description="Health pool when the run begins.">
+                <input
                     type="number"
                     min={1}
                     value={soloConfig.startingHealth}
                     onChange={handleNumberInput('startingHealth', (value) => Math.max(1, value))}
                     className={inputClasses}
                   />
-                </ConfigField>
-                <ConfigField label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
+              </FieldConfig>
+              <FieldConfig label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
                   <input
                     type="number"
                     min={0}
@@ -105,24 +107,18 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                     onChange={handleNumberInput('startingStrain', (value) => Math.max(0, value))}
                     className={inputClasses}
                   />
-                </ConfigField>
-                <ConfigField label="Fatigue Multiplier" description="Round-by-round growth applied to fatigue.">
-                  <div className="flex flex-col gap-2">
-                    <input
-                      type="range"
-                      min={1}
-                      max={2}
-                      step={0.1}
-                      value={soloConfig.strainMultiplier}
-                      onChange={(event) => updateConfigValue('strainMultiplier', Number(event.target.value))}
-                      className="w-full accent-sky-400"
-                    />
-                    <span className="text-xs text-slate-300">
-                      {soloConfig.strainMultiplier.toFixed(1)}x fatigue growth
-                    </span>
-                  </div>
-                </ConfigField>
-                <ConfigField label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
+              </FieldConfig>
+                <SliderConfig
+                  label="Fatigue Multiplier"
+                  description="Round-by-round growth applied to fatigue."
+                  min={1}
+                  max={2}
+                  step={0.1}
+                  value={soloConfig.strainMultiplier}
+                  onChange={(value) => updateConfigValue('strainMultiplier', value)}
+                  valueLabel={`${soloConfig.strainMultiplier.toFixed(1)}x fatigue growth`}
+                />
+                <FieldConfig label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
                   <input
                     type="number"
                     min={1}
@@ -131,38 +127,28 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                     onChange={handleNumberInput('targetRuneScore', (value) => Math.max(1, value))}
                     className={inputClasses}
                   />
-                </ConfigField>
-                <ConfigField label="Runeforges" description="How many personal factories deal into your pool.">
-                  <div className="flex flex-col gap-2">
-                    <input
-                      type="range"
-                      min={2}
-                      max={6}
-                      step={1}
-                      value={soloConfig.factoriesPerPlayer}
-                      onChange={(event) => updateConfigValue('factoriesPerPlayer', Number(event.target.value))}
-                      className="w-full accent-sky-400"
-                    />
-                    <span className="text-xs text-slate-300">{soloConfig.factoriesPerPlayer} runeforges</span>
-                  </div>
-                </ConfigField>
-                <ConfigField label="Deck Size" description="How many of each rune type appear in your deck.">
-                  <div className="flex flex-col gap-2">
-                    <input
-                      type="range"
-                      min={8}
-                      max={30}
-                      step={1}
-                      value={soloConfig.deckRunesPerType}
-                      onChange={(event) => updateConfigValue('deckRunesPerType', Number(event.target.value))}
-                      className="w-full accent-sky-400"
-                    />
-                    <span className="text-xs text-slate-300">
-                      {soloConfig.deckRunesPerType} of each rune ({soloConfig.deckRunesPerType * runeTypeCount} total)
-                    </span>
-                  </div>
-                </ConfigField>
-                <ConfigField
+                </FieldConfig>
+                <SliderConfig
+                  label="Runeforges"
+                  description="How many personal factories deal into your pool."
+                  min={2}
+                  max={6}
+                  step={1}
+                  value={soloConfig.factoriesPerPlayer}
+                  onChange={(value) => updateConfigValue('factoriesPerPlayer', value)}
+                  valueLabel={`${soloConfig.factoriesPerPlayer} runeforges`}
+                />
+                <SliderConfig
+                  label="Deck Size"
+                  description="How many of each rune type appear in your deck."
+                  min={8}
+                  max={30}
+                  step={1}
+                  value={soloConfig.deckRunesPerType}
+                  onChange={(value) => updateConfigValue('deckRunesPerType', value)}
+                  valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * runeTypeCount} total)`}
+                />
+                <FieldConfig
                   label="Lock Completed Lines"
                   description="When a pattern line scores, keep that line blocked until the next round (Solo only)."
                 >
@@ -175,7 +161,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                   >
                     {soloConfig.patternLinesLockOnComplete ? 'Enabled' : 'Disabled'}
                   </button>
-                </ConfigField>
+                </FieldConfig>
               </div>
 
               <div className="space-y-2">
@@ -213,20 +199,4 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
       </div>
     </div>
   );
-}
-
-interface ConfigFieldProps {
-  label: string;
-  description: string;
-  children: ReactNode;
-}
-
-function ConfigField({ label, description, children }: ConfigFieldProps) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-slate-700/20 bg-white/5 px-3 py-3">
-      <div className="text-sm font-semibold text-slate-100">{label}</div>
-      <p className="text-xs text-slate-300 leading-relaxed">{description}</p>
-      {children}
-    </div>
-  )
 }
