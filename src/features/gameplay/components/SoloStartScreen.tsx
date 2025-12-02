@@ -2,15 +2,19 @@
  * SoloStartScreen - entry screen for Solo mode setup
  */
 
-import type React from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { RuneTypeCount, SoloRunConfig } from '../../../types/game';
 import { DEFAULT_SOLO_CONFIG, normalizeSoloConfig } from '../../../utils/gameInitialization';
+import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
 
 interface SoloStartScreenProps {
   onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
 }
+
+const inputClasses =
+  'w-full rounded-lg border border-slate-600/70 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400';
 
 export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
   const navigate = useNavigate();
@@ -22,107 +26,74 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
     setSoloConfig((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleNumberInput = (key: keyof SoloRunConfig, clamp?: (value: number) => number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = Number(event.target.value);
-    const parsedValue = Number.isNaN(rawValue) ? 0 : rawValue;
-    const nextValue = clamp ? clamp(parsedValue) : parsedValue;
-    updateConfigValue(key, nextValue as SoloRunConfig[typeof key]);
-  };
+  const handleNumberInput =
+    <K extends keyof SoloRunConfig>(key: K, clamp?: (value: number) => number) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const rawValue = Number(event.target.value);
+      const parsedValue = Number.isNaN(rawValue) ? 0 : rawValue;
+      const nextValue = clamp ? clamp(parsedValue) : parsedValue;
+      updateConfigValue(key, nextValue as SoloRunConfig[typeof key]);
+    };
 
   const normalizedConfig = normalizeSoloConfig(soloConfig);
 
+  const patternToggleClasses = soloConfig.patternLinesLockOnComplete
+    ? 'border-transparent bg-gradient-to-br from-sky-500 to-purple-700 text-slate-200 shadow-[0_12px_30px_rgba(59,130,246,0.35)]'
+    : 'border-slate-600/60 bg-slate-900/30 text-slate-200 hover:border-slate-400/70';
+
+  const boardButtonClass = (count: number) => {
+    const isActive = runeTypeCount === count;
+    const base =
+      'flex-1 rounded-xl border-2 px-3 py-3 text-sm font-semibold transition-colors duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
+    const active =
+      'border-transparent bg-gradient-to-br from-sky-500 to-purple-600 text-slate-950 shadow-[0_12px_30px_rgba(59,130,246,0.35)]';
+    const inactive = 'border-slate-600/40 bg-transparent text-slate-200 hover:border-slate-400/60 hover:bg-slate-900/50';
+    return `${base} ${isActive ? active : inactive}`;
+  };
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#0b1024',
-        color: '#f8fafc',
-        padding: '24px',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '760px',
-          background: 'linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(30, 41, 59, 0.85))',
-          borderRadius: '16px',
-          border: '1px solid rgba(148, 163, 184, 0.25)',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.55)',
-          padding: '32px',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+    <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
+      <div className="w-full max-w-[760px] space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+        <div className="flex items-center justify-between gap-4">
           <button
             type="button"
             onClick={() => navigate('/')}
-            style={{
-              background: 'transparent',
-              color: '#93c5fd',
-              border: 'none',
-              fontWeight: 700,
-              cursor: 'pointer',
-              padding: '6px 10px',
-              borderRadius: '8px',
-            }}
+            className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
           >
             ← Back
           </button>
-          <div style={{ color: '#cbd5e1', fontSize: '14px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Solo Mode
-          </div>
+          <div className="text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Solo Mode</div>
         </div>
 
-        <h1 style={{ fontSize: '42px', margin: 0, marginBottom: '6px' }}>Solo Run</h1>
-        <p style={{ color: '#cbd5e1', margin: 0, marginBottom: '22px', fontSize: '16px' }}>
-          Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
-        </p>
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold uppercase tracking-tight text-slate-50">Solo Run</h1>
+          <p className="text-base text-slate-300">
+            Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
+          </p>
+        </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe' }}>Run Setup</div>
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Run Setup</div>
             <button
               type="button"
               onClick={() => setShowAdvanced((s) => !s)}
-              style={{
-                background: 'transparent',
-                color: '#93c5fd',
-                border: '1px solid rgba(148, 163, 184, 0.12)',
-                padding: '6px 10px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 700,
-              }}
+              className="rounded-xl border border-slate-600/30 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-sky-300 transition hover:border-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
             >
               {showAdvanced ? 'Hide Advanced' : 'Advanced Options'}
             </button>
           </div>
 
           {showAdvanced && (
-            <div
-              style={{
-                padding: '16px',
-                backgroundColor: '#0b1433',
-                borderRadius: '10px',
-                border: '1px solid rgba(148, 163, 184, 0.18)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                  gap: '12px',
-                }}
-              >
+            <div className="space-y-4 rounded-2xl border border-slate-600/40 bg-slate-900/50 p-4 backdrop-blur">
+              <div className="grid gap-3 md:grid-cols-2">
                 <ConfigField label="Starting Health" description="Health pool when the run begins.">
                   <input
                     type="number"
                     min={1}
                     value={soloConfig.startingHealth}
                     onChange={handleNumberInput('startingHealth', (value) => Math.max(1, value))}
-                    style={inputStyle}
+                    className={inputClasses}
                   />
                 </ConfigField>
                 <ConfigField label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
@@ -132,11 +103,11 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                     step={1}
                     value={soloConfig.startingStrain}
                     onChange={handleNumberInput('startingStrain', (value) => Math.max(0, value))}
-                    style={inputStyle}
+                    className={inputClasses}
                   />
                 </ConfigField>
                 <ConfigField label="Fatigue Multiplier" description="Round-by-round growth applied to fatigue.">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div className="flex flex-col gap-2">
                     <input
                       type="range"
                       min={1}
@@ -144,9 +115,11 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                       step={0.1}
                       value={soloConfig.strainMultiplier}
                       onChange={(event) => updateConfigValue('strainMultiplier', Number(event.target.value))}
-                      style={{ width: '100%' }}
+                      className="w-full accent-sky-400"
                     />
-                    <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.strainMultiplier.toFixed(1)}x fatigue growth</div>
+                    <span className="text-xs text-slate-300">
+                      {soloConfig.strainMultiplier.toFixed(1)}x fatigue growth
+                    </span>
                   </div>
                 </ConfigField>
                 <ConfigField label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
@@ -156,11 +129,11 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                     step={10}
                     value={soloConfig.targetRuneScore}
                     onChange={handleNumberInput('targetRuneScore', (value) => Math.max(1, value))}
-                    style={inputStyle}
+                    className={inputClasses}
                   />
                 </ConfigField>
                 <ConfigField label="Runeforges" description="How many personal factories deal into your pool.">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div className="flex flex-col gap-2">
                     <input
                       type="range"
                       min={2}
@@ -168,13 +141,13 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                       step={1}
                       value={soloConfig.factoriesPerPlayer}
                       onChange={(event) => updateConfigValue('factoriesPerPlayer', Number(event.target.value))}
-                      style={{ width: '100%' }}
+                      className="w-full accent-sky-400"
                     />
-                    <div style={{ color: '#cbd5e1', fontSize: '13px' }}>{soloConfig.factoriesPerPlayer} runeforges</div>
+                    <span className="text-xs text-slate-300">{soloConfig.factoriesPerPlayer} runeforges</span>
                   </div>
                 </ConfigField>
                 <ConfigField label="Deck Size" description="How many of each rune type appear in your deck.">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div className="flex flex-col gap-2">
                     <input
                       type="range"
                       min={8}
@@ -182,11 +155,11 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                       step={1}
                       value={soloConfig.deckRunesPerType}
                       onChange={(event) => updateConfigValue('deckRunesPerType', Number(event.target.value))}
-                      style={{ width: '100%' }}
+                      className="w-full accent-sky-400"
                     />
-                    <div style={{ color: '#cbd5e1', fontSize: '13px' }}>
+                    <span className="text-xs text-slate-300">
                       {soloConfig.deckRunesPerType} of each rune ({soloConfig.deckRunesPerType * runeTypeCount} total)
-                    </div>
+                    </span>
                   </div>
                 </ConfigField>
                 <ConfigField
@@ -195,94 +168,45 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                 >
                   <button
                     type="button"
-                    onClick={() => updateConfigValue('patternLinesLockOnComplete', !soloConfig.patternLinesLockOnComplete)}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '10px',
-                      border: '1px solid rgba(148, 163, 184, 0.4)',
-                      background: soloConfig.patternLinesLockOnComplete
-                        ? 'linear-gradient(135deg, #38bdf8, #6366f1)'
-                        : 'rgba(255,255,255,0.03)',
-                      color: soloConfig.patternLinesLockOnComplete ? '#0b1024' : '#e2e8f0',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 120ms ease',
-                    }}
+                    onClick={() =>
+                      updateConfigValue('patternLinesLockOnComplete', !soloConfig.patternLinesLockOnComplete)
+                    }
+                    className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold uppercase tracking-wide transition ${patternToggleClasses}`}
                   >
                     {soloConfig.patternLinesLockOnComplete ? 'Enabled' : 'Disabled'}
                   </button>
                 </ConfigField>
               </div>
 
-              <div style={{ marginTop: '16px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 700, color: '#dbeafe', marginBottom: '10px' }}>Board Size</div>
-                <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="space-y-2">
+                <div className="text-sm font-semibold uppercase tracking-wide text-slate-200">Board Size</div>
+                <div className="flex gap-3">
                   {[4, 6].map((count) => (
                     <button
                       key={count}
+                      type="button"
                       onClick={() => setRuneTypeCount(count as RuneTypeCount)}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        borderRadius: '10px',
-                        border: '2px solid',
-                        borderColor: runeTypeCount === count ? '#38bdf8' : 'rgba(148, 163, 184, 0.25)',
-                        background: runeTypeCount === count ? 'linear-gradient(135deg, #38bdf8, #818cf8)' : 'transparent',
-                        color: runeTypeCount === count ? '#0b1024' : '#e2e8f0',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 120ms ease',
-                      }}
-                      onMouseEnter={(event) => {
-                        if (runeTypeCount !== count) {
-                          event.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.12)';
-                        }
-                      }}
-                      onMouseLeave={(event) => {
-                        if (runeTypeCount !== count) {
-                          event.currentTarget.style.backgroundColor = 'transparent';
-                        }
-                      }}
+                      className={boardButtonClass(count)}
                     >
                       {count}x{count}
                     </button>
                   ))}
                 </div>
-                <div style={{ marginTop: '8px', color: '#93c5fd', fontSize: '13px' }}>
+                <p className="text-xs text-sky-300">
                   {runeTypeCount === 3 && '3 rune types, 3x3 Spell Wall, light overload pressure.'}
                   {runeTypeCount === 4 && '4 rune types, 4x4 Spell Wall, balanced Solo pace.'}
                   {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, extended run with heavy pressure.'}
                   {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning joins for maximal Essence scaling.'}
-                </div>
+                </p>
               </div>
             </div>
           )}
-        </div>
+        </section>
 
         <button
           type="button"
           onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: '12px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #38bdf8, #6366f1)',
-            color: '#0b1024',
-            fontWeight: 800,
-            fontSize: '18px',
-            cursor: 'pointer',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            boxShadow: '0 18px 40px rgba(59, 130, 246, 0.35)',
-          }}
-          onMouseEnter={(event) => {
-            event.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={(event) => {
-            event.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className={`${gradientButtonClasses} w-full px-6 py-4 text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
         >
           Begin Solo Run
         </button>
@@ -294,36 +218,15 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
 interface ConfigFieldProps {
   label: string;
   description: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function ConfigField({ label, description, children }: ConfigFieldProps) {
   return (
-    <div
-      style={{
-        padding: '12px',
-        borderRadius: '12px',
-        border: '1px solid rgba(148, 163, 184, 0.2)',
-        background: 'rgba(255, 255, 255, 0.02)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-      }}
-    >
-      <div style={{ fontWeight: 700, color: '#e0f2fe', fontSize: '15px' }}>{label}</div>
-      <div style={{ color: '#cbd5e1', fontSize: '13px', lineHeight: 1.4 }}>{description}</div>
+    <div className="flex flex-col gap-2 rounded-xl border border-slate-700/20 bg-white/5 px-3 py-3">
+      <div className="text-sm font-semibold text-slate-100">{label}</div>
+      <p className="text-xs text-slate-300 leading-relaxed">{description}</p>
       {children}
     </div>
-  );
+  )
 }
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px',
-  borderRadius: '8px',
-  border: '1px solid rgba(148, 163, 184, 0.4)',
-  backgroundColor: '#0f172a',
-  color: '#e2e8f0',
-  fontSize: '14px',
-  outline: 'none',
-};
