@@ -9,6 +9,7 @@ import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
 import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../../utils/scoring';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../../utils/runeEffects';
+import { SoloRuneScoreOverlay } from '../SoloRuneScoreOverlay';
 
 interface PlayerBoardProps {
   player: Player;
@@ -28,9 +29,13 @@ interface PlayerBoardProps {
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
   hideStatsPanel?: boolean;
+  soloRuneScore?: {
+    currentScore: number;
+    targetScore: number;
+  };
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false, soloRuneScore }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -85,11 +90,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     : 0;
 
   const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
-  const focusTooltip = 'Focus - connect more runes to increase your multiplier.';
-  const segmentDamageTooltip = 'Complete a pattern line to strike immediately. The placed rune deals damage equal to the connected segment it joins (minimum 1).';
-  const essenceTooltip = essenceRuneCount > 0
-    ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
-    : 'Essence - cast more runes to increase spell damage.';
 
   return (
     <div
@@ -114,10 +114,23 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       }}>
         <div style={{ 
           flex: '1 1 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'min(1.2vmin, 12px)'
-        }}>
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'min(1.2vmin, 12px)'
+      }}>
+          {hideStatsPanel && soloRuneScore && (
+            <div
+              style={{ display: 'flex', justifyContent: 'center' }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div style={{ width: '100%', maxWidth: '640px' }}>
+                <SoloRuneScoreOverlay
+                  currentScore={soloRuneScore.currentScore}
+                  targetScore={soloRuneScore.targetScore}
+                />
+              </div>
+            </div>
+          )}
           <div
             style={{
               display: 'grid',

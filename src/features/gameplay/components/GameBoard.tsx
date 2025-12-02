@@ -11,9 +11,9 @@ import { OpponentView } from './Player/OpponentView';
 import { GameOverModal } from './GameOverModal';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { RulesOverlay } from './RulesOverlay';
-import { SoloRuneScoreOverlay } from './SoloRuneScoreOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
+import { SoloStats } from './Player/SoloStats';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -150,6 +150,12 @@ export function GameBoard({ gameState }: GameBoardProps) {
       )
     : 0;
   const overloadPenalty = isSoloMode ? baseOverloadPenalty : 0;
+  const soloRuneScore = isSoloMode
+    ? {
+        currentScore: runePowerTotal,
+        targetScore: soloTargetScore,
+      }
+    : null;
   const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
@@ -788,26 +794,6 @@ export function GameBoard({ gameState }: GameBoardProps) {
       }}
       onClick={handleBackgroundClick}
     >
-      {isSoloMode && soloStats && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '16px',
-            left: '16px',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'flex-start',
-            pointerEvents: 'none',
-            zIndex: 12,
-          }}
-        >
-          <SoloRuneScoreOverlay
-            currentScore={runePowerTotal}
-            targetScore={soloTargetScore}
-            stats={soloStats}
-          />
-        </div>
-      )}
       <div
         style={{
           position: 'absolute',
@@ -954,6 +940,7 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   hiddenFloorSlotIndexes={playerHiddenFloorSlots}
                   round={round}
                   hideStatsPanel={true}
+                  soloRuneScore={soloRuneScore || undefined}
                 />
               </div>
             </div>
@@ -991,6 +978,31 @@ export function GameBoard({ gameState }: GameBoardProps) {
                   hiddenCenterRuneIds={hiddenCenterRuneIds}
                   hideOpponentRow={true}
                 />
+                {isSoloMode && soloStats && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '16px',
+                      left: '16px',
+                      pointerEvents: 'none',
+                      zIndex: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        pointerEvents: 'auto',
+                        padding: '10px 12px',
+                        borderRadius: '16px',
+                        border: '1px solid rgba(148, 163, 184, 0.35)',
+                        background: 'rgba(8, 10, 24, 0.9)',
+                        boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
+                        maxWidth: '520px',
+                      }}
+                    >
+                      <SoloStats {...soloStats} />
+                    </div>
+                  </div>
+                )}
                 
                 {/* Game Over Modal - Centered over drafting area */}
                 {isGameOver && (

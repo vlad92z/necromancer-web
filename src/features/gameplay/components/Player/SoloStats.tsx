@@ -78,6 +78,8 @@ export function SoloStats({
           flexDirection: 'row',
           alignItems: 'center',
           gap: '0.9em',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-start',
         }}
       >
         <StatBadge

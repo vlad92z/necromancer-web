@@ -20,6 +20,10 @@ interface PlayerViewProps {
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
   hideStatsPanel?: boolean;
+  soloRuneScore?: {
+    currentScore: number;
+    targetScore: number;
+  };
 }
 
 export function PlayerView({
@@ -37,6 +41,7 @@ export function PlayerView({
   hiddenFloorSlotIndexes,
   round,
   hideStatsPanel = false,
+  soloRuneScore,
 }: PlayerViewProps) {
   return (
     <div>
@@ -56,6 +61,7 @@ export function PlayerView({
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
         round={round}
         hideStatsPanel={hideStatsPanel}
+        soloRuneScore={soloRuneScore}
       />
     </div>
   );
