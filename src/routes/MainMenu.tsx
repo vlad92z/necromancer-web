@@ -5,77 +5,27 @@ export function MainMenu() {
   const navigate = useNavigate()
   const playClickSound = useClickSound()
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#1a1a1a',
-    color: '#ffffff',
-    padding: '20px',
-  }
-
-  const titleStyle: React.CSSProperties = {
-    fontSize: '48px',
-    fontWeight: 'bold',
-    marginBottom: '16px',
-    textAlign: 'center',
-  }
-
-  const subtitleStyle: React.CSSProperties = {
-    fontSize: '20px',
-    marginBottom: '48px',
-    color: '#aaaaaa',
-    textAlign: 'center',
-  }
-
-  const menuStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    width: '300px',
-  }
-
-  const buttonStyle: React.CSSProperties = {
-    padding: '16px 32px',
-    fontSize: '18px',
-    fontWeight: 'bold',
-    backgroundColor: '#4a9eff',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  }
-
-
   const handleSolo = () => {
     playClickSound()
     navigate('/solo')
   }
-  
+
   return (
-    <div style={containerStyle}>
-      <h1 style={titleStyle}>Massive Spell: Arcane Arena</h1>
-      <p style={subtitleStyle}>A roguelite deck-builder</p>
-      
-      <div style={menuStyle}>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-6 py-10 text-white">
+      <div className="flex flex-col items-center text-center">
+        <h1 className="mb-3 text-4xl font-bold md:text-5xl">Massive Spell: Arcane Arena</h1>
+        <p className="text-lg text-slate-400">A roguelite deck-builder</p>
+      </div>
+
+      <div className="mt-10 flex w-full max-w-[320px] flex-col gap-4">
         <button
-          style={buttonStyle}
+          type="button"
+          className="rounded-lg bg-sky-500 px-8 py-4 text-lg font-bold text-white transition transform duration-200 hover:bg-sky-400 hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-500/50"
           onClick={handleSolo}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#5ab0ff'
-            e.currentTarget.style.transform = 'scale(1.05)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#4a9eff'
-            e.currentTarget.style.transform = 'scale(1)'
-          }}
         >
           Solo
         </button>
       </div>
-    </div>
+    </main>
   )
 }

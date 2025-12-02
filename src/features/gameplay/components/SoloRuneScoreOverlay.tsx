@@ -2,19 +2,15 @@
  * SoloRuneScoreOverlay - displays the solo target and current rune score
  */
 
-import { useState } from 'react';
-
 interface SoloRuneScoreOverlayProps {
   currentScore: number;
   targetScore: number;
 }
 
 export function SoloRuneScoreOverlay({ currentScore, targetScore }: SoloRuneScoreOverlayProps) {
-  const [isInfoHovered, setIsInfoHovered] = useState(false);
   const progress = targetScore > 0 ? Math.min(1, currentScore / targetScore) : 0;
   const progressPercent = Math.round(progress * 100);
   const reachedTarget = currentScore >= targetScore;
-  const accentColor = reachedTarget ? '#34d399' : '#a855f7';
 
   return (
     <div
