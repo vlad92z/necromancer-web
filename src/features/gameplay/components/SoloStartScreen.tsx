@@ -198,7 +198,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
         <button
           type="button"
           onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
-          className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
+          className={`${gradientButtonClasses} mx-auto block px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
         >
           Begin Solo Run
         </button>
