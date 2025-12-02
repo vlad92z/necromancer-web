@@ -4,7 +4,7 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GameBoard } from '../features/gameplay/components/GameBoard';
+import { SoloGameBoard } from '../features/gameplay/components/SoloGameBoard';
 import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import type { RuneTypeCount, SoloRunConfig } from '../types/game';
@@ -37,5 +37,5 @@ export function Solo() {
     return <SoloStartScreen onStartSolo={handleStartSolo} />;
   }
 
-  return <GameBoard gameState={gameState} />;
+  return <SoloGameBoard gameState={gameState} />;
 }
