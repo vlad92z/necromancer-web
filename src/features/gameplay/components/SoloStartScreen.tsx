@@ -55,7 +55,13 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
-      <div className="w-full max-w-[760px] space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+        <div
+          className="w-full space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+          style={{
+            width: 'min(1100px, 94vw)',
+            minHeight: 'calc(min(1100px, 94vw) * 2 / 3)',
+          }}
+        >
         <div className="flex items-center justify-between gap-4">
           <button
             type="button"
@@ -88,17 +94,17 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
 
           {showAdvanced && (
             <div className="space-y-4 rounded-2xl border border-slate-600/40 bg-slate-900/50 p-4 backdrop-blur">
-              <div className="grid gap-3 md:grid-cols-2">
-              <FieldConfig label="Starting Health" description="Health pool when the run begins.">
-                <input
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
+                <FieldConfig label="Starting Health" description="Health pool when the run begins.">
+                  <input
                     type="number"
                     min={1}
                     value={soloConfig.startingHealth}
                     onChange={handleNumberInput('startingHealth', (value) => Math.max(1, value))}
                     className={inputClasses}
                   />
-              </FieldConfig>
-              <FieldConfig label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
+                </FieldConfig>
+                <FieldConfig label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
                   <input
                     type="number"
                     min={0}
@@ -107,7 +113,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                     onChange={handleNumberInput('startingStrain', (value) => Math.max(0, value))}
                     className={inputClasses}
                   />
-              </FieldConfig>
+                </FieldConfig>
                 <SliderConfig
                   label="Fatigue Multiplier"
                   description="Round-by-round growth applied to fatigue."
@@ -192,7 +198,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
         <button
           type="button"
           onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
-          className={`${gradientButtonClasses} w-full px-6 py-4 text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
+          className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
         >
           Begin Solo Run
         </button>
