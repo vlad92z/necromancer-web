@@ -22,10 +22,7 @@ export function OpponentView(
   {
     opponent,
     isActive,
-    frozenPatternLines = [],
-    lockedPatternLines = [],
     freezeSelectionEnabled = false,
-    onFreezePatternLine,
     onCancelFreezeSelection,
     hiddenSlotKeys,
     hiddenFloorSlotIndexes, 
@@ -84,11 +81,6 @@ export function OpponentView(
         selectedRuneType={null}
         canPlace={false}
         onCancelSelection={() => {}}
-        nameColor="#7f1d1d"
-        frozenPatternLines={frozenPatternLines}
-        lockedPatternLines={lockedPatternLines}
-        freezeSelectionEnabled={freezeSelectionEnabled}
-        onFreezePatternLine={onFreezePatternLine}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
         round={round}

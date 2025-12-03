@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DuelGameBoard } from '../features/gameplay/components/DuelGameBoard'
+// import { DuelGameBoard } from '../features/gameplay/components/DuelGameBoard'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
 import { executeAITurn, needsAIPlacement, executeAIVoidEffect, executeAIFrostEffect } from '../systems/aiController'
@@ -100,6 +100,6 @@ export function GameMatch() {
   if (!wholeGameState.gameStarted) {
     return <StartGameScreen onStartGame={handleStartGame} />
   }
-
-  return <DuelGameBoard gameState={wholeGameState} />
+  return <StartGameScreen onStartGame={handleStartGame} />
+  // return <DuelGameBoard gameState={wholeGameState} />
 }

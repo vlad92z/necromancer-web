@@ -42,9 +42,6 @@ export function Solo() {
         gameState={gameState}
         variant="solo"
         renderContent={(shared, variantData) => {
-          if (variantData.type !== 'solo') {
-            return null;
-          }
           return <SoloBoardContent shared={shared} variantData={variantData} />;
         }}
       />;

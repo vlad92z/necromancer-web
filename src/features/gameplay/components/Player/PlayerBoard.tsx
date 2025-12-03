@@ -6,8 +6,8 @@ import type { Player, RuneType } from '../../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
-import { PlayerStats } from './PlayerStats';
 import { SoloRuneScoreOverlay } from '../SoloRuneScoreOverlay';
+import { SoloHealthTracker } from '../SoloHealthTracker';
 
 interface PlayerBoardProps {
   player: Player;
@@ -17,31 +17,21 @@ interface PlayerBoardProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
-  nameColor: string;
-  frozenPatternLines?: number[];
-  lockedPatternLines?: number[];
-  freezeSelectionEnabled?: boolean;
-  onFreezePatternLine?: (patternLineIndex: number) => void;
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
-  hideStatsPanel?: boolean;
   soloRuneScore?: {
     currentScore: number;
     targetScore: number;
   };
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false, soloRuneScore }: PlayerBoardProps) {
+export function PlayerBoard({ player, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, hiddenSlotKeys, hiddenFloorSlotIndexes, soloRuneScore }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
     }
   };
-
-  const currentHealth = player.health;
-
-  const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
 
   return (
     <div
@@ -70,31 +60,38 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
         flexDirection: 'column',
         gap: 'min(1.2vmin, 12px)'
       }}>
-          {hideStatsPanel && soloRuneScore && (
-            <div
+          <div
               style={{ display: 'flex', justifyContent: 'center' }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div style={{ width: '100%', maxWidth: '640px' }}>
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: '640px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
                 <SoloRuneScoreOverlay
-                  currentScore={soloRuneScore.currentScore}
-                  targetScore={soloRuneScore.targetScore}
+                  currentScore={soloRuneScore?.currentScore ?? 0}
+                  targetScore={soloRuneScore?.targetScore ?? 0}
                 />
+                <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
               </div>
             </div>
-          )}
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: 'auto auto',
-              gridTemplateRows: hideStatsPanel ? 'auto auto' : 'auto',
+              gridTemplateRows: 'auto auto',
               alignItems: 'start',
               gap: 'min(1.2vmin, 14px)'
             }}
           >
             {/* Pattern Lines */}
             <div
-              style={{ gridColumn: 1, gridRow: hideStatsPanel ? 2 : 1 }}
+              style={{ gridColumn: 1, gridRow: 2 }}
               onClick={(e) => e.stopPropagation()}
             >
               <PatternLines 
@@ -103,10 +100,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
                 onPlaceRunes={onPlaceRunes}
                 selectedRuneType={selectedRuneType}
                 canPlace={canPlace}
-                frozenLineIndexes={frozenPatternLines}
-                lockedLineIndexes={lockedPatternLines}
-                freezeSelectionEnabled={freezeSelectionEnabled}
-                onFreezeLine={onFreezePatternLine}
                 playerId={player.id}
                 hiddenSlotKeys={hiddenSlotKeys}
               />
@@ -116,7 +109,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             <div
               style={{
                 gridColumn: 2,
-                gridRow: hideStatsPanel ? 2 : 1,
+                gridRow: 2,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -139,26 +132,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
             />
           </div>
         </div>
-
-        {/* Right side - Player Info and RuneScore */}
-        {!hideStatsPanel && (
-          <div style={{ 
-            flex: '0 0 auto',
-            width: detailPanelWidth,
-            minWidth: detailPanelWidth,
-            maxWidth: detailPanelWidth,
-            display: 'flex', 
-            flexDirection: 'column'
-          }} onClick={(e) => e.stopPropagation()}>
-            <PlayerStats
-              playerName={player.name}
-              isActive={isActive}
-              nameColor={nameColor}
-              health={currentHealth}
-              round={round}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

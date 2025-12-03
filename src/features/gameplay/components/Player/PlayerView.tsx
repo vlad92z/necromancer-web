@@ -13,12 +13,9 @@ interface PlayerViewProps {
   selectedRuneType: RuneType | null;
   canPlace: boolean;
   onCancelSelection: () => void;
-  frozenPatternLines: number[];
-  lockedPatternLines?: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
-  hideStatsPanel?: boolean;
   soloRuneScore?: {
     currentScore: number;
     targetScore: number;
@@ -33,12 +30,9 @@ export function PlayerView({
   selectedRuneType,
   canPlace,
   onCancelSelection,
-  frozenPatternLines,
-  lockedPatternLines,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
   round,
-  hideStatsPanel = false,
   soloRuneScore,
 }: PlayerViewProps) {
   return (
@@ -51,13 +45,9 @@ export function PlayerView({
         selectedRuneType={selectedRuneType}
         canPlace={canPlace}
         onCancelSelection={onCancelSelection}
-        nameColor="#0c4a6e"
-        frozenPatternLines={frozenPatternLines}
-        lockedPatternLines={lockedPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
         round={round}
-        hideStatsPanel={hideStatsPanel}
         soloRuneScore={soloRuneScore}
       />
     </div>
