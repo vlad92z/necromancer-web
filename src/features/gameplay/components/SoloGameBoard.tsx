@@ -3,7 +3,7 @@
  */
 
 import type { GameBoardSharedProps, SoloVariantData } from './GameBoardFrame';
-import { DraftingTable } from './Center/DraftingTabgle';
+import { DraftingTable } from './Center/DraftingTable';
 import { PlayerView } from './Player/PlayerView';
 import { SoloStats } from './Player/SoloStats';
 import { SoloGameOverModal } from './SoloGameOverModal';
@@ -17,7 +17,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
   const {
     players,
     currentPlayerIndex,
-    currentPlayerId,
     selectedRuneType,
     hasSelectedRunes,
     playerHiddenPatternSlots,
@@ -50,9 +49,8 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
           <DraftingTable
             runeforges={runeforges}
             centerPool={centerPool}
-            players={players}
+            player={players[0]}
             runeTypeCount={runeTypeCount}
-            currentPlayerId={currentPlayerId}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
             isDraftPhase={isDraftPhase}
@@ -62,7 +60,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             onCancelSelection={onCancelSelection}
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}
-            hideOpponentRow={true}
           />
         </div>
       </div>

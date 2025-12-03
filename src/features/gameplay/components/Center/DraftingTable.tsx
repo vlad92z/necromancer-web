@@ -10,12 +10,11 @@ import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
 import { RuneTypeTotals } from './RuneTypeTotals';
 
-interface RuneforgesAndCenterProps {
+interface DraftingTableProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
   runeTypeCount: RuneTypeCount;
-  players: [Player, Player];
-  currentPlayerId: Player['id'];
+  player: Player;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   isDraftPhase: boolean;
@@ -32,8 +31,7 @@ export function DraftingTable({
   runeforges, 
   centerPool, 
   runeTypeCount,
-  players,
-  currentPlayerId,
+  player,
   onRuneClick,
   onCenterRuneClick,
   isDraftPhase, 
@@ -44,14 +42,8 @@ export function DraftingTable({
   animatingRuneIds,
   hiddenCenterRuneIds,
   hideOpponentRow = false
-}: RuneforgesAndCenterProps) {
-  const [player, opponent] = players;
-  const playerRuneforges = runeforges.filter((forge) => forge.ownerId === player.id);
-  const opponentRuneforges = runeforges.filter((forge) => forge.ownerId === opponent.id);
-  const currentPlayerRuneforges = runeforges.filter((forge) => forge.ownerId === currentPlayerId);
-  const hasAccessibleRuneforges = currentPlayerRuneforges.some(
-    (forge) => forge.runes.length > 0
-  );
+}: DraftingTableProps) {
+  const hasAccessibleRuneforges = runeforges.some((forge) => forge.runes.length > 0);
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
   const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
@@ -68,34 +60,12 @@ export function DraftingTable({
     () =>
       getRuneTypeCounts({
         runeforges,
-        playerRuneforges,
         centerPool,
         selectedRunes,
-        draftSource,
-        hideOpponentRow,
+        draftSource
       }),
-    [centerPool, draftSource, hideOpponentRow, playerRuneforges, runeforges, selectedRunes]
+    [centerPool, draftSource, runeforges, selectedRunes]
   );
-
-  const getDisabledState = (forge: RuneforgeType): boolean => {
-    const selectionMatchesForge = selectedFromRuneforgeId === forge.id;
-
-
-    const baseDisabled = !isDraftPhase;
-    if (baseDisabled) {
-      return true;
-    }
-
-    if (hasSelectedRunes && !selectionMatchesForge) {
-      return true;
-    }
-
-    if (forge.ownerId !== currentPlayerId) {
-      return true;
-    }
-
-    return false;
-  };
 
   const renderRuneforgeRow = (
     owner: Player,
@@ -121,7 +91,7 @@ export function DraftingTable({
               key={runeforge.id} 
               runeforge={runeforge}
               onRuneClick={onRuneClick}
-              disabled={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes ? false : getDisabledState(runeforge)}
+              disabled={hasSelectedRunes}
               displayOverride={
                 selectedFromRuneforgeId === runeforge.id
                   ? {
@@ -160,7 +130,7 @@ export function DraftingTable({
 
   const renderSoloRuneforges = () => (
     <>
-      {renderRuneforgeRow(player, playerRuneforges, 'center', 'player')}
+      {renderRuneforgeRow(player, runeforges, 'center', 'player')}
       {renderCenterSection()}
       <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
     </>
@@ -185,8 +155,7 @@ export function DraftingTable({
           renderSoloRuneforges()
         ) : (
           <>
-            {renderRuneforgeRow(opponent, opponentRuneforges, 'center', 'opponent')}
-            {renderRuneforgeRow(player, playerRuneforges, 'center', 'player')}
+            {renderRuneforgeRow(player, runeforges, 'center', 'player')}
             {renderCenterSection()}
           </>
         )}
