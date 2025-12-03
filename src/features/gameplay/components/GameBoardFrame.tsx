@@ -19,6 +19,8 @@ import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
+import { applyStressMitigation } from '../../../utils/scoring';
+import { getPassiveEffectValue } from '../../../utils/runeEffects';
 import type { SoloStatsProps } from './Player/SoloStats';
 
 const BOARD_BASE_SIZE = 1200;
@@ -143,7 +145,7 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     scoringPhase,
     draftSource,
     round,
-    strainMultiplier,
+    strain,
   } = gameState;
   const isSoloMode = variant === 'solo';
   const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
@@ -215,13 +217,16 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
   const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
+        const strainMitigation = player.wall
+          .flat()
+          .reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'StrainMitigation'), 0);
+        const overloadMultiplier = applyStressMitigation(strain, strainMitigation);
 
         return {
           isActive: currentPlayerIndex === 0,
           health: player.health,
-          runePowerTotal,
+          overloadMultiplier,
           round,
-          fatigueMultiplier: strainMultiplier,
           deckCount: player.deck.length,
         };
       })()
