@@ -12,19 +12,8 @@ import fatigueSvg from '../../../../assets/stats/fatigue.svg';
 export interface SoloStatsProps {
   isActive: boolean;
   health: number;
-  healing: number;
-  essence: number;
-  focus: number;
-  totalPower: number;
-  essenceRuneCount: number;
-  hasOverload: boolean;
-  hasWindMitigation: boolean;
-  windRuneCount: number;
-  overloadPenalty: number;
   overloadMultiplier: number;
-  overloadDamagePreview: number;
   round: number;
-  frostRuneCount: number;
   deckCount?: number;
 }
 
