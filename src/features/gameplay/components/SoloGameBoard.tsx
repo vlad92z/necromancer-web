@@ -44,8 +44,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1.1fr) 1.9fr' }}>
       <div
-        className="p-6 border-r flex items-center justify-center relative"
-        style={{ borderRightColor: 'rgba(148, 163, 184, 0.35)', background: 'radial-gradient(circle at 45% 25%, rgba(86, 27, 176, 0.12), transparent 60%)' }}
+        className="p-6 border-r flex items-center justify-center relative border-r-[rgba(148,163,184,0.35)] bg-[radial-gradient(circle_at_45%_25%,rgba(86,27,176,0.12),transparent_60%)]"
       >
         <div className="w-full h-full relative">
           <RuneforgesAndCenter
