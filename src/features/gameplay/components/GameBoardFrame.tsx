@@ -15,10 +15,7 @@ import { RuneAnimation } from '../../../components/RuneAnimation';
 import { VolumeControl } from '../../../components/VolumeControl';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
-import { useFreezeSound } from '../../../hooks/useFreezeSound';
-import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
-import { getControllerForIndex } from '../../../utils/playerControllers';
 import { applyStressMitigation } from '../../../utils/scoring';
 import { getPassiveEffectValue } from '../../../utils/runeEffects';
 import type { SoloStatsProps } from './Player/SoloStats';
@@ -67,7 +64,6 @@ export interface GameBoardProps {
 }
 
 export interface SoloVariantData {
-  type: 'solo';
   soloOutcome: GameState['soloOutcome'];
   soloRuneScore: { currentScore: number; targetScore: number } | null;
   soloStats: SoloStatsProps | null;
@@ -76,22 +72,15 @@ export interface SoloVariantData {
 }
 
 export interface DuelVariantData {
-  type: 'duel';
   winner: GameState['players'][number] | null;
 }
 
-export type GameBoardVariantData = SoloVariantData | DuelVariantData;
-
 export interface GameBoardSharedProps {
-  borderColor: string;
-  sectionPadding: number;
   players: GameState['players'];
   currentPlayerIndex: number;
   currentPlayerId: string;
   selectedRuneType: RuneType | null;
   hasSelectedRunes: boolean;
-  playerFrozenLines: number[];
-  opponentFrozenLines: number[];
   playerLockedLines: number[];
   opponentLockedLines: number[];
   playerHiddenPatternSlots?: Set<string>;
@@ -99,37 +88,28 @@ export interface GameBoardSharedProps {
   playerHiddenFloorSlots?: Set<number>;
   isDraftPhase: boolean;
   isGameOver: boolean;
-  isAITurn: boolean;
   runeforges: GameState['runeforges'];
   centerPool: GameState['centerPool'];
   runeTypeCount: GameState['runeTypeCount'];
-  voidEffectPending: boolean;
-  frostEffectPending: boolean;
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
   animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
-  onVoidRuneforgeRuneSelect: (runeforgeId: string, runeId: string) => void;
-  onVoidCenterRuneSelect: (runeId: string) => void;
   onCancelSelection: () => void;
-  onCancelVoidSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
   onPlaceRunesInFloor: () => void;
-  canFreezeOpponentPatternLine: boolean;
-  onFreezePatternLine: (lineIndex: number) => void;
-  onCancelFreezeSelection?: () => void;
   round: number;
   returnToStartScreen: () => void;
 }
 
 export interface GameBoardFrameProps extends GameBoardProps {
   variant: GameBoardVariant;
-  renderContent: (shared: GameBoardSharedProps, variantData: GameBoardVariantData) => ReactElement | null;
+  renderContent: (shared: GameBoardSharedProps, variantData: SoloVariantData) => ReactElement | null;
 }
 
-export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardFrameProps) {
+export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {
   const {
     players,
     runeforges,
@@ -137,9 +117,6 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     currentPlayerIndex,
     selectedRunes,
     turnPhase,
-    voidEffectPending,
-    frostEffectPending,
-    frozenPatternLines,
     lockedPatternLines,
     shouldTriggerEndRound,
     scoringPhase,
@@ -147,15 +124,12 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     round,
     strain,
   } = gameState;
-  const isSoloMode = variant === 'solo';
-  const soloOutcome = isSoloMode ? gameState.soloOutcome : null;
+  const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
-  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, skipVoidEffect, skipFrostEffect } =
+  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } =
     useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
-  const destroyRune = useGameplayStore((state) => state.destroyRune);
-  const freezePatternLine = useGameplayStore((state) => state.freezePatternLine);
   const endRound = useGameplayStore((state) => state.endRound);
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
   const soundVolume = useUIStore((state) => state.soundVolume);
@@ -189,15 +163,11 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
-  const currentController = getControllerForIndex(gameState, currentPlayerIndex);
-  const isAITurn = currentController.type === 'computer';
   const activeAnimatingRunes = useMemo(() => [...animatingRunes, ...runeforgeAnimatingRunes], [animatingRunes, runeforgeAnimatingRunes]);
   const isAnimatingPlacement = animatingRunes.length > 0;
   const animatingRuneIds = activeAnimatingRunes.map((rune) => rune.id);
   useRunePlacementSounds(players, activeAnimatingRunes, soundVolume);
   useBackgroundMusic(!isMusicMuted, soundVolume);
-  useFreezeSound(frozenPatternLines);
-  useVoidEffectSound(voidEffectPending, runeforges, centerPool);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -206,16 +176,12 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     window.localStorage.setItem('musicMuted', isMusicMuted ? 'true' : 'false');
   }, [isMusicMuted]);
 
-  const winner = !isSoloMode && isGameOver ? (players[0].health > players[1].health ? players[0] : players[1].health > players[0].health ? players[1] : null) : null;
-
-  const soloRuneScore = isSoloMode
-    ? {
+  const soloRuneScore = {
         currentScore: runePowerTotal,
         targetScore: soloTargetScore,
-      }
-    : null;
-  const soloStats = isSoloMode
-    ? (() => {
+      };
+
+  const soloStats = (() => {
         const player = players[0];
         const strainMitigation = player.wall
           .flat()
@@ -228,8 +194,7 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
           round,
           deckCount: player.deck.length,
         };
-      })()
-    : null;
+      })();
 
   const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
     draftRune(runeforgeId, runeType, runeId);
@@ -243,36 +208,8 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
   const playerHiddenPatternSlots = hiddenPatternSlots[players[0].id];
   const opponentHiddenPatternSlots = hiddenPatternSlots[opponent.id];
   const playerHiddenFloorSlots = hiddenFloorSlots[players[0].id];
-  const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
-  const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
   const playerLockedLines = lockedPatternLines[players[0].id] ?? [];
   const opponentLockedLines = lockedPatternLines[opponent.id] ?? [];
-  const canFreezeOpponentPatternLine = !isSoloMode && frostEffectPending && currentPlayerIndex === 0;
-  const canSkipFrostEffect = canFreezeOpponentPatternLine && !isAITurn;
-
-  const handleFreezePatternLine = (lineIndex: number) => {
-    if (!canFreezeOpponentPatternLine) {
-      return;
-    }
-
-    freezePatternLine(opponent.id, lineIndex);
-  };
-
-  const handleVoidRuneFromRuneforge = (runeforgeId: string, runeId: string) => {
-    if (!voidEffectPending) {
-      return;
-    }
-
-    destroyRune({ source: 'runeforge', runeforgeId, runeId });
-  };
-
-  const handleVoidRuneFromCenter = (runeId: string) => {
-    if (!voidEffectPending) {
-      return;
-    }
-
-    destroyRune({ source: 'center', runeId });
-  };
 
   const handleToggleMusic = () => {
     setIsMusicMuted((prev) => !prev);
@@ -751,20 +688,14 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const borderColor = 'rgba(255, 255, 255, 0.12)';
-  const sectionPadding = 24;
   const scaledBoardWidth = BOARD_BASE_WIDTH * boardScale;
   const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
   const sharedProps: GameBoardSharedProps = {
-    borderColor,
-    sectionPadding,
     players,
     currentPlayerIndex,
     currentPlayerId: currentPlayer.id,
     selectedRuneType,
     hasSelectedRunes,
-    playerFrozenLines,
-    opponentFrozenLines,
     playerLockedLines,
     opponentLockedLines,
     playerHiddenPatternSlots,
@@ -772,42 +703,27 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     playerHiddenFloorSlots,
     isDraftPhase,
     isGameOver,
-    isAITurn,
     runeforges,
     centerPool,
     runeTypeCount: gameState.runeTypeCount,
-    voidEffectPending,
-    frostEffectPending,
     selectedRunes,
     draftSource,
     animatingRuneIds,
     hiddenCenterRuneIds,
     onRuneClick: handleRuneClick,
     onCenterRuneClick: handleCenterRuneClick,
-    onVoidRuneforgeRuneSelect: handleVoidRuneFromRuneforge,
-    onVoidCenterRuneSelect: handleVoidRuneFromCenter,
     onCancelSelection: handleCancelSelection,
-    onCancelVoidSelection: skipVoidEffect,
     onPlaceRunes: handlePatternLinePlacement,
     onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
-    canFreezeOpponentPatternLine,
-    onFreezePatternLine: handleFreezePatternLine,
-    onCancelFreezeSelection: canSkipFrostEffect ? skipFrostEffect : undefined,
     round,
     returnToStartScreen,
   };
-  const variantData: GameBoardVariantData = isSoloMode
-    ? {
-        type: 'solo',
+  const variantData: SoloVariantData = {
         soloOutcome,
         soloRuneScore,
         soloStats,
         soloTargetScore,
         runePowerTotal,
-      }
-    : {
-        type: 'duel',
-        winner,
       };
   const boardContent = renderContent(sharedProps, variantData);
 
@@ -853,7 +769,7 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
             transformOrigin: 'top left',
             background: 'rgba(9, 3, 24, 0.85)',
             borderRadius: '36px',
-            border: `1px solid ${borderColor}`,
+            border: `1px solid rgba(255, 255, 255, 0.12)`,
             boxShadow: '0 40px 120px rgba(0, 0, 0, 0.75)',
             display: 'flex',
             flexDirection: 'column',
