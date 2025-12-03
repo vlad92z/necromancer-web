@@ -20,7 +20,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     currentPlayerId,
     selectedRuneType,
     hasSelectedRunes,
-    playerLockedLines,
     playerHiddenPatternSlots,
     playerHiddenFloorSlots,
     runeforges,
