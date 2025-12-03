@@ -4,16 +4,11 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { calculateSegmentSize, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
+import { calculateSegmentSize, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
-
-// Helper function to count Life runes on a wall
-function calculateHealingAmount(wall: Player['wall']): number {
-  return wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0);
-}
 
 function calculatePassiveEffectForWall(
   wall: Player['wall'],
@@ -23,14 +18,6 @@ function calculatePassiveEffectForWall(
     (total, cell) => total + getPassiveEffectValue(cell.effects, effectType),
     0
   );
-}
-
-function calculateVoidDamageBonus(
-  wall: Player['wall'],
-  projectedDamageTaken: number
-): number {
-  const conversionRate = calculatePassiveEffectForWall(wall, 'DamageToSpellpower');
-  return projectedDamageTaken * conversionRate;
 }
 
 function calculateNextStrainMultiplier(
@@ -125,8 +112,6 @@ function processSoloScoringPhase(state: GameState): GameState {
     return state;
   }
 
-  const emptyWallStats: WallPowerStats = { essence: 0, focus: 0, totalPower: 0 };
-
   if (currentPhase === 'moving-to-wall') {
     const moveRunesToWall = (player: Player): Player => {
       const updatedPatternLines = [...player.patternLines];
@@ -158,36 +143,10 @@ function processSoloScoringPhase(state: GameState): GameState {
 
     const updatedPlayer = moveRunesToWall(state.players[0]);
 
-    const floorPenalty = calculateEffectiveFloorPenalty(
-      updatedPlayer.floorLine.runes,
-      updatedPlayer.patternLines,
-      updatedPlayer.wall
-    );
-
-    const wallPowerStats = calculateWallPowerWithSegments(
-      updatedPlayer.wall,
-      floorPenalty
-    );
-    const projectedDamageTaken = floorPenalty * state.strain;
-    const voidBonus = calculateVoidDamageBonus(updatedPlayer.wall, projectedDamageTaken);
-    const adjustedWallPowerStats: WallPowerStats = {
-      ...wallPowerStats,
-      totalPower: wallPowerStats.totalPower + voidBonus,
-    };
-
-    const healingTotal = calculateHealingAmount(updatedPlayer.wall);
-
-    const scoringSnapshot: ScoringSnapshot = {
-      floorPenalties: [floorPenalty, 0],
-      wallPowerStats: [adjustedWallPowerStats, emptyWallStats],
-      healingTotals: [healingTotal, 0],
-    };
-
     return {
       ...state,
       players: [updatedPlayer, state.players[1]],
       scoringPhase: 'clearing-floor' as const,
-      scoringSnapshot,
     };
   }
 
@@ -212,58 +171,12 @@ function processSoloScoringPhase(state: GameState): GameState {
     return {
       ...state,
       players: updatedPlayersArray,
-      scoringPhase: 'healing' as const,
-    };
-  }
-
-  if (currentPhase === 'healing') {
-    if (!state.scoringSnapshot) {
-      return state;
-    }
-
-    const healingAmount = state.scoringSnapshot.healingTotals[0];
-    const applyHealing = (player: Player, amount: number): Player => {
-      const maxHealth = player.maxHealth ?? player.health;
-      return {
-        ...player,
-        health: Math.min(maxHealth, player.health + amount),
-      };
-    };
-
-    const healedPlayers: [Player, Player] = [
-      applyHealing(state.players[0], healingAmount),
-      state.players[1],
-    ];
-
-    return {
-      ...state,
-      players: healedPlayers,
       scoringPhase: 'complete' as const,
-    };
-  }
-
-  if (currentPhase === 'damage') {
-    return {
-      ...state,
-      scoringPhase: 'complete' as const,
-      scoringSnapshot: null,
     };
   }
 
   if (currentPhase === 'complete') {
-    const roundDamage = state.roundDamage ?? [0, 0];
-      const roundScore = {
-        round: state.round,
-        playerName: state.players[0].name,
-        playerEssence: roundDamage[0],
-        playerFocus: 1,
-      playerTotal: roundDamage[0],
-      opponentName: 'Overload',
-      opponentEssence: 0,
-      opponentFocus: 0,
-      opponentTotal: 0,
-      };
-      const roundHistory = [...state.roundHistory, roundScore];
+    const roundHistory = [...state.roundHistory];
     const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
     const playerHasEnough = state.players[0].deck.length >= runesNeededForRound;
 
@@ -277,7 +190,6 @@ function processSoloScoringPhase(state: GameState): GameState {
         turnPhase: 'game-over',
         round: state.round,
         scoringPhase: null,
-        scoringSnapshot: null,
         soloOutcome: achievedTarget ? ('victory' as SoloOutcome) : ('defeat' as SoloOutcome),
         shouldTriggerEndRound: false,
         roundDamage: [0, 0],
@@ -316,7 +228,6 @@ function processSoloScoringPhase(state: GameState): GameState {
       strain: state.strain * state.strainMultiplier,
       strainMultiplier: nextStrainMultiplier,
       scoringPhase: null,
-      scoringSnapshot: null,
       soloOutcome: null,
       roundDamage: [0, 0],
       roundHistory,
@@ -1047,64 +958,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           moveRunesToWall(state.players[1]),
         ];
 
-        const floorPenalties: [number, number] = [
-          calculateEffectiveFloorPenalty(
-            updatedPlayersArray[0].floorLine.runes,
-            updatedPlayersArray[0].patternLines,
-            updatedPlayersArray[0].wall
-          ),
-          calculateEffectiveFloorPenalty(
-            updatedPlayersArray[1].floorLine.runes,
-            updatedPlayersArray[1].patternLines,
-            updatedPlayersArray[1].wall
-          ),
-        ];
-
-        const baseWallPowerStats: [WallPowerStats, WallPowerStats] = [
-          calculateWallPowerWithSegments(
-            updatedPlayersArray[0].wall,
-            floorPenalties[0]
-          ),
-          calculateWallPowerWithSegments(
-            updatedPlayersArray[1].wall,
-            floorPenalties[1]
-          ),
-        ];
-        const projectedDamageTaken: [number, number] = [
-          baseWallPowerStats[1].totalPower,
-          baseWallPowerStats[0].totalPower,
-        ];
-        const voidBonuses: [number, number] = [
-          calculateVoidDamageBonus(updatedPlayersArray[0].wall, projectedDamageTaken[0]),
-          calculateVoidDamageBonus(updatedPlayersArray[1].wall, projectedDamageTaken[1]),
-        ];
-        const wallPowerStats: [WallPowerStats, WallPowerStats] = [
-          {
-            ...baseWallPowerStats[0],
-            totalPower: baseWallPowerStats[0].totalPower + voidBonuses[0],
-          },
-          {
-            ...baseWallPowerStats[1],
-            totalPower: baseWallPowerStats[1].totalPower + voidBonuses[1],
-          },
-        ];
-
-        const healingTotals: [number, number] = [
-          calculateHealingAmount(updatedPlayersArray[0].wall),
-          calculateHealingAmount(updatedPlayersArray[1].wall),
-        ];
-
-        const scoringSnapshot: ScoringSnapshot = {
-          floorPenalties,
-          wallPowerStats,
-          healingTotals,
-        };
-
         return {
           ...state,
           players: updatedPlayersArray,
           scoringPhase: 'clearing-floor' as const,
-          scoringSnapshot,
         };
       }
 
@@ -1135,56 +992,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         };
       }
 
-      if (currentPhase === 'healing') {
-        if (!state.scoringSnapshot) {
-          return state;
-        }
-
-        const healingAmounts: [number, number] = state.scoringSnapshot.healingTotals;
-
-        const applyHealing = (player: Player, amount: number): Player => {
-          const maxHealth = player.maxHealth ?? player.health;
-          return {
-            ...player,
-            health: Math.min(maxHealth, player.health + amount),
-          };
-        };
-
-        const healedPlayers: [Player, Player] = [
-          applyHealing(state.players[0], healingAmounts[0]),
-          applyHealing(state.players[1], healingAmounts[1]),
-        ];
-
-        console.log('Scoring: Applied healing stage', healingAmounts);
-
-        return {
-          ...state,
-          players: healedPlayers,
-          scoringPhase: 'complete' as const,
-        };
-      }
-
-      if (currentPhase === 'damage') {
-        return {
-          ...state,
-          scoringPhase: 'complete' as const,
-          scoringSnapshot: null,
-        };
-      }
-
       if (currentPhase === 'complete') {
         console.log('Scoring: Complete, checking game over...');
-        const roundDamage = state.roundDamage ?? [0, 0];
         const roundScore = {
           round: state.round,
           playerName: state.players[0].name,
-          playerEssence: roundDamage[0],
-          playerFocus: 1,
-          playerTotal: roundDamage[0],
           opponentName: state.players[1].name,
-          opponentEssence: roundDamage[1],
-          opponentFocus: 1,
-          opponentTotal: roundDamage[1],
         };
         const roundHistory = [...state.roundHistory, roundScore];
         const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;

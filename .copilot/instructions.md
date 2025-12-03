@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Massive Spell: Arcane Arena** is a roguelite deck-building 1v1 duel game inspired by Azul's drafting mechanics. Players draft runes from runeforges, place them on pattern lines, and complete lines to add runes to their 5×5 scoring wall. The goal is to build connected segments of runes to maximize spellpower (Essence × Focus) and defeat the opponent.
+**Massive Spell: Arcane Arena** is a roguelite deck-building 1v1 duel game inspired by Azul's drafting mechanics. Players draft runes from runeforges, place them on pattern lines, and complete lines to add runes to their 5×5 scoring wall. The goal is to build connected segments of runes to maximize spell damage while surviving arcane overload.
 
 ### Tech Stack
 - **React 19** + **TypeScript** (strict mode)
@@ -12,9 +12,7 @@
 - **Inline CSS** styling with JavaScript style objects (no CSS-in-JS libraries, no Tailwind, no CSS Modules)
 
 ### Current Scope
-- Single-page PvE game (Player vs AI opponent)
-- No routing, no backend integration, no meta-progression
-- Focus: Core gameplay loop with polished UX
+- Solo Game Mode, where players try to reach the target RuneScore before they succumb to Arcane Overload
 
 ---
 
@@ -434,11 +432,12 @@ const fadeInUp = {
 ### Core Concepts
 
 **Rune Types** (5 elemental types):
-- `Fire`: Red (#FF4500) — Increases Essence (+1 per Fire rune on wall)
-- `Frost`: Blue (#1E90FF) — Freezes opponent's runeforge (blocks one draft)
-- `Poison`: Green (#32CD32) — Reduces opponent's Focus (-1 per Poison rune on your wall)
-- `Void`: Purple (#8B008B) — Destroys all runes in a selected runeforge
-- `Wind`: Yellow (#F0E68C) — Cancels floor line penalties (one Wind cancels one penalty)
+- `Fire`: Red (#FF4500)
+- `Frost`: Teal (#1E90FF)
+- `Poison`: Green (#32CD32)
+- `Void`: Purple (#8B008B)
+- `Wind`: Blue (#1E90FF)
+- `Lightning`: Yellow (#F0E68C)
 
 **Rune Effects** (discriminated union):
 ```typescript

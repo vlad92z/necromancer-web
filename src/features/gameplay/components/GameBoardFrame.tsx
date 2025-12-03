@@ -19,8 +19,6 @@ import { useFreezeSound } from '../../../hooks/useFreezeSound';
 import { useVoidEffectSound } from '../../../hooks/useVoidEffectSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { getControllerForIndex } from '../../../utils/playerControllers';
-import { calculateEffectiveFloorPenalty, calculateProjectedPower, applyStressMitigation } from '../../../utils/scoring';
-import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../utils/runeEffects';
 import type { SoloStatsProps } from './Player/SoloStats';
 
 const BOARD_BASE_SIZE = 1200;
@@ -89,7 +87,6 @@ export interface GameBoardSharedProps {
   currentPlayerId: string;
   selectedRuneType: RuneType | null;
   hasSelectedRunes: boolean;
-  gameMode: GameState['gameMode'];
   playerFrozenLines: number[];
   opponentFrozenLines: number[];
   playerLockedLines: number[];
@@ -142,12 +139,10 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     frostEffectPending,
     frozenPatternLines,
     lockedPatternLines,
-    gameMode,
     shouldTriggerEndRound,
     scoringPhase,
     draftSource,
     round,
-    strain,
     strainMultiplier,
   } = gameState;
   const isSoloMode = variant === 'solo';
@@ -211,10 +206,6 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
 
   const winner = !isSoloMode && isGameOver ? (players[0].health > players[1].health ? players[0] : players[1].health > players[0].health ? players[1] : null) : null;
 
-  const baseOverloadPenalty = isSoloMode
-    ? calculateEffectiveFloorPenalty(players[0].floorLine.runes, players[0].patternLines, players[0].wall, gameMode)
-    : 0;
-  const overloadPenalty = isSoloMode ? baseOverloadPenalty : 0;
   const soloRuneScore = isSoloMode
     ? {
         currentScore: runePowerTotal,
@@ -224,74 +215,12 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
   const soloStats = isSoloMode
     ? (() => {
         const player = players[0];
-        const completedPatternLines = player.patternLines
-          .map((line, index) => ({ line, row: index }))
-          .filter(({ line }) => line.count === line.tier && line.runeType !== null)
-          .map(({ line, row }) => ({
-            row,
-            runeType: line.runeType!,
-            effects: copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType!)),
-          }));
-
-        const healingAmount =
-          gameMode === 'standard'
-            ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
-              completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
-            : 0;
-
-        const windMitigationCount =
-          gameMode === 'standard'
-            ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
-              completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
-            : 0;
-
-        const { essence, focus, totalPower } = calculateProjectedPower(player.wall, completedPatternLines, baseOverloadPenalty, gameMode);
-        const hasPenalty = overloadPenalty > 0;
-
-        const countRunesOfType = (runeType: RuneType): number => {
-          const wallCount = player.wall.flat().reduce((total, cell) => (cell.runeType === runeType ? total + 1 : total), 0);
-          const pendingCount = completedPatternLines.reduce((total, line) => (line.runeType === runeType ? total + 1 : total), 0);
-
-          return wallCount + pendingCount;
-        };
-
-        const frostRuneCount = gameMode === 'standard' ? countRunesOfType('Frost') : 0;
-        const windRuneCount = gameMode === 'standard' ? countRunesOfType('Wind') : 0;
-        const voidRuneCount = gameMode === 'standard' ? countRunesOfType('Void') : 0;
-        const hasWindMitigation = gameMode === 'standard' && (windMitigationCount > 0 || windRuneCount > 0);
-        const strainMitigation =
-          gameMode === 'standard'
-            ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'StrainMitigation'), 0) +
-              completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'StrainMitigation'), 0)
-            : 0;
-        const overloadMultiplier = applyStressMitigation(strain, strainMitigation);
-        const overloadDamagePreview = overloadPenalty * overloadMultiplier;
-
-        const essenceRuneCount =
-          gameMode === 'standard'
-            ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
-              completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
-            : 0;
 
         return {
           isActive: currentPlayerIndex === 0,
           health: player.health,
-          healing: healingAmount,
-          essence,
-          focus,
-          totalPower,
           runePowerTotal,
-          essenceRuneCount,
-          hasPenalty,
-          hasOverload: hasPenalty,
-          hasWindMitigation,
-          windRuneCount,
-          overloadPenalty,
-          overloadMultiplier,
-          overloadDamagePreview,
           round,
-          frostRuneCount,
-          voidRuneCount,
           fatigueMultiplier: strainMultiplier,
           deckCount: player.deck.length,
         };
@@ -712,14 +641,6 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
       timer = setTimeout(() => {
         processScoringStep();
       }, 1500);
-    } else if (scoringPhase === 'healing') {
-      timer = setTimeout(() => {
-        processScoringStep();
-      }, 1600);
-    } else if (scoringPhase === 'damage') {
-      timer = setTimeout(() => {
-        processScoringStep();
-      }, 1600);
     } else if (scoringPhase === 'complete') {
       timer = setTimeout(() => {
         processScoringStep();
@@ -838,7 +759,6 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     currentPlayerId: currentPlayer.id,
     selectedRuneType,
     hasSelectedRunes,
-    gameMode,
     playerFrozenLines,
     opponentFrozenLines,
     playerLockedLines,

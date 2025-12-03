@@ -7,8 +7,6 @@ import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
-import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../../utils/scoring';
-import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../../utils/runeEffects';
 import { SoloRuneScoreOverlay } from '../SoloRuneScoreOverlay';
 
 interface PlayerBoardProps {
@@ -41,42 +39,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     }
   };
 
-  // Find completed pattern lines
-  const completedPatternLines = player.patternLines
-    .map((line, index) => ({ line, row: index }))
-    .filter(({ line }) => line.count === line.tier && line.runeType !== null)
-    .map(({ line, row }) => ({
-      row,
-      runeType: line.runeType!,
-      effects: copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType!)),
-    }));
-
   const currentHealth = player.health;
-  const healingAmount = player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0);
-  
-  // Floor mitigation is applied only when runes grant FloorPenaltyMitigation (legacy Wind effect).
-  const floorPenaltyCount = calculateEffectiveFloorPenalty(
-    player.floorLine.runes,
-    player.patternLines,
-    player.wall
-  );
-  const windMitigationCount = player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0);
-  const windRuneCount = player.wall.flat().reduce((total, cell) => (cell.runeType === 'Wind' ? total + 1 : total), 0) +
-      completedPatternLines.reduce((total, line) => (line.runeType === 'Wind' ? total + 1 : total), 0);
-  const hasWindMitigation = (windMitigationCount > 0 || windRuneCount > 0);
- 
-  const { essence, focus, totalPower } = calculateProjectedPower(
-    player.wall,
-    completedPatternLines,
-    floorPenaltyCount
-  );
-  const hasPenalty = floorPenaltyCount > 0;
-  
-  // Count Essence-boosting runes: current wall + completed pattern lines
-  const essenceRuneCount = player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0);
 
   const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
 
@@ -170,7 +133,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               floorLine={player.floorLine}
               onPlaceRunesInFloor={onPlaceRunesInFloor}
               canPlace={canPlace}
-              mitigatedSlots={windMitigationCount}
+              mitigatedSlots={0}
               playerId={player.id}
               hiddenSlotIndexes={hiddenFloorSlotIndexes}
             />
@@ -192,14 +155,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               isActive={isActive}
               nameColor={nameColor}
               health={currentHealth}
-              healing={healingAmount}
-              essence={essence}
-              focus={focus}
-              totalPower={totalPower}
-              essenceRuneCount={essenceRuneCount}
-              hasPenalty={hasPenalty}
-              hasWindMitigation={hasWindMitigation}
-              windRuneCount={windRuneCount}
               round={round}
             />
           </div>
