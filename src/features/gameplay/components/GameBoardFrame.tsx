@@ -224,7 +224,6 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
 
         return {
           isActive: currentPlayerIndex === 0,
-          health: player.health,
           overloadMultiplier,
           round,
           deckCount: player.deck.length,

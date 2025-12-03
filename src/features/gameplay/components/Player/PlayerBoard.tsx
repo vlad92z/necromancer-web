@@ -8,6 +8,7 @@ import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
 import { SoloRuneScoreOverlay } from '../SoloRuneScoreOverlay';
+import { SoloHealthTracker } from '../SoloHealthTracker';
 
 interface PlayerBoardProps {
   player: Player;
@@ -75,11 +76,20 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               style={{ display: 'flex', justifyContent: 'center' }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div style={{ width: '100%', maxWidth: '640px' }}>
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: '640px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
                 <SoloRuneScoreOverlay
                   currentScore={soloRuneScore.currentScore}
                   targetScore={soloRuneScore.targetScore}
                 />
+                <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
               </div>
             </div>
           )}
