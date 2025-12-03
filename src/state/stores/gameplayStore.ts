@@ -4,18 +4,20 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, RuneEffect, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { calculateSegmentSize, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
+import { resolveSegment, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
-import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
+import { copyRuneEffects, getEffectValue, getRuneEffectsForType, hasEffectType } from '../../utils/runeEffects';
 
-function calculatePassiveEffectForWall(
+type NumericEffectType = Extract<RuneEffect, { amount: number }>['type'];
+
+function calculateEffectValueForWall(
   wall: Player['wall'],
-  effectType: PassiveRuneEffect['type']
+  effectType: NumericEffectType
 ): number {
   return wall.flat().reduce(
-    (total, cell) => total + getPassiveEffectValue(cell.effects, effectType),
+    (total, cell) => total + getEffectValue(cell.effects, effectType),
     0
   );
 }
@@ -50,7 +52,7 @@ function calculateImmediateOverloadDamage(
     return 0;
   }
 
-  const frostMitigation = calculatePassiveEffectForWall(wall, 'StrainMitigation');
+  const frostMitigation = calculateEffectValueForWall(wall, 'StrainMitigation');
   const overloadMultiplier = applyStressMitigation(strain, frostMitigation);
   return addedPenalty * overloadMultiplier;
 }
@@ -411,7 +413,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             state.strain
           )
         : 0;
-      const nextHealth = shouldApplyOverloadDamage
+      let nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
 
@@ -421,6 +423,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const updatedLockedPatternLines: Record<Player['id'], number[]> = { ...state.lockedPatternLines };
       let nextRunePowerTotal = state.runePowerTotal;
       let damageDealt = 0;
+      let healingGained = 0;
       let opponentHealth: number | null = null;
       let soloOutcome: SoloOutcome = state.soloOutcome;
 
@@ -437,7 +440,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           firstRuneId: null,
           firstRuneEffects: null,
         };
-        damageDealt = Math.max(1, calculateSegmentSize(updatedWall, row, col));
+        const resolvedSegment = resolveSegment(updatedWall, row, col);
+        damageDealt = resolvedSegment.damage;
+        healingGained = resolvedSegment.healing;
         if (state.matchType === 'solo' && state.soloPatternLineLock) {
           const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
           updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(patternLineIndex)
@@ -458,6 +463,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             ? [updatedRoundDamage[0] + damageDealt, updatedRoundDamage[1]]
             : [updatedRoundDamage[0], updatedRoundDamage[1] + damageDealt];
         }
+      }
+
+      if (healingGained > 0) {
+        const maxHealth = currentPlayer.maxHealth ?? state.startingHealth;
+        nextHealth = Math.min(maxHealth, nextHealth + healingGained);
       }
 
       // Update player
@@ -529,11 +539,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
       
       // Check if Void runes were placed (Void effect: destroy a single rune)
-      const hasVoidRunes = selectedRunes.some((rune) => hasActiveEffect(rune.effects, 'DestroyRune'));
+      const hasVoidRunes = selectedRunes.some((rune) => hasEffectType(rune.effects, 'DestroyRune'));
       const hasVoidTargets = state.runeforges.some(f => f.runes.length > 0) || state.centerPool.length > 0;
       
       // Check if Frost runes were placed (Frost effect: freeze an opponent pattern line)
-      const hasFrostRunes = !isSoloMode && selectedRunes.some((rune) => hasActiveEffect(rune.effects, 'FreezePatternLine'));
+      const hasFrostRunes = !isSoloMode && selectedRunes.some((rune) => hasEffectType(rune.effects, 'FreezePatternLine'));
       const opponentId = state.players[opponentIndex].id;
       const opponentPatternLines = state.players[opponentIndex].patternLines;
       const frozenOpponentLines = state.frozenPatternLines[opponentId] ?? [];

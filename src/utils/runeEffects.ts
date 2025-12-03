@@ -2,7 +2,7 @@
  * runeEffects - helpers for rune effect definitions and accessors.
  */
 
-import type { ActiveRuneEffect, PassiveRuneEffect, RuneEffects, RuneType } from '../types/game';
+import type { RuneEffect, RuneEffects, RuneType } from '../types/game';
 
 export interface RuneEffectTuning {
   lifeHealing?: number;
@@ -14,42 +14,21 @@ export interface RuneEffectTuning {
  * Legacy rune effects preserved for future use.
  */
 export const LEGACY_RUNE_EFFECTS: Pick<Record<RuneType, RuneEffects>, 'Frost' | 'Void'> = {
-  Frost: {
-    passive: [],
-    active: [{ type: 'FreezePatternLine' }],
-  },
-  Void: {
-    passive: [],
-    active: [{ type: 'DestroyRune' }],
-  },
-};
-
-/**
- * Archived complex effects kept for future variants.
- */
-export const ADVANCED_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
-  Frost: { passive: [{ type: 'StrainMitigation', amount: 0.1 }], active: [] },
-  Life: { passive: [{ type: 'Healing', amount: 10 }], active: [] },
-  Void: { passive: [{ type: 'DamageToSpellpower', amount: 0.1 }], active: [] },
-  Wind: { passive: [{ type: 'FloorPenaltyMitigation', amount: 1 }], active: [] },
-  Lightning: { passive: [{ type: 'EssenceBonus', amount: 1 }], active: [] },
+  Frost: [{ type: 'FreezePatternLine' }],
+  Void: [{ type: 'DestroyRune' }],
 };
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: { passive: [], active: [] },
-  Frost: { passive: [], active: [] },
-  Life: { passive: [], active: [] },
-  Void: { passive: [], active: [] },
-  Wind: { passive: [], active: [] },
-  Lightning: { passive: [], active: [] },
+  Fire: [{ type: 'Damage', amount: 1 }],
+  Frost: [{ type: 'Healing', amount: 1 }],
+  Life: [{ type: 'Healing', amount: 1 }],
+  Void: [{ type: 'Damage', amount: 1 }],
+  Wind: [{ type: 'Healing', amount: 1 }],
+  Lightning: [{ type: 'Damage', amount: 1 }],
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {
-  return {
-    passive: effects.passive.map((effect) => ({ ...effect })),
-    active: effects.active.map((effect) => ({ ...effect })),
-  };
+  return effects.map((effect) => ({ ...effect }));
 }
 
 export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTuning): RuneEffects {
@@ -59,13 +38,9 @@ export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTun
     return cloneEffects(baseEffects);
   }
 
-  const tunedPassive = baseEffects.passive.map((effect) => {
+  const tunedEffects = baseEffects.map((effect) => {
     if (effect.type === 'Healing' && tuning.lifeHealing !== undefined) {
       return { ...effect, amount: tuning.lifeHealing };
-    }
-
-    if (effect.type === 'StrainMitigation' && tuning.frostMitigation !== undefined) {
-      return { ...effect, amount: tuning.frostMitigation };
     }
 
     if (effect.type === 'DamageToSpellpower' && tuning.voidConversion !== undefined) {
@@ -75,33 +50,30 @@ export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTun
     return effect;
   });
 
-  return cloneEffects({
-    ...baseEffects,
-    passive: tunedPassive,
-  });
+  return cloneEffects(tunedEffects);
 }
 
 export function copyRuneEffects(effects: RuneEffects | null | undefined): RuneEffects {
   if (!effects) {
-    return { passive: [], active: [] };
+    return [];
   }
   return cloneEffects(effects);
 }
 
-export function getPassiveEffectValue(
+export function getEffectValue(
   effects: RuneEffects | null | undefined,
-  type: PassiveRuneEffect['type']
+  type: Extract<RuneEffect, { amount: number }>['type']
 ): number {
   if (!effects) return 0;
-  return effects.passive.reduce((total, effect) => {
-    return effect.type === type ? total + effect.amount : total;
+  return effects.reduce((total, effect) => {
+    return effect.type === type && 'amount' in effect ? total + effect.amount : total;
   }, 0);
 }
 
-export function hasActiveEffect(
+export function hasEffectType(
   effects: RuneEffects | null | undefined,
-  type: ActiveRuneEffect['type']
+  type: RuneEffect['type']
 ): boolean {
   if (!effects) return false;
-  return effects.active.some((effect) => effect.type === type);
+  return effects.some((effect) => effect.type === type);
 }

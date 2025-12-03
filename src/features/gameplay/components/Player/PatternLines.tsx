@@ -134,7 +134,7 @@ export function PatternLines({
                 const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
                 const runeEffects = isPrimaryRuneSlot && line.runeType
                   ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
-                  : { passive: [], active: [] };
+                  : [];
                 const rune = hasRuneInSlot && line.runeType ? {
                   id: `pattern-${index}-${slotIndex}`,
                   runeType: line.runeType,

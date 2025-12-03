@@ -17,7 +17,7 @@ import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { applyStressMitigation } from '../../../utils/scoring';
-import { getPassiveEffectValue } from '../../../utils/runeEffects';
+import { getEffectValue } from '../../../utils/runeEffects';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 
@@ -173,7 +173,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         const player = players[0];
         const strainMitigation = player.wall
           .flat()
-          .reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'StrainMitigation'), 0);
+          .reduce((total, cell) => total + getEffectValue(cell.effects, 'StrainMitigation'), 0);
         const overloadMultiplier = applyStressMitigation(strain, strainMitigation);
 
         return {

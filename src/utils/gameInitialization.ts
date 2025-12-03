@@ -75,7 +75,7 @@ export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
   startingHealth: SOLO_STARTING_HEALTH,
   startingStrain: DEFAULT_STARTING_STRAIN,
   strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
-  lifeRuneHealing: 5,
+  lifeRuneHealing: 1,
   frostMitigationPercent: 10,
   voidConversionPercent: 10,
   factoriesPerPlayer: SOLO_FACTORIES_PER_PLAYER,
