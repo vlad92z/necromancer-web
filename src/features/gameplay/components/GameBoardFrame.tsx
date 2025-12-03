@@ -2,10 +2,10 @@
  * GameBoardFrame - shared logic and layout shell for solo and duel boards
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { ChangeEvent } from 'react';
-import type { GameState, RuneType, AnimatingRune, Rune } from '../../../types/game';
+import type { GameState, RuneType, Rune } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { GameLogOverlay } from './GameLogOverlay';
@@ -19,13 +19,13 @@ import { useUIStore } from '../../../state/stores/uiStore';
 import { applyStressMitigation } from '../../../utils/scoring';
 import { getPassiveEffectValue } from '../../../utils/runeEffects';
 import type { SoloStatsProps } from './Player/SoloStats';
+import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
 const BOARD_PADDING = 80;
 const MIN_BOARD_SCALE = 0.55;
 const MIN_AVAILABLE_SIZE = 520;
-const OVERLAY_RUNE_SIZE = 48;
 
 const computeBoardScale = (width: number, height: number): number => {
   const availableWidth = Math.max(width - BOARD_PADDING, MIN_AVAILABLE_SIZE);
@@ -34,28 +34,6 @@ const computeBoardScale = (width: number, height: number): number => {
   const clamped = Math.min(rawScale, 1);
   return Math.max(clamped, MIN_BOARD_SCALE);
 };
-
-interface SelectionSnapshot {
-  playerId: string;
-  playerIndex: number;
-  runeOrder: Rune[];
-  patternLineCounts: number[];
-  runePositions: Map<string, { startX: number; startY: number }>;
-  floorRuneCount: number;
-}
-
-type PendingPlacementTarget = { type: 'pattern'; index: number } | { type: 'floor' } | null;
-
-interface AutoAnimationMeta {
-  pattern?: { playerId: string; slotKeys: string[] };
-  floor?: { playerId: string; slotIndexes: number[] };
-}
-
-interface RuneforgeAnimationSnapshot {
-  key: string;
-  runes: Rune[];
-  runePositions: Map<string, { startX: number; startY: number }>;
-}
 
 export type GameBoardVariant = 'solo' | 'duel';
 
@@ -76,31 +54,40 @@ export interface DuelVariantData {
 }
 
 export interface GameBoardSharedProps {
+  // Core context
   players: GameState['players'];
   currentPlayerIndex: number;
   currentPlayerId: string;
+  round: number;
+  isDraftPhase: boolean;
+  isGameOver: boolean;
+
+  // Selection state
   selectedRuneType: RuneType | null;
+  selectedRunes: Rune[];
   hasSelectedRunes: boolean;
+  draftSource: GameState['draftSource'];
+
+  // Board data
+  runeforges: GameState['runeforges'];
+  centerPool: GameState['centerPool'];
+  runeTypeCount: GameState['runeTypeCount'];
+
+  // Locks and visibility
   playerLockedLines: number[];
   opponentLockedLines: number[];
   playerHiddenPatternSlots?: Set<string>;
   opponentHiddenPatternSlots?: Set<string>;
   playerHiddenFloorSlots?: Set<number>;
-  isDraftPhase: boolean;
-  isGameOver: boolean;
-  runeforges: GameState['runeforges'];
-  centerPool: GameState['centerPool'];
-  runeTypeCount: GameState['runeTypeCount'];
-  selectedRunes: Rune[];
-  draftSource: GameState['draftSource'];
   animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
+
+  // Actions
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onCancelSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
   onPlaceRunesInFloor: () => void;
-  round: number;
   returnToStartScreen: () => void;
 }
 
@@ -144,28 +131,29 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     }
     return window.localStorage.getItem('musicMuted') === 'true';
   });
-  const [animatingRunes, setAnimatingRunes] = useState<AnimatingRune[]>([]);
-  const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
-  const [pendingPlacementTarget, setPendingPlacementTarget] = useState<PendingPlacementTarget>(null);
-  const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Record<string, Set<string>>>({});
-  const [hiddenFloorSlots, setHiddenFloorSlots] = useState<Record<string, Set<number>>>({});
-  const [hiddenCenterRuneIds, setHiddenCenterRuneIds] = useState<Set<string>>(new Set());
-  const manualAnimationRef = useRef(false);
-  const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
-  const previousSelectedCountRef = useRef<number>(selectedRunes.length);
-  const autoAnimationMetaRef = useRef<AutoAnimationMeta | null>(null);
-  const runeforgeAnimationMetaRef = useRef<{ runeIds: string[] } | null>(null);
-  const lastRuneforgeAnimationKeyRef = useRef<string | null>(null);
-  const runeforgeAnimationSnapshotRef = useRef<RuneforgeAnimationSnapshot | null>(null);
-
   const isDraftPhase = turnPhase === 'draft';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
-  const activeAnimatingRunes = useMemo(() => [...animatingRunes, ...runeforgeAnimatingRunes], [animatingRunes, runeforgeAnimatingRunes]);
-  const isAnimatingPlacement = animatingRunes.length > 0;
-  const animatingRuneIds = activeAnimatingRunes.map((rune) => rune.id);
+  const {
+    animatingRunes: placementAnimatingRunes,
+    runeforgeAnimatingRunes: centerAnimatingRunes,
+    activeAnimatingRunes,
+    animatingRuneIds,
+    hiddenPatternSlots,
+    hiddenFloorSlots,
+    hiddenCenterRuneIds,
+    isAnimatingPlacement,
+    handlePlacementAnimationComplete,
+    handleRuneforgeAnimationComplete,
+  } = useRunePlacementAnimations({
+    players,
+    currentPlayerIndex,
+    selectedRunes,
+    draftSource,
+    centerPool,
+  });
   useRunePlacementSounds(players, activeAnimatingRunes, soundVolume);
   useBackgroundMusic(!isMusicMuted, soundVolume);
 
@@ -223,326 +211,12 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     setSoundVolume(nextValue / 100);
   };
 
-  const hidePatternSlots = useCallback((playerId: string, slotKeys: string[]) => {
-    if (slotKeys.length === 0) {
-      return;
-    }
-    setHiddenPatternSlots((prev) => {
-      const playerSet = prev[playerId] ? new Set(prev[playerId]) : new Set<string>();
-      slotKeys.forEach((key) => playerSet.add(key));
-      return {
-        ...prev,
-        [playerId]: playerSet,
-      };
-    });
-  }, []);
-
-  const revealPatternSlots = useCallback((playerId: string, slotKeys: string[]) => {
-    if (slotKeys.length === 0) {
-      return;
-    }
-    setHiddenPatternSlots((prev) => {
-      const playerSet = prev[playerId];
-      if (!playerSet) {
-        return prev;
-      }
-      const nextSet = new Set(playerSet);
-      slotKeys.forEach((key) => nextSet.delete(key));
-      const nextState = { ...prev };
-      if (nextSet.size === 0) {
-        delete nextState[playerId];
-      } else {
-        nextState[playerId] = nextSet;
-      }
-      return nextState;
-    });
-  }, []);
-
-  const hideFloorSlots = useCallback((playerId: string, slotIndexes: number[]) => {
-    if (slotIndexes.length === 0) {
-      return;
-    }
-    setHiddenFloorSlots((prev) => {
-      const playerSet = prev[playerId] ? new Set(prev[playerId]) : new Set<number>();
-      slotIndexes.forEach((index) => playerSet.add(index));
-      return {
-        ...prev,
-        [playerId]: playerSet,
-      };
-    });
-  }, []);
-
-  const revealFloorSlots = useCallback((playerId: string, slotIndexes: number[]) => {
-    if (slotIndexes.length === 0) {
-      return;
-    }
-    setHiddenFloorSlots((prev) => {
-      const playerSet = prev[playerId];
-      if (!playerSet) {
-        return prev;
-      }
-      const nextSet = new Set(playerSet);
-      slotIndexes.forEach((index) => nextSet.delete(index));
-      const nextState = { ...prev };
-      if (nextSet.size === 0) {
-        delete nextState[playerId];
-      } else {
-        nextState[playerId] = nextSet;
-      }
-      return nextState;
-    });
-  }, []);
-
-  const hideCenterRunes = useCallback((runeIds: string[]) => {
-    if (runeIds.length === 0) {
-      return;
-    }
-    setHiddenCenterRuneIds((prev) => {
-      const nextSet = new Set(prev);
-      let changed = false;
-      runeIds.forEach((id) => {
-        if (!nextSet.has(id)) {
-          nextSet.add(id);
-          changed = true;
-        }
-      });
-      return changed ? nextSet : prev;
-    });
-  }, []);
-
-  const revealCenterRunes = useCallback((runeIds: string[]) => {
-    if (runeIds.length === 0) {
-      return;
-    }
-    setHiddenCenterRuneIds((prev) => {
-      if (prev.size === 0) {
-        return prev;
-      }
-      const nextSet = new Set(prev);
-      let changed = false;
-      runeIds.forEach((id) => {
-        if (nextSet.delete(id)) {
-          changed = true;
-        }
-      });
-      return changed ? nextSet : prev;
-    });
-  }, []);
-
-  const captureSelectedRunePositions = (runes: Rune[]): Map<string, { startX: number; startY: number }> => {
-    const positions = new Map<string, { startX: number; startY: number }>();
-    if (typeof document === 'undefined') {
-      return positions;
-    }
-    runes.forEach((rune) => {
-      const runeElement = document.querySelector<HTMLElement>(`[data-selected-rune="true"][data-rune-id="${rune.id}"]`);
-      if (!runeElement) {
-        return;
-      }
-      const rect = runeElement.getBoundingClientRect();
-      positions.set(rune.id, {
-        startX: rect.left + rect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-        startY: rect.top + rect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-      });
-    });
-    return positions;
-  };
-
-  const captureRuneforgeRunePositions = useCallback((runes: Rune[]): Map<string, { startX: number; startY: number }> => {
-    const positions = new Map<string, { startX: number; startY: number }>();
-    if (typeof document === 'undefined') {
-      return positions;
-    }
-    runes.forEach((rune) => {
-      const runeElement = document.querySelector<HTMLElement>(`[data-rune-id="${rune.id}"][data-rune-source="runeforge"]`);
-      if (!runeElement) {
-        return;
-      }
-      const rect = runeElement.getBoundingClientRect();
-      positions.set(rune.id, {
-        startX: rect.left + rect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-        startY: rect.top + rect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-      });
-    });
-    return positions;
-  }, []);
-
-  const triggerAutoPlacementAnimation = useCallback(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-    const snapshot = selectionSnapshotRef.current;
-    selectionSnapshotRef.current = null;
-    if (!snapshot) {
-      return;
-    }
-    const targetPlayer = players.find((player) => player.id === snapshot.playerId);
-    if (!targetPlayer) {
-      return;
-    }
-    const updatedCounts = targetPlayer.patternLines.map((line) => line.count);
-    const previousCounts = snapshot.patternLineCounts;
-    const changedLineIndex = updatedCounts.findIndex((count, index) => count > (previousCounts[index] ?? 0));
-    const overlayRunes: AnimatingRune[] = [];
-    const patternSlotKeys: string[] = [];
-    let patternRunesUsed = 0;
-
-    if (changedLineIndex !== -1) {
-      const placedCount = updatedCounts[changedLineIndex] - (previousCounts[changedLineIndex] ?? 0);
-      if (placedCount > 0) {
-        const runesToAnimate = snapshot.runeOrder.slice(0, placedCount);
-        runesToAnimate.forEach((rune, offset) => {
-          const start = snapshot.runePositions.get(rune.id);
-          if (!start) {
-            return;
-          }
-          const slotIndex = (previousCounts[changedLineIndex] ?? 0) + offset;
-          const selector = `[data-player-id="${snapshot.playerId}"][data-pattern-line-index="${changedLineIndex}"][data-pattern-slot-index="${slotIndex}"]`;
-          const targetElement = document.querySelector<HTMLElement>(selector);
-          if (!targetElement) {
-            return;
-          }
-          const targetRect = targetElement.getBoundingClientRect();
-          overlayRunes.push({
-            id: rune.id,
-            runeType: rune.runeType,
-            startX: start.startX,
-            startY: start.startY,
-            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-          });
-          patternSlotKeys.push(`${changedLineIndex}-${slotIndex}`);
-        });
-        patternRunesUsed = placedCount;
-      }
-    }
-
-    const previousFloorCount = snapshot.floorRuneCount;
-    const newFloorCount = targetPlayer.floorLine.runes.length;
-    const floorDelta = newFloorCount - previousFloorCount;
-    const floorSlotIndexes: number[] = [];
-    if (floorDelta > 0) {
-      const overflowRunes = snapshot.runeOrder.slice(patternRunesUsed, patternRunesUsed + floorDelta);
-      overflowRunes.forEach((rune, offset) => {
-        const start = snapshot.runePositions.get(rune.id);
-        if (!start) {
-          return;
-        }
-        const slotIndex = previousFloorCount + offset;
-        const selector = `[data-player-id="${snapshot.playerId}"][data-floor-slot-index="${slotIndex}"]`;
-        const targetElement = document.querySelector<HTMLElement>(selector);
-        if (!targetElement) {
-          return;
-        }
-        const targetRect = targetElement.getBoundingClientRect();
-        overlayRunes.push({
-          id: rune.id,
-          runeType: rune.runeType,
-          startX: start.startX,
-          startY: start.startY,
-          endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-          endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-        });
-        floorSlotIndexes.push(slotIndex);
-      });
-    }
-
-    if (overlayRunes.length === 0) {
-      return;
-    }
-
-    const meta: AutoAnimationMeta = {};
-    if (patternSlotKeys.length > 0) {
-      hidePatternSlots(snapshot.playerId, patternSlotKeys);
-      meta.pattern = { playerId: snapshot.playerId, slotKeys: patternSlotKeys };
-    }
-    if (floorSlotIndexes.length > 0) {
-      hideFloorSlots(snapshot.playerId, floorSlotIndexes);
-      meta.floor = { playerId: snapshot.playerId, slotIndexes: floorSlotIndexes };
-    }
-    autoAnimationMetaRef.current = Object.keys(meta).length > 0 ? meta : null;
-    setAnimatingRunes(overlayRunes);
-  }, [players, hidePatternSlots, hideFloorSlots]);
-
-  const animateRuneforgeToCenter = useCallback(
-    (snapshot: RuneforgeAnimationSnapshot) => {
-      const runes = snapshot.runes;
-      const runeIds = runes.map((rune) => rune.id);
-      if (runes.length === 0) {
-        return;
-      }
-      if (typeof document === 'undefined') {
-        revealCenterRunes(runeIds);
-        return;
-      }
-      requestAnimationFrame(() => {
-        const overlayRunes: AnimatingRune[] = [];
-        runes.forEach((rune) => {
-          const start = snapshot.runePositions.get(rune.id);
-          const targetElement = document.querySelector<HTMLElement>(`[data-rune-id="${rune.id}"][data-rune-source="center"]`);
-          if (!start || !targetElement) {
-            return;
-          }
-          const targetRect = targetElement.getBoundingClientRect();
-          overlayRunes.push({
-            id: rune.id,
-            runeType: rune.runeType,
-            startX: start.startX,
-            startY: start.startY,
-            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-          });
-        });
-        if (overlayRunes.length === 0) {
-          revealCenterRunes(runeIds);
-          runeforgeAnimationMetaRef.current = null;
-          return;
-        }
-        runeforgeAnimationMetaRef.current = { runeIds };
-        setRuneforgeAnimatingRunes(overlayRunes);
-      });
-    },
-    [revealCenterRunes],
-  );
-
   const handleCancelSelection = () => {
     if (isAnimatingPlacement) {
       return;
     }
     cancelSelection();
   };
-
-  const handlePlacementAnimationComplete = () => {
-    const nextPlacement = pendingPlacementTarget;
-    setAnimatingRunes([]);
-    setPendingPlacementTarget(null);
-    if (nextPlacement) {
-      if (nextPlacement.type === 'pattern') {
-        placeRunes(nextPlacement.index);
-      } else {
-        placeRunesInFloor();
-      }
-    }
-    const autoMeta = autoAnimationMetaRef.current;
-    if (autoMeta) {
-      if (autoMeta.pattern) {
-        revealPatternSlots(autoMeta.pattern.playerId, autoMeta.pattern.slotKeys);
-      }
-      if (autoMeta.floor) {
-        revealFloorSlots(autoMeta.floor.playerId, autoMeta.floor.slotIndexes);
-      }
-      autoAnimationMetaRef.current = null;
-    }
-  };
-
-  const handleRuneforgeAnimationComplete = useCallback(() => {
-    const runeIds = runeforgeAnimationMetaRef.current?.runeIds ?? [];
-    runeforgeAnimationMetaRef.current = null;
-    setRuneforgeAnimatingRunes([]);
-    if (runeIds.length > 0) {
-      revealCenterRunes(runeIds);
-    }
-  }, [revealCenterRunes]);
 
   const handlePlaceRunesInFloorWrapper = () => {
     if (isAnimatingPlacement) {
@@ -592,82 +266,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     };
   }, [scoringPhase, processScoringStep]);
 
-  useLayoutEffect(() => {
-    if (selectedRunes.length === 0) {
-      return;
-    }
-    const runePositions = captureSelectedRunePositions(selectedRunes);
-    selectionSnapshotRef.current = {
-      playerId: players[currentPlayerIndex].id,
-      playerIndex: currentPlayerIndex,
-      runeOrder: [...selectedRunes],
-      patternLineCounts: players[currentPlayerIndex].patternLines.map((line) => line.count),
-      runePositions,
-      floorRuneCount: players[currentPlayerIndex].floorLine.runes.length,
-    };
-  }, [selectedRunes, players, currentPlayerIndex]);
-
-  useLayoutEffect(() => {
-    const previousCount = previousSelectedCountRef.current;
-    if (previousCount > 0 && selectedRunes.length === 0) {
-      if (manualAnimationRef.current) {
-        manualAnimationRef.current = false;
-        selectionSnapshotRef.current = null;
-      } else {
-        triggerAutoPlacementAnimation();
-      }
-    }
-    previousSelectedCountRef.current = selectedRunes.length;
-  }, [selectedRunes.length, triggerAutoPlacementAnimation, players]);
-
-  useLayoutEffect(() => {
-    if (!draftSource || draftSource.type !== 'runeforge') {
-      return;
-    }
-    const movedRunes = draftSource.movedToCenter;
-    if (movedRunes.length === 0) {
-      lastRuneforgeAnimationKeyRef.current = null;
-      runeforgeAnimationSnapshotRef.current = null;
-      return;
-    }
-    const selectionKey = `${draftSource.runeforgeId}-${movedRunes.map((rune) => rune.id).join(',')}`;
-    if (lastRuneforgeAnimationKeyRef.current === selectionKey) {
-      return;
-    }
-    lastRuneforgeAnimationKeyRef.current = selectionKey;
-    const runePositions = captureRuneforgeRunePositions(movedRunes);
-    runeforgeAnimationSnapshotRef.current = {
-      key: selectionKey,
-      runes: movedRunes,
-      runePositions,
-    };
-    hideCenterRunes(movedRunes.map((rune) => rune.id));
-  }, [draftSource, hideCenterRunes, captureRuneforgeRunePositions]);
-
-  useLayoutEffect(() => {
-    const snapshot = runeforgeAnimationSnapshotRef.current;
-    if (!snapshot) {
-      return;
-    }
-    if (draftSource && draftSource.type === 'runeforge') {
-      return;
-    }
-    const runeIds = snapshot.runes.map((rune) => rune.id);
-    const centerHasRunes = runeIds.every((runeId) => centerPool.some((rune) => rune.id === runeId));
-    runeforgeAnimationSnapshotRef.current = null;
-    if (!centerHasRunes) {
-      revealCenterRunes(runeIds);
-      return;
-    }
-    animateRuneforgeToCenter(snapshot);
-  }, [draftSource, centerPool, animateRuneforgeToCenter, revealCenterRunes]);
-
-  useLayoutEffect(() => {
-    if (!draftSource || draftSource.type !== 'runeforge') {
-      lastRuneforgeAnimationKeyRef.current = null;
-    }
-  }, [draftSource]);
-
   const [boardScale, setBoardScale] = useState(() => {
     if (typeof window === 'undefined') {
       return 1;
@@ -691,31 +289,40 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const scaledBoardWidth = BOARD_BASE_WIDTH * boardScale;
   const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
   const sharedProps: GameBoardSharedProps = {
+    // Core context
     players,
     currentPlayerIndex,
     currentPlayerId: currentPlayer.id,
+    round,
+    isDraftPhase,
+    isGameOver,
+
+    // Selection state
     selectedRuneType,
+    selectedRunes,
     hasSelectedRunes,
+    draftSource,
+
+    // Board data
+    runeforges,
+    centerPool,
+    runeTypeCount: gameState.runeTypeCount,
+
+    // Locks and visibility
     playerLockedLines,
     opponentLockedLines,
     playerHiddenPatternSlots,
     opponentHiddenPatternSlots,
     playerHiddenFloorSlots,
-    isDraftPhase,
-    isGameOver,
-    runeforges,
-    centerPool,
-    runeTypeCount: gameState.runeTypeCount,
-    selectedRunes,
-    draftSource,
     animatingRuneIds,
     hiddenCenterRuneIds,
+
+    // Actions
     onRuneClick: handleRuneClick,
     onCenterRuneClick: handleCenterRuneClick,
     onCancelSelection: handleCancelSelection,
     onPlaceRunes: handlePatternLinePlacement,
     onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
-    round,
     returnToStartScreen,
   };
   const variantData: SoloVariantData = {
@@ -725,7 +332,10 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         soloTargetScore,
         runePowerTotal,
       };
-  const boardContent = renderContent(sharedProps, variantData);
+  const boardContent = renderContent(
+    sharedProps,
+    variantData,
+  );
 
   return (
     <div
@@ -788,8 +398,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
       {showLogOverlay && <GameLogOverlay roundHistory={gameState.roundHistory} onClose={() => setShowLogOverlay(false)} />}
 
-      <RuneAnimation animatingRunes={animatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
-      <RuneAnimation animatingRunes={runeforgeAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
+      <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
+      <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
     </div>
   );
 }
