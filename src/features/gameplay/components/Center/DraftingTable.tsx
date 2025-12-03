@@ -40,8 +40,7 @@ export function DraftingTable({
   draftSource,
   onCancelSelection,
   animatingRuneIds,
-  hiddenCenterRuneIds,
-  hideOpponentRow = false
+  hiddenCenterRuneIds
 }: DraftingTableProps) {
   const hasAccessibleRuneforges = runeforges.some((forge) => forge.runes.length > 0);
   const canDraftFromCenter = !hasAccessibleRuneforges;
@@ -57,13 +56,18 @@ export function DraftingTable({
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
   const runeTypes = useMemo(() => getRuneTypesForCount(runeTypeCount), [runeTypeCount]);
   const runeCounts = useMemo(
-    () =>
-      getRuneTypeCounts({
+    () => {
+      const counts = getRuneTypeCounts({
         runeforges,
         centerPool,
         selectedRunes,
         draftSource
-      }),
+      });
+      // Log runeCounts whenever it's computed for debugging
+      // eslint-disable-next-line no-console
+      console.log('runeCounts computed:', counts);
+      return counts;
+    },
     [centerPool, draftSource, runeforges, selectedRunes]
   );
 
@@ -127,39 +131,21 @@ export function DraftingTable({
       />
     </div>
   );
-
-  const renderSoloRuneforges = () => (
-    <>
-      {renderRuneforgeRow(player, runeforges, 'center', 'player')}
-      {renderCenterSection()}
-      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
-    </>
-  );
   
   return (
     <div
       style={{
-        position: 'relative',
-        padding: '8px 0',
         height: '100%',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'stretch',
         gap: '16px',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-        {hideOpponentRow ? (
-          renderSoloRuneforges()
-        ) : (
-          <>
-            {renderRuneforgeRow(player, runeforges, 'center', 'player')}
-            {renderCenterSection()}
-          </>
-        )}
-      </div>
+      {renderRuneforgeRow(player, runeforges, 'center', 'player')}
+      {renderCenterSection()}
+      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
     </div>
   );
 }

@@ -26,7 +26,6 @@ export function getRuneTypeCounts({
     Lightning: 0,
   };
   const countedIds = new Set<string>();
-  const relevantRuneforges = runeforges;
   const selectionFromCenter = draftSource?.type === 'center';
   const centerRunesForCount =
     selectionFromCenter && draftSource?.originalRunes ? draftSource.originalRunes : centerPool;
@@ -39,7 +38,7 @@ export function getRuneTypeCounts({
     countedIds.add(rune.id);
   };
 
-  relevantRuneforges.forEach((forge) => {
+  runeforges.forEach((forge) => {
     const forgeRunes =
       draftSource?.type === 'runeforge' &&
       draftSource.runeforgeId === forge.id &&
