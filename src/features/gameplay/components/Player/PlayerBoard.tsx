@@ -17,6 +17,7 @@ interface PlayerBoardProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
+  lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
@@ -26,7 +27,18 @@ interface PlayerBoardProps {
   };
 }
 
-export function PlayerBoard({ player, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, hiddenSlotKeys, hiddenFloorSlotIndexes, soloRuneScore }: PlayerBoardProps) {
+export function PlayerBoard({
+  player,
+  onPlaceRunes,
+  onPlaceRunesInFloor,
+  selectedRuneType,
+  canPlace,
+  onCancelSelection,
+  lockedLineIndexes,
+  hiddenSlotKeys,
+  hiddenFloorSlotIndexes,
+  soloRuneScore,
+}: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -102,6 +114,7 @@ export function PlayerBoard({ player, onPlaceRunes, onPlaceRunesInFloor, selecte
                 canPlace={canPlace}
                 playerId={player.id}
                 hiddenSlotKeys={hiddenSlotKeys}
+                lockedLineIndexes={lockedLineIndexes}
               />
             </div>
             

@@ -22,6 +22,8 @@ export function OpponentView(
   {
     opponent,
     isActive,
+    frozenPatternLines,
+    lockedPatternLines,
     freezeSelectionEnabled = false,
     onCancelFreezeSelection,
     hiddenSlotKeys,
@@ -83,6 +85,7 @@ export function OpponentView(
         onCancelSelection={() => {}}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
+        lockedLineIndexes={lockedPatternLines}
         round={round}
       />
     </div>
