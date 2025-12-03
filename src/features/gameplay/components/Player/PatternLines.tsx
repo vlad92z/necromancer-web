@@ -130,7 +130,8 @@ export function PatternLines({
                 const slotKey = `${index}-${slotIndex}`;
                 const shouldHideRune = hiddenSlotKeys?.has(slotKey);
                 const hasRuneInSlot = slotIndex < line.count && line.runeType !== null;
-                const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
+                // Primary rune (moves to the wall) should live in the trailing cell
+                const isPrimaryRuneSlot = slotIndex === line.tier - 1 && !shouldHideRune;
                 const runeEffects = isPrimaryRuneSlot && line.runeType
                   ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
                   : { passive: [], active: [] };
