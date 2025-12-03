@@ -5,6 +5,7 @@
 import { useMemo } from 'react';
 import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType, RuneTypeCount } from '../../../../types/game';
 import { getRuneTypesForCount } from '../../../../utils/gameInitialization';
+import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
 import { RuneTypeTotals } from './RuneTypeTotals';
@@ -63,53 +64,18 @@ export function RuneforgesAndCenter({
   const selectedRuneIds = selectedRunes.map((rune) => rune.id);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
   const runeTypes = useMemo(() => getRuneTypesForCount(runeTypeCount), [runeTypeCount]);
-  const runeCounts = useMemo(() => {
-    const counts: Record<RuneType, number> = { Fire: 0, Frost: 0, Life: 0, Void: 0, Wind: 0, Lightning: 0 };
-    const countedIds = new Set<string>();
-    const relevantRuneforges = hideOpponentRow ? playerRuneforges : runeforges;
-    const centerRunesForCount = selectionFromCenter && centerSelectionOriginalRunes
-      ? centerSelectionOriginalRunes
-      : centerPool;
-
-    const countRune = (rune: Rune) => {
-      counts[rune.runeType] = (counts[rune.runeType] ?? 0) + 1;
-      countedIds.add(rune.id);
-    };
-
-    relevantRuneforges.forEach((forge) => {
-      const forgeRunes =
-        draftSource?.type === 'runeforge' && draftSource.runeforgeId === forge.id && selectedRuneforgeOriginalRunes.length > 0
-          ? selectedRuneforgeOriginalRunes
-          : forge.runes;
-
-      forgeRunes.forEach((rune) => {
-        if (countedIds.has(rune.id)) return;
-        countRune(rune);
-      });
-    });
-
-    centerRunesForCount.forEach((rune) => {
-      if (countedIds.has(rune.id)) return;
-      countRune(rune);
-    });
-
-    selectedRunes.forEach((rune) => {
-      if (countedIds.has(rune.id)) return;
-      countRune(rune);
-    });
-
-    return counts;
-  }, [
-    centerPool,
-    centerSelectionOriginalRunes,
-    draftSource,
-    hideOpponentRow,
-    playerRuneforges,
-    runeforges,
-    selectedRuneforgeOriginalRunes,
-    selectedRunes,
-    selectionFromCenter,
-  ]);
+  const runeCounts = useMemo(
+    () =>
+      getRuneTypeCounts({
+        runeforges,
+        playerRuneforges,
+        centerPool,
+        selectedRunes,
+        draftSource,
+        hideOpponentRow,
+      }),
+    [centerPool, draftSource, hideOpponentRow, playerRuneforges, runeforges, selectedRunes]
+  );
 
   const getDisabledState = (forge: RuneforgeType): boolean => {
     const selectionMatchesForge = selectedFromRuneforgeId === forge.id;
