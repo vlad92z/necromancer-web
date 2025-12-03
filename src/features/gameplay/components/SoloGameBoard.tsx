@@ -15,14 +15,11 @@ interface SoloBoardContentProps {
 
 export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps) {
   const {
-    borderColor,
-    sectionPadding,
     players,
     currentPlayerIndex,
     currentPlayerId,
     selectedRuneType,
     hasSelectedRunes,
-    playerFrozenLines,
     playerLockedLines,
     playerHiddenPatternSlots,
     playerHiddenFloorSlots,
@@ -30,19 +27,13 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     centerPool,
     runeTypeCount,
     isDraftPhase,
-    isAITurn,
-    voidEffectPending,
-    frostEffectPending,
     selectedRunes,
     draftSource,
     animatingRuneIds,
     hiddenCenterRuneIds,
     onRuneClick,
     onCenterRuneClick,
-    onVoidRuneforgeRuneSelect,
-    onVoidCenterRuneSelect,
     onCancelSelection,
-    onCancelVoidSelection,
     onPlaceRunes,
     onPlaceRunesInFloor,
     round,
@@ -63,8 +54,8 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     >
       <div
         style={{
-          padding: `${sectionPadding}px`,
-          borderRight: `1px solid ${borderColor}`,
+          padding: `24px`,
+          borderRight: `1px solid rgba(148, 163, 184, 0.35)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -81,17 +72,11 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             currentPlayerId={currentPlayerId}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
-            onVoidRuneforgeRuneSelect={onVoidRuneforgeRuneSelect}
-            onVoidCenterRuneSelect={onVoidCenterRuneSelect}
             isDraftPhase={isDraftPhase}
             hasSelectedRunes={hasSelectedRunes}
-            isAITurn={isAITurn}
-            voidEffectPending={voidEffectPending}
-            frostEffectPending={frostEffectPending}
             selectedRunes={selectedRunes}
             draftSource={draftSource}
             onCancelSelection={onCancelSelection}
-            onCancelVoidSelection={onCancelVoidSelection}
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}
             hideOpponentRow={true}
@@ -101,7 +86,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
 
       <div
         style={{
-          padding: `${sectionPadding}px`,
+          padding: `24px`,
           display: 'grid',
           gridTemplateRows: '1fr auto',
           alignItems: 'center',
@@ -118,7 +103,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
             canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
             onCancelSelection={onCancelSelection}
-            frozenPatternLines={playerFrozenLines}
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             hiddenFloorSlotIndexes={playerHiddenFloorSlots}

@@ -339,52 +339,20 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
   return (
     <div
-      style={{
-        minHeight: '100vh',
-        width: '100%',
-        background: 'radial-gradient(circle at top, #2b184f 0%, #0c041c 65%, #05010d 100%)',
-        color: '#f5f3ff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px 16px',
-        boxSizing: 'border-box',
-        position: 'relative',
-      }}
+      className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
     >
-      <div
-        style={{
-          position: 'absolute',
-          top: '16px',
-          right: '16px',
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          pointerEvents: 'none',
-          zIndex: 12,
-        }}
-      >
+      <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
         <VolumeControl soundVolume={soundVolume} onVolumeChange={handleVolumeChange} isMusicMuted={isMusicMuted} onToggleMusic={handleToggleMusic} />
       </div>
 
-      <div style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px`, position: 'relative' }}>
+      <div className="relative" style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px` }}>
         <div
+          className="absolute top-0 left-0 origin-top-left bg-[rgba(9,3,24,0.85)] rounded-[36px] border border-white/12 shadow-[0_40px_120px_rgba(0,0,0,0.75)] flex flex-col overflow-hidden backdrop-blur-[14px]"
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
             width: `${BOARD_BASE_WIDTH}px`,
             height: `${BOARD_BASE_HEIGHT}px`,
             transform: `scale(${boardScale})`,
             transformOrigin: 'top left',
-            background: 'rgba(9, 3, 24, 0.85)',
-            borderRadius: '36px',
-            border: `1px solid rgba(255, 255, 255, 0.12)`,
-            boxShadow: '0 40px 120px rgba(0, 0, 0, 0.75)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            backdropFilter: 'blur(14px)',
           }}
           onClick={(event) => event.stopPropagation()}
         >
