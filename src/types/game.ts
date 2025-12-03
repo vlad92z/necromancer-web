@@ -167,7 +167,7 @@ export interface Player {
   patternLines: PatternLine[];
   wall: ScoringWall;
   floorLine: FloorLine;
-  health: number; // Current health (starts at configurable amount, reduced by opponent spellpower)
+  health: number; // Current health (starts at configurable amount)
   maxHealth?: number; // Maximum health cap (initialized at game start)
   deck: Rune[]; // Player's deck of runes for this run
 }

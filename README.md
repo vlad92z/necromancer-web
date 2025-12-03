@@ -58,7 +58,7 @@ npm run lint
 - Strain (overload multiplier) grows each round.
 - Game over triggers at 0 HP or when a player lacks enough runes to refill runeforges. The survivor or higher-health player wins; Solo checks Rune Power against the target score when the deck runs dry.
 
-## Rune Effects (Standard Mode)
+## Rune Effects
 
 Currently runes have no active or passive effects applied. These will be unlocked as deck building is implemented.
 
@@ -66,7 +66,6 @@ Currently runes have no active or passive effects applied. These will be unlocke
 - **Objective**: Accumulate Rune Power (total segment damage from placements) to reach the target score before you run out of runes or health.
 - **Drafting**: Only from your own runeforges until they are empty; then from the center. Opponent runeforges are disabled.
 - **Overload & Strain**: Overflowing to the floor immediately deals overload damage equal to added penalty x current strain. Strain starts at 1x by default and multiplies each round (configurable 1.0-2.0x); Frost mitigation hooks reduce it.
-- **Healing & Effects**: Life/Wind/Frost runes heal when they land on the wall. Healing amount, strain, and rune counts are adjustable on the Solo start screen.
 - **Config Defaults**: 100 HP (cap 1000), 5 personal runeforges, 15 of each rune type, 5 healing per support rune, 200 Rune Power target, pattern-line locking enabled (cleared between rounds).
 - **Victory/Defeat**: Victory when Rune Power meets the target before the deck runs dry; defeat at 0 HP or by failing to hit the target once no new round can start.
 

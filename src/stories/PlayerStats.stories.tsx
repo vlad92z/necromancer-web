@@ -20,7 +20,6 @@ export const Default: Story = {
     isActive: false,
     nameColor: '#8b5cf6',
     health: 28,
-    healing: 0,
     round: 1,
   },
 };
@@ -31,7 +30,6 @@ export const ActiveWithPenalty: Story = {
     isActive: true,
     nameColor: '#ef4444',
     health: 16,
-    healing: 1,
     round: 1,
   },
 };
@@ -42,7 +40,6 @@ export const HighSpellpower: Story = {
     isActive: true,
     nameColor: '#06b6d4',
     health: 30,
-    healing: 2,
     round: 1,
   },
 };

@@ -301,7 +301,6 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
   return {
     gameStarted: false,
     matchType: 'versus',
-    gameMode: 'standard', // Default to standard mode (will be set when starting game)
     runeTypeCount,
     factoriesPerPlayer: quickPlayConfig.factoriesPerPlayer,
     totalRunesPerPlayer: quickPlayConfig.totalRunesPerPlayer,
@@ -336,7 +335,6 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
       [player2.id]: [],
     },
     shouldTriggerEndRound: false,
-    scoringSnapshot: null,
     runePowerTotal: 0,
     soloTargetScore: 0,
     soloOutcome: null,
@@ -403,7 +401,6 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
   return {
     gameStarted: false,
     matchType: 'solo',
-    gameMode: 'standard',
     runeTypeCount,
     factoriesPerPlayer: soloRuneforgeCount,
     totalRunesPerPlayer: soloDeckSize,
@@ -438,7 +435,6 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
       [echoPlayer.id]: [],
     },
     shouldTriggerEndRound: false,
-    scoringSnapshot: null,
     runePowerTotal: 0,
     soloTargetScore: soloConfig.targetRuneScore,
     soloOutcome: null,

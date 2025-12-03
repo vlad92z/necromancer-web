@@ -92,8 +92,8 @@ export function GameMatch() {
     }
   }, [gameStarted, frostEffectPending, currentPlayerIndex, players, turnPhase, playerControllers])
 
-  const handleStartGame = (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../types/game').RuneTypeCount) => {
-    startGame(gameMode, topController, runeTypeCount)
+  const handleStartGame = (topController: QuickPlayOpponent, runeTypeCount: import('../types/game').RuneTypeCount) => {
+    startGame(topController, runeTypeCount)
   }
 
   // Show start screen if game hasn't started

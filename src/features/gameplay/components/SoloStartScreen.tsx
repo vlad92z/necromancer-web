@@ -188,7 +188,7 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
                   {runeTypeCount === 3 && '3 rune types, 3x3 Spell Wall, light overload pressure.'}
                   {runeTypeCount === 4 && '4 rune types, 4x4 Spell Wall, balanced Solo pace.'}
                   {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, extended run with heavy pressure.'}
-                  {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning joins for maximal Essence scaling.'}
+                  {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning.'}
                 </p>
               </div>
             </div>

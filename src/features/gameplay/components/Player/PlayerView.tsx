@@ -13,7 +13,6 @@ interface PlayerViewProps {
   selectedRuneType: RuneType | null;
   canPlace: boolean;
   onCancelSelection: () => void;
-  gameMode: 'classic' | 'standard';
   frozenPatternLines: number[];
   lockedPatternLines?: number[];
   hiddenSlotKeys?: Set<string>;
@@ -34,7 +33,6 @@ export function PlayerView({
   selectedRuneType,
   canPlace,
   onCancelSelection,
-  gameMode,
   frozenPatternLines,
   lockedPatternLines,
   hiddenSlotKeys,
@@ -53,7 +51,6 @@ export function PlayerView({
         selectedRuneType={selectedRuneType}
         canPlace={canPlace}
         onCancelSelection={onCancelSelection}
-        gameMode={gameMode}
         nameColor="#0c4a6e"
         frozenPatternLines={frozenPatternLines}
         lockedPatternLines={lockedPatternLines}

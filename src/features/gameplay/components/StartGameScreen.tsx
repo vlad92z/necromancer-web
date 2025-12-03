@@ -9,12 +9,11 @@ import { getAIDifficultyLabel } from '../../../utils/aiDifficultyLabels';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
-  onStartGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: RuneTypeCount) => void;
+  onStartGame: (topController: QuickPlayOpponent, runeTypeCount: RuneTypeCount) => void;
 }
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const navigate = useNavigate();
-  const [gameMode] = useState<'classic' | 'standard'>('standard');
   const [opponentSetting, setOpponentSetting] = useState<QuickPlayOpponent>('normal');
   const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(5);
   const [showRules, setShowRules] = useState(false);
@@ -323,7 +322,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
         </div>
         
         <button
-          onClick={() => onStartGame(gameMode, opponentSetting, runeTypeCount)}
+          onClick={() => onStartGame(opponentSetting, runeTypeCount)}
           style={{
             backgroundColor: '#4a9eff',
             color: '#ffffff',

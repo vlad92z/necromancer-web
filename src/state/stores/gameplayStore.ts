@@ -500,7 +500,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
           scoringPhase: null,
-          scoringSnapshot: null,
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           runePowerTotal: nextRunePowerTotal,
           roundDamage: updatedRoundDamage,
@@ -520,7 +519,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
           scoringPhase: null,
-          scoringSnapshot: null,
           soloOutcome,
           runePowerTotal: nextRunePowerTotal,
           roundDamage: updatedRoundDamage,
@@ -667,7 +665,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
           scoringPhase: null,
-          scoringSnapshot: null,
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           voidEffectPending: false,
           frostEffectPending: false,
@@ -906,7 +903,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       ...state,
       scoringPhase: 'moving-to-wall' as const,
       shouldTriggerEndRound: false,
-      scoringSnapshot: null,
     }));
   },
   
@@ -988,7 +984,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return {
           ...state,
           players: updatedPlayersArray,
-          scoringPhase: 'healing' as const,
+          scoringPhase: 'complete' as const,
         };
       }
 
@@ -1018,7 +1014,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             turnPhase: 'game-over',
             round: state.round,
             scoringPhase: null,
-            scoringSnapshot: null,
             roundHistory,
             roundDamage: [0, 0],
             lockedPatternLines: {
@@ -1060,7 +1055,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           strain: state.strain * state.strainMultiplier,
           strainMultiplier: nextStrainMultiplier,
           scoringPhase: null,
-          scoringSnapshot: null,
           roundHistory,
           roundDamage: [0, 0],
           lockedPatternLines: {
