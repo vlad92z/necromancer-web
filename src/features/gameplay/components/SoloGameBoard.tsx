@@ -22,7 +22,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     currentPlayerId,
     selectedRuneType,
     hasSelectedRunes,
-    gameMode,
     playerFrozenLines,
     playerLockedLines,
     playerHiddenPatternSlots,
@@ -119,7 +118,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
             canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
             onCancelSelection={onCancelSelection}
-            gameMode={gameMode}
             frozenPatternLines={playerFrozenLines}
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}

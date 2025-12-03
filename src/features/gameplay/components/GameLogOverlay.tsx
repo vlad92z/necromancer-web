@@ -137,31 +137,6 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                     Round {round.round}
                   </div>
 
-                  {/* Player Score */}
-                  <div style={{
-                    fontSize: '14px',
-                    color: '#1e293b',
-                    marginBottom: '8px',
-                    fontFamily: 'monospace',
-                  }}>
-                    <span style={{ fontWeight: 'bold', color: '#059669' }}>
-                      {round.playerName}:
-                    </span>{' '}
-                    <span style={{ fontWeight: 'bold' }}>{round.playerTotal}</span> dmg
-                  </div>
-
-                  {/* Opponent Score */}
-                  <div style={{
-                    fontSize: '14px',
-                    color: '#1e293b',
-                    fontFamily: 'monospace',
-                  }}>
-                    <span style={{ fontWeight: 'bold', color: '#dc2626' }}>
-                      {round.opponentName}:
-                    </span>{' '}
-                    <span style={{ fontWeight: 'bold' }}>{round.opponentTotal}</span> dmg
-                  </div>
-
                   {/* Separator (not on last item) */}
                   {index < roundHistory.length - 1 && (
                     <div style={{
