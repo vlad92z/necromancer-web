@@ -103,11 +103,9 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
             canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
             onCancelSelection={onCancelSelection}
-            lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             hiddenFloorSlotIndexes={playerHiddenFloorSlots}
             round={round}
-            hideStatsPanel={true}
             soloRuneScore={soloRuneScore || undefined}
           />
         </div>
