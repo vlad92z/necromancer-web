@@ -64,7 +64,6 @@ export function DraftingTable({
         draftSource
       });
       // Log runeCounts whenever it's computed for debugging
-      // eslint-disable-next-line no-console
       console.log('runeCounts computed:', counts);
       return counts;
     },
@@ -81,15 +80,11 @@ export function DraftingTable({
       return null;
     }
 
+    const alignClass = align === 'flex-start' ? 'items-start' : align === 'center' ? 'items-center' : 'items-end';
+
     return (
-      <div key={`${owner.id}-${keySuffix}`} style={{ width: '100%' }}>
-        <div style={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: align,
-          gap: '14px',
-          width: '100%'
-        }}>
+      <div key={`${owner.id}-${keySuffix}`} className="w-full">
+        <div className={`flex flex-col ${alignClass} gap-[14px] w-full`}>
           {ownedRuneforges.map((runeforge) => (
             <Runeforge 
               key={runeforge.id} 
@@ -115,7 +110,7 @@ export function DraftingTable({
   };
 
   const renderCenterSection = () => (
-    <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', marginTop: '4px' }}>
+    <div className="relative w-full flex justify-center mt-1">
       <CenterPool 
         centerPool={centerPool}
         onRuneClick={onCenterRuneClick}
@@ -133,16 +128,7 @@ export function DraftingTable({
   );
   
   return (
-    <div
-      style={{
-        height: '100%',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        gap: '16px',
-      }}
-    >
+    <div className="h-full w-full flex flex-col justify-center gap-4">
       {renderRuneforgeRow(player, runeforges, 'center', 'player')}
       {renderCenterSection()}
       <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
