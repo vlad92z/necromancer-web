@@ -37,18 +37,14 @@ export function getRuneColorClass(runeType: RuneType): string {
 /**
  * Get the effect description for a rune type
  */
-export function getRuneEffectDescription(runeType: RuneType, isClassicMode: boolean): string {
-  if (isClassicMode) {
-    return 'No special effect (Classic Mode)';
-  }
-  
+export function getRuneEffectDescription(runeType: RuneType): string {  
   const descriptions: Record<RuneType, string> = {
-    Fire: 'Each Fire rune on your wall adds +1 Essence',
-    Frost: 'Each Frost rune on your wall restores 10 health during scoring',
-    Life: 'Each Life rune on your wall restores 10 health during scoring',
-    Void: 'Each Void rune on your wall adds +1 Essence',
-    Wind: 'Each Wind rune on your wall restores 10 health during scoring',
-    Lightning: 'Each Lightning rune on your wall adds +1 Essence',
+    Fire: 'Fire Rune',
+    Frost: 'Frost Rune',
+    Life: 'Life Rune',
+    Void: 'Void Rune',
+    Wind: 'Wind Rune',
+    Lightning: 'Lightning Rune',
   };
   return descriptions[runeType];
 }

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GameBoard } from '../features/gameplay/components/GameBoard'
+import { DuelGameBoard } from '../features/gameplay/components/DuelGameBoard'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
 import { executeAITurn, needsAIPlacement, executeAIVoidEffect, executeAIFrostEffect } from '../systems/aiController'
@@ -92,8 +92,8 @@ export function GameMatch() {
     }
   }, [gameStarted, frostEffectPending, currentPlayerIndex, players, turnPhase, playerControllers])
 
-  const handleStartGame = (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../types/game').RuneTypeCount) => {
-    startGame(gameMode, topController, runeTypeCount)
+  const handleStartGame = (topController: QuickPlayOpponent, runeTypeCount: import('../types/game').RuneTypeCount) => {
+    startGame(topController, runeTypeCount)
   }
 
   // Show start screen if game hasn't started
@@ -101,5 +101,5 @@ export function GameMatch() {
     return <StartGameScreen onStartGame={handleStartGame} />
   }
 
-  return <GameBoard gameState={wholeGameState} />
+  return <DuelGameBoard gameState={wholeGameState} />
 }

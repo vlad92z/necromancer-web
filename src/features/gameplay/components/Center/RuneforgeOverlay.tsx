@@ -10,21 +10,18 @@ interface RuneforgeOverlayProps {
   runes: Rune[];
   onSelectRune: (runeType: RuneType) => void;
   onClose: () => void;
-  gameMode: 'classic' | 'standard';
 }
 
-export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: RuneforgeOverlayProps) {
-  // Rune effect descriptions (only shown in standard mode)
+export function RuneforgeOverlay({ runes, onSelectRune, onClose }: RuneforgeOverlayProps) {
+  // Rune effect descriptions TODO: these are outdated
   const getRuneDescription = (runeType: RuneType): string => {
-    if (gameMode === 'classic') return '';
-    
     const descriptions: Record<RuneType, string> = {
-      Fire: '+1 Essence per Fire rune on your Spell Wall',
-      Frost: '+10 healing per Frost rune during scoring',
-      Life: '+10 healing per Life rune during scoring',
-      Void: '+1 Essence per Void rune on your Spell Wall',
-      Wind: '+10 healing per Wind rune during scoring',
-      Lightning: '+1 Essence per Lightning rune on your Spell Wall',
+      Fire: 'Fire rune',
+      Frost: 'Frost rune',
+      Life: 'Life rune',
+      Void: 'Void rune',
+      Wind: 'Wind rune',
+      Lightning: 'Lightning rune',
     };
     return descriptions[runeType];
   };
@@ -142,7 +139,6 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
                     }}>
                       {runeType} ({typeRunes.length})
                     </div>
-                    {gameMode === 'standard' && (
                       <div style={{
                         fontSize: '14px',
                         color: '#64748b',
@@ -150,7 +146,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose, gameMode }: Run
                       }}>
                         {getRuneDescription(runeType)}
                       </div>
-                    )}
+                    
                     
                     {/* Preview of all runes of this type */}
                     <div style={{

@@ -4,16 +4,11 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, ScoringSnapshot, WallPowerStats, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, PassiveRuneEffect, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { calculateSegmentSize, calculateWallPowerWithSegments, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
+import { calculateSegmentSize, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType, hasActiveEffect } from '../../utils/runeEffects';
-
-// Helper function to count Life runes on a wall
-function calculateHealingAmount(wall: Player['wall']): number {
-  return wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0);
-}
 
 function calculatePassiveEffectForWall(
   wall: Player['wall'],
@@ -25,21 +20,8 @@ function calculatePassiveEffectForWall(
   );
 }
 
-function calculateVoidDamageBonus(
-  wall: Player['wall'],
-  projectedDamageTaken: number,
-  gameMode: GameState['gameMode']
-): number {
-  if (gameMode === 'classic') {
-    return 0;
-  }
-  const conversionRate = calculatePassiveEffectForWall(wall, 'DamageToSpellpower');
-  return projectedDamageTaken * conversionRate;
-}
-
 function calculateNextStrainMultiplier(
   _players: [Player, Player],
-  _gameMode: GameState['gameMode'],
   baseMultiplier: number
 ): number {
   return baseMultiplier;
@@ -52,28 +34,23 @@ function calculateImmediateOverloadDamage(
   nextPatternLines: Player['patternLines'],
   wall: Player['wall'],
   strain: number,
-  gameMode: GameState['gameMode']
 ): number {
   const previousPenalty = calculateEffectiveFloorPenalty(
     previousFloorRunes,
     previousPatternLines,
-    wall,
-    gameMode
+    wall
   );
   const nextPenalty = calculateEffectiveFloorPenalty(
     nextFloorRunes,
     nextPatternLines,
-    wall,
-    gameMode
+    wall
   );
   const addedPenalty = Math.max(0, nextPenalty - previousPenalty);
   if (addedPenalty === 0) {
     return 0;
   }
 
-  const frostMitigation = gameMode === 'standard'
-    ? calculatePassiveEffectForWall(wall, 'StrainMitigation')
-    : 0;
+  const frostMitigation = calculatePassiveEffectForWall(wall, 'StrainMitigation');
   const overloadMultiplier = applyStressMitigation(strain, frostMitigation);
   return addedPenalty * overloadMultiplier;
 }
@@ -108,7 +85,8 @@ const getInitializerForMatchType = (matchType: MatchType, runeTypeCount: import(
 
 export interface GameplayStore extends GameState {
   // Actions
-  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
+  // Not in use
+  startGame: (topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
@@ -133,8 +111,6 @@ function processSoloScoringPhase(state: GameState): GameState {
   if (!currentPhase) {
     return state;
   }
-
-  const emptyWallStats: WallPowerStats = { essence: 0, focus: 0, totalPower: 0 };
 
   if (currentPhase === 'moving-to-wall') {
     const moveRunesToWall = (player: Player): Player => {
@@ -167,38 +143,10 @@ function processSoloScoringPhase(state: GameState): GameState {
 
     const updatedPlayer = moveRunesToWall(state.players[0]);
 
-    const floorPenalty = calculateEffectiveFloorPenalty(
-      updatedPlayer.floorLine.runes,
-      updatedPlayer.patternLines,
-      updatedPlayer.wall,
-      state.gameMode
-    );
-
-    const wallPowerStats = calculateWallPowerWithSegments(
-      updatedPlayer.wall,
-      floorPenalty,
-      state.gameMode
-    );
-    const projectedDamageTaken = floorPenalty * state.strain;
-    const voidBonus = calculateVoidDamageBonus(updatedPlayer.wall, projectedDamageTaken, state.gameMode);
-    const adjustedWallPowerStats: WallPowerStats = {
-      ...wallPowerStats,
-      totalPower: wallPowerStats.totalPower + voidBonus,
-    };
-
-    const healingTotal = state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayer.wall) : 0;
-
-    const scoringSnapshot: ScoringSnapshot = {
-      floorPenalties: [floorPenalty, 0],
-      wallPowerStats: [adjustedWallPowerStats, emptyWallStats],
-      healingTotals: [healingTotal, 0],
-    };
-
     return {
       ...state,
       players: [updatedPlayer, state.players[1]],
       scoringPhase: 'clearing-floor' as const,
-      scoringSnapshot,
     };
   }
 
@@ -223,58 +171,12 @@ function processSoloScoringPhase(state: GameState): GameState {
     return {
       ...state,
       players: updatedPlayersArray,
-      scoringPhase: 'healing' as const,
-    };
-  }
-
-  if (currentPhase === 'healing') {
-    if (!state.scoringSnapshot) {
-      return state;
-    }
-
-    const healingAmount = state.scoringSnapshot.healingTotals[0];
-    const applyHealing = (player: Player, amount: number): Player => {
-      const maxHealth = player.maxHealth ?? player.health;
-      return {
-        ...player,
-        health: Math.min(maxHealth, player.health + amount),
-      };
-    };
-
-    const healedPlayers: [Player, Player] = [
-      applyHealing(state.players[0], healingAmount),
-      state.players[1],
-    ];
-
-    return {
-      ...state,
-      players: healedPlayers,
       scoringPhase: 'complete' as const,
-    };
-  }
-
-  if (currentPhase === 'damage') {
-    return {
-      ...state,
-      scoringPhase: 'complete' as const,
-      scoringSnapshot: null,
     };
   }
 
   if (currentPhase === 'complete') {
-    const roundDamage = state.roundDamage ?? [0, 0];
-      const roundScore = {
-        round: state.round,
-        playerName: state.players[0].name,
-        playerEssence: roundDamage[0],
-        playerFocus: 1,
-      playerTotal: roundDamage[0],
-      opponentName: 'Overload',
-      opponentEssence: 0,
-      opponentFocus: 0,
-      opponentTotal: 0,
-      };
-      const roundHistory = [...state.roundHistory, roundScore];
+    const roundHistory = [...state.roundHistory];
     const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
     const playerHasEnough = state.players[0].deck.length >= runesNeededForRound;
 
@@ -288,7 +190,6 @@ function processSoloScoringPhase(state: GameState): GameState {
         turnPhase: 'game-over',
         round: state.round,
         scoringPhase: null,
-        scoringSnapshot: null,
         soloOutcome: achievedTarget ? ('victory' as SoloOutcome) : ('defeat' as SoloOutcome),
         shouldTriggerEndRound: false,
         roundDamage: [0, 0],
@@ -313,7 +214,6 @@ function processSoloScoringPhase(state: GameState): GameState {
 
     const nextStrainMultiplier = calculateNextStrainMultiplier(
       [updatedPlayer, state.players[1]],
-      state.gameMode,
       DEFAULT_STRAIN_MULTIPLIER
     );
 
@@ -328,7 +228,6 @@ function processSoloScoringPhase(state: GameState): GameState {
       strain: state.strain * state.strainMultiplier,
       strainMultiplier: nextStrainMultiplier,
       scoringPhase: null,
-      scoringSnapshot: null,
       soloOutcome: null,
       roundDamage: [0, 0],
       roundHistory,
@@ -437,6 +336,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => {
       const { selectedRunes, currentPlayerIndex } = state;
       const isSoloMode = state.matchType === 'solo';
+      const shouldApplyOverloadDamage = isSoloMode ? currentPlayerIndex === 0 : true;
       
       // No runes selected, do nothing
       if (selectedRunes.length === 0) return state;
@@ -501,18 +401,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
       };
 
-      const overloadDamage = isSoloMode && currentPlayerIndex === 0
+      const overloadDamage = shouldApplyOverloadDamage
         ? calculateImmediateOverloadDamage(
             currentPlayer.floorLine.runes,
             updatedFloorLine.runes,
             currentPlayer.patternLines,
             updatedPatternLines,
             currentPlayer.wall,
-            state.strain,
-            state.gameMode
+            state.strain
           )
         : 0;
-      const nextHealth = isSoloMode && currentPlayerIndex === 0
+      const nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
 
@@ -588,7 +487,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
       const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
-      const defeatedByOverload = isSoloMode && currentPlayerIndex === 0 && nextHealth === 0;
+      const defeatedByOverload = shouldApplyOverloadDamage && nextHealth === 0;
       const opponentDefeated = !isSoloMode && opponentHealth === 0 && damageDealt > 0;
       const soloVictoryAchieved = isSoloMode && soloOutcome === 'victory';
       if (defeatedByOverload) {
@@ -601,8 +500,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
           scoringPhase: null,
-          scoringSnapshot: null,
-          soloOutcome: 'defeat' as SoloOutcome,
+          soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           runePowerTotal: nextRunePowerTotal,
           roundDamage: updatedRoundDamage,
           lockedPatternLines: updatedLockedPatternLines,
@@ -621,7 +519,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
           scoringPhase: null,
-          scoringSnapshot: null,
           soloOutcome,
           runePowerTotal: nextRunePowerTotal,
           roundDamage: updatedRoundDamage,
@@ -649,12 +546,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
-      // Only trigger rune effects in standard mode
-      const isStandardMode = state.gameMode === 'standard';
-      
       // If Void runes were placed and there are available targets, trigger Void effect
       // Keep current player so THEY get to choose which rune to destroy
-      if (isStandardMode && hasVoidRunes && hasVoidTargets && !shouldEndRound) {
+      if (hasVoidRunes && hasVoidTargets && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -673,7 +567,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       
       // If Frost runes were placed and there are non-empty runeforges, trigger Frost effect
       // Keep current player so THEY get to choose which runeforge to freeze
-      if (isStandardMode && hasFrostRunes && canTriggerFrostEffect && !shouldEndRound) {
+      if (hasFrostRunes && canTriggerFrostEffect && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -714,6 +608,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => {
       const { selectedRunes, currentPlayerIndex } = state;
       const isSoloMode = state.matchType === 'solo';
+      const shouldApplyOverloadDamage = isSoloMode ? currentPlayerIndex === 0 : true;
       
       // No runes selected, do nothing
       if (selectedRunes.length === 0) return state;
@@ -730,18 +625,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
       };
 
-      const overloadDamage = isSoloMode && currentPlayerIndex === 0
+      const overloadDamage = shouldApplyOverloadDamage
         ? calculateImmediateOverloadDamage(
             currentPlayer.floorLine.runes,
             updatedFloorLine.runes,
             currentPlayer.patternLines,
             currentPlayer.patternLines,
             currentPlayer.wall,
-            state.strain,
-            state.gameMode
+            state.strain
           )
         : 0;
-      const nextHealth = isSoloMode && currentPlayerIndex === 0
+      const nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
       
@@ -760,7 +654,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       // Switch to next player (alternate between 0 and 1)
       const nextPlayerIndex = isSoloMode ? currentPlayerIndex : currentPlayerIndex === 0 ? 1 : 0;
-      const defeatedByOverload = isSoloMode && currentPlayerIndex === 0 && nextHealth === 0;
+      const defeatedByOverload = shouldApplyOverloadDamage && nextHealth === 0;
       if (defeatedByOverload) {
         return {
           ...state,
@@ -771,8 +665,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
           scoringPhase: null,
-          scoringSnapshot: null,
-          soloOutcome: 'defeat' as SoloOutcome,
+          soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           voidEffectPending: false,
           frostEffectPending: false,
         };
@@ -1010,7 +903,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       ...state,
       scoringPhase: 'moving-to-wall' as const,
       shouldTriggerEndRound: false,
-      scoringSnapshot: null,
     }));
   },
   
@@ -1062,68 +954,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           moveRunesToWall(state.players[1]),
         ];
 
-        const floorPenalties: [number, number] = [
-          calculateEffectiveFloorPenalty(
-            updatedPlayersArray[0].floorLine.runes,
-            updatedPlayersArray[0].patternLines,
-            updatedPlayersArray[0].wall,
-            state.gameMode
-          ),
-          calculateEffectiveFloorPenalty(
-            updatedPlayersArray[1].floorLine.runes,
-            updatedPlayersArray[1].patternLines,
-            updatedPlayersArray[1].wall,
-            state.gameMode
-          ),
-        ];
-
-        const baseWallPowerStats: [WallPowerStats, WallPowerStats] = [
-          calculateWallPowerWithSegments(
-            updatedPlayersArray[0].wall,
-            floorPenalties[0],
-            state.gameMode
-          ),
-          calculateWallPowerWithSegments(
-            updatedPlayersArray[1].wall,
-            floorPenalties[1],
-            state.gameMode
-          ),
-        ];
-        const projectedDamageTaken: [number, number] = [
-          baseWallPowerStats[1].totalPower,
-          baseWallPowerStats[0].totalPower,
-        ];
-        const voidBonuses: [number, number] = [
-          calculateVoidDamageBonus(updatedPlayersArray[0].wall, projectedDamageTaken[0], state.gameMode),
-          calculateVoidDamageBonus(updatedPlayersArray[1].wall, projectedDamageTaken[1], state.gameMode),
-        ];
-        const wallPowerStats: [WallPowerStats, WallPowerStats] = [
-          {
-            ...baseWallPowerStats[0],
-            totalPower: baseWallPowerStats[0].totalPower + voidBonuses[0],
-          },
-          {
-            ...baseWallPowerStats[1],
-            totalPower: baseWallPowerStats[1].totalPower + voidBonuses[1],
-          },
-        ];
-
-        const healingTotals: [number, number] = [
-          state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayersArray[0].wall) : 0,
-          state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayersArray[1].wall) : 0,
-        ];
-
-        const scoringSnapshot: ScoringSnapshot = {
-          floorPenalties,
-          wallPowerStats,
-          healingTotals,
-        };
-
         return {
           ...state,
           players: updatedPlayersArray,
           scoringPhase: 'clearing-floor' as const,
-          scoringSnapshot,
         };
       }
 
@@ -1150,60 +984,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return {
           ...state,
           players: updatedPlayersArray,
-          scoringPhase: 'healing' as const,
-        };
-      }
-
-      if (currentPhase === 'healing') {
-        if (!state.scoringSnapshot) {
-          return state;
-        }
-
-        const healingAmounts: [number, number] = state.scoringSnapshot.healingTotals;
-
-        const applyHealing = (player: Player, amount: number): Player => {
-          const maxHealth = player.maxHealth ?? player.health;
-          return {
-            ...player,
-            health: Math.min(maxHealth, player.health + amount),
-          };
-        };
-
-        const healedPlayers: [Player, Player] = [
-          applyHealing(state.players[0], healingAmounts[0]),
-          applyHealing(state.players[1], healingAmounts[1]),
-        ];
-
-        console.log('Scoring: Applied healing stage', healingAmounts);
-
-        return {
-          ...state,
-          players: healedPlayers,
           scoringPhase: 'complete' as const,
-        };
-      }
-
-      if (currentPhase === 'damage') {
-        return {
-          ...state,
-          scoringPhase: 'complete' as const,
-          scoringSnapshot: null,
         };
       }
 
       if (currentPhase === 'complete') {
         console.log('Scoring: Complete, checking game over...');
-        const roundDamage = state.roundDamage ?? [0, 0];
         const roundScore = {
           round: state.round,
           playerName: state.players[0].name,
-          playerEssence: roundDamage[0],
-          playerFocus: 1,
-          playerTotal: roundDamage[0],
           opponentName: state.players[1].name,
-          opponentEssence: roundDamage[1],
-          opponentFocus: 1,
-          opponentTotal: roundDamage[1],
         };
         const roundHistory = [...state.roundHistory, roundScore];
         const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
@@ -1224,7 +1014,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             turnPhase: 'game-over',
             round: state.round,
             scoringPhase: null,
-            scoringSnapshot: null,
             roundHistory,
             roundDamage: [0, 0],
             lockedPatternLines: {
@@ -1250,7 +1039,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ];
         const nextStrainMultiplier = calculateNextStrainMultiplier(
           finalPlayers,
-          state.gameMode,
           DEFAULT_STRAIN_MULTIPLIER
         );
 
@@ -1267,7 +1055,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           strain: state.strain * state.strainMultiplier,
           strainMultiplier: nextStrainMultiplier,
           scoringPhase: null,
-          scoringSnapshot: null,
           roundHistory,
           roundDamage: [0, 0],
           lockedPatternLines: {
@@ -1281,7 +1068,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => {
+  startGame: (topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => {
     set((state) => {
       const shouldResetState = state.runeTypeCount !== runeTypeCount || state.matchType !== 'versus';
       // If rune type count changed or we are resuming from a different match type, reinitialize the game with new configuration
@@ -1308,7 +1095,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...newState,
           gameStarted: true,
           matchType: 'versus',
-          gameMode: gameMode,
           runeTypeCount: runeTypeCount,
           playerControllers: updatedControllers,
           players: updatedPlayers,
@@ -1342,7 +1128,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         gameStarted: true,
         matchType: 'versus',
-        gameMode: gameMode,
         runeTypeCount: runeTypeCount,
         playerControllers: updatedControllers,
         players: updatedPlayers,
@@ -1377,7 +1162,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...baseState,
         gameStarted: true,
         matchType: 'versus',
-        gameMode: 'standard' as const,
         players: updatedPlayers,
         playerControllers,
         runePowerTotal: 0,

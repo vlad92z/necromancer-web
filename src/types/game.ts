@@ -167,7 +167,7 @@ export interface Player {
   patternLines: PatternLine[];
   wall: ScoringWall;
   floorLine: FloorLine;
-  health: number; // Current health (starts at configurable amount, reduced by opponent spellpower)
+  health: number; // Current health (starts at configurable amount)
   maxHealth?: number; // Maximum health cap (initialized at game start)
   deck: Rune[]; // Player's deck of runes for this run
 }
@@ -180,25 +180,7 @@ export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-o
 /**
  * Scoring phase steps for visual feedback
  */
-export type ScoringPhase = 'moving-to-wall' | 'clearing-floor' | 'healing' | 'damage' | 'complete' | null;
-
-/**
- * Wall power details recorded during scoring
- */
-export interface WallPowerStats {
-  essence: number;
-  focus: number;
-  totalPower: number;
-}
-
-/**
- * Snapshot of scoring data preserved between phases
- */
-export interface ScoringSnapshot {
-  floorPenalties: [number, number];
-  wallPowerStats: [WallPowerStats, WallPowerStats];
-  healingTotals: [number, number];
-}
+export type ScoringPhase = 'moving-to-wall' | 'clearing-floor' | 'complete' | null;
 
 /**
  * Round history entry for game log
@@ -206,13 +188,7 @@ export interface ScoringSnapshot {
 export interface RoundScore {
   round: number;
   playerName: string;
-  playerEssence: number;
-  playerFocus: number;
-  playerTotal: number;
   opponentName: string;
-  opponentEssence: number;
-  opponentFocus: number;
-  opponentTotal: number;
 }
 
 /**
@@ -234,7 +210,6 @@ export interface AnimatingRune {
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   matchType: MatchType; // Game variant: traditional duel or solo run
-  gameMode: 'classic' | 'standard'; // Game mode: classic (no modifiers) or standard (with rune effects)
   runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
   factoriesPerPlayer: number; // Runeforge count per player (quick play config)
   totalRunesPerPlayer: number; // Deck size for the quick play packet
@@ -274,8 +249,7 @@ export interface GameState {
   frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
-  scoringSnapshot: ScoringSnapshot | null; // Cached scoring data across phases
-  runePowerTotal: number; // Solo score accumulator (essence × focus per round)
+  runePowerTotal: number; // Solo score accumulator
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
   soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round

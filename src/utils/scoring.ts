@@ -4,135 +4,13 @@
  */
 
 import type { PatternLine, RuneEffects, RuneType, ScoringWall } from '../types/game';
-import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
+import { getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
 
 const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 
 export function getRuneOrderForSize(wallSize: number): RuneType[] {
   const size = Math.max(1, Math.min(RUNE_ORDER.length, wallSize));
   return RUNE_ORDER.slice(0, size);
-}
-
-/**
- * Calculate total wall power using simplified scoring
- * Essence = total runes on the wall + passive essence bonuses
- * Focus = size of the largest connected segment (floor penalties no longer reduce focus)
- * Power = Essence × Focus
- * Runes are connected if they share an edge (not diagonal)
- * Healing and other passives are handled elsewhere via the wall cell effects.
- */
-export function calculateWallPower(
-  wall: ScoringWall, 
-  _floorPenaltyCount: number = 0, 
-  gameMode: 'classic' | 'standard' = 'standard'
-): number {
-  void _floorPenaltyCount;
-  const wallSize = wall.length;
-  const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
-  let totalRunes = 0;
-  let largestSegment = 0;
-  let essenceBonus = 0;
-  
-  // Flood fill to find each connected segment
-  function floodFill(row: number, col: number): number {
-    // Out of bounds or already visited or empty cell
-    if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || 
-        visited[row][col] || wall[row][col].runeType === null) {
-      return 0;
-    }
-    
-    visited[row][col] = true;
-    let count = 1;
-    
-    // Check all 4 adjacent cells (up, down, left, right)
-    count += floodFill(row - 1, col); // up
-    count += floodFill(row + 1, col); // down
-    count += floodFill(row, col - 1); // left
-    count += floodFill(row, col + 1); // right
-    
-    return count;
-  }
-  
-  // Find all segments and track the largest, count essence-boosting runes
-  for (let row = 0; row < wallSize; row++) {
-    for (let col = 0; col < wallSize; col++) {
-      if (!visited[row][col] && wall[row][col].runeType !== null) {
-        const segmentSize = floodFill(row, col);
-        totalRunes += segmentSize;
-        largestSegment = Math.max(largestSegment, segmentSize);
-      }
-      if (gameMode === 'standard') {
-        essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
-      }
-    }
-  }
-  
-  // Calculate essence with rune essence bonuses (only in standard mode)
-  const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
-  
-  // Focus is no longer reduced by overload penalties
-  const focus = Math.max(1, largestSegment);
-  const totalPower = essence * focus;
-  
-  return totalPower;
-}
-
-/**
- * Calculate wall power and return detailed information
- * Used for game log display
- * Returns essence (total runes + passive essence bonuses) and focus (largest segment)
- * Passive bonuses come from wall cell effects; floor penalties are provided by caller.
- */
-export function calculateWallPowerWithSegments(
-  wall: ScoringWall, 
-  _floorPenaltyCount: number = 0,
-  gameMode: 'classic' | 'standard' = 'standard'
-): { essence: number; focus: number; totalPower: number } {
-  void _floorPenaltyCount;
-  const wallSize = wall.length;
-  const visited = Array(wallSize).fill(null).map(() => Array(wallSize).fill(false));
-  let totalRunes = 0;
-  let largestSegment = 0;
-  let essenceBonus = 0;
-  
-  function floodFill(row: number, col: number): number {
-    if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || 
-        visited[row][col] || wall[row][col].runeType === null) {
-      return 0;
-    }
-    
-    visited[row][col] = true;
-    let count = 1;
-    
-    count += floodFill(row - 1, col);
-    count += floodFill(row + 1, col);
-    count += floodFill(row, col - 1);
-    count += floodFill(row, col + 1);
-    
-    return count;
-  }
-  
-  for (let row = 0; row < wallSize; row++) {
-    for (let col = 0; col < wallSize; col++) {
-      if (!visited[row][col] && wall[row][col].runeType !== null) {
-        const segmentSize = floodFill(row, col);
-        totalRunes += segmentSize;
-        largestSegment = Math.max(largestSegment, segmentSize);
-      }
-      if (gameMode === 'standard') {
-        essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
-      }
-    }
-  }
-  
-  // Calculate essence with rune essence bonuses (only in standard mode)
-  const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
-  
-  // Focus is no longer reduced by overload penalties
-  const focus = Math.max(1, largestSegment);
-  const totalPower = essence * focus;
-  
-  return { essence, focus, totalPower };
 }
 
 /**
@@ -260,13 +138,8 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 export function calculateEffectiveFloorPenalty(
   floorRunes: Array<{ runeType: RuneType | null; effects?: RuneEffects | null }>,
   patternLines: Pick<PatternLine, 'runeType' | 'count' | 'tier' | 'firstRuneEffects'>[],
-  wall: ScoringWall,
-  gameMode: 'classic' | 'standard' = 'standard'
+  wall: ScoringWall
 ): number {
-  // In classic mode, all floor runes count as penalties
-  if (gameMode === 'classic') {
-    return floorRunes.length;
-  }
 
   const windRunesOnWall = wall.flat().reduce((total, cell) => (
     total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation')
@@ -386,29 +259,4 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
   }
   
   return bonus;
-}
-
-/**
- * Calculate projected power for the end of current turn
- * Shows what essence and focus will be after placing completed pattern lines
- * Passive effects are inherited from the first rune placed on a pattern line.
- */
-export function calculateProjectedPower(
-  wall: ScoringWall,
-  completedPatternLines: Array<{ row: number; runeType: RuneType; effects?: RuneEffects | null }>,
-  floorPenaltyCount: number,
-  gameMode: 'classic' | 'standard' = 'standard'
-): { essence: number; focus: number; totalPower: number } {
-  const wallSize = wall.length;
-  const simulatedWall: ScoringWall = wall.map((row) => row.map((cell) => ({ ...cell })));
-
-  for (const { row, runeType, effects } of completedPatternLines) {
-    const col = getWallColumnForRune(row, runeType, wallSize);
-    simulatedWall[row][col] = {
-      runeType,
-      effects: effects ? copyRuneEffects(effects) : getRuneEffectsForType(runeType),
-    };
-  }
-
-  return calculateWallPowerWithSegments(simulatedWall, floorPenaltyCount, gameMode);
 }

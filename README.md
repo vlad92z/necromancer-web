@@ -58,7 +58,7 @@ npm run lint
 - Strain (overload multiplier) grows each round.
 - Game over triggers at 0 HP or when a player lacks enough runes to refill runeforges. The survivor or higher-health player wins; Solo checks Rune Power against the target score when the deck runs dry.
 
-## Rune Effects (Standard Mode)
+## Rune Effects
 
 Currently runes have no active or passive effects applied. These will be unlocked as deck building is implemented.
 
@@ -66,7 +66,6 @@ Currently runes have no active or passive effects applied. These will be unlocke
 - **Objective**: Accumulate Rune Power (total segment damage from placements) to reach the target score before you run out of runes or health.
 - **Drafting**: Only from your own runeforges until they are empty; then from the center. Opponent runeforges are disabled.
 - **Overload & Strain**: Overflowing to the floor immediately deals overload damage equal to added penalty x current strain. Strain starts at 1x by default and multiplies each round (configurable 1.0-2.0x); Frost mitigation hooks reduce it.
-- **Healing & Effects**: Life/Wind/Frost runes heal when they land on the wall. Healing amount, strain, and rune counts are adjustable on the Solo start screen.
 - **Config Defaults**: 100 HP (cap 1000), 5 personal runeforges, 15 of each rune type, 5 healing per support rune, 200 Rune Power target, pattern-line locking enabled (cleared between rounds).
 - **Victory/Defeat**: Victory when Rune Power meets the target before the deck runs dry; defeat at 0 HP or by failing to hit the target once no new round can start.
 
@@ -120,13 +119,13 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 #### UI/UX Enhancements
 
 ##### Animation & Motion
-- [ ] Animate runes traveling from the center to pattern or floor lines
+- [x] Animate runes traveling from the center to pattern or floor lines
 
 ##### Effects & Overlays
-- [ ] Add effect indicators/tooltips on rune tokens
-- [ ] Show active effects in game state (frozen runeforges, Life healing)
-- [ ] Update `RulesOverlay` with rune effect explanations
-- [ ] Add overlay buttons for rules, deck, and the game log
+- [x] Add effect indicators/tooltips on rune tokens
+- [x] Show active effects in game state (frozen runeforges, Life healing)
+- [x] Update `RulesOverlay` with rune effect explanations
+- [x] Add overlay buttons for rules, deck, and the game log
 
 #### AI Improvements
 - [ ] Make AI evaluate Fire runes for scoring potential
@@ -154,7 +153,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### Configuration System
 - [ ] Create `GameRules` interface for configurable game rules
-- [ ] Create rule presets (Classic, Standard, Campaign boss-specific, Draft, PvP ranked)
 - [ ] Update game initialization to accept and apply `GameRules`
 
 #### Code Quality

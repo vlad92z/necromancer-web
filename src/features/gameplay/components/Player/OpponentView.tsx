@@ -8,7 +8,6 @@ import { PlayerBoard } from './PlayerBoard';
 interface OpponentViewProps {
   opponent: Player;
   isActive: boolean;
-  gameMode: 'classic' | 'standard';
   frozenPatternLines?: number[];
   lockedPatternLines?: number[];
   freezeSelectionEnabled?: boolean;
@@ -19,7 +18,19 @@ interface OpponentViewProps {
   round: number;
 }
 
-export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, onCancelFreezeSelection, hiddenSlotKeys, hiddenFloorSlotIndexes, round }: OpponentViewProps) {
+export function OpponentView(
+  {
+    opponent,
+    isActive,
+    frozenPatternLines = [],
+    lockedPatternLines = [],
+    freezeSelectionEnabled = false,
+    onFreezePatternLine,
+    onCancelFreezeSelection,
+    hiddenSlotKeys,
+    hiddenFloorSlotIndexes, 
+    round 
+  }: OpponentViewProps) {
   const showCancelPill = freezeSelectionEnabled && Boolean(onCancelFreezeSelection);
   return (
     <div style={{ marginBottom: '24px', position: 'relative' }}>
@@ -73,7 +84,6 @@ export function OpponentView({ opponent, isActive, gameMode, frozenPatternLines 
         selectedRuneType={null}
         canPlace={false}
         onCancelSelection={() => {}}
-        gameMode={gameMode}
         nameColor="#7f1d1d"
         frozenPatternLines={frozenPatternLines}
         lockedPatternLines={lockedPatternLines}

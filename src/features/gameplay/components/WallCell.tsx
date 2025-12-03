@@ -105,20 +105,5 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
 }
 
 function getRuneDescription(type: RuneType) {
-  switch (type) {
-    case 'Fire':
-      return 'Fire - increases ⚡Essence to deal more damage.';
-    case 'Void':
-      return 'Void - fuels ⚡Essence just like Fire and Lightning.';
-    case 'Lightning':
-      return 'Lightning - supercharges ⚡Essence just like Fire runes.';
-    case 'Frost':
-      return 'Frost - each rune restores 10 health during scoring.';
-    case 'Life':
-      return 'Life - each rune restores 10 health during scoring.';
-    case 'Wind':
-      return 'Wind - each rune restores 10 health during scoring.';
-    default:
-      return `${type} rune`;
-  }
+  return type
 }

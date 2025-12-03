@@ -17,8 +17,7 @@
  */
 
 import type { GameState, RuneType, PatternLine, Player, Rune, ScoringWall, VoidTarget, AIDifficulty } from '../types/game';
-import { getWallColumnForRune, calculateWallPower, calculateWallPowerWithSegments, calculateEffectiveFloorPenalty } from './scoring';
-import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
+import { getWallColumnForRune } from './scoring';
 
 const RUNE_PRIORITIES: RuneType[] = ['Fire', 'Lightning', 'Wind', 'Life', 'Void', 'Frost'];
 
@@ -26,36 +25,6 @@ const runePriorityMap: Record<RuneType, number> = RUNE_PRIORITIES.reduce((acc, r
   acc[runeType] = index;
   return acc;
 }, {} as Record<RuneType, number>);
-
-function calculateHealingAmountForWall(wall: Player['wall']): number {
-  return wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0);
-}
-
-function evaluateSpellpowerAndHealingValue(state: GameState, playerIndex: 0 | 1): number {
-  const player = state.players[playerIndex];
-  const predictedWall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
-  const wallSize = player.wall.length;
-
-  player.patternLines.forEach((line, lineIndex) => {
-    if (line.count === line.tier && line.runeType) {
-      const col = getWallColumnForRune(lineIndex, line.runeType, wallSize);
-      const effects = line.firstRuneEffects ?? getRuneEffectsForType(line.runeType);
-      predictedWall[lineIndex][col] = { runeType: line.runeType, effects: copyRuneEffects(effects) };
-    }
-  });
-
-  const floorPenalty = calculateEffectiveFloorPenalty(
-    player.floorLine.runes,
-    player.patternLines,
-    predictedWall,
-    state.gameMode
-  );
-
-  const power = calculateWallPowerWithSegments(predictedWall, floorPenalty, state.gameMode);
-  const lifeHeal = state.gameMode === 'standard' ? calculateHealingAmountForWall(predictedWall) : 0;
-
-  return power.totalPower + lifeHeal;
-}
 
 interface DraftMove {
   type: 'runeforge' | 'center';
@@ -297,164 +266,6 @@ function calculateWasteEfficiency(
 }
 
 /**
- * ADVANCED: Deep copy a player state for simulation
- */
-function clonePlayer(player: Player): Player {
-  return {
-    ...player,
-    patternLines: player.patternLines.map(line => ({ ...line })),
-    wall: player.wall.map(row => row.map(cell => ({ ...cell }))),
-    floorLine: {
-      ...player.floorLine,
-      runes: [...player.floorLine.runes]
-    },
-    deck: [...player.deck]
-  };
-}
-
-/**
- * ADVANCED: Simulate a draft move and return the new game state
- */
-function simulateDraftMove(state: GameState, move: DraftMove, targetLineIndex: number | null): GameState {
-  const newState: GameState = {
-    ...state,
-    players: [clonePlayer(state.players[0]), clonePlayer(state.players[1])],
-    runeforges: state.runeforges.map(f => ({ ...f, runes: [...f.runes] })),
-    centerPool: [...state.centerPool],
-    selectedRunes: []
-  };
-  
-  const currentPlayer = newState.players[newState.currentPlayerIndex];
-  let runesToPlace: { runeType: RuneType }[] = [];
-  
-  // Execute draft
-  if (move.type === 'runeforge' && move.runeforgeId) {
-    const runeforge = newState.runeforges.find(f => f.id === move.runeforgeId);
-    if (runeforge) {
-      runesToPlace = runeforge.runes.filter(r => r.runeType === move.runeType);
-      const remainingRunes = runeforge.runes.filter(r => r.runeType !== move.runeType);
-      newState.centerPool.push(...remainingRunes);
-      runeforge.runes = [];
-    }
-  } else if (move.type === 'center') {
-    runesToPlace = newState.centerPool.filter(r => r.runeType === move.runeType);
-    newState.centerPool = newState.centerPool.filter(r => r.runeType !== move.runeType);
-  }
-  
-  // Execute placement
-  if (targetLineIndex !== null && targetLineIndex >= 0 && targetLineIndex < 5) {
-    const line = currentPlayer.patternLines[targetLineIndex];
-    const spacesAvailable = line.tier - line.count;
-    const runesToAdd = Math.min(runesToPlace.length, spacesAvailable);
-    const overflow = runesToPlace.length - runesToAdd;
-    
-    line.runeType = move.runeType;
-    line.count += runesToAdd;
-    
-    if (overflow > 0) {
-      // Add overflow to floor line (simplified)
-      for (let i = 0; i < overflow && currentPlayer.floorLine.runes.length < currentPlayer.floorLine.maxCapacity; i++) {
-        currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effects: getRuneEffectsForType(move.runeType) });
-      }
-    }
-  } else {
-    // All to floor line
-    for (let i = 0; i < runesToPlace.length && currentPlayer.floorLine.runes.length < currentPlayer.floorLine.maxCapacity; i++) {
-      currentPlayer.floorLine.runes.push({ id: `floor-${Date.now()}-${i}`, runeType: move.runeType, effects: getRuneEffectsForType(move.runeType) });
-    }
-  }
-  
-  return newState;
-}
-
-/**
- * ADVANCED: Calculate expected score gain from a move by simulating end-of-round scoring
- * This simulates what would happen if the round ended after this move
- */
-function simulateScoreGain(state: GameState, move: DraftMove, targetLineIndex: number | null): number {
-  const currentPlayer = state.players[state.currentPlayerIndex];
-  const currentPenalty = calculateEffectiveFloorPenalty(
-    currentPlayer.floorLine.runes,
-    currentPlayer.patternLines,
-    currentPlayer.wall,
-    state.gameMode
-  );
-  const currentScore = calculateWallPower(currentPlayer.wall, currentPenalty, state.gameMode);
-  
-  // Simulate the move
-  const simulatedState = simulateDraftMove(state, move, targetLineIndex);
-  const simulatedPlayer = simulatedState.players[simulatedState.currentPlayerIndex];
-  
-  // Calculate potential wall state after this line completes
-  const simulatedWall = simulatedPlayer.wall.map(row => row.map(cell => ({ ...cell })));
-  const wallSize = simulatedPlayer.wall.length;
-  
-  // If we're completing a pattern line, simulate adding it to the wall
-  if (targetLineIndex !== null && targetLineIndex >= 0) {
-    const line = simulatedPlayer.patternLines[targetLineIndex];
-    if (line.count === line.tier && line.runeType !== null) {
-      const col = getWallColumnForRune(targetLineIndex, line.runeType, wallSize);
-      simulatedWall[targetLineIndex][col].runeType = line.runeType;
-    }
-  }
-  
-  const simulatedPenalty = calculateEffectiveFloorPenalty(
-    simulatedPlayer.floorLine.runes,
-    simulatedPlayer.patternLines,
-    simulatedWall,
-    state.gameMode
-  );
-  const simulatedScore = calculateWallPower(simulatedWall, simulatedPenalty, state.gameMode);
-  return simulatedScore - currentScore;
-}
-
-/**
- * ADVANCED: Minimax evaluation - consider opponent's best response
- * Looks ahead one move for the opponent and evaluates the resulting position
- */
-function evaluateWithOpponentResponse(state: GameState, move: DraftMove, targetLineIndex: number | null): number {
-  const simulatedState = simulateDraftMove(state, move, targetLineIndex);
-  
-  // Switch to opponent's perspective
-  const opponentIndex = (1 - simulatedState.currentPlayerIndex) as 0 | 1;
-  simulatedState.currentPlayerIndex = opponentIndex;
-  
-  // Get opponent's possible moves
-  const opponentMoves = getLegalDraftMoves(simulatedState);
-  if (opponentMoves.length === 0) {
-    return 0; // No opponent moves available
-  }
-  
-  // Find opponent's best move (their highest scoring move hurts us)
-  let worstCaseForUs = Infinity;
-  
-  for (const opponentMove of opponentMoves.slice(0, Math.min(5, opponentMoves.length))) {
-    // For each opponent move, find their best placement
-    const opponentPlayer = simulatedState.players[simulatedState.currentPlayerIndex];
-    const opponentFrozenLines = simulatedState.frozenPatternLines[opponentPlayer.id] ?? [];
-    let bestOpponentScore = -Infinity;
-    
-    for (let lineIdx = 0; lineIdx < 5; lineIdx++) {
-      const line = opponentPlayer.patternLines[lineIdx];
-      if (canPlaceOnLine(line, opponentMove.runeType, opponentPlayer.wall, lineIdx, opponentFrozenLines)) {
-        const opponentGain = simulateScoreGain(simulatedState, opponentMove, lineIdx);
-        if (opponentGain > bestOpponentScore) {
-          bestOpponentScore = opponentGain;
-        }
-      }
-    }
-    
-    // Calculate net position: our gain minus opponent's gain
-    const ourGain = simulateScoreGain(state, move, targetLineIndex);
-    const netAdvantage = ourGain - bestOpponentScore;
-    
-    worstCaseForUs = Math.min(worstCaseForUs, netAdvantage);
-  }
-  
-  return worstCaseForUs === Infinity ? 0 : worstCaseForUs;
-}
-
-/**
  * Score a draft move based on:
  * 1. Completing pattern lines (highest priority)
  * 2. Avoiding wasted runes (minimize overflow to floor) - ENHANCED
@@ -558,9 +369,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType, currentPlayerFrozenLines);
   score += wasteEfficiency * 0.5; // Scale it down since it's already factored in waste penalty
   
-  // Strategy 8: ADVANCED - Scoring simulation
-  // Find the best placement line for this move
-  let bestPlacementLineIndex: number | null = null;
+
   let bestPlacementScore = -Infinity;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
@@ -568,25 +377,9 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
       const placementScore = scorePlacementMove(lineIndex, state);
       if (placementScore > bestPlacementScore) {
         bestPlacementScore = placementScore;
-        bestPlacementLineIndex = lineIndex;
       }
     }
   });
-  
-  // Calculate expected score gain through simulation
-  if (bestPlacementLineIndex !== null) {
-    const expectedScoreGain = simulateScoreGain(state, move, bestPlacementLineIndex);
-    // Weight the simulated score heavily - it's based on actual game mechanics
-    score += expectedScoreGain * 3;
-  }
-  
-  // Strategy 9: ADVANCED - Minimax evaluation (opponent response)
-  // Consider what the opponent could do in response to this move
-  if (bestPlacementLineIndex !== null) {
-    const minimaxScore = evaluateWithOpponentResponse(state, move, bestPlacementLineIndex);
-    // Add minimax consideration (moderate weight since it's one level deep)
-    score += minimaxScore * 2;
-  }
   
   return score;
 }
@@ -1273,7 +1066,6 @@ function makeNormalAIMove(
   if (state.selectedRunes.length > 0) {
     const FLOOR_MOVE = -1;
     const runeType = state.selectedRunes[0].runeType;
-    let bestValue = Number.NEGATIVE_INFINITY;
     let bestMoveIndex: number | null = null;
 
     currentPlayer.patternLines.forEach((line, lineIndex) => {
@@ -1309,19 +1101,7 @@ function makeNormalAIMove(
         floorLine: nextFloorLine,
       };
 
-      const simulatedState: GameState = {
-        ...state,
-        players: nextPlayers,
-        selectedRunes: [],
-      };
-
-      const value = evaluateSpellpowerAndHealingValue(simulatedState, state.currentPlayerIndex);
-      if (value > bestValue) {
-        bestValue = value;
-        bestMoveIndex = lineIndex;
-      } else if (value === bestValue && bestMoveIndex !== null && bestMoveIndex >= 0 && lineIndex < bestMoveIndex) {
-        bestMoveIndex = lineIndex;
-      }
+      bestMoveIndex = lineIndex;
     });
 
     const floorPlayers: [Player, Player] = [...state.players] as [Player, Player];
@@ -1332,16 +1112,6 @@ function makeNormalAIMove(
         runes: [...currentPlayer.floorLine.runes, ...state.selectedRunes],
       },
     };
-    const floorSimulated: GameState = {
-      ...state,
-      players: floorPlayers,
-      selectedRunes: [],
-    };
-    const floorValue = evaluateSpellpowerAndHealingValue(floorSimulated, state.currentPlayerIndex);
-    if (floorValue > bestValue) {
-      bestValue = floorValue;
-      bestMoveIndex = FLOOR_MOVE;
-    }
 
     if (bestMoveIndex === null) {
       console.log('AI evaluate: no placement line found for selected runes', {
@@ -1371,7 +1141,7 @@ function makeNormalAIMove(
     return false;
   }
 
-  const baseValue = evaluateSpellpowerAndHealingValue(state, state.currentPlayerIndex);
+  const baseValue = 0;
   let bestDraft: DraftMove | null = null;
   let bestValue = baseValue;
 

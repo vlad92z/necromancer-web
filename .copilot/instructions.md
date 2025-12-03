@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Massive Spell: Arcane Arena** is a roguelite deck-building 1v1 duel game inspired by Azul's drafting mechanics. Players draft runes from runeforges, place them on pattern lines, and complete lines to add runes to their 5×5 scoring wall. The goal is to build connected segments of runes to maximize spellpower (Essence × Focus) and defeat the opponent.
+**Massive Spell: Arcane Arena** is a roguelite deck-building 1v1 duel game inspired by Azul's drafting mechanics. Players draft runes from runeforges, place them on pattern lines, and complete lines to add runes to their 5×5 scoring wall. The goal is to build connected segments of runes to maximize spell damage while surviving arcane overload.
 
 ### Tech Stack
 - **React 19** + **TypeScript** (strict mode)
@@ -12,9 +12,7 @@
 - **Inline CSS** styling with JavaScript style objects (no CSS-in-JS libraries, no Tailwind, no CSS Modules)
 
 ### Current Scope
-- Single-page PvE game (Player vs AI opponent)
-- No routing, no backend integration, no meta-progression
-- Focus: Core gameplay loop with polished UX
+- Solo Game Mode, where players try to reach the target RuneScore before they succumb to Arcane Overload
 
 ---
 
@@ -281,7 +279,7 @@ interface GameStore extends GameState {
   // State is inherited from GameState interface
   
   // Actions
-  startGame: (gameMode: 'classic' | 'standard') => void;
+  startGame: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
   endRound: () => void;
@@ -434,11 +432,12 @@ const fadeInUp = {
 ### Core Concepts
 
 **Rune Types** (5 elemental types):
-- `Fire`: Red (#FF4500) — Increases Essence (+1 per Fire rune on wall)
-- `Frost`: Blue (#1E90FF) — Freezes opponent's runeforge (blocks one draft)
-- `Poison`: Green (#32CD32) — Reduces opponent's Focus (-1 per Poison rune on your wall)
-- `Void`: Purple (#8B008B) — Destroys all runes in a selected runeforge
-- `Wind`: Yellow (#F0E68C) — Cancels floor line penalties (one Wind cancels one penalty)
+- `Fire`: Red (#FF4500)
+- `Frost`: Teal (#1E90FF)
+- `Poison`: Green (#32CD32)
+- `Void`: Purple (#8B008B)
+- `Wind`: Blue (#1E90FF)
+- `Lightning`: Yellow (#F0E68C)
 
 **Rune Effects** (discriminated union):
 ```typescript
@@ -448,10 +447,6 @@ type RuneEffect =
   | { type: 'MinusCost'; amount: number }     // Reduce cost by N
   | { type: 'None' };                         // No effect
 ```
-
-**Game Modes**:
-- `classic`: No rune effects, pure Azul-style mechanics
-- `standard`: Rune effects enabled (Fire bonus, Poison penalty, etc.)
 
 **Game Structure**:
 - **Runeforges** (5 for 2-player): Containers holding 4 runes each at round start
@@ -469,12 +464,6 @@ type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 - `end-of-round`: All runeforges and center are empty, trigger scoring
 - `scoring`: Animated scoring sequence (move to wall, calculate power, clear floor)
 - `game-over`: A player reaches 100+ damage, determine winner
-
-**Spellpower Calculation**:
-- **Essence**: Total runes on wall + Fire bonus (in standard mode)
-- **Focus**: Largest connected segment size - floor penalties - opponent's Poison count (in standard mode)
-- **Spellpower**: Essence × Focus
-- Runes are connected if they share an edge (not diagonal)
 
 ### Domain Rules for Copilot
 
@@ -570,7 +559,6 @@ The codebase should remain resilient to future features without requiring major 
 - Effects are modular (`RuneEffect` union can be extended without breaking existing code)
 
 **New Game Modes, Maps, or Screens**:
-- Game modes are already parameterized (`classic` vs `standard`)
 - New modes should extend `GameState` without altering core types
 - Screens should be components in `src/features/` with clear navigation contracts
 

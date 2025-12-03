@@ -7,12 +7,7 @@ import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
 import { PlayerStats } from './PlayerStats';
-import { calculateProjectedPower, calculateEffectiveFloorPenalty } from '../../../../utils/scoring';
-import { copyRuneEffects, getPassiveEffectValue, getRuneEffectsForType } from '../../../../utils/runeEffects';
-import { StatBadge } from '../../../../components/StatBadge';
-import essenceSvg from '../../../../assets/stats/essence.svg';
-import focusSvg from '../../../../assets/stats/focus.svg';
-import spellpowerSvg from '../../../../assets/stats/spellpower.svg';
+import { SoloRuneScoreOverlay } from '../SoloRuneScoreOverlay';
 
 interface PlayerBoardProps {
   player: Player;
@@ -22,7 +17,6 @@ interface PlayerBoardProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
-  gameMode: 'classic' | 'standard';
   nameColor: string;
   frozenPatternLines?: number[];
   lockedPatternLines?: number[];
@@ -32,68 +26,22 @@ interface PlayerBoardProps {
   hiddenFloorSlotIndexes?: Set<number>;
   round: number;
   hideStatsPanel?: boolean;
+  soloRuneScore?: {
+    currentScore: number;
+    targetScore: number;
+  };
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false, soloRuneScore }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
     }
   };
 
-  // Find completed pattern lines
-  const completedPatternLines = player.patternLines
-    .map((line, index) => ({ line, row: index }))
-    .filter(({ line }) => line.count === line.tier && line.runeType !== null)
-    .map(({ line, row }) => ({
-      row,
-      runeType: line.runeType!,
-      effects: copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType!)),
-    }));
-
   const currentHealth = player.health;
-  const healingAmount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
-    : 0;
-  
-  // Floor mitigation is applied only when runes grant FloorPenaltyMitigation (legacy Wind effect).
-  const floorPenaltyCount = calculateEffectiveFloorPenalty(
-    player.floorLine.runes,
-    player.patternLines,
-    player.wall,
-    gameMode
-  );
-  const windMitigationCount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
-    : 0;
-  const windRuneCount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => (cell.runeType === 'Wind' ? total + 1 : total), 0) +
-      completedPatternLines.reduce((total, line) => (line.runeType === 'Wind' ? total + 1 : total), 0)
-    : 0;
-  const hasWindMitigation = gameMode === 'standard' && (windMitigationCount > 0 || windRuneCount > 0);
- 
-  const { essence, focus, totalPower } = calculateProjectedPower(
-    player.wall,
-    completedPatternLines,
-    floorPenaltyCount,
-    gameMode
-  );
-  const hasPenalty = floorPenaltyCount > 0;
-  
-  // Count Essence-boosting runes: current wall + completed pattern lines (only in standard mode)
-  const essenceRuneCount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
-    : 0;
 
   const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
-  const focusTooltip = 'Focus - connect more runes to increase your multiplier.';
-  const segmentDamageTooltip = 'Complete a pattern line to strike immediately. The placed rune deals damage equal to the connected segment it joins (minimum 1).';
-  const essenceTooltip = essenceRuneCount > 0
-    ? `Essence - cast more runes to increase spell damage. Fire, Lightning, and Void runes (${essenceRuneCount}) amplify your Essence.`
-    : 'Essence - cast more runes to increase spell damage.';
 
   return (
     <div
@@ -118,10 +66,23 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
       }}>
         <div style={{ 
           flex: '1 1 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'min(1.2vmin, 12px)'
-        }}>
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'min(1.2vmin, 12px)'
+      }}>
+          {hideStatsPanel && soloRuneScore && (
+            <div
+              style={{ display: 'flex', justifyContent: 'center' }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div style={{ width: '100%', maxWidth: '640px' }}>
+                <SoloRuneScoreOverlay
+                  currentScore={soloRuneScore.currentScore}
+                  targetScore={soloRuneScore.targetScore}
+                />
+              </div>
+            </div>
+          )}
           <div
             style={{
               display: 'grid',
@@ -131,45 +92,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               gap: 'min(1.2vmin, 14px)'
             }}
           >
-            {hideStatsPanel && (
-              <div
-                style={{
-                  gridColumn: 2,
-                  gridRow: 1,
-                  width: '100%',
-                  display: 'flex',
-                  gap: '1em',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center'
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <StatBadge
-                  label="Essence"
-                  value={essence}
-                  color="#facc15"
-                  borderColor="rgba(250, 204, 21, 0.35)"
-                  tooltip={essenceTooltip}
-                  image={essenceSvg}
-                />
-                <StatBadge
-                  label="Focus"
-                  value={focus}
-                  color="#38bdf8"
-                  borderColor="rgba(56, 189, 248, 0.35)"
-                  tooltip={focusTooltip}
-                  image={focusSvg}
-                />
-                <StatBadge
-                  label="Segment Damage"
-                  value={totalPower}
-                  color="#9d17efff"
-                  borderColor="rgba(157, 23, 255, 0.35)"
-                  tooltip={segmentDamageTooltip}
-                  image={spellpowerSvg}
-                />
-              </div>
-            )}
             {/* Pattern Lines */}
             <div
               style={{ gridColumn: 1, gridRow: hideStatsPanel ? 2 : 1 }}
@@ -211,7 +133,7 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               floorLine={player.floorLine}
               onPlaceRunesInFloor={onPlaceRunesInFloor}
               canPlace={canPlace}
-              mitigatedSlots={windMitigationCount}
+              mitigatedSlots={0}
               playerId={player.id}
               hiddenSlotIndexes={hiddenFloorSlotIndexes}
             />
@@ -233,14 +155,6 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
               isActive={isActive}
               nameColor={nameColor}
               health={currentHealth}
-              healing={healingAmount}
-              essence={essence}
-              focus={focus}
-              totalPower={totalPower}
-              essenceRuneCount={essenceRuneCount}
-              hasPenalty={hasPenalty}
-              hasWindMitigation={hasWindMitigation}
-              windRuneCount={windRuneCount}
               round={round}
             />
           </div>

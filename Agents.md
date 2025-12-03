@@ -11,7 +11,7 @@ Follow all rules precisely. Do not deviate from established patterns.
 -   **Vite 7**
 -   **Zustand 5** for global game state
 -   **Framer Motion 12** for all animations
--   **Inline CSS (style objects)** --- no CSS libraries
+-   **Inline CSS (style objects)** --- currently used while transitioning toward Tailwind for new views
 -   Single-page PvE game (no routing, no backend)
 
 Only implement features within this scope.
@@ -117,9 +117,9 @@ export function ComponentName(props: ComponentNameProps) {
 ## 7. Styling Rules (Strict)
 
 Allowed: - Inline CSS (`React.CSSProperties`) - Style objects -
-Conditional merges
+Conditional merges - Tailwind for new views and gradual refactors
 
-Forbidden: - Tailwind - CSS Modules - Styled-components - Emotion -
+Forbidden: - CSS Modules - Styled-components - Emotion -
 Additional CSS files (except minimal global) - CSS animations
 
 ## 8. Animation Rules (Framer Motion Only)
@@ -192,7 +192,7 @@ Explain the plan first.
 -   Follow conventions exactly.
 -   Never introduce new paradigms.
 -   Keep UI pure, state serializable, and logic isolated.
--   Use Zustand + Framer Motion + inline CSS only.
+-   Use Zustand + Framer Motion; prefer Tailwind for new views while existing inline CSS migrates gradually.
 -   Extend domain types safely.
 -   Small, incremental changes only.
 

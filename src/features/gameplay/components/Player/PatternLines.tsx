@@ -69,7 +69,7 @@ export function PatternLines({
   };
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-end' }}>
       {patternLines.map((line, index) => {
         const isFrozen = frozenLineIndexes.includes(index);
         const isLocked = lockedLineIndexes.includes(index);
@@ -109,6 +109,7 @@ export function PatternLines({
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-end',
               gap: '4px',
               width: '100%',
               cursor: cursorStyle,
@@ -129,7 +130,8 @@ export function PatternLines({
                 const slotKey = `${index}-${slotIndex}`;
                 const shouldHideRune = hiddenSlotKeys?.has(slotKey);
                 const hasRuneInSlot = slotIndex < line.count && line.runeType !== null;
-                const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
+                // Primary rune (moves to the wall) should live in the trailing cell
+                const isPrimaryRuneSlot = slotIndex === line.tier - 1 && !shouldHideRune;
                 const runeEffects = isPrimaryRuneSlot && line.runeType
                   ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
                   : { passive: [], active: [] };
