@@ -425,6 +425,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => {
       const { selectedRunes, currentPlayerIndex } = state;
       const isSoloMode = state.matchType === 'solo';
+      const shouldApplyOverloadDamage = isSoloMode ? currentPlayerIndex === 0 : true;
       
       // No runes selected, do nothing
       if (selectedRunes.length === 0) return state;
@@ -489,7 +490,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
       };
 
-      const overloadDamage = isSoloMode && currentPlayerIndex === 0
+      const overloadDamage = shouldApplyOverloadDamage
         ? calculateImmediateOverloadDamage(
             currentPlayer.floorLine.runes,
             updatedFloorLine.runes,
@@ -499,7 +500,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             state.strain
           )
         : 0;
-      const nextHealth = isSoloMode && currentPlayerIndex === 0
+      const nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
 
@@ -575,7 +576,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
       const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
-      const defeatedByOverload = isSoloMode && currentPlayerIndex === 0 && nextHealth === 0;
+      const defeatedByOverload = shouldApplyOverloadDamage && nextHealth === 0;
       const opponentDefeated = !isSoloMode && opponentHealth === 0 && damageDealt > 0;
       const soloVictoryAchieved = isSoloMode && soloOutcome === 'victory';
       if (defeatedByOverload) {
@@ -589,7 +590,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           scoringPhase: null,
           scoringSnapshot: null,
-          soloOutcome: 'defeat' as SoloOutcome,
+          soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           runePowerTotal: nextRunePowerTotal,
           roundDamage: updatedRoundDamage,
           lockedPatternLines: updatedLockedPatternLines,
@@ -698,6 +699,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => {
       const { selectedRunes, currentPlayerIndex } = state;
       const isSoloMode = state.matchType === 'solo';
+      const shouldApplyOverloadDamage = isSoloMode ? currentPlayerIndex === 0 : true;
       
       // No runes selected, do nothing
       if (selectedRunes.length === 0) return state;
@@ -714,7 +716,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
       };
 
-      const overloadDamage = isSoloMode && currentPlayerIndex === 0
+      const overloadDamage = shouldApplyOverloadDamage
         ? calculateImmediateOverloadDamage(
             currentPlayer.floorLine.runes,
             updatedFloorLine.runes,
@@ -724,7 +726,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             state.strain
           )
         : 0;
-      const nextHealth = isSoloMode && currentPlayerIndex === 0
+      const nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
       
@@ -743,7 +745,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       // Switch to next player (alternate between 0 and 1)
       const nextPlayerIndex = isSoloMode ? currentPlayerIndex : currentPlayerIndex === 0 ? 1 : 0;
-      const defeatedByOverload = isSoloMode && currentPlayerIndex === 0 && nextHealth === 0;
+      const defeatedByOverload = shouldApplyOverloadDamage && nextHealth === 0;
       if (defeatedByOverload) {
         return {
           ...state,
@@ -755,7 +757,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           scoringPhase: null,
           scoringSnapshot: null,
-          soloOutcome: 'defeat' as SoloOutcome,
+          soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           voidEffectPending: false,
           frostEffectPending: false,
         };
