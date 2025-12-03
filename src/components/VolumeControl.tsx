@@ -1,8 +1,7 @@
 /**
  * VolumeControl - music and sound volume overlay control
  */
-import React from 'react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, ReactElement } from 'react';
 
 interface VolumeControlProps {
   soundVolume: number; // 0..1
@@ -11,7 +10,7 @@ interface VolumeControlProps {
   onVolumeChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function VolumeControl({ soundVolume, isMusicMuted, onToggleMusic, onVolumeChange }: VolumeControlProps): JSX.Element {
+export function VolumeControl({ soundVolume, isMusicMuted, onToggleMusic, onVolumeChange }: VolumeControlProps): ReactElement {
   return (
     <div
       style={{
