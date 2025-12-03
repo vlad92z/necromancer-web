@@ -281,7 +281,7 @@ interface GameStore extends GameState {
   // State is inherited from GameState interface
   
   // Actions
-  startGame: (gameMode: 'classic' | 'standard') => void;
+  startGame: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType) => void;
   placeRunes: (patternLineIndex: number) => void;
   endRound: () => void;
@@ -449,10 +449,6 @@ type RuneEffect =
   | { type: 'None' };                         // No effect
 ```
 
-**Game Modes**:
-- `classic`: No rune effects, pure Azul-style mechanics
-- `standard`: Rune effects enabled (Fire bonus, Poison penalty, etc.)
-
 **Game Structure**:
 - **Runeforges** (5 for 2-player): Containers holding 4 runes each at round start
 - **Center Pool**: Accumulates leftover runes when a runeforge is drafted from
@@ -469,12 +465,6 @@ type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 - `end-of-round`: All runeforges and center are empty, trigger scoring
 - `scoring`: Animated scoring sequence (move to wall, calculate power, clear floor)
 - `game-over`: A player reaches 100+ damage, determine winner
-
-**Spellpower Calculation**:
-- **Essence**: Total runes on wall + Fire bonus (in standard mode)
-- **Focus**: Largest connected segment size - floor penalties - opponent's Poison count (in standard mode)
-- **Spellpower**: Essence × Focus
-- Runes are connected if they share an edge (not diagonal)
 
 ### Domain Rules for Copilot
 
@@ -570,7 +560,6 @@ The codebase should remain resilient to future features without requiring major 
 - Effects are modular (`RuneEffect` union can be extended without breaking existing code)
 
 **New Game Modes, Maps, or Screens**:
-- Game modes are already parameterized (`classic` vs `standard`)
 - New modes should extend `GameState` without altering core types
 - Screens should be components in `src/features/` with clear navigation contracts
 

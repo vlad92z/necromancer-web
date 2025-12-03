@@ -27,19 +27,14 @@ function calculatePassiveEffectForWall(
 
 function calculateVoidDamageBonus(
   wall: Player['wall'],
-  projectedDamageTaken: number,
-  gameMode: GameState['gameMode']
+  projectedDamageTaken: number
 ): number {
-  if (gameMode === 'classic') {
-    return 0;
-  }
   const conversionRate = calculatePassiveEffectForWall(wall, 'DamageToSpellpower');
   return projectedDamageTaken * conversionRate;
 }
 
 function calculateNextStrainMultiplier(
   _players: [Player, Player],
-  _gameMode: GameState['gameMode'],
   baseMultiplier: number
 ): number {
   return baseMultiplier;
@@ -52,28 +47,23 @@ function calculateImmediateOverloadDamage(
   nextPatternLines: Player['patternLines'],
   wall: Player['wall'],
   strain: number,
-  gameMode: GameState['gameMode']
 ): number {
   const previousPenalty = calculateEffectiveFloorPenalty(
     previousFloorRunes,
     previousPatternLines,
-    wall,
-    gameMode
+    wall
   );
   const nextPenalty = calculateEffectiveFloorPenalty(
     nextFloorRunes,
     nextPatternLines,
-    wall,
-    gameMode
+    wall
   );
   const addedPenalty = Math.max(0, nextPenalty - previousPenalty);
   if (addedPenalty === 0) {
     return 0;
   }
 
-  const frostMitigation = gameMode === 'standard'
-    ? calculatePassiveEffectForWall(wall, 'StrainMitigation')
-    : 0;
+  const frostMitigation = calculatePassiveEffectForWall(wall, 'StrainMitigation');
   const overloadMultiplier = applyStressMitigation(strain, frostMitigation);
   return addedPenalty * overloadMultiplier;
 }
@@ -108,7 +98,8 @@ const getInitializerForMatchType = (matchType: MatchType, runeTypeCount: import(
 
 export interface GameplayStore extends GameState {
   // Actions
-  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
+  // Not in use
+  startGame: (topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
@@ -170,23 +161,21 @@ function processSoloScoringPhase(state: GameState): GameState {
     const floorPenalty = calculateEffectiveFloorPenalty(
       updatedPlayer.floorLine.runes,
       updatedPlayer.patternLines,
-      updatedPlayer.wall,
-      state.gameMode
+      updatedPlayer.wall
     );
 
     const wallPowerStats = calculateWallPowerWithSegments(
       updatedPlayer.wall,
-      floorPenalty,
-      state.gameMode
+      floorPenalty
     );
     const projectedDamageTaken = floorPenalty * state.strain;
-    const voidBonus = calculateVoidDamageBonus(updatedPlayer.wall, projectedDamageTaken, state.gameMode);
+    const voidBonus = calculateVoidDamageBonus(updatedPlayer.wall, projectedDamageTaken);
     const adjustedWallPowerStats: WallPowerStats = {
       ...wallPowerStats,
       totalPower: wallPowerStats.totalPower + voidBonus,
     };
 
-    const healingTotal = state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayer.wall) : 0;
+    const healingTotal = calculateHealingAmount(updatedPlayer.wall);
 
     const scoringSnapshot: ScoringSnapshot = {
       floorPenalties: [floorPenalty, 0],
@@ -313,7 +302,6 @@ function processSoloScoringPhase(state: GameState): GameState {
 
     const nextStrainMultiplier = calculateNextStrainMultiplier(
       [updatedPlayer, state.players[1]],
-      state.gameMode,
       DEFAULT_STRAIN_MULTIPLIER
     );
 
@@ -508,8 +496,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             currentPlayer.patternLines,
             updatedPatternLines,
             currentPlayer.wall,
-            state.strain,
-            state.gameMode
+            state.strain
           )
         : 0;
       const nextHealth = isSoloMode && currentPlayerIndex === 0
@@ -649,12 +636,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
-      // Only trigger rune effects in standard mode
-      const isStandardMode = state.gameMode === 'standard';
-      
       // If Void runes were placed and there are available targets, trigger Void effect
       // Keep current player so THEY get to choose which rune to destroy
-      if (isStandardMode && hasVoidRunes && hasVoidTargets && !shouldEndRound) {
+      if (hasVoidRunes && hasVoidTargets && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -673,7 +657,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       
       // If Frost runes were placed and there are non-empty runeforges, trigger Frost effect
       // Keep current player so THEY get to choose which runeforge to freeze
-      if (isStandardMode && hasFrostRunes && canTriggerFrostEffect && !shouldEndRound) {
+      if (hasFrostRunes && canTriggerFrostEffect && !shouldEndRound) {
         return {
           ...state,
           players: updatedPlayers,
@@ -737,8 +721,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             currentPlayer.patternLines,
             currentPlayer.patternLines,
             currentPlayer.wall,
-            state.strain,
-            state.gameMode
+            state.strain
           )
         : 0;
       const nextHealth = isSoloMode && currentPlayerIndex === 0
@@ -1066,27 +1049,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           calculateEffectiveFloorPenalty(
             updatedPlayersArray[0].floorLine.runes,
             updatedPlayersArray[0].patternLines,
-            updatedPlayersArray[0].wall,
-            state.gameMode
+            updatedPlayersArray[0].wall
           ),
           calculateEffectiveFloorPenalty(
             updatedPlayersArray[1].floorLine.runes,
             updatedPlayersArray[1].patternLines,
-            updatedPlayersArray[1].wall,
-            state.gameMode
+            updatedPlayersArray[1].wall
           ),
         ];
 
         const baseWallPowerStats: [WallPowerStats, WallPowerStats] = [
           calculateWallPowerWithSegments(
             updatedPlayersArray[0].wall,
-            floorPenalties[0],
-            state.gameMode
+            floorPenalties[0]
           ),
           calculateWallPowerWithSegments(
             updatedPlayersArray[1].wall,
-            floorPenalties[1],
-            state.gameMode
+            floorPenalties[1]
           ),
         ];
         const projectedDamageTaken: [number, number] = [
@@ -1094,8 +1073,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           baseWallPowerStats[0].totalPower,
         ];
         const voidBonuses: [number, number] = [
-          calculateVoidDamageBonus(updatedPlayersArray[0].wall, projectedDamageTaken[0], state.gameMode),
-          calculateVoidDamageBonus(updatedPlayersArray[1].wall, projectedDamageTaken[1], state.gameMode),
+          calculateVoidDamageBonus(updatedPlayersArray[0].wall, projectedDamageTaken[0]),
+          calculateVoidDamageBonus(updatedPlayersArray[1].wall, projectedDamageTaken[1]),
         ];
         const wallPowerStats: [WallPowerStats, WallPowerStats] = [
           {
@@ -1109,8 +1088,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ];
 
         const healingTotals: [number, number] = [
-          state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayersArray[0].wall) : 0,
-          state.gameMode === 'standard' ? calculateHealingAmount(updatedPlayersArray[1].wall) : 0,
+          calculateHealingAmount(updatedPlayersArray[0].wall),
+          calculateHealingAmount(updatedPlayersArray[1].wall),
         ];
 
         const scoringSnapshot: ScoringSnapshot = {
@@ -1250,7 +1229,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ];
         const nextStrainMultiplier = calculateNextStrainMultiplier(
           finalPlayers,
-          state.gameMode,
           DEFAULT_STRAIN_MULTIPLIER
         );
 
@@ -1281,7 +1259,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  startGame: (gameMode: 'classic' | 'standard', topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => {
+  startGame: (topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => {
     set((state) => {
       const shouldResetState = state.runeTypeCount !== runeTypeCount || state.matchType !== 'versus';
       // If rune type count changed or we are resuming from a different match type, reinitialize the game with new configuration
@@ -1308,7 +1286,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...newState,
           gameStarted: true,
           matchType: 'versus',
-          gameMode: gameMode,
           runeTypeCount: runeTypeCount,
           playerControllers: updatedControllers,
           players: updatedPlayers,
@@ -1342,7 +1319,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         gameStarted: true,
         matchType: 'versus',
-        gameMode: gameMode,
         runeTypeCount: runeTypeCount,
         playerControllers: updatedControllers,
         players: updatedPlayers,
@@ -1377,7 +1353,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...baseState,
         gameStarted: true,
         matchType: 'versus',
-        gameMode: 'standard' as const,
         players: updatedPlayers,
         playerControllers,
         runePowerTotal: 0,

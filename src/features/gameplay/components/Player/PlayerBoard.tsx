@@ -19,7 +19,6 @@ interface PlayerBoardProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
-  gameMode: 'classic' | 'standard';
   nameColor: string;
   frozenPatternLines?: number[];
   lockedPatternLines?: number[];
@@ -35,7 +34,7 @@ interface PlayerBoardProps {
   };
 }
 
-export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, gameMode, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false, soloRuneScore }: PlayerBoardProps) {
+export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloor, selectedRuneType, canPlace, onCancelSelection, nameColor, frozenPatternLines = [], lockedPatternLines = [], freezeSelectionEnabled = false, onFreezePatternLine, hiddenSlotKeys, hiddenFloorSlotIndexes, round, hideStatsPanel = false, soloRuneScore }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
@@ -53,41 +52,31 @@ export function PlayerBoard({ player, isActive, onPlaceRunes, onPlaceRunesInFloo
     }));
 
   const currentHealth = player.health;
-  const healingAmount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0)
-    : 0;
+  const healingAmount = player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'Healing'), 0) +
+      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'Healing'), 0);
   
   // Floor mitigation is applied only when runes grant FloorPenaltyMitigation (legacy Wind effect).
   const floorPenaltyCount = calculateEffectiveFloorPenalty(
     player.floorLine.runes,
     player.patternLines,
-    player.wall,
-    gameMode
+    player.wall
   );
-  const windMitigationCount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0)
-    : 0;
-  const windRuneCount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => (cell.runeType === 'Wind' ? total + 1 : total), 0) +
-      completedPatternLines.reduce((total, line) => (line.runeType === 'Wind' ? total + 1 : total), 0)
-    : 0;
-  const hasWindMitigation = gameMode === 'standard' && (windMitigationCount > 0 || windRuneCount > 0);
+  const windMitigationCount = player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation'), 0) +
+      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'FloorPenaltyMitigation'), 0);
+  const windRuneCount = player.wall.flat().reduce((total, cell) => (cell.runeType === 'Wind' ? total + 1 : total), 0) +
+      completedPatternLines.reduce((total, line) => (line.runeType === 'Wind' ? total + 1 : total), 0);
+  const hasWindMitigation = (windMitigationCount > 0 || windRuneCount > 0);
  
   const { essence, focus, totalPower } = calculateProjectedPower(
     player.wall,
     completedPatternLines,
-    floorPenaltyCount,
-    gameMode
+    floorPenaltyCount
   );
   const hasPenalty = floorPenaltyCount > 0;
   
-  // Count Essence-boosting runes: current wall + completed pattern lines (only in standard mode)
-  const essenceRuneCount = gameMode === 'standard'
-    ? player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
-      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0)
-    : 0;
+  // Count Essence-boosting runes: current wall + completed pattern lines
+  const essenceRuneCount = player.wall.flat().reduce((total, cell) => total + getPassiveEffectValue(cell.effects, 'EssenceBonus'), 0) +
+      completedPatternLines.reduce((total, line) => total + getPassiveEffectValue(line.effects, 'EssenceBonus'), 0);
 
   const detailPanelWidth = 'clamp(320px, 30vmin, 420px)';
 

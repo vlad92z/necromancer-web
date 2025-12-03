@@ -23,8 +23,7 @@ export function getRuneOrderForSize(wallSize: number): RuneType[] {
  */
 export function calculateWallPower(
   wall: ScoringWall, 
-  _floorPenaltyCount: number = 0, 
-  gameMode: 'classic' | 'standard' = 'standard'
+  _floorPenaltyCount: number = 0
 ): number {
   void _floorPenaltyCount;
   const wallSize = wall.length;
@@ -61,14 +60,11 @@ export function calculateWallPower(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
-      if (gameMode === 'standard') {
-        essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
-      }
+      essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
     }
   }
   
-  // Calculate essence with rune essence bonuses (only in standard mode)
-  const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
+  const essence = totalRunes + (essenceBonus);
   
   // Focus is no longer reduced by overload penalties
   const focus = Math.max(1, largestSegment);
@@ -86,7 +82,6 @@ export function calculateWallPower(
 export function calculateWallPowerWithSegments(
   wall: ScoringWall, 
   _floorPenaltyCount: number = 0,
-  gameMode: 'classic' | 'standard' = 'standard'
 ): { essence: number; focus: number; totalPower: number } {
   void _floorPenaltyCount;
   const wallSize = wall.length;
@@ -119,14 +114,11 @@ export function calculateWallPowerWithSegments(
         totalRunes += segmentSize;
         largestSegment = Math.max(largestSegment, segmentSize);
       }
-      if (gameMode === 'standard') {
-        essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
-      }
+      essenceBonus += getPassiveEffectValue(wall[row][col].effects, 'EssenceBonus');
     }
   }
   
-  // Calculate essence with rune essence bonuses (only in standard mode)
-  const essence = totalRunes + (gameMode === 'standard' ? essenceBonus : 0);
+  const essence = totalRunes;
   
   // Focus is no longer reduced by overload penalties
   const focus = Math.max(1, largestSegment);
@@ -260,13 +252,8 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 export function calculateEffectiveFloorPenalty(
   floorRunes: Array<{ runeType: RuneType | null; effects?: RuneEffects | null }>,
   patternLines: Pick<PatternLine, 'runeType' | 'count' | 'tier' | 'firstRuneEffects'>[],
-  wall: ScoringWall,
-  gameMode: 'classic' | 'standard' = 'standard'
+  wall: ScoringWall
 ): number {
-  // In classic mode, all floor runes count as penalties
-  if (gameMode === 'classic') {
-    return floorRunes.length;
-  }
 
   const windRunesOnWall = wall.flat().reduce((total, cell) => (
     total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation')
@@ -396,8 +383,7 @@ export function calculateEndGameBonus(wall: ScoringWall): number {
 export function calculateProjectedPower(
   wall: ScoringWall,
   completedPatternLines: Array<{ row: number; runeType: RuneType; effects?: RuneEffects | null }>,
-  floorPenaltyCount: number,
-  gameMode: 'classic' | 'standard' = 'standard'
+  floorPenaltyCount: number
 ): { essence: number; focus: number; totalPower: number } {
   const wallSize = wall.length;
   const simulatedWall: ScoringWall = wall.map((row) => row.map((cell) => ({ ...cell })));
@@ -410,5 +396,5 @@ export function calculateProjectedPower(
     };
   }
 
-  return calculateWallPowerWithSegments(simulatedWall, floorPenaltyCount, gameMode);
+  return calculateWallPowerWithSegments(simulatedWall, floorPenaltyCount);
 }

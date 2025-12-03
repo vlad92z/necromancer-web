@@ -120,13 +120,13 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 #### UI/UX Enhancements
 
 ##### Animation & Motion
-- [ ] Animate runes traveling from the center to pattern or floor lines
+- [x] Animate runes traveling from the center to pattern or floor lines
 
 ##### Effects & Overlays
-- [ ] Add effect indicators/tooltips on rune tokens
-- [ ] Show active effects in game state (frozen runeforges, Life healing)
-- [ ] Update `RulesOverlay` with rune effect explanations
-- [ ] Add overlay buttons for rules, deck, and the game log
+- [x] Add effect indicators/tooltips on rune tokens
+- [x] Show active effects in game state (frozen runeforges, Life healing)
+- [x] Update `RulesOverlay` with rune effect explanations
+- [x] Add overlay buttons for rules, deck, and the game log
 
 #### AI Improvements
 - [ ] Make AI evaluate Fire runes for scoring potential
@@ -154,7 +154,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 #### Configuration System
 - [ ] Create `GameRules` interface for configurable game rules
-- [ ] Create rule presets (Classic, Standard, Campaign boss-specific, Draft, PvP ranked)
 - [ ] Update game initialization to accept and apply `GameRules`
 
 #### Code Quality
