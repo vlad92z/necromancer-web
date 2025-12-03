@@ -101,21 +101,21 @@ export function CenterPool({
   // Layout: simple centered horizontal row for all runes in the center pool
   
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: totalRunes === 0 ? 'none' : 'auto' }}>
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', pointerEvents: totalRunes === 0 ? 'none' : 'auto' }}>
         <motion.div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+          justifyItems: 'center',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: 'min(1.8vmin, 30px)',
-          padding: 'min(1vmin, 16px)',
-          borderRadius: '28px',
+          gap: '12px',
+          padding: '14px 16px',
+          borderRadius: '24px',
           background: totalRunes === 0 ? 'transparent' : 'rgba(12, 6, 29, 0.85)',
           border: totalRunes === 0 ? 'none' : containerBorder,
           boxShadow: totalRunes === 0 ? 'none' : containerBoxShadow,
+          minWidth: 'min(340px, 90%)',
+          maxWidth: '520px',
+          width: '100%',
         }} {...containerMotionProps}>
           {displayRunes.map(({ rune, isSelected }) => {
             const highlightByType = hoveredRuneType === rune.runeType && !isSelected;

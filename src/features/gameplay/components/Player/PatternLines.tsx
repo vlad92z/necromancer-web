@@ -69,7 +69,7 @@ export function PatternLines({
   };
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-end' }}>
       {patternLines.map((line, index) => {
         const isFrozen = frozenLineIndexes.includes(index);
         const isLocked = lockedLineIndexes.includes(index);
@@ -109,6 +109,7 @@ export function PatternLines({
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-end',
               gap: '4px',
               width: '100%',
               cursor: cursorStyle,

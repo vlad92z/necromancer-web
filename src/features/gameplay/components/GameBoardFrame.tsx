@@ -23,16 +23,17 @@ import { applyStressMitigation } from '../../../utils/scoring';
 import { getPassiveEffectValue } from '../../../utils/runeEffects';
 import type { SoloStatsProps } from './Player/SoloStats';
 
-const BOARD_BASE_SIZE = 1200;
+const BOARD_BASE_WIDTH = 1500;
+const BOARD_BASE_HEIGHT = 1000;
 const BOARD_PADDING = 80;
 const MIN_BOARD_SCALE = 0.55;
 const MIN_AVAILABLE_SIZE = 520;
 const OVERLAY_RUNE_SIZE = 48;
 
 const computeBoardScale = (width: number, height: number): number => {
-  const shortestSide = Math.min(width, height);
-  const available = Math.max(shortestSide - BOARD_PADDING, MIN_AVAILABLE_SIZE);
-  const rawScale = available / BOARD_BASE_SIZE;
+  const availableWidth = Math.max(width - BOARD_PADDING, MIN_AVAILABLE_SIZE);
+  const availableHeight = Math.max(height - BOARD_PADDING, MIN_AVAILABLE_SIZE);
+  const rawScale = Math.min(availableWidth / BOARD_BASE_WIDTH, availableHeight / BOARD_BASE_HEIGHT);
   const clamped = Math.min(rawScale, 1);
   return Math.max(clamped, MIN_BOARD_SCALE);
 };
@@ -755,7 +756,8 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
 
   const borderColor = 'rgba(255, 255, 255, 0.12)';
   const sectionPadding = 24;
-  const scaledBoardSize = BOARD_BASE_SIZE * boardScale;
+  const scaledBoardWidth = BOARD_BASE_WIDTH * boardScale;
+  const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
   const sharedProps: GameBoardSharedProps = {
     borderColor,
     sectionPadding,
@@ -843,14 +845,14 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
         <VolumeControl soundVolume={soundVolume} onVolumeChange={handleVolumeChange} isMusicMuted={isMusicMuted} onToggleMusic={handleToggleMusic} />
       </div>
 
-      <div style={{ width: `${scaledBoardSize}px`, height: `${scaledBoardSize}px`, position: 'relative' }}>
+      <div style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px`, position: 'relative' }}>
         <div
           style={{
             position: 'absolute',
             top: 0,
             left: 0,
-            width: `${BOARD_BASE_SIZE}px`,
-            height: `${BOARD_BASE_SIZE}px`,
+            width: `${BOARD_BASE_WIDTH}px`,
+            height: `${BOARD_BASE_HEIGHT}px`,
             transform: `scale(${boardScale})`,
             transformOrigin: 'top left',
             background: 'rgba(9, 3, 24, 0.85)',

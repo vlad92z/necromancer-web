@@ -163,12 +163,13 @@ export function RuneforgesAndCenter({
     }
 
     return (
-      <div key={`${owner.id}-${keySuffix}`} style={{ marginBottom: '16px', width: '100%' }}>
+      <div key={`${owner.id}-${keySuffix}`} style={{ width: '100%' }}>
         <div style={{ 
-          display: 'flex', 
-          justifyContent: align, 
-          gap: '60px', 
-          flexWrap: 'wrap'
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: align,
+          gap: '14px',
+          width: '100%'
         }}>
           {ownedRuneforges.map((runeforge) => (
             <Runeforge 
@@ -198,7 +199,7 @@ export function RuneforgesAndCenter({
   };
 
   const renderCenterSection = () => (
-    <div style={{ position: 'relative', minHeight: '60px', marginBottom: '25px', marginTop: '25px', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', marginTop: '4px' }}>
       <CenterPool 
         centerPool={centerPool}
         onRuneClick={onCenterRuneClick}
@@ -218,20 +219,13 @@ export function RuneforgesAndCenter({
     </div>
   );
 
-  const renderSoloRuneforges = () => {
-    const midpoint = Math.ceil(playerRuneforges.length / 2);
-    const topRuneforges = playerRuneforges.slice(0, midpoint);
-    const bottomRuneforges = playerRuneforges.slice(midpoint);
-
-    return (
-      <>
-        {renderRuneforgeRow(player, topRuneforges, 'center', 'top')}
-        {renderCenterSection()}
-        {renderRuneforgeRow(player, bottomRuneforges, 'center', 'bottom')}
-        <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
-      </>
-    );
-  };
+  const renderSoloRuneforges = () => (
+    <>
+      {renderRuneforgeRow(player, playerRuneforges, 'center', 'player')}
+      {renderCenterSection()}
+      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
+    </>
+  );
   
   return (
     <div
@@ -243,7 +237,8 @@ export function RuneforgesAndCenter({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'stretch',
+        gap: '16px',
       }}
     >
       {voidEffectPending && !isAITurn && onCancelVoidSelection && (
@@ -289,15 +284,17 @@ export function RuneforgesAndCenter({
           </button>
         </div>
       )}
-      {hideOpponentRow ? (
-        renderSoloRuneforges()
-      ) : (
-        <>
-          {renderRuneforgeRow(opponent, opponentRuneforges, 'center', 'opponent')}
-          {renderCenterSection()}
-          {renderRuneforgeRow(player, playerRuneforges, 'center', 'player')}
-        </>
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+        {hideOpponentRow ? (
+          renderSoloRuneforges()
+        ) : (
+          <>
+            {renderRuneforgeRow(opponent, opponentRuneforges, 'center', 'opponent')}
+            {renderRuneforgeRow(player, playerRuneforges, 'center', 'player')}
+            {renderCenterSection()}
+          </>
+        )}
+      </div>
     </div>
   );
 }
