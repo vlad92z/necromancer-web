@@ -23,7 +23,6 @@ function DuelBoardContent({ shared, variantData }: DuelBoardContentProps) {
     currentPlayerId,
     selectedRuneType,
     hasSelectedRunes,
-    gameMode,
     playerFrozenLines,
     opponentFrozenLines,
     playerLockedLines,
@@ -31,7 +30,6 @@ function DuelBoardContent({ shared, variantData }: DuelBoardContentProps) {
     playerHiddenPatternSlots,
     opponentHiddenPatternSlots,
     playerHiddenFloorSlots,
-    opponentHiddenFloorSlots,
     runeforges,
     centerPool,
     runeTypeCount,
@@ -61,25 +59,41 @@ function DuelBoardContent({ shared, variantData }: DuelBoardContentProps) {
   const { winner } = variantData;
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(360px, 1.15fr) 1.85fr',
-        gridTemplateRows: '1fr 1fr',
-        height: '100%',
-        position: 'relative',
-      }}
-    >
+    <>
       <div
         style={{
-          gridRow: '1 / span 2',
+          flex: 1,
           padding: `${sectionPadding}px`,
-          borderRight: `1px solid ${borderColor}`,
+          borderBottom: `1px solid ${borderColor}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <OpponentView
+            opponent={players[1]}
+            isActive={currentPlayerIndex === 1}
+            frozenPatternLines={opponentFrozenLines}
+            lockedPatternLines={opponentLockedLines}
+            freezeSelectionEnabled={canFreezeOpponentPatternLine}
+            onFreezePatternLine={canFreezeOpponentPatternLine ? onFreezePatternLine : undefined}
+            onCancelFreezeSelection={onCancelFreezeSelection}
+            hiddenSlotKeys={opponentHiddenPatternSlots}
+            round={round}
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          padding: `${sectionPadding}px`,
+          borderBottom: `1px solid ${borderColor}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
-          background: 'radial-gradient(circle at 40% 20%, rgba(86, 27, 176, 0.12), transparent 60%)',
         }}
       >
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -106,37 +120,27 @@ function DuelBoardContent({ shared, variantData }: DuelBoardContentProps) {
             hiddenCenterRuneIds={hiddenCenterRuneIds}
             hideOpponentRow={false}
           />
+
+          {isGameOver && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 100,
+                width: 'auto',
+              }}
+            >
+              <GameOverModal players={players} winner={winner} onReturnToStart={returnToStartScreen} />
+            </div>
+          )}
         </div>
       </div>
 
       <div
         style={{
-          padding: `${sectionPadding}px`,
-          borderBottom: `1px solid ${borderColor}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <OpponentView
-            opponent={players[1]}
-            isActive={currentPlayerIndex === 1}
-            gameMode={gameMode}
-            frozenPatternLines={opponentFrozenLines}
-            lockedPatternLines={opponentLockedLines}
-            freezeSelectionEnabled={canFreezeOpponentPatternLine}
-            onFreezePatternLine={canFreezeOpponentPatternLine ? onFreezePatternLine : undefined}
-            onCancelFreezeSelection={onCancelFreezeSelection}
-            hiddenSlotKeys={opponentHiddenPatternSlots}
-            hiddenFloorSlotIndexes={opponentHiddenFloorSlotIndexes}
-            round={round}
-          />
-        </div>
-      </div>
-
-      <div
-        style={{
+          flex: 1,
           padding: `${sectionPadding}px`,
           display: 'flex',
           alignItems: 'center',
@@ -152,7 +156,6 @@ function DuelBoardContent({ shared, variantData }: DuelBoardContentProps) {
             selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
             canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
             onCancelSelection={onCancelSelection}
-            gameMode={gameMode}
             frozenPatternLines={playerFrozenLines}
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
@@ -161,22 +164,7 @@ function DuelBoardContent({ shared, variantData }: DuelBoardContentProps) {
           />
         </div>
       </div>
-
-      {isGameOver && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 100,
-            width: 'auto',
-          }}
-        >
-          <GameOverModal players={players} winner={winner} onReturnToStart={returnToStartScreen} />
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 

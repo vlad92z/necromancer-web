@@ -97,7 +97,6 @@ export interface GameBoardSharedProps {
   playerHiddenPatternSlots?: Set<string>;
   opponentHiddenPatternSlots?: Set<string>;
   playerHiddenFloorSlots?: Set<number>;
-  opponentHiddenFloorSlots?: Set<number>;
   isDraftPhase: boolean;
   isGameOver: boolean;
   isAITurn: boolean;
@@ -245,7 +244,6 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
   const playerHiddenPatternSlots = hiddenPatternSlots[players[0].id];
   const opponentHiddenPatternSlots = hiddenPatternSlots[opponent.id];
   const playerHiddenFloorSlots = hiddenFloorSlots[players[0].id];
-  const opponentHiddenFloorSlots = hiddenFloorSlots[opponent.id];
   const playerFrozenLines = frozenPatternLines[players[0].id] ?? [];
   const opponentFrozenLines = frozenPatternLines[opponent.id] ?? [];
   const playerLockedLines = lockedPatternLines[players[0].id] ?? [];
@@ -773,7 +771,6 @@ export function GameBoardFrame({ gameState, variant, renderContent }: GameBoardF
     playerHiddenPatternSlots,
     opponentHiddenPatternSlots,
     playerHiddenFloorSlots,
-    opponentHiddenFloorSlots,
     isDraftPhase,
     isGameOver,
     isAITurn,
