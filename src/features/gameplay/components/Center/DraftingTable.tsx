@@ -28,7 +28,7 @@ interface RuneforgesAndCenterProps {
   hideOpponentRow?: boolean;
 }
 
-export function RuneforgesAndCenter({ 
+export function DraftingTable({ 
   runeforges, 
   centerPool, 
   runeTypeCount,

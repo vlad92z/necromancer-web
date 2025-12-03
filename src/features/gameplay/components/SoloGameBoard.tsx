@@ -3,7 +3,7 @@
  */
 
 import type { GameBoardSharedProps, SoloVariantData } from './GameBoardFrame';
-import { RuneforgesAndCenter } from './Center/RuneforgesAndCenter';
+import { DraftingTable } from './Center/DraftingTabgle';
 import { PlayerView } from './Player/PlayerView';
 import { SoloStats } from './Player/SoloStats';
 import { SoloGameOverModal } from './SoloGameOverModal';
@@ -47,7 +47,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
         className="p-6 border-r flex items-center justify-center relative border-r-[rgba(148,163,184,0.35)] bg-[radial-gradient(circle_at_45%_25%,rgba(86,27,176,0.12),transparent_60%)]"
       >
         <div className="w-full h-full relative">
-          <RuneforgesAndCenter
+          <DraftingTable
             runeforges={runeforges}
             centerPool={centerPool}
             players={players}
