@@ -20,8 +20,8 @@ function StatIcon({ name }: { name: string }) {
     <img
       src={name}
       alt=""
-      aria-hidden
-      style={{ display: 'inline-flex', width: 35, height: 35 }}
+      aria-hidden={true}
+      className="inline-flex w-[35px] h-[35px]"
     />
   );
 }
@@ -35,13 +35,7 @@ export function StatBadge({ label, value, borderColor, tooltip, image, onClick, 
   const baseShadow = alert ? '0 0 16px rgba(248, 113, 113, 0.4)' : '0 10px 26px rgba(0,0,0,0.45)';
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'center',
-      }}
-    >
+    <div className="relative flex justify-center">
       <button
         type="button"
         onMouseEnter={() => setIsHovered(true)}
@@ -49,45 +43,24 @@ export function StatBadge({ label, value, borderColor, tooltip, image, onClick, 
         onFocus={() => setIsHovered(true)}
         onBlur={() => setIsHovered(false)}
         onClick={onClick}
-        style={{
-          fontSize: '0.2rem',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '2em 3em',
-          background: 'rgba(8, 17, 35, 0.85)',
-          borderRadius: '0.6rem',
-          border: `1px solid ${borderColor}`,
-          cursor: isClickable ? 'pointer' : 'default',
-          color: '#f8fafc',
-          boxShadow: baseShadow,
-          transition: 'box-shadow 0.2s ease',
-        }}
+        className={
+          `flex items-center px-2 py-2 min-w-[110px] rounded-[0.6rem] bg-[rgba(8,17,35,0.85)] text-slate-50 transition-shadow` +
+          (isClickable ? ' cursor-pointer' : ' cursor-default')
+        }
+        style={{ border: `1px solid ${borderColor}`, boxShadow: baseShadow }}
         aria-label={`${label}: ${tooltip}`}
       >
         <StatIcon name={image} />
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, marginLeft: '0.5rem' }}>
-          <span style={{ fontSize: '1.15rem', fontWeight: 600 }}>{value}</span>
+        <div className="flex flex-col leading-[1.2] ml-2">
+          <span className="text-[1.15rem] font-semibold">{value}</span>
         </div>
       </button>
       {isHovered && (
         <div
-          style={{
-            position: 'absolute',
-            bottom: 'calc(100% + 8px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'min(240px, 70vw)',
-            padding: '10px 14px',
-            background: 'rgba(3, 7, 18, 0.95)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            color: '#cbd5f5',
-            fontSize: '1rem',
-            lineHeight: 1.6,
-            whiteSpace: 'pre-wrap',
-            boxShadow: '0 20px 45px rgba(0,0,0,0.55)',
-            zIndex: 5,
-          }}
+          className={
+            'absolute left-1/2 transform -translate-x-1/2 p-[10px] px-[14px] rounded-[12px] border border-white/12 text-slate-300 text-[1rem] leading-[1.6] whitespace-pre-wrap shadow-[0_20px_45px_rgba(0,0,0,0.55)] z-50 bg-[rgba(3,7,18,0.95)]'
+          }
+          style={{ bottom: 'calc(100% + 8px)', width: 'min(240px, 70vw)' }}
         >
           {tooltip}
         </div>
