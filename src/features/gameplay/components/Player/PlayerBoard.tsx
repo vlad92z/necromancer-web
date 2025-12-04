@@ -59,100 +59,48 @@ export function PlayerBoard({
   return (
     <div
       onClick={handleBoardClick}
-      style={{
-        width: '100%',
-        height: '100%',
-        padding: 'min(1.2vmin, 16px)',
-        borderRadius: '28px',
-        background: 'rgba(14, 6, 32, 0.92)',
-        boxShadow: '0 10px 40px rgba(3, 0, 18, 0.65)',
-        transition: 'box-shadow 0.2s ease'
-      }}
+      className={
+        "w-full h-full " +
+        "p-[min(1.2vmin,16px)] rounded-[28px] " +
+        "bg-[rgba(14,6,32,0.92)] shadow-[0_10px_40px_rgba(3,0,18,0.65)] transition-shadow duration-200"
+      }
     >
-      <div style={{ 
-        display: 'flex',
-        alignItems: 'stretch',
-        justifyContent: 'space-between',
-        gap: 'min(1.5vmin, 18px)',
-        width: '100%',
-        height: '100%'
-      }}>
-        <div style={{ 
-          flex: '1 1 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'min(1.2vmin, 12px)'
-      }}>
-          <div
-              style={{ display: 'flex', justifyContent: 'center' }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  maxWidth: '640px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'auto 1fr',
-                    gap: '10px',
-                    alignItems: 'stretch'
-                  }}
-                >
-                  <StatBadge
-                    label="Deck"
-                    value={deckValue}
-                    color="#60a5fa"
-                    borderColor="rgba(96, 165, 250, 0.35)"
-                    tooltip={`Runes left in deck: ${deckValue}`}
-                    image={deckSvg}
-                    onClick={onOpenDeck}
-                  />
-                  <SoloRuneScoreOverlay
-                    currentScore={soloRuneScore?.currentScore ?? 0}
-                    targetScore={soloRuneScore?.targetScore ?? 0}
-                  />
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'auto 1fr',
-                    gap: '10px',
-                    alignItems: 'stretch'
-                  }}
-                >
-                  <StatBadge
-                    label="Fatigue"
-                    value={fatigueValue}
-                    color="#fa6060ff"
-                    borderColor="rgba(154, 147, 23, 0.35)"
-                    tooltip={`Overloading runes immediately deals ${fatigueValue} damage`}
-                    image={fatigueSvg}
-                  />
-                  <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
-                </div>
+      <div className="flex items-stretch justify-between gap-[min(1.5vmin,18px)] w-full h-full">
+        <div className="flex-1 flex flex-col gap-[min(1.2vmin,12px)]">
+          <div className="flex justify-center" onClick={(event) => event.stopPropagation()}>
+            <div className="w-full max-w-[640px] flex flex-col gap-[10px]">
+              <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', gap: '10px', alignItems: 'stretch' }}>
+                <StatBadge
+                  label="Deck"
+                  value={deckValue}
+                  color="#60a5fa"
+                  borderColor="rgba(96, 165, 250, 0.35)"
+                  tooltip={`Runes left in deck: ${deckValue}`}
+                  image={deckSvg}
+                  onClick={onOpenDeck}
+                />
+                <SoloRuneScoreOverlay
+                  currentScore={soloRuneScore?.currentScore ?? 0}
+                  targetScore={soloRuneScore?.targetScore ?? 0}
+                />
+              </div>
+              <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', gap: '10px', alignItems: 'stretch' }}>
+                <StatBadge
+                  label="Fatigue"
+                  value={fatigueValue}
+                  color="#fa6060ff"
+                  borderColor="rgba(250, 96, 96, 0.35)"
+                  tooltip={`Overloading runes immediately deals ${fatigueValue} damage`}
+                  image={fatigueSvg}
+                />
+                <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
               </div>
             </div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'auto auto',
-              gridTemplateRows: 'auto auto',
-              alignItems: 'start',
-              gap: 'min(1.2vmin, 14px)'
-            }}
-          >
+          </div>
+          <div className="grid grid-cols-2 items-start gap-[min(1.2vmin,14px)]">
             {/* Pattern Lines */}
-            <div
-              style={{ gridColumn: 1, gridRow: 2 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <PatternLines 
+            <div className="col-start-1" onClick={(e) => e.stopPropagation()}>
+              <PatternLines
                 patternLines={player.patternLines}
                 wall={player.wall}
                 onPlaceRunes={onPlaceRunes}
@@ -163,25 +111,16 @@ export function PlayerBoard({
                 lockedLineIndexes={lockedLineIndexes}
               />
             </div>
-            
+
             {/* Wall */}
-            <div
-              style={{
-                gridColumn: 2,
-                gridRow: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 'min(0.7vmin, 12px)'
-              }}
-            >
+            <div className="col-start-2 flex flex-col items-center gap-[min(0.7vmin,12px)]">
               <ScoringWall wall={player.wall} patternLines={player.patternLines} />
             </div>
           </div>
 
           {/* Floor Line - spans beneath pattern lines and wall */}
           <div onClick={(e) => e.stopPropagation()}>
-            <FloorLine 
+            <FloorLine
               floorLine={player.floorLine}
               onPlaceRunesInFloor={onPlaceRunesInFloor}
               canPlace={canPlace}
