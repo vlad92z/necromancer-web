@@ -10,11 +10,17 @@ import type { MouseEvent } from 'react';
 import type { Rune, RuneType } from '../types/game';
 import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
+import fireRuneUncommon from '../assets/runes/fire_rune_uncommon.svg';
 import frostRune from '../assets/runes/frost_rune.svg';
+import frostRuneUncommon from '../assets/runes/frost_rune_uncommon.svg';
 import lifeRune from '../assets/runes/life_rune.svg';
+import lifeRuneUncommon from '../assets/runes/life_rune_uncommon.svg';
 import voidRune from '../assets/runes/void_rune.svg';
+import voidRuneUncommon from '../assets/runes/void_rune_uncommon.svg';
 import windRune from '../assets/runes/wind_rune.svg';
+import windRuneUncommon from '../assets/runes/wind_rune_uncommon.svg';
 import lightningRune from '../assets/runes/lightning_rune.svg';
+import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.svg';
 import { getRuneEffectDescription } from '../utils/runeEffects';
 
 const RUNE_ASSETS = {
@@ -24,6 +30,15 @@ const RUNE_ASSETS = {
   Void: voidRune,
   Wind: windRune,
   Lightning: lightningRune,
+};
+
+const RUNE_UNCOMMON_ASSETS = {
+  Fire: fireRuneUncommon,
+  Frost: frostRuneUncommon,
+  Life: lifeRuneUncommon,
+  Void: voidRuneUncommon,
+  Wind: windRuneUncommon,
+  Lightning: lightningRuneUncommon,
 };
 
 export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
@@ -116,11 +131,13 @@ export function RuneCell({
   const variantStyle = VARIANT_STYLES[usedVariant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
-  const runeImage = runeType ? RUNE_ASSETS[runeType] : null;
+  const hasEffect = showEffect && Boolean(rune && rune.effects.length > 0);
+  const runeImage = runeType
+    ? (hasEffect ? RUNE_UNCOMMON_ASSETS[runeType] : RUNE_ASSETS[runeType])
+    : null;
   
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
-  const hasEffect = showEffect && Boolean(rune && rune.effects.length > 0);
   const tooltipText = useMemo(() => {
     if (!showTooltip || !rune) {
       return null;
@@ -170,9 +187,6 @@ export function RuneCell({
   const tooltipPositionStyles = tooltipPlacement === 'bottom'
     ? { top: 'calc(100% + 8px)', bottom: 'auto' }
     : { bottom: 'calc(100% + 8px)', top: 'auto' };
-  const effectGlow = hasEffect
-    ? '0 0 12px rgba(74, 222, 128, 0.75), 0 0 0 2px rgba(74, 222, 128, 0.35)'
-    : undefined;
 
   return (
     <Container
@@ -188,7 +202,6 @@ export function RuneCell({
         borderRadius: `${RADIUS.md}px`,
         border: borderStyle,
         backgroundColor: backgroundColor,
-        boxShadow: effectGlow,
         padding: `${config.padding}px`,
         cursor: clickable ? 'pointer' : 'default',
         
