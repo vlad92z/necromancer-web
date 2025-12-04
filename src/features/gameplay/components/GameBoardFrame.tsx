@@ -109,7 +109,6 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     turnPhase,
     lockedPatternLines,
     shouldTriggerEndRound,
-    scoringPhase,
     draftSource,
     round,
     strain,
@@ -121,6 +120,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     draftRune,
     draftFromCenter,
     placeRunes,
+    moveRunesToWall,
     placeRunesInFloor,
     cancelSelection,
     selectDeckDraftRuneforge,
@@ -128,7 +128,6 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
-  const processScoringStep = useGameplayStore((state) => state.processScoringStep);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
   const isSoloVariant = variant === 'solo';
@@ -262,28 +261,15 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   }, [shouldTriggerEndRound, endRound]);
 
   useEffect(() => {
-    if (!scoringPhase) return;
+    if (turnPhase !== 'cast') return;
 
-    let timer: ReturnType<typeof setTimeout>;
+    const timer = setTimeout(() => {
+      moveRunesToWall();
+    }, 750);
 
-    if (scoringPhase === 'moving-to-wall') {
-      timer = setTimeout(() => {
-        processScoringStep();
-      }, 1500);
-    } else if (scoringPhase === 'clearing-floor') {
-      timer = setTimeout(() => {
-        processScoringStep();
-      }, 1500);
-    } else if (scoringPhase === 'complete') {
-      timer = setTimeout(() => {
-        processScoringStep();
-      }, 500);
-    }
+    return () => clearTimeout(timer);
+  }, [turnPhase, moveRunesToWall]);
 
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [scoringPhase, processScoringStep]);
 
   const [boardScale, setBoardScale] = useState(() => {
     if (typeof window === 'undefined') {

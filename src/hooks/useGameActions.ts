@@ -10,6 +10,7 @@ export function useGameActions() {
   const draftRune = useGameplayStore((state) => state.draftRune);
   const draftFromCenter = useGameplayStore((state) => state.draftFromCenter);
   const placeRunes = useGameplayStore((state) => state.placeRunes);
+  const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
   const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
   const cancelSelection = useGameplayStore((state) => state.cancelSelection);
   const skipVoidEffect = useGameplayStore((state) => state.skipVoidEffect);
@@ -26,6 +27,7 @@ export function useGameActions() {
     draftRune,
     draftFromCenter,
     placeRunes,
+    moveRunesToWall,
     placeRunesInFloor,
     cancelSelection,
     skipVoidEffect,
