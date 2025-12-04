@@ -16,10 +16,7 @@ interface SelectedDisplayOverride {
 interface RuneforgeProps {
   runeforge: RuneforgeType;
   onRuneClick?: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onVoidRuneSelect?: (runeforgeId: string, runeId: string) => void;
   disabled?: boolean;
-  voidEffectPending?: boolean;
-  frostEffectPending?: boolean;
   displayOverride?: SelectedDisplayOverride;
   selectionSourceActive?: boolean;
   onCancelSelection?: () => void;
@@ -29,24 +26,17 @@ interface RuneforgeProps {
 export function Runeforge({ 
   runeforge, 
   onRuneClick,
-  onVoidRuneSelect,
-  disabled = false, 
-  voidEffectPending = false, 
-  frostEffectPending = false,
+  disabled = false,
   displayOverride,
   selectionSourceActive = false,
   onCancelSelection,
   animatingRuneIds = null
 }: RuneforgeProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
-  const [hoveredVoidRuneId, setHoveredVoidRuneId] = useState<string | null>(null);
-  const canSelectRunesForVoid = Boolean(
-    voidEffectPending && onVoidRuneSelect && !disabled && runeforge.runes.length > 0
-  );
   const displayedRunes = displayOverride ? displayOverride.runes : runeforge.runes;
   const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
   const selectionActive = selectionSourceActive && Boolean(displayOverride);
-  const canHighlightRunes = !selectionActive && ((!voidEffectPending && !frostEffectPending && !disabled) || canSelectRunesForVoid);
+  const canHighlightRunes = !selectionActive && !disabled;
   const runeSize = 60;
   const runeGap = 14;
   const containerPadding = 24;
@@ -64,11 +54,7 @@ export function Runeforge({
     if (selectionActive) {
       return;
     }
-    if (canSelectRunesForVoid && onVoidRuneSelect) {
-      onVoidRuneSelect(runeforge.id, rune.id);
-      return;
-    }
-    if (!disabled && onRuneClick && !voidEffectPending && !frostEffectPending) {
+    if (!disabled && onRuneClick) {
       onRuneClick(runeforge.id, rune.runeType, rune.id);
     }
   };
@@ -82,30 +68,16 @@ export function Runeforge({
   const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
   const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
-  const frostGlowRest = '0 6px 24px rgba(6, 182, 212, 0.85), inset 0 0 8px rgba(34, 211, 238, 0.25)';
-  const frostGlowPeak = '0 10px 34px rgba(59, 130, 246, 1), inset 0 0 14px rgba(34, 211, 238, 0.4)';
-  const frostGlowRange: [string, string] = [frostGlowRest, frostGlowPeak];
   let glowRange: [string, string] | null = null;
   let glowDuration = 1.5;
   
   // Normal selectable state (green highlight when player can select)
-  const isSelectable = !disabled && !selectionActive && !voidEffectPending && !frostEffectPending && runeforge.runes.length > 0 && onRuneClick;
+  const isSelectable = !disabled && !selectionActive && runeforge.runes.length > 0 && onRuneClick;
   if (isSelectable) {
     borderColor = '#c084fc';
     boxShadow = selectableGlowRest;
     glowRange = selectableGlowRange;
     glowDuration = 1.5;
-  }
-  
-  // Frost effect styling (cyan)
-  if (frostEffectPending && runeforge.runes.length > 0 && !disabled) {
-    // Use a dark blue glow instead of changing the background
-    borderColor = '#22d3ee';
-    hoverBackgroundColor = '#1c1034';
-    boxShadow = frostGlowRest;
-    glowRange = frostGlowRange;
-    glowDuration = 1.4;
-    ariaLabel = `Frost effect active - waiting to freeze a pattern line`;
   }
   
   const glowMotionProps = glowRange
@@ -131,18 +103,14 @@ export function Runeforge({
         justifyContent: 'center',
         transition: 'all 0.2s',
         border: `1px solid ${borderColor}`,
-        cursor: selectionActive
-          ? 'pointer'
-          : (buttonDisabled ? 'not-allowed' : (voidEffectPending ? 'default' : 'pointer')),
+        cursor: selectionActive || !buttonDisabled ? 'pointer' : 'not-allowed',
         outline: 'none',
         boxShadow: boxShadow,
         position: 'relative'
       }}
       onMouseEnter={(e) => {
-        if (!voidEffectPending && !frostEffectPending) {
-          e.currentTarget.style.backgroundColor = hoverBackgroundColor;
-          e.currentTarget.style.transform = 'scale(1.02)';
-        }
+        e.currentTarget.style.backgroundColor = hoverBackgroundColor;
+        e.currentTarget.style.transform = 'scale(1.02)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = backgroundColor;
@@ -162,16 +130,11 @@ export function Runeforge({
               const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
               const isAnimatingRune = animatingRuneIds?.has(rune.id) ?? false;
               const highlightByType = hoveredRuneType === rune.runeType && !displayOverride;
-              const highlightByVoidSelection = canSelectRunesForVoid && hoveredVoidRuneId === rune.id;
-              const isHighlighted = highlightByVoidSelection || highlightByType;
+              const isHighlighted = highlightByType;
               const baseSize = `${runeSize}px`;
-              const basePointerEvents = selectionActive
-                ? (isSelectedForDisplay ? 'auto' : 'none')
-                : ((!canSelectRunesForVoid && (frostEffectPending || disabled)) ? 'none' : 'auto');
+              const basePointerEvents = (selectionActive && isSelectedForDisplay) || (!selectionActive && !disabled) ? 'auto' : 'none';
               const pointerEvents = isAnimatingRune ? 'none' : basePointerEvents;
-              const baseCursor = selectionActive
-                ? (isSelectedForDisplay ? 'pointer' : 'not-allowed')
-                : ((frostEffectPending || disabled) ? 'not-allowed' : 'pointer');
+              const baseCursor = selectionActive || !disabled ? 'pointer' : 'not-allowed';
               const cursor = isAnimatingRune ? 'default' : baseCursor;
               const motionProps = isSelectedForDisplay
                 ? {
@@ -210,17 +173,10 @@ export function Runeforge({
                     if (!canHighlightRunes) {
                       return;
                     }
-                    if (canSelectRunesForVoid) {
-                      setHoveredVoidRuneId(rune.id);
-                      setHoveredRuneType(null);
-                      return;
-                    }
                     setHoveredRuneType(rune.runeType);
-                    setHoveredVoidRuneId(null);
                   }}
                   onMouseLeave={() => {
                     setHoveredRuneType(null);
-                    setHoveredVoidRuneId(null);
                   }}
                   {...motionProps}
                 >
@@ -229,7 +185,6 @@ export function Runeforge({
                     variant="runeforge"
                     size='large'
                     showEffect={false}
-                    isVoidPending={canSelectRunesForVoid}
                   />
                 </motion.div>
               );
