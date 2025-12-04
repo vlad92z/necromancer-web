@@ -9,6 +9,7 @@ import { useClickSound } from '../../../hooks/useClickSound';
 interface DeckDraftingModalProps {
   draftState: DeckDraftState;
   onSelectRuneforge: (runeforgeId: string) => void;
+  onOpenDeckOverlay: () => void;
   currentTarget: number;
   nextTarget: number;
   currentDeckSize: number;
@@ -17,6 +18,7 @@ interface DeckDraftingModalProps {
 export function DeckDraftingModal({
   draftState,
   onSelectRuneforge,
+  onOpenDeckOverlay,
   currentTarget,
   nextTarget,
   currentDeckSize,
@@ -27,6 +29,11 @@ export function DeckDraftingModal({
   const handleSelect = (runeforgeId: string) => {
     playClickSound();
     onSelectRuneforge(runeforgeId);
+  };
+
+  const handleOpenDeckOverlay = () => {
+    playClickSound();
+    onOpenDeckOverlay();
   };
 
   return (
@@ -83,6 +90,15 @@ export function DeckDraftingModal({
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Selections Left</div>
           <div className="text-base font-bold text-white">{draftState.picksRemaining}</div>
+        </div>
+        <div className="flex w-full justify-end sm:w-auto">
+          <button
+            type="button"
+            onClick={handleOpenDeckOverlay}
+            className="w-full sm:w-auto rounded-xl border border-sky-400/40 bg-sky-900/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-50 transition hover:border-sky-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+          >
+            View Deck
+          </button>
         </div>
       </div>
     </div>
