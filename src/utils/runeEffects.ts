@@ -6,17 +6,7 @@ import type { RuneEffect, RuneEffects, RuneType } from '../types/game';
 
 export interface RuneEffectTuning {
   lifeHealing?: number;
-  frostMitigation?: number;
-  voidConversion?: number;
 }
-
-/**
- * Legacy rune effects preserved for future use.
- */
-export const LEGACY_RUNE_EFFECTS: Pick<Record<RuneType, RuneEffects>, 'Frost' | 'Void'> = {
-  Frost: [{ type: 'FreezePatternLine' }],
-  Void: [{ type: 'DestroyRune' }],
-};
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 1 }],
@@ -41,10 +31,6 @@ export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTun
   const tunedEffects = baseEffects.map((effect) => {
     if (effect.type === 'Healing' && tuning.lifeHealing !== undefined) {
       return { ...effect, amount: tuning.lifeHealing };
-    }
-
-    if (effect.type === 'DamageToSpellpower' && tuning.voidConversion !== undefined) {
-      return { ...effect, amount: tuning.voidConversion };
     }
 
     return effect;
