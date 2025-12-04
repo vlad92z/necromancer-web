@@ -166,6 +166,7 @@ export function CenterPool({
                   variant="center"
                   size="large"
                   showEffect={false}
+                  showTooltip
                 />
               </motion.div>
             );

@@ -5,6 +5,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import type { Rune, RuneType } from '../types/game';
 import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
@@ -14,6 +15,7 @@ import lifeRune from '../assets/runes/life_rune.svg';
 import voidRune from '../assets/runes/void_rune.svg';
 import windRune from '../assets/runes/wind_rune.svg';
 import lightningRune from '../assets/runes/lightning_rune.svg';
+import { getRuneEffectDescription } from '../utils/runeEffects';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
@@ -50,6 +52,8 @@ export interface RuneCellProps {
   onClick?: () => void;
   showEffect?: boolean;
   isPending?: boolean; // For wall cells with full pattern lines
+  showTooltip?: boolean;
+  tooltipPlacement?: 'top' | 'bottom';
 }
 
 const SIZE_CONFIG = {
@@ -103,7 +107,10 @@ export function RuneCell({
   onClick,
   showEffect = false,
   isPending = false,
+  showTooltip = false,
+  tooltipPlacement = 'top',
 }: RuneCellProps) {
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = SIZE_CONFIG[size];
   const usedVariant = forceVariant ?? variant;
   const variantStyle = VARIANT_STYLES[usedVariant];
@@ -114,6 +121,12 @@ export function RuneCell({
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   const hasEffect = showEffect && Boolean(rune && rune.effects.length > 0);
+  const tooltipText = useMemo(() => {
+    if (!showTooltip || !rune) {
+      return null;
+    }
+    return getRuneEffectDescription(rune.runeType, rune.effects);
+  }, [rune, showTooltip]);
   
   // Use occupied background for wall cells that have runes OR are pending placement
   // Use `usedVariant` for styling decisions so callers can force visuals
@@ -135,6 +148,29 @@ export function RuneCell({
   } : {};
   
   const Container = shouldAnimate ? motion.div : 'div';
+
+  const handleMouseEnter = (e: MouseEvent<HTMLDivElement>) => {
+    if (clickable) {
+      e.currentTarget.style.transform = 'scale(1.05)';
+    }
+    if (showTooltip && rune) {
+      setIsTooltipVisible(true);
+    }
+  };
+
+  const handleMouseLeave = (e: MouseEvent<HTMLDivElement>) => {
+    if (clickable) {
+      e.currentTarget.style.transform = 'scale(1)';
+    }
+    if (isTooltipVisible) {
+      setIsTooltipVisible(false);
+    }
+  };
+
+  const tooltipPositionStyles = tooltipPlacement === 'bottom'
+    ? { top: 'calc(100% + 8px)', bottom: 'auto' }
+    : { bottom: 'calc(100% + 8px)', top: 'auto' };
+
   return (
     <Container
       {...animationProps}
@@ -155,8 +191,8 @@ export function RuneCell({
         position: 'relative',
         
       }}
-      onMouseEnter={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1.05)')}
-      onMouseLeave={(e: MouseEvent<HTMLDivElement>) => clickable && (e.currentTarget.style.transform = 'scale(1)')}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {runeImage && (
         <img 
@@ -208,6 +244,30 @@ export function RuneCell({
           border: `2px solid ${COLORS.ui.text}`,
           boxShadow: SHADOWS.sm,
         }} />
+      )}
+
+      {isTooltipVisible && tooltipText && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '8px 12px',
+            background: 'rgba(8, 7, 16, 0.95)',
+            borderRadius: '10px',
+            border: `1px solid ${COLORS.ui.borderLight}`,
+            color: COLORS.ui.text,
+            fontSize: '12px',
+            lineHeight: 1.5,
+            whiteSpace: 'pre-line',
+            boxShadow: SHADOWS.md,
+            zIndex: 10,
+            pointerEvents: 'none',
+            ...tooltipPositionStyles,
+          }}
+        >
+          {tooltipText}
+        </div>
       )}
     </Container>
   );

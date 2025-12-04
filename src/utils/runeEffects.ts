@@ -21,6 +21,27 @@ function cloneEffects(effects: RuneEffects): RuneEffects {
   return effects.map((effect) => ({ ...effect }));
 }
 
+function formatRuneEffect(effect: RuneEffect): string {
+  switch (effect.type) {
+    case 'Damage':
+      return `+${effect.amount} damage when placed`;
+    case 'Healing':
+      return `Restore ${effect.amount} health when scored`;
+    case 'DamageToSpellpower':
+      return `+${effect.amount} spellpower damage`;
+    case 'EssenceBonus':
+      return `Essence bonus +${effect.amount}`;
+    case 'FloorPenaltyMitigation':
+      return `Reduce floor penalties by ${effect.amount}`;
+    case 'DestroyRune':
+      return 'Void: destroy 1 rune from a runeforge or the center';
+    case 'FreezePatternLine':
+      return 'Frost: freeze an opponent pattern line (versus only)';
+    default:
+      return effect.type;
+  }
+}
+
 export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTuning): RuneEffects {
   const baseEffects = BASE_RUNE_EFFECTS[runeType];
 
@@ -58,4 +79,16 @@ export function hasEffectType(
 ): boolean {
   if (!effects) return false;
   return effects.some((effect) => effect.type === type);
+}
+
+export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffects | null | undefined): string {
+  const resolvedEffects = effects ?? [];
+  const effectLines = resolvedEffects.map(formatRuneEffect).filter(Boolean);
+
+  if (effectLines.length === 0) {
+    return `${runeType} rune\n• No special effects`;
+  }
+
+  const bulletList = effectLines.map((line) => `• ${line}`).join('\n');
+  return `${runeType} rune\n${bulletList}`;
 }

@@ -185,6 +185,7 @@ export function Runeforge({
                     variant="runeforge"
                     size='large'
                     showEffect={false}
+                    showTooltip
                   />
                 </motion.div>
               );

@@ -141,6 +141,7 @@ export function PatternLines({
                       variant="pattern"
                       size="large"
                       showEffect={false}
+                      showTooltip
                     />
                     {isPrimaryRuneSlot && !isLocked && (
                       <div
