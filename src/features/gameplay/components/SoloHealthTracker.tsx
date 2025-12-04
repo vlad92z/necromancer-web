@@ -3,6 +3,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import { useHealthChangeSound } from '../../../hooks/useHealthChangeSound';
 
 interface SoloHealthTrackerProps {
   health: number;
@@ -14,10 +15,14 @@ export function SoloHealthTracker({ health, maxHealth }: SoloHealthTrackerProps)
   const clampedHealth = Math.max(0, Math.min(health, healthCap));
   const progressPercent = Math.round((clampedHealth / healthCap) * 100);
   const previousHealthRef = useRef(clampedHealth);
-  const damageSequenceRef = useRef(0);
-  const [damageIndicator, setDamageIndicator] = useState<{ amount: number; key: number } | null>(null);
+  const changeSequenceRef = useRef(0);
+  const [healthIndicator, setHealthIndicator] = useState<{ amount: number; key: number; type: 'heal' | 'damage' } | null>(
+    null
+  );
   const animatedHealth = useMotionValue(clampedHealth);
   const [displayedHealth, setDisplayedHealth] = useState(clampedHealth);
+
+  useHealthChangeSound(clampedHealth);
 
   useMotionValueEvent(animatedHealth, 'change', (value) => {
     setDisplayedHealth(Math.round(value));
@@ -35,27 +40,32 @@ export function SoloHealthTracker({ health, maxHealth }: SoloHealthTrackerProps)
   useEffect(() => {
     const previousHealth = previousHealthRef.current;
 
-    if (clampedHealth < previousHealth) {
-      damageSequenceRef.current += 1;
-      setDamageIndicator({ amount: previousHealth - clampedHealth, key: damageSequenceRef.current });
+    if (clampedHealth !== previousHealth) {
+      changeSequenceRef.current += 1;
+      const isHeal = clampedHealth > previousHealth;
+      setHealthIndicator({
+        amount: Math.abs(clampedHealth - previousHealth),
+        key: changeSequenceRef.current,
+        type: isHeal ? 'heal' : 'damage',
+      });
     }
 
     previousHealthRef.current = clampedHealth;
   }, [clampedHealth]);
 
   useEffect(() => {
-    if (!damageIndicator) {
+    if (!healthIndicator) {
       return;
     }
 
     const timeout = window.setTimeout(() => {
-      setDamageIndicator(null);
+      setHealthIndicator(null);
     }, 900);
 
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [damageIndicator]);
+  }, [healthIndicator]);
 
   return (
     <div className="flex flex-col gap-2 py-3 px-3.5 rounded-[14px] border border-red-500/30 shadow-[0_12px_28px_rgba(0,0,0,0.42)]">
@@ -63,16 +73,21 @@ export function SoloHealthTracker({ health, maxHealth }: SoloHealthTrackerProps)
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">Health</div>
         <div className="flex items-center gap-2">
           <AnimatePresence>
-            {damageIndicator && (
+            {healthIndicator && (
               <motion.span
-                key={damageIndicator.key}
+                key={healthIndicator.key}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className="text-rose-300 text-sm font-bold drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]"
+                className={`text-sm font-bold ${
+                  healthIndicator.type === 'heal'
+                    ? 'text-emerald-300 drop-shadow-[0_0_10px_rgba(52,211,153,0.45)]'
+                    : 'text-rose-300 drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]'
+                }`}
               >
-                -{damageIndicator.amount}
+                {healthIndicator.type === 'heal' ? '+' : '-'}
+                {healthIndicator.amount}
               </motion.span>
             )}
           </AnimatePresence>
