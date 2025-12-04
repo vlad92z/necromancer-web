@@ -436,10 +436,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
       };
 
-      const overloadDamage = shouldApplyOverloadDamage
-        ? state.strain
+      const overloadRunesPlaced = shouldApplyOverloadDamage ? overflowRunes.length : 0;
+      const overloadDamage = overloadRunesPlaced > 0
+        ? overloadRunesPlaced * state.strain
         : 0;
-      let nextHealth = shouldApplyOverloadDamage
+      let nextHealth = overloadDamage > 0
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
 
@@ -628,10 +629,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
       };
 
-      const overloadDamage = shouldApplyOverloadDamage
-        ? state.strain
+      const overloadRunesPlaced = shouldApplyOverloadDamage ? selectedRunes.length : 0;
+      const overloadDamage = overloadRunesPlaced > 0
+        ? overloadRunesPlaced * state.strain
         : 0;
-      const nextHealth = shouldApplyOverloadDamage
+      const nextHealth = overloadDamage > 0
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
       
