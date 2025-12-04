@@ -80,8 +80,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     return state;
   }
   const deckTemplate = getSoloDeckTemplate(state);
-  const lifeRuneHealing = deriveLifeRuneHealing(deckTemplate);
-  const deckDraftState = createDeckDraftState(state.runeTypeCount, state.players[0].id, 3, { lifeHealing: lifeRuneHealing });
+  const deckDraftState = createDeckDraftState(state.runeTypeCount, state.players[0].id, 3);
 
   return {
     ...state,
@@ -1343,8 +1342,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const deckTemplate = getSoloDeckTemplate(state);
       const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
       const lifeRuneHealing = deriveLifeRuneHealing(updatedDeckTemplate);
-      const runeEffectTuning = { lifeHealing: lifeRuneHealing };
-      const nextDraftState = advanceDeckDraftState(state.deckDraftState, state.runeTypeCount, state.players[0].id, runeEffectTuning);
+      const nextDraftState = advanceDeckDraftState(state.deckDraftState, state.runeTypeCount, state.players[0].id);
       const updatedPlayer: Player = {
         ...state.players[0],
         deck: mergeDeckWithRuneforge(state.players[0].deck, selectedRuneforge),
