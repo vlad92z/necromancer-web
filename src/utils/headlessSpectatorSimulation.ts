@@ -5,7 +5,7 @@ import type { StoreApi } from 'zustand';
 import type { AIDifficulty } from '../types/game';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { createGameplayStoreInstance } from '../state/stores/gameplayStore';
-import { executeAITurn, needsAIPlacement, executeAIVoidEffect, executeAIFrostEffect } from '../systems/aiController';
+import { executeAITurn, needsAIPlacement } from '../systems/aiController';
 import { getControllerForIndex } from './playerControllers';
 
 const MAX_STEPS_PER_GAME = 8000;
@@ -50,11 +50,7 @@ function runSingleHeadlessGame(
       break;
     }
 
-    if (state.voidEffectPending) {
-      executeAIVoidEffect(store as StoreApi<GameplayStore>);
-    } else if (state.frostEffectPending) {
-      executeAIFrostEffect(store as StoreApi<GameplayStore>);
-    } else if (needsAIPlacement(store as StoreApi<GameplayStore>)) {
+    if (needsAIPlacement(store as StoreApi<GameplayStore>)) {
       executeAITurn(store as StoreApi<GameplayStore>);
     } else if (state.turnPhase === 'draft') {
       executeAITurn(store as StoreApi<GameplayStore>);
