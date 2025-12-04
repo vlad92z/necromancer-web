@@ -107,7 +107,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose }: DeckOverlay
                       <RuneCell
                         rune={rune}
                         variant="runeforge"
-                        size={'large'}
+                        size={'medium'}
                         showEffect
                         showTooltip
                         runeOpacity={isDrafted ? 0.25 : 1}
