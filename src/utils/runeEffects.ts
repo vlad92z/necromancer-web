@@ -26,6 +26,24 @@ const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Lightning: [{ type: 'Damage', amount: 1 }],
 };
 
+const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
+  Fire: [{ type: 'Damage', amount: 2 }],
+  Frost: [{ type: 'Healing', amount: 2 }],
+  Life: [{ type: 'Healing', amount: 2 }],
+  Void: [{ type: 'Damage', amount: 2 }],
+  Wind: [{ type: 'Healing', amount: 2 }],
+  Lightning: [{ type: 'Damage', amount: 2 }],
+};
+
+const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
+  Fire: [{ type: 'Damage', amount: 5 }],
+  Frost: [{ type: 'Healing', amount: 5 }],
+  Life: [{ type: 'Healing', amount: 5 }],
+  Void: [{ type: 'Damage', amount: 5 }],
+  Wind: [{ type: 'Healing', amount: 5 }],
+  Lightning: [{ type: 'Damage', amount: 5 }],
+};
+
 function cloneEffects(effects: RuneEffects): RuneEffects {
   return effects.map((effect) => ({ ...effect }));
 }
