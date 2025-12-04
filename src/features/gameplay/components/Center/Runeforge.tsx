@@ -195,7 +195,7 @@ export function Runeforge({
                     rune={rune}
                     variant="runeforge"
                     size='large'
-                    showEffect={false}
+                    showEffect
                     showTooltip
                   />
                 </motion.div>

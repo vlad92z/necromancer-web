@@ -67,6 +67,7 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
               variant="selected"
               forceVariant="runeforge"
               size="medium"
+              showEffect
             />
           </motion.div>
         );

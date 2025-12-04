@@ -137,7 +137,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                       rune={runes[0]}
                       variant="runeforge"
                       size={'medium'}
-                      showEffect={false}
+                      showEffect
                     />
                     <div style={{
                       fontSize: '14px',
@@ -182,7 +182,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                           rune={rune}
                           variant="runeforge"
                           size={'large'}
-                          showEffect={true}
+                          showEffect
                         />
                       </motion.div>
                     ))}

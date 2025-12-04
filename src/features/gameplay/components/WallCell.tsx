@@ -67,7 +67,7 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
           type: 'rune',
           runeType: expectedRuneType,
         }}
-        showEffect={false}
+        showEffect
         isPending={isPending}
         showTooltip
       />

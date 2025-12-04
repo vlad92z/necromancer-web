@@ -105,7 +105,7 @@ export function RuneCell({
   placeholder,
   clickable = false,
   onClick,
-  showEffect = false,
+  showEffect = true,
   isPending = false,
   showTooltip = false,
   tooltipPlacement = 'top',
@@ -170,6 +170,9 @@ export function RuneCell({
   const tooltipPositionStyles = tooltipPlacement === 'bottom'
     ? { top: 'calc(100% + 8px)', bottom: 'auto' }
     : { bottom: 'calc(100% + 8px)', top: 'auto' };
+  const effectGlow = hasEffect
+    ? '0 0 12px rgba(74, 222, 128, 0.75), 0 0 0 2px rgba(74, 222, 128, 0.35)'
+    : undefined;
 
   return (
     <Container
@@ -185,6 +188,7 @@ export function RuneCell({
         borderRadius: `${RADIUS.md}px`,
         border: borderStyle,
         backgroundColor: backgroundColor,
+        boxShadow: effectGlow,
         padding: `${config.padding}px`,
         cursor: clickable ? 'pointer' : 'default',
         
@@ -229,21 +233,6 @@ export function RuneCell({
             pointerEvents: 'none',
           }}
         />
-      )}
-      
-      {/* Effect indicator - will be expanded when effects are implemented */}
-      {hasEffect && (
-        <div style={{
-          position: 'absolute',
-          top: '-4px',
-          right: '-4px',
-          width: '12px',
-          height: '12px',
-          borderRadius: RADIUS.round,
-          backgroundColor: COLORS.status.warning,
-          border: `2px solid ${COLORS.ui.text}`,
-          boxShadow: SHADOWS.sm,
-        }} />
       )}
 
       {isTooltipVisible && tooltipText && (

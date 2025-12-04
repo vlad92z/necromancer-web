@@ -163,7 +163,7 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose }: RuneforgeOver
                             rune={rune}
                             variant="runeforge"
                             size="large"
-                            showEffect={true}
+                            showEffect
                           />
                         </div>
                       ))}

@@ -30,7 +30,7 @@ export function RuneToken({ rune, size = 'medium', onClick }: RuneTokenProps) {
         rune={rune}
         variant="selected"
         size={size}
-        showEffect={true}
+        showEffect
       />
     </div>
   );

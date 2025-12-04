@@ -9,6 +9,15 @@ export interface RuneEffectTuning {
 }
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
+  Fire: [],//[{ type: 'Damage', amount: 1 }],
+  Frost:[],// [{ type: 'Healing', amount: 1 }],
+  Life: [],//[{ type: 'Healing', amount: 1 }],
+  Void: [],//[{ type: 'Damage', amount: 1 }],
+  Wind: [],//[{ type: 'Healing', amount: 1 }],
+  Lightning: [],//[{ type: 'Damage', amount: 1 }],
+};
+
+const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 1 }],
   Frost: [{ type: 'Healing', amount: 1 }],
   Life: [{ type: 'Healing', amount: 1 }],
@@ -38,7 +47,7 @@ function formatRuneEffect(effect: RuneEffect): string {
     case 'FreezePatternLine':
       return 'Frost: freeze an opponent pattern line (versus only)';
     default:
-      return effect.type;
+      return "Common Rune";
   }
 }
 
@@ -54,6 +63,10 @@ export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTun
   });
 
   return cloneEffects(tunedEffects);
+}
+
+export function getDraftEffectsForType(runeType: RuneType): RuneEffects {
+  return cloneEffects(UNCOMMON_RUNE_EFFECTS[runeType]);
 }
 
 export function copyRuneEffects(effects: RuneEffects | null | undefined): RuneEffects {
