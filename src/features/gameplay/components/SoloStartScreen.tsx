@@ -15,12 +15,13 @@ interface SoloStartScreenProps {
   onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
   onContinueSolo?: () => void;
   canContinue?: boolean;
+  bestRound?: number;
 }
 
 const inputClasses =
   'w-full rounded-lg border border-slate-600/70 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400';
 
-export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false }: SoloStartScreenProps) {
+export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, bestRound = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
   const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(6);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
@@ -76,6 +77,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           <p className="text-base text-slate-300">
             Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
           </p>
+          <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+            <span className="text-[11px] text-sky-300">Best Round</span>
+            <span className="text-lg font-extrabold text-slate-50">{bestRound > 0 ? bestRound : '--'}</span>
+          </div>
         </div>
 
         <section className="space-y-2">

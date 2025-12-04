@@ -25,6 +25,7 @@ export const NewRun: Story = {
   args: {
     canContinue: false,
     onStartSolo: handleStartSolo,
+    bestRound: 0,
   },
 };
 
@@ -33,5 +34,6 @@ export const ContinueExisting: Story = {
     canContinue: true,
     onContinueSolo: () => console.log('Continue solo run'),
     onStartSolo: handleStartSolo,
+    bestRound: 7,
   },
 };

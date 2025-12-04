@@ -10,7 +10,7 @@ import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { GameState, RuneTypeCount, SoloRunConfig } from '../types/game';
-import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState } from '../utils/soloPersistence';
+import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getBestSoloRound, updateBestSoloRound } from '../utils/soloPersistence';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -30,6 +30,12 @@ export function Solo() {
   const runeTypeCount = useGameplayStore((state) => state.runeTypeCount);
   const gameState = useGameplayStore();
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
+  const [bestSoloRound, setBestSoloRound] = useState<number>(() => {
+    const storedBest = getBestSoloRound();
+    const savedState = loadSoloState();
+    const savedRound = savedState?.matchType === 'solo' ? savedState.round : 0;
+    return Math.max(storedBest, savedRound);
+  });
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -48,6 +54,13 @@ export function Solo() {
       if (persistableState.matchType === 'solo' && persistableState.gameStarted) {
         saveSoloState(persistableState);
         setHasSavedSoloRun(true);
+        setBestSoloRound((previousBest) => {
+          const nextBest = Math.max(previousBest, persistableState.round);
+          if (nextBest === previousBest) {
+            return previousBest;
+          }
+          return updateBestSoloRound(nextBest);
+        });
       }
     });
 
@@ -71,7 +84,14 @@ export function Solo() {
   };
 
   if (!gameStarted || matchType !== 'solo') {
-    return <SoloStartScreen onStartSolo={handleStartSolo} onContinueSolo={handleContinueSolo} canContinue={hasSavedSoloRun} />;
+    return (
+      <SoloStartScreen
+        onStartSolo={handleStartSolo}
+        onContinueSolo={handleContinueSolo}
+        canContinue={hasSavedSoloRun}
+        bestRound={bestSoloRound}
+      />
+    );
   }
 
   return <GameBoardFrame

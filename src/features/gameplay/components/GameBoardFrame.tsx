@@ -368,6 +368,10 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
           >
             Quit Run
           </button>
+          <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Current Round</div>
+            <div className="text-2xl font-extrabold text-white leading-tight">Round {round}</div>
+          </div>
         </div>
       )}
       <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">

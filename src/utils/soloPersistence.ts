@@ -5,6 +5,7 @@
 import type { GameState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
+const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
 
 const canAccessStorage = (): boolean => typeof window !== 'undefined';
 
@@ -48,4 +49,32 @@ export function clearSoloState(): void {
   } catch (error) {
     console.error('Failed to clear solo state', error);
   }
+}
+
+export function getBestSoloRound(): number {
+  if (!canAccessStorage()) return 0;
+  const rawValue = window.localStorage.getItem(SOLO_BEST_ROUND_KEY);
+  if (!rawValue) return 0;
+
+  const parsed = Number.parseInt(rawValue, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+export function updateBestSoloRound(round: number): number {
+  if (!canAccessStorage()) return 0;
+  const sanitizedRound = Math.max(0, Math.floor(round));
+  const currentBest = getBestSoloRound();
+  const nextBest = Math.max(currentBest, sanitizedRound);
+
+  if (nextBest === currentBest) {
+    return currentBest;
+  }
+
+  try {
+    window.localStorage.setItem(SOLO_BEST_ROUND_KEY, nextBest.toString());
+  } catch (error) {
+    console.error('Failed to save best solo round', error);
+  }
+
+  return nextBest;
 }
