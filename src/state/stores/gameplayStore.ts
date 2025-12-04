@@ -1279,7 +1279,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const deckTemplate = getSoloDeckTemplate(state);
       const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
-      const lifeRuneHealing = deriveLifeRuneHealing(updatedDeckTemplate);
       const nextDraftState = advanceDeckDraftState(
         state.deckDraftState,
         state.runeTypeCount,
@@ -1300,7 +1299,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             startingHealth: state.startingHealth,
             startingStrain: state.soloStartingStrain,
             strainMultiplier: state.strainMultiplier,
-            lifeRuneHealing,
             factoriesPerPlayer: state.factoriesPerPlayer,
             deckRunesPerType,
             targetRuneScore: nextTarget,
