@@ -1,5 +1,4 @@
 import React from 'react';
-import { COLORS, RADIUS, SPACING, TRANSITIONS } from '../../styles/tokens';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
@@ -14,97 +13,37 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   children,
   disabled = false,
-  style = {},
+  className = '',
   ...props
 }) => {
-  const sizeStyles = {
-    small: {
-      padding: `${SPACING.xs}px ${SPACING.sm}px`,
-      fontSize: '12px',
-    },
-    medium: {
-      padding: `${SPACING.sm}px ${SPACING.md}px`,
-      fontSize: '14px',
-    },
-    large: {
-      padding: `${SPACING.md}px ${SPACING.lg}px`,
-      fontSize: '16px',
-    },
+  const sizeClasses = {
+    small: 'px-2 py-1 text-xs',
+    medium: 'px-3 py-2 text-sm',
+    large: 'px-4 py-3 text-base',
   }[size];
 
-  const variantStyles = {
-    primary: {
-      backgroundColor: COLORS.ui.accent,
-      color: COLORS.ui.text,
-      border: 'none',
-      hover: {
-        backgroundColor: COLORS.ui.accentHover,
-      },
-    },
-    secondary: {
-      backgroundColor: COLORS.ui.surface,
-      color: COLORS.ui.text,
-      border: `1px solid ${COLORS.ui.border}`,
-      hover: {
-        backgroundColor: COLORS.ui.surfaceHover,
-        borderColor: COLORS.ui.borderLight,
-      },
-    },
-    danger: {
-      backgroundColor: COLORS.status.error,
-      color: COLORS.ui.text,
-      border: 'none',
-      hover: {
-        backgroundColor: '#cc0000',
-      },
-    },
-    success: {
-      backgroundColor: COLORS.status.success,
-      color: COLORS.ui.background,
-      border: 'none',
-      hover: {
-        backgroundColor: '#00cc00',
-      },
-    },
-    ghost: {
-      backgroundColor: 'transparent',
-      color: COLORS.ui.text,
-      border: 'none',
-      hover: {
-        backgroundColor: COLORS.ui.surface,
-      },
-    },
+  const variantClasses = {
+    primary:
+      'bg-[#a855f7] text-white hover:bg-[#c084fc] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300',
+    secondary:
+      'border border-white/10 bg-[#1a1032] text-white hover:border-white/30 hover:bg-[#231542] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300',
+    danger:
+      'bg-[#fb7185] text-white hover:bg-[#f43f5e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-300',
+    success:
+      'bg-[#4ade80] text-[#0c051c] hover:bg-[#22c55e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300',
+    ghost:
+      'bg-transparent text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300',
   }[variant];
 
-  const baseStyle: React.CSSProperties = {
-    ...sizeStyles,
-    ...variantStyles,
-    borderRadius: `${RADIUS.md}px`,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontWeight: 'bold',
-    transition: TRANSITIONS.fast,
-    opacity: disabled ? 0.5 : 1,
-    width: fullWidth ? '100%' : 'auto',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: `${SPACING.xs}px`,
-    ...style,
-  };
-
-  const [isHovered, setIsHovered] = React.useState(false);
-
-  const finalStyle: React.CSSProperties = {
-    ...baseStyle,
-    ...(isHovered && !disabled ? variantStyles.hover : {}),
-  };
+  const widthClass = fullWidth ? 'w-full' : '';
+  const stateClasses = disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
+  const baseClasses =
+    'inline-flex items-center justify-center gap-2 rounded-md font-bold transition duration-150 ease-out';
 
   return (
     <button
-      style={finalStyle}
+      className={`${baseClasses} ${sizeClasses} ${variantClasses} ${widthClass} ${stateClasses} ${className}`}
       disabled={disabled}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       {...props}
     >
       {children}

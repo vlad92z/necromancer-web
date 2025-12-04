@@ -24,9 +24,20 @@ export const Grid: React.FC<GridProps> = ({
   style = {},
   className = '',
 }) => {
-  const getSpacingValue = (value: keyof typeof SPACING | number | undefined) => {
-    if (value === undefined) return undefined;
-    return typeof value === 'number' ? `${value}px` : `${SPACING[value]}px`;
+  const spacingClassMap: Record<keyof typeof SPACING, string> = {
+    xs: '1',
+    sm: '2',
+    md: '4',
+    lg: '6',
+    xl: '8',
+    xxl: '12',
+    xxxl: '16',
+  };
+
+  const getSpacingClass = (value: keyof typeof SPACING | number | undefined, axis?: 'x' | 'y') => {
+    if (value === undefined || typeof value === 'number') return '';
+    const prefix = axis === 'x' ? 'gap-x-' : axis === 'y' ? 'gap-y-' : 'gap-';
+    return `${prefix}${spacingClassMap[value]}`;
   };
 
   const gridTemplateColumns = autoFit
@@ -36,16 +47,21 @@ export const Grid: React.FC<GridProps> = ({
     : undefined;
 
   const gridStyle: React.CSSProperties = {
-    display: 'grid',
     gridTemplateColumns,
-    gap: getSpacingValue(gap),
-    columnGap: getSpacingValue(columnGap),
-    rowGap: getSpacingValue(rowGap),
+    ...(typeof gap === 'number' ? { gap: `${gap}px` } : {}),
+    ...(typeof columnGap === 'number' ? { columnGap: `${columnGap}px` } : {}),
+    ...(typeof rowGap === 'number' ? { rowGap: `${rowGap}px` } : {}),
     ...style,
   };
 
   return (
-    <div style={gridStyle} className={className}>
+    <div
+      style={gridStyle}
+      className={`grid ${getSpacingClass(gap)} ${getSpacingClass(columnGap, 'x')} ${getSpacingClass(
+        rowGap,
+        'y',
+      )} ${className}`}
+    >
       {children}
     </div>
   );

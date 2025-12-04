@@ -6,11 +6,24 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { QuickPlayOpponent, RuneTypeCount } from '../../../types/game';
 import { getAIDifficultyLabel } from '../../../utils/aiDifficultyLabels';
+import { backLinkClasses, primaryActionClasses, secondaryActionClasses, viewShellClasses } from '../../../styles/uiClasses';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
   onStartGame: (topController: QuickPlayOpponent, runeTypeCount: RuneTypeCount) => void;
 }
+
+const cardClasses =
+  'w-full max-w-3xl rounded-2xl border border-sky-400/15 bg-[linear-gradient(145deg,_rgba(15,23,36,0.95),_rgba(9,12,22,0.92))] px-7 py-10 text-center shadow-[0_28px_80px_rgba(0,0,0,0.65)]';
+const sectionClasses = 'space-y-3 rounded-xl border border-sky-400/15 bg-slate-900/60 p-4 text-left';
+const sectionTitleClasses = 'text-sm font-semibold uppercase tracking-[0.18em] text-sky-200';
+const pillButtonBase =
+  'flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold uppercase tracking-wide transition-all duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
+const pillButtonActive =
+  'border-transparent bg-gradient-to-br from-sky-500 to-blue-500 text-slate-950 shadow-[0_14px_36px_rgba(56,189,248,0.3)]';
+const pillButtonInactive =
+  'border-white/10 bg-transparent text-slate-200 hover:border-sky-400/60 hover:bg-slate-900/60';
+const supportTextClasses = 'text-xs text-sky-300';
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const navigate = useNavigate();
@@ -19,371 +32,93 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const [showRules, setShowRules] = useState(false);
   
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#1a1a1a',
-      color: '#ffffff',
-      padding: '20px'
-    }}>
-      <div style={{ 
-        backgroundColor: '#0f1724',
-        border: '2px solid rgba(74,158,255,0.12)',
-        borderRadius: '12px', 
-        padding: '36px 28px', 
-        maxWidth: '640px',
-        width: '100%',
-        textAlign: 'center',
-        boxShadow: '0 12px 36px rgba(2,6,23,0.6)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '8px' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              backgroundColor: 'transparent',
-              color: '#9fb7ff',
-              border: 'none',
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: '6px 10px',
-              borderRadius: '8px'
-            }}
-          >
+    <div className={viewShellClasses}>
+      <div className={cardClasses}>
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <button type="button" onClick={() => navigate('/')} className={backLinkClasses}>
             ← Back
           </button>
+          <div className="text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Quick Play</div>
         </div>
 
-        <h1 style={{ 
-          fontSize: '48px', 
-          fontWeight: 'bold', 
-          color: '#ffffff', 
-          marginBottom: '6px'
-        }}>
-          Massive Spell
-        </h1>
-
-        <h2 style={{ 
-          fontSize: '20px', 
-          fontWeight: '600', 
-          color: '#9fb7ff', 
-          marginBottom: '20px' 
-        }}>
-          Arcane Arena
-        </h2>
-        
-        <div style={{ 
-          marginBottom: '24px', 
-          fontSize: '16px',
-          color: '#c7d2fe',
-          lineHeight: '1.6'
-        }}>
-          <p style={{ marginBottom: '12px' }}>
-            Prepare powerful runes from mystical Runeforges and craft strategic spell patterns.
-          </p>
-          <p style={{ marginBottom: '12px' }}>
-            Complete your Spellcasting Lines and place runes on your Spell Wall to unleash devastating combos!
-          </p>
+        <div className="space-y-2 text-center">
+          <h1 className="text-5xl font-extrabold uppercase tracking-tight text-slate-50">Massive Spell</h1>
+          <h2 className="text-xl font-semibold text-sky-300">Arcane Arena</h2>
         </div>
 
-        {/* Rune Type Count Toggle */}
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '16px',
-          backgroundColor: '#071029',
-          borderRadius: '8px',
-          border: '1px solid rgba(74,158,255,0.08)'
-        }}>
-          <div style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#cfe0ff',
-            marginBottom: '12px'
-          }}>
-            Rune Types
-          </div>
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center'
-          }}>
-            <button
-              onClick={() => setRuneTypeCount(3)}
-              style={{
-                flex: 1,
-                padding: '10px 18px',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '600',
-                border: '2px solid',
-                borderColor: runeTypeCount === 3 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: runeTypeCount === 3 ? '#4a9eff' : 'transparent',
-                color: runeTypeCount === 3 ? '#ffffff' : '#c7d2fe',
-                cursor: 'pointer',
-                transition: 'all 0.12s'
-              }}
-              onMouseEnter={(e) => {
-                if (runeTypeCount !== 3) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (runeTypeCount !== 3) e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              3 Types
-            </button>
-            <button
-              onClick={() => setRuneTypeCount(4)}
-              style={{
-                flex: 1,
-                padding: '10px 18px',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '600',
-                border: '2px solid',
-                borderColor: runeTypeCount === 4 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: runeTypeCount === 4 ? '#4a9eff' : 'transparent',
-                color: runeTypeCount === 4 ? '#ffffff' : '#c7d2fe',
-                cursor: 'pointer',
-                transition: 'all 0.12s'
-              }}
-              onMouseEnter={(e) => {
-                if (runeTypeCount !== 4) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (runeTypeCount !== 4) e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              4 Types
-            </button>
-            <button
-              onClick={() => setRuneTypeCount(5)}
-              style={{
-                flex: 1,
-                padding: '10px 18px',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '600',
-                border: '2px solid',
-                borderColor: runeTypeCount === 5 ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: runeTypeCount === 5 ? '#4a9eff' : 'transparent',
-                color: runeTypeCount === 5 ? '#ffffff' : '#c7d2fe',
-                cursor: 'pointer',
-                transition: 'all 0.12s'
-              }}
-              onMouseEnter={(e) => {
-                if (runeTypeCount !== 5) e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (runeTypeCount !== 5) e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              5 Types
-            </button>
-          </div>
-          <div style={{
-            marginTop: '8px',
-            fontSize: '13px',
-            color: '#9fb7ff',
-            textAlign: 'center'
-          }}>
-            {runeTypeCount === 3 && '3 rune types (Fire, Life, Wind) with 3x3 wall and 3 pattern lines'}
-            {runeTypeCount === 4 && '4 rune types (Fire, Life, Wind, Frost) with 4x4 wall and 4 pattern lines'}
-            {runeTypeCount === 5 && '5 rune types (Fire, Life, Wind, Frost, Void) with 5x5 wall and 5 pattern lines'}
-          </div>
+        <div className="mt-5 space-y-3 text-base leading-relaxed text-slate-200">
+          <p>Prepare powerful runes from mystical Runeforges and craft strategic spell patterns.</p>
+          <p>Complete your Spellcasting Lines and place runes on your Spell Wall to unleash devastating combos!</p>
         </div>
 
-        {/* Difficulty Toggle */}
-        <div style={{
-          marginBottom: '20px',
-          padding: '16px',
-          backgroundColor: '#071029',
-          borderRadius: '8px',
-          border: '1px solid rgba(74,158,255,0.08)'
-        }}>
-          <div style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#cfe0ff',
-            marginBottom: '12px'
-          }}>
-            Difficulty
-          </div>
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center'
-          }}>
-            <button
-              onClick={() => setOpponentSetting('human')}
-              style={{
-                flex: 1,
-                padding: '10px 18px',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '600',
-                border: '2px solid',
-                borderColor: opponentSetting === 'human' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: opponentSetting === 'human' ? '#4a9eff' : 'transparent',
-                color: opponentSetting === 'human' ? '#ffffff' : '#c7d2fe',
-                cursor: 'pointer',
-                transition: 'all 0.12s'
-              }}
-              onMouseEnter={(e) => {
-                if (opponentSetting !== 'human') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (opponentSetting !== 'human') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              Human
-            </button>
-            <button
-              onClick={() => setOpponentSetting('easy')}
-              style={{
-                flex: 1,
-                padding: '10px 18px',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '600',
-                border: '2px solid',
-                borderColor: opponentSetting === 'easy' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: opponentSetting === 'easy' ? '#4a9eff' : 'transparent',
-                color: opponentSetting === 'easy' ? '#ffffff' : '#c7d2fe',
-                cursor: 'pointer',
-                transition: 'all 0.12s'
-              }}
-              onMouseEnter={(e) => {
-                if (opponentSetting !== 'easy') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (opponentSetting !== 'easy') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              {getAIDifficultyLabel('easy')}
-            </button>
-            <button
-              onClick={() => setOpponentSetting('normal')}
-              style={{
-                flex: 1,
-                padding: '10px 18px',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '600',
-                border: '2px solid',
-                borderColor: opponentSetting === 'normal' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: opponentSetting === 'normal' ? '#4a9eff' : 'transparent',
-                color: opponentSetting === 'normal' ? '#ffffff' : '#c7d2fe',
-                cursor: 'pointer',
-                transition: 'all 0.12s'
-              }}
-              onMouseEnter={(e) => {
-                if (opponentSetting !== 'normal') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (opponentSetting !== 'normal') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              {getAIDifficultyLabel('normal')}
-            </button>
-            <button
-              onClick={() => setOpponentSetting('hard')}
-              style={{
-                flex: 1,
-                padding: '10px 18px',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '600',
-                border: '2px solid',
-                borderColor: opponentSetting === 'hard' ? '#4a9eff' : 'rgba(255,255,255,0.06)',
-                backgroundColor: opponentSetting === 'hard' ? '#4a9eff' : 'transparent',
-                color: opponentSetting === 'hard' ? '#ffffff' : '#c7d2fe',
-                cursor: 'pointer',
-                transition: 'all 0.12s'
-              }}
-              onMouseEnter={(e) => {
-                if (opponentSetting !== 'hard') e.currentTarget.style.backgroundColor = 'rgba(74,158,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (opponentSetting !== 'hard') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              {getAIDifficultyLabel('hard')}
-            </button>
-          </div>
-          <div style={{
-            marginTop: '8px',
-            fontSize: '13px',
-            color: '#9fb7ff',
-            textAlign: 'center'
-          }}>
-            Choose who controls the top player. Selecting Human lets one person play both sides.
-          </div>
+        <div className="mt-6 space-y-5">
+          <section className={sectionClasses}>
+            <div className="flex items-center justify-between">
+              <div className="text-base font-semibold text-sky-100">Rune Types</div>
+            </div>
+            <div className="flex gap-3">
+              {[3, 4, 5].map((count) => {
+                const isActive = runeTypeCount === count;
+                return (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setRuneTypeCount(count as RuneTypeCount)}
+                    className={`${pillButtonBase} ${isActive ? pillButtonActive : pillButtonInactive}`}
+                  >
+                    {count} Types
+                  </button>
+                );
+              })}
+            </div>
+            <p className={supportTextClasses}>
+              {runeTypeCount === 3 && '3 rune types (Fire, Life, Wind) with 3x3 wall and 3 pattern lines'}
+              {runeTypeCount === 4 && '4 rune types (Fire, Life, Wind, Frost) with 4x4 wall and 4 pattern lines'}
+              {runeTypeCount === 5 && '5 rune types (Fire, Life, Wind, Frost, Void) with 5x5 wall and 5 pattern lines'}
+            </p>
+          </section>
+
+          <section className={sectionClasses}>
+            <div className="flex items-center justify-between">
+              <div className="text-base font-semibold text-sky-100">Difficulty</div>
+              <div className={sectionTitleClasses}>Top Player</div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {(['human', 'easy', 'normal', 'hard'] as QuickPlayOpponent[]).map((setting) => {
+                const isActive = opponentSetting === setting;
+                return (
+                  <button
+                    key={setting}
+                    type="button"
+                    onClick={() => setOpponentSetting(setting)}
+                    className={`${pillButtonBase} ${isActive ? pillButtonActive : pillButtonInactive}`}
+                  >
+                    {setting === 'human' ? 'Human' : getAIDifficultyLabel(setting)}
+                  </button>
+                );
+              })}
+            </div>
+            <p className={supportTextClasses}>
+              Choose who controls the top player. Selecting Human lets one person play both sides.
+            </p>
+          </section>
         </div>
-        
-        <button
-          onClick={() => onStartGame(opponentSetting, runeTypeCount)}
-          style={{
-            backgroundColor: '#4a9eff',
-            color: '#ffffff',
-            fontWeight: '700',
-            padding: '16px 24px',
-            borderRadius: '10px',
-            fontSize: '18px',
-            width: '100%',
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'all 0.18s',
-            boxShadow: '0 6px 18px rgba(74,158,255,0.14)',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            marginBottom: '12px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#5ab0ff';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 10px 28px rgba(74,158,255,0.22)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#4a9eff';
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 6px 18px rgba(74,158,255,0.14)';
-          }}
-        >
-          Start Game
-        </button>
-        
-        <button
-          onClick={() => setShowRules(true)}
-          style={{
-            backgroundColor: 'transparent',
-            color: '#4a9eff',
-            fontWeight: '600',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            fontSize: '15px',
-            width: '100%',
-            border: '2px solid rgba(74,158,255,0.16)',
-            cursor: 'pointer',
-            transition: 'all 0.14s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#4a9eff';
-            e.currentTarget.style.color = '#ffffff';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#4a9eff';
-          }}
-        >
-          📖 How to Play
-        </button>
+
+        <div className="mt-6 space-y-3">
+          <button
+            type="button"
+            onClick={() => onStartGame(opponentSetting, runeTypeCount)}
+            className={primaryActionClasses}
+          >
+            Start Game
+          </button>
+          <button type="button" onClick={() => setShowRules(true)} className={secondaryActionClasses}>
+            📖 How to Play
+          </button>
+        </div>
       </div>
-      
-      {/* Rules Overlay */}
-      {showRules && (
-        <RulesOverlay onClose={() => setShowRules(false)} />
-      )}
+
+      {showRules && <RulesOverlay onClose={() => setShowRules(false)} />}
     </div>
   );
 }

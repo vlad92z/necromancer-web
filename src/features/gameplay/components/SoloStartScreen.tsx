@@ -58,11 +58,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
         <div
-          className="w-full space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
-          style={{
-            width: 'min(1100px, 94vw)',
-            minHeight: 'calc(min(1100px, 94vw) * 2 / 3)',
-          }}
+          className="w-[min(1100px,_94vw)] min-h-[calc(min(1100px,_94vw)_*_2/3)] space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
         >
         <div className="flex items-center justify-between gap-4">
           <button

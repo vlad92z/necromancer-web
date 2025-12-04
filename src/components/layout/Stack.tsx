@@ -1,5 +1,4 @@
 import React from 'react';
-import { SPACING } from '../../styles/tokens';
 
 interface StackProps {
   children: React.ReactNode;
@@ -22,36 +21,44 @@ export const Stack: React.FC<StackProps> = ({
   style = {},
   className = '',
 }) => {
-  const spacingValue = typeof spacing === 'number' ? spacing : SPACING[spacing];
+  const spacingClass =
+    typeof spacing === 'number'
+      ? ''
+      : {
+          xs: 'gap-1',
+          sm: 'gap-2',
+          md: 'gap-4',
+          lg: 'gap-6',
+          xl: 'gap-8',
+          xxl: 'gap-12',
+          xxxl: 'gap-16',
+        }[spacing];
+
+  const spacingStyle = typeof spacing === 'number' ? { gap: `${spacing}px` } : {};
 
   const alignItems = {
-    start: 'flex-start',
-    center: 'center',
-    end: 'flex-end',
-    stretch: 'stretch',
+    start: 'items-start',
+    center: 'items-center',
+    end: 'items-end',
+    stretch: 'items-stretch',
   }[align];
 
   const justifyContent = {
-    start: 'flex-start',
-    center: 'center',
-    end: 'flex-end',
-    'space-between': 'space-between',
-    'space-around': 'space-around',
-    'space-evenly': 'space-evenly',
+    start: 'justify-start',
+    center: 'justify-center',
+    end: 'justify-end',
+    'space-between': 'justify-between',
+    'space-around': 'justify-around',
+    'space-evenly': 'justify-evenly',
   }[justify];
 
-  const stackStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: direction === 'horizontal' ? 'row' : 'column',
-    gap: `${spacingValue}px`,
-    alignItems,
-    justifyContent,
-    flexWrap: wrap ? 'wrap' : 'nowrap',
-    ...style,
-  };
-
   return (
-    <div style={stackStyle} className={className}>
+    <div
+      style={{ ...spacingStyle, ...style }}
+      className={`flex ${direction === 'horizontal' ? 'flex-row' : 'flex-col'} ${spacingClass} ${alignItems} ${justifyContent} ${
+        wrap ? 'flex-wrap' : 'flex-nowrap'
+      } ${className}`}
+    >
       {children}
     </div>
   );

@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { COLORS, RADIUS, SHADOWS, SPACING, Z_INDEX } from '../../styles/tokens';
 
 interface ModalProps {
   children: React.ReactNode;
@@ -9,7 +8,7 @@ interface ModalProps {
   maxWidth?: number;
   showCloseButton?: boolean;
   closeOnBackdrop?: boolean;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -20,7 +19,7 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = 600,
   showCloseButton = true,
   closeOnBackdrop = true,
-  style = {},
+  className = '',
 }) => {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -43,62 +42,6 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  const backdropStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.overlay.backdrop,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: Z_INDEX.modal,
-    padding: `${SPACING.md}px`,
-  };
-
-  const modalStyle: React.CSSProperties = {
-    backgroundColor: COLORS.ui.background,
-    borderRadius: `${RADIUS.lg}px`,
-    boxShadow: SHADOWS.xl,
-    maxWidth: `${maxWidth}px`,
-    width: '100%',
-    maxHeight: '90vh',
-    overflow: 'auto',
-    position: 'relative',
-    ...style,
-  };
-
-  const headerStyle: React.CSSProperties = {
-    padding: `${SPACING.lg}px`,
-    borderBottom: `1px solid ${COLORS.ui.border}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  };
-
-  const titleStyle: React.CSSProperties = {
-    margin: 0,
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: COLORS.ui.text,
-  };
-
-  const closeButtonStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    fontSize: '24px',
-    cursor: 'pointer',
-    color: COLORS.ui.textMuted,
-    padding: `${SPACING.sm}px`,
-    lineHeight: 1,
-    transition: 'color 150ms ease',
-  };
-
-  const contentStyle: React.CSSProperties = {
-    padding: `${SPACING.lg}px`,
-  };
-
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (closeOnBackdrop && e.target === e.currentTarget) {
       onClose();
@@ -106,29 +49,31 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div style={backdropStyle} onClick={handleBackdropClick}>
-      <div style={modalStyle} role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-[rgba(0,0,0,0.7)] px-4 py-4"
+      onClick={handleBackdropClick}
+    >
+      <div
+        style={{ maxWidth: `${maxWidth}px` }}
+        className={`relative max-h-[90vh] w-full overflow-auto rounded-2xl bg-[#0c051c] text-slate-100 shadow-[0_12px_24px_rgba(0,0,0,0.6)] ${className}`}
+        role="dialog"
+        aria-modal="true"
+      >
         {(title || showCloseButton) && (
-          <div style={headerStyle}>
-            {title && <h2 style={titleStyle}>{title}</h2>}
+          <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+            {title && <h2 className="text-2xl font-bold text-slate-50">{title}</h2>}
             {showCloseButton && (
               <button
-                style={closeButtonStyle}
+                className="rounded-lg p-2 text-2xl leading-none text-slate-400 transition hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
                 onClick={onClose}
                 aria-label="Close modal"
-                onMouseOver={(e) => {
-                  e.currentTarget.style.color = COLORS.ui.text;
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.color = COLORS.ui.textMuted;
-                }}
               >
                 ×
               </button>
             )}
           </div>
         )}
-        <div style={contentStyle}>{children}</div>
+        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   );

@@ -18,100 +18,34 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(4px)',
-          padding: '24px',
-        }}
+        className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 px-6 py-6 backdrop-blur-sm"
       >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            maxWidth: '540px',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            width: '100%',
-          }}
+          className="w-full max-w-2xl max-h-[90vh] overflow-auto rounded-2xl bg-white p-8 text-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
         >
-          {/* Header */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px',
-          }}>
+          <div className="mb-5 flex items-center justify-between">
             <div>
-              <h2 style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#0c4a6e',
-                margin: 0,
-              }}>
-                Game Log
-              </h2>
-              <p style={{
-                fontSize: '14px',
-                color: '#64748b',
-                margin: '4px 0 0 0',
-              }}>
-                Round-by-round damage history
-              </p>
+              <h2 className="text-2xl font-bold text-sky-900">Game Log</h2>
+              <p className="mt-1 text-sm text-slate-500">Round-by-round damage history</p>
             </div>
             <button
               onClick={onClose}
-              style={{
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              }}
+              className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-rose-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400"
+              type="button"
             >
               ✕
             </button>
           </div>
 
-          {/* Round History */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-          }}>
+          <div className="flex flex-col gap-5">
             {roundHistory.length === 0 ? (
-              <div style={{
-                padding: '48px',
-                textAlign: 'center',
-                color: '#94a3b8',
-              }}>
-                <div style={{ fontSize: '64px', marginBottom: '16px' }}>
-                  📜
-                </div>
-                <p style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                }}>
-                  No rounds completed yet
-                </p>
+              <div className="rounded-2xl border border-dashed border-slate-300/80 bg-slate-50 px-12 py-10 text-center text-slate-500">
+                <div className="mb-4 text-6xl">📜</div>
+                <p className="text-lg font-bold">No rounds completed yet</p>
               </div>
             ) : (
               roundHistory.map((round, index) => (
@@ -120,29 +54,12 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  style={{
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    border: '2px solid #cbd5e1',
-                  }}
+                  className="rounded-xl border-2 border-slate-300 bg-slate-50 px-4 py-3"
                 >
-                  {/* Round Number */}
-                  <div style={{
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    color: '#0c4a6e',
-                    marginBottom: '12px',
-                  }}>
-                    Round {round.round}
-                  </div>
+                  <div className="text-base font-bold text-sky-900">Round {round.round}</div>
 
-                  {/* Separator (not on last item) */}
                   {index < roundHistory.length - 1 && (
-                    <div style={{
-                      marginTop: '12px',
-                      borderBottom: '1px dashed #cbd5e1',
-                    }} />
+                    <div className="mt-3 border-b border-dashed border-slate-300" />
                   )}
                 </motion.div>
               ))

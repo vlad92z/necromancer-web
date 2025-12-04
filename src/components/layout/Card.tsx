@@ -1,5 +1,4 @@
 import React from 'react';
-import { COLORS, RADIUS, SHADOWS, SPACING } from '../../styles/tokens';
 
 interface CardProps {
   children: React.ReactNode;
@@ -20,58 +19,35 @@ export const Card: React.FC<CardProps> = ({
   onClick,
   hoverable = false,
 }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
+  const paddingClass =
+    typeof padding === 'number'
+      ? ''
+      : {
+          xs: 'p-1',
+          sm: 'p-2',
+          md: 'p-4',
+          lg: 'p-6',
+          xl: 'p-8',
+          xxl: 'p-12',
+          xxxl: 'p-16',
+        }[padding];
 
-  const paddingValue = typeof padding === 'number' ? padding : SPACING[padding];
+  const paddingStyle = typeof padding === 'number' ? { padding: `${padding}px` } : {};
 
-  const variantStyles = {
-    default: {
-      backgroundColor: COLORS.ui.surface,
-      border: 'none',
-      boxShadow: 'none',
-    },
-    elevated: {
-      backgroundColor: COLORS.ui.surface,
-      border: 'none',
-      boxShadow: SHADOWS.md,
-    },
-    outlined: {
-      backgroundColor: COLORS.ui.surface,
-      border: `1px solid ${COLORS.ui.border}`,
-      boxShadow: 'none',
-    },
+  const variantClasses = {
+    default: 'bg-[#1a1032] text-white',
+    elevated: 'bg-[#1a1032] text-white shadow-[0_4px_12px_rgba(0,0,0,0.45)]',
+    outlined: 'bg-[#1a1032] text-white border border-white/10',
   }[variant];
 
-  const baseStyle: React.CSSProperties = {
-    ...variantStyles,
-    borderRadius: `${RADIUS.lg}px`,
-    padding: `${paddingValue}px`,
-    cursor: onClick ? 'pointer' : 'default',
-    transition: 'all 150ms ease',
-    ...style,
-  };
-
-  const hoverStyle: React.CSSProperties =
-    (hoverable || onClick) && isHovered
-      ? {
-          backgroundColor: COLORS.ui.surfaceHover,
-          boxShadow: variant === 'elevated' ? SHADOWS.lg : undefined,
-          transform: 'translateY(-2px)',
-        }
-      : {};
-
-  const finalStyle: React.CSSProperties = {
-    ...baseStyle,
-    ...hoverStyle,
-  };
+  const hoverClasses = (hoverable || onClick) && !style.transform ? 'hover:-translate-y-0.5 hover:bg-[#231542]' : '';
+  const cursorClass = onClick ? 'cursor-pointer' : 'cursor-default';
 
   return (
     <div
-      style={finalStyle}
-      className={className}
+      style={{ ...paddingStyle, ...style }}
+      className={`rounded-xl transition-all duration-150 ${paddingClass} ${variantClasses} ${hoverClasses} ${cursorClass} ${className}`}
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {children}
     </div>

@@ -32,7 +32,7 @@ function StatIcon({ name }: { name: string }) {
 export function StatBadge({ label, value, borderColor, tooltip, image, onClick, alert }: StatBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
   const isClickable = typeof onClick === 'function';
-  const baseShadow = alert ? '0 0 16px rgba(248, 113, 113, 0.4)' : '0 10px 26px rgba(0,0,0,0.45)';
+  const baseShadowClass = alert ? 'shadow-[0_0_16px_rgba(248,113,113,0.4)]' : 'shadow-[0_10px_26px_rgba(0,0,0,0.45)]';
 
   return (
     <div className="relative flex justify-center">
@@ -43,11 +43,10 @@ export function StatBadge({ label, value, borderColor, tooltip, image, onClick, 
         onFocus={() => setIsHovered(true)}
         onBlur={() => setIsHovered(false)}
         onClick={onClick}
-        className={
-          `flex items-center px-2 py-2 min-w-[110px] rounded-[0.6rem] bg-[rgba(8,17,35,0.85)] text-slate-50 transition-shadow` +
-          (isClickable ? ' cursor-pointer' : ' cursor-default')
-        }
-        style={{ border: `1px solid ${borderColor}`, boxShadow: baseShadow }}
+        className={`flex min-w-[110px] items-center rounded-[0.6rem] border bg-[rgba(8,17,35,0.85)] px-2 py-2 text-slate-50 transition-shadow ${baseShadowClass} ${
+          isClickable ? 'cursor-pointer' : 'cursor-default'
+        }`}
+        style={{ borderColor }}
         aria-label={`${label}: ${tooltip}`}
       >
         <StatIcon name={image} />
@@ -57,10 +56,7 @@ export function StatBadge({ label, value, borderColor, tooltip, image, onClick, 
       </button>
       {isHovered && (
         <div
-          className={
-            'absolute left-1/2 transform -translate-x-1/2 p-[10px] px-[14px] rounded-[12px] border border-white/12 text-slate-300 text-[1rem] leading-[1.6] whitespace-pre-wrap shadow-[0_20px_45px_rgba(0,0,0,0.55)] z-50 bg-[rgba(3,7,18,0.95)]'
-          }
-          style={{ bottom: 'calc(100% + 8px)', width: 'min(240px, 70vw)' }}
+          className="absolute left-1/2 bottom-[calc(100%+8px)] w-[min(240px,70vw)] -translate-x-1/2 transform rounded-[12px] border border-white/12 bg-[rgba(3,7,18,0.95)] px-[14px] py-[10px] text-[1rem] leading-[1.6] text-slate-300 shadow-[0_20px_45px_rgba(0,0,0,0.55)] drop-shadow-lg"
         >
           {tooltip}
         </div>
