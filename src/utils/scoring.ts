@@ -4,7 +4,7 @@
  */
 
 import type { PatternLine, RuneEffects, RuneType, ScoringWall } from '../types/game';
-import { getPassiveEffectValue, getRuneEffectsForType } from './runeEffects';
+import { getEffectValue, getRuneEffectsForType } from './runeEffects';
 
 const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 
@@ -13,29 +13,31 @@ export function getRuneOrderForSize(wallSize: number): RuneType[] {
   return RUNE_ORDER.slice(0, size);
 }
 
-/**
- * Calculate the size of the connected segment that includes a specific cell.
- * Counts all orthogonally-adjacent runes regardless of type; returns 0 if empty.
- */
-export function calculateSegmentSize(
+export interface SegmentCell {
+  row: number;
+  col: number;
+  effects: RuneEffects | null;
+}
+
+export function collectSegmentCells(
   wall: ScoringWall,
   row: number,
   col: number
-): number {
+): SegmentCell[] {
   const wallSize = wall.length;
   if (row < 0 || row >= wallSize || col < 0 || col >= wallSize) {
-    return 0;
+    return [];
   }
 
   if (wall[row][col].runeType === null) {
-    return 0;
+    return [];
   }
 
   const visited = Array(wallSize)
     .fill(null)
     .map(() => Array(wallSize).fill(false));
   const stack: Array<[number, number]> = [[row, col]];
-  let count = 0;
+  const cells: SegmentCell[] = [];
 
   while (stack.length > 0) {
     const [r, c] = stack.pop() as [number, number];
@@ -51,7 +53,7 @@ export function calculateSegmentSize(
     }
 
     visited[r][c] = true;
-    count += 1;
+    cells.push({ row: r, col: c, effects: wall[r][c].effects });
 
     stack.push([r - 1, c]);
     stack.push([r + 1, c]);
@@ -59,7 +61,133 @@ export function calculateSegmentSize(
     stack.push([r, c + 1]);
   }
 
-  return count;
+  return cells;
+}
+
+/**
+ * Collects the straight-line cross (row + column) that includes the target cell,
+ * stopping when an empty cell is encountered in any direction.
+ */
+function collectLineSegmentCells(
+  wall: ScoringWall,
+  row: number,
+  col: number
+): SegmentCell[] {
+  const wallSize = wall.length;
+  if (row < 0 || row >= wallSize || col < 0 || col >= wallSize) {
+    return [];
+  }
+
+  if (wall[row][col].runeType === null) {
+    return [];
+  }
+
+  const cellsByKey = new Map<string, SegmentCell>();
+
+  const addCell = (r: number, c: number) => {
+    const key = `${r}-${c}`;
+    if (!cellsByKey.has(key)) {
+      cellsByKey.set(key, { row: r, col: c, effects: wall[r][c].effects });
+    }
+  };
+
+  // Walk horizontally (left and right) from the anchor
+  for (let c = col; c >= 0; c--) {
+    if (wall[row][c].runeType === null) break;
+    addCell(row, c);
+  }
+  for (let c = col + 1; c < wallSize; c++) {
+    if (wall[row][c].runeType === null) break;
+    addCell(row, c);
+  }
+
+  // Walk vertically (up and down) from the anchor
+  for (let r = row - 1; r >= 0; r--) {
+    if (wall[r][col].runeType === null) break;
+    addCell(r, col);
+  }
+  for (let r = row + 1; r < wallSize; r++) {
+    if (wall[r][col].runeType === null) break;
+    addCell(r, col);
+  }
+
+  return Array.from(cellsByKey.values());
+}
+
+/**
+ * Calculate the size of the connected segment that includes a specific cell.
+ * Counts all orthogonally-adjacent runes regardless of type; returns 0 if empty.
+ */
+export function calculateSegmentSize(
+  wall: ScoringWall,
+  row: number,
+  col: number
+): number {
+  return collectSegmentCells(wall, row, col).length;
+}
+
+export interface ResolvedSegment {
+  segmentSize: number;
+  damage: number;
+  healing: number;
+  orderedCells: SegmentCell[];
+}
+
+/**
+ * Resolve scoring effects for a connected segment. Effects are applied in
+ * reading order (left-to-right within each row, then top-to-bottom across rows).
+ */
+export function resolveSegment(
+  wall: ScoringWall,
+  row: number,
+  col: number
+): ResolvedSegment {
+  const connectedCells = collectSegmentCells(wall, row, col);
+  const effectCells = collectLineSegmentCells(wall, row, col);
+  return resolveSegmentFromCells(connectedCells, effectCells);
+}
+
+export function resolveSegmentFromCells(
+  connectedCells: SegmentCell[],
+  effectCells?: SegmentCell[]
+): ResolvedSegment {
+  if (connectedCells.length === 0) {
+    return { segmentSize: 0, damage: 0, healing: 0, orderedCells: [] };
+  }
+
+  // Effects resolve along the scored line (row + column) to avoid pulling in
+  // the entire connected wall when large clusters exist.
+  const orderedEffectCells = [...(effectCells ?? connectedCells)].sort((a, b) =>
+    a.row === b.row ? a.col - b.col : a.row - b.row
+  );
+  let damage = Math.max(1, connectedCells.length);
+  let healing = 0;
+
+  connectedCells.forEach((cell) => {
+    const effects = cell.effects ?? [];
+    effects.forEach((effect) => {
+      if (effect.type === 'Damage') {
+        damage += effect.amount;
+      }
+    });
+  });
+
+  connectedCells.forEach((cell) => {
+    const effects = cell.effects ?? [];
+    effects.forEach((effect) => {
+      if (effect.type === 'Healing') {
+        console.log(`Healing +${effect.amount} at (${cell.row},${cell.col})`);
+        healing += effect.amount;
+      }
+    });
+  });
+
+  return {
+    segmentSize: connectedCells.length,
+    damage,
+    healing,
+    orderedCells: orderedEffectCells,
+  };
 }
 
 /**
@@ -142,7 +270,7 @@ export function calculateEffectiveFloorPenalty(
 ): number {
 
   const windRunesOnWall = wall.flat().reduce((total, cell) => (
-    total + getPassiveEffectValue(cell.effects, 'FloorPenaltyMitigation')
+    total + getEffectValue(cell.effects, 'FloorPenaltyMitigation')
   ), 0);
 
   // Completed Wind pattern lines count as pending placements (if the wall slot is still empty)
@@ -152,7 +280,7 @@ export function calculateEffectiveFloorPenalty(
       return total;
     }
     const effects = line.firstRuneEffects ?? getRuneEffectsForType(line.runeType);
-    const mitigation = getPassiveEffectValue(effects, 'FloorPenaltyMitigation');
+    const mitigation = getEffectValue(effects, 'FloorPenaltyMitigation');
     if (mitigation === 0) {
       return total;
     }

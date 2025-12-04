@@ -50,7 +50,6 @@ export interface RuneCellProps {
   onClick?: () => void;
   showEffect?: boolean;
   isPending?: boolean; // For wall cells with full pattern lines
-  isVoidPending?: boolean; // true if a void effect is pending selection
 }
 
 const SIZE_CONFIG = {
@@ -104,7 +103,6 @@ export function RuneCell({
   onClick,
   showEffect = false,
   isPending = false,
-  isVoidPending = false,
 }: RuneCellProps) {
   const config = SIZE_CONFIG[size];
   const usedVariant = forceVariant ?? variant;
@@ -115,7 +113,7 @@ export function RuneCell({
   
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
-  const hasEffect = showEffect && Boolean(rune && (rune.effects.passive.length > 0 || rune.effects.active.length > 0));
+  const hasEffect = showEffect && Boolean(rune && rune.effects.length > 0);
   
   // Use occupied background for wall cells that have runes OR are pending placement
   // Use `usedVariant` for styling decisions so callers can force visuals
@@ -137,7 +135,6 @@ export function RuneCell({
   } : {};
   
   const Container = shouldAnimate ? motion.div : 'div';
-  const glowStyle = '0 0 14px rgba(139, 92, 246, 0.85), 0 0 26px rgba(167, 139, 250, 0.45)';
   return (
     <Container
       {...animationProps}
@@ -149,11 +146,10 @@ export function RuneCell({
         alignItems: 'center',
         justifyContent: 'center',
         transition: shouldAnimate ? undefined : TRANSITIONS.medium,
-        boxShadow: isVoidPending ? glowStyle : 'none',
-        borderRadius: isVoidPending ? '50%' : `${RADIUS.md}px`,
+        borderRadius: `${RADIUS.md}px`,
         border: borderStyle,
         backgroundColor: backgroundColor,
-        padding: isVoidPending ? 0 : `${config.padding}px`,
+        padding: `${config.padding}px`,
         cursor: clickable ? 'pointer' : 'default',
         
         position: 'relative',

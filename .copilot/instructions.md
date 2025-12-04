@@ -85,7 +85,7 @@ src/
 │           ├── RulesOverlay.tsx
 │           ├── Runeforge.tsx
 │           ├── RuneforgeOverlay.tsx
-│           ├── RuneforgesAndCenter.tsx
+│           ├── DraftingTable.tsx
 │           ├── RunePower.tsx
 │           ├── ScoringWall.tsx
 │           ├── SelectedRunesOverlay.tsx

@@ -16,10 +16,7 @@ interface PatternLinesProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
-  frozenLineIndexes?: number[];
   lockedLineIndexes?: number[];
-  freezeSelectionEnabled?: boolean;
-  onFreezeLine?: (patternLineIndex: number) => void;
   playerId?: string;
   hiddenSlotKeys?: Set<string>;
 }
@@ -30,19 +27,12 @@ export function PatternLines({
   onPlaceRunes,
   selectedRuneType,
   canPlace,
-  frozenLineIndexes = [],
   lockedLineIndexes = [],
-  freezeSelectionEnabled = false,
-  onFreezeLine,
   playerId,
   hiddenSlotKeys,
 }: PatternLinesProps) {
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (!canPlace || !selectedRuneType) return false;
-
-    if (frozenLineIndexes.includes(lineIndex)) {
-      return false;
-    }
     
     const matchesType = line.runeType === null || line.runeType === selectedRuneType;
     const notFull = line.count < line.tier;
@@ -58,9 +48,6 @@ export function PatternLines({
   const selectableGlowRest = '0 0 18px rgba(34, 197, 94, 0.75), 0 0 38px rgba(34, 197, 94, 0.35)';
   const selectableGlowPeak = '0 0 28px rgba(16, 185, 129, 0.95), 0 0 56px rgba(21, 128, 61, 0.55)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
-  const freezeGlowRest = '0 0 18px rgba(6, 182, 212, 0.85), 0 0 32px rgba(14, 165, 233, 0.45)';
-  const freezeGlowPeak = '0 0 26px rgba(14, 165, 233, 0.95), 0 0 52px rgba(125, 211, 252, 0.55)';
-  const freezeGlowRange: [string, string] = [freezeGlowRest, freezeGlowPeak];
   const cellPulseTransition: Transition = {
     duration: 1.2,
     repeat: Infinity,
@@ -71,37 +58,24 @@ export function PatternLines({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
       {patternLines.map((line, index) => {
-        const isFrozen = frozenLineIndexes.includes(index);
         const isLocked = lockedLineIndexes.includes(index);
-        const canFreezeLine = freezeSelectionEnabled && !isFrozen && line.count < line.tier;
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         const placementClickable = Boolean(canPlace && onPlaceRunes);
-        const freezeClickable = freezeSelectionEnabled && Boolean(onFreezeLine);
-        const showGlow = freezeSelectionEnabled ? canFreezeLine : isPlacementTarget;
-        const glowRange = freezeSelectionEnabled ? freezeGlowRange : selectableGlowRange;
-        const buttonDisabled = freezeSelectionEnabled
-          ? !(canFreezeLine && freezeClickable)
-          : !(isPlacementTarget && placementClickable);
-        const cursorStyle = freezeSelectionEnabled
-          ? (canFreezeLine ? 'pointer' : 'not-allowed')
-          : placementClickable
+        const showGlow = isPlacementTarget;
+        const glowRange = selectableGlowRange;
+        const buttonDisabled = !(isPlacementTarget && placementClickable);
+        const cursorStyle = placementClickable
             ? (isPlacementTarget ? 'pointer' : 'not-allowed')
             : 'default';
 
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
-        const ariaLabel = freezeSelectionEnabled
-          ? `${ariaLabelBase}. ${canFreezeLine ? 'Click to freeze this line.' : 'Cannot freeze this line.'}`
-          : ariaLabelBase;
+        const ariaLabel = ariaLabelBase;
 
         return (
           <button
             key={index}
             onClick={() => {
-              if (freezeSelectionEnabled) {
-                if (canFreezeLine && onFreezeLine) {
-                  onFreezeLine(index);
-                }
-              } else if (isPlacementTarget && onPlaceRunes) {
+              if (isPlacementTarget && onPlaceRunes) {
                 onPlaceRunes(index);
               }
             }}
@@ -134,14 +108,13 @@ export function PatternLines({
                 const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
                 const runeEffects = isPrimaryRuneSlot && line.runeType
                   ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
-                  : { passive: [], active: [] };
+                  : [];
                 const rune = hasRuneInSlot && line.runeType ? {
                   id: `pattern-${index}-${slotIndex}`,
                   runeType: line.runeType,
                   effects: runeEffects,
                 } : null;
                 const displayedRune = shouldHideRune ? null : rune;
-                const showFrozenOverlay = isFrozen && !freezeSelectionEnabled;
                 const cellMotionProps = showGlow
                   ? {
                       animate: { boxShadow: glowRange },
@@ -157,7 +130,7 @@ export function PatternLines({
                     data-pattern-slot-index={slotIndex}
                     style={{
                       position: 'relative',
-                      boxShadow: showGlow ? (freezeSelectionEnabled ? freezeGlowRest : selectableGlowRest) : 'none',
+                      boxShadow: showGlow ? selectableGlowRest : 'none',
                       borderRadius: '8px',
                       transition: 'box-shadow 0.2s'
                     }}
@@ -180,23 +153,6 @@ export function PatternLines({
                           pointerEvents: 'none'
                         }}
                       />
-                    )}
-                    {showFrozenOverlay && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '18px',
-                          color: '#0ea5e9',
-                          textShadow: '0 0 6px rgba(125, 211, 252, 0.8)',
-                          pointerEvents: 'none'
-                        }}
-                      >
-                        ❄️
-                      </div>
                     )}
                   </motion.div>
                 );
