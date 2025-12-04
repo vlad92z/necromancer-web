@@ -606,7 +606,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (selectedRunes.length === 0) return state;
       
       const currentPlayer = state.players[currentPlayerIndex];
-      const opponentIndex = currentPlayerIndex === 0 ? 1 : 0;
       const patternLine = currentPlayer.patternLines[patternLineIndex];
       if (!patternLine) {
         return state;

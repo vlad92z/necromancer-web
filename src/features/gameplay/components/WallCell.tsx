@@ -2,7 +2,7 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
+import type { WallCell as WallCellType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
