@@ -69,6 +69,7 @@ export interface RuneCellProps {
   isPending?: boolean; // For wall cells with full pattern lines
   showTooltip?: boolean;
   tooltipPlacement?: 'top' | 'bottom';
+  runeOpacity?: number;
 }
 
 const SIZE_CONFIG = {
@@ -124,6 +125,7 @@ export function RuneCell({
   isPending = false,
   showTooltip = false,
   tooltipPlacement = 'top',
+  runeOpacity = 1,
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = SIZE_CONFIG[size];
@@ -219,7 +221,7 @@ export function RuneCell({
             width: '100%', 
             height: '100%', 
             objectFit: 'contain',
-            opacity: (isWallPlaceholder && !isPending) ? variantStyle.emptyOpacity : 1,
+            opacity: ((isWallPlaceholder && !isPending) ? variantStyle.emptyOpacity ?? 1 : 1) * runeOpacity,
           }}
         />
       )}

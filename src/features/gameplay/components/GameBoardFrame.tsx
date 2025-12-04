@@ -2,7 +2,7 @@
  * GameBoardFrame - shared logic and layout shell for solo and duel boards
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
@@ -18,6 +18,7 @@ import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useUIStore } from '../../../state/stores/uiStore';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
+import { createStartingDeck } from '../../../utils/gameInitialization';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -140,6 +141,13 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
+  const fullDeck = useMemo(
+    () =>
+      gameState.soloDeckTemplate && gameState.soloDeckTemplate.length > 0
+        ? gameState.soloDeckTemplate
+        : createStartingDeck(players[0].id, gameState.runeTypeCount, gameState.totalRunesPerPlayer),
+    [gameState.runeTypeCount, gameState.soloDeckTemplate, gameState.totalRunesPerPlayer, players],
+  );
   const {
     animatingRunes: placementAnimatingRunes,
     runeforgeAnimatingRunes: centerAnimatingRunes,
@@ -381,7 +389,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
 
       {showRulesOverlay && <RulesOverlay onClose={() => setShowRulesOverlay(false)} />}
 
-      {showDeckOverlay && <DeckOverlay deck={players[0].deck} playerName={players[0].name} onClose={() => setShowDeckOverlay(false)} />}
+      {showDeckOverlay && <DeckOverlay deck={players[0].deck} fullDeck={fullDeck} playerName={players[0].name} onClose={() => setShowDeckOverlay(false)} />}
 
       {showLogOverlay && <GameLogOverlay roundHistory={gameState.roundHistory} onClose={() => setShowLogOverlay(false)} />}
 

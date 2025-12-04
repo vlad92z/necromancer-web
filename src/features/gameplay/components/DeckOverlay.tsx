@@ -9,11 +9,13 @@ import { RuneTypeTotals } from './Center/RuneTypeTotals';
 
 interface DeckOverlayProps {
   deck: Rune[];
+  fullDeck?: Rune[];
   playerName: string;
   onClose: () => void;
 }
 
-export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
+export function DeckOverlay({ deck, fullDeck, playerName, onClose }: DeckOverlayProps) {
+  const completeDeck = fullDeck && fullDeck.length > 0 ? fullDeck : deck;
   // Group runes by type for ordering and totals
   const runesByType = deck.reduce((acc, rune) => {
     if (!acc[rune.runeType]) {
@@ -24,9 +26,10 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
   }, {} as Record<RuneType, Rune[]>);
 
   const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+  const remainingRuneIds = new Set(deck.map((rune) => rune.id));
   const sortedRunes = runeTypes.flatMap((runeType) => {
-    const runes = runesByType[runeType] ?? [];
-    return [...runes].sort((a, b) => {
+    const runes = completeDeck.filter((rune) => rune.runeType === runeType);
+    const ordered = [...runes].sort((a, b) => {
       const aHasEffects = a.effects.length > 0;
       const bHasEffects = b.effects.length > 0;
       if (aHasEffects !== bHasEffects) {
@@ -34,6 +37,10 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
       }
       return a.id.localeCompare(b.id);
     });
+    return ordered.map((rune) => ({
+      rune,
+      isDrafted: !remainingRuneIds.has(rune.id),
+    }));
   });
   const runeTypeCounts = runeTypes.reduce(
     (acc, runeType) => ({
@@ -178,7 +185,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                     gap: '10px',
                   }}
                 >
-                  {sortedRunes.map((rune, index) => (
+                  {sortedRunes.map(({ rune, isDrafted }, index) => (
                     <motion.div
                       key={rune.id}
                       initial={{ scale: 0, opacity: 0 }}
@@ -196,6 +203,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                         size={'large'}
                         showEffect
                         showTooltip
+                        runeOpacity={isDrafted ? 0.25 : 1}
                         tooltipPlacement="bottom"
                       />
                     </motion.div>
@@ -205,7 +213,7 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
             )}
 
             {/* Empty state */}
-            {deck.length === 0 && (
+            {sortedRunes.length === 0 && (
               <div
                 style={{
                   padding: '48px',
