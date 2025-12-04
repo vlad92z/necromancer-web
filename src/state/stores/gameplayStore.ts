@@ -4,23 +4,11 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, RuneEffect, SoloRunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER } from '../../utils/gameInitialization';
-import { resolveSegment, getWallColumnForRune, calculateEffectiveFloorPenalty, applyStressMitigation } from '../../utils/scoring';
+import { resolveSegment, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
-import { copyRuneEffects, getEffectValue, getRuneEffectsForType, hasEffectType } from '../../utils/runeEffects';
-
-type NumericEffectType = Extract<RuneEffect, { amount: number }>['type'];
-
-function calculateEffectValueForWall(
-  wall: Player['wall'],
-  effectType: NumericEffectType
-): number {
-  return wall.flat().reduce(
-    (total, cell) => total + getEffectValue(cell.effects, effectType),
-    0
-  );
-}
+import { copyRuneEffects, getRuneEffectsForType, hasEffectType } from '../../utils/runeEffects';
 
 function calculateNextStrainMultiplier(
   _players: [Player, Player],
@@ -52,8 +40,7 @@ function calculateImmediateOverloadDamage(
     return 0;
   }
 
-  const frostMitigation = calculateEffectValueForWall(wall, 'StrainMitigation');
-  const overloadMultiplier = applyStressMitigation(strain, frostMitigation);
+  const overloadMultiplier = strain;
   return addedPenalty * overloadMultiplier;
 }
 

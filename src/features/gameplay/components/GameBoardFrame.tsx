@@ -16,8 +16,6 @@ import { VolumeControl } from '../../../components/VolumeControl';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useUIStore } from '../../../state/stores/uiStore';
-import { applyStressMitigation } from '../../../utils/scoring';
-import { getEffectValue } from '../../../utils/runeEffects';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 
@@ -44,7 +42,7 @@ export interface GameBoardProps {
 export interface SoloVariantData {
   soloOutcome: GameState['soloOutcome'];
   soloRuneScore: { currentScore: number; targetScore: number } | null;
-  soloStats: SoloStatsProps | null;
+  soloStats: SoloStatsProps;
   soloTargetScore: number;
   runePowerTotal: number;
 }
@@ -172,10 +170,10 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
 
   const soloStats = (() => {
         const player = players[0];
-        const strainMitigation = player.wall
-          .flat()
-          .reduce((total, cell) => total + getEffectValue(cell.effects, 'StrainMitigation'), 0);
-        const overloadMultiplier = applyStressMitigation(strain, strainMitigation);
+        // const strainMitigation = player.wall
+        //   .flat()
+          // .reduce((total, cell) => total + getEffectValue(cell.effects, 'StrainMitigation'), 0);
+        const overloadMultiplier = strain;//applyStressMitigation(strain, strainMitigation);
 
         return {
           isActive: currentPlayerIndex === 0,
