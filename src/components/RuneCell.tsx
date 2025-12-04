@@ -292,14 +292,14 @@ export function RuneCell({
         <div
           style={{
             position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
             padding: '8px 12px',
             background: 'rgba(8, 7, 16, 0.95)',
             borderRadius: '10px',
             border: `1px solid ${COLORS.ui.borderLight}`,
             color: COLORS.ui.text,
             fontSize: '12px',
+            minWidth: '100px',
+            textAlign: 'center',
             lineHeight: 1.5,
             whiteSpace: 'pre-line',
             boxShadow: SHADOWS.md,

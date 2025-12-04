@@ -51,9 +51,9 @@ function cloneEffects(effects: RuneEffects): RuneEffects {
 function formatRuneEffect(effect: RuneEffect): string {
   switch (effect.type) {
     case 'Damage':
-      return `+${effect.amount} damage when placed`;
+      return `+${effect.amount} damage`;
     case 'Healing':
-      return `Restore ${effect.amount} health when scored`;
+      return `+${effect.amount} healing`;
     default:
       return "Common Rune";
   }
@@ -113,10 +113,10 @@ export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffect
   const effectLines = resolvedEffects.map(formatRuneEffect).filter(Boolean);
 
   if (effectLines.length === 0) {
-    return `${runeType} rune\n• No special effects`;
+    return `${runeType} rune`;
   }
 
-  const bulletList = effectLines.map((line) => `• ${line}`).join('\n');
+  const bulletList = effectLines.map((line) => `${line}`).join('\n');
   return `${runeType} rune\n${bulletList}`;
 }
 
