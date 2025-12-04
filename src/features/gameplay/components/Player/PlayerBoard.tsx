@@ -89,7 +89,7 @@ export function PlayerBoard({
                   label="Fatigue"
                   value={fatigueValue}
                   color="#fa6060ff"
-                  borderColor="rgba(250, 96, 96, 0.35)"
+                  borderColor="rgba(96, 165, 250, 0.35)"
                   tooltip={`Overloading runes immediately deals ${fatigueValue} damage`}
                   image={fatigueSvg}
                 />

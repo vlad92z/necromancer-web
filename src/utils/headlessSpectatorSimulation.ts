@@ -28,14 +28,14 @@ function runSingleHeadlessGame(
   while (store.getState().turnPhase !== 'game-over' && steps < MAX_STEPS_PER_GAME) {
     const state = store.getState();
 
-    if (state.scoringPhase) {
-      store.getState().processScoringStep();
+    if (state.shouldTriggerEndRound || state.turnPhase === 'end-of-round') {
+      store.getState().endRound();
       steps++;
       continue;
     }
 
-    if (state.shouldTriggerEndRound) {
-      store.getState().endRound();
+    if (state.turnPhase === 'cast') {
+      store.getState().moveRunesToWall();
       steps++;
       continue;
     }
@@ -52,7 +52,7 @@ function runSingleHeadlessGame(
 
     if (needsAIPlacement(store as StoreApi<GameplayStore>)) {
       executeAITurn(store as StoreApi<GameplayStore>);
-    } else if (state.turnPhase === 'draft') {
+    } else if (state.turnPhase === 'draft' || state.turnPhase === 'place') {
       executeAITurn(store as StoreApi<GameplayStore>);
     } else {
       // Unexpected phase; break to avoid infinite loop

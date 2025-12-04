@@ -32,17 +32,7 @@
      y1="477.81879"
      x2="191.42899"
      y2="188.41435"
-     gradientUnits="userSpaceOnUse" /><filter
-     inkscape:collect="always"
-     style="color-interpolation-filters:sRGB"
-     id="filter6"
-     x="-0.011389621"
-     y="-0.0088935229"
-     width="1.0227792"
-     height="1.017787"><feGaussianBlur
-       inkscape:collect="always"
-       stdDeviation="2.209088"
-       id="feGaussianBlur6" /></filter></defs><sodipodi:namedview
+     gradientUnits="userSpaceOnUse" /></defs><sodipodi:namedview
    id="namedview6"
    pagecolor="#ffffff"
    bordercolor="#000000"
@@ -53,16 +43,16 @@
    inkscape:deskcolor="#d1d1d1"
    inkscape:zoom="0.98875"
    inkscape:cx="399.49431"
-   inkscape:cy="400"
+   inkscape:cy="399.49431"
    inkscape:window-width="1920"
-   inkscape:window-height="948"
+   inkscape:window-height="947"
    inkscape:window-x="1080"
    inkscape:window-y="351"
    inkscape:window-maximized="0"
    inkscape:current-layer="Capa_1" />
 <g
    id="g6"
-   style="fill:url(#linearGradient6);fill-opacity:1;filter:url(#filter6)">
+   style="fill:url(#linearGradient6);fill-opacity:1">
 	<g
    id="g5"
    style="fill:url(#linearGradient6);fill-opacity:1.0">

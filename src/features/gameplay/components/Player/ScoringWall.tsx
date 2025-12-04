@@ -129,7 +129,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
                 cell={cell}
                 row={rowIndex}
                 col={colIndex}
-                patternLine={patternLines[rowIndex]}
                 wallSize={gridSize}
                 availableRuneTypes={availableRuneTypes}
               />

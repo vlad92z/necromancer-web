@@ -2,7 +2,7 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
+import type { WallCell as WallCellType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
@@ -11,7 +11,6 @@ interface WallCellProps {
   cell: WallCellType;
   row: number;
   col: number;
-  patternLine: PatternLine;
   // Number of columns/rows of the scoring wall (3, 4 or 5)
   wallSize: number;
   // Rune types available for this wall size (ordered)
@@ -38,13 +37,8 @@ function getExpectedRuneType(
   return fallback[baseIndex];
 }
 
-export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneTypes }: WallCellProps) {
+export function WallCell({ cell, row, col, wallSize, availableRuneTypes }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col, wallSize, availableRuneTypes);
-  
-  // Check if the pattern line is full and matches this cell's expected rune type
-  const isPatternLineFull = patternLine.count === patternLine.tier;
-  const patternLineMatchesCell = patternLine.runeType === expectedRuneType;
-  const isPending = !cell.runeType && isPatternLineFull && patternLineMatchesCell;
   
   // Convert WallCell to Rune format if occupied
   const rune = cell.runeType ? {
@@ -68,7 +62,6 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
           runeType: expectedRuneType,
         }}
         showEffect
-        isPending={isPending}
         showTooltip
       />
     </div>

@@ -20,7 +20,10 @@ export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore)
   const controller = getControllerForIndex(state, state.currentPlayerIndex);
   
   // Only execute if it's AI's turn and in draft phase
-  if (controller.type !== 'computer' || state.turnPhase !== 'draft') {
+  if (
+    controller.type !== 'computer' ||
+    (state.turnPhase !== 'draft' && state.turnPhase !== 'place')
+  ) {
     return false;
   }
   
@@ -63,7 +66,7 @@ export function executeAITurn(store: StoreApi<GameplayStore> = useGameplayStore)
 
   if (
     !moveMade &&
-    state.turnPhase === 'draft' &&
+    (state.turnPhase === 'draft' || state.turnPhase === 'place') &&
     state.selectedRunes.length === 0
   ) {
     const hasDraftableRunes =
@@ -88,7 +91,7 @@ export function needsAIPlacement(store: StoreApi<GameplayStore> = useGameplaySto
   
   return controller.type === 'computer' && 
          state.selectedRunes.length > 0 &&
-         state.turnPhase === 'draft';
+         state.turnPhase === 'place';
 }
 
 /**

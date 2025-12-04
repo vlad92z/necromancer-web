@@ -102,7 +102,6 @@ export interface RuneCellProps {
   clickable?: boolean;
   onClick?: () => void;
   showEffect?: boolean;
-  isPending?: boolean; // For wall cells with full pattern lines
   showTooltip?: boolean;
   tooltipPlacement?: 'top' | 'bottom';
   runeOpacity?: number;
@@ -158,7 +157,6 @@ export function RuneCell({
   clickable = false,
   onClick,
   showEffect = true,
-  isPending = false,
   showTooltip = false,
   tooltipPlacement = 'top',
   runeOpacity = 1,
@@ -185,10 +183,10 @@ export function RuneCell({
     return getRuneEffectDescription(rune.runeType, rune.effects);
   }, [rune, showTooltip]);
   
-  // Use occupied background for wall cells that have runes OR are pending placement
+  // Use occupied background for wall cells that have runes
   // Use `usedVariant` for styling decisions so callers can force visuals
   // without changing semantic behavior.
-  const backgroundColor = (usedVariant === 'wall' && (rune || isPending) && variantStyle.backgroundOccupied)
+  const backgroundColor = (usedVariant === 'wall' && (rune) && variantStyle.backgroundOccupied)
     ? variantStyle.backgroundOccupied
     : variantStyle.background;
   
@@ -259,7 +257,7 @@ export function RuneCell({
             width: '100%', 
             height: '100%', 
             objectFit: 'contain',
-            opacity: ((isWallPlaceholder && !isPending) ? variantStyle.emptyOpacity ?? 1 : 1) * runeOpacity,
+            opacity: ((isWallPlaceholder) ? variantStyle.emptyOpacity ?? 1 : 1) * runeOpacity,
           }}
         />
       )}
@@ -292,14 +290,14 @@ export function RuneCell({
         <div
           style={{
             position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
             padding: '8px 12px',
             background: 'rgba(8, 7, 16, 0.95)',
             borderRadius: '10px',
             border: `1px solid ${COLORS.ui.borderLight}`,
             color: COLORS.ui.text,
             fontSize: '12px',
+            minWidth: '100px',
+            textAlign: 'center',
             lineHeight: 1.5,
             whiteSpace: 'pre-line',
             boxShadow: SHADOWS.md,
