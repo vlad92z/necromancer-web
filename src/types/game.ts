@@ -168,7 +168,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
+export type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'deck-draft' | 'game-over';
 
 /**
  * Scoring phase steps for visual feedback
@@ -211,6 +211,7 @@ export interface GameState {
   overflowCapacity: number; // Floor line capacity that determines overflow penalties
   playerControllers: PlayerControllers; // Controller assignments for top and bottom players
   players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
+  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games (empty for versus)
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   currentPlayerIndex: 0 | 1;
@@ -226,6 +227,7 @@ export interface GameState {
    * so it can be tuned or modified by runes in the future.
    */
   strainMultiplier: number;
+  soloStartingStrain: number; // Configured strain at the start of the run
   selectedRunes: Rune[]; // Runes currently selected by active player
   draftSource:
     | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
@@ -246,4 +248,12 @@ export interface GameState {
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
   soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
+  deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
+  soloBaseTargetScore: number; // Configured starting target for reset scenarios
+}
+
+export interface DeckDraftState {
+  runeforges: Runeforge[];
+  picksRemaining: number;
+  totalPicks: number;
 }

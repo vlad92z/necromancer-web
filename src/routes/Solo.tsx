@@ -14,25 +14,6 @@ import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState } from 
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
-    startGame,
-    startSpectatorMatch,
-    startSoloRun,
-    prepareSoloMode,
-    hydrateGameState,
-    returnToStartScreen,
-    draftRune,
-    draftFromCenter,
-    placeRunes,
-    placeRunesInFloor,
-    cancelSelection,
-    destroyRune,
-    skipVoidEffect,
-    skipFrostEffect,
-    freezePatternLine,
-    endRound,
-    resetGame,
-    triggerRoundEnd,
-    processScoringStep,
     ...gameState
   } = state;
 

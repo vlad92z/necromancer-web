@@ -45,6 +45,9 @@ export interface SoloVariantData {
   soloStats: SoloStatsProps;
   soloTargetScore: number;
   runePowerTotal: number;
+  deckDraftState: GameState['deckDraftState'];
+  isDeckDrafting: boolean;
+  onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
 }
 
 export interface DuelVariantData {
@@ -112,7 +115,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
-  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection } =
+  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, selectDeckDraftRuneforge } =
     useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
@@ -131,6 +134,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     return window.localStorage.getItem('musicMuted') === 'true';
   });
   const isDraftPhase = turnPhase === 'draft';
+  const isDeckDrafting = turnPhase === 'deck-draft';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
@@ -330,6 +334,9 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
         soloStats,
         soloTargetScore,
         runePowerTotal,
+        deckDraftState: gameState.deckDraftState,
+        isDeckDrafting,
+        onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
       };
   const boardContent = renderContent(
     sharedProps,

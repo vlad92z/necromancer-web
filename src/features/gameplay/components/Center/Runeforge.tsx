@@ -16,6 +16,7 @@ interface SelectedDisplayOverride {
 interface RuneforgeProps {
   runeforge: RuneforgeType;
   onRuneClick?: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
+  onRuneforgeSelect?: (runeforgeId: string) => void;
   disabled?: boolean;
   displayOverride?: SelectedDisplayOverride;
   selectionSourceActive?: boolean;
@@ -26,6 +27,7 @@ interface RuneforgeProps {
 export function Runeforge({ 
   runeforge, 
   onRuneClick,
+  onRuneforgeSelect,
   disabled = false,
   displayOverride,
   selectionSourceActive = false,
@@ -51,6 +53,10 @@ export function Runeforge({
       onCancelSelection();
       return;
     }
+    if (onRuneforgeSelect && !disabled) {
+      onRuneforgeSelect(runeforge.id);
+      return;
+    }
     if (selectionActive) {
       return;
     }
@@ -72,7 +78,7 @@ export function Runeforge({
   let glowDuration = 1.5;
   
   // Normal selectable state (green highlight when player can select)
-  const isSelectable = !disabled && !selectionActive && runeforge.runes.length > 0 && onRuneClick;
+  const isSelectable = !disabled && !selectionActive && runeforge.runes.length > 0 && (onRuneClick || onRuneforgeSelect);
   if (isSelectable) {
     borderColor = '#c084fc';
     boxShadow = selectableGlowRest;
@@ -92,6 +98,11 @@ export function Runeforge({
   return (
     <motion.button
       disabled={buttonDisabled}
+      onClick={() => {
+        if (!buttonDisabled && onRuneforgeSelect) {
+          onRuneforgeSelect(runeforge.id);
+        }
+      }}
       style={{
         backgroundColor: backgroundColor,
         borderRadius: '16px',
@@ -184,7 +195,8 @@ export function Runeforge({
                     rune={rune}
                     variant="runeforge"
                     size='large'
-                    showEffect={false}
+                    showEffect
+                    showTooltip
                   />
                 </motion.div>
               );

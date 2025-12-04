@@ -7,6 +7,7 @@ import { DraftingTable } from './Center/DraftingTable';
 import { PlayerView } from './Player/PlayerView';
 import { SoloStats } from './Player/SoloStats';
 import { SoloGameOverModal } from './SoloGameOverModal';
+import { DeckDraftingModal } from './DeckDraftingModal';
 
 interface SoloBoardContentProps {
   shared: GameBoardSharedProps;
@@ -39,7 +40,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     isGameOver,
     returnToStartScreen,
   } = shared;
-  const { soloOutcome, soloRuneScore, soloStats, runePowerTotal, soloTargetScore } = variantData;
+  const { soloOutcome, soloRuneScore, soloStats, runePowerTotal, soloTargetScore, deckDraftState, isDeckDrafting, onSelectDeckDraftRuneforge } = variantData;
 
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1.1fr) 1.9fr' }}>
@@ -93,6 +94,18 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
           </div>
         )}
       </div>
+
+      {isDeckDrafting && deckDraftState && (
+        <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-sm px-4">
+          <DeckDraftingModal
+            draftState={deckDraftState}
+            onSelectRuneforge={onSelectDeckDraftRuneforge}
+            currentTarget={soloTargetScore}
+            nextTarget={soloTargetScore + 100}
+            currentDeckSize={players[0].deck.length}
+          />
+        </div>
+      )}
 
       {isGameOver && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-auto">

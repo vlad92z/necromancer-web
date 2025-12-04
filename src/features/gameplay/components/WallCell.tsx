@@ -2,7 +2,6 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import { useState } from 'react';
 import type { WallCell as WallCellType, RuneType, PatternLine } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
@@ -41,7 +40,6 @@ function getExpectedRuneType(
 
 export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneTypes }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col, wallSize, availableRuneTypes);
-  const [isHovered, setIsHovered] = useState(false);
   
   // Check if the pattern line is full and matches this cell's expected rune type
   const isPatternLineFull = patternLine.count === patternLine.tier;
@@ -58,10 +56,6 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
   return (
     <div
       style={{ position: 'relative', display: 'inline-block' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onFocus={() => setIsHovered(true)}
-      onBlur={() => setIsHovered(false)}
       tabIndex={0}
       aria-label={`${expectedRuneType} rune cell`}
     >
@@ -73,37 +67,10 @@ export function WallCell({ cell, row, col, patternLine, wallSize, availableRuneT
           type: 'rune',
           runeType: expectedRuneType,
         }}
-        showEffect={false}
+        showEffect
         isPending={isPending}
+        showTooltip
       />
-
-      {isHovered && rune && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 'calc(100% + 8px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'min(240px, 70vw)',
-            padding: '10px 14px',
-            background: 'rgba(3, 7, 18, 0.95)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            color: '#cbd5f5',
-            fontSize: '1rem',
-            lineHeight: 1.6,
-            whiteSpace: 'pre-wrap',
-            boxShadow: '0 20px 45px rgba(0,0,0,0.55)',
-            zIndex: 5
-          }}
-        >
-          {getRuneDescription(rune.runeType)}
-        </div>
-      )}
     </div>
   );
-}
-
-function getRuneDescription(type: RuneType) {
-  return type
 }

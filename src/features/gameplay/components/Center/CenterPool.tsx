@@ -165,7 +165,8 @@ export function CenterPool({
                   rune={rune}
                   variant="center"
                   size="large"
-                  showEffect={false}
+                  showEffect
+                  showTooltip
                 />
               </motion.div>
             );

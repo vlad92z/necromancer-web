@@ -89,7 +89,9 @@ export function FloorLine({ floorLine, onPlaceRunesInFloor, canPlace, mitigatedS
                     forceVariant={isNeutral ? 'pattern' : undefined}
                     emptyIcon={!runeToDisplay && !isNeutral && !isHidden ? overloadSvg : undefined}
                   size="large"
-                  showEffect={false}
+                  showEffect
+                  showTooltip
+                  tooltipPlacement="top"
                 />
               </motion.div>
             );

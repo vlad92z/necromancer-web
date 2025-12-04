@@ -6,19 +6,18 @@ import type { RuneEffect, RuneEffects, RuneType } from '../types/game';
 
 export interface RuneEffectTuning {
   lifeHealing?: number;
-  frostMitigation?: number;
-  voidConversion?: number;
 }
 
-/**
- * Legacy rune effects preserved for future use.
- */
-export const LEGACY_RUNE_EFFECTS: Pick<Record<RuneType, RuneEffects>, 'Frost' | 'Void'> = {
-  Frost: [{ type: 'FreezePatternLine' }],
-  Void: [{ type: 'DestroyRune' }],
+const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
+  Fire: [],//[{ type: 'Damage', amount: 1 }],
+  Frost:[],// [{ type: 'Healing', amount: 1 }],
+  Life: [],//[{ type: 'Healing', amount: 1 }],
+  Void: [],//[{ type: 'Damage', amount: 1 }],
+  Wind: [],//[{ type: 'Healing', amount: 1 }],
+  Lightning: [],//[{ type: 'Damage', amount: 1 }],
 };
 
-const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
+const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 1 }],
   Frost: [{ type: 'Healing', amount: 1 }],
   Life: [{ type: 'Healing', amount: 1 }],
@@ -31,6 +30,27 @@ function cloneEffects(effects: RuneEffects): RuneEffects {
   return effects.map((effect) => ({ ...effect }));
 }
 
+function formatRuneEffect(effect: RuneEffect): string {
+  switch (effect.type) {
+    case 'Damage':
+      return `+${effect.amount} damage when placed`;
+    case 'Healing':
+      return `Restore ${effect.amount} health when scored`;
+    case 'DamageToSpellpower':
+      return `+${effect.amount} spellpower damage`;
+    case 'EssenceBonus':
+      return `Essence bonus +${effect.amount}`;
+    case 'FloorPenaltyMitigation':
+      return `Reduce floor penalties by ${effect.amount}`;
+    case 'DestroyRune':
+      return 'Void: destroy 1 rune from a runeforge or the center';
+    case 'FreezePatternLine':
+      return 'Frost: freeze an opponent pattern line (versus only)';
+    default:
+      return "Common Rune";
+  }
+}
+
 export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTuning): RuneEffects {
   const baseEffects = BASE_RUNE_EFFECTS[runeType];
 
@@ -39,18 +59,14 @@ export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTun
   }
 
   const tunedEffects = baseEffects.map((effect) => {
-    if (effect.type === 'Healing' && tuning.lifeHealing !== undefined) {
-      return { ...effect, amount: tuning.lifeHealing };
-    }
-
-    if (effect.type === 'DamageToSpellpower' && tuning.voidConversion !== undefined) {
-      return { ...effect, amount: tuning.voidConversion };
-    }
-
     return effect;
   });
 
   return cloneEffects(tunedEffects);
+}
+
+export function getDraftEffectsForType(runeType: RuneType): RuneEffects {
+  return cloneEffects(UNCOMMON_RUNE_EFFECTS[runeType]);
 }
 
 export function copyRuneEffects(effects: RuneEffects | null | undefined): RuneEffects {
@@ -76,4 +92,16 @@ export function hasEffectType(
 ): boolean {
   if (!effects) return false;
   return effects.some((effect) => effect.type === type);
+}
+
+export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffects | null | undefined): string {
+  const resolvedEffects = effects ?? [];
+  const effectLines = resolvedEffects.map(formatRuneEffect).filter(Boolean);
+
+  if (effectLines.length === 0) {
+    return `${runeType} rune\n• No special effects`;
+  }
+
+  const bulletList = effectLines.map((line) => `• ${line}`).join('\n');
+  return `${runeType} rune\n${bulletList}`;
 }

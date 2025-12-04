@@ -140,7 +140,8 @@ export function PatternLines({
                       rune={displayedRune}
                       variant="pattern"
                       size="large"
-                      showEffect={false}
+                      showEffect
+                      showTooltip
                     />
                     {isPrimaryRuneSlot && !isLocked && (
                       <div

@@ -19,6 +19,7 @@ export function useGameActions() {
   const startSpectatorMatch = useGameplayStore((state) => state.startSpectatorMatch);
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
   const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
+  const selectDeckDraftRuneforge = useGameplayStore((state) => state.selectDeckDraftRuneforge);
   
   return {
     draftRune,
@@ -33,6 +34,7 @@ export function useGameActions() {
     startSpectatorMatch,
     startSoloRun,
     prepareSoloMode,
+    selectDeckDraftRuneforge,
   };
 }
 
