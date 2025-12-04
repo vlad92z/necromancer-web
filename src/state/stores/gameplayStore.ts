@@ -40,14 +40,6 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
   return createStartingDeck(state.players[0].id, state.runeTypeCount, state.totalRunesPerPlayer);
 }
 
-function deriveLifeRuneHealing(deckTemplate: Rune[]): number {
-  const lifeRune = deckTemplate.find((rune) => rune.runeType === 'Life');
-  const healingEffect = lifeRune?.effects.find((effect) => effect.type === 'Healing' && 'amount' in effect);
-  return typeof healingEffect === 'object' && healingEffect && 'amount' in healingEffect
-    ? (healingEffect as Extract<typeof healingEffect, { amount: number }>).amount
-    : DEFAULT_SOLO_CONFIG.lifeRuneHealing;
-}
-
 function enterDeckDraftMode(state: GameState): GameState {
   if (state.matchType !== 'solo') {
     return state;

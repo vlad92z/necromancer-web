@@ -111,9 +111,6 @@ export interface SoloRunConfig {
   startingHealth: number;
   startingStrain: number;
   strainMultiplier: number;
-  lifeRuneHealing: number;
-  frostMitigationPercent: number;
-  voidConversionPercent: number;
   factoriesPerPlayer: number;
   deckRunesPerType: number;
   targetRuneScore: number;

@@ -4,10 +4,6 @@
 
 import type { RuneEffect, RuneEffectRarity, RuneEffects, RuneType } from '../types/game';
 
-export interface RuneEffectTuning {
-  lifeHealing?: number;
-}
-
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [],//[{ type: 'Damage', amount: 1 }],
   Frost:[],// [{ type: 'Healing', amount: 1 }],
@@ -59,12 +55,8 @@ function formatRuneEffect(effect: RuneEffect): string {
   }
 }
 
-export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTuning): RuneEffects {
+export function getRuneEffectsForType(runeType: RuneType): RuneEffects {
   const baseEffects = BASE_RUNE_EFFECTS[runeType];
-
-  if (!tuning) {
-    return cloneEffects(baseEffects);
-  }
 
   const tunedEffects = baseEffects.map((effect) => {
     return effect;
