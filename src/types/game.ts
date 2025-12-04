@@ -25,7 +25,6 @@ export type RuneEffect =
   | { type: 'DamageToSpellpower'; amount: number }
   | { type: 'EssenceBonus'; amount: number }
   | { type: 'FloorPenaltyMitigation'; amount: number }
-  | { type: 'StrainMitigation'; amount: number }
   | { type: 'DestroyRune' }
   | { type: 'FreezePatternLine' };
 

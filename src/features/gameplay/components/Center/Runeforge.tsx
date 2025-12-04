@@ -62,9 +62,9 @@ export function Runeforge({
   // Determine styling based on state
   const backgroundColor = '#1c1034';
   let borderColor = 'rgba(255, 255, 255, 0.15)';
-  let hoverBackgroundColor = '#251646';
+  const hoverBackgroundColor = '#251646';
   let boxShadow = '0 8px 24px rgba(0, 0, 0, 0.45)';
-  let ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
+  const ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
   const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
   const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];

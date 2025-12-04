@@ -160,9 +160,6 @@ export function resolveSegmentFromCells(
   const orderedEffectCells = [...(effectCells ?? connectedCells)].sort((a, b) =>
     a.row === b.row ? a.col - b.col : a.row - b.row
   );
-  const orderedDamageCells = [...connectedCells].sort((a, b) =>
-    a.row === b.row ? a.col - b.col : a.row - b.row
-  );
   let damage = Math.max(1, connectedCells.length);
   let healing = 0;
 
