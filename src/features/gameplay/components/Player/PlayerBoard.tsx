@@ -8,6 +8,9 @@ import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
 import { SoloRuneScoreOverlay } from '../SoloRuneScoreOverlay';
 import { SoloHealthTracker } from '../SoloHealthTracker';
+import { StatBadge } from '../../../../components/StatBadge';
+import deckSvg from '../../../../assets/stats/deck.svg';
+import fatigueSvg from '../../../../assets/stats/fatigue.svg';
 
 interface PlayerBoardProps {
   player: Player;
@@ -25,6 +28,9 @@ interface PlayerBoardProps {
     currentScore: number;
     targetScore: number;
   };
+  deckCount?: number;
+  strain?: number;
+  onOpenDeck?: () => void;
 }
 
 export function PlayerBoard({
@@ -38,12 +44,17 @@ export function PlayerBoard({
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
   soloRuneScore,
+  deckCount,
+  strain,
+  onOpenDeck,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
     }
   };
+  const deckValue = deckCount ?? player.deck.length ?? 0;
+  const fatigueValue = strain ?? 0;
 
   return (
     <div
@@ -85,11 +96,46 @@ export function PlayerBoard({
                   gap: '10px',
                 }}
               >
-                <SoloRuneScoreOverlay
-                  currentScore={soloRuneScore?.currentScore ?? 0}
-                  targetScore={soloRuneScore?.targetScore ?? 0}
-                />
-                <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr',
+                    gap: '10px',
+                    alignItems: 'stretch'
+                  }}
+                >
+                  <StatBadge
+                    label="Deck"
+                    value={deckValue}
+                    color="#60a5fa"
+                    borderColor="rgba(96, 165, 250, 0.35)"
+                    tooltip={`Runes left in deck: ${deckValue}`}
+                    image={deckSvg}
+                    onClick={onOpenDeck}
+                  />
+                  <SoloRuneScoreOverlay
+                    currentScore={soloRuneScore?.currentScore ?? 0}
+                    targetScore={soloRuneScore?.targetScore ?? 0}
+                  />
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr',
+                    gap: '10px',
+                    alignItems: 'stretch'
+                  }}
+                >
+                  <StatBadge
+                    label="Fatigue"
+                    value={fatigueValue}
+                    color="#fa6060ff"
+                    borderColor="rgba(154, 147, 23, 0.35)"
+                    tooltip={`Overloading runes immediately deals ${fatigueValue} damage`}
+                    image={fatigueSvg}
+                  />
+                  <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
+                </div>
               </div>
             </div>
           <div

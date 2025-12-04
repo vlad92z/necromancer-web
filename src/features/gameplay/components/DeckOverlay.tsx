@@ -138,6 +138,8 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                       variant="runeforge"
                       size={'medium'}
                       showEffect
+                      showTooltip
+                      tooltipPlacement="bottom"
                     />
                     <div style={{
                       fontSize: '14px',
@@ -183,6 +185,8 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
                           variant="runeforge"
                           size={'large'}
                           showEffect
+                          showTooltip
+                          tooltipPlacement="bottom"
                         />
                       </motion.div>
                     ))}

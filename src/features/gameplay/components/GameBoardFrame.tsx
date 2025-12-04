@@ -48,6 +48,7 @@ export interface SoloVariantData {
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
+  onOpenDeckOverlay: () => void;
 }
 
 export interface DuelVariantData {
@@ -337,6 +338,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
         deckDraftState: gameState.deckDraftState,
         isDeckDrafting,
         onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
+        onOpenDeckOverlay: () => setShowDeckOverlay(true),
       };
   const boardContent = renderContent(
     sharedProps,

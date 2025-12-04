@@ -5,7 +5,6 @@
 import type { GameBoardSharedProps, SoloVariantData } from './GameBoardFrame';
 import { DraftingTable } from './Center/DraftingTable';
 import { PlayerView } from './Player/PlayerView';
-import { SoloStats } from './Player/SoloStats';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 
@@ -40,7 +39,17 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     isGameOver,
     returnToStartScreen,
   } = shared;
-  const { soloOutcome, soloRuneScore, soloStats, runePowerTotal, soloTargetScore, deckDraftState, isDeckDrafting, onSelectDeckDraftRuneforge } = variantData;
+  const {
+    soloOutcome,
+    soloRuneScore,
+    soloStats,
+    runePowerTotal,
+    soloTargetScore,
+    deckDraftState,
+    isDeckDrafting,
+    onSelectDeckDraftRuneforge,
+    onOpenDeckOverlay,
+  } = variantData;
 
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1.1fr) 1.9fr' }}>
@@ -81,18 +90,11 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             hiddenFloorSlotIndexes={playerHiddenFloorSlots}
             round={round}
             soloRuneScore={soloRuneScore || undefined}
+            deckCount={soloStats?.deckCount}
+            strain={soloStats?.overloadMultiplier}
+            onOpenDeck={onOpenDeckOverlay}
           />
         </div>
-        {soloStats && (
-          <div className="w-full flex justify-center">
-            <div
-              className="py-2.5 px-3 rounded-2xl border w-full max-w-[640px]"
-              style={{ borderColor: 'rgba(148, 163, 184, 0.35)', background: 'rgba(8, 10, 24, 0.9)', boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)' }}
-            >
-              <SoloStats {...soloStats} />
-            </div>
-          </div>
-        )}
       </div>
 
       {isDeckDrafting && deckDraftState && (
