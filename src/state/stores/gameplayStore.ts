@@ -1349,7 +1349,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       if (!nextDraftState) {
-        const nextTarget = state.soloTargetScore + 100;
+        const nextTarget = state.soloTargetScore + 50;
         const deckRunesPerType = Math.max(1, Math.round(updatedDeckTemplate.length / state.runeTypeCount));
         const nextGameState = initializeSoloGame(
           state.runeTypeCount,
