@@ -14,7 +14,7 @@ interface DeckOverlayProps {
 }
 
 export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
-  // Group runes by type for organized display
+  // Group runes by type for ordering and totals
   const runesByType = deck.reduce((acc, rune) => {
     if (!acc[rune.runeType]) {
       acc[rune.runeType] = [];
@@ -24,6 +24,17 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
   }, {} as Record<RuneType, Rune[]>);
 
   const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+  const sortedRunes = runeTypes.flatMap((runeType) => {
+    const runes = runesByType[runeType] ?? [];
+    return [...runes].sort((a, b) => {
+      const aHasEffects = a.effects.length > 0;
+      const bHasEffects = b.effects.length > 0;
+      if (aHasEffects !== bHasEffects) {
+        return aHasEffects ? -1 : 1;
+      }
+      return a.id.localeCompare(b.id);
+    });
+  });
   const runeTypeCounts = runeTypes.reduce(
     (acc, runeType) => ({
       ...acc,
@@ -145,109 +156,53 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
               flex: 1,
               overflowY: 'auto',
               paddingRight: '6px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
             }}
           >
-            {/* Runes grid grouped by type */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}
-            >
-              {runeTypes.map((runeType, typeIndex) => {
-                const runes = runesByType[runeType] || [];
-
-                if (runes.length === 0) return null;
-
-                return (
-                  <motion.div
-                    key={runeType}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: typeIndex * 0.05 }}
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(67, 31, 120, 0.5), rgba(21, 10, 46, 0.9))',
-                      borderRadius: '14px',
-                      padding: '12px',
-                      border: '1px solid rgba(149, 117, 255, 0.3)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px',
-                      boxShadow: '0 18px 50px rgba(0, 0, 0, 0.45)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        justifyContent: 'space-between',
-                        padding: '0 2px',
+            {sortedRunes.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 16 }}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(67, 31, 120, 0.35), rgba(21, 10, 46, 0.92))',
+                  borderRadius: '16px',
+                  padding: '14px',
+                  border: '1px solid rgba(149, 117, 255, 0.3)',
+                  boxShadow: '0 18px 50px rgba(0, 0, 0, 0.45)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))',
+                    gap: '10px',
+                  }}
+                >
+                  {sortedRunes.map((rune, index) => (
+                    <motion.div
+                      key={rune.id}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        delay: index * 0.015,
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 20,
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: '16px',
-                          fontWeight: 800,
-                          color: '#ede9fe',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {runeType}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '13px',
-                          color: 'rgba(221, 214, 254, 0.82)',
-                        }}
-                      >
-                        ({runes.length})
-                      </div>
-                    </div>
-
-                    {/* Runes grid (on the right) */}
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))',
-                        gap: '8px',
-                        padding: '10px',
-                        backgroundColor: 'rgba(7, 3, 18, 0.75)',
-                        borderRadius: '10px',
-                        flex: 1,
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                      }}
-                    >
-                      {runes.map((rune, index) => (
-                        <motion.div
-                          key={rune.id}
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{
-                            delay: typeIndex * 0.05 + index * 0.02,
-                            type: 'spring',
-                            stiffness: 300,
-                            damping: 20,
-                          }}
-                        >
-                          <RuneCell
-                            rune={rune}
-                            variant="runeforge"
-                            size={'large'}
-                            showEffect
-                            showTooltip
-                            tooltipPlacement="bottom"
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                      <RuneCell
+                        rune={rune}
+                        variant="runeforge"
+                        size={'large'}
+                        showEffect
+                        showTooltip
+                        tooltipPlacement="bottom"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Empty state */}
             {deck.length === 0 && (
