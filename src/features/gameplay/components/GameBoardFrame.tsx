@@ -117,8 +117,15 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
-  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, selectDeckDraftRuneforge } =
-    useGameActions();
+  const {
+    draftRune,
+    draftFromCenter,
+    placeRunes,
+    placeRunesInFloor,
+    cancelSelection,
+    selectDeckDraftRuneforge,
+    forceSoloVictory,
+  } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
@@ -358,7 +365,14 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
       className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
     >
       {isSoloVariant && (
-        <div className="absolute left-4 top-4 z-30">
+        <div className="absolute left-4 top-4 z-30 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={forceSoloVictory}
+            className="rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-50 transition hover:border-emerald-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          >
+            Instant Win
+          </button>
           <button
             type="button"
             onClick={returnToStartScreen}

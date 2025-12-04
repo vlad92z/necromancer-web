@@ -6,7 +6,7 @@
  */
 
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS, SHADOWS } from '../styles/tokens';
-import { Stack, Grid, Button, Card, Modal } from '../components/layout';
+import { Stack, Grid, Button, Modal } from '../components/layout';
 import { useState } from 'react';
 
 export function DesignTokenExample() {
@@ -26,40 +26,6 @@ export function DesignTokenExample() {
         }}>
           Design System Example
         </h1>
-
-        {/* Example 2: Using Card component */}
-        <Card variant="elevated" padding="lg">
-          <Stack spacing="md">
-            <h2 style={{ 
-              color: COLORS.ui.text,
-              fontSize: `${TYPOGRAPHY.large}px`,
-              margin: 0,
-            }}>
-              Card with Stack Layout
-            </h2>
-            <p style={{ color: COLORS.ui.textMuted, margin: 0 }}>
-              This demonstrates using the Card component with Stack inside.
-            </p>
-          </Stack>
-        </Card>
-
-        {/* Example 3: Using Grid for multiple items */}
-        <Grid columns={3} gap="md">
-          {['Fire', 'Frost', 'Life'].map((rune) => (
-            <Card key={rune} variant="outlined" hoverable>
-              <Stack spacing="sm" align="center">
-                <div style={{
-                  width: '50px',
-                  height: '50px',
-                  borderRadius: RADIUS.round,
-                  backgroundColor: COLORS.runes[rune as keyof typeof COLORS.runes],
-                  boxShadow: SHADOWS.md,
-                }} />
-                <span style={{ color: COLORS.ui.text }}>{rune}</span>
-              </Stack>
-            </Card>
-          ))}
-        </Grid>
 
         {/* Example 4: Using Button component */}
         <Stack direction="horizontal" spacing="md">

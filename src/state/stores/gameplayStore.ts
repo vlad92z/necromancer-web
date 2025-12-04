@@ -95,6 +95,7 @@ export interface GameplayStore extends GameState {
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
+  forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
@@ -1188,6 +1189,30 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...initializeSoloGame(targetRuneTypeCount, config),
         gameStarted: false,
       };
+    });
+  },
+
+  forceSoloVictory: () => {
+    set((state) => {
+      if (state.matchType !== 'solo') {
+        return state;
+      }
+      if (state.turnPhase === 'deck-draft' || state.turnPhase === 'game-over') {
+        return state;
+      }
+      const nextRunePowerTotal = Math.max(state.soloTargetScore, state.runePowerTotal);
+      return enterDeckDraftMode({
+        ...state,
+        runePowerTotal: nextRunePowerTotal,
+        selectedRunes: [],
+        draftSource: null,
+        pendingPlacement: null,
+        animatingRunes: [],
+        scoringPhase: null,
+        shouldTriggerEndRound: false,
+        voidEffectPending: false,
+        frostEffectPending: false,
+      });
     });
   },
 
