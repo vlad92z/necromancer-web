@@ -92,6 +92,7 @@ export interface GameplayStore extends GameState {
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
+  hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
   draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void;
@@ -1198,6 +1199,19 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return {
         ...initializeSoloGame(targetRuneTypeCount, config),
         gameStarted: false,
+      };
+    });
+  },
+
+  hydrateGameState: (nextState: GameState) => {
+    set((state) => {
+      const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
+      if (!shouldMerge) {
+        return state;
+      }
+      return {
+        ...state,
+        ...nextState,
       };
     });
   },

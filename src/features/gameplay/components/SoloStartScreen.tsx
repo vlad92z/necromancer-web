@@ -13,12 +13,14 @@ import { SliderConfig } from '../../../components/SliderConfig';
 
 interface SoloStartScreenProps {
   onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
+  onContinueSolo?: () => void;
+  canContinue?: boolean;
 }
 
 const inputClasses =
   'w-full rounded-lg border border-slate-600/70 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400';
 
-export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
+export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false }: SoloStartScreenProps) {
   const navigate = useNavigate();
   const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(6);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
@@ -195,13 +197,24 @@ export function SoloStartScreen({ onStartSolo }: SoloStartScreenProps) {
           )}
         </section>
 
-        <button
-          type="button"
-          onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
-          className={`${gradientButtonClasses} mx-auto block px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
-        >
-          Begin Solo Run
-        </button>
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+          {canContinue && onContinueSolo && (
+            <button
+              type="button"
+              onClick={onContinueSolo}
+              className="w-full rounded-xl border border-slate-500/70 bg-slate-900/70 px-6 py-4 text-center text-base font-bold uppercase tracking-[0.2em] text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+            >
+              Continue Run
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
+            className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
+          >
+            New Game
+          </button>
+        </div>
       </div>
     </div>
   );

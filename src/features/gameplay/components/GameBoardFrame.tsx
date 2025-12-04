@@ -96,7 +96,7 @@ export interface GameBoardFrameProps extends GameBoardProps {
   renderContent: (shared: GameBoardSharedProps, variantData: SoloVariantData) => ReactElement | null;
 }
 
-export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {
+export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardFrameProps) {
   const {
     players,
     runeforges,
@@ -121,6 +121,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
+  const isSoloVariant = variant === 'solo';
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
@@ -341,6 +342,17 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     <div
       className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
     >
+      {isSoloVariant && (
+        <div className="absolute left-4 top-4 z-30">
+          <button
+            type="button"
+            onClick={returnToStartScreen}
+            className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+          >
+            Quit Run
+          </button>
+        </div>
+      )}
       <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
         <VolumeControl soundVolume={soundVolume} onVolumeChange={handleVolumeChange} isMusicMuted={isMusicMuted} onToggleMusic={handleToggleMusic} />
       </div>
