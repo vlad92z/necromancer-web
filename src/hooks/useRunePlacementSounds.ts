@@ -8,6 +8,7 @@ import frostRuneSound from '../assets/sounds/frost.mp3';
 import lifeRuneSound from '../assets/sounds/life.mp3';
 import voidRuneSound from '../assets/sounds/void.mp3';
 import windRuneSound from '../assets/sounds/wind.mp3';
+import damageSoundUrl from '../assets/sounds/damage.mp3';
 
 type RuneSoundMap = Record<RuneType, string>;
 type RuneCountMap = Record<RuneType, number>;
@@ -54,7 +55,13 @@ const countRunePlacements = (players: Player[]): RuneCountMap =>
     };
   }, createEmptyCountMap(0));
 
-export function useRunePlacementSounds(players: Player[], animatingRunes: AnimatingRune[], soundVolume: number) {
+export function useRunePlacementSounds(
+  players: Player[],
+  animatingRunes: AnimatingRune[],
+  soundVolume: number,
+  overloadSoundPending: boolean,
+  clearOverloadSound: () => void
+) {
   const placementsByType = useMemo(() => countRunePlacements(players), [players]);
   const previousCountsRef = useRef<RuneCountMap>(placementsByType);
   const audioRefs = useRef<Record<RuneType, HTMLAudioElement | null>>({
@@ -75,6 +82,7 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
   });
 
   const soundVolumeRef = useRef(soundVolume);
+  const damageAudioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     soundVolumeRef.current = soundVolume;
   }, [soundVolume]);
@@ -117,6 +125,12 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
         audio.volume = soundVolume;
       }
     });
+    if (!damageAudioRef.current) {
+      damageAudioRef.current = new Audio(damageSoundUrl);
+    }
+    if (damageAudioRef.current) {
+      damageAudioRef.current.volume = soundVolume;
+    }
   }, [soundVolume]);
 
   const playSound = useRef((runeType: RuneType) => {
@@ -132,6 +146,10 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
   });
 
   useEffect(() => {
+    if (overloadSoundPending) {
+      previousAnimationKeysRef.current = animationKeys;
+      return;
+    }
     (Object.keys(animationKeys) as RuneType[]).forEach((runeType) => {
       const currentKey = animationKeys[runeType];
       const previousKey = previousAnimationKeysRef.current[runeType];
@@ -142,9 +160,38 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
         previousAnimationKeysRef.current[runeType] = '';
       }
     });
-  }, [animationKeys]);
+  }, [animationKeys, overloadSoundPending]);
 
   useEffect(() => {
+    if (!overloadSoundPending) {
+      return;
+    }
+
+    if (typeof Audio !== 'undefined') {
+      if (!damageAudioRef.current) {
+        damageAudioRef.current = new Audio(damageSoundUrl);
+      }
+      const audioElement = damageAudioRef.current;
+      if (audioElement) {
+        audioElement.volume = soundVolumeRef.current;
+        audioElement.currentTime = 0;
+        const playPromise = audioElement.play();
+        if (playPromise) {
+          void playPromise.catch(() => {});
+        }
+      }
+    }
+
+    previousAnimationKeysRef.current = animationKeys;
+    previousCountsRef.current = placementsByType;
+    clearOverloadSound();
+  }, [animationKeys, clearOverloadSound, overloadSoundPending, placementsByType]);
+
+  useEffect(() => {
+    if (overloadSoundPending) {
+      previousCountsRef.current = placementsByType;
+      return;
+    }
     (Object.keys(placementsByType) as RuneType[]).forEach((runeType) => {
       const currentCount = placementsByType[runeType];
       const previousCount = previousCountsRef.current[runeType];
@@ -153,5 +200,5 @@ export function useRunePlacementSounds(players: Player[], animatingRunes: Animat
       }
       previousCountsRef.current[runeType] = currentCount;
     });
-  }, [placementsByType]);
+  }, [overloadSoundPending, placementsByType]);
 }

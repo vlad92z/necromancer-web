@@ -60,6 +60,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     selectedRunes: [],
     draftSource: null,
     shouldTriggerEndRound: false,
+    overloadSoundPending: false,
     voidEffectPending: false,
     frostEffectPending: false,
     soloOutcome: 'victory',
@@ -145,6 +146,7 @@ function prepareSoloRoundReset(state: GameState): GameState {
         draftSource: null,
         pendingPlacement: null,
         animatingRunes: [],
+        overloadSoundPending: false,
         voidEffectPending: false,
         frostEffectPending: false,
         turnPhase: 'deck-draft',
@@ -170,6 +172,7 @@ function prepareSoloRoundReset(state: GameState): GameState {
       draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
+      overloadSoundPending: false,
       voidEffectPending: false,
       frostEffectPending: false,
     };
@@ -212,6 +215,7 @@ function prepareSoloRoundReset(state: GameState): GameState {
     draftSource: null,
     pendingPlacement: null,
     animatingRunes: [],
+    overloadSoundPending: false,
     voidEffectPending: false,
     frostEffectPending: false,
   };
@@ -249,6 +253,7 @@ function prepareVersusRoundReset(state: GameState): GameState {
       draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
+      overloadSoundPending: false,
       voidEffectPending: false,
       frostEffectPending: false,
     };
@@ -293,6 +298,7 @@ function prepareVersusRoundReset(state: GameState): GameState {
     draftSource: null,
     pendingPlacement: null,
     animatingRunes: [],
+    overloadSoundPending: false,
     voidEffectPending: false,
     frostEffectPending: false,
   };
@@ -320,6 +326,7 @@ export interface GameplayStore extends GameState {
   destroyRune: (target: VoidTarget) => void;
   skipVoidEffect: () => void;
   skipFrostEffect: () => void;
+  acknowledgeOverloadSound: () => void;
   freezePatternLine: (playerId: string, patternLineIndex: number) => void;
   endRound: () => void;
   resetGame: () => void;
@@ -701,6 +708,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
+          overloadSoundPending: overloadDamage > 0,
           voidEffectPending: false,
           frostEffectPending: false,
         };
@@ -730,6 +738,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         currentPlayerIndex: completedLines.length > 0 ? currentPlayerIndex : (nextPlayerIndex as 0 | 1),
         shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
         frozenPatternLines: updatedFrozenPatternLines,
+        overloadSoundPending: overloadDamage > 0,
       };
     });
   },
@@ -787,15 +796,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...state,
           players: updatedPlayers,
           selectedRunes: [],
-        draftSource: null,
-        centerPool: nextCenterPool,
-        turnPhase: 'game-over' as const,
-        shouldTriggerEndRound: false,
-        soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
-        soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
-        voidEffectPending: false,
-        frostEffectPending: false,
-      };
+          draftSource: null,
+          centerPool: nextCenterPool,
+          turnPhase: 'game-over' as const,
+          shouldTriggerEndRound: false,
+          soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
+          soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
+          overloadSoundPending: overloadDamage > 0,
+          voidEffectPending: false,
+          frostEffectPending: false,
+        };
       }
       
       // Check if round should end (all runeforges and center empty)
@@ -813,6 +823,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
         frozenPatternLines: updatedFrozenPatternLines,
+        overloadSoundPending: overloadDamage > 0,
       };
     });
   },
@@ -963,6 +974,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         shouldTriggerEndRound: shouldEndRound,
       };
     });
+  },
+
+  acknowledgeOverloadSound: () => {
+    set({ overloadSoundPending: false });
   },
   
   freezePatternLine: (playerId: string, patternLineIndex: number) => {
@@ -1228,6 +1243,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         soloBaseTargetScore,
         soloStartingStrain,
         soloWinStreak,
+        overloadSoundPending: nextState.overloadSoundPending ?? false,
       };
     });
   },

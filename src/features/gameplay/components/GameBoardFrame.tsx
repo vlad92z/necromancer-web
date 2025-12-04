@@ -128,6 +128,8 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
+  const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
+  const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
   const isSoloVariant = variant === 'solo';
@@ -172,7 +174,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     draftSource,
     centerPool,
   });
-  useRunePlacementSounds(players, activeAnimatingRunes, soundVolume);
+  useRunePlacementSounds(players, activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
   useBackgroundMusic(!isMusicMuted, soundVolume);
 
   useEffect(() => {

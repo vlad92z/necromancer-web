@@ -225,6 +225,7 @@ export interface GameState {
   firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
+  overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   roundHistory: RoundScore[]; // History of completed rounds for game log
   roundDamage: [number, number]; // Damage dealt by each player during the current round
   voidEffectPending: boolean; // Whether Void effect is waiting for rune destruction selection
