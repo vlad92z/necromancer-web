@@ -10,6 +10,8 @@ import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
+import castSoundUrl from '../../assets/sounds/cast.mp3';
+import { useUIStore } from './uiStore';
 
 function calculateNextStrainMultiplier(
   _players: [Player, Player],
@@ -74,6 +76,30 @@ let navigationCallback: (() => void) | null = null;
 
 export function setNavigationCallback(callback: (() => void) | null) {
   navigationCallback = callback;
+}
+
+const castAudioRef: { current: HTMLAudioElement | null } = { current: null };
+
+function playCastSound(): void {
+  if (typeof Audio === 'undefined') {
+    return;
+  }
+
+  if (!castAudioRef.current) {
+    castAudioRef.current = new Audio(castSoundUrl);
+  }
+
+  const audioElement = castAudioRef.current;
+  if (!audioElement) {
+    return;
+  }
+
+  audioElement.volume = useUIStore.getState().soundVolume;
+  audioElement.currentTime = 0;
+  const playPromise = audioElement.play();
+  if (playPromise) {
+    void playPromise.catch(() => {});
+  }
 }
 
 function clearFloorLines(players: [Player, Player]): [Player, Player] {
@@ -398,6 +424,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: shouldEndRound,
         };
       }
+
+      playCastSound();
 
       let totalDamage = 0;
       let totalHealing = 0;
