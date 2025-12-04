@@ -1,6 +1,7 @@
 /**
  * RuneTypeTotals - displays rune icons with their total counts on the drafting table
  */
+import type { CSSProperties } from 'react';
 import type { RuneType } from '../../../../types/game';
 import { COLORS, RADIUS } from '../../../../styles/tokens';
 import fireRune from '../../../../assets/runes/fire_rune.svg';
@@ -22,9 +23,10 @@ const RUNE_ICONS: Record<RuneType, string> = {
 interface RuneTypeTotalsProps {
   runeTypes: RuneType[];
   counts: Record<RuneType, number>;
+  style?: CSSProperties;
 }
 
-export function RuneTypeTotals({ runeTypes, counts }: RuneTypeTotalsProps) {
+export function RuneTypeTotals({ runeTypes, counts, style }: RuneTypeTotalsProps) {
   return (
     <div
       style={{
@@ -35,6 +37,7 @@ export function RuneTypeTotals({ runeTypes, counts }: RuneTypeTotalsProps) {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '12px',
+        ...style,
       }}
     >
       {runeTypes.map((runeType) => (

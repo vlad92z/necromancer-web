@@ -5,6 +5,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
+import { RuneTypeTotals } from './Center/RuneTypeTotals';
 
 interface DeckOverlayProps {
   deck: Rune[];
@@ -13,7 +14,6 @@ interface DeckOverlayProps {
 }
 
 export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
-
   // Group runes by type for organized display
   const runesByType = deck.reduce((acc, rune) => {
     if (!acc[rune.runeType]) {
@@ -24,6 +24,13 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
   }, {} as Record<RuneType, Rune[]>);
 
   const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+  const runeTypeCounts = runeTypes.reduce(
+    (acc, runeType) => ({
+      ...acc,
+      [runeType]: runesByType[runeType]?.length ?? 0,
+    }),
+    {} as Record<RuneType, number>,
+  );
 
   return (
     <AnimatePresence>
@@ -38,12 +45,12 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backgroundColor: 'rgba(4, 2, 12, 0.78)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          backdropFilter: 'blur(4px)',
+          backdropFilter: 'blur(6px)',
           padding: '24px',
         }}
       >
@@ -53,185 +60,220 @@ export function DeckOverlay({ deck, playerName, onClose }: DeckOverlayProps) {
           exit={{ scale: 0.9, y: 20 }}
           onClick={(e) => e.stopPropagation()}
           style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            maxWidth: '640px', // slightly narrower
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            width: '100%',
+            width: 'min(1100px, 92vw)',
+            aspectRatio: '3 / 2',
+            maxHeight: '88vh',
+            background: 'radial-gradient(circle at 20% 20%, rgba(92, 40, 160, 0.22), transparent 40%), linear-gradient(145deg, rgba(20, 12, 38, 0.96), rgba(8, 4, 18, 0.94))',
+            borderRadius: '28px',
+            padding: '28px',
+            boxShadow: '0 40px 140px rgba(0, 0, 0, 0.7)',
+            border: '1px solid rgba(149, 117, 255, 0.35)',
+            display: 'flex',
+            flexDirection: 'column',
+            color: '#e8e5ff',
+            overflow: 'hidden',
           }}
         >
           {/* Header */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '16px',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
             <div>
-              <h2 style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#0c4a6e',
-                margin: 0,
-              }}>
-                {playerName}'s Deck ({deck.length})
+              <div
+                style={{
+                  fontSize: '12px',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(212, 197, 255, 0.7)',
+                  fontWeight: 700,
+                  marginBottom: '4px',
+                }}
+              >
+                Deck Overview
+              </div>
+              <h2
+                style={{
+                  fontSize: '26px',
+                  fontWeight: 800,
+                  color: '#f5f3ff',
+                  margin: 0,
+                }}
+              >
+                {playerName}&apos;s Deck ({deck.length})
               </h2>
             </div>
-            <button
-              onClick={onClose}
+            <div
               style={{
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
               }}
             >
-              ✕
-            </button>
+              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts} style={{ marginTop: 0 }} />
+              <button
+                onClick={onClose}
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #22d3ee 100%)',
+                  color: '#0b0816',
+                  border: '1px solid rgba(255, 255, 255, 0.18)',
+                  borderRadius: '12px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  fontWeight: 800,
+                  boxShadow: '0 10px 25px rgba(99, 102, 241, 0.45)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
 
-          {/* Runes grid grouped by type */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-          }}>
-            {runeTypes.map((runeType, typeIndex) => {
-              const runes = runesByType[runeType] || [];
-              
-              if (runes.length === 0) return null;
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              paddingRight: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            {/* Runes grid grouped by type */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}
+            >
+              {runeTypes.map((runeType, typeIndex) => {
+                const runes = runesByType[runeType] || [];
 
-              return (
-                <motion.div
-                  key={runeType}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: typeIndex * 0.05 }}
-                  style={{
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '8px',
-                    padding: '10px',
-                    border: '2px solid #cbd5e1',
-                    display: 'flex',
-                    gap: '12px',
-                    alignItems: 'start',
-                  }}
-                >
-                  {/* Type header (on the left) */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '6px',
-                    minWidth: '80px',
-                  }}>
-                    <RuneCell
-                      rune={runes[0]}
-                      variant="runeforge"
-                      size={'medium'}
-                      showEffect
-                      showTooltip
-                      tooltipPlacement="bottom"
-                    />
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      color: '#1e293b',
-                      textAlign: 'center',
-                    }}>
-                      {runeType}
-                    </div>
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#64748b',
-                      textAlign: 'center',
-                    }}>
-                      ({runes.length})
-                    </div>
-                  </div>
+                if (runes.length === 0) return null;
 
-                  {/* Runes grid (on the right) */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))',
-                    gap: '6px',
-                    padding: '8px',
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '6px',
-                    flex: 1,
-                  }}>
-                    {runes.map((rune, index) => (
-                      <motion.div
-                        key={rune.id}
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ 
-                          delay: typeIndex * 0.05 + index * 0.02,
-                          type: 'spring',
-                          stiffness: 300,
-                          damping: 20
+                return (
+                  <motion.div
+                    key={runeType}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: typeIndex * 0.05 }}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(67, 31, 120, 0.5), rgba(21, 10, 46, 0.9))',
+                      borderRadius: '14px',
+                      padding: '12px',
+                      border: '1px solid rgba(149, 117, 255, 0.3)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      boxShadow: '0 18px 50px rgba(0, 0, 0, 0.45)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        justifyContent: 'space-between',
+                        padding: '0 2px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 800,
+                          color: '#ede9fe',
+                          letterSpacing: '0.04em',
                         }}
                       >
-                        <RuneCell
-                          rune={rune}
-                          variant="runeforge"
-                          size={'large'}
-                          showEffect
-                          showTooltip
-                          tooltipPlacement="bottom"
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                        {runeType}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          color: 'rgba(221, 214, 254, 0.82)',
+                        }}
+                      >
+                        ({runes.length})
+                      </div>
+                    </div>
 
-          {/* Empty state */}
-          {deck.length === 0 && (
-            <div style={{
-              padding: '48px',
-              textAlign: 'center',
-              color: '#94a3b8',
-            }}>
-              <div style={{ fontSize: '64px', marginBottom: '16px' }}>
-                🎴
-              </div>
-              <p style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-              }}>
-                No runes remaining
-              </p>
+                    {/* Runes grid (on the right) */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))',
+                        gap: '8px',
+                        padding: '10px',
+                        backgroundColor: 'rgba(7, 3, 18, 0.75)',
+                        borderRadius: '10px',
+                        flex: 1,
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                      }}
+                    >
+                      {runes.map((rune, index) => (
+                        <motion.div
+                          key={rune.id}
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{
+                            delay: typeIndex * 0.05 + index * 0.02,
+                            type: 'spring',
+                            stiffness: 300,
+                            damping: 20,
+                          }}
+                        >
+                          <RuneCell
+                            rune={rune}
+                            variant="runeforge"
+                            size={'large'}
+                            showEffect
+                            showTooltip
+                            tooltipPlacement="bottom"
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
-          )}
 
-          {/* Footer info */}
-          <div style={{
-            marginTop: '16px',
-            padding: '12px',
-            backgroundColor: '#eff6ff',
-            borderRadius: '8px',
-            border: '2px solid #bfdbfe',
-          }}>
-            <p style={{
-              fontSize: '13px',
-              color: '#1e40af',
-              margin: 0,
-              lineHeight: 1.4,
-            }}>
-              💡 Runes are drawn from your deck to fill the Runeforges each round. 
-              The game ends when you don't have enough runes left to fill all Runeforges.
-            </p>
+            {/* Empty state */}
+            {deck.length === 0 && (
+              <div
+                style={{
+                  padding: '48px',
+                  textAlign: 'center',
+                  color: 'rgba(226, 232, 240, 0.75)',
+                  borderRadius: '16px',
+                  border: '1px dashed rgba(148, 163, 184, 0.4)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                }}
+              >
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>
+                  🎴
+                </div>
+                <p
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 800,
+                  }}
+                >
+                  No runes remaining
+                </p>
+              </div>
+            )}
           </div>
         </motion.div>
       </motion.div>

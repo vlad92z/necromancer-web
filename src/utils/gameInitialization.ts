@@ -376,7 +376,7 @@ export function initializeSoloGame(
 
   const soloPlayer = createPlayer(
     'player-1',
-    'Solo Arcanist',
+    'Arcane Apprentice',
     'human',
     soloConfig.startingHealth,
     runeTypeCount,
