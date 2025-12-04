@@ -54,16 +54,6 @@ function formatRuneEffect(effect: RuneEffect): string {
       return `+${effect.amount} damage when placed`;
     case 'Healing':
       return `Restore ${effect.amount} health when scored`;
-    case 'DamageToSpellpower':
-      return `+${effect.amount} spellpower damage`;
-    case 'EssenceBonus':
-      return `Essence bonus +${effect.amount}`;
-    case 'FloorPenaltyMitigation':
-      return `Reduce floor penalties by ${effect.amount}`;
-    case 'DestroyRune':
-      return 'Void: destroy 1 rune from a runeforge or the center';
-    case 'FreezePatternLine':
-      return 'Frost: freeze an opponent pattern line (versus only)';
     default:
       return "Common Rune";
   }

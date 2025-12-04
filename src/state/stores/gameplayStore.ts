@@ -6,9 +6,9 @@
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, createStartingDeck, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
-import { resolveSegment, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
+import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
-import { copyRuneEffects, getRuneEffectsForType, hasEffectType } from '../../utils/runeEffects';
+import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
 
 function calculateNextStrainMultiplier(
@@ -16,33 +16,6 @@ function calculateNextStrainMultiplier(
   baseMultiplier: number
 ): number {
   return baseMultiplier;
-}
-
-function calculateImmediateOverloadDamage(
-  previousFloorRunes: Player['floorLine']['runes'],
-  nextFloorRunes: Player['floorLine']['runes'],
-  previousPatternLines: Player['patternLines'],
-  nextPatternLines: Player['patternLines'],
-  wall: Player['wall'],
-  strain: number,
-): number {
-  const previousPenalty = calculateEffectiveFloorPenalty(
-    previousFloorRunes,
-    previousPatternLines,
-    wall
-  );
-  const nextPenalty = calculateEffectiveFloorPenalty(
-    nextFloorRunes,
-    nextPatternLines,
-    wall
-  );
-  const addedPenalty = Math.max(0, nextPenalty - previousPenalty);
-  if (addedPenalty === 0) {
-    return 0;
-  }
-
-  const overloadMultiplier = strain;
-  return addedPenalty * overloadMultiplier;
 }
 
 function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
@@ -460,14 +433,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadDamage = shouldApplyOverloadDamage
-        ? calculateImmediateOverloadDamage(
-            currentPlayer.floorLine.runes,
-            updatedFloorLine.runes,
-            currentPlayer.patternLines,
-            updatedPatternLines,
-            currentPlayer.wall,
-            state.strain
-          )
+        ? state.strain
         : 0;
       let nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
@@ -606,62 +572,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           lockedPatternLines: updatedLockedPatternLines,
         });
       }
-      
-      // Check if Void runes were placed (Void effect: destroy a single rune)
-      const hasVoidRunes = selectedRunes.some((rune) => hasEffectType(rune.effects, 'DestroyRune'));
-      const hasVoidTargets = state.runeforges.some(f => f.runes.length > 0) || state.centerPool.length > 0;
-      
-      // Check if Frost runes were placed (Frost effect: freeze an opponent pattern line)
-      const hasFrostRunes = !isSoloMode && selectedRunes.some((rune) => hasEffectType(rune.effects, 'FreezePatternLine'));
-      const opponentId = state.players[opponentIndex].id;
-      const opponentPatternLines = state.players[opponentIndex].patternLines;
-      const frozenOpponentLines = state.frozenPatternLines[opponentId] ?? [];
-      const canTriggerFrostEffect = !isSoloMode && opponentPatternLines.some(
-        (line, index) => line.count < line.tier && !frozenOpponentLines.includes(index)
-      );
+ 
       
       // Check if round should end (all runeforges and center empty)
       const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-      
-      // If Void runes were placed and there are available targets, trigger Void effect
-      // Keep current player so THEY get to choose which rune to destroy
-      if (hasVoidRunes && hasVoidTargets && !shouldEndRound) {
-        return {
-          ...state,
-          players: updatedPlayers,
-          selectedRunes: [],
-          draftSource: null,
-          centerPool: nextCenterPool,
-          turnPhase: 'draft' as const,
-          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
-          voidEffectPending: true, // Wait for runeforge selection
-          frozenPatternLines: updatedFrozenPatternLines,
-          runePowerTotal: nextRunePowerTotal,
-          roundDamage: updatedRoundDamage,
-          lockedPatternLines: updatedLockedPatternLines,
-        };
-      }
-      
-      // If Frost runes were placed and there are non-empty runeforges, trigger Frost effect
-      // Keep current player so THEY get to choose which runeforge to freeze
-      if (hasFrostRunes && canTriggerFrostEffect && !shouldEndRound) {
-        return {
-          ...state,
-          players: updatedPlayers,
-          selectedRunes: [],
-          draftSource: null,
-          centerPool: nextCenterPool,
-          turnPhase: 'draft' as const,
-          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
-          frostEffectPending: true, // Wait for runeforge selection
-          frozenPatternLines: updatedFrozenPatternLines,
-          runePowerTotal: nextRunePowerTotal,
-          roundDamage: updatedRoundDamage,
-          lockedPatternLines: updatedLockedPatternLines,
-        };
-      }
       
       // Switch to next player (alternate between 0 and 1) - only if no Void/Frost effect
       const nextPlayerIndex = isSoloMode ? currentPlayerIndex : currentPlayerIndex === 0 ? 1 : 0;
@@ -708,14 +624,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadDamage = shouldApplyOverloadDamage
-        ? calculateImmediateOverloadDamage(
-            currentPlayer.floorLine.runes,
-            updatedFloorLine.runes,
-            currentPlayer.patternLines,
-            currentPlayer.patternLines,
-            currentPlayer.wall,
-            state.strain
-          )
+        ? state.strain
         : 0;
       const nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)

@@ -22,11 +22,6 @@ export type RuneTypeCount = 3 | 4 | 5 | 6;
 export type RuneEffect =
   | { type: 'Damage'; amount: number }
   | { type: 'Healing'; amount: number }
-  | { type: 'DamageToSpellpower'; amount: number }
-  | { type: 'EssenceBonus'; amount: number }
-  | { type: 'FloorPenaltyMitigation'; amount: number }
-  | { type: 'DestroyRune' }
-  | { type: 'FreezePatternLine' };
 
 export type RuneEffects = RuneEffect[];
 
