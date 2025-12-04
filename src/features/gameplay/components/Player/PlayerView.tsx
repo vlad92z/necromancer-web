@@ -21,6 +21,9 @@ interface PlayerViewProps {
     currentScore: number;
     targetScore: number;
   };
+  deckCount?: number;
+  strain?: number;
+  onOpenDeck?: () => void;
 }
 
 export function PlayerView({
@@ -36,6 +39,9 @@ export function PlayerView({
   hiddenFloorSlotIndexes,
   round,
   soloRuneScore,
+  deckCount,
+  strain,
+  onOpenDeck,
 }: PlayerViewProps) {
   return (
     <div>
@@ -52,6 +58,9 @@ export function PlayerView({
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
         round={round}
         soloRuneScore={soloRuneScore}
+        deckCount={deckCount}
+        strain={strain}
+        onOpenDeck={onOpenDeck}
       />
     </div>
   );

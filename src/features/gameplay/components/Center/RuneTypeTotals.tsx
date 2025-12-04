@@ -2,7 +2,6 @@
  * RuneTypeTotals - displays rune icons with their total counts on the drafting table
  */
 import type { RuneType } from '../../../../types/game';
-import { COLORS, RADIUS } from '../../../../styles/tokens';
 import fireRune from '../../../../assets/runes/fire_rune.svg';
 import frostRune from '../../../../assets/runes/frost_rune.svg';
 import lifeRune from '../../../../assets/runes/life_rune.svg';
@@ -22,65 +21,21 @@ const RUNE_ICONS: Record<RuneType, string> = {
 interface RuneTypeTotalsProps {
   runeTypes: RuneType[];
   counts: Record<RuneType, number>;
+  className?: string;
 }
 
-export function RuneTypeTotals({ runeTypes, counts }: RuneTypeTotalsProps) {
+export function RuneTypeTotals({ runeTypes, counts, className }: RuneTypeTotalsProps) {
   return (
-    <div
-      style={{
-        marginTop: '12px',
-        padding: '10px 14px',
-        borderRadius: `${RADIUS.lg}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '12px',
-      }}
-    >
+    <div className={`mt-3 flex items-center justify-center gap-3 rounded-[12px] bg-white/5 px-4 py-2.5 ${className ?? ''}`}>
       {runeTypes.map((runeType) => (
         <div
           key={runeType}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 10px',
-            borderRadius: `${RADIUS.md}px`,
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: `1px solid ${COLORS.ui.border}`,
-            minWidth: '70px',
-            justifyContent: 'center',
-          }}
+          className="flex min-w-[70px] items-center justify-center gap-2 rounded-[8px] border border-[rgba(255,255,255,0.12)] bg-white/5 px-3 py-1.5"
         >
-          <div
-            style={{
-              width: '26px',
-              height: '26px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <img
-              src={RUNE_ICONS[runeType]}
-              alt={`${runeType} rune`}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-              }}
-            />
+          <div className="flex h-[26px] w-[26px] items-center justify-center">
+            <img src={RUNE_ICONS[runeType]} alt={`${runeType} rune`} className="h-full w-full object-contain" />
           </div>
-          <div
-            style={{
-              color: COLORS.ui.text,
-              fontWeight: 700,
-              fontSize: '14px',
-              letterSpacing: '0.04em',
-              minWidth: '16px',
-              textAlign: 'right',
-            }}
-          >
+          <div className="min-w-[16px] text-right text-sm font-bold tracking-wide text-slate-100">
             {counts[runeType] ?? 0}
           </div>
         </div>

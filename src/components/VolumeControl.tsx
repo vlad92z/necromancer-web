@@ -13,23 +13,12 @@ interface VolumeControlProps {
 export function VolumeControl({ soundVolume, isMusicMuted, onToggleMusic, onVolumeChange }: VolumeControlProps): ReactElement {
   return (
     <div
-      style={{
-        pointerEvents: 'auto',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '10px 12px',
-        borderRadius: '999px',
-        border: '1px solid rgba(148, 163, 184, 0.4)',
-        background: 'rgba(12, 10, 24, 0.75)',
-        boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
-        backdropFilter: 'blur(10px)',
-      }}
+      className="pointer-events-auto flex items-center gap-3 rounded-full border border-slate-400/40 bg-[rgba(12,10,24,0.75)] px-3 py-2 shadow-[0_14px_36px_rgba(0,0,0,0.45)] backdrop-blur"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '200px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#c7d2fe', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>Volume</span>
-          <span style={{ color: '#e2e8f0', fontSize: '12px', fontWeight: 700 }}>{Math.round(soundVolume * 100)}%</span>
+      <div className="flex min-w-[200px] flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-indigo-100">Volume</span>
+          <span className="text-[12px] font-bold text-slate-200">{Math.round(soundVolume * 100)}%</span>
         </div>
         <input
           type="range"
@@ -39,52 +28,23 @@ export function VolumeControl({ soundVolume, isMusicMuted, onToggleMusic, onVolu
           value={Math.round(soundVolume * 100)}
           onChange={onVolumeChange}
           aria-label="Sound volume"
-          style={{
-            width: '100%',
-            accentColor: '#7c3aed',
-            cursor: 'pointer',
-          }}
+          className="w-full cursor-pointer accent-purple-600"
         />
       </div>
       <button
         type="button"
         onClick={onToggleMusic}
         aria-pressed={isMusicMuted}
-        style={{
-          pointerEvents: 'auto',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '10px 16px',
-          borderRadius: '999px',
-          border: '1px solid rgba(148, 163, 184, 0.4)',
-          background: isMusicMuted ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(127, 29, 29, 0.35))' : 'linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(124, 58, 237, 0.35))',
-          color: '#e2e8f0',
-          fontWeight: 700,
-          fontSize: '13px',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          cursor: 'pointer',
-          boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
-          transition: 'transform 120ms ease, box-shadow 120ms ease',
-        }}
-        onMouseEnter={(event) => {
-          event.currentTarget.style.transform = 'translateY(-1px)';
-          event.currentTarget.style.boxShadow = '0 18px 42px rgba(0, 0, 0, 0.6)';
-        }}
-        onMouseLeave={(event) => {
-          event.currentTarget.style.transform = 'translateY(0)';
-          event.currentTarget.style.boxShadow = '0 14px 36px rgba(0, 0, 0, 0.45)';
-        }}
+        className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-[0_14px_36px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.6)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 ${
+          isMusicMuted
+            ? 'bg-gradient-to-r from-rose-400/30 to-rose-900/60'
+            : 'bg-gradient-to-r from-sky-500/30 to-purple-700/50'
+        }`}
       >
         <span
-          style={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            backgroundColor: isMusicMuted ? '#f87171' : '#34d399',
-            boxShadow: '0 0 12px rgba(255, 255, 255, 0.35)',
-          }}
+          className={`h-3 w-3 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.35)] ${
+            isMusicMuted ? 'bg-rose-400' : 'bg-emerald-400'
+          }`}
           aria-hidden={true}
         />
         {isMusicMuted ? 'Music Muted' : 'Music On'}

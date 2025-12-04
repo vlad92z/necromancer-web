@@ -6,9 +6,9 @@
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, createStartingDeck, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
-import { resolveSegment, getWallColumnForRune, calculateEffectiveFloorPenalty } from '../../utils/scoring';
+import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
-import { copyRuneEffects, getRuneEffectsForType, hasEffectType } from '../../utils/runeEffects';
+import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
 
 function calculateNextStrainMultiplier(
@@ -16,33 +16,6 @@ function calculateNextStrainMultiplier(
   baseMultiplier: number
 ): number {
   return baseMultiplier;
-}
-
-function calculateImmediateOverloadDamage(
-  previousFloorRunes: Player['floorLine']['runes'],
-  nextFloorRunes: Player['floorLine']['runes'],
-  previousPatternLines: Player['patternLines'],
-  nextPatternLines: Player['patternLines'],
-  wall: Player['wall'],
-  strain: number,
-): number {
-  const previousPenalty = calculateEffectiveFloorPenalty(
-    previousFloorRunes,
-    previousPatternLines,
-    wall
-  );
-  const nextPenalty = calculateEffectiveFloorPenalty(
-    nextFloorRunes,
-    nextPatternLines,
-    wall
-  );
-  const addedPenalty = Math.max(0, nextPenalty - previousPenalty);
-  if (addedPenalty === 0) {
-    return 0;
-  }
-
-  const overloadMultiplier = strain;
-  return addedPenalty * overloadMultiplier;
 }
 
 function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
@@ -80,7 +53,8 @@ function enterDeckDraftMode(state: GameState): GameState {
     return state;
   }
   const deckTemplate = getSoloDeckTemplate(state);
-  const deckDraftState = createDeckDraftState(state.runeTypeCount, state.players[0].id, 3);
+  const nextWinStreak = state.soloWinStreak + 1;
+  const deckDraftState = createDeckDraftState(state.runeTypeCount, state.players[0].id, 3, nextWinStreak);
 
   return {
     ...state,
@@ -96,6 +70,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     voidEffectPending: false,
     frostEffectPending: false,
     soloOutcome: 'victory',
+    soloWinStreak: nextWinStreak,
     currentPlayerIndex: 0,
   };
 }
@@ -120,6 +95,7 @@ export interface GameplayStore extends GameState {
   startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
+  forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
@@ -240,6 +216,7 @@ function processSoloScoringPhase(state: GameState): GameState {
         round: state.round,
         scoringPhase: null,
         soloOutcome: 'defeat' as SoloOutcome,
+        soloWinStreak: 0,
         shouldTriggerEndRound: false,
         roundDamage: [0, 0],
         lockedPatternLines: {
@@ -460,14 +437,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadDamage = shouldApplyOverloadDamage
-        ? calculateImmediateOverloadDamage(
-            currentPlayer.floorLine.runes,
-            updatedFloorLine.runes,
-            currentPlayer.patternLines,
-            updatedPatternLines,
-            currentPlayer.wall,
-            state.strain
-          )
+        ? state.strain
         : 0;
       let nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
@@ -567,6 +537,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           scoringPhase: null,
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
+          soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
           runePowerTotal: nextRunePowerTotal,
           roundDamage: updatedRoundDamage,
           lockedPatternLines: updatedLockedPatternLines,
@@ -606,62 +577,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           lockedPatternLines: updatedLockedPatternLines,
         });
       }
-      
-      // Check if Void runes were placed (Void effect: destroy a single rune)
-      const hasVoidRunes = selectedRunes.some((rune) => hasEffectType(rune.effects, 'DestroyRune'));
-      const hasVoidTargets = state.runeforges.some(f => f.runes.length > 0) || state.centerPool.length > 0;
-      
-      // Check if Frost runes were placed (Frost effect: freeze an opponent pattern line)
-      const hasFrostRunes = !isSoloMode && selectedRunes.some((rune) => hasEffectType(rune.effects, 'FreezePatternLine'));
-      const opponentId = state.players[opponentIndex].id;
-      const opponentPatternLines = state.players[opponentIndex].patternLines;
-      const frozenOpponentLines = state.frozenPatternLines[opponentId] ?? [];
-      const canTriggerFrostEffect = !isSoloMode && opponentPatternLines.some(
-        (line, index) => line.count < line.tier && !frozenOpponentLines.includes(index)
-      );
+ 
       
       // Check if round should end (all runeforges and center empty)
       const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-      
-      // If Void runes were placed and there are available targets, trigger Void effect
-      // Keep current player so THEY get to choose which rune to destroy
-      if (hasVoidRunes && hasVoidTargets && !shouldEndRound) {
-        return {
-          ...state,
-          players: updatedPlayers,
-          selectedRunes: [],
-          draftSource: null,
-          centerPool: nextCenterPool,
-          turnPhase: 'draft' as const,
-          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
-          voidEffectPending: true, // Wait for runeforge selection
-          frozenPatternLines: updatedFrozenPatternLines,
-          runePowerTotal: nextRunePowerTotal,
-          roundDamage: updatedRoundDamage,
-          lockedPatternLines: updatedLockedPatternLines,
-        };
-      }
-      
-      // If Frost runes were placed and there are non-empty runeforges, trigger Frost effect
-      // Keep current player so THEY get to choose which runeforge to freeze
-      if (hasFrostRunes && canTriggerFrostEffect && !shouldEndRound) {
-        return {
-          ...state,
-          players: updatedPlayers,
-          selectedRunes: [],
-          draftSource: null,
-          centerPool: nextCenterPool,
-          turnPhase: 'draft' as const,
-          currentPlayerIndex: currentPlayerIndex, // Don't switch! Current player chooses runeforge
-          frostEffectPending: true, // Wait for runeforge selection
-          frozenPatternLines: updatedFrozenPatternLines,
-          runePowerTotal: nextRunePowerTotal,
-          roundDamage: updatedRoundDamage,
-          lockedPatternLines: updatedLockedPatternLines,
-        };
-      }
       
       // Switch to next player (alternate between 0 and 1) - only if no Void/Frost effect
       const nextPlayerIndex = isSoloMode ? currentPlayerIndex : currentPlayerIndex === 0 ? 1 : 0;
@@ -708,14 +629,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadDamage = shouldApplyOverloadDamage
-        ? calculateImmediateOverloadDamage(
-            currentPlayer.floorLine.runes,
-            updatedFloorLine.runes,
-            currentPlayer.patternLines,
-            currentPlayer.patternLines,
-            currentPlayer.wall,
-            state.strain
-          )
+        ? state.strain
         : 0;
       const nextHealth = shouldApplyOverloadDamage
         ? Math.max(0, currentPlayer.health - overloadDamage)
@@ -748,6 +662,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           scoringPhase: null,
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
+          soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
           voidEffectPending: false,
           frostEffectPending: false,
         };
@@ -1277,6 +1192,30 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
+  forceSoloVictory: () => {
+    set((state) => {
+      if (state.matchType !== 'solo') {
+        return state;
+      }
+      if (state.turnPhase === 'deck-draft' || state.turnPhase === 'game-over') {
+        return state;
+      }
+      const nextRunePowerTotal = Math.max(state.soloTargetScore, state.runePowerTotal);
+      return enterDeckDraftMode({
+        ...state,
+        runePowerTotal: nextRunePowerTotal,
+        selectedRunes: [],
+        draftSource: null,
+        pendingPlacement: null,
+        animatingRunes: [],
+        scoringPhase: null,
+        shouldTriggerEndRound: false,
+        voidEffectPending: false,
+        frostEffectPending: false,
+      });
+    });
+  },
+
   hydrateGameState: (nextState: GameState) => {
     set((state) => {
       const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
@@ -1303,6 +1242,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           : nextState.matchType === 'solo'
             ? nextState.strain
             : DEFAULT_STARTING_STRAIN;
+      const soloWinStreak =
+        typeof nextState.soloWinStreak === 'number'
+          ? nextState.soloWinStreak
+          : 0;
       return {
         ...state,
         ...nextState,
@@ -1310,6 +1253,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         soloDeckTemplate: deckTemplate,
         soloBaseTargetScore,
         soloStartingStrain,
+        soloWinStreak,
       };
     });
   },
@@ -1342,14 +1286,19 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const deckTemplate = getSoloDeckTemplate(state);
       const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
       const lifeRuneHealing = deriveLifeRuneHealing(updatedDeckTemplate);
-      const nextDraftState = advanceDeckDraftState(state.deckDraftState, state.runeTypeCount, state.players[0].id);
+      const nextDraftState = advanceDeckDraftState(
+        state.deckDraftState,
+        state.runeTypeCount,
+        state.players[0].id,
+        state.soloWinStreak
+      );
       const updatedPlayer: Player = {
         ...state.players[0],
         deck: mergeDeckWithRuneforge(state.players[0].deck, selectedRuneforge),
       };
 
       if (!nextDraftState) {
-        const nextTarget = state.soloTargetScore + 100;
+        const nextTarget = state.soloTargetScore + 50;
         const deckRunesPerType = Math.max(1, Math.round(updatedDeckTemplate.length / state.runeTypeCount));
         const nextGameState = initializeSoloGame(
           state.runeTypeCount,
@@ -1366,6 +1315,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           {
             startingDeck: updatedDeckTemplate,
             targetScore: nextTarget,
+            winStreak: state.soloWinStreak,
           }
         );
 

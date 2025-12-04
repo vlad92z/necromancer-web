@@ -7,21 +7,33 @@
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
-import type { Rune, RuneType } from '../types/game';
+import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
 import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
 import fireRuneUncommon from '../assets/runes/fire_rune_uncommon.svg';
+import fireRuneRare from '../assets/runes/fire_rune_rare.svg';
+import fireRuneEpic from '../assets/runes/fire_rune_epic.svg';
 import frostRune from '../assets/runes/frost_rune.svg';
 import frostRuneUncommon from '../assets/runes/frost_rune_uncommon.svg';
+import frostRuneRare from '../assets/runes/frost_rune_rare.svg';
+import frostRuneEpic from '../assets/runes/frost_rune_epic.svg';
 import lifeRune from '../assets/runes/life_rune.svg';
 import lifeRuneUncommon from '../assets/runes/life_rune_uncommon.svg';
+import lifeRuneRare from '../assets/runes/life_rune_rare.svg';
+import lifeRuneEpic from '../assets/runes/life_rune_epic.svg';
 import voidRune from '../assets/runes/void_rune.svg';
 import voidRuneUncommon from '../assets/runes/void_rune_uncommon.svg';
+import voidRuneRare from '../assets/runes/void_rune_rare.svg';
+import voidRuneEpic from '../assets/runes/void_rune_epic.svg';
 import windRune from '../assets/runes/wind_rune.svg';
 import windRuneUncommon from '../assets/runes/wind_rune_uncommon.svg';
+import windRuneRare from '../assets/runes/wind_rune_rare.svg';
+import windRuneEpic from '../assets/runes/wind_rune_epic.svg';
 import lightningRune from '../assets/runes/lightning_rune.svg';
 import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.svg';
-import { getRuneEffectDescription } from '../utils/runeEffects';
+import lightningRuneRare from '../assets/runes/lightning_rune_rare.svg';
+import lightningRuneEpic from '../assets/runes/lightning_rune_epic.svg';
+import { getRuneEffectDescription, getRuneRarity } from '../utils/runeEffects';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
@@ -39,6 +51,30 @@ const RUNE_UNCOMMON_ASSETS = {
   Void: voidRuneUncommon,
   Wind: windRuneUncommon,
   Lightning: lightningRuneUncommon,
+};
+
+const RUNE_RARE_ASSETS = {
+  Fire: fireRuneRare,
+  Frost: frostRuneRare,
+  Life: lifeRuneRare,
+  Void: voidRuneRare,
+  Wind: windRuneRare,
+  Lightning: lightningRuneRare,
+};
+
+const RUNE_EPIC_ASSETS = {
+  Fire: fireRuneEpic,
+  Frost: frostRuneEpic,
+  Life: lifeRuneEpic,
+  Void: voidRuneEpic,
+  Wind: windRuneEpic,
+  Lightning: lightningRuneEpic,
+};
+
+const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> = {
+  uncommon: RUNE_UNCOMMON_ASSETS,
+  rare: RUNE_RARE_ASSETS,
+  epic: RUNE_EPIC_ASSETS,
 };
 
 export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
@@ -69,6 +105,7 @@ export interface RuneCellProps {
   isPending?: boolean; // For wall cells with full pattern lines
   showTooltip?: boolean;
   tooltipPlacement?: 'top' | 'bottom';
+  runeOpacity?: number;
 }
 
 const SIZE_CONFIG = {
@@ -124,6 +161,7 @@ export function RuneCell({
   isPending = false,
   showTooltip = false,
   tooltipPlacement = 'top',
+  runeOpacity = 1,
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = SIZE_CONFIG[size];
@@ -131,9 +169,11 @@ export function RuneCell({
   const variantStyle = VARIANT_STYLES[usedVariant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
-  const hasEffect = showEffect && Boolean(rune && rune.effects.length > 0);
+  const runeRarity = showEffect && rune ? getRuneRarity(rune.effects) : null;
   const runeImage = runeType
-    ? (hasEffect ? RUNE_UNCOMMON_ASSETS[runeType] : RUNE_ASSETS[runeType])
+    ? runeRarity
+      ? RUNE_ASSETS_BY_RARITY[runeRarity][runeType]
+      : RUNE_ASSETS[runeType]
     : null;
   
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
@@ -219,7 +259,7 @@ export function RuneCell({
             width: '100%', 
             height: '100%', 
             objectFit: 'contain',
-            opacity: (isWallPlaceholder && !isPending) ? variantStyle.emptyOpacity : 1,
+            opacity: ((isWallPlaceholder && !isPending) ? variantStyle.emptyOpacity ?? 1 : 1) * runeOpacity,
           }}
         />
       )}

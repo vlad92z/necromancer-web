@@ -26,46 +26,23 @@ export function SoloGameOverModal({ player, outcome, runePowerTotal, round, targ
           ? 'Rune power fell short of the target'
           : 'Your channel collapsed under overload'
         : 'The arena falls silent';
-  const accentColor = outcome === 'victory' ? '#34d399' : outcome === 'defeat' ? '#f87171' : '#facc15';
+  const accentClasses =
+    outcome === 'victory'
+      ? 'border-emerald-300/70 from-emerald-500/20'
+      : outcome === 'defeat'
+      ? 'border-rose-300/70 from-rose-500/20'
+      : 'border-amber-300/70 from-amber-300/25';
 
   return (
-    <div
-      style={{
-        background: 'rgba(6, 4, 18, 0.95)',
-        borderRadius: '28px',
-        padding: '32px 28px',
-        minWidth: '360px',
-        border: `1px solid ${accentColor}`,
-        color: '#f8fafc',
-        textAlign: 'center',
-        boxShadow: '0 40px 90px rgba(0, 0, 0, 0.65)',
-      }}
-    >
+    <div className="min-w-[360px] rounded-[28px] border bg-[rgba(6,4,18,0.95)] px-7 py-8 text-center text-[#f8fafc] shadow-[0_40px_90px_rgba(0,0,0,0.65)]">
       <div
-        style={{
-          padding: '10px 14px',
-          borderRadius: '12px',
-          border: `1px solid ${accentColor}`,
-          background: `linear-gradient(120deg, ${accentColor}22, rgba(126, 34, 206, 0.3))`,
-          marginBottom: '16px',
-          letterSpacing: '0.12em',
-          fontSize: '12px',
-          fontWeight: 800,
-          textTransform: 'uppercase',
-        }}
+        className={`mb-4 rounded-xl border ${accentClasses} bg-gradient-to-r to-purple-900/50 px-3.5 py-2 text-[12px] font-extrabold uppercase tracking-[0.12em]`}
       >
         {heading}
       </div>
-      <div style={{ color: '#cbd5e1', marginBottom: '22px', fontSize: '15px' }}>{subline}</div>
+      <div className="mb-5 text-[15px] text-slate-300">{subline}</div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          gap: '12px',
-          marginBottom: '20px',
-        }}
-      >
+      <div className="mb-5 grid grid-cols-3 gap-3">
         <StatCard label="Health" value={`${player.health}/${player.maxHealth ?? player.health}`} accent="#34d399" />
         <StatCard label="Rounds Cleared" value={round} accent="#60a5fa" />
         <StatCard label="Rune Power" value={targetScore ? `${runePowerTotal} / ${targetScore}` : runePowerTotal} accent="#facc15" />
@@ -78,27 +55,7 @@ export function SoloGameOverModal({ player, outcome, runePowerTotal, round, targ
           playClickSound();
           onReturnToStart?.();
         }}
-        style={{
-          width: '100%',
-          padding: '12px 16px',
-          borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.18)',
-          background: 'linear-gradient(120deg, rgba(103, 232, 249, 0.18), rgba(56, 189, 248, 0.24))',
-          color: '#e2e8f0',
-          fontWeight: 700,
-          letterSpacing: '0.08em',
-          cursor: 'pointer',
-          boxShadow: '0 16px 36px rgba(0, 0, 0, 0.45)',
-          transition: 'transform 120ms ease, box-shadow 120ms ease',
-        }}
-        onMouseEnter={(event) => {
-          event.currentTarget.style.transform = 'translateY(-1px)';
-          event.currentTarget.style.boxShadow = '0 22px 48px rgba(0, 0, 0, 0.6)';
-        }}
-        onMouseLeave={(event) => {
-          event.currentTarget.style.transform = 'translateY(0)';
-          event.currentTarget.style.boxShadow = '0 16px 36px rgba(0, 0, 0, 0.45)';
-        }}
+        className="w-full rounded-xl border border-white/20 bg-gradient-to-r from-cyan-200/20 to-sky-300/20 px-4 py-3 text-sm font-bold uppercase tracking-[0.08em] text-slate-100 shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_48px_rgba(0,0,0,0.6)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
       >
         Back to Menu
       </button>
@@ -113,29 +70,21 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, accent }: StatCardProps) {
+  const accentClass =
+    accent === '#34d399'
+      ? 'text-emerald-400'
+      : accent === '#60a5fa'
+      ? 'text-sky-400'
+      : accent === '#facc15'
+      ? 'text-amber-300'
+      : 'text-indigo-200';
+
   return (
-    <div
-      style={{
-        padding: '14px 12px',
-        borderRadius: '12px',
-        border: '1px solid rgba(255,255,255,0.08)',
-        background: 'rgba(255,255,255,0.02)',
-        textAlign: 'center',
-      }}
-    >
-      <div
-        style={{
-          fontSize: '11px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: 'rgba(226, 232, 240, 0.8)',
-          marginBottom: '6px',
-          fontWeight: 700,
-        }}
-      >
+    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-center">
+      <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-200/80">
         {label}
       </div>
-      <div style={{ fontSize: '20px', fontWeight: 800, color: accent }}>{value}</div>
+      <div className={`text-xl font-extrabold ${accentClass}`}>{value}</div>
     </div>
   );
 }

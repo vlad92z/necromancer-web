@@ -92,78 +92,6 @@ export function needsAIPlacement(store: StoreApi<GameplayStore> = useGameplaySto
 }
 
 /**
- * Execute AI Void effect (single rune destruction)
- * Pure function - no setTimeout, timing handled by caller
- */
-export function executeAIVoidEffect(store: StoreApi<GameplayStore> = useGameplayStore) {
-  const state = store.getState();
-  const controller = getControllerForIndex(state, state.currentPlayerIndex);
-
-  if (controller.type !== 'computer') {
-    return;
-  }
-  
-  const aiProfile = getAIPlayerProfile(controller.difficulty);
-  const runeTarget = aiProfile.chooseVoidTarget(state);
-  
-  if (runeTarget) {
-    state.destroyRune(runeTarget);
-  } else {
-    state.skipVoidEffect();
-  }
-}
-
-/**
- * Execute AI Frost effect (pattern line freezing)
- * Pure function - no setTimeout, timing handled by caller
- */
-export function executeAIFrostEffect(store: StoreApi<GameplayStore> = useGameplayStore) {
-  const state = store.getState();
-  const controller = getControllerForIndex(state, state.currentPlayerIndex);
-
-  if (controller.type !== 'computer') {
-    return;
-  }
-  
-  const aiProfile = getAIPlayerProfile(controller.difficulty);
-  // Primary chooser
-  let patternLineToFreeze = aiProfile.choosePatternLineToFreeze(state);
-  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
-  const opponentId = state.players[opponentIndex].id;
-
-  // Fallbacks: if primary chooser returns null, try simpler/random strategies
-  if (patternLineToFreeze === null) {
-    // Try easy fallback (prioritize finishable lines)
-    try {
-      // Importing specific fallback selectors from aiPlayer via the profile might not be available,
-      // so attempt a safer random selection next.
-      const { choosePatternLineToFreeze: fallback } = getAIPlayerProfile('easy');
-      patternLineToFreeze = fallback(state);
-    } catch (e) {
-      console.log(e);
-      patternLineToFreeze = null;
-    }
-  }
-
-  if (patternLineToFreeze === null) {
-    // Last resort: pick a random available pattern line to freeze
-    try {
-      const { choosePatternLineToFreeze: randomFallback } = getAIPlayerProfile('hard');
-      patternLineToFreeze = randomFallback(state);
-    } catch (e) {
-      console.log(e);
-      patternLineToFreeze = null;
-    }
-  }
-
-  if (patternLineToFreeze !== null) {
-    state.freezePatternLine(opponentId, patternLineToFreeze);
-  } else {
-    state.skipFrostEffect();
-  }
-}
-
-/**
  * Legacy exports for backward compatibility
  * @deprecated Use executeAITurn instead
  */
@@ -173,12 +101,10 @@ export const triggerAITurn = executeAITurn;
  * @deprecated Use executeAIVoidEffect instead
  */
 export function handleAIVoidEffect() {
-  executeAIVoidEffect();
 }
 
 /**
  * @deprecated Use executeAIFrostEffect instead
  */
 export function handleAIFrostEffect() {
-  executeAIFrostEffect();
 }

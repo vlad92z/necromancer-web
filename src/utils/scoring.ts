@@ -3,8 +3,7 @@
  * Implements connected segment scoring
  */
 
-import type { PatternLine, RuneEffects, RuneType, ScoringWall } from '../types/game';
-import { getEffectValue, getRuneEffectsForType } from './runeEffects';
+import type { RuneEffects, RuneType, ScoringWall } from '../types/game';
 
 const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 
@@ -256,42 +255,6 @@ export function calculatePlacementScore(
 export function calculateFloorPenalty(floorLineCount: number): number {
   const penalties = [0, -1, -2, -4, -6, -8, -11, -14];
   return penalties[Math.min(floorLineCount, 7)];
-}
-
-/**
- * Calculate effective floor penalty count after mitigation effects.
- * FloorPenaltyMitigation is preserved for variants (legacy Wind effect); default rune sets do not apply it.
- * Completed pattern lines count as "pending" wall placements and mitigate immediately when present.
- */
-export function calculateEffectiveFloorPenalty(
-  floorRunes: Array<{ runeType: RuneType | null; effects?: RuneEffects | null }>,
-  patternLines: Pick<PatternLine, 'runeType' | 'count' | 'tier' | 'firstRuneEffects'>[],
-  wall: ScoringWall
-): number {
-
-  const windRunesOnWall = wall.flat().reduce((total, cell) => (
-    total + getEffectValue(cell.effects, 'FloorPenaltyMitigation')
-  ), 0);
-
-  // Completed Wind pattern lines count as pending placements (if the wall slot is still empty)
-  const wallSize = wall.length;
-  const pendingWindPlacements = patternLines.reduce((total, line, rowIndex) => {
-    if (line.count !== line.tier || line.runeType === null) {
-      return total;
-    }
-    const effects = line.firstRuneEffects ?? getRuneEffectsForType(line.runeType);
-    const mitigation = getEffectValue(effects, 'FloorPenaltyMitigation');
-    if (mitigation === 0) {
-      return total;
-    }
-    const col = getWallColumnForRune(rowIndex, line.runeType, wallSize);
-    const alreadyPlaced = wall[rowIndex][col]?.runeType === line.runeType;
-    return alreadyPlaced ? total : total + mitigation;
-  }, 0);
-
-  const mitigatingWindRunes = windRunesOnWall + pendingWindPlacements;
-  const effectivePenalty = floorRunes.length - mitigatingWindRunes;
-  return Math.max(0, effectivePenalty);
 }
 
 /**

@@ -2,7 +2,7 @@
  * GameBoardFrame - shared logic and layout shell for solo and duel boards
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
@@ -18,6 +18,7 @@ import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useUIStore } from '../../../state/stores/uiStore';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
+import { createStartingDeck } from '../../../utils/gameInitialization';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -48,6 +49,7 @@ export interface SoloVariantData {
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
+  onOpenDeckOverlay: () => void;
 }
 
 export interface DuelVariantData {
@@ -115,8 +117,15 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
-  const { draftRune, draftFromCenter, placeRunes, placeRunesInFloor, cancelSelection, selectDeckDraftRuneforge } =
-    useGameActions();
+  const {
+    draftRune,
+    draftFromCenter,
+    placeRunes,
+    placeRunesInFloor,
+    cancelSelection,
+    selectDeckDraftRuneforge,
+    forceSoloVictory,
+  } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
   const processScoringStep = useGameplayStore((state) => state.processScoringStep);
@@ -139,6 +148,13 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
   const currentPlayer = players[currentPlayerIndex];
+  const fullDeck = useMemo(
+    () =>
+      gameState.soloDeckTemplate && gameState.soloDeckTemplate.length > 0
+        ? gameState.soloDeckTemplate
+        : createStartingDeck(players[0].id, gameState.runeTypeCount, gameState.totalRunesPerPlayer),
+    [gameState.runeTypeCount, gameState.soloDeckTemplate, gameState.totalRunesPerPlayer, players],
+  );
   const {
     animatingRunes: placementAnimatingRunes,
     runeforgeAnimatingRunes: centerAnimatingRunes,
@@ -337,6 +353,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
         deckDraftState: gameState.deckDraftState,
         isDeckDrafting,
         onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
+        onOpenDeckOverlay: () => setShowDeckOverlay(true),
       };
   const boardContent = renderContent(
     sharedProps,
@@ -348,7 +365,14 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
       className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
     >
       {isSoloVariant && (
-        <div className="absolute left-4 top-4 z-30">
+        <div className="absolute left-4 top-4 z-30 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={forceSoloVictory}
+            className="rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-50 transition hover:border-emerald-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          >
+            Instant Win
+          </button>
           <button
             type="button"
             onClick={returnToStartScreen}
@@ -379,7 +403,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
 
       {showRulesOverlay && <RulesOverlay onClose={() => setShowRulesOverlay(false)} />}
 
-      {showDeckOverlay && <DeckOverlay deck={players[0].deck} playerName={players[0].name} onClose={() => setShowDeckOverlay(false)} />}
+      {showDeckOverlay && <DeckOverlay deck={players[0].deck} fullDeck={fullDeck} playerName={players[0].name} onClose={() => setShowDeckOverlay(false)} />}
 
       {showLogOverlay && <GameLogOverlay roundHistory={gameState.roundHistory} onClose={() => setShowLogOverlay(false)} />}
 
