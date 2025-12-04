@@ -19,9 +19,11 @@ export type RuneTypeCount = 3 | 4 | 5 | 6;
 /**
  * Rune effect modifiers
  */
+export type RuneEffectRarity = 'uncommon' | 'rare' | 'epic';
+
 export type RuneEffect =
-  | { type: 'Damage'; amount: number }
-  | { type: 'Healing'; amount: number }
+  | { type: 'Damage'; amount: number; rarity: RuneEffectRarity }
+  | { type: 'Healing'; amount: number; rarity: RuneEffectRarity }
 
 export type RuneEffects = RuneEffect[];
 
@@ -243,6 +245,7 @@ export interface GameState {
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
   soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
+  soloWinStreak: number; // Consecutive solo victories used for draft bonuses
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   soloBaseTargetScore: number; // Configured starting target for reset scenarios
 }

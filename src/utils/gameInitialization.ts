@@ -95,6 +95,7 @@ export interface QuickPlayConfig {
 export interface SoloInitializationOptions {
   startingDeck?: Rune[];
   targetScore?: number;
+  winStreak?: number;
 }
 
 export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunConfig {
@@ -346,6 +347,7 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     soloTargetScore: 0,
     soloOutcome: null,
     soloPatternLineLock: false,
+    soloWinStreak: 0,
     deckDraftState: null,
     soloBaseTargetScore: 0,
   };
@@ -369,6 +371,7 @@ export function initializeSoloGame(
   const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
   const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
   const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * runeTypeCount;
+  const winStreak = options?.winStreak ?? 0;
   const runeEffectTuning: RuneEffectTuning = {
     lifeHealing: soloConfig.lifeRuneHealing
   };
@@ -457,6 +460,7 @@ export function initializeSoloGame(
     soloTargetScore: targetScore,
     soloOutcome: null,
     soloPatternLineLock: soloConfig.patternLinesLockOnComplete,
+    soloWinStreak: winStreak,
     deckDraftState: null,
     soloBaseTargetScore: soloConfig.targetRuneScore,
   };

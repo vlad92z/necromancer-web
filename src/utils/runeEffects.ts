@@ -2,7 +2,7 @@
  * runeEffects - helpers for rune effect definitions and accessors.
  */
 
-import type { RuneEffect, RuneEffects, RuneType } from '../types/game';
+import type { RuneEffect, RuneEffectRarity, RuneEffects, RuneType } from '../types/game';
 
 export interface RuneEffectTuning {
   lifeHealing?: number;
@@ -18,30 +18,30 @@ const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 };
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: [{ type: 'Damage', amount: 1 }],
-  Frost: [{ type: 'Healing', amount: 1 }],
-  Life: [{ type: 'Healing', amount: 1 }],
-  Void: [{ type: 'Damage', amount: 1 }],
-  Wind: [{ type: 'Healing', amount: 1 }],
-  Lightning: [{ type: 'Damage', amount: 1 }],
+  Fire: [{ type: 'Damage', amount: 1, rarity: 'uncommon' }],
+  Frost: [{ type: 'Healing', amount: 1, rarity: 'uncommon' }],
+  Life: [{ type: 'Healing', amount: 1, rarity: 'uncommon' }],
+  Void: [{ type: 'Damage', amount: 1, rarity: 'uncommon' }],
+  Wind: [{ type: 'Healing', amount: 1, rarity: 'uncommon' }],
+  Lightning: [{ type: 'Damage', amount: 1, rarity: 'uncommon' }],
 };
 
 const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: [{ type: 'Damage', amount: 2 }],
-  Frost: [{ type: 'Healing', amount: 2 }],
-  Life: [{ type: 'Healing', amount: 2 }],
-  Void: [{ type: 'Damage', amount: 2 }],
-  Wind: [{ type: 'Healing', amount: 2 }],
-  Lightning: [{ type: 'Damage', amount: 2 }],
+  Fire: [{ type: 'Damage', amount: 2, rarity: 'rare' }],
+  Frost: [{ type: 'Healing', amount: 2, rarity: 'rare' }],
+  Life: [{ type: 'Healing', amount: 2, rarity: 'rare' }],
+  Void: [{ type: 'Damage', amount: 2, rarity: 'rare' }],
+  Wind: [{ type: 'Healing', amount: 2, rarity: 'rare' }],
+  Lightning: [{ type: 'Damage', amount: 2, rarity: 'rare' }],
 };
 
 const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: [{ type: 'Damage', amount: 5 }],
-  Frost: [{ type: 'Healing', amount: 5 }],
-  Life: [{ type: 'Healing', amount: 5 }],
-  Void: [{ type: 'Damage', amount: 5 }],
-  Wind: [{ type: 'Healing', amount: 5 }],
-  Lightning: [{ type: 'Damage', amount: 5 }],
+  Fire: [{ type: 'Damage', amount: 5, rarity: 'epic' }],
+  Frost: [{ type: 'Healing', amount: 5, rarity: 'epic' }],
+  Life: [{ type: 'Healing', amount: 5, rarity: 'epic' }],
+  Void: [{ type: 'Damage', amount: 5, rarity: 'epic' }],
+  Wind: [{ type: 'Healing', amount: 5, rarity: 'epic' }],
+  Lightning: [{ type: 'Damage', amount: 5, rarity: 'epic' }],
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {
@@ -73,8 +73,14 @@ export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTun
   return cloneEffects(tunedEffects);
 }
 
-export function getDraftEffectsForType(runeType: RuneType): RuneEffects {
-  return cloneEffects(UNCOMMON_RUNE_EFFECTS[runeType]);
+const DRAFT_EFFECTS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, RuneEffects>> = {
+  uncommon: UNCOMMON_RUNE_EFFECTS,
+  rare: RARE_RUNE_EFFECTS,
+  epic: EPIC_RUNE_EFFECTS,
+};
+
+export function getDraftEffectsForType(runeType: RuneType, rarity: RuneEffectRarity = 'uncommon'): RuneEffects {
+  return cloneEffects(DRAFT_EFFECTS_BY_RARITY[rarity][runeType]);
 }
 
 export function copyRuneEffects(effects: RuneEffects | null | undefined): RuneEffects {
@@ -112,4 +118,18 @@ export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffect
 
   const bulletList = effectLines.map((line) => `• ${line}`).join('\n');
   return `${runeType} rune\n${bulletList}`;
+}
+
+const RARITY_ORDER: RuneEffectRarity[] = ['uncommon', 'rare', 'epic'];
+
+export function getRuneRarity(effects: RuneEffects | null | undefined): RuneEffectRarity | null {
+  if (!effects || effects.length === 0) {
+    return null;
+  }
+
+  return effects.reduce<RuneEffectRarity>((highest, effect) => {
+    const currentIndex = RARITY_ORDER.indexOf(highest);
+    const nextIndex = RARITY_ORDER.indexOf(effect.rarity);
+    return nextIndex > currentIndex ? effect.rarity : highest;
+  }, effects[0].rarity);
 }

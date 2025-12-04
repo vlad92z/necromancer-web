@@ -2,7 +2,7 @@
  * DeckDrafting utilities - helpers for post-victory deck upgrades
  */
 
-import type { DeckDraftState, Rune, RuneType, RuneTypeCount } from '../types/game';
+import type { DeckDraftState, Rune, RuneEffectRarity, RuneType, RuneTypeCount } from '../types/game';
 import { getDraftEffectsForType } from './runeEffects';
 import { getRuneTypesForCount } from './gameInitialization';
 import type { Runeforge } from '../types/game';
@@ -10,17 +10,40 @@ import type { Runeforge } from '../types/game';
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
 
-const createDraftRune = (ownerId: string, runeType: RuneType, index: number): Rune => ({
-  id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
-  runeType,
-  effects: getDraftEffectsForType(runeType),
-});
+const BASE_EPIC_CHANCE = 5;
+const BASE_RARE_CHANCE = 20;
+const EPIC_INCREMENT_PER_WIN = 5;
+const RARE_INCREMENT_PER_WIN = 10;
+
+function getDraftRarity(winStreak: number): RuneEffectRarity {
+  const epicChance = Math.min(100, BASE_EPIC_CHANCE + winStreak * EPIC_INCREMENT_PER_WIN);
+  const rareChance = Math.min(100 - epicChance, BASE_RARE_CHANCE + winStreak * RARE_INCREMENT_PER_WIN);
+  const roll = Math.random() * 100;
+
+  if (roll < epicChance) {
+    return 'epic';
+  }
+  if (roll < epicChance + rareChance) {
+    return 'rare';
+  }
+  return 'uncommon';
+}
+
+const createDraftRune = (ownerId: string, runeType: RuneType, index: number, winStreak: number): Rune => {
+  const rarity = getDraftRarity(winStreak);
+  return {
+    id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+    runeType,
+    effects: getDraftEffectsForType(runeType, rarity),
+  };
+};
 
 function createDraftRuneforges(
   runeTypeCount: RuneTypeCount,
   ownerId: string,
   runeforgeCount: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-  runesPerRuneforge: number = DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE
+  runesPerRuneforge: number = DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
+  winStreak: number = 0
 ): Runeforge[] {
   const runeTypes = getRuneTypesForCount(runeTypeCount);
 
@@ -30,7 +53,7 @@ function createDraftRuneforges(
       const runes: Rune[] = [];
       for (let i = 0; i < runesPerRuneforge; i++) {
         const runeType = runeTypes[Math.floor(Math.random() * runeTypes.length)];
-        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i));
+        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i, winStreak));
       }
 
       return {
@@ -44,10 +67,17 @@ function createDraftRuneforges(
 export function createDeckDraftState(
   runeTypeCount: RuneTypeCount,
   ownerId: string,
-  totalPicks: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT
+  totalPicks: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
+  winStreak: number = 0
 ): DeckDraftState {
   return {
-    runeforges: createDraftRuneforges(runeTypeCount, ownerId, DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT, DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE),
+    runeforges: createDraftRuneforges(
+      runeTypeCount,
+      ownerId,
+      DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
+      DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
+      winStreak
+    ),
     picksRemaining: totalPicks,
     totalPicks,
   };
@@ -56,7 +86,8 @@ export function createDeckDraftState(
 export function advanceDeckDraftState(
   current: DeckDraftState,
   runeTypeCount: RuneTypeCount,
-  ownerId: string
+  ownerId: string,
+  winStreak: number = 0
 ): DeckDraftState | null {
   const nextPicks = Math.max(0, current.picksRemaining - 1);
   if (nextPicks === 0) {
@@ -64,7 +95,13 @@ export function advanceDeckDraftState(
   }
 
   return {
-    runeforges: createDraftRuneforges(runeTypeCount, ownerId, DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT, DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE),
+    runeforges: createDraftRuneforges(
+      runeTypeCount,
+      ownerId,
+      DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
+      DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
+      winStreak
+    ),
     picksRemaining: nextPicks,
     totalPicks: current.totalPicks,
   };

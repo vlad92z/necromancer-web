@@ -53,7 +53,8 @@ function enterDeckDraftMode(state: GameState): GameState {
     return state;
   }
   const deckTemplate = getSoloDeckTemplate(state);
-  const deckDraftState = createDeckDraftState(state.runeTypeCount, state.players[0].id, 3);
+  const nextWinStreak = state.soloWinStreak + 1;
+  const deckDraftState = createDeckDraftState(state.runeTypeCount, state.players[0].id, 3, nextWinStreak);
 
   return {
     ...state,
@@ -69,6 +70,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     voidEffectPending: false,
     frostEffectPending: false,
     soloOutcome: 'victory',
+    soloWinStreak: nextWinStreak,
     currentPlayerIndex: 0,
   };
 }
@@ -213,6 +215,7 @@ function processSoloScoringPhase(state: GameState): GameState {
         round: state.round,
         scoringPhase: null,
         soloOutcome: 'defeat' as SoloOutcome,
+        soloWinStreak: 0,
         shouldTriggerEndRound: false,
         roundDamage: [0, 0],
         lockedPatternLines: {
@@ -533,6 +536,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           scoringPhase: null,
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
+          soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
           runePowerTotal: nextRunePowerTotal,
           roundDamage: updatedRoundDamage,
           lockedPatternLines: updatedLockedPatternLines,
@@ -657,6 +661,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           scoringPhase: null,
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
+          soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
           voidEffectPending: false,
           frostEffectPending: false,
         };
@@ -1212,6 +1217,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           : nextState.matchType === 'solo'
             ? nextState.strain
             : DEFAULT_STARTING_STRAIN;
+      const soloWinStreak =
+        typeof nextState.soloWinStreak === 'number'
+          ? nextState.soloWinStreak
+          : 0;
       return {
         ...state,
         ...nextState,
@@ -1219,6 +1228,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         soloDeckTemplate: deckTemplate,
         soloBaseTargetScore,
         soloStartingStrain,
+        soloWinStreak,
       };
     });
   },
@@ -1251,7 +1261,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const deckTemplate = getSoloDeckTemplate(state);
       const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
       const lifeRuneHealing = deriveLifeRuneHealing(updatedDeckTemplate);
-      const nextDraftState = advanceDeckDraftState(state.deckDraftState, state.runeTypeCount, state.players[0].id);
+      const nextDraftState = advanceDeckDraftState(
+        state.deckDraftState,
+        state.runeTypeCount,
+        state.players[0].id,
+        state.soloWinStreak
+      );
       const updatedPlayer: Player = {
         ...state.players[0],
         deck: mergeDeckWithRuneforge(state.players[0].deck, selectedRuneforge),
@@ -1275,6 +1290,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           {
             startingDeck: updatedDeckTemplate,
             targetScore: nextTarget,
+            winStreak: state.soloWinStreak,
           }
         );
 
