@@ -92,6 +92,11 @@ export interface QuickPlayConfig {
   overflowCapacity: number;
 }
 
+export interface SoloInitializationOptions {
+  startingDeck?: Rune[];
+  targetScore?: number;
+}
+
 export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunConfig {
   const merged = { ...DEFAULT_SOLO_CONFIG, ...config };
 
@@ -309,6 +314,8 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     overflowCapacity: quickPlayConfig.overflowCapacity,
     strain: DEFAULT_STARTING_STRAIN,
     strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
+    soloStartingStrain: DEFAULT_STARTING_STRAIN,
+    soloDeckTemplate: [],
     playerControllers,
     players: [player1, player2],
     runeforges: filledRuneforges,
@@ -339,13 +346,19 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     soloTargetScore: 0,
     soloOutcome: null,
     soloPatternLineLock: false,
+    deckDraftState: null,
+    soloBaseTargetScore: 0,
   };
 }
 
 /**
  * Initialize a solo run with the same board sizing options as quick play
  */
-export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Partial<SoloRunConfig>): GameState {
+export function initializeSoloGame(
+  runeTypeCount: RuneTypeCount = 5,
+  config?: Partial<SoloRunConfig>,
+  options?: SoloInitializationOptions
+): GameState {
   const playerControllers: PlayerControllers = {
     bottom: { type: 'human' },
     top: { type: 'human' },
@@ -354,7 +367,8 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
   const soloConfig = normalizeSoloConfig(config);
   const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
   const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
-  const soloDeckSize = soloConfig.deckRunesPerType * runeTypeCount;
+  const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
+  const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * runeTypeCount;
   const runeEffectTuning: RuneEffectTuning = {
     lifeHealing: soloConfig.lifeRuneHealing
   };
@@ -371,6 +385,10 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
     soloMaxHealth,
     runeEffectTuning
   );
+  if (options?.startingDeck) {
+    soloPlayer.deck = [...options.startingDeck];
+  }
+  const startingDeckTemplate = [...soloPlayer.deck];
 
   const echoPlayer = createPlayer(
     'solo-echo',
@@ -407,8 +425,10 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
     overflowCapacity: quickPlayConfig.overflowCapacity,
     strain: soloConfig.startingStrain,
     strainMultiplier: soloConfig.strainMultiplier,
+    soloStartingStrain: soloConfig.startingStrain,
     playerControllers,
     players: [soloPlayer, echoPlayer],
+    soloDeckTemplate: startingDeckTemplate,
     runeforges: filledRuneforges,
     centerPool: [],
     currentPlayerIndex: 0,
@@ -434,8 +454,10 @@ export function initializeSoloGame(runeTypeCount: RuneTypeCount = 5, config?: Pa
     },
     shouldTriggerEndRound: false,
     runePowerTotal: 0,
-    soloTargetScore: soloConfig.targetRuneScore,
+    soloTargetScore: targetScore,
     soloOutcome: null,
     soloPatternLineLock: soloConfig.patternLinesLockOnComplete,
+    deckDraftState: null,
+    soloBaseTargetScore: soloConfig.targetRuneScore,
   };
 }

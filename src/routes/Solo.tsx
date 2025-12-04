@@ -33,6 +33,7 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
     resetGame,
     triggerRoundEnd,
     processScoringStep,
+    selectDeckDraftRuneforge,
     ...gameState
   } = state;
 
