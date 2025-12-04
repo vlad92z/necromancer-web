@@ -29,10 +29,6 @@ export function getRuneEffectsForType(runeType: RuneType, tuning?: RuneEffectTun
   }
 
   const tunedEffects = baseEffects.map((effect) => {
-    if (effect.type === 'Healing' && tuning.lifeHealing !== undefined) {
-      return { ...effect, amount: tuning.lifeHealing };
-    }
-
     return effect;
   });
 
