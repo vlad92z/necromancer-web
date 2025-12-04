@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
-   sodipodi:docname="fire_rune.svg"
+   sodipodi:docname="fire_rune_rare.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -27,12 +27,12 @@
      inkscape:zoom="1.298997"
      inkscape:cx="344.88147"
      inkscape:cy="342.572"
-     inkscape:window-width="1920"
-     inkscape:window-height="947"
-     inkscape:window-x="1080"
-     inkscape:window-y="351"
+     inkscape:window-width="1800"
+     inkscape:window-height="1101"
+     inkscape:window-x="3000"
+     inkscape:window-y="494"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer2-0" />
+     inkscape:current-layer="layer1" />
   <defs
      id="defs1">
     <linearGradient
@@ -44,11 +44,11 @@
          id="stop6" />
       <stop
          style="stop-color:#e02802;stop-opacity:0.30769235;"
-         offset="0.9690848"
+         offset="0.70742673"
          id="stop8" />
       <stop
-         style="stop-color:#ffffff;stop-opacity:0;"
-         offset="1"
+         style="stop-color:#08deff;stop-opacity:1;"
+         offset="0.76683939"
          id="stop7" />
     </linearGradient>
     <radialGradient

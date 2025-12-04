@@ -25,14 +25,14 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="0.91852959"
-     inkscape:cx="424.59166"
+     inkscape:cx="424.04731"
      inkscape:cy="367.43509"
      inkscape:window-width="1800"
      inkscape:window-height="940"
      inkscape:window-x="3000"
      inkscape:window-y="494"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer2" />
+     inkscape:current-layer="layer1" />
   <defs
      id="defs1">
     <linearGradient
@@ -44,11 +44,11 @@
          id="stop6" />
       <stop
          style="stop-color:#00cb06;stop-opacity:0.30769235;"
-         offset="0.97135752"
+         offset="0.70396328"
          id="stop8" />
       <stop
-         style="stop-color:#b0b0b0;stop-opacity:0;"
-         offset="1"
+         style="stop-color:#08d3ff;stop-opacity:1;"
+         offset="0.75034106"
          id="stop7" />
     </linearGradient>
     <radialGradient
