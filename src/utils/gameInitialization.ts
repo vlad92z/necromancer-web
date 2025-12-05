@@ -323,12 +323,6 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     overloadSoundPending: false,
     roundHistory: [],
     roundDamage: [0, 0],
-    voidEffectPending: false,
-    frostEffectPending: false,
-    frozenPatternLines: {
-      [player1.id]: [],
-      [player2.id]: [],
-    },
     lockedPatternLines: {
       [player1.id]: [],
       [player2.id]: [],
@@ -432,12 +426,6 @@ export function initializeSoloGame(
     overloadSoundPending: false,
     roundHistory: [],
     roundDamage: [0, 0],
-    voidEffectPending: false,
-    frostEffectPending: false,
-    frozenPatternLines: {
-      [soloPlayer.id]: [],
-      [echoPlayer.id]: [],
-    },
     lockedPatternLines: {
       [soloPlayer.id]: [],
       [echoPlayer.id]: [],

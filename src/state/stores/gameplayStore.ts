@@ -62,8 +62,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     draftSource: null,
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
-    voidEffectPending: false,
-    frostEffectPending: false,
     soloOutcome: 'victory',
     soloWinStreak: nextWinStreak,
     currentPlayerIndex: 0,
@@ -148,8 +146,6 @@ function prepareSoloRoundReset(state: GameState): GameState {
         pendingPlacement: null,
         animatingRunes: [],
         overloadSoundPending: false,
-        voidEffectPending: false,
-        frostEffectPending: false,
         turnPhase: 'deck-draft',
       });
     }
@@ -174,8 +170,6 @@ function prepareSoloRoundReset(state: GameState): GameState {
       pendingPlacement: null,
       animatingRunes: [],
       overloadSoundPending: false,
-      voidEffectPending: false,
-      frostEffectPending: false,
     };
   }
 
@@ -217,8 +211,6 @@ function prepareSoloRoundReset(state: GameState): GameState {
     pendingPlacement: null,
     animatingRunes: [],
     overloadSoundPending: false,
-    voidEffectPending: false,
-    frostEffectPending: false,
   };
 }
 
@@ -255,8 +247,6 @@ function prepareVersusRoundReset(state: GameState): GameState {
       pendingPlacement: null,
       animatingRunes: [],
       overloadSoundPending: false,
-      voidEffectPending: false,
-      frostEffectPending: false,
     };
   }
 
@@ -300,8 +290,6 @@ function prepareVersusRoundReset(state: GameState): GameState {
     pendingPlacement: null,
     animatingRunes: [],
     overloadSoundPending: false,
-    voidEffectPending: false,
-    frostEffectPending: false,
   };
 }
 
@@ -326,10 +314,7 @@ export interface GameplayStore extends GameState {
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
   destroyRune: (target: VoidTarget) => void;
-  skipVoidEffect: () => void;
-  skipFrostEffect: () => void;
   acknowledgeOverloadSound: () => void;
-  freezePatternLine: (playerId: string, patternLineIndex: number) => void;
   endRound: () => void;
   resetGame: () => void;
   triggerRoundEnd: () => void;
@@ -537,8 +522,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           pendingPlacement: null,
           animatingRunes: [],
           shouldTriggerEndRound: false,
-          voidEffectPending: false,
-          frostEffectPending: false,
         });
       }
 
@@ -612,9 +595,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (!patternLine) {
         return state;
       }
-      const frozenLinesForPlayer = state.frozenPatternLines[currentPlayer.id] ?? [];
       const lockedLinesForPlayer = state.lockedPatternLines[currentPlayer.id] ?? [];
-      if (frozenLinesForPlayer.includes(patternLineIndex) || lockedLinesForPlayer.includes(patternLineIndex)) {
+      if (lockedLinesForPlayer.includes(patternLineIndex)) {
         console.log(`Pattern line ${patternLineIndex + 1} is unavailable - cannot place runes`);
         return state;
       }
@@ -690,11 +672,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         health: nextHealth,
       };
       
-      // Clear any frozen lines affecting this player after they complete placement
-      const updatedFrozenPatternLines = {
-        ...state.frozenPatternLines,
-        [currentPlayer.id]: [],
-      };
       const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       const defeatedByOverload = shouldApplyOverloadDamage && nextHealth === 0;
@@ -710,8 +687,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
           overloadSoundPending: overloadDamage > 0,
-          voidEffectPending: false,
-          frostEffectPending: false,
         };
       }
       
@@ -738,7 +713,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         turnPhase: nextTurnPhase,
         currentPlayerIndex: completedLines.length > 0 ? currentPlayerIndex : (nextPlayerIndex as 0 | 1),
         shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
-        frozenPatternLines: updatedFrozenPatternLines,
         overloadSoundPending: overloadDamage > 0,
       };
     });
@@ -757,10 +731,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (selectedRunes.length === 0) return state;
       
       const currentPlayer = state.players[currentPlayerIndex];
-      const updatedFrozenPatternLines = {
-        ...state.frozenPatternLines,
-        [currentPlayer.id]: [],
-      };
       
       // Add all selected runes to floor line
       const updatedFloorLine = {
@@ -804,8 +774,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
           soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
           overloadSoundPending: overloadDamage > 0,
-          voidEffectPending: false,
-          frostEffectPending: false,
         };
       }
       
@@ -823,7 +791,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
         currentPlayerIndex: nextPlayerIndex as 0 | 1,
         shouldTriggerEndRound: shouldEndRound,
-        frozenPatternLines: updatedFrozenPatternLines,
         overloadSoundPending: overloadDamage > 0,
       };
     });
@@ -900,7 +867,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return {
           ...state,
           runeforges: updatedRuneforges,
-          voidEffectPending: false,
           currentPlayerIndex: nextPlayerIndex as 0 | 1,
           turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
           shouldTriggerEndRound: shouldEndRound,
@@ -921,7 +887,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return {
           ...state,
           centerPool: updatedCenterPool,
-          voidEffectPending: false,
           currentPlayerIndex: nextPlayerIndex as 0 | 1,
           turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
           shouldTriggerEndRound: shouldEndRound,
@@ -932,102 +897,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  skipVoidEffect: () => {
-    set((state) => {
-      // Skip Void effect without destroying any rune
-      if (!state.voidEffectPending) return state;
-      
-      // Switch to next player when skipping Void effect
-      const isSoloMode = state.matchType === 'solo';
-      const nextPlayerIndex = isSoloMode ? state.currentPlayerIndex : state.currentPlayerIndex === 0 ? 1 : 0;
-      
-      // Check if round should end
-      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-      
-      return {
-        ...state,
-        voidEffectPending: false,
-        currentPlayerIndex: nextPlayerIndex as 0 | 1,
-        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
-        shouldTriggerEndRound: shouldEndRound,
-      };
-    });
-  },
-  
-  skipFrostEffect: () => {
-    set((state) => {
-      // Skip Frost effect without freezing a pattern line
-      if (!state.frostEffectPending) return state;
-      
-      const isSoloMode = state.matchType === 'solo';
-      const nextPlayerIndex = isSoloMode ? state.currentPlayerIndex : state.currentPlayerIndex === 0 ? 1 : 0;
-      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-      
-      return {
-        ...state,
-        frostEffectPending: false,
-        currentPlayerIndex: nextPlayerIndex as 0 | 1,
-        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
-        shouldTriggerEndRound: shouldEndRound,
-      };
-    });
-  },
-
   acknowledgeOverloadSound: () => {
     set({ overloadSoundPending: false });
-  },
-  
-  freezePatternLine: (playerId: string, patternLineIndex: number) => {
-    set((state) => {
-      // Frost effect: freeze the selected opponent pattern line
-      if (!state.frostEffectPending) return state;
-      const isSoloMode = state.matchType === 'solo';
-      if (isSoloMode) return state;
-
-      const currentPlayer = state.players[state.currentPlayerIndex];
-      if (playerId === currentPlayer.id) {
-        return state;
-      }
-      const targetPlayer = state.players.find((player) => player.id === playerId);
-      if (!targetPlayer) {
-        return state;
-      }
-      const targetLine = targetPlayer.patternLines[patternLineIndex];
-      if (!targetLine) {
-        return state;
-      }
-      const isLineFull = targetLine.count >= targetLine.tier;
-      const currentFrozen = state.frozenPatternLines[playerId] ?? [];
-      if (isLineFull || currentFrozen.includes(patternLineIndex)) {
-        return state;
-      }
-      
-      const updatedFrozenPatternLines = {
-        ...state.frozenPatternLines,
-        [playerId]: [...currentFrozen, patternLineIndex],
-      };
-      
-      // Switch to next player after pattern line is frozen
-      const nextPlayerIndex = state.currentPlayerIndex === 0 ? 1 : 0;
-      
-      // Check if round should end
-      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-      
-      return {
-        ...state,
-        frozenPatternLines: updatedFrozenPatternLines,
-        frostEffectPending: false,
-        currentPlayerIndex: nextPlayerIndex as 0 | 1,
-        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
-        shouldTriggerEndRound: shouldEndRound,
-      };
-    });
   },
 
   triggerRoundEnd: () => {
@@ -1200,8 +1071,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         pendingPlacement: null,
         animatingRunes: [],
         shouldTriggerEndRound: false,
-        voidEffectPending: false,
-        frostEffectPending: false,
       });
     });
   },

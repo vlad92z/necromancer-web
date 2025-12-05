@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-// import { DuelGameBoard } from '../features/gameplay/components/DuelGameBoard'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
 import { executeAITurn, needsAIPlacement } from '../systems/aiController'
@@ -14,8 +13,6 @@ export function GameMatch() {
   const currentPlayerIndex = useGameplayStore((s) => s.currentPlayerIndex)
   const turnPhase = useGameplayStore((s) => s.turnPhase)
   const selectedRunesLength = useGameplayStore((s) => s.selectedRunes.length)
-  const voidEffectPending = useGameplayStore((s) => s.voidEffectPending)
-  const frostEffectPending = useGameplayStore((s) => s.frostEffectPending)
   const players = useGameplayStore((s) => s.players)
   const playerControllers = useGameplayStore((s) => s.playerControllers)
   const wholeGameState = useGameplayStore()
@@ -39,9 +36,7 @@ export function GameMatch() {
     if (
       controller.type === 'computer' &&
       turnPhase === 'draft' &&
-      selectedRunesLength === 0 &&
-      !voidEffectPending &&
-      !frostEffectPending
+      selectedRunesLength === 0
     ) {
       const delayTimer = setTimeout(() => {
         executeAITurn()
@@ -49,7 +44,7 @@ export function GameMatch() {
 
       return () => clearTimeout(delayTimer)
     }
-  }, [gameStarted, currentPlayerIndex, turnPhase, players, selectedRunesLength, voidEffectPending, frostEffectPending, playerControllers])
+  }, [gameStarted, currentPlayerIndex, turnPhase, players, selectedRunesLength, playerControllers])
   
   // Handle AI placement after drafting
   useEffect(() => {
@@ -64,31 +59,29 @@ export function GameMatch() {
     }
   }, [gameStarted, currentPlayerIndex, players, selectedRunesLength, turnPhase, playerControllers])
   
-  // Handle Void effect for AI (when AI's turn and voidEffectPending)
   useEffect(() => {
     if (!gameStarted) return;
 
     const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
-    if (controller.type === 'computer' && voidEffectPending && turnPhase === 'draft') {
+    if (controller.type === 'computer' && turnPhase === 'draft') {
       const delayTimer = setTimeout(() => {
       }, 1500) // 1.5 second delay for Void effect
 
       return () => clearTimeout(delayTimer)
     }
-  }, [gameStarted, voidEffectPending, currentPlayerIndex, players, turnPhase, playerControllers])
+  }, [gameStarted, currentPlayerIndex, players, turnPhase, playerControllers])
   
-  // Handle Frost effect for AI (when AI's turn and frostEffectPending)
   useEffect(() => {
     if (!gameStarted) return;
 
     const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
-    if (controller.type === 'computer' && frostEffectPending && turnPhase === 'draft') {
+    if (controller.type === 'computer' && turnPhase === 'draft') {
       const delayTimer = setTimeout(() => {
       }, 1500) // 1.5 second delay for Frost effect
 
       return () => clearTimeout(delayTimer)
     }
-  }, [gameStarted, frostEffectPending, currentPlayerIndex, players, turnPhase, playerControllers])
+  }, [gameStarted, currentPlayerIndex, players, turnPhase, playerControllers])
 
   const handleStartGame = (topController: QuickPlayOpponent, runeTypeCount: import('../types/game').RuneTypeCount) => {
     startGame(topController, runeTypeCount)

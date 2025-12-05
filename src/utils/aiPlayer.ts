@@ -280,7 +280,6 @@ function calculateWasteEfficiency(
 function scoreDraftMove(move: DraftMove, state: GameState): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const opponent = state.players[1 - state.currentPlayerIndex];
-  const currentPlayerFrozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   let score = 0;
   
   // Find best line this move could fill
@@ -289,7 +288,7 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   const wallSize = currentPlayer.wall.length;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, currentPlayerFrozenLines)) {
+    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
       const spacesNeeded = line.tier - line.count;
       const waste = Math.max(0, move.count - spacesNeeded);
       
@@ -366,14 +365,14 @@ function scoreDraftMove(move: DraftMove, state: GameState): number {
   }
   
   // Strategy 7: MEDIUM - Waste efficiency bonus
-  const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType, currentPlayerFrozenLines);
+  const wasteEfficiency = calculateWasteEfficiency(move, currentPlayer, move.runeType);
   score += wasteEfficiency * 0.5; // Scale it down since it's already factored in waste penalty
   
 
   let bestPlacementScore = -Infinity;
   
   currentPlayer.patternLines.forEach((line, lineIndex) => {
-    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, currentPlayerFrozenLines)) {
+    if (canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
       const placementScore = scorePlacementMove(lineIndex, state);
       if (placementScore > bestPlacementScore) {
         bestPlacementScore = placementScore;
@@ -423,7 +422,6 @@ function scorePlacementMove(
   state: GameState
 ): number {
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   const runeCount = state.selectedRunes.length;
   
   // Floor placement (last resort)
@@ -431,10 +429,7 @@ function scorePlacementMove(
     // MEDIUM: Floor penalty scales with number of runes wasted
     return -100 - (runeCount * 15);
   }
-  
-  if (frozenLines.includes(lineIndex)) {
-    return -Infinity;
-  }
+
   
   const line = currentPlayer.patternLines[lineIndex];
   const spacesAvailable = line.tier - line.count;
@@ -483,7 +478,6 @@ function scorePlacementMove(
 function getLegalPlacementMoves(state: GameState): Array<{ type: 'line' | 'floor', lineIndex?: number }> {
   const moves: Array<{ type: 'line' | 'floor', lineIndex?: number }> = [];
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   
   if (state.selectedRunes.length === 0) return moves;
   
@@ -491,7 +485,7 @@ function getLegalPlacementMoves(state: GameState): Array<{ type: 'line' | 'floor
   
   // Check each pattern line
   currentPlayer.patternLines.forEach((line, index) => {
-    if (canPlaceOnLine(line, runeType, currentPlayer.wall, index, frozenLines)) {
+    if (canPlaceOnLine(line, runeType, currentPlayer.wall, index)) {
       moves.push({ type: 'line', lineIndex: index });
     }
   });
@@ -577,60 +571,12 @@ function calculateOpponentNeedForRune(opponent: Player, runeType: RuneType): num
 }
 
 /**
- * Choose which rune to destroy with the Void effect.
- * Strategy: Remove the rune that most helps the opponent progress.
- */
-export function chooseVoidRuneTarget(state: GameState): VoidTarget | null {
-  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
-  const opponent = state.players[opponentIndex];
-  const currentPlayerId = state.players[state.currentPlayerIndex].id;
-
-  const candidates: Array<{ target: VoidTarget; score: number }> = [];
-
-  state.runeforges.forEach((runeforge) => {
-    runeforge.runes.forEach((rune) => {
-      const needScore = Math.max(2, calculateOpponentNeedForRune(opponent, rune.runeType));
-      let totalScore = needScore;
-
-      if (runeforge.ownerId === opponent.id) {
-        totalScore += 6;
-      } else if (runeforge.ownerId === currentPlayerId) {
-        totalScore -= 4;
-      } else {
-        totalScore += 2;
-      }
-
-      candidates.push({
-        target: { source: 'runeforge', runeforgeId: runeforge.id, runeId: rune.id },
-        score: totalScore,
-      });
-    });
-  });
-
-  state.centerPool.forEach((rune) => {
-    const needScore = Math.max(2, calculateOpponentNeedForRune(opponent, rune.runeType));
-    candidates.push({
-      target: { source: 'center', runeId: rune.id },
-      score: needScore + 4,
-    });
-  });
-
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  candidates.sort((a, b) => b.score - a.score);
-  return candidates[0].target;
-}
-
-/**
  * AI chooses which opponent pattern line to freeze with Frost effect
  * Strategy: Freeze lines that are close to completion or high-value tiers
  */
 export function choosePatternLineToFreeze(state: GameState): number | null {
   const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
   const opponent = state.players[opponentIndex];
-  const frozenLines = state.frozenPatternLines[opponent.id] ?? [];
   
   let bestLineIndex: number | null = null;
   let bestScore = -Infinity;
@@ -638,9 +584,6 @@ export function choosePatternLineToFreeze(state: GameState): number | null {
   
   opponent.patternLines.forEach((line, index) => {
     if (line.count >= line.tier) {
-      return;
-    }
-    if (frozenLines.includes(index)) {
       return;
     }
     
@@ -715,19 +658,16 @@ const compareLinePreference = (a: EasyDraftOption | EasyPlacementOption, b: Easy
 function findBestPerfectDraftOption(state: GameState): EasyDraftOption | null {
   const moves = getLegalDraftMoves(state);
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   const options: EasyDraftOption[] = [];
 
   moves.forEach((move) => {
     currentPlayer.patternLines.forEach((line, lineIndex) => {
-      if (frozenLines.includes(lineIndex)) {
-        return;
-      }
+
       const spaces = line.tier - line.count;
       if (spaces !== move.count) {
         return;
       }
-      if (!canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex, frozenLines)) {
+      if (!canPlaceOnLine(line, move.runeType, currentPlayer.wall, lineIndex)) {
         return;
       }
       options.push({
@@ -753,7 +693,6 @@ function chooseEasyPlacementMove(state: GameState): { type: 'line' | 'floor'; li
     return null;
   }
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   const runeType = state.selectedRunes[0].runeType;
   const runeCount = state.selectedRunes.length;
 
@@ -761,10 +700,7 @@ function chooseEasyPlacementMove(state: GameState): { type: 'line' | 'floor'; li
   const fallbackOptions: EasyPlacementOption[] = [];
 
   currentPlayer.patternLines.forEach((line, lineIndex) => {
-    if (frozenLines.includes(lineIndex)) {
-      return;
-    }
-    if (!canPlaceOnLine(line, runeType, currentPlayer.wall, lineIndex, frozenLines)) {
+    if (!canPlaceOnLine(line, runeType, currentPlayer.wall, lineIndex)) {
       return;
     }
     const spaces = line.tier - line.count;
@@ -813,14 +749,10 @@ interface FinishableLine {
 
 function getFinishableLinesForPlayer(state: GameState, playerIndex: 0 | 1): FinishableLine[] {
   const targetPlayer = state.players[playerIndex];
-  const frozenLines = state.frozenPatternLines[targetPlayer.id] ?? [];
   const legalMoves = getLegalDraftMovesForPlayer(state, playerIndex);
   const finishable: FinishableLine[] = [];
 
   targetPlayer.patternLines.forEach((line, lineIndex) => {
-    if (frozenLines.includes(lineIndex)) {
-      return;
-    }
     const spaces = line.tier - line.count;
     if (spaces <= 0) {
       return;
@@ -829,7 +761,7 @@ function getFinishableLinesForPlayer(state: GameState, playerIndex: 0 | 1): Fini
     const candidateRuneTypes: RuneType[] = line.runeType ? [line.runeType] : RUNE_PRIORITIES;
 
     candidateRuneTypes.forEach((runeType) => {
-      if (!canPlaceOnLine(line, runeType, targetPlayer.wall, lineIndex, frozenLines)) {
+      if (!canPlaceOnLine(line, runeType, targetPlayer.wall, lineIndex)) {
         return;
       }
       const matchingMoves = legalMoves
@@ -854,49 +786,6 @@ function getFinishableLinesForPlayer(state: GameState, playerIndex: 0 | 1): Fini
   });
 
   return finishable;
-}
-
-function chooseEasyVoidRuneTarget(state: GameState): VoidTarget | null {
-  const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
-  const finishableLines = getFinishableLinesForPlayer(state, opponentIndex).filter((entry) => entry.surplus === 0);
-
-  if (finishableLines.length === 0) {
-    return null;
-  }
-
-  finishableLines.sort((a, b) => {
-    if (a.spaces !== b.spaces) {
-      return b.spaces - a.spaces;
-    }
-    if (a.hasExistingRunes !== b.hasExistingRunes) {
-      return a.hasExistingRunes ? -1 : 1;
-    }
-    const priorityDiff = runePriorityMap[a.runeType] - runePriorityMap[b.runeType];
-    if (priorityDiff !== 0) {
-      return priorityDiff;
-    }
-    return a.lineIndex - b.lineIndex;
-  });
-
-  const targetLine = finishableLines[0];
-  const { bestMove } = targetLine;
-
-  if (bestMove.type === 'runeforge' && bestMove.runeforgeId) {
-    const runeforge = state.runeforges.find((forge) => forge.id === bestMove.runeforgeId);
-    const rune = runeforge?.runes.find((r) => r.runeType === targetLine.runeType);
-    if (runeforge && rune) {
-      return { source: 'runeforge', runeforgeId: runeforge.id, runeId: rune.id };
-    }
-  }
-
-  if (bestMove.type === 'center') {
-    const rune = state.centerPool.find((r) => r.runeType === targetLine.runeType);
-    if (rune) {
-      return { source: 'center', runeId: rune.id };
-    }
-  }
-
-  return null;
 }
 
 function chooseEasyPatternLineToFreeze(state: GameState): number | null {
@@ -975,7 +864,6 @@ function makeRandomAIMove(
   placeRunesInFloor: () => void
 ): boolean {
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   const wallSize = currentPlayer.wall.length;
 
   if (state.selectedRunes.length > 0) {
@@ -983,7 +871,6 @@ function makeRandomAIMove(
     const availableLines = currentPlayer.patternLines
       .map((line, index) => ({ line, index }))
       .filter(({ line, index }) => {
-        if (frozenLines.includes(index)) return false;
         if (line.count >= line.tier) return false;
         if (line.runeType !== null && line.runeType !== runeType) return false;
         const col = getWallColumnForRune(index, runeType, wallSize);
@@ -1015,34 +902,12 @@ function makeRandomAIMove(
   return true;
 }
 
-function chooseRandomVoidRuneTarget(state: GameState): VoidTarget | null {
-  const runeforgeTargets: VoidTarget[] = state.runeforges.flatMap((forge) =>
-    forge.runes.map((rune) => ({
-      source: 'runeforge' as const,
-      runeforgeId: forge.id,
-      runeId: rune.id,
-    }))
-  );
-  const centerTargets: VoidTarget[] = state.centerPool.map((rune) => ({
-    source: 'center' as const,
-    runeId: rune.id,
-  }));
-
-  const allTargets = [...runeforgeTargets, ...centerTargets];
-  if (allTargets.length === 0) {
-    return null;
-  }
-  return allTargets[Math.floor(Math.random() * allTargets.length)];
-}
-
 function chooseRandomPatternLineToFreeze(state: GameState): number | null {
   const opponentIndex = state.currentPlayerIndex === 0 ? 1 : 0;
   const opponent = state.players[opponentIndex];
-  const frozen = state.frozenPatternLines[opponent.id] ?? [];
 
   const candidates = opponent.patternLines
     .map((line, index) => ({ line, index }))
-    .filter(({ line, index }) => !frozen.includes(index) && line.count < line.tier);
 
   if (candidates.length === 0) {
     return null;
@@ -1060,7 +925,6 @@ function makeNormalAIMove(
   placeRunesInFloor: () => void
 ): boolean {
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const frozenLines = state.frozenPatternLines[currentPlayer.id] ?? [];
   const wallSize = currentPlayer.wall.length;
 
   if (state.selectedRunes.length > 0) {
@@ -1069,7 +933,6 @@ function makeNormalAIMove(
     let bestMoveIndex: number | null = null;
 
     currentPlayer.patternLines.forEach((line, lineIndex) => {
-      if (frozenLines.includes(lineIndex)) return;
       if (line.count >= line.tier) return;
       if (line.runeType !== null && line.runeType !== runeType) return;
       const col = getWallColumnForRune(lineIndex, runeType, wallSize);
@@ -1209,14 +1072,12 @@ export function makeAIMove(
 export interface AIPlayerProfile {
   id: AIDifficulty;
   makeMove: typeof makeAIMove;
-  chooseVoidTarget: typeof chooseVoidRuneTarget;
   choosePatternLineToFreeze: typeof choosePatternLineToFreeze;
 }
 
 const createBaseAIProfile = (id: AIDifficulty): AIPlayerProfile => ({
   id,
   makeMove: makeNormalAIMove,
-  chooseVoidTarget: chooseVoidRuneTarget,
   choosePatternLineToFreeze,
 });
 
@@ -1224,14 +1085,12 @@ export const aiPlayerProfiles: Record<AIDifficulty, AIPlayerProfile> = {
   easy: {
     id: 'easy',
     makeMove: makeEasyAIMove,
-    chooseVoidTarget: chooseEasyVoidRuneTarget,
     choosePatternLineToFreeze: chooseEasyPatternLineToFreeze,
   },
   normal: createBaseAIProfile('normal'),
   hard: {
     id: 'hard',
     makeMove: makeRandomAIMove,
-    chooseVoidTarget: chooseRandomVoidRuneTarget,
     choosePatternLineToFreeze: chooseRandomPatternLineToFreeze,
   },
 };

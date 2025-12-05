@@ -228,9 +228,6 @@ export interface GameState {
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   roundHistory: RoundScore[]; // History of completed rounds for game log
   roundDamage: [number, number]; // Damage dealt by each player during the current round
-  voidEffectPending: boolean; // Whether Void effect is waiting for rune destruction selection
-  frostEffectPending: boolean; // Whether Frost effect is waiting for pattern line selection
-  frozenPatternLines: Record<Player['id'], number[]>; // Pattern line indices frozen for each player
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
   runePowerTotal: number; // Solo score accumulator
