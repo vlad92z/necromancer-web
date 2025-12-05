@@ -11,6 +11,7 @@ import { setNavigationCallback, useGameplayStore } from '../state/stores/gamepla
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { GameState, RuneTypeCount, SoloRunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getBestSoloRound, updateBestSoloRound } from '../utils/soloPersistence';
+import { addArcaneDust, getArcaneDust, getArcaneDustReward } from '../utils/arcaneDust';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -36,6 +37,7 @@ export function Solo() {
     const savedRound = savedState?.matchType === 'solo' ? savedState.round : 0;
     return Math.max(storedBest, savedRound);
   });
+  const [arcaneDust, setArcaneDust] = useState<number>(() => getArcaneDust());
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -49,6 +51,8 @@ export function Solo() {
   }, [navigate, matchType, prepareSoloMode, runeTypeCount]);
 
   useEffect(() => {
+    let lastCompletionSignature: string | null = null;
+
     const unsubscribe = useGameplayStore.subscribe((state) => {
       const persistableState = selectPersistableSoloState(state);
       if (persistableState.matchType === 'solo' && persistableState.gameStarted) {
@@ -61,6 +65,24 @@ export function Solo() {
           }
           return updateBestSoloRound(nextBest);
         });
+      }
+
+      const completionAchieved =
+        state.matchType === 'solo' &&
+        state.soloOutcome === 'victory' &&
+        (state.turnPhase === 'game-over' || state.turnPhase === 'deck-draft');
+
+      if (completionAchieved) {
+        const completionSignature = `${state.soloOutcome}-${state.turnPhase}-${state.round}`;
+        if (completionSignature !== lastCompletionSignature) {
+          const reward = getArcaneDustReward(state.round);
+          if (reward > 0) {
+            setArcaneDust(addArcaneDust(reward));
+          }
+          lastCompletionSignature = completionSignature;
+        }
+      } else {
+        lastCompletionSignature = null;
       }
     });
 
@@ -90,6 +112,7 @@ export function Solo() {
         onContinueSolo={handleContinueSolo}
         canContinue={hasSavedSoloRun}
         bestRound={bestSoloRound}
+        arcaneDust={arcaneDust}
       />
     );
   }

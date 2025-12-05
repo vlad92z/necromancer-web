@@ -111,9 +111,9 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     lockedPatternLines,
     shouldTriggerEndRound,
     draftSource,
-    round,
     strain,
   } = gameState;
+  const currentRound = useGameplayStore((state) => state.round);
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
@@ -201,7 +201,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
         return {
           isActive: currentPlayerIndex === 0,
           overloadMultiplier,
-          round,
+          round: currentRound,
           deckCount: player.deck.length,
         };
       })();
@@ -302,7 +302,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     players,
     currentPlayerIndex,
     currentPlayerId: currentPlayer.id,
-    round,
+    round: currentRound,
     isDraftPhase,
     isGameOver,
 
@@ -373,7 +373,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
           </button>
           <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
             <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Current Round</div>
-            <div className="text-2xl font-extrabold text-white leading-tight">Round {round}</div>
+            <div className="text-2xl font-extrabold text-white leading-tight">Round {currentRound}</div>
           </div>
         </div>
       )}

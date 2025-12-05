@@ -26,6 +26,7 @@ export const NewRun: Story = {
     canContinue: false,
     onStartSolo: handleStartSolo,
     bestRound: 0,
+    arcaneDust: 0,
   },
 };
 
@@ -35,5 +36,6 @@ export const ContinueExisting: Story = {
     onContinueSolo: () => console.log('Continue solo run'),
     onStartSolo: handleStartSolo,
     bestRound: 7,
+    arcaneDust: 450,
   },
 };
