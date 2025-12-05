@@ -106,16 +106,6 @@ export interface SoloRunConfig {
 }
 
 /**
- * Controller type for a player seat
- */
-export type PlayerController = { type: 'human' };
-
-/**
- * Controller configuration for both player seats
- */
-export type PlayerControllers = Record<PlayerSide, PlayerController>;
-
-/**
  * Solo game ending state
  */
 export type SoloOutcome = 'victory' | 'defeat' | null;

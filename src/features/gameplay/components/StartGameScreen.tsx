@@ -4,12 +4,12 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { QuickPlayOpponent, RuneTypeCount } from '../../../types/game';
+import type { RuneTypeCount } from '../../../types/game';
 import { backLinkClasses, primaryActionClasses, secondaryActionClasses, viewShellClasses } from '../../../styles/uiClasses';
 import { RulesOverlay } from './RulesOverlay';
 
 interface StartGameScreenProps {
-  onStartGame: (topController: QuickPlayOpponent, runeTypeCount: RuneTypeCount) => void;
+  onStartGame: (runeTypeCount: RuneTypeCount) => void;
 }
 
 const cardClasses =
@@ -26,7 +26,7 @@ const supportTextClasses = 'text-xs text-sky-300';
 
 export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
   const navigate = useNavigate();
-  const [opponentSetting, setOpponentSetting] = useState<QuickPlayOpponent>('normal');
+  const [opponentSetting, setOpponentSetting] = useState('normal');
   const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(5);
   const [showRules, setShowRules] = useState(false);
   

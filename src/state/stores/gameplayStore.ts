@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, createStartingDeck, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
@@ -294,7 +294,7 @@ const getInitializerForMatchType = (matchType: MatchType, runeTypeCount: import(
 export interface GameplayStore extends GameState {
   // Actions
   // Not in use
-  startGame: (topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
+  startGame: (runeTypeCount: import('../../types/game').RuneTypeCount) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   forceSoloVictory: () => void;
@@ -861,16 +861,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  startGame: (topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => {
+  startGame: (runeTypeCount: import('../../types/game').RuneTypeCount) => {
     set((state) => {
       const shouldResetState = state.runeTypeCount !== runeTypeCount || state.matchType !== 'versus';
       // If rune type count changed or we are resuming from a different match type, reinitialize the game with new configuration
       if (shouldResetState) {
         const newState = initializeGame(runeTypeCount);
-        const updatedControllers: PlayerControllers = {
-          bottom: { type: 'human' },
-          top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },
-        };
 
         const updatedPlayers: [Player, Player] = [
           { ...newState.players[0], type: 'human' },
@@ -882,7 +878,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           gameStarted: true,
           matchType: 'versus',
           runeTypeCount: runeTypeCount,
-          playerControllers: updatedControllers,
           players: updatedPlayers,
           runePowerTotal: 0,
           soloOutcome: null,
@@ -891,12 +886,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
         };
       }
-
-      // Otherwise just update the existing state
-      const updatedControllers: PlayerControllers = {
-        bottom: { type: 'human' },
-        top: topController === 'human' ? { type: 'human' } : { type: 'computer', difficulty: topController },
-      };
 
       const updatedPlayers: [Player, Player] = [
         { ...state.players[0], type: 'human' },
@@ -908,7 +897,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         gameStarted: true,
         matchType: 'versus',
         runeTypeCount: runeTypeCount,
-        playerControllers: updatedControllers,
         players: updatedPlayers,
         runePowerTotal: 0,
         soloOutcome: null,

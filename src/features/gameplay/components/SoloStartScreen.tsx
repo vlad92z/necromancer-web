@@ -24,7 +24,7 @@ const inputClasses =
 
 export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, bestRound = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
-  const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(6);
+  const [runeTypeCount] = useState<RuneTypeCount>(6);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
@@ -43,20 +43,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
     };
 
   const normalizedConfig = normalizeSoloConfig(soloConfig);
-
-  const patternToggleClasses = soloConfig.patternLinesLockOnComplete
-    ? 'border-transparent bg-gradient-to-br from-sky-500 to-purple-700 text-slate-200 shadow-[0_12px_30px_rgba(59,130,246,0.35)]'
-    : 'border-slate-600/60 bg-slate-900/30 text-slate-200 hover:border-slate-400/70';
-
-  const boardButtonClass = (count: number) => {
-    const isActive = runeTypeCount === count;
-    const base =
-      'flex-1 rounded-xl border-2 px-3 py-3 text-sm font-semibold transition-colors duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
-    const active =
-      'border-transparent bg-gradient-to-br from-sky-500 to-purple-600 text-slate-950 shadow-[0_12px_30px_rgba(59,130,246,0.35)]';
-    const inactive = 'border-slate-600/40 bg-transparent text-slate-200 hover:border-slate-400/60 hover:bg-slate-900/50';
-    return `${base} ${isActive ? active : inactive}`;
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">

@@ -4,7 +4,6 @@
 
 import type {
   GameState,
-  PlayerControllers,
   Player,
   Runeforge,
   PatternLine,
@@ -252,11 +251,6 @@ export function fillFactories(
  * Always creates a PvE game (Player vs AI Opponent)
  */
 export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
-  const playerControllers: PlayerControllers = {
-    bottom: { type: 'human' },
-    top: { type: 'computer', difficulty: 'normal' },
-  };
-
   const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
 
   const player1 = createPlayer(
@@ -308,7 +302,6 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
     soloStartingStrain: DEFAULT_STARTING_STRAIN,
     soloDeckTemplate: [],
-    playerControllers,
     players: [player1, player2],
     runeforges: filledRuneforges,
     centerPool: [],
@@ -347,11 +340,6 @@ export function initializeSoloGame(
   config?: Partial<SoloRunConfig>,
   options?: SoloInitializationOptions
 ): GameState {
-  const playerControllers: PlayerControllers = {
-    bottom: { type: 'human' },
-    top: { type: 'human' },
-  };
-
   const soloConfig = normalizeSoloConfig(config);
   const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
   const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
@@ -410,7 +398,6 @@ export function initializeSoloGame(
     strain: soloConfig.startingStrain,
     strainMultiplier: soloConfig.strainMultiplier,
     soloStartingStrain: soloConfig.startingStrain,
-    playerControllers,
     players: [soloPlayer, echoPlayer],
     soloDeckTemplate: startingDeckTemplate,
     runeforges: filledRuneforges,

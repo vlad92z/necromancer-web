@@ -2,8 +2,6 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
-import type { QuickPlayOpponent } from '../types/game'
-import { getControllerForIndex } from '../utils/playerControllers'
 
 export function GameMatch() {
   const navigate = useNavigate()
@@ -11,9 +9,7 @@ export function GameMatch() {
   const gameStarted = useGameplayStore((s) => s.gameStarted)
   const currentPlayerIndex = useGameplayStore((s) => s.currentPlayerIndex)
   const turnPhase = useGameplayStore((s) => s.turnPhase)
-  const selectedRunesLength = useGameplayStore((s) => s.selectedRunes.length)
   const players = useGameplayStore((s) => s.players)
-  const playerControllers = useGameplayStore((s) => s.playerControllers)
   const wholeGameState = useGameplayStore()
 
   // Set up navigation callback for returnToStartScreen
@@ -29,30 +25,14 @@ export function GameMatch() {
   
   useEffect(() => {
     if (!gameStarted) return;
-
-    const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
-    if (controller.type === 'computer' && turnPhase === 'draft') {
-      const delayTimer = setTimeout(() => {
-      }, 1500) // 1.5 second delay for Void effect
-
-      return () => clearTimeout(delayTimer)
-    }
-  }, [gameStarted, currentPlayerIndex, players, turnPhase, playerControllers])
+  }, [gameStarted, currentPlayerIndex, players, turnPhase])
   
   useEffect(() => {
     if (!gameStarted) return;
+  }, [gameStarted, currentPlayerIndex, players, turnPhase])
 
-    const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
-    if (controller.type === 'computer' && turnPhase === 'draft') {
-      const delayTimer = setTimeout(() => {
-      }, 1500) // 1.5 second delay for Frost effect
-
-      return () => clearTimeout(delayTimer)
-    }
-  }, [gameStarted, currentPlayerIndex, players, turnPhase, playerControllers])
-
-  const handleStartGame = (topController: QuickPlayOpponent, runeTypeCount: import('../types/game').RuneTypeCount) => {
-    startGame(topController, runeTypeCount)
+  const handleStartGame = (runeTypeCount: import('../types/game').RuneTypeCount) => {
+    startGame(runeTypeCount)
   }
 
   // Show start screen if game hasn't started

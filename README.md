@@ -80,7 +80,6 @@ src/
 ├── routes/                 # MainMenu, GameMatch, Solo, Developer, etc.
 ├── state/stores/           # Zustand stores (gameplay, UI)
 ├── styles/                 # Design tokens and global styles
-├── systems/aiController.ts # AI driver for automated turns
 ├── types/                  # Domain types (game, rune, controllers)
 ├── utils/                  # Pure logic (scoring, init, AI helpers, rune effects)
 ├── stories/                # Storybook-like design previews
