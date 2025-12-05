@@ -10,9 +10,9 @@ import type { Runeforge } from '../types/game';
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
 
-const BASE_EPIC_CHANCE = 1;
-const BASE_RARE_CHANCE = 20;
-const EPIC_INCREMENT_PER_WIN = 1;
+const BASE_EPIC_CHANCE = 15;
+const BASE_RARE_CHANCE = 15;
+const EPIC_INCREMENT_PER_WIN = 5;
 const RARE_INCREMENT_PER_WIN = 5;
 
 function getDraftRarity(winStreak: number): RuneEffectRarity {

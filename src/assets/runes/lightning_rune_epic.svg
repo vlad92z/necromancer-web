@@ -25,7 +25,7 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="1"
-     inkscape:cx="345.5"
+     inkscape:cx="346"
      inkscape:cy="381"
      inkscape:window-width="1800"
      inkscape:window-height="1101"
@@ -40,15 +40,15 @@
        inkscape:collect="always">
       <stop
          style="stop-color:#f6ed00;stop-opacity:1;"
-         offset="0"
+         offset="0.42125985"
          id="stop6" />
       <stop
-         style="stop-color:#e0b602;stop-opacity:0.66137564;"
-         offset="0.73561084"
+         style="stop-color:#362a02;stop-opacity:0.51098901;"
+         offset="0.52891791"
          id="stop8" />
       <stop
          style="stop-color:#8c00ff;stop-opacity:1;"
-         offset="0.7974683"
+         offset="0.92935807"
          id="stop7" />
     </linearGradient>
     <radialGradient

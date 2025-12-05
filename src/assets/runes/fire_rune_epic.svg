@@ -40,15 +40,15 @@
        inkscape:collect="always">
       <stop
          style="stop-color:#f60000;stop-opacity:1;"
-         offset="0.36811027"
+         offset="0.51875126"
          id="stop6" />
       <stop
-         style="stop-color:#8f1e05;stop-opacity:0.55769229;"
-         offset="0.59673333"
+         style="stop-color:#380e09;stop-opacity:0.55769229;"
+         offset="0.68166924"
          id="stop8" />
       <stop
-         style="stop-color:#b312ff;stop-opacity:0.9932065;"
-         offset="0.80322117"
+         style="stop-color:#8c00ff;stop-opacity:1;"
+         offset="0.86732376"
          id="stop7" />
     </linearGradient>
     <radialGradient
@@ -65,13 +65,13 @@
        inkscape:collect="always"
        style="color-interpolation-filters:sRGB"
        id="filter24"
-       x="-0.08911525"
-       y="-0.08911525"
-       width="1.1782305"
-       height="1.1782305">
+       x="-0.061394558"
+       y="-0.061394558"
+       width="1.1227891"
+       height="1.1227891">
       <feGaussianBlur
          inkscape:collect="always"
-         stdDeviation="5.5697031"
+         stdDeviation="3.8371599"
          id="feGaussianBlur24" />
     </filter>
     <filter

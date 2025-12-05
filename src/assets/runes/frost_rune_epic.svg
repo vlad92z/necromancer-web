@@ -27,28 +27,28 @@
      inkscape:zoom="0.91852959"
      inkscape:cx="424.59166"
      inkscape:cy="367.97944"
-     inkscape:window-width="1920"
-     inkscape:window-height="1021"
-     inkscape:window-x="1080"
-     inkscape:window-y="351"
+     inkscape:window-width="1800"
+     inkscape:window-height="1101"
+     inkscape:window-x="3000"
+     inkscape:window-y="494"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer2-2" />
+     inkscape:current-layer="layer1" />
   <defs
      id="defs1">
     <linearGradient
        id="linearGradient6"
        inkscape:collect="always">
       <stop
-         style="stop-color:#004b8f;stop-opacity:1;"
-         offset="0"
+         style="stop-color:#0cf8ff;stop-opacity:1;"
+         offset="0.38385826"
          id="stop6" />
       <stop
-         style="stop-color:#0cf8ff;stop-opacity:0.30769235;"
-         offset="1"
+         style="stop-color:#006062;stop-opacity:0.11263736;"
+         offset="0.65157485"
          id="stop8" />
       <stop
-         style="stop-color:#ffffff;stop-opacity:0;"
-         offset="1"
+         style="stop-color:#8c00ff;stop-opacity:1;"
+         offset="0.79133856"
          id="stop7" />
     </linearGradient>
     <radialGradient

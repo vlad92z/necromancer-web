@@ -25,13 +25,13 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="1"
-     inkscape:cx="344"
+     inkscape:cx="343.5"
      inkscape:cy="381"
-     inkscape:window-width="1200"
-     inkscape:window-height="975"
-     inkscape:window-x="-52"
-     inkscape:window-y="804"
-     inkscape:window-maximized="0"
+     inkscape:window-width="1800"
+     inkscape:window-height="1101"
+     inkscape:window-x="3000"
+     inkscape:window-y="494"
+     inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
      id="defs1">
@@ -44,11 +44,11 @@
          id="stop6" />
       <stop
          style="stop-color:#e0b602;stop-opacity:0.76898736;"
-         offset="0.47901565"
+         offset="0.60452724"
          id="stop8" />
       <stop
          style="stop-color:#08deff;stop-opacity:1;"
-         offset="1"
+         offset="0.87448841"
          id="stop7" />
     </linearGradient>
     <radialGradient
@@ -65,13 +65,13 @@
        inkscape:collect="always"
        style="color-interpolation-filters:sRGB"
        id="filter24"
-       x="-0.13972733"
-       y="-0.13972733"
-       width="1.2794547"
-       height="1.2794547">
+       x="-0.099794777"
+       y="-0.099794777"
+       width="1.1995896"
+       height="1.1995896">
       <feGaussianBlur
          inkscape:collect="always"
-         stdDeviation="8.7329575"
+         stdDeviation="6.2371735"
          id="feGaussianBlur24" />
     </filter>
     <filter
