@@ -51,7 +51,6 @@ export interface SoloVariantData {
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
   onStartNextGame: () => void;
-  deckDraftReadyForNextGame: boolean;
 }
 
 export interface DuelVariantData {
@@ -114,7 +113,6 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     draftSource,
     round,
     strain,
-    deckDraftReadyForNextGame,
   } = gameState;
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
@@ -347,7 +345,6 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
         onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
         onOpenDeckOverlay: () => setShowDeckOverlay(true),
         onStartNextGame: startNextSoloGame,
-        deckDraftReadyForNextGame,
       };
   const boardContent = renderContent(
     sharedProps,

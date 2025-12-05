@@ -50,7 +50,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     onSelectDeckDraftRuneforge,
     onOpenDeckOverlay,
     onStartNextGame,
-    deckDraftReadyForNextGame,
   } = variantData;
 
   return (
@@ -107,7 +106,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             onOpenDeckOverlay={onOpenDeckOverlay}
             currentDeckSize={players[0].deck.length}
             onStartNextGame={onStartNextGame}
-            deckDraftReadyForNextGame={deckDraftReadyForNextGame}
           />
         </div>
       )}
