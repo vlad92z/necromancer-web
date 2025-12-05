@@ -10,8 +10,6 @@ interface DeckDraftingModalProps {
   draftState: DeckDraftState;
   onSelectRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
-  currentTarget: number;
-  nextTarget: number;
   currentDeckSize: number;
 }
 
@@ -19,12 +17,14 @@ export function DeckDraftingModal({
   draftState,
   onSelectRuneforge,
   onOpenDeckOverlay,
-  currentTarget,
-  nextTarget,
   currentDeckSize,
 }: DeckDraftingModalProps) {
   const playClickSound = useClickSound();
   const picksUsed = draftState.totalPicks - draftState.picksRemaining;
+
+  const dummySelect = () => {
+
+  };
 
   const handleSelect = (runeforgeId: string) => {
     playClickSound();
@@ -63,9 +63,9 @@ export function DeckDraftingModal({
         {draftState.runeforges.map((runeforge) => (
           <div
             key={runeforge.id}
-            className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/70 px-3 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.45)]"
+            className="flex flex-col items-center gap-3 px-3 py-4"
           >
-            <Runeforge runeforge={runeforge} onRuneforgeSelect={handleSelect} />
+            <Runeforge runeforge={runeforge} onRuneforgeSelect={dummySelect} />
             <button
               type="button"
               onClick={() => handleSelect(runeforge.id)}

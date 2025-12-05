@@ -103,8 +103,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             draftState={deckDraftState}
             onSelectRuneforge={onSelectDeckDraftRuneforge}
             onOpenDeckOverlay={onOpenDeckOverlay}
-            currentTarget={soloTargetScore}
-            nextTarget={soloTargetScore + 50} //TODO: Use the same value that will be used in-game
             currentDeckSize={players[0].deck.length}
           />
         </div>
