@@ -149,6 +149,8 @@ const createSoloBoardFixtures = (
     isDeckDrafting: gameState.turnPhase === 'deck-draft',
     onSelectDeckDraftRuneforge: () => {},
     onOpenDeckOverlay: () => {},
+    onStartNextGame: () => {},
+    deckDraftReadyForNextGame: gameState.deckDraftReadyForNextGame,
   };
 
   return { shared, variantData };

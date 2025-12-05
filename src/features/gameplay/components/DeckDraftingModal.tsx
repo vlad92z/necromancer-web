@@ -2,8 +2,10 @@
  * DeckDraftingModal - post-victory drafting overlay for Solo mode
  */
 
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, animate, useMotionValue } from 'framer-motion';
 import { Runeforge } from './Center/Runeforge';
-import type { DeckDraftState } from '../../../types/game';
+import type { DeckDraftState, Runeforge as RuneforgeType } from '../../../types/game';
 import { useClickSound } from '../../../hooks/useClickSound';
 
 interface DeckDraftingModalProps {
@@ -11,6 +13,8 @@ interface DeckDraftingModalProps {
   onSelectRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
   currentDeckSize: number;
+  onStartNextGame: () => void;
+  deckDraftReadyForNextGame: boolean;
 }
 
 export function DeckDraftingModal({
@@ -18,22 +22,154 @@ export function DeckDraftingModal({
   onSelectRuneforge,
   onOpenDeckOverlay,
   currentDeckSize,
+  onStartNextGame,
+  deckDraftReadyForNextGame,
 }: DeckDraftingModalProps) {
   const playClickSound = useClickSound();
+  const [displayedRuneforges, setDisplayedRuneforges] = useState<RuneforgeType[]>(draftState.runeforges);
+  const [pendingRuneforges, setPendingRuneforges] = useState<RuneforgeType[] | null>(null);
+  const [selectedRuneforgeId, setSelectedRuneforgeId] = useState<string | null>(null);
+  const [animationPhase, setAnimationPhase] = useState<'idle' | 'hidingOthers' | 'selectedExit'>('idle');
+  const [showSelectedRuneforge, setShowSelectedRuneforge] = useState(true);
+  const deckCountValue = useMotionValue(currentDeckSize);
+  const [displayedDeckCount, setDisplayedDeckCount] = useState(currentDeckSize);
+  const deckCountAnimation = useRef<ReturnType<typeof animate> | null>(null);
   const picksUsed = draftState.totalPicks - draftState.picksRemaining;
+  const isAnimating = animationPhase !== 'idle';
+  const draftComplete = draftState.picksRemaining === 0;
+  const canStartNextGame = deckDraftReadyForNextGame;
+  const selectionLocked = isAnimating || draftComplete;
 
-  const dummySelect = () => {
+  const dummySelect = () => {};
 
+  useEffect(() => {
+    const unsubscribe = deckCountValue.on('change', (latest) => {
+      setDisplayedDeckCount(Math.round(latest));
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [deckCountValue]);
+
+  useEffect(() => {
+    if (animationPhase === 'idle') {
+      deckCountValue.set(currentDeckSize);
+      setDisplayedDeckCount(currentDeckSize);
+    } else if (currentDeckSize > displayedDeckCount) {
+      deckCountValue.set(currentDeckSize);
+    }
+  }, [animationPhase, currentDeckSize, deckCountValue, displayedDeckCount]);
+
+  useEffect(() => {
+    if (animationPhase === 'idle') {
+      setDisplayedRuneforges(draftState.runeforges);
+      setPendingRuneforges(null);
+      setSelectedRuneforgeId(null);
+      setShowSelectedRuneforge(true);
+      return;
+    }
+
+    const incomingKey = draftState.runeforges.map((forge) => forge.id).join('|');
+    const currentKey = displayedRuneforges.map((forge) => forge.id).join('|');
+
+    if (incomingKey !== currentKey) {
+      setPendingRuneforges(draftState.runeforges);
+    }
+  }, [animationPhase, displayedRuneforges, draftState.runeforges]);
+
+  useEffect(() => {
+    if (animationPhase === 'hidingOthers' && selectedRuneforgeId) {
+      const hasOtherRuneforges = displayedRuneforges.some((forge) => forge.id !== selectedRuneforgeId);
+      if (!hasOtherRuneforges) {
+        setAnimationPhase('selectedExit');
+      }
+    }
+  }, [animationPhase, displayedRuneforges, selectedRuneforgeId]);
+
+  useEffect(() => {
+    if (animationPhase === 'selectedExit' && selectedRuneforgeId) {
+      setShowSelectedRuneforge(false);
+      onSelectRuneforge(selectedRuneforgeId);
+    }
+  }, [animationPhase, onSelectRuneforge, selectedRuneforgeId]);
+
+  useEffect(() => {
+    return () => {
+      deckCountAnimation.current?.stop();
+    };
+  }, []);
+
+  const runeforgeVariants = useMemo(
+    () => ({
+      initial: { opacity: 0, scale: 0.95, y: 12 },
+      animate: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 26 } },
+      exit: (isSelected: boolean) => ({
+        opacity: 0,
+        scale: isSelected ? 0.9 : 0.85,
+        y: isSelected ? -10 : 14,
+        filter: 'blur(3px)',
+        transition: { duration: 0.26, ease: 'easeInOut' },
+      }),
+    }),
+    []
+  );
+
+  const visibleRuneforges = displayedRuneforges.filter((runeforge) => {
+    if (!selectedRuneforgeId) {
+      return true;
+    }
+    if (animationPhase === 'hidingOthers') {
+      return runeforge.id === selectedRuneforgeId;
+    }
+    if (animationPhase === 'selectedExit') {
+      return runeforge.id === selectedRuneforgeId && showSelectedRuneforge;
+    }
+    return true;
+  });
+
+  const handleRuneforgeExitComplete = () => {
+    if (animationPhase === 'hidingOthers') {
+      setAnimationPhase('selectedExit');
+      return;
+    }
+
+    if (animationPhase === 'selectedExit') {
+      if (pendingRuneforges) {
+        setDisplayedRuneforges(pendingRuneforges);
+        setPendingRuneforges(null);
+      }
+      setShowSelectedRuneforge(true);
+      setSelectedRuneforgeId(null);
+      setAnimationPhase('idle');
+    }
   };
 
-  const handleSelect = (runeforgeId: string) => {
+  const animateDeckCounter = (target: number) => {
+    deckCountAnimation.current?.stop();
+    deckCountAnimation.current = animate(deckCountValue, target, {
+      duration: 0.6,
+      ease: 'easeOut',
+    });
+  };
+
+  const handleSelect = (runeforge: RuneforgeType) => {
+    if (selectionLocked || deckDraftReadyForNextGame) {
+      return;
+    }
     playClickSound();
-    onSelectRuneforge(runeforgeId);
+    setSelectedRuneforgeId(runeforge.id);
+    setAnimationPhase('hidingOthers');
+    animateDeckCounter(currentDeckSize + runeforge.runes.length);
   };
 
   const handleOpenDeckOverlay = () => {
     playClickSound();
     onOpenDeckOverlay();
+  };
+
+  const handleStartNextGame = () => {
+    playClickSound();
+    onStartNextGame();
   };
 
   return (
@@ -60,29 +196,65 @@ export function DeckDraftingModal({
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
-        {draftState.runeforges.map((runeforge) => (
-          <div
-            key={runeforge.id}
-            className="flex flex-col items-center gap-3 px-3 py-4"
+        <AnimatePresence mode="sync" onExitComplete={handleRuneforgeExitComplete}>
+          {visibleRuneforges.map((runeforge) => {
+            const isSelected = runeforge.id === selectedRuneforgeId;
+            return (
+              <motion.div
+                layout
+                key={runeforge.id}
+                variants={runeforgeVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                custom={isSelected}
+                className="flex flex-col items-center gap-3 px-3 py-4"
+              >
+                <Runeforge runeforge={runeforge} onRuneforgeSelect={dummySelect} />
+                <button
+                  type="button"
+                  onClick={() => handleSelect(runeforge)}
+                  disabled={selectionLocked}
+                  className="w-full rounded-xl border border-sky-400/40 bg-gradient-to-r from-sky-500/80 to-indigo-500/80 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Draft
+                </button>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+        {visibleRuneforges.length === 0 && draftComplete && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:col-span-3 rounded-2xl border border-emerald-300/25 bg-emerald-900/20 px-4 py-6 text-center text-slate-100"
           >
-            <Runeforge runeforge={runeforge} onRuneforgeSelect={dummySelect} />
-            <button
-              type="button"
-              onClick={() => handleSelect(runeforge.id)}
-              className="w-full rounded-xl border border-sky-400/40 bg-gradient-to-r from-sky-500/80 to-indigo-500/80 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-            >
-              Draft
-            </button>
-          </div>
-        ))}
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-100/85">Draft Complete</div>
+            <div className="text-base font-bold text-white">Ready when you are. Start the next game to continue your run.</div>
+          </motion.div>
+        )}
       </div>
 
       <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Deck Size</div>
-          <div className="text-base font-bold text-white">{currentDeckSize} runes</div>
+          <motion.div
+            animate={{ scale: isAnimating ? [1, 1.08, 1] : 1 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+            className="text-base font-bold text-white"
+          >
+            {displayedDeckCount} runes
+          </motion.div>
         </div>
-        <div className="flex w-full justify-end sm:w-auto">
+        <div className="flex w-full justify-end sm:w-auto gap-2">
+          <button
+              type="button"
+              onClick={handleStartNextGame}
+              // disabled={!canStartNextGame}
+              className="w-full sm:w-auto rounded-xl border border-emerald-300/60 bg-gradient-to-r from-emerald-500/85 to-cyan-500/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Next Game
+            </button>
           <button
             type="button"
             onClick={handleOpenDeckOverlay}

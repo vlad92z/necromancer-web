@@ -53,6 +53,7 @@ function enterDeckDraftMode(state: GameState): GameState {
   return {
     ...state,
     deckDraftState,
+    deckDraftReadyForNextGame: false,
     soloDeckTemplate: deckTemplate,
     turnPhase: 'deck-draft' as const,
     runeforges: [],
@@ -317,6 +318,7 @@ export interface GameplayStore extends GameState {
   forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
+  startNextSoloGame: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
   draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void;
   placeRunes: (patternLineIndex: number) => void;
@@ -1238,6 +1240,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         ...nextState,
         deckDraftState: nextState.deckDraftState ?? null,
+        deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
         soloDeckTemplate: deckTemplate,
         soloBaseTargetScore,
         soloStartingStrain,
@@ -1288,30 +1291,19 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (!nextDraftState) {
         const nextTarget = state.soloTargetScore + 50;
         const deckRunesPerType = Math.max(1, Math.round(updatedDeckTemplate.length / state.runeTypeCount));
-        const nextGameState = initializeSoloGame(
-          state.runeTypeCount,
-          {
-            startingHealth: state.startingHealth,
-            startingStrain: state.soloStartingStrain,
-            strainMultiplier: state.strainMultiplier,
-            factoriesPerPlayer: state.factoriesPerPlayer,
-            deckRunesPerType,
-            targetRuneScore: nextTarget,
-            patternLinesLockOnComplete: state.soloPatternLineLock,
-          },
-          {
-            startingDeck: updatedDeckTemplate,
-            targetScore: nextTarget,
-            winStreak: state.soloWinStreak,
-          }
-        );
-
         return {
-          ...nextGameState,
-          gameStarted: true,
+          ...state,
+          players: [updatedPlayer, state.players[1]],
           soloDeckTemplate: updatedDeckTemplate,
+          totalRunesPerPlayer: updatedDeckTemplate.length,
+          soloTargetScore: nextTarget,
           soloBaseTargetScore: state.soloBaseTargetScore || nextTarget,
-          deckDraftState: null,
+          deckDraftState: {
+            runeforges: [],
+            picksRemaining: 0,
+            totalPicks: state.deckDraftState.totalPicks,
+          },
+          deckDraftReadyForNextGame: true,
         };
       }
 
@@ -1321,6 +1313,45 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         deckDraftState: nextDraftState,
         soloDeckTemplate: updatedDeckTemplate,
         totalRunesPerPlayer: updatedDeckTemplate.length,
+        deckDraftReadyForNextGame: false,
+      };
+    });
+  },
+
+  startNextSoloGame: () => {
+    set((state) => {
+      if (state.matchType !== 'solo' || state.turnPhase !== 'deck-draft' || !state.deckDraftReadyForNextGame) {
+        return state;
+      }
+
+      const deckTemplate = getSoloDeckTemplate(state);
+      const nextTarget = state.soloTargetScore;
+      const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / state.runeTypeCount));
+      const nextGameState = initializeSoloGame(
+        state.runeTypeCount,
+        {
+          startingHealth: state.startingHealth,
+          startingStrain: state.soloStartingStrain,
+          strainMultiplier: state.strainMultiplier,
+          factoriesPerPlayer: state.factoriesPerPlayer,
+          deckRunesPerType,
+          targetRuneScore: nextTarget,
+          patternLinesLockOnComplete: state.soloPatternLineLock,
+        },
+        {
+          startingDeck: deckTemplate,
+          targetScore: nextTarget,
+          winStreak: state.soloWinStreak,
+        }
+      );
+
+      return {
+        ...nextGameState,
+        gameStarted: true,
+        soloDeckTemplate: deckTemplate,
+        soloBaseTargetScore: state.soloBaseTargetScore || nextTarget,
+        deckDraftState: null,
+        deckDraftReadyForNextGame: false,
       };
     });
   },

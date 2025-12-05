@@ -341,6 +341,7 @@ export function initializeGame(runeTypeCount: RuneTypeCount = 5): GameState {
     soloWinStreak: 0,
     deckDraftState: null,
     soloBaseTargetScore: 0,
+    deckDraftReadyForNextGame: false,
   };
 }
 
@@ -449,5 +450,6 @@ export function initializeSoloGame(
     soloWinStreak: winStreak,
     deckDraftState: null,
     soloBaseTargetScore: soloConfig.targetRuneScore,
+    deckDraftReadyForNextGame: false,
   };
 }
