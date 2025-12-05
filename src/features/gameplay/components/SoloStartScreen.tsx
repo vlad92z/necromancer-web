@@ -138,16 +138,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   />
                 </FieldConfig>
                 <SliderConfig
-                  label="Runeforges"
-                  description="How many personal factories deal into your pool."
-                  min={2}
-                  max={6}
-                  step={1}
-                  value={soloConfig.factoriesPerPlayer}
-                  onChange={(value) => updateConfigValue('factoriesPerPlayer', value)}
-                  valueLabel={`${soloConfig.factoriesPerPlayer} runeforges`}
-                />
-                <SliderConfig
                   label="Deck Size"
                   description="How many of each rune type appear in your deck."
                   min={8}
@@ -157,42 +147,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   onChange={(value) => updateConfigValue('deckRunesPerType', value)}
                   valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * runeTypeCount} total)`}
                 />
-                <FieldConfig
-                  label="Lock Completed Lines"
-                  description="When a pattern line scores, keep that line blocked until the next round (Solo only)."
-                >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateConfigValue('patternLinesLockOnComplete', !soloConfig.patternLinesLockOnComplete)
-                    }
-                    className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold uppercase tracking-wide transition ${patternToggleClasses}`}
-                  >
-                    {soloConfig.patternLinesLockOnComplete ? 'Enabled' : 'Disabled'}
-                  </button>
-                </FieldConfig>
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-sm font-semibold uppercase tracking-wide text-slate-200">Board Size</div>
-                <div className="flex gap-3">
-                  {[4, 6].map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => setRuneTypeCount(count as RuneTypeCount)}
-                      className={boardButtonClass(count)}
-                    >
-                      {count}x{count}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-sky-300">
-                  {runeTypeCount === 3 && '3 rune types, 3x3 Spell Wall, light overload pressure.'}
-                  {runeTypeCount === 4 && '4 rune types, 4x4 Spell Wall, balanced Solo pace.'}
-                  {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, extended run with heavy pressure.'}
-                  {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning.'}
-                </p>
               </div>
             </div>
           )}
