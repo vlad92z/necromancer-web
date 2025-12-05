@@ -40,14 +40,13 @@ export function DeckDraftingModal({
     <div className="w-full max-w-5xl rounded-3xl border border-white/12 bg-[rgba(10,10,24,0.9)] p-6 md:p-8 shadow-[0_34px_80px_rgba(0,0,0,0.7)] backdrop-blur">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <div className="text-xs font-bold uppercase tracking-[0.22em] text-slate-300/80">Deck Drafting</div>
+          <div className="text-xs font-bold uppercase tracking-[0.22em] text-slate-300/80">victory</div>
           <h2 className="text-2xl font-bold text-white">Choose your new runes</h2>
-          <p className="text-sm text-slate-300">Select one runeforge below. All four runes will be added to your deck.</p>
         </div>
-        <div className="rounded-2xl border border-sky-400/40 bg-sky-900/30 px-4 py-3 text-right">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Progress</div>
-          <div className="text-lg font-extrabold text-white">{picksUsed} / {draftState.totalPicks}</div>
-          <div className="text-xs text-slate-200/80">Selections completed</div>
+        <div className="rounded-2xl border border-sky-400/40 bg-sky-900/30 px-4 py-3 text-left">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Bonus</div>
+          <div className="text-lg font-extrabold text-white">50</div>
+          <div className="text-xs text-slate-200/80">Arcane Dust Received</div>
         </div>
       </div>
 
@@ -79,14 +78,6 @@ export function DeckDraftingModal({
       </div>
 
       <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Selections Left</div>
-          <div className="text-base font-bold text-white">{draftState.picksRemaining}</div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Target Increase</div>
-          <div className="text-base font-bold text-sky-200">{currentTarget} → {nextTarget} rune power</div>
-        </div>
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Deck Size</div>
           <div className="text-base font-bold text-white">{currentDeckSize} runes</div>
