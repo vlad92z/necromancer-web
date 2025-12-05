@@ -1327,7 +1327,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const deckTemplate = getSoloDeckTemplate(state);
       const nextTarget = state.soloTargetScore;
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / state.runeTypeCount));
-      const nextGameState = initializeSoloGame(
+      let nextGameState = initializeSoloGame(
         state.runeTypeCount,
         {
           startingHealth: state.startingHealth,
@@ -1344,7 +1344,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           winStreak: state.soloWinStreak,
         }
       );
-
+      nextGameState.round += 1;
       return {
         ...nextGameState,
         gameStarted: true,
