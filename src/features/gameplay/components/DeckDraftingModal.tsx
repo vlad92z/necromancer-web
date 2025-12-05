@@ -71,7 +71,7 @@ export function DeckDraftingModal({
               onClick={() => handleSelect(runeforge.id)}
               className="w-full rounded-xl border border-sky-400/40 bg-gradient-to-r from-sky-500/80 to-indigo-500/80 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
             >
-              Draft Forge
+              Draft
             </button>
           </div>
         ))}
