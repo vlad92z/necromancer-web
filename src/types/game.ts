@@ -46,13 +46,6 @@ export interface Runeforge {
 }
 
 /**
- * Selection target for the Void effect
- */
-export type VoidTarget =
-  | { source: 'runeforge'; runeforgeId: Runeforge['id']; runeId: Rune['id'] }
-  | { source: 'center'; runeId: Rune['id'] };
-
-/**
  * Pattern line (1-5 tiers, each requiring matching runes to complete)
  */
 export interface PatternLine {
@@ -87,12 +80,7 @@ export interface FloorLine {
 /**
  * Player type (human or computer-controlled)
  */
-export type PlayerType = 'human' | 'computer';
-
-/**
- * AI difficulty levels
- */
-export type AIDifficulty = 'easy' | 'normal' | 'hard';
+export type PlayerType = 'human' | 'computer'; //TODO: Remove
 
 /**
  * Player side on the board
@@ -120,24 +108,12 @@ export interface SoloRunConfig {
 /**
  * Controller type for a player seat
  */
-export type PlayerController =
-  | { type: 'human' }
-  | { type: 'computer'; difficulty: AIDifficulty };
+export type PlayerController = { type: 'human' };
 
 /**
  * Controller configuration for both player seats
  */
 export type PlayerControllers = Record<PlayerSide, PlayerController>;
-
-/**
- * Quick play opponent selection
- */
-export type QuickPlayOpponent = AIDifficulty | 'human';
-
-/**
- * Difficulty type alias for spectator mode
- */
-export type Difficulty = AIDifficulty;
 
 /**
  * Solo game ending state

@@ -4,10 +4,9 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, VoidTarget, AIDifficulty, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, QuickPlayOpponent, PlayerControllers, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
 import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, createStartingDeck, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
-import { getAIDifficultyLabel } from '../../utils/aiDifficultyLabels';
 import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
 import castSoundUrl from '../../assets/sounds/cast.mp3';
@@ -18,10 +17,6 @@ function calculateNextStrainMultiplier(
   baseMultiplier: number
 ): number {
   return baseMultiplier;
-}
-
-function getAIDisplayName(baseName: string, difficulty: AIDifficulty): string {
-  return `${baseName} (${getAIDifficultyLabel(difficulty)})`;
 }
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
@@ -300,7 +295,6 @@ export interface GameplayStore extends GameState {
   // Actions
   // Not in use
   startGame: (topController: QuickPlayOpponent, runeTypeCount: import('../../types/game').RuneTypeCount) => void;
-  startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   forceSoloVictory: () => void;
@@ -313,7 +307,6 @@ export interface GameplayStore extends GameState {
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
-  destroyRune: (target: VoidTarget) => void;
   acknowledgeOverloadSound: () => void;
   endRound: () => void;
   resetGame: () => void;
@@ -835,68 +828,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  destroyRune: (target: VoidTarget) => {
-    set((state) => {
-      // Void effect: destroy a single rune from a runeforge or the center
-      if (!state.voidEffectPending) return state;
-
-      const isSoloMode = state.matchType === 'solo';
-      const nextPlayerIndex = isSoloMode ? state.currentPlayerIndex : state.currentPlayerIndex === 0 ? 1 : 0;
-
-      if (target.source === 'runeforge') {
-        const targetRuneforge = state.runeforges.find((f) => f.id === target.runeforgeId);
-        if (!targetRuneforge) {
-          return state;
-        }
-
-        const hasRune = targetRuneforge.runes.some((r) => r.id === target.runeId);
-        if (!hasRune) {
-          return state;
-        }
-
-        const updatedRuneforges = state.runeforges.map((f) =>
-          f.id === target.runeforgeId
-            ? { ...f, runes: f.runes.filter((r) => r.id !== target.runeId) }
-            : f
-        );
-
-        const allRuneforgesEmpty = updatedRuneforges.every((f) => f.runes.length === 0);
-        const centerEmpty = state.centerPool.length === 0;
-        const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-
-        return {
-          ...state,
-          runeforges: updatedRuneforges,
-          currentPlayerIndex: nextPlayerIndex as 0 | 1,
-          turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
-          shouldTriggerEndRound: shouldEndRound,
-        };
-      }
-
-      if (target.source === 'center') {
-        const hasRune = state.centerPool.some((r) => r.id === target.runeId);
-        if (!hasRune) {
-          return state;
-        }
-
-        const updatedCenterPool = state.centerPool.filter((r) => r.id !== target.runeId);
-        const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-        const centerEmpty = updatedCenterPool.length === 0;
-        const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-
-        return {
-          ...state,
-          centerPool: updatedCenterPool,
-          currentPlayerIndex: nextPlayerIndex as 0 | 1,
-          turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
-          shouldTriggerEndRound: shouldEndRound,
-        };
-      }
-
-      return state;
-    });
-  },
-  
   acknowledgeOverloadSound: () => {
     set({ overloadSoundPending: false });
   },
@@ -943,14 +874,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         const updatedPlayers: [Player, Player] = [
           { ...newState.players[0], type: 'human' },
-          {
-            ...newState.players[1],
-            type: updatedControllers.top.type,
-            name:
-              updatedControllers.top.type === 'computer'
-                ? getAIDisplayName('Opponent', updatedControllers.top.difficulty)
-                : 'Player 2',
-          },
+          { ...newState.players[1], type: 'human' },
         ];
 
         return {
@@ -976,14 +900,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const updatedPlayers: [Player, Player] = [
         { ...state.players[0], type: 'human' },
-        {
-          ...state.players[1],
-          type: updatedControllers.top.type,
-          name:
-            updatedControllers.top.type === 'computer'
-              ? getAIDisplayName('Opponent', updatedControllers.top.difficulty)
-              : 'Player 2',
-        },
+        { ...state.players[1], type: 'human' }
       ];
 
       return {
@@ -995,41 +912,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         players: updatedPlayers,
         runePowerTotal: 0,
         soloOutcome: null,
-      };
-    });
-  },
-
-  startSpectatorMatch: (topDifficulty: AIDifficulty, bottomDifficulty: AIDifficulty) => {
-    set((state) => {
-      const baseState = state.matchType === 'versus' ? state : initializeGame(state.runeTypeCount);
-      const playerControllers: PlayerControllers = {
-        bottom: { type: 'computer', difficulty: bottomDifficulty },
-        top: { type: 'computer', difficulty: topDifficulty },
-      };
-
-      const updatedPlayers: [Player, Player] = [
-        {
-          ...baseState.players[0],
-          type: 'computer',
-          name: getAIDisplayName('Bottom AI', bottomDifficulty),
-        },
-        {
-          ...baseState.players[1],
-          type: 'computer',
-          name: getAIDisplayName('Top AI', topDifficulty),
-        },
-      ];
-
-      return {
-        ...baseState,
-        gameStarted: true,
-        matchType: 'versus',
-        players: updatedPlayers,
-        playerControllers,
-        runePowerTotal: 0,
-        soloOutcome: null,
-        strain: DEFAULT_STARTING_STRAIN,
-        strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
       };
     });
   },

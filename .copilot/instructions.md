@@ -100,7 +100,6 @@ src/
 ├── types/                  # TypeScript type definitions
 │   └── game.ts             # Core game domain types
 ├── utils/                  # Pure utility functions and game logic
-│   ├── aiPlayer.ts         # AI opponent decision logic
 │   ├── gameInitialization.ts  # Game setup and initialization
 │   ├── runeHelpers.ts      # Rune-related utilities
 │   └── scoring.ts          # Scoring calculations (spellpower, segments)

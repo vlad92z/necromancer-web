@@ -5,7 +5,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { QuickPlayOpponent, RuneTypeCount } from '../../../types/game';
-import { getAIDifficultyLabel } from '../../../utils/aiDifficultyLabels';
 import { backLinkClasses, primaryActionClasses, secondaryActionClasses, viewShellClasses } from '../../../styles/uiClasses';
 import { RulesOverlay } from './RulesOverlay';
 
@@ -93,7 +92,7 @@ export function StartGameScreen({ onStartGame }: StartGameScreenProps) {
                     onClick={() => setOpponentSetting(setting)}
                     className={`${pillButtonBase} ${isActive ? pillButtonActive : pillButtonInactive}`}
                   >
-                    {setting === 'human' ? 'Human' : getAIDifficultyLabel(setting)}
+                    {'Human'}
                   </button>
                 );
               })}

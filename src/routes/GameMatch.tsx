@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StartGameScreen } from '../features/gameplay/components/StartGameScreen'
 import { useGameplayStore, setNavigationCallback } from '../state/stores/gameplayStore'
-import { executeAITurn, needsAIPlacement } from '../systems/aiController'
 import type { QuickPlayOpponent } from '../types/game'
 import { getControllerForIndex } from '../utils/playerControllers'
 
@@ -27,37 +26,6 @@ export function GameMatch() {
       setNavigationCallback(null)
     }
   }, [navigate])
-
-  // Trigger AI turn when it's AI's turn (draft phase)
-  useEffect(() => {
-    if (!gameStarted) return;
-
-    const controller = getControllerForIndex(useGameplayStore.getState(), currentPlayerIndex)
-    if (
-      controller.type === 'computer' &&
-      turnPhase === 'draft' &&
-      selectedRunesLength === 0
-    ) {
-      const delayTimer = setTimeout(() => {
-        executeAITurn()
-      }, 2000) // 2 second delay before AI starts
-
-      return () => clearTimeout(delayTimer)
-    }
-  }, [gameStarted, currentPlayerIndex, turnPhase, players, selectedRunesLength, playerControllers])
-  
-  // Handle AI placement after drafting
-  useEffect(() => {
-    if (!gameStarted) return;
-
-    if (needsAIPlacement()) {
-      const delayTimer = setTimeout(() => {
-        executeAITurn()
-      }, 2000) // 2 second delay before AI places runes
-
-      return () => clearTimeout(delayTimer)
-    }
-  }, [gameStarted, currentPlayerIndex, players, selectedRunesLength, turnPhase, playerControllers])
   
   useEffect(() => {
     if (!gameStarted) return;
