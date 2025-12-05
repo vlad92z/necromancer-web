@@ -80,16 +80,16 @@ export function DeckDraftingModal({
 
       <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Deck Size</div>
-          <div className="text-base font-bold text-white">{currentDeckSize} runes</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Selections Left</div>
+          <div className="text-base font-bold text-white">{draftState.picksRemaining}</div>
         </div>
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Target Increase</div>
           <div className="text-base font-bold text-sky-200">{currentTarget} → {nextTarget} rune power</div>
         </div>
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Selections Left</div>
-          <div className="text-base font-bold text-white">{draftState.picksRemaining}</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Deck Size</div>
+          <div className="text-base font-bold text-white">{currentDeckSize} runes</div>
         </div>
         <div className="flex w-full justify-end sm:w-auto">
           <button
