@@ -1320,7 +1320,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   startNextSoloGame: () => {
     set((state) => {
-      if (state.matchType !== 'solo' || state.turnPhase !== 'deck-draft' || !state.deckDraftReadyForNextGame) {
+      if (state.matchType !== 'solo' || state.turnPhase !== 'deck-draft') {
         return state;
       }
 

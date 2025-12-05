@@ -14,7 +14,6 @@ interface DeckDraftingModalProps {
   onOpenDeckOverlay: () => void;
   currentDeckSize: number;
   onStartNextGame: () => void;
-  deckDraftReadyForNextGame: boolean;
 }
 
 export function DeckDraftingModal({
@@ -23,7 +22,6 @@ export function DeckDraftingModal({
   onOpenDeckOverlay,
   currentDeckSize,
   onStartNextGame,
-  deckDraftReadyForNextGame,
 }: DeckDraftingModalProps) {
   const playClickSound = useClickSound();
   const [displayedRuneforges, setDisplayedRuneforges] = useState<RuneforgeType[]>(draftState.runeforges);
@@ -37,7 +35,6 @@ export function DeckDraftingModal({
   const picksUsed = draftState.totalPicks - draftState.picksRemaining;
   const isAnimating = animationPhase !== 'idle';
   const draftComplete = draftState.picksRemaining === 0;
-  const canStartNextGame = deckDraftReadyForNextGame;
   const selectionLocked = isAnimating || draftComplete;
 
   const dummySelect = () => {};
@@ -79,12 +76,14 @@ export function DeckDraftingModal({
 
   useEffect(() => {
     if (animationPhase === 'hidingOthers' && selectedRuneforgeId) {
-      const hasOtherRuneforges = displayedRuneforges.some((forge) => forge.id !== selectedRuneforgeId);
-      if (!hasOtherRuneforges) {
+      const timeout = setTimeout(() => {
         setAnimationPhase('selectedExit');
-      }
+      }, 240);
+      return () => {
+        clearTimeout(timeout);
+      };
     }
-  }, [animationPhase, displayedRuneforges, selectedRuneforgeId]);
+  }, [animationPhase, selectedRuneforgeId]);
 
   useEffect(() => {
     if (animationPhase === 'selectedExit' && selectedRuneforgeId) {
@@ -102,7 +101,14 @@ export function DeckDraftingModal({
   const runeforgeVariants = useMemo(
     () => ({
       initial: { opacity: 0, scale: 0.95, y: 12 },
-      animate: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 26 } },
+      visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 26 } },
+      dimmed: {
+        opacity: 0,
+        scale: 0.97,
+        y: 6,
+        filter: 'blur(2px)',
+        transition: { duration: 0.26, ease: 'easeInOut' },
+      },
       exit: (isSelected: boolean) => ({
         opacity: 0,
         scale: isSelected ? 0.9 : 0.85,
@@ -115,17 +121,24 @@ export function DeckDraftingModal({
   );
 
   const visibleRuneforges = displayedRuneforges.filter((runeforge) => {
-    if (!selectedRuneforgeId) {
-      return true;
-    }
-    if (animationPhase === 'hidingOthers') {
-      return runeforge.id === selectedRuneforgeId;
-    }
-    if (animationPhase === 'selectedExit') {
-      return runeforge.id === selectedRuneforgeId && showSelectedRuneforge;
+    if (animationPhase === 'selectedExit' && runeforge.id === selectedRuneforgeId) {
+      return showSelectedRuneforge;
     }
     return true;
   });
+
+  const getRuneforgeAnimationState = (runeforgeId: string) => {
+    if (!selectedRuneforgeId) {
+      return 'visible';
+    }
+    if (animationPhase === 'hidingOthers' && runeforgeId !== selectedRuneforgeId) {
+      return 'dimmed';
+    }
+    if (animationPhase === 'selectedExit' && runeforgeId !== selectedRuneforgeId) {
+      return 'dimmed';
+    }
+    return 'visible';
+  };
 
   const handleRuneforgeExitComplete = () => {
     if (animationPhase === 'hidingOthers') {
@@ -153,7 +166,7 @@ export function DeckDraftingModal({
   };
 
   const handleSelect = (runeforge: RuneforgeType) => {
-    if (selectionLocked || deckDraftReadyForNextGame) {
+    if (selectionLocked) {
       return;
     }
     playClickSound();
@@ -177,7 +190,7 @@ export function DeckDraftingModal({
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-xs font-bold uppercase tracking-[0.22em] text-slate-300/80">victory</div>
-          <h2 className="text-2xl font-bold text-white">Choose your new runes</h2>
+          <h2 className="text-2xl font-bold text-white">{draftComplete ? 'Draft complete' : 'Choose your new runes'}</h2>
         </div>
         <div className="rounded-2xl border border-sky-400/40 bg-sky-900/30 px-4 py-3 text-left">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Bonus</div>
@@ -199,16 +212,20 @@ export function DeckDraftingModal({
         <AnimatePresence mode="sync" onExitComplete={handleRuneforgeExitComplete}>
           {visibleRuneforges.map((runeforge) => {
             const isSelected = runeforge.id === selectedRuneforgeId;
+            const animationState = getRuneforgeAnimationState(runeforge.id);
             return (
               <motion.div
-                layout
+                layout="position"
                 key={runeforge.id}
                 variants={runeforgeVariants}
                 initial="initial"
-                animate="animate"
+                animate={animationState}
                 exit="exit"
                 custom={isSelected}
                 className="flex flex-col items-center gap-3 px-3 py-4"
+                style={{
+                  pointerEvents: animationState === 'dimmed' ? 'none' : 'auto',
+                }}
               >
                 <Runeforge runeforge={runeforge} onRuneforgeSelect={dummySelect} />
                 <button
@@ -223,16 +240,6 @@ export function DeckDraftingModal({
             );
           })}
         </AnimatePresence>
-        {visibleRuneforges.length === 0 && draftComplete && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="md:col-span-3 rounded-2xl border border-emerald-300/25 bg-emerald-900/20 px-4 py-6 text-center text-slate-100"
-          >
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-100/85">Draft Complete</div>
-            <div className="text-base font-bold text-white">Ready when you are. Start the next game to continue your run.</div>
-          </motion.div>
-        )}
       </div>
 
       <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200 sm:flex-row sm:items-center sm:justify-between">
@@ -250,7 +257,6 @@ export function DeckDraftingModal({
           <button
               type="button"
               onClick={handleStartNextGame}
-              // disabled={!canStartNextGame}
               className="w-full sm:w-auto rounded-xl border border-emerald-300/60 bg-gradient-to-r from-emerald-500/85 to-cyan-500/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Next Game

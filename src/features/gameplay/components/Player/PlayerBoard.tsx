@@ -72,10 +72,10 @@ export function PlayerBoard({
               <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', gap: '10px', alignItems: 'stretch' }}>
                 <StatBadge
                   label="Deck"
-                  value={deckValue}
+                  value={deckValue - 20}
                   color="#60a5fa"
                   borderColor="rgba(96, 165, 250, 0.35)"
-                  tooltip={`Runes left in deck: ${deckValue}`}
+                  tooltip={`Runes left in deck: ${deckValue - 20}`}
                   image={deckSvg}
                   onClick={onOpenDeck}
                 />
