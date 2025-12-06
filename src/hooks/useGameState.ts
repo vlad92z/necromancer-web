@@ -6,20 +6,6 @@
 import { useGameplayStore } from '../state/stores/gameplayStore';
 
 /**
- * Get current player state
- */
-export function useCurrentPlayer() {
-  return useGameplayStore((state) => state.players[state.currentPlayerIndex]);
-}
-
-/**
- * Get opponent player state
- */
-export function useOpponentPlayer() {
-  return useGameplayStore((state) => state.players[state.currentPlayerIndex === 0 ? 1 : 0]);
-}
-
-/**
  * Get runeforges and center pool
  */
 export function useFactories() {

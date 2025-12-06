@@ -100,7 +100,6 @@ src/
 ├── types/                  # TypeScript type definitions
 │   └── game.ts             # Core game domain types
 ├── utils/                  # Pure utility functions and game logic
-│   ├── aiPlayer.ts         # AI opponent decision logic
 │   ├── gameInitialization.ts  # Game setup and initialization
 │   ├── runeHelpers.ts      # Rune-related utilities
 │   └── scoring.ts          # Scoring calculations (spellpower, segments)
@@ -121,7 +120,7 @@ src/
 - ❌ Reusable components unrelated to gameplay
 
 **`src/hooks/`**: Custom React hooks for state access and actions
-- ✅ `useGameState`, `useGameActions`, `useCurrentPlayer`, `useFactories`
+- ✅ `useGameState`, `useGameActions`, `useFactories`
 - ❌ Game logic (belongs in `src/utils/`)
 
 **`src/state/`**: Global state management (Zustand stores)
@@ -307,9 +306,6 @@ export const useGameStore = create<GameStore>((set) => ({
 
 **Custom Hooks for Selectors**: Define selector hooks in `src/hooks/useGameState.ts` to optimize re-renders:
 ```typescript
-export function useCurrentPlayer() {
-  return useGameStore((state) => state.players[state.currentPlayerIndex]);
-}
 
 export function useFactories() {
   return useGameStore((state) => ({

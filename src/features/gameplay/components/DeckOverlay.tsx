@@ -42,6 +42,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose }: DeckOverlay
       isDrafted: !remainingRuneIds.has(rune.id),
     }));
   });
+  const runeSize =  sortedRunes.length > 140 ? 'small' : 'medium';
   const runeTypeCounts = runeTypes.reduce(
     (acc, runeType) => ({
       ...acc,
@@ -91,7 +92,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose }: DeckOverlay
                 exit={{ opacity: 0, y: 16 }}
                 className="rounded-2xl border border-[#9575ff]/30 bg-[linear-gradient(135deg,rgba(67,31,120,0.35),rgba(21,10,46,0.92))] p-3.5 shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
               >
-                <div className="grid grid-cols-[repeat(auto-fill,_minmax(64px,_1fr))] gap-2.5">
+                <div className="grid grid-cols-[repeat(auto-fill,_minmax(38px,_1fr))] gap-2.5">
                   {sortedRunes.map(({ rune, isDrafted }, index) => (
                     <motion.div
                       key={rune.id}
@@ -107,7 +108,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose }: DeckOverlay
                       <RuneCell
                         rune={rune}
                         variant="runeforge"
-                        size={'medium'}
+                        size={runeSize}
                         showEffect
                         showTooltip
                         runeOpacity={isDrafted ? 0.25 : 1}

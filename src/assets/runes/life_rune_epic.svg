@@ -32,7 +32,7 @@
      inkscape:window-x="3000"
      inkscape:window-y="494"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer2" />
+     inkscape:current-layer="layer1" />
   <defs
      id="defs1">
     <linearGradient
@@ -44,11 +44,11 @@
          id="stop6" />
       <stop
          style="stop-color:#00cb06;stop-opacity:0.30769235;"
-         offset="0.97135752"
+         offset="0.57638037"
          id="stop8" />
       <stop
-         style="stop-color:#b0b0b0;stop-opacity:0;"
-         offset="1"
+         style="stop-color:#8c00ff;stop-opacity:1;"
+         offset="0.76369864"
          id="stop7" />
     </linearGradient>
     <radialGradient

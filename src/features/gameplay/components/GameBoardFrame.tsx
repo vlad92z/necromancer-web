@@ -18,7 +18,6 @@ import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useUIStore } from '../../../state/stores/uiStore';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
-import { createStartingDeck } from '../../../utils/gameInitialization';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -50,15 +49,12 @@ export interface SoloVariantData {
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
-}
-
-export interface DuelVariantData {
-  winner: GameState['players'][number] | null;
+  onStartNextGame: () => void;
 }
 
 export interface GameBoardSharedProps {
   // Core context
-  players: GameState['players'];
+  player: GameState['player'];
   currentPlayerIndex: number;
   currentPlayerId: string;
   round: number;
@@ -78,9 +74,7 @@ export interface GameBoardSharedProps {
 
   // Locks and visibility
   playerLockedLines: number[];
-  opponentLockedLines: number[];
   playerHiddenPatternSlots?: Set<string>;
-  opponentHiddenPatternSlots?: Set<string>;
   playerHiddenFloorSlots?: Set<number>;
   animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
@@ -101,18 +95,18 @@ export interface GameBoardFrameProps extends GameBoardProps {
 
 export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardFrameProps) {
   const {
-    players,
+    player,
     runeforges,
     centerPool,
-    currentPlayerIndex,
     selectedRunes,
     turnPhase,
     lockedPatternLines,
     shouldTriggerEndRound,
     draftSource,
-    round,
     strain,
+    soloDeckTemplate,
   } = gameState;
+  const currentRound = useGameplayStore((state) => state.round);
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
@@ -125,6 +119,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     cancelSelection,
     selectDeckDraftRuneforge,
     forceSoloVictory,
+    startNextSoloGame,
   } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
@@ -148,14 +143,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
-  const currentPlayer = players[currentPlayerIndex];
-  const fullDeck = useMemo(
-    () =>
-      gameState.soloDeckTemplate && gameState.soloDeckTemplate.length > 0
-        ? gameState.soloDeckTemplate
-        : createStartingDeck(players[0].id, gameState.runeTypeCount, gameState.totalRunesPerPlayer),
-    [gameState.runeTypeCount, gameState.soloDeckTemplate, gameState.totalRunesPerPlayer, players],
-  );
+  const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]);
   const {
     animatingRunes: placementAnimatingRunes,
     runeforgeAnimatingRunes: centerAnimatingRunes,
@@ -168,13 +156,13 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     handlePlacementAnimationComplete,
     handleRuneforgeAnimationComplete,
   } = useRunePlacementAnimations({
-    players,
-    currentPlayerIndex,
+    player,
     selectedRunes,
     draftSource,
     centerPool,
   });
-  useRunePlacementSounds(players, activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
+  
+  useRunePlacementSounds([player], activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
   useBackgroundMusic(!isMusicMuted, soundVolume);
 
   useEffect(() => {
@@ -190,16 +178,15 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
       };
 
   const soloStats = (() => {
-        const player = players[0];
         // const strainMitigation = player.wall
         //   .flat()
           // .reduce((total, cell) => total + getEffectValue(cell.effects, 'StrainMitigation'), 0);
         const overloadMultiplier = strain;//applyStressMitigation(strain, strainMitigation);
 
         return {
-          isActive: currentPlayerIndex === 0,
+          isActive: true,
           overloadMultiplier,
-          round,
+          round: currentRound,
           deckCount: player.deck.length,
         };
       })();
@@ -212,12 +199,9 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     draftFromCenter(runeType, runeId);
   };
 
-  const opponent = players[1];
-  const playerHiddenPatternSlots = hiddenPatternSlots[players[0].id];
-  const opponentHiddenPatternSlots = hiddenPatternSlots[opponent.id];
-  const playerHiddenFloorSlots = hiddenFloorSlots[players[0].id];
-  const playerLockedLines = lockedPatternLines[players[0].id] ?? [];
-  const opponentLockedLines = lockedPatternLines[opponent.id] ?? [];
+  const playerHiddenPatternSlots = hiddenPatternSlots[player.id];
+  const playerHiddenFloorSlots = hiddenFloorSlots[player.id];
+  const playerLockedLines = lockedPatternLines[player.id];
 
   const handleToggleMusic = () => {
     setIsMusicMuted((prev) => !prev);
@@ -297,10 +281,10 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
   const sharedProps: GameBoardSharedProps = {
     // Core context
-    players,
-    currentPlayerIndex,
-    currentPlayerId: currentPlayer.id,
-    round,
+    player,
+    currentPlayerIndex: 0,
+    currentPlayerId: player.id,
+    round: currentRound,
     isDraftPhase,
     isGameOver,
 
@@ -317,9 +301,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
 
     // Locks and visibility
     playerLockedLines,
-    opponentLockedLines,
     playerHiddenPatternSlots,
-    opponentHiddenPatternSlots,
     playerHiddenFloorSlots,
     animatingRuneIds,
     hiddenCenterRuneIds,
@@ -342,6 +324,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
         isDeckDrafting,
         onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
         onOpenDeckOverlay: () => setShowDeckOverlay(true),
+        onStartNextGame: startNextSoloGame,
       };
   const boardContent = renderContent(
     sharedProps,
@@ -368,6 +351,10 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
           >
             Quit Run
           </button>
+          <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Current Round</div>
+            <div className="text-2xl font-extrabold text-white leading-tight">Round {currentRound}</div>
+          </div>
         </div>
       )}
       <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
@@ -391,7 +378,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
 
       {showRulesOverlay && <RulesOverlay onClose={() => setShowRulesOverlay(false)} />}
 
-      {showDeckOverlay && <DeckOverlay deck={players[0].deck} fullDeck={fullDeck} playerName={players[0].name} onClose={() => setShowDeckOverlay(false)} />}
+      {showDeckOverlay && <DeckOverlay deck={player.deck} fullDeck={fullDeck} playerName={player.name} onClose={() => setShowDeckOverlay(false)} />}
 
       {showLogOverlay && <GameLogOverlay roundHistory={gameState.roundHistory} onClose={() => setShowLogOverlay(false)} />}
 

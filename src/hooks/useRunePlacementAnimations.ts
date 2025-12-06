@@ -6,7 +6,6 @@ import type { AnimatingRune, GameState, Rune } from '../types/game';
 
 interface SelectionSnapshot {
   playerId: string;
-  playerIndex: number;
   runeOrder: Rune[];
   patternLineCounts: number[];
   runePositions: Map<string, { startX: number; startY: number }>;
@@ -25,8 +24,7 @@ interface RuneforgeAnimationSnapshot {
 }
 
 interface UseRunePlacementAnimationsParams {
-  players: GameState['players'];
-  currentPlayerIndex: number;
+  player: GameState['player'];
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
   centerPool: GameState['centerPool'];
@@ -35,8 +33,7 @@ interface UseRunePlacementAnimationsParams {
 const OVERLAY_RUNE_SIZE = 48;
 
 export function useRunePlacementAnimations({
-  players,
-  currentPlayerIndex,
+  player,
   selectedRunes,
   draftSource,
   centerPool,
@@ -217,10 +214,7 @@ export function useRunePlacementAnimations({
     if (!snapshot) {
       return;
     }
-    const targetPlayer = players.find((player) => player.id === snapshot.playerId);
-    if (!targetPlayer) {
-      return;
-    }
+    const targetPlayer = player;
     const updatedCounts = targetPlayer.patternLines.map((line) => line.count);
     const previousCounts = snapshot.patternLineCounts;
     const changedLineIndex = updatedCounts.findIndex((count, index) => count > (previousCounts[index] ?? 0));
@@ -303,7 +297,7 @@ export function useRunePlacementAnimations({
     }
     autoAnimationMetaRef.current = Object.keys(meta).length > 0 ? meta : null;
     setAnimatingRunes(overlayRunes);
-  }, [players, hidePatternSlots, hideFloorSlots]);
+  }, [player, hidePatternSlots, hideFloorSlots]);
 
   const animateRuneforgeToCenter = useCallback(
     (snapshot: RuneforgeAnimationSnapshot) => {
@@ -375,14 +369,13 @@ export function useRunePlacementAnimations({
     }
     const runePositions = captureSelectedRunePositions(selectedRunes);
     selectionSnapshotRef.current = {
-      playerId: players[currentPlayerIndex].id,
-      playerIndex: currentPlayerIndex,
+      playerId: player.id,
       runeOrder: [...selectedRunes],
-      patternLineCounts: players[currentPlayerIndex].patternLines.map((line) => line.count),
+      patternLineCounts: player.patternLines.map((line) => line.count),
       runePositions,
-      floorRuneCount: players[currentPlayerIndex].floorLine.runes.length,
+      floorRuneCount: player.floorLine.runes.length,
     };
-  }, [selectedRunes, players, currentPlayerIndex]);
+  }, [selectedRunes, player]);
 
   useLayoutEffect(() => {
     const previousCount = previousSelectedCountRef.current;

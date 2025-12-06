@@ -15,7 +15,7 @@ interface SoloBoardContentProps {
 
 export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps) {
   const {
-    players,
+    player,
     currentPlayerIndex,
     selectedRuneType,
     hasSelectedRunes,
@@ -49,6 +49,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     isDeckDrafting,
     onSelectDeckDraftRuneforge,
     onOpenDeckOverlay,
+    onStartNextGame,
   } = variantData;
 
   return (
@@ -60,7 +61,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
           <DraftingTable
             runeforges={runeforges}
             centerPool={centerPool}
-            player={players[0]}
+            player={player}
             runeTypeCount={runeTypeCount}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
@@ -78,7 +79,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
       <div className="p-6 grid items-center justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
         <div className="w-full h-full flex items-center justify-center">
           <PlayerView
-            player={players[0]}
+            player={player}
             isActive={currentPlayerIndex === 0}
             onPlaceRunes={currentPlayerIndex === 0 ? onPlaceRunes : undefined}
             onPlaceRunesInFloor={currentPlayerIndex === 0 ? onPlaceRunesInFloor : undefined}
@@ -103,9 +104,8 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             draftState={deckDraftState}
             onSelectRuneforge={onSelectDeckDraftRuneforge}
             onOpenDeckOverlay={onOpenDeckOverlay}
-            currentTarget={soloTargetScore}
-            nextTarget={soloTargetScore + 50} //TODO: Use the same value that will be used in-game
-            currentDeckSize={players[0].deck.length}
+            currentDeckSize={player.deck.length}
+            onStartNextGame={onStartNextGame}
           />
         </div>
       )}
@@ -113,7 +113,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
       {isGameOver && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-auto">
           <SoloGameOverModal
-            player={players[0]}
+            player={player}
             outcome={soloOutcome}
             runePowerTotal={runePowerTotal}
             round={round}

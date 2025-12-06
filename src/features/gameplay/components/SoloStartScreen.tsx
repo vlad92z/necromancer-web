@@ -15,16 +15,19 @@ interface SoloStartScreenProps {
   onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
   onContinueSolo?: () => void;
   canContinue?: boolean;
+  bestRound?: number;
+  arcaneDust?: number;
 }
 
 const inputClasses =
   'w-full rounded-lg border border-slate-600/70 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400';
 
-export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false }: SoloStartScreenProps) {
+export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, bestRound = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
-  const [runeTypeCount, setRuneTypeCount] = useState<RuneTypeCount>(6);
+  const [runeTypeCount] = useState<RuneTypeCount>(6);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const formattedDust = arcaneDust.toLocaleString();
 
   const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: SoloRunConfig[K]) => {
     setSoloConfig((prev) => ({ ...prev, [key]: value }));
@@ -40,20 +43,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
     };
 
   const normalizedConfig = normalizeSoloConfig(soloConfig);
-
-  const patternToggleClasses = soloConfig.patternLinesLockOnComplete
-    ? 'border-transparent bg-gradient-to-br from-sky-500 to-purple-700 text-slate-200 shadow-[0_12px_30px_rgba(59,130,246,0.35)]'
-    : 'border-slate-600/60 bg-slate-900/30 text-slate-200 hover:border-slate-400/70';
-
-  const boardButtonClass = (count: number) => {
-    const isActive = runeTypeCount === count;
-    const base =
-      'flex-1 rounded-xl border-2 px-3 py-3 text-sm font-semibold transition-colors duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
-    const active =
-      'border-transparent bg-gradient-to-br from-sky-500 to-purple-600 text-slate-950 shadow-[0_12px_30px_rgba(59,130,246,0.35)]';
-    const inactive = 'border-slate-600/40 bg-transparent text-slate-200 hover:border-slate-400/60 hover:bg-slate-900/50';
-    return `${base} ${isActive ? active : inactive}`;
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
@@ -76,6 +65,16 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           <p className="text-base text-slate-300">
             Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+              <span className="text-[11px] text-sky-300">Best Round</span>
+              <span className="text-lg font-extrabold text-slate-50">{bestRound > 0 ? bestRound : '--'}</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+              <span className="text-[11px] font-semibold text-amber-200/90">Arcane Dust</span>
+              <span className="text-lg text-amber-200">{formattedDust}</span>
+            </div>
+          </div>
         </div>
 
         <section className="space-y-2">
@@ -133,16 +132,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   />
                 </FieldConfig>
                 <SliderConfig
-                  label="Runeforges"
-                  description="How many personal factories deal into your pool."
-                  min={2}
-                  max={6}
-                  step={1}
-                  value={soloConfig.factoriesPerPlayer}
-                  onChange={(value) => updateConfigValue('factoriesPerPlayer', value)}
-                  valueLabel={`${soloConfig.factoriesPerPlayer} runeforges`}
-                />
-                <SliderConfig
                   label="Deck Size"
                   description="How many of each rune type appear in your deck."
                   min={8}
@@ -152,42 +141,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   onChange={(value) => updateConfigValue('deckRunesPerType', value)}
                   valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * runeTypeCount} total)`}
                 />
-                <FieldConfig
-                  label="Lock Completed Lines"
-                  description="When a pattern line scores, keep that line blocked until the next round (Solo only)."
-                >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateConfigValue('patternLinesLockOnComplete', !soloConfig.patternLinesLockOnComplete)
-                    }
-                    className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold uppercase tracking-wide transition ${patternToggleClasses}`}
-                  >
-                    {soloConfig.patternLinesLockOnComplete ? 'Enabled' : 'Disabled'}
-                  </button>
-                </FieldConfig>
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-sm font-semibold uppercase tracking-wide text-slate-200">Board Size</div>
-                <div className="flex gap-3">
-                  {[4, 6].map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => setRuneTypeCount(count as RuneTypeCount)}
-                      className={boardButtonClass(count)}
-                    >
-                      {count}x{count}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-sky-300">
-                  {runeTypeCount === 3 && '3 rune types, 3x3 Spell Wall, light overload pressure.'}
-                  {runeTypeCount === 4 && '4 rune types, 4x4 Spell Wall, balanced Solo pace.'}
-                  {runeTypeCount === 5 && '5 rune types, 5x5 Spell Wall, extended run with heavy pressure.'}
-                  {runeTypeCount === 6 && '6 rune types, 6x6 Spell Wall, Lightning.'}
-                </p>
               </div>
             </div>
           )}

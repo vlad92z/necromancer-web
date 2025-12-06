@@ -77,13 +77,11 @@ src/
 ├── components/             # Reusable UI (layout primitives, runes, stats)
 ├── features/gameplay/      # Gameboard, overlays, Solo UI
 ├── hooks/                  # Zustand selector/action hooks
-├── routes/                 # MainMenu, GameMatch, Solo, Developer, etc.
+├── routes/                 # MainMenu, Solo, Developer, etc.
 ├── state/stores/           # Zustand stores (gameplay, UI)
 ├── styles/                 # Design tokens and global styles
-├── systems/aiController.ts # AI driver for automated turns
 ├── types/                  # Domain types (game, rune, controllers)
 ├── utils/                  # Pure logic (scoring, init, AI helpers, rune effects)
-├── stories/                # Storybook-like design previews
 ├── App.tsx
 └── main.tsx
 ```
@@ -141,7 +139,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Move all `setTimeout` calls from stores to components (`useEffect` hooks)
 - [ ] Create `src/systems/turnManager.ts` for turn flow management
 - [ ] Create `src/systems/effectResolver.ts` for unified effect handling
-- [ ] Extract repeated hooks: `useIsAITurn()`, `useCurrentPlayer()`, `useOpponent()`, `useGamePhase()`
+- [ ] Extract repeated hooks: `useGamePhase()`
 
 #### Persistence Layer
 - [ ] Create `src/services/storage/localStorage.ts` - persistent client storage

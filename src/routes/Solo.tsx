@@ -10,7 +10,8 @@ import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { GameState, RuneTypeCount, SoloRunConfig } from '../types/game';
-import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState } from '../utils/soloPersistence';
+import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getBestSoloRound, updateBestSoloRound } from '../utils/soloPersistence';
+import { addArcaneDust, getArcaneDust, getArcaneDustReward } from '../utils/arcaneDust';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -23,31 +24,61 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
 export function Solo() {
   const navigate = useNavigate();
   const gameStarted = useGameplayStore((state) => state.gameStarted);
-  const matchType = useGameplayStore((state) => state.matchType);
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
   const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
   const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
   const runeTypeCount = useGameplayStore((state) => state.runeTypeCount);
   const gameState = useGameplayStore();
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
+  const [bestSoloRound, setBestSoloRound] = useState<number>(() => {
+    const storedBest = getBestSoloRound();
+    const savedState = loadSoloState();
+    const savedRound = savedState?.round ?? 0;
+    return Math.max(storedBest, savedRound);
+  });
+  const [arcaneDust, setArcaneDust] = useState<number>(() => getArcaneDust());
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
-    if (matchType !== 'solo') {
-      prepareSoloMode(runeTypeCount);
-    }
+    prepareSoloMode(runeTypeCount);
 
     return () => {
       setNavigationCallback(null);
     };
-  }, [navigate, matchType, prepareSoloMode, runeTypeCount]);
+  }, [navigate, prepareSoloMode, runeTypeCount]);
 
   useEffect(() => {
+    let lastCompletionSignature: string | null = null;
+
     const unsubscribe = useGameplayStore.subscribe((state) => {
       const persistableState = selectPersistableSoloState(state);
-      if (persistableState.matchType === 'solo' && persistableState.gameStarted) {
+      if (persistableState.gameStarted) {
         saveSoloState(persistableState);
         setHasSavedSoloRun(true);
+        setBestSoloRound((previousBest) => {
+          const nextBest = Math.max(previousBest, persistableState.round);
+          if (nextBest === previousBest) {
+            return previousBest;
+          }
+          return updateBestSoloRound(nextBest);
+        });
+      }
+
+      const completionAchieved =
+        state.soloOutcome === 'victory' &&
+        (state.turnPhase === 'game-over' || state.turnPhase === 'deck-draft');
+
+      if (completionAchieved) {
+        const completionSignature = `${state.soloOutcome}-${state.turnPhase}-${state.round}`;
+        if (completionSignature !== lastCompletionSignature) {
+          const reward = getArcaneDustReward(state.round);
+          if (reward > 0) {
+            setArcaneDust(addArcaneDust(reward));
+          }
+          lastCompletionSignature = completionSignature;
+        }
+      } else {
+        lastCompletionSignature = null;
       }
     });
 
@@ -70,8 +101,16 @@ export function Solo() {
     hydrateGameState(savedState);
   };
 
-  if (!gameStarted || matchType !== 'solo') {
-    return <SoloStartScreen onStartSolo={handleStartSolo} onContinueSolo={handleContinueSolo} canContinue={hasSavedSoloRun} />;
+  if (!gameStarted) {
+    return (
+      <SoloStartScreen
+        onStartSolo={handleStartSolo}
+        onContinueSolo={handleContinueSolo}
+        canContinue={hasSavedSoloRun}
+        bestRound={bestSoloRound}
+        arcaneDust={arcaneDust}
+      />
+    );
   }
 
   return <GameBoardFrame
