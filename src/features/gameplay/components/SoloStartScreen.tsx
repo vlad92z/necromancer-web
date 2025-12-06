@@ -11,6 +11,9 @@ import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
 import { FieldConfig } from '../../../components/FieldConfig';
 import { SliderConfig } from '../../../components/SliderConfig';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
+import { ArtefactsView } from '../../../components/ArtefactsView';
+import { ArtefactsRow } from '../../../components/ArtefactsRow';
+import { useArtefactStore } from '../../../state/stores/artefactStore';
 
 interface SoloStartScreenProps {
   onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
@@ -28,7 +31,9 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
   const runeTypeCount = useGameplayStore((state) => state.runeTypeCount);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
+  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
 
   const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: SoloRunConfig[K]) => {
     setSoloConfig((prev) => ({ ...prev, [key]: value }));
@@ -82,6 +87,29 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             )}
           </div>
         </div>
+
+        {/* Artefacts Section */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Artefacts</div>
+            <button
+              type="button"
+              onClick={() => setShowArtefactsModal(true)}
+              className="rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
+            >
+              Manage Artefacts
+            </button>
+          </div>
+          {selectedArtefactIds.length > 0 ? (
+            <div className="rounded-xl border border-slate-600/40 bg-slate-900/50 p-4">
+              <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-600/40 bg-slate-900/50 p-4 text-center text-sm text-slate-400">
+              No artefacts selected
+            </div>
+          )}
+        </section>
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
@@ -171,6 +199,9 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           </button>
         </div>
       </div>
+
+      {/* Artefacts Modal */}
+      <ArtefactsView isOpen={showArtefactsModal} onClose={() => setShowArtefactsModal(false)} />
     </div>
   );
 }
