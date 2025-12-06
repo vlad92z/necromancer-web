@@ -248,7 +248,6 @@ export interface GameplayStore extends GameState {
   acknowledgeOverloadSound: () => void;
   endRound: () => void;
   resetGame: () => void;
-  triggerChapterEnd: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
   disenchantRuneFromDeck: (runeId: string) => number;
 }
@@ -270,7 +269,6 @@ function selectPersistableGameState(state: GameplayStore): GameState {
     acknowledgeOverloadSound,
     endRound,
     resetGame,
-    triggerChapterEnd,
     selectDeckDraftRuneforge,
     disenchantRuneFromDeck,
     ...persistableState
@@ -686,22 +684,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   
   acknowledgeOverloadSound: () => {
     set({ overloadSoundPending: false });
-  },
-
-  triggerChapterEnd: () => {
-    console.log('gameplayStoreConfig: triggerChapterEnd called');
-    set((state) => {
-      const roundExhausted = isRoundExhausted(state.runeforges, state.centerPool);
-      if (!roundExhausted || state.selectedRunes.length > 0 || state.turnPhase === 'end-of-round') {
-        return state;
-      }
-
-      return {
-        ...state,
-        turnPhase: 'end-of-round' as const,
-        shouldTriggerEndRound: true,
-      };
-    });
   },
   
   endRound: () => {
