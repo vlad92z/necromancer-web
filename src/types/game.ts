@@ -154,6 +154,7 @@ export interface GameState {
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
+  selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
