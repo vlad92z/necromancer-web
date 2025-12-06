@@ -52,7 +52,7 @@ export interface PatternLine {
   tier: 1 | 2 | 3 | 4 | 5 | 6; // Line capacity (1-6 runes)
   runeType: RuneType | null; // Type of rune in this line (null if empty)
   count: number; // Current number of runes in the line
-  firstRuneId: string | null; // ID of the first rune placed on this line
+  firstRuneId: string | null; // ID of the first rune placed on this line TODO Rename to Primary Rune
   firstRuneEffects: RuneEffects | null; // Effects inherited by wall placement
 }
 
@@ -76,11 +76,6 @@ export interface FloorLine {
   runes: Rune[];
   maxCapacity: number;
 }
-
-/**
- * Player side on the board
- */
-export type PlayerSide = 'top' | 'bottom';
 
 /**
  * Solo run configuration values entered on the start screen
@@ -125,7 +120,6 @@ export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-round' | 'deck-draf
 export interface RoundScore {
   round: number;
   playerName: string;
-  opponentName: string;
 }
 
 /**
@@ -142,25 +136,22 @@ export interface AnimatingRune {
 
 /**
  * Main game state
- * Note: Only PvE (Player vs AI) mode is supported
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
   factoriesPerPlayer: number; // Runeforge count per player (quick play config)
-  totalRunesPerPlayer: number; // Deck size for the quick play packet
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
   startingHealth: number; // Health pool per player for the current configuration
   overflowCapacity: number; // Floor line capacity that determines overflow penalties
-  players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
+  player: Player;
   soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games (empty for versus)
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
-  currentPlayerIndex: 0 | 1;
   turnPhase: TurnPhase;
   round: number;
   /**
-   * Strain multiplier applied to overload at round end (configurable)
+   * Damage dealt for every overload rune
    * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
    */
   strain: number;
@@ -179,7 +170,7 @@ export interface GameState {
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   roundHistory: RoundScore[]; // History of completed rounds for game log
-  roundDamage: [number, number]; // Damage dealt by each player during the current round
+  roundDamage: number; // Damage dealt by the player during the current round
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
   runePowerTotal: number; // Solo score accumulator

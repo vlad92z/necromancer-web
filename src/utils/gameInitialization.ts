@@ -273,17 +273,6 @@ export function initializeSoloGame(
   }
   const startingDeckTemplate = [...soloPlayer.deck];
 
-  const echoPlayer = createPlayer(
-    'solo-echo',
-    'Echo',
-    soloConfig.startingHealth,
-    runeTypeCount,
-    0,
-    quickPlayConfig.overflowCapacity,
-    soloMaxHealth,
-  );
-  echoPlayer.deck = [];
-
   const soloFactories = createSoloFactories(soloPlayer, soloRuneforgeCount);
   const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
     soloFactories,
@@ -299,18 +288,16 @@ export function initializeSoloGame(
     gameStarted: false,
     runeTypeCount,
     factoriesPerPlayer: soloRuneforgeCount,
-    totalRunesPerPlayer: soloDeckSize,
     runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
     startingHealth: soloConfig.startingHealth,
     overflowCapacity: quickPlayConfig.overflowCapacity,
     strain: soloConfig.startingStrain,
     strainMultiplier: soloConfig.strainMultiplier,
     soloStartingStrain: soloConfig.startingStrain,
-    players: [soloPlayer, echoPlayer],
+    player: soloPlayer,
     soloDeckTemplate: startingDeckTemplate,
     runeforges: filledRuneforges,
     centerPool: [],
-    currentPlayerIndex: 0,
     turnPhase: 'draft',
     round: 1,
     selectedRunes: [],
@@ -319,10 +306,9 @@ export function initializeSoloGame(
     pendingPlacement: null,
     overloadSoundPending: false,
     roundHistory: [],
-    roundDamage: [0, 0],
+    roundDamage: 0,
     lockedPatternLines: {
-      [soloPlayer.id]: [],
-      [echoPlayer.id]: [],
+      [soloPlayer.id]: []
     },
     shouldTriggerEndRound: false,
     runePowerTotal: 0,

@@ -5,11 +5,10 @@ import { useGameplayStore, setNavigationCallback } from '../state/stores/gamepla
 
 export function GameMatch() {
   const navigate = useNavigate()
-  const startGame = useGameplayStore((state) => state.startGame)
+  const startGame = useGameplayStore((state) => state.startSoloRun) //todo or start solorun?
   const gameStarted = useGameplayStore((s) => s.gameStarted)
-  const currentPlayerIndex = useGameplayStore((s) => s.currentPlayerIndex)
   const turnPhase = useGameplayStore((s) => s.turnPhase)
-  const players = useGameplayStore((s) => s.players)
+  const player = useGameplayStore((s) => s.player)
   const wholeGameState = useGameplayStore()
 
   // Set up navigation callback for returnToStartScreen
@@ -25,12 +24,11 @@ export function GameMatch() {
   
   useEffect(() => {
     if (!gameStarted) return;
-  }, [gameStarted, currentPlayerIndex, players, turnPhase])
+  }, [gameStarted, player, turnPhase])
   
   useEffect(() => {
     if (!gameStarted) return;
-  }, [gameStarted, currentPlayerIndex, players, turnPhase])
-
+  }, [gameStarted, player, turnPhase])
   const handleStartGame = (runeTypeCount: import('../types/game').RuneTypeCount) => {
     startGame(runeTypeCount)
   }
