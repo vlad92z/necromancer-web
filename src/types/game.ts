@@ -78,19 +78,9 @@ export interface FloorLine {
 }
 
 /**
- * Player type (human or computer-controlled)
- */
-export type PlayerType = 'human' | 'computer'; //TODO: Remove
-
-/**
  * Player side on the board
  */
 export type PlayerSide = 'top' | 'bottom';
-
-/**
- * Game match type
- */
-export type MatchType = 'versus' | 'solo';
 
 /**
  * Solo run configuration values entered on the start screen
@@ -116,7 +106,6 @@ export type SoloOutcome = 'victory' | 'defeat' | null;
 export interface Player {
   id: string;
   name: string;
-  type: PlayerType;
   patternLines: PatternLine[];
   wall: ScoringWall;
   floorLine: FloorLine;
@@ -157,14 +146,12 @@ export interface AnimatingRune {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
-  matchType: MatchType; // Game variant: traditional duel or solo run
   runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
   factoriesPerPlayer: number; // Runeforge count per player (quick play config)
   totalRunesPerPlayer: number; // Deck size for the quick play packet
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
   startingHealth: number; // Health pool per player for the current configuration
   overflowCapacity: number; // Floor line capacity that determines overflow penalties
-  playerControllers: PlayerControllers; // Controller assignments for top and bottom players
   players: [Player, Player]; // Bottom player (index 0) and top player (index 1)
   soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games (empty for versus)
   runeforges: Runeforge[];
@@ -188,7 +175,6 @@ export interface GameState {
     | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
     | { type: 'center'; originalRunes: Rune[] }
     | null; // Where the selected runes came from (and original forge state)
-  firstPlayerToken: 0 | 1 | null; // Which player has the first player token (null if in center)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement

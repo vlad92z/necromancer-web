@@ -4,8 +4,8 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, MatchType, SoloOutcome, SoloRunConfig } from '../../types/game';
-import { initializeGame, fillFactories, createEmptyFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, createStartingDeck, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
+import type { GameState, RuneType, Player, Rune, SoloOutcome, SoloRunConfig, RuneTypeCount } from '../../types/game';
+import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, createStartingDeck, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
@@ -38,9 +38,6 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
 }
 
 function enterDeckDraftMode(state: GameState): GameState {
-  if (state.matchType !== 'solo') {
-    return state;
-  }
   const deckTemplate = getSoloDeckTemplate(state);
   const nextWinStreak = state.soloWinStreak + 1;
   const deckDraftState = createDeckDraftState(state.runeTypeCount, state.players[0].id, 3, nextWinStreak);
@@ -209,92 +206,12 @@ function prepareSoloRoundReset(state: GameState): GameState {
   };
 }
 
-function prepareVersusRoundReset(state: GameState): GameState {
-  const clearedPlayers = clearFloorLines(state.players);
-  const roundScore = {
-    round: state.round,
-    playerName: clearedPlayers[0].name,
-    opponentName: clearedPlayers[1].name,
-  };
-  const roundHistory = [...state.roundHistory, roundScore];
-  const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
-
-  const player1HasEnough = clearedPlayers[0].deck.length >= runesNeededForRound;
-  const player2HasEnough = clearedPlayers[1].deck.length >= runesNeededForRound;
-
-  if (!player1HasEnough || !player2HasEnough) {
-    return {
-      ...state,
-      players: clearedPlayers,
-      runeforges: [],
-      centerPool: [],
-      turnPhase: 'game-over',
-      round: state.round,
-      roundHistory,
-      roundDamage: [0, 0],
-      lockedPatternLines: {
-        [clearedPlayers[0].id]: [],
-        [clearedPlayers[1].id]: [],
-      },
-      shouldTriggerEndRound: false,
-      selectedRunes: [],
-      draftSource: null,
-      pendingPlacement: null,
-      animatingRunes: [],
-      overloadSoundPending: false,
-    };
-  }
-
-  const emptyFactories = createEmptyFactories(clearedPlayers, state.factoriesPerPlayer);
-  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
-    emptyFactories,
-    {
-      [clearedPlayers[0].id]: clearedPlayers[0].deck,
-      [clearedPlayers[1].id]: clearedPlayers[1].deck,
-    },
-    state.runesPerRuneforge
-  );
-
-  const finalPlayers: [Player, Player] = [
-    { ...clearedPlayers[0], deck: decksByPlayer[clearedPlayers[0].id] ?? [] },
-    { ...clearedPlayers[1], deck: decksByPlayer[clearedPlayers[1].id] ?? [] },
-  ];
-  const nextStrainMultiplier = calculateNextStrainMultiplier(
-    finalPlayers,
-    DEFAULT_STRAIN_MULTIPLIER
-  );
-
-  return {
-    ...state,
-    players: finalPlayers,
-    runeforges: filledRuneforges,
-    centerPool: [],
-    turnPhase: 'draft',
-    round: state.round + 1,
-    strain: state.strain * state.strainMultiplier,
-    strainMultiplier: nextStrainMultiplier,
-    roundHistory,
-    roundDamage: [0, 0],
-    lockedPatternLines: {
-      [finalPlayers[0].id]: [],
-      [finalPlayers[1].id]: [],
-    },
-    shouldTriggerEndRound: false,
-    selectedRunes: [],
-    draftSource: null,
-    pendingPlacement: null,
-    animatingRunes: [],
-    overloadSoundPending: false,
-  };
-}
-
-const getInitializerForMatchType = (matchType: MatchType, runeTypeCount: import('../../types/game').RuneTypeCount) =>
-  matchType === 'solo' ? initializeSoloGame(runeTypeCount) : initializeGame(runeTypeCount);
+//TODO: Remove
+const getInitializerForMatchType = (runeTypeCount: RuneTypeCount) =>
+  initializeSoloGame(runeTypeCount);
 
 export interface GameplayStore extends GameState {
   // Actions
-  // Not in use
-  startGame: (runeTypeCount: import('../../types/game').RuneTypeCount) => void;
   startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
   forceSoloVictory: () => void;
@@ -316,7 +233,7 @@ export interface GameplayStore extends GameState {
 
 export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
   // Initial state
-  ...initializeGame(),
+  ...initializeSoloGame(),
   // Strain configuration - starting value and multiplier factor (tune here)
   strain: DEFAULT_STARTING_STRAIN,
   strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
@@ -327,32 +244,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase !== 'draft') {
         return state;
       }
-      const currentPlayer = state.players[state.currentPlayerIndex];
-      const isSoloMode = state.matchType === 'solo';
       // Find the runeforge
       const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
-
-      if (isSoloMode && runeforge.ownerId !== currentPlayer.id) {
-        return state;
-      }
-
-      const ownsRuneforge = runeforge.ownerId === currentPlayer.id;
-      const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
-      const hasAccessibleRuneforges = playerRuneforges.some(
-        (f) => f.runes.length > 0
-      );
-      const centerIsEmpty = state.centerPool.length === 0;
-      const canDraftOpponentRuneforge = !ownsRuneforge && !hasAccessibleRuneforges && centerIsEmpty;
-
-      if (isSoloMode && !ownsRuneforge) {
-        return state;
-      }
-
-      if (!ownsRuneforge && !canDraftOpponentRuneforge) {
-        return state;
-      }
-      
+//       
       // Separate runes by selected type
       const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
       const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
@@ -387,8 +282,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const currentPlayerIndex = state.currentPlayerIndex;
       const currentPlayer = state.players[currentPlayerIndex];
-      const opponentIndex = currentPlayerIndex === 0 ? 1 : 0;
-      const isSoloMode = state.matchType === 'solo';
 
       const updatedPatternLines = [...currentPlayer.patternLines];
       const updatedWall = currentPlayer.wall.map((row) => [...row]);
@@ -402,12 +295,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
         const centerEmpty = state.centerPool.length === 0;
         const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-        const nextPlayerIndex = isSoloMode ? currentPlayerIndex : opponentIndex;
 
         return {
           ...state,
           turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
-          currentPlayerIndex: nextPlayerIndex as 0 | 1,
           shouldTriggerEndRound: shouldEndRound,
         };
       }
@@ -436,7 +327,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         totalDamage += resolvedSegment.damage;
         totalHealing += resolvedSegment.healing;
 
-        if (isSoloMode && state.soloPatternLineLock) {
+        if (state.soloPatternLineLock) {
           const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
           updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(index)
             ? existingLocked
@@ -447,7 +338,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       let nextRunePowerTotal = state.runePowerTotal;
       let updatedRoundDamage: [number, number] = [...state.roundDamage] as [number, number];
       let soloOutcome: SoloOutcome = state.soloOutcome;
-      let opponentHealth: number | null = null;
       let nextHealth = currentPlayer.health;
 
       if (totalHealing > 0) {
@@ -455,19 +345,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         nextHealth = Math.min(maxHealth, nextHealth + totalHealing);
       }
 
-      if (isSoloMode && currentPlayerIndex === 0) {
-        nextRunePowerTotal += totalDamage;
+      nextRunePowerTotal += totalDamage;
         updatedRoundDamage = [updatedRoundDamage[0] + totalDamage, updatedRoundDamage[1]];
         if (nextRunePowerTotal >= state.soloTargetScore) {
           soloOutcome = 'victory';
         }
-      } else {
-        const opponent = state.players[opponentIndex];
-        opponentHealth = Math.max(0, opponent.health - totalDamage);
-        updatedRoundDamage = currentPlayerIndex === 0
-          ? [updatedRoundDamage[0] + totalDamage, updatedRoundDamage[1]]
-          : [updatedRoundDamage[0], updatedRoundDamage[1] + totalDamage];
-      }
 
       const updatedPlayers: [Player, Player] = [...state.players] as [Player, Player];
       updatedPlayers[currentPlayerIndex] = {
@@ -477,31 +359,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         health: nextHealth,
       };
 
-      if (!isSoloMode && opponentHealth !== null) {
-        const opponentPlayer = state.players[opponentIndex];
-        updatedPlayers[opponentIndex] = {
-          ...opponentPlayer,
-          health: opponentHealth,
-        };
-      }
-
-      const opponentDefeated = !isSoloMode && opponentHealth === 0 && totalDamage > 0;
-      const soloVictoryAchieved = isSoloMode && soloOutcome === 'victory';
-
-      if (opponentDefeated) {
-        return {
-          ...state,
-          players: updatedPlayers,
-          turnPhase: 'game-over' as const,
-          shouldTriggerEndRound: false,
-          soloOutcome,
-          runePowerTotal: nextRunePowerTotal,
-          roundDamage: updatedRoundDamage,
-          lockedPatternLines: updatedLockedPatternLines,
-          draftSource: null,
-          selectedRunes: [],
-        };
-      }
+      const soloVictoryAchieved = soloOutcome === 'victory';
 
       if (soloVictoryAchieved) {
         return enterDeckDraftMode({
@@ -521,7 +379,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
       const centerEmpty = state.centerPool.length === 0;
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
-      const nextPlayerIndex = isSoloMode ? currentPlayerIndex : opponentIndex;
+      const nextPlayerIndex = currentPlayerIndex;
 
       return {
         ...state,
@@ -577,8 +435,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
       const { selectedRunes, currentPlayerIndex } = state;
-      const isSoloMode = state.matchType === 'solo';
-      const shouldApplyOverloadDamage = isSoloMode ? currentPlayerIndex === 0 : true;
+      const shouldApplyOverloadDamage = currentPlayerIndex === 0;
       
       // No runes selected, do nothing
       if (selectedRunes.length === 0) return state;
@@ -677,8 +534,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           centerPool: nextCenterPool,
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
-          soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
-          soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
+          soloOutcome: ('defeat' as SoloOutcome),
+          soloWinStreak: 0,
           overloadSoundPending: overloadDamage > 0,
         };
       }
@@ -689,7 +546,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const shouldEndRound = allRuneforgesEmpty && centerEmpty;
       
       // Switch to next player (alternate between 0 and 1) - only if no cast required
-      const nextPlayerIndex = isSoloMode ? currentPlayerIndex : currentPlayerIndex === 0 ? 1 : 0;
+      const nextPlayerIndex = currentPlayerIndex;
       const nextTurnPhase =
         completedLines.length > 0
           ? ('cast' as const)
@@ -717,8 +574,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
       const { selectedRunes, currentPlayerIndex } = state;
-      const isSoloMode = state.matchType === 'solo';
-      const shouldApplyOverloadDamage = isSoloMode ? currentPlayerIndex === 0 : true;
+      const shouldApplyOverloadDamage = currentPlayerIndex === 0;
       
       // No runes selected, do nothing
       if (selectedRunes.length === 0) return state;
@@ -753,7 +609,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
       const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
       // Switch to next player (alternate between 0 and 1)
-      const nextPlayerIndex = isSoloMode ? currentPlayerIndex : currentPlayerIndex === 0 ? 1 : 0;
+      const nextPlayerIndex = currentPlayerIndex;
       const defeatedByOverload = shouldApplyOverloadDamage && nextHealth === 0;
       if (defeatedByOverload) {
         return {
@@ -764,8 +620,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           centerPool: nextCenterPool,
           turnPhase: 'game-over' as const,
           shouldTriggerEndRound: false,
-          soloOutcome: isSoloMode ? ('defeat' as SoloOutcome) : state.soloOutcome,
-          soloWinStreak: isSoloMode ? 0 : state.soloWinStreak,
+          soloOutcome: ('defeat' as SoloOutcome),
+          soloWinStreak: 0,
           overloadSoundPending: overloadDamage > 0,
         };
       }
@@ -853,54 +709,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (!state.shouldTriggerEndRound && state.turnPhase !== 'end-of-round') {
         return state;
       }
-      if (state.matchType === 'solo') {
-        return prepareSoloRoundReset(state);
-      }
-
-      return prepareVersusRoundReset(state);
-    });
-  },
-  
-  startGame: (runeTypeCount: import('../../types/game').RuneTypeCount) => {
-    set((state) => {
-      const shouldResetState = state.runeTypeCount !== runeTypeCount || state.matchType !== 'versus';
-      // If rune type count changed or we are resuming from a different match type, reinitialize the game with new configuration
-      if (shouldResetState) {
-        const newState = initializeGame(runeTypeCount);
-
-        const updatedPlayers: [Player, Player] = [
-          { ...newState.players[0], type: 'human' },
-          { ...newState.players[1], type: 'human' },
-        ];
-
-        return {
-          ...newState,
-          gameStarted: true,
-          matchType: 'versus',
-          runeTypeCount: runeTypeCount,
-          players: updatedPlayers,
-          runePowerTotal: 0,
-          soloOutcome: null,
-          // ensure strain defaults are present when creating a fresh game
-          strain: DEFAULT_STARTING_STRAIN,
-          strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
-        };
-      }
-
-      const updatedPlayers: [Player, Player] = [
-        { ...state.players[0], type: 'human' },
-        { ...state.players[1], type: 'human' }
-      ];
-
-      return {
-        ...state,
-        gameStarted: true,
-        matchType: 'versus',
-        runeTypeCount: runeTypeCount,
-        players: updatedPlayers,
-        runePowerTotal: 0,
-        soloOutcome: null,
-      };
+      return prepareSoloRoundReset(state);
     });
   },
 
@@ -926,9 +735,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   forceSoloVictory: () => {
     set((state) => {
-      if (state.matchType !== 'solo') {
-        return state;
-      }
       if (state.turnPhase === 'deck-draft' || state.turnPhase === 'game-over') {
         return state;
       }
@@ -947,30 +753,24 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   hydrateGameState: (nextState: GameState) => {
     set((state) => {
-      const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
-      if (!shouldMerge) {
-        return state;
-      }
+      // const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
+      // if (!shouldMerge) {
+      //   return state;
+      // }
       const targetRuneTypeCount = nextState.runeTypeCount ?? state.runeTypeCount;
       const totalRunes = nextState.totalRunesPerPlayer ?? state.totalRunesPerPlayer;
-      const deckTemplate =
-        nextState.matchType === 'solo'
-          ? (nextState.soloDeckTemplate && nextState.soloDeckTemplate.length > 0
+      //TODO WTF is happening?
+      const deckTemplate = (nextState.soloDeckTemplate && nextState.soloDeckTemplate.length > 0
             ? nextState.soloDeckTemplate
-            : createStartingDeck(nextState.players[0]?.id ?? 'player-1', targetRuneTypeCount, totalRunes))
-          : [];
+            : createStartingDeck(nextState.players[0]?.id ?? 'player-1', targetRuneTypeCount, totalRunes));
       const soloBaseTargetScore =
         typeof nextState.soloBaseTargetScore === 'number'
           ? nextState.soloBaseTargetScore
-          : nextState.matchType === 'solo'
-            ? nextState.soloTargetScore ?? DEFAULT_SOLO_CONFIG.targetRuneScore
-            : 0;
+          : nextState.soloTargetScore ?? DEFAULT_SOLO_CONFIG.targetRuneScore;
       const soloStartingStrain =
         typeof nextState.soloStartingStrain === 'number'
           ? nextState.soloStartingStrain
-          : nextState.matchType === 'solo'
-            ? nextState.strain
-            : DEFAULT_STARTING_STRAIN;
+          : nextState.strain;
       const soloWinStreak =
         typeof nextState.soloWinStreak === 'number'
           ? nextState.soloWinStreak
@@ -991,7 +791,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   returnToStartScreen: () => {
     set((state) => ({
-      ...getInitializerForMatchType(state.matchType, state.runeTypeCount),
+      ...getInitializerForMatchType(state.runeTypeCount),
       gameStarted: false,
     }));
     // Call navigation callback if registered (for router integration)
@@ -1001,12 +801,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   resetGame: () => {
-    set((state) => getInitializerForMatchType(state.matchType, state.runeTypeCount));
+    set((state) => getInitializerForMatchType(state.runeTypeCount));
   },
 
   selectDeckDraftRuneforge: (runeforgeId: string) => {
     set((state) => {
-      if (state.matchType !== 'solo' || state.turnPhase !== 'deck-draft' || !state.deckDraftState) {
+      if (state.turnPhase !== 'deck-draft' || !state.deckDraftState) {
         return state;
       }
       const selectedRuneforge = state.deckDraftState.runeforges.find((runeforge) => runeforge.id === runeforgeId);
@@ -1059,10 +859,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   startNextSoloGame: () => {
     set((state) => {
-      if (state.matchType !== 'solo' || state.turnPhase !== 'deck-draft') {
-        return state;
-      }
-
       const deckTemplate = getSoloDeckTemplate(state);
       const nextTarget = state.soloTargetScore;
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / state.runeTypeCount));

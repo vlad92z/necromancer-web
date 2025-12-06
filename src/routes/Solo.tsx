@@ -24,7 +24,6 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
 export function Solo() {
   const navigate = useNavigate();
   const gameStarted = useGameplayStore((state) => state.gameStarted);
-  const matchType = useGameplayStore((state) => state.matchType);
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
   const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
   const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
@@ -34,28 +33,26 @@ export function Solo() {
   const [bestSoloRound, setBestSoloRound] = useState<number>(() => {
     const storedBest = getBestSoloRound();
     const savedState = loadSoloState();
-    const savedRound = savedState?.matchType === 'solo' ? savedState.round : 0;
+    const savedRound = savedState?.round ?? 0;
     return Math.max(storedBest, savedRound);
   });
   const [arcaneDust, setArcaneDust] = useState<number>(() => getArcaneDust());
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
-    if (matchType !== 'solo') {
-      prepareSoloMode(runeTypeCount);
-    }
+    prepareSoloMode(runeTypeCount);
 
     return () => {
       setNavigationCallback(null);
     };
-  }, [navigate, matchType, prepareSoloMode, runeTypeCount]);
+  }, [navigate, prepareSoloMode, runeTypeCount]);
 
   useEffect(() => {
     let lastCompletionSignature: string | null = null;
 
     const unsubscribe = useGameplayStore.subscribe((state) => {
       const persistableState = selectPersistableSoloState(state);
-      if (persistableState.matchType === 'solo' && persistableState.gameStarted) {
+      if (persistableState.gameStarted) {
         saveSoloState(persistableState);
         setHasSavedSoloRun(true);
         setBestSoloRound((previousBest) => {
@@ -68,7 +65,6 @@ export function Solo() {
       }
 
       const completionAchieved =
-        state.matchType === 'solo' &&
         state.soloOutcome === 'victory' &&
         (state.turnPhase === 'game-over' || state.turnPhase === 'deck-draft');
 
@@ -105,7 +101,7 @@ export function Solo() {
     hydrateGameState(savedState);
   };
 
-  if (!gameStarted || matchType !== 'solo') {
+  if (!gameStarted) {
     return (
       <SoloStartScreen
         onStartSolo={handleStartSolo}
