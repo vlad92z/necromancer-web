@@ -146,10 +146,6 @@ export function useRunePlacementSounds(
   });
 
   useEffect(() => {
-    if (overloadSoundPending) {
-      previousAnimationKeysRef.current = animationKeys;
-      return;
-    }
     (Object.keys(animationKeys) as RuneType[]).forEach((runeType) => {
       const currentKey = animationKeys[runeType];
       const previousKey = previousAnimationKeysRef.current[runeType];
@@ -160,7 +156,7 @@ export function useRunePlacementSounds(
         previousAnimationKeysRef.current[runeType] = '';
       }
     });
-  }, [animationKeys, overloadSoundPending]);
+  }, [animationKeys]);
 
   useEffect(() => {
     if (!overloadSoundPending) {
@@ -182,16 +178,10 @@ export function useRunePlacementSounds(
       }
     }
 
-    previousAnimationKeysRef.current = animationKeys;
-    previousCountsRef.current = placementsByType;
     clearOverloadSound();
-  }, [animationKeys, clearOverloadSound, overloadSoundPending, placementsByType]);
+  }, [clearOverloadSound, overloadSoundPending]);
 
   useEffect(() => {
-    if (overloadSoundPending) {
-      previousCountsRef.current = placementsByType;
-      return;
-    }
     (Object.keys(placementsByType) as RuneType[]).forEach((runeType) => {
       const currentCount = placementsByType[runeType];
       const previousCount = previousCountsRef.current[runeType];
@@ -200,5 +190,5 @@ export function useRunePlacementSounds(
       }
       previousCountsRef.current[runeType] = currentCount;
     });
-  }, [overloadSoundPending, placementsByType]);
+  }, [placementsByType]);
 }
