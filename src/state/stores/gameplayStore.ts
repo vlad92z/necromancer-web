@@ -809,7 +809,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
 
-      const runeToRemove = state.player.deck.find((rune) => rune.id === runeId);
+      const runeInDeck = state.player.deck.find((rune) => rune.id === runeId);
+      const runeInTemplate = state.soloDeckTemplate.find((rune) => rune.id === runeId);
+      const runeToRemove = runeInDeck ?? runeInTemplate;
+
       if (!runeToRemove) {
         return state;
       }
@@ -822,7 +825,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       } as const;
       dustAwarded = rarity ? rarityDustMap[rarity] ?? 0 : 0;
 
-      const updatedDeck = state.player.deck.filter((rune) => rune.id !== runeId);
+      const updatedDeck = runeInDeck
+        ? state.player.deck.filter((rune) => rune.id !== runeId)
+        : state.player.deck;
       const updatedDeckTemplate = state.soloDeckTemplate.filter((rune) => rune.id !== runeId);
 
       if (dustAwarded > 0) {
