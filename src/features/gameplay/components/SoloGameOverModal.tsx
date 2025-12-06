@@ -18,12 +18,11 @@ export function SoloGameOverModal({ player, outcome, runePowerTotal, game, targe
   const playClickSound = useClickSound();
   const heading = outcome === 'victory' ? 'Solo Victory' : outcome === 'defeat' ? 'Defeat' : 'Run Complete';
   const missedTarget = typeof targetScore === 'number' ? runePowerTotal < targetScore : false;
-  const subline =
-    outcome === 'victory'
+  const subline = outcome === 'victory'
       ? 'No runes remain to continue the run'
       : outcome === 'defeat'
         ? missedTarget
-          ? 'Rune power fell short of the target'
+          ? 'Arcane Overload has claimed another victim'
           : 'Your channel collapsed under overload'
         : 'The arena falls silent';
   const accentClasses =
@@ -43,10 +42,8 @@ export function SoloGameOverModal({ player, outcome, runePowerTotal, game, targe
       <div className="mb-5 text-[15px] text-slate-300">{subline}</div>
 
       <div className="mb-5 grid grid-cols-3 gap-3">
-        <StatCard label="Health" value={`${player.health}/${player.maxHealth ?? player.health}`} accent="#34d399" />
         <StatCard label="Games Cleared" value={game} accent="#60a5fa" />
         <StatCard label="Rune Power" value={targetScore ? `${runePowerTotal} / ${targetScore}` : runePowerTotal} accent="#facc15" />
-        <StatCard label="Player" value={player.name} accent="#a5b4fc" />
       </div>
 
       <button

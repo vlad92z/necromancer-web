@@ -1,6 +1,6 @@
 # Massive Spell: Arcane Arena
 
-A Roguelite deck-building game where players draft magical runes through multiple chapters in each run, balancing increasing magical powers against increasingly difficult arcane overload.
+A Roguelite deck-building game where players draft magical runes to cast spells while trying to survive arcane overload damage
 
 ## Tech Stack
 
@@ -26,52 +26,33 @@ npm run build
 npm run lint
 ```
 
-## Game Modes
-- **Solo**: Draft from your own runeforges through multiple chapters in a run, manage overload, and race to the target Rune Power score before the deck runs dry.
-
 ## Gameplay Rules (current build)
 
 ### Board & Setup
-- Board sizes track rune variety: 3-6 rune types map to 3x3-6x6 walls with matching pattern lines (tiers 1-6).
-- Solo runeforge count scales with rune variety, with health scaling alongside the chosen config.
+- Board size 6x6 with 6 unique rune types.
 - The center pool opens once your personal runeforges are empty, carrying leftover runes forward.
 
 ### Draft & Place (Actions)
-- On your turn (Action), take all runes of one type from a runeforge (leftovers drop to the center).
+- On your turn, take all runes of one type from a runeforge (leftovers drop to the center).
 - Once all your Runeforges are empty - draft from the shared center pool.
 - Place all drafted runes on a single pattern line that is empty or already holds that type. You cannot place a rune type in a row where it already sits on your wall.
-- Overflow goes to the floor, damaging the player. This damage scales every chapter.
+- Overflow goes to the floor, damaging the player. This damage scales every round (strain).
 
 ### Segment Damage (instant scoring)
 - When a pattern line fills, the first rune jumps to your wall immediately and clears that line.
-- The placement deals instant damage equal to the size of the connected segment it joins (orthogonal adjacency, minimum 1). Build dense clusters so every later placement hits harder.
-- In Solo, that hit also increases your cumulative Rune Power score.
+- The placement deals instant damage (increase rune score) equal to the size of the connected segment it joins (orthogonal adjacency, minimum 1). Build dense clusters so every later placement hits harder.
 
-### Round End & Chapter Progression
+### Round End & Run Progression
 - A **Round** ends when all runeforges and the center are empty, then runeforges are repopulated from the player's deck.
-- A **Chapter** completes when the player reaches the target Rune Score and drafts new runes for their deck.
-- A **Run** ends when the player dies (0 HP) or completes all chapters.
 - Resolve any end-of-round effects.
 - Unlock empty pattern lines.
 - Clears floor runes.
-- Strain (overload multiplier) grows each chapter.
+- Strain (overload multiplier) grows each round.
+
+- A **Game** completes when the player reaches the target Rune Score and drafts new runes for their deck.
+
+- A **Run** ends when the player dies (0 HP).
 - Game over triggers at 0 HP or when there are not enough runes to refill runeforges; Solo checks Rune Power against the target score when the deck runs dry.
-
-## Rune Effects
-
-Currently runes have no active or passive effects applied. These will be unlocked as deck building is implemented.
-
-## Solo Mode
-- **Objective**: Accumulate Rune Power (total segment damage from placements) to reach the target score before you run out of runes or health.
-- **Drafting**: Only from your own runeforges until they are empty; then from the center. Opponent runeforges are disabled.
-- **Overload & Strain**: Overflowing to the floor immediately deals overload damage equal to added penalty x current strain. Strain starts at 1x by default and multiplies each chapter (configurable 1.0-2.0x); Frost mitigation hooks reduce it.
-- **Config Defaults**: 100 HP (cap 1000), 5 personal runeforges, 15 of each rune type, 5 healing per support rune, 200 Rune Power target, pattern-line locking enabled (cleared between rounds).
-- **Terminology**:
-  - **Run**: A full roguelite attempt from start until death
-  - **Chapter**: A single game within a run (starts at Chapter 1, increments after deck drafting)
-  - **Round**: Runeforge repopulation cycle within a chapter
-  - **Action**: Placing runes in pattern lines or overload
-- **Victory/Defeat**: Victory when Rune Power meets the target before the deck runs dry; defeat at 0 HP or by failing to hit the target once no new round can start.
 
 ## Project Structure
 

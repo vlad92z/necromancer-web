@@ -689,6 +689,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   triggerChapterEnd: () => {
+    console.log('gameplayStoreConfig: triggerChapterEnd called');
     set((state) => {
       const roundExhausted = isRoundExhausted(state.runeforges, state.centerPool);
       if (!roundExhausted || state.selectedRunes.length > 0 || state.turnPhase === 'end-of-round') {
