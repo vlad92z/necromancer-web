@@ -55,7 +55,7 @@ export interface GameBoardSharedProps {
   player: GameState['player'];
   currentPlayerIndex: number;
   currentPlayerId: string;
-  round: number;
+  chapter: number;
   isDraftPhase: boolean;
   isGameOver: boolean;
 
@@ -97,12 +97,12 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     selectedRunes,
     turnPhase,
     lockedPatternLines,
-    shouldTriggerEndRound,
+    shouldTriggerEndChapter,
     draftSource,
     strain,
     soloDeckTemplate,
   } = gameState;
-  const currentRound = useGameplayStore((state) => state.round);
+  const currentChapter = useGameplayStore((state) => state.chapter);
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
@@ -118,7 +118,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     startNextSoloGame,
   } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
-  const endRound = useGameplayStore((state) => state.endRound);
+  const endChapter = useGameplayStore((state) => state.endChapter);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
@@ -181,7 +181,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         return {
           isActive: true,
           overloadMultiplier,
-          round: currentRound,
+          chapter: currentChapter,
           deckCount: player.deck.length,
         };
       })();
@@ -232,14 +232,14 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   };
 
   useEffect(() => {
-    if (shouldTriggerEndRound) {
+    if (shouldTriggerEndChapter) {
       const timer = setTimeout(() => {
-        endRound();
+        endChapter();
       }, 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [shouldTriggerEndRound, endRound]);
+  }, [shouldTriggerEndChapter, endChapter]);
 
   useEffect(() => {
     if (turnPhase !== 'cast') return;
@@ -279,7 +279,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     player,
     currentPlayerIndex: 0,
     currentPlayerId: player.id,
-    round: currentRound,
+    chapter: currentChapter,
     isDraftPhase,
     isGameOver,
 
@@ -345,8 +345,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           Quit Run
         </button>
         <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Current Round</div>
-          <div className="text-2xl font-extrabold text-white leading-tight">Round {currentRound}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Chapter</div>
+          <div className="text-2xl font-extrabold text-white leading-tight">{currentChapter}</div>
         </div>
       </div>
       <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
@@ -372,7 +372,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
       {showDeckOverlay && <DeckOverlay deck={player.deck} fullDeck={fullDeck} playerName={player.name} onClose={() => setShowDeckOverlay(false)} />}
 
-      {showLogOverlay && <GameLogOverlay roundHistory={gameState.roundHistory} onClose={() => setShowLogOverlay(false)} />}
+      {showLogOverlay && <GameLogOverlay chapterHistory={gameState.chapterHistory} onClose={() => setShowLogOverlay(false)} />}
 
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
       <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />

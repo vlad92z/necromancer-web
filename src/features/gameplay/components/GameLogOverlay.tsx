@@ -3,14 +3,14 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import type { RoundScore } from '../../../types/game';
+import type { ChapterScore } from '../../../types/game';
 
 interface GameLogOverlayProps {
-  roundHistory: RoundScore[];
+  chapterHistory: ChapterScore[];
   onClose: () => void;
 }
 
-export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
+export function GameLogOverlay({ chapterHistory, onClose }: GameLogOverlayProps) {
   return (
     <AnimatePresence>
       <motion.div
@@ -42,13 +42,13 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
           </div>
 
           <div className="flex flex-col gap-5">
-            {roundHistory.length === 0 ? (
+            {chapterHistory.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300/80 bg-slate-50 px-12 py-10 text-center text-slate-500">
                 <div className="mb-4 text-6xl">📜</div>
-                <p className="text-lg font-bold">No rounds completed yet</p>
+                <p className="text-lg font-bold">No chapters completed yet</p>
               </div>
             ) : (
-              roundHistory.map((round, index) => (
+              chapterHistory.map((chapterScore, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: -20 }}
@@ -56,9 +56,9 @@ export function GameLogOverlay({ roundHistory, onClose }: GameLogOverlayProps) {
                   transition={{ delay: index * 0.05 }}
                   className="rounded-xl border-2 border-slate-300 bg-slate-50 px-4 py-3"
                 >
-                  <div className="text-base font-bold text-sky-900">Round {round.round}</div>
+                  <div className="text-base font-bold text-sky-900">Chapter {chapterScore.chapter}</div>
 
-                  {index < roundHistory.length - 1 && (
+                  {index < chapterHistory.length - 1 && (
                     <div className="mt-3 border-b border-dashed border-slate-300" />
                   )}
                 </motion.div>

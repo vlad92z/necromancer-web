@@ -30,8 +30,8 @@ export function useSelectedRunes() {
 }
 
 /**
- * Get current round number
+ * Get current chapter number
  */
-export function useRound() {
-  return useGameplayStore((state) => state.round);
+export function useChapter() {
+  return useGameplayStore((state) => state.chapter);
 }

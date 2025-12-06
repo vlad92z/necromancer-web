@@ -16,7 +16,7 @@ interface PlayerViewProps {
   lockedPatternLines?: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
-  round: number;
+  chapter: number;
   soloRuneScore?: {
     currentScore: number;
     targetScore: number;
@@ -37,7 +37,7 @@ export function PlayerView({
   lockedPatternLines,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
-  round,
+  chapter,
   soloRuneScore,
   deckCount,
   strain,
@@ -56,7 +56,7 @@ export function PlayerView({
         lockedLineIndexes={lockedPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
-        round={round}
+        chapter={chapter}
         soloRuneScore={soloRuneScore}
         deckCount={deckCount}
         strain={strain}

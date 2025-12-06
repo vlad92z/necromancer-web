@@ -34,7 +34,7 @@ export function addArcaneDust(amount: number): number {
   return saveArcaneDust(nextTotal);
 }
 
-export function getArcaneDustReward(round: number): number {
-  const normalizedRound = Math.max(0, Math.floor(round));
-  return normalizedRound * 50;
+export function getArcaneDustReward(chapter: number): number {
+  const normalizedChapter = Math.max(0, Math.floor(chapter));
+  return normalizedChapter * 50;
 }

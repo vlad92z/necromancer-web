@@ -25,7 +25,7 @@ interface PlayerBoardProps {
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
-  round: number;
+  chapter: number;
   soloRuneScore?: {
     currentScore: number;
     targetScore: number;
@@ -45,6 +45,7 @@ export function PlayerBoard({
   lockedLineIndexes,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
+  chapter: _chapter, // Available for future use
   soloRuneScore,
   deckCount,
   strain,

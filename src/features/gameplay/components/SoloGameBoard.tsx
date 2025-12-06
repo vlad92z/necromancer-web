@@ -34,7 +34,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     onCancelSelection,
     onPlaceRunes,
     onPlaceRunesInFloor,
-    round,
+    chapter,
     isGameOver,
     returnToStartScreen,
   } = shared;
@@ -87,7 +87,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             hiddenFloorSlotIndexes={playerHiddenFloorSlots}
-            round={round}
+            chapter={chapter}
             soloRuneScore={soloRuneScore || undefined}
             deckCount={soloStats?.deckCount}
             strain={soloStats?.overloadMultiplier}
@@ -114,7 +114,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             player={player}
             outcome={soloOutcome}
             runePowerTotal={runePowerTotal}
-            round={round}
+            chapter={chapter}
             targetScore={soloTargetScore}
             onReturnToStart={returnToStartScreen}
           />

@@ -258,7 +258,8 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 }
 
 /**
- * Calculate overload by adding the current round number to the effective penalty.
+ * Calculate overload by adding the current chapter number to the effective penalty.
+ * @deprecated - This function is not currently used
  */
 export function calculateOverloadPenalty(effectivePenalty: number, round: number): number {
   const normalizedPenalty = Math.max(0, effectivePenalty);

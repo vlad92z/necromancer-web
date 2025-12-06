@@ -84,7 +84,7 @@ export interface SoloSizingConfig {
 export interface SoloInitializationOptions {
   startingDeck?: Rune[];
   targetScore?: number;
-  winStreak?: number;
+  longestRun?: number;
 }
 
 export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunConfig {
@@ -244,7 +244,7 @@ export function initializeSoloGame(
   const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
   const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
   const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * RUNE_TYPES.length;
-  const winStreak = options?.winStreak ?? 0;
+  const longestRun = options?.longestRun ?? 0;
   const soloMaxHealth = Math.max(SOLO_MAX_HEALTH, soloConfig.startingHealth);
 
   const soloPlayer = createPlayer(
@@ -285,23 +285,23 @@ export function initializeSoloGame(
     runeforges: filledRuneforges,
     centerPool: [],
     turnPhase: 'draft',
-    round: 1,
+    chapter: 1,
     selectedRunes: [],
     draftSource: null,
     animatingRunes: [],
     pendingPlacement: null,
     overloadSoundPending: false,
-    roundHistory: [],
-    roundDamage: 0,
+    chapterHistory: [],
+    chapterDamage: 0,
     lockedPatternLines: {
       [soloPlayer.id]: []
     },
-    shouldTriggerEndRound: false,
+    shouldTriggerEndChapter: false,
     runePowerTotal: 0,
     soloTargetScore: targetScore,
     soloOutcome: null,
     soloPatternLineLock: soloConfig.patternLinesLockOnComplete,
-    soloWinStreak: winStreak,
+    longestRun,
     deckDraftState: null,
     soloBaseTargetScore: soloConfig.targetRuneScore,
     deckDraftReadyForNextGame: false,

@@ -105,13 +105,13 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
+export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-chapter' | 'deck-draft' | 'game-over';
 
 /**
- * Round history entry for game log
+ * Chapter history entry for game log
  */
-export interface RoundScore {
-  round: number;
+export interface ChapterScore {
+  chapter: number;
   playerName: string;
 }
 
@@ -141,14 +141,14 @@ export interface GameState {
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   turnPhase: TurnPhase;
-  round: number;
+  chapter: number; // Current chapter in this run (increments after each deck draft)
   /**
    * Damage dealt for every overload rune
-   * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
+   * Starts at a tunable value and is multiplied each chapter by `strainMultiplier`.
    */
   strain: number;
   /**
-   * Factor used to multiply `strain` at the end of each round. Kept in state
+   * Factor used to multiply `strain` at the end of each chapter. Kept in state
    * so it can be tuned or modified by runes in the future.
    */
   strainMultiplier: number;
@@ -161,15 +161,15 @@ export interface GameState {
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
-  roundHistory: RoundScore[]; // History of completed rounds for game log
-  roundDamage: number; // Damage dealt by the player during the current round
+  chapterHistory: ChapterScore[]; // History of completed chapters for game log
+  chapterDamage: number; // Damage dealt by the player during the current chapter
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
-  shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
+  shouldTriggerEndChapter: boolean; // Flag to trigger endChapter in component useEffect
   runePowerTotal: number; // Solo score accumulator
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
   soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
-  soloWinStreak: number; // Consecutive solo victories used for draft bonuses
+  longestRun: number; // Furthest chapter reached in any run
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   soloBaseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
