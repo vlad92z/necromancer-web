@@ -5,6 +5,7 @@
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
+import { useState } from 'react';
 
 interface ArtefactsRowProps {
   selectedArtefactIds: ArtefactId[];
@@ -20,8 +21,13 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
   const iconSize = compact ? 'w-[60px] h-[60px]' : 'w-[100px] h-[100px]';
   const gap = compact ? 'gap-1.5' : 'gap-2';
 
+  const [hovered, setHovered] = useState<{
+    id: ArtefactId | null;
+    rect: { left: number; top: number; width: number; height: number } | null;
+  }>({ id: null, rect: null });
+
   return (
-    <div className={`flex items-center ${gap} flex-wrap`}>
+    <div className={`relative flex items-center ${gap} flex-wrap`}>
       {selectedArtefactIds.map((artefactId) => {
         const artefact = ARTEFACTS[artefactId];
         if (!artefact) return null;
@@ -33,7 +39,21 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
           <div
             key={artefactId}
             className={`${iconSize} rounded-lg overflow-hidden border border-slate-600/50 bg-slate-900/50 shadow-lg`}
-            title={tooltipText}
+            onMouseEnter={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setHovered({
+                id: artefactId,
+                rect: {
+                  left: rect.left,
+                  top: rect.top,
+                  width: rect.width,
+                  height: rect.height,
+                },
+              });
+            }}
+            onMouseLeave={() => setHovered({ id: null, rect: null })}
+            role="img"
+            aria-label={tooltipText}
           >
             <img
               src={artefact.image}
@@ -43,6 +63,26 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
           </div>
         );
       })}
+
+      {hovered.id && hovered.rect && (
+        (() => {
+          const art = ARTEFACTS[hovered.id as ArtefactId];
+          if (!art) return null;
+          const desc = getArtefactEffectDescription(hovered.id as ArtefactId);
+          return (
+            <div
+              className="pointer-events-none fixed z-50 max-w-[320px] rounded-md border border-slate-700/60 bg-slate-900/95 px-3 py-2 text-xs text-slate-100 shadow-lg"
+              style={{
+                left: hovered.rect.left + hovered.rect.width / 2,
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              <div className="text-sm font-semibold text-slate-50">{art.name}</div>
+              <div className="mt-1 text-[12px] text-slate-300 whitespace-pre-wrap">{desc}</div>
+            </div>
+          );
+        })()
+      )}
     </div>
   );
 }
