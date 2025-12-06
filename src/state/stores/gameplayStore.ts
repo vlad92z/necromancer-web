@@ -649,6 +649,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   
   draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
+      if (state.turnPhase === 'place') {
+        return attemptAutoPlacement(state);
+      }
       if (state.turnPhase !== 'draft') {
         return state;
       }
