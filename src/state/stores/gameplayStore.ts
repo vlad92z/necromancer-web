@@ -416,6 +416,102 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
   };
 }
 
+function placeSelectionInFloor(state: GameplayStore): GameplayStore {
+  if (state.turnPhase !== 'place') {
+    return state;
+  }
+
+  const { selectedRunes } = state;
+  if (selectedRunes.length === 0) return state;
+
+  const currentPlayer = state.player;
+
+  const updatedFloorLine = {
+    ...currentPlayer.floorLine,
+    runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
+  };
+
+  const overloadRunesPlaced = selectedRunes.length;
+  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
+
+  const updatedPlayer = {
+    ...currentPlayer,
+    floorLine: updatedFloorLine,
+    health: nextHealth,
+  };
+
+  const nextCenterPool = getNextCenterPool(state);
+  const defeatedByOverload = nextHealth === 0;
+  if (defeatedByOverload) {
+    const defeatedState = handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+    return { ...state, ...defeatedState, selectionTimestamp: null };
+  }
+
+  const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
+  if (nextRunePowerTotal >= state.soloTargetScore) {
+    const deckDraftReadyState = enterDeckDraftMode({
+      ...selectPersistableGameState(state),
+      player: updatedPlayer,
+      centerPool: nextCenterPool,
+      selectedRunes: [],
+      selectionTimestamp: null,
+      draftSource: null,
+      pendingPlacement: null,
+      animatingRunes: [],
+      shouldTriggerEndRound: false,
+      overloadSoundPending: overloadDamage > 0,
+      runePowerTotal: nextRunePowerTotal,
+    });
+
+    return { ...state, ...deckDraftReadyState, selectionTimestamp: null };
+  }
+
+  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+
+  return {
+    ...state,
+    player: updatedPlayer,
+    selectedRunes: [],
+    selectionTimestamp: null,
+    draftSource: null,
+    centerPool: nextCenterPool,
+    turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
+    shouldTriggerEndRound: shouldEndRound,
+    overloadSoundPending: overloadDamage > 0,
+    runePowerTotal: state.runePowerTotal + scoreBonus,
+  };
+}
+
+function canPlaceSelectionOnAnyLine(state: GameplayStore): boolean {
+  if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+    return false;
+  }
+
+  const currentPlayer = state.player;
+  const runeType = state.selectedRunes[0].runeType;
+  const lockedLinesForPlayer = state.lockedPatternLines[currentPlayer.id] ?? [];
+
+  return currentPlayer.patternLines.some((line, index) => {
+    if (lockedLinesForPlayer.includes(index)) {
+      return false;
+    }
+    if (line.runeType !== null && line.runeType !== runeType) {
+      return false;
+    }
+    if (line.count >= line.tier) {
+      return false;
+    }
+
+    const wallSize = currentPlayer.wall.length;
+    const col = getWallColumnForRune(index, runeType, wallSize);
+    if (currentPlayer.wall[index][col].runeType !== null) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
 function attemptAutoPlacement(state: GameplayStore): GameplayStore {
   if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
     return state;
@@ -441,6 +537,11 @@ function attemptAutoPlacement(state: GameplayStore): GameplayStore {
 
   if (bestLineIndex !== null) {
     return placeSelectionOnPatternLine(state, bestLineIndex);
+  }
+
+  const canPlaceAnywhere = canPlaceSelectionOnAnyLine(state);
+  if (!canPlaceAnywhere) {
+    return placeSelectionInFloor(state);
   }
 
   return cancelSelectionState(state);
@@ -690,73 +791,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   placeRunesInFloor: () => {
-    set((state) => {
-      if (state.turnPhase !== 'place') {
-        return state;
-      }
-      const { selectedRunes } = state;
-      
-      // No runes selected, do nothing
-      if (selectedRunes.length === 0) return state;
-      
-      const currentPlayer = state.player;
-      
-      // Add all selected runes to floor line
-      const updatedFloorLine = {
-        ...currentPlayer.floorLine,
-        runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
-      };
-
-      const overloadRunesPlaced = selectedRunes.length;
-      const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
-      
-      // Update player
-      const updatedPlayer = {
-        ...currentPlayer,
-        floorLine: updatedFloorLine,
-        health: nextHealth,
-      };
-      
-      const nextCenterPool = getNextCenterPool(state);
-      const defeatedByOverload = nextHealth === 0;
-      if (defeatedByOverload) {
-        return handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
-      }
-
-      const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
-      if (nextRunePowerTotal >= state.soloTargetScore) {
-        // Rod can trigger a victory directly from overload damage
-        return enterDeckDraftMode({
-          ...state,
-          player: updatedPlayer,
-          centerPool: nextCenterPool,
-          selectedRunes: [],
-          selectionTimestamp: null,
-          draftSource: null,
-          pendingPlacement: null,
-          animatingRunes: [],
-          shouldTriggerEndRound: false,
-          overloadSoundPending: overloadDamage > 0,
-          runePowerTotal: nextRunePowerTotal,
-        });
-      }
-      
-      // Check if round should end (all runeforges and center empty)
-      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
-      
-      return {
-        ...state,
-        player: updatedPlayer,
-        selectedRunes: [],
-        selectionTimestamp: null,
-        draftSource: null,
-        centerPool: nextCenterPool,
-        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
-        shouldTriggerEndRound: shouldEndRound,
-        overloadSoundPending: overloadDamage > 0,
-        runePowerTotal: state.runePowerTotal + scoreBonus,
-      };
-    });
+    set((state) => placeSelectionInFloor(state));
   },
   
   cancelSelection: () => {
