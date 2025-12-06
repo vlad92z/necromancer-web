@@ -50,24 +50,29 @@ export function Runeforge({
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedForDisplay: boolean) => {
     e.stopPropagation();
-    if (disabled && allowCancel && onCancelSelection) {
-      onCancelSelection();
-      return;
-    }
-    if (isSelectedForDisplay && onCancelSelection) {
-      onCancelSelection();
-      return;
-    }
-    if (onRuneforgeSelect && !disabled) {
-      onRuneforgeSelect(runeforge.id);
-      return;
-    }
-    if (selectionActive) {
-      return;
-    }
-    if (!disabled && onRuneClick) {
+    console.log('rune clicked inside runeforge');
+    if (onRuneClick) {
+      console.log('click sent');
       onRuneClick(runeforge.id, rune.runeType, rune.id);
     }
+    // if (disabled && allowCancel && onCancelSelection) {
+    //   onCancelSelection();
+    //   return;
+    // }
+    // if (isSelectedForDisplay && onCancelSelection) {
+    //   onCancelSelection();
+    //   return;
+    // }
+    // if (onRuneforgeSelect && !disabled) {
+    //   onRuneforgeSelect(runeforge.id);
+    //   return;
+    // }
+    // if (selectionActive) {
+    //   return;
+    // }
+    // if (!disabled && onRuneClick) {
+    //   onRuneClick(runeforge.id, rune.runeType, rune.id);
+    // }
   };
   
   // Determine styling based on state

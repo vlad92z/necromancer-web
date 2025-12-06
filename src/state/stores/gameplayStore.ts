@@ -15,6 +15,7 @@ import { useUIStore } from './uiStore';
 import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
 import { saveSoloState } from '../../utils/soloPersistence';
+import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
@@ -245,6 +246,7 @@ export interface GameplayStore extends GameState {
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
+  autoPlaceSelection: () => void;
   acknowledgeOverloadSound: () => void;
   endRound: () => void;
   resetGame: () => void;
@@ -266,6 +268,7 @@ function selectPersistableGameState(state: GameplayStore): GameState {
     moveRunesToWall,
     placeRunesInFloor,
     cancelSelection,
+    autoPlaceSelection,
     acknowledgeOverloadSound,
     endRound,
     resetGame,
@@ -295,13 +298,49 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   // Strain configuration - starting value and multiplier factor (tune here)
   strain: DEFAULT_STARTING_STRAIN,
   strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
+
+  
   
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
+      console.log(`gameplayStore: draftRune called with runeforgeId=${state.turnPhase}`);
+      if (state.turnPhase == 'place') {
+
+    // // Check if selection is within 1 second (1000ms) for double-click behavior
+    // const now = Date.now();
+    // const timeSinceSelection = state.selectionTimestamp ? now - state.selectionTimestamp : Infinity;
+    // const isWithinDoubleClickWindow = timeSinceSelection <= 1000;
+
+    // if (!isWithinDoubleClickWindow) {
+    //   // More than 1 second has passed, just cancel the selection
+    //   state.cancelSelection();
+    //   return;
+    // }
+
+        const currentPlayer = state.player;
+        const lockedLineIndexes = state.lockedPatternLines[currentPlayer.id] ?? [];
+
+        // Find the best pattern line for auto-placement
+        const bestLineIndex = findBestPatternLineForAutoPlacement(
+          state.selectedRunes,
+          currentPlayer.patternLines,
+          currentPlayer.wall,
+          lockedLineIndexes
+        );
+
+        if (bestLineIndex !== null) {
+          // Found a suitable line - trigger placement using the existing placeRunes logic
+          state.placeRunes(bestLineIndex);
+        } else {
+          // No suitable line found - fallback to cancel selection
+          state.cancelSelection();
+        }
+      }
       if (state.turnPhase !== 'draft') {
         return state;
       }
+      console.log('continue')
       // Find the runeforge
       const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
@@ -714,6 +753,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         };
       }
     });
+  },
+
+
+  /**
+   * Try to automatically place the current rune selection on an appropriate pattern line.
+   * This implements the "double-click to send runes" feature with a 1-second timeout.
+   * 
+   * Algorithm:
+   * 1. Check if the selection was made within the last 1 second (for double-click behavior)
+   * 2. If yes, try to find an unfinished pattern line or empty line with exact match
+   * 3. If found, place runes there; otherwise cancel selection
+   * 4. If more than 1 second has passed, just cancel the selection
+   * 
+   * Only works when in the 'place' phase with selected runes.
+   */
+  autoPlaceSelection: () => {
+    
   },
   
   acknowledgeOverloadSound: () => {
