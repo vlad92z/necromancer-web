@@ -135,7 +135,7 @@ export function PlayerBoard({
           </div>
           {selectedArtefactIds.length > 0 && (
             <div className="flex justify-center mt-2">
-              <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
+              <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
             </div>
           )}
         </div>

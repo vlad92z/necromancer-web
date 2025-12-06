@@ -79,7 +79,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
         {/* All Artefacts Grid */}
         <div>
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">All Artefacts</h3>
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-5">
             {allArtefacts.map((artefact) => {
               const isOwned = ownedArtefactIds.includes(artefact.id);
               const isSelected = selectedArtefactIds.includes(artefact.id);
@@ -88,7 +88,8 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
               return (
                 <div
                   key={artefact.id}
-                  className={`relative cursor-pointer overflow-hidden rounded-xl border transition ${
+
+                  className={`h-32 w-32 relative cursor-pointer overflow-hidden rounded-xl border transition ${
                     isOwned
                       ? isSelected
                         ? 'border-sky-400 bg-slate-800 shadow-lg'

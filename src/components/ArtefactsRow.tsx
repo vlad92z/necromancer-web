@@ -15,7 +15,8 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
     return null;
   }
 
-  const iconSize = compact ? 'w-8 h-8' : 'w-12 h-12';
+  // Match rune cell sizes: medium = 35px, large = 60px
+  const iconSize = compact ? 'w-[60px] h-[60px]' : 'w-[100px] h-[100px]';
   const gap = compact ? 'gap-1.5' : 'gap-2';
 
   return (
