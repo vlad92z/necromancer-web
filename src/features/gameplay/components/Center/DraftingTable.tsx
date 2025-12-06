@@ -98,7 +98,7 @@ export function DraftingTable({
                   : undefined
               }
               selectionSourceActive={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes}
-              onCancelSelection={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes ? onCancelSelection : undefined}
+              onCancelSelection={hasSelectedRunes ? onCancelSelection : undefined}
               animatingRuneIds={animatingRuneIdSet}
             />
           ))}
@@ -125,8 +125,14 @@ export function DraftingTable({
     </div>
   );
   
+  const handleDraftingTableClick = () => {
+    if (hasSelectedRunes) {
+      onCancelSelection();
+    }
+  };
+
   return (
-    <div className="h-full w-full flex flex-col justify-center gap-4">
+    <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
       {renderRuneforgeRow(player, runeforges, 'center', 'player')}
       {renderCenterSection()}
       <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />

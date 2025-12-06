@@ -38,6 +38,7 @@ export function Runeforge({
   const displayedRunes = displayOverride ? displayOverride.runes : runeforge.runes;
   const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
   const selectionActive = selectionSourceActive && Boolean(displayOverride);
+  const allowCancel = Boolean(onCancelSelection);
   const canHighlightRunes = !selectionActive && !disabled;
   const runeSize = 60;
   const runeGap = 14;
@@ -49,6 +50,10 @@ export function Runeforge({
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedForDisplay: boolean) => {
     e.stopPropagation();
+    if (disabled && allowCancel && onCancelSelection) {
+      onCancelSelection();
+      return;
+    }
     if (isSelectedForDisplay && onCancelSelection) {
       onCancelSelection();
       return;
@@ -93,7 +98,7 @@ export function Runeforge({
       }
     : {};
 
-  const buttonDisabled = selectionActive ? false : (disabled || runeforge.runes.length === 0);
+  const buttonDisabled = selectionActive ? false : (((disabled && !allowCancel) || runeforge.runes.length === 0));
 
   return (
     <motion.button
@@ -101,6 +106,10 @@ export function Runeforge({
       onClick={() => {
         if (!buttonDisabled && onRuneforgeSelect) {
           onRuneforgeSelect(runeforge.id);
+          return;
+        }
+        if (!buttonDisabled && allowCancel && onCancelSelection && disabled) {
+          onCancelSelection();
         }
       }}
       style={{
@@ -143,7 +152,7 @@ export function Runeforge({
               const highlightByType = hoveredRuneType === rune.runeType && !displayOverride;
               const isHighlighted = highlightByType;
               const baseSize = `${runeSize}px`;
-              const basePointerEvents = (selectionActive && isSelectedForDisplay) || (!selectionActive && !disabled) ? 'auto' : 'none';
+              const basePointerEvents = (selectionActive && isSelectedForDisplay) || (!selectionActive && (!disabled || allowCancel)) ? 'auto' : 'none';
               const pointerEvents = isAnimatingRune ? 'none' : basePointerEvents;
               const baseCursor = selectionActive || !disabled ? 'pointer' : 'not-allowed';
               const cursor = isAnimatingRune ? 'default' : baseCursor;
