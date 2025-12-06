@@ -68,7 +68,6 @@ export interface GameBoardSharedProps {
   // Board data
   runeforges: GameState['runeforges'];
   centerPool: GameState['centerPool'];
-  runeTypeCount: GameState['runeTypeCount'];
 
   // Locks and visibility
   playerLockedLines: number[];
@@ -293,7 +292,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     // Board data
     runeforges,
     centerPool,
-    runeTypeCount: gameState.runeTypeCount,
 
     // Locks and visibility
     playerLockedLines,

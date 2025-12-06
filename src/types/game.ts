@@ -8,15 +8,6 @@
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
 
 /**
- * Number of rune types in the game
- * 3 types: Fire, Life, Wind (3x3 wall, 3 pattern lines)
- * 4 types: Fire, Life, Wind, Frost (4x4 wall, 4 pattern lines)
- * 5 types: Fire, Life, Wind, Frost, Void (5x5 wall, 5 pattern lines)
- * 6 types: Fire, Life, Wind, Frost, Void, Lightning (6x6 wall, 6 pattern lines)
- */
-export type RuneTypeCount = 3 | 4 | 5 | 6;
-
-/**
  * Rune effect modifiers
  */
 export type RuneEffectRarity = 'uncommon' | 'rare' | 'epic';
@@ -139,7 +130,6 @@ export interface AnimatingRune {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
-  runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
   factoriesPerPlayer: number; // Runeforge count for the current solo setup
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
   startingHealth: number; // Health pool per player for the current configuration

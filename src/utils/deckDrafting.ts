@@ -2,9 +2,9 @@
  * DeckDrafting utilities - helpers for post-victory deck upgrades
  */
 
-import type { DeckDraftState, Rune, RuneEffectRarity, RuneType, RuneTypeCount } from '../types/game';
+import type { DeckDraftState, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import { getDraftEffectsForType } from './runeEffects';
-import { getRuneTypesForCount } from './gameInitialization';
+import { getRuneTypes } from './gameInitialization';
 import type { Runeforge } from '../types/game';
 
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
@@ -39,13 +39,12 @@ const createDraftRune = (ownerId: string, runeType: RuneType, index: number, win
 };
 
 function createDraftRuneforges(
-  runeTypeCount: RuneTypeCount,
   ownerId: string,
   runeforgeCount: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
   runesPerRuneforge: number = DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
   winStreak: number = 0
 ): Runeforge[] {
-  const runeTypes = getRuneTypesForCount(runeTypeCount);
+  const runeTypes = getRuneTypes();
 
   return Array(runeforgeCount)
     .fill(null)
@@ -65,14 +64,12 @@ function createDraftRuneforges(
 }
 
 export function createDeckDraftState(
-  runeTypeCount: RuneTypeCount,
   ownerId: string,
   totalPicks: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
   winStreak: number = 0
 ): DeckDraftState {
   return {
     runeforges: createDraftRuneforges(
-      runeTypeCount,
       ownerId,
       DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
       DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
@@ -85,7 +82,6 @@ export function createDeckDraftState(
 
 export function advanceDeckDraftState(
   current: DeckDraftState,
-  runeTypeCount: RuneTypeCount,
   ownerId: string,
   winStreak: number = 0
 ): DeckDraftState | null {
@@ -96,7 +92,6 @@ export function advanceDeckDraftState(
 
   return {
     runeforges: createDraftRuneforges(
-      runeTypeCount,
       ownerId,
       DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
       DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,

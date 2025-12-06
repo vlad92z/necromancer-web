@@ -10,17 +10,17 @@ import type {
   ScoringWall,
   Rune,
   RuneType,
-  RuneTypeCount,
   SoloRunConfig,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 
-const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+const WALL_SIZE = RUNE_TYPES.length;
 
 /**
- * Create an empty scoring wall (3x3 up to 6x6)
+ * Create an empty scoring wall (fixed 6x6)
  */
-export function createEmptyWall(size: number = 5): ScoringWall {
+export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
   return Array(size)
     .fill(null)
     .map(() =>
@@ -31,9 +31,9 @@ export function createEmptyWall(size: number = 5): ScoringWall {
 }
 
 /**
- * Create initial pattern lines (3, 4, or 5 lines, capacities 1-N)
+ * Create initial pattern lines (fixed 6 lines, capacities 1-6)
  */
-export function createPatternLines(count: number = 5): PatternLine[] {
+export function createPatternLines(count: number = WALL_SIZE): PatternLine[] {
   const lines: PatternLine[] = [];
   for (let i = 1; i <= count; i++) {
     lines.push({
@@ -48,15 +48,10 @@ export function createPatternLines(count: number = 5): PatternLine[] {
 }
 
 /**
- * Get the rune types for a given rune type count
- * 3 types: Fire, Life, Wind
- * 4 types: Fire, Life, Wind, Frost
- * 5 types: Fire, Life, Wind, Frost, Void
- * 6 types: Fire, Life, Wind, Frost, Void, Lightning
+ * Get all rune types in the fixed order used by the game.
  */
-export function getRuneTypesForCount(count: RuneTypeCount): RuneType[] {
-  const clampedCount = Math.min(RUNE_ORDER.length, Math.max(3, count));
-  return RUNE_ORDER.slice(0, clampedCount) as RuneType[];
+export function getRuneTypes(): RuneType[] {
+  return [...RUNE_TYPES];
 }
 
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
@@ -107,17 +102,15 @@ export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunCon
 }
 
 /**
- * Derive solo sizing for factories and rune pool based on wall size.
+ * Derive solo sizing for factories and rune pool (fixed wall size).
  */
-export function getSoloSizingConfig(runeTypeCount: RuneTypeCount): SoloSizingConfig {
-  const sizingByBoardSize: Record<RuneTypeCount, { factoriesPerPlayer: number; totalRunesPerPlayer: number; startingHealth: number; overflowCapacity: number }> = {
-    3: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 25, overflowCapacity: 6 },
-    4: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 50, overflowCapacity: 8 },
-    5: { factoriesPerPlayer: 3, totalRunesPerPlayer: 36, startingHealth: 100, overflowCapacity: 10 },
-    6: { factoriesPerPlayer: 4, totalRunesPerPlayer: 48, startingHealth: 150, overflowCapacity: 12 },
+export function getSoloSizingConfig(): SoloSizingConfig {
+  const baseSizing = {
+    factoriesPerPlayer: 4,
+    totalRunesPerPlayer: 48,
+    startingHealth: 150,
+    overflowCapacity: 12,
   };
-
-  const baseSizing = sizingByBoardSize[runeTypeCount];
   return {
     ...baseSizing,
     runesPerRuneforge: DEFAULT_RUNES_PER_RUNEFORGE,
@@ -129,11 +122,10 @@ export function getSoloSizingConfig(runeTypeCount: RuneTypeCount): SoloSizingCon
  */
 export function createStartingDeck(
   playerId: string,
-  runeTypeCount: RuneTypeCount = 5,
   totalRunesPerPlayer?: number
 ): Rune[] {
   const deck: Rune[] = [];
-  const runeTypes = getRuneTypesForCount(runeTypeCount);
+  const runeTypes = getRuneTypes();
   const runesToGenerate = totalRunesPerPlayer ?? runeTypes.length * 8;
   const baseRunesPerType = Math.floor(runesToGenerate / runeTypes.length);
   let remainder = runesToGenerate - baseRunesPerType * runeTypes.length;
@@ -162,7 +154,6 @@ export function createPlayer(
   id: string,
   name: string,
   startingHealth: number = 300,
-  runeTypeCount: RuneTypeCount = 5,
   totalRunesPerPlayer?: number,
   overflowCapacity?: number,
   maxHealthOverride?: number,
@@ -170,15 +161,15 @@ export function createPlayer(
   return {
     id,
     name,
-    patternLines: createPatternLines(runeTypeCount),
-    wall: createEmptyWall(runeTypeCount),
+    patternLines: createPatternLines(WALL_SIZE),
+    wall: createEmptyWall(WALL_SIZE),
     floorLine: {
       runes: [],
       maxCapacity: overflowCapacity ?? 10,
     },
     health: startingHealth,
     maxHealth: maxHealthOverride ?? startingHealth,
-    deck: createStartingDeck(id, runeTypeCount, totalRunesPerPlayer),
+    deck: createStartingDeck(id, totalRunesPerPlayer),
   };
 }
 
@@ -242,18 +233,17 @@ export function fillFactories(
 }
 
 /**
- * Initialize a solo run using sizing driven by rune variety
+ * Initialize a solo run using the fixed six-rune setup.
  */
 export function initializeSoloGame(
-  runeTypeCount: RuneTypeCount = 5,
   config?: Partial<SoloRunConfig>,
   options?: SoloInitializationOptions
 ): GameState {
   const soloConfig = normalizeSoloConfig(config);
-  const soloSizingConfig = getSoloSizingConfig(runeTypeCount);
+  const soloSizingConfig = getSoloSizingConfig();
   const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
   const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
-  const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * runeTypeCount;
+  const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * RUNE_TYPES.length;
   const winStreak = options?.winStreak ?? 0;
   const soloMaxHealth = Math.max(SOLO_MAX_HEALTH, soloConfig.startingHealth);
 
@@ -261,7 +251,6 @@ export function initializeSoloGame(
     'player-1',
     'Arcane Apprentice',
     soloConfig.startingHealth,
-    runeTypeCount,
     soloDeckSize,
     soloSizingConfig.overflowCapacity,
     soloMaxHealth,
@@ -284,7 +273,6 @@ export function initializeSoloGame(
 
   return {
     gameStarted: false,
-    runeTypeCount,
     factoriesPerPlayer: soloRuneforgeCount,
     runesPerRuneforge: soloSizingConfig.runesPerRuneforge,
     startingHealth: soloConfig.startingHealth,

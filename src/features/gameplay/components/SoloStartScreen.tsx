@@ -5,18 +5,17 @@
 import type { ChangeEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { RuneTypeCount, SoloRunConfig } from '../../../types/game';
-import { DEFAULT_SOLO_CONFIG, normalizeSoloConfig } from '../../../utils/gameInitialization';
+import type { SoloRunConfig } from '../../../types/game';
+import { DEFAULT_SOLO_CONFIG, RUNE_TYPES, normalizeSoloConfig } from '../../../utils/gameInitialization';
 import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
 import { FieldConfig } from '../../../components/FieldConfig';
 import { SliderConfig } from '../../../components/SliderConfig';
-import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { ArtefactsView } from '../../../components/ArtefactsView';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 
 interface SoloStartScreenProps {
-  onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
+  onStartSolo: (config: SoloRunConfig) => void;
   onContinueSolo?: () => void;
   canContinue?: boolean;
   bestRound?: number;
@@ -28,7 +27,6 @@ const inputClasses =
 
 export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, bestRound = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
-  const runeTypeCount = useGameplayStore((state) => state.runeTypeCount);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
@@ -173,7 +171,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   step={1}
                   value={soloConfig.deckRunesPerType}
                   onChange={(value) => updateConfigValue('deckRunesPerType', value)}
-                  valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * runeTypeCount} total)`}
+                  valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * RUNE_TYPES.length} total)`}
                 />
               </div>
             </div>
@@ -192,7 +190,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           )}
           <button
             type="button"
-            onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
+            onClick={() => onStartSolo(normalizedConfig)}
             className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
           >
             New Game

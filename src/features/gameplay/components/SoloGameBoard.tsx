@@ -24,7 +24,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     playerLockedLines,
     runeforges,
     centerPool,
-    runeTypeCount,
     isDraftPhase,
     selectedRunes,
     draftSource,
@@ -62,7 +61,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             runeforges={runeforges}
             centerPool={centerPool}
             player={player}
-            runeTypeCount={runeTypeCount}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
             isDraftPhase={isDraftPhase}

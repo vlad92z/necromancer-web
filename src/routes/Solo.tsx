@@ -9,7 +9,7 @@ import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
-import type { GameState, RuneTypeCount, SoloRunConfig } from '../types/game';
+import type { GameState, SoloRunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getBestSoloRound, updateBestSoloRound } from '../utils/soloPersistence';
 import { addArcaneDust, getArcaneDust, getArcaneDustReward } from '../utils/arcaneDust';
 import { useArtefactStore } from '../state/stores/artefactStore';
@@ -28,7 +28,6 @@ export function Solo() {
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
   const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
   const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
-  const runeTypeCount = useGameplayStore((state) => state.runeTypeCount);
   const gameState = useGameplayStore();
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
   const [bestSoloRound, setBestSoloRound] = useState<number>(() => {
@@ -43,13 +42,13 @@ export function Solo() {
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
-    prepareSoloMode(runeTypeCount);
+    prepareSoloMode();
     loadArtefactState();
 
     return () => {
       setNavigationCallback(null);
     };
-  }, [navigate, prepareSoloMode, runeTypeCount, loadArtefactState]);
+  }, [navigate, prepareSoloMode, loadArtefactState]);
 
   useEffect(() => {
     let lastCompletionSignature: string | null = null;
@@ -93,8 +92,8 @@ export function Solo() {
     };
   }, [updateArcaneDust]);
 
-  const handleStartSolo = (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => {
-    startSoloRun(runeTypeCount, config);
+  const handleStartSolo = (config: SoloRunConfig) => {
+    startSoloRun(config);
   };
 
   const handleContinueSolo = () => {

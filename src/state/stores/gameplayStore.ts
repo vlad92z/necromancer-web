@@ -5,7 +5,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, SoloOutcome, SoloRunConfig } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, DEFAULT_SOLO_CONFIG, RUNE_TYPES } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
@@ -30,7 +30,7 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
 function enterDeckDraftMode(state: GameState): GameState {
   const deckTemplate = getSoloDeckTemplate(state);
   const nextWinStreak = state.soloWinStreak + 1;
-  const deckDraftState = createDeckDraftState(state.runeTypeCount, state.player.id, 3, nextWinStreak); //TODO configure number
+  const deckDraftState = createDeckDraftState(state.player.id, 3, nextWinStreak); //TODO configure number
 
   return {
     ...state,
@@ -214,8 +214,8 @@ function prepareSoloRoundReset(state: GameState): GameState {
 
 export interface GameplayStore extends GameState {
   // Actions
-  startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
-  prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => void;
+  startSoloRun: (config?: Partial<SoloRunConfig>) => void;
+  prepareSoloMode: (config?: Partial<SoloRunConfig>) => void;
   forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
@@ -651,9 +651,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  startSoloRun: (runeTypeCount: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => {
+  startSoloRun: (config?: Partial<SoloRunConfig>) => {
     set(() => {
-      const baseState = initializeSoloGame(runeTypeCount, config);
+      const baseState = initializeSoloGame(config);
       return {
         ...baseState,
         gameStarted: true,
@@ -661,14 +661,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  prepareSoloMode: (runeTypeCount?: import('../../types/game').RuneTypeCount, config?: Partial<SoloRunConfig>) => {
-    set((state) => {
-      const targetRuneTypeCount = runeTypeCount ?? state.runeTypeCount;
-      return {
-        ...initializeSoloGame(targetRuneTypeCount, config),
-        gameStarted: false,
-      };
-    });
+  prepareSoloMode: (config?: Partial<SoloRunConfig>) => {
+    set(() => ({
+      ...initializeSoloGame(config),
+      gameStarted: false,
+    }));
   },
 
   forceSoloVictory: () => {
@@ -724,8 +721,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   returnToStartScreen: () => {
-    set((state) => ({
-      ...initializeSoloGame(state.runeTypeCount),
+    set(() => ({
+      ...initializeSoloGame(),
       gameStarted: false,
     }));
     // Call navigation callback if registered (for router integration)
@@ -735,7 +732,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   resetGame: () => {
-    set((state) => initializeSoloGame(state.runeTypeCount));
+    set(() => initializeSoloGame());
   },
 
   selectDeckDraftRuneforge: (runeforgeId: string) => {
@@ -752,7 +749,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
       const nextDraftState = advanceDeckDraftState(
         state.deckDraftState,
-        state.runeTypeCount,
         state.player.id,
         state.soloWinStreak
       );
@@ -794,9 +790,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => {
       const deckTemplate = getSoloDeckTemplate(state);
       const nextTarget = state.soloTargetScore;
-      const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / state.runeTypeCount));
+      const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
       const nextGameState = initializeSoloGame(
-        state.runeTypeCount,
         {
           startingHealth: state.startingHealth,
           startingStrain: state.soloStartingStrain,
