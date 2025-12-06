@@ -40,8 +40,6 @@ export function DeckDraftingModal({
   const draftComplete = draftState.picksRemaining === 0;
   const selectionLocked = isAnimating || draftComplete;
 
-  const dummySelect = () => {};
-
   useEffect(() => {
     const unsubscribe = deckCountValue.on('change', (latest) => {
       setDisplayedDeckCount(Math.round(latest));
@@ -209,7 +207,7 @@ export function DeckDraftingModal({
                   pointerEvents: animationState === 'dimmed' ? 'none' : 'auto',
                 }}
               >
-                <Runeforge runeforge={runeforge} onRuneforgeSelect={dummySelect} />
+                <Runeforge runeforge={runeforge}/>
                 <button
                   type="button"
                   onClick={() => handleSelect(runeforge)}

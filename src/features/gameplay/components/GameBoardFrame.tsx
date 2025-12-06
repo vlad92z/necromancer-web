@@ -188,6 +188,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       })();
 
   const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
+    console.log('rune clicked');
     draftRune(runeforgeId, runeType, runeId);
   };
 
