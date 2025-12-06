@@ -2,6 +2,8 @@
  * Core game types for Massive Spell: Arcane Arena
  */
 
+import type { ArtefactId } from './artefacts';
+
 /**
  * Rune types (elemental identities)
  */
@@ -171,6 +173,7 @@ export interface GameState {
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   soloBaseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
+  activeArtefacts: ArtefactId[]; // Artefacts active for this game run
 }
 
 export interface DeckDraftState {

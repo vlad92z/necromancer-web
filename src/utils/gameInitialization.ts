@@ -305,5 +305,6 @@ export function initializeSoloGame(
     deckDraftState: null,
     soloBaseTargetScore: soloConfig.targetRuneScore,
     deckDraftReadyForNextGame: false,
+    activeArtefacts: [],
   };
 }

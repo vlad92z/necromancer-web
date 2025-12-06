@@ -11,6 +11,8 @@ import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects'
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
 import castSoundUrl from '../../assets/sounds/cast.mp3';
 import { useUIStore } from './uiStore';
+import { useArtefactStore } from './artefactStore';
+import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
@@ -30,7 +32,9 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
 function enterDeckDraftMode(state: GameState): GameState {
   const deckTemplate = getSoloDeckTemplate(state);
   const nextWinStreak = state.soloWinStreak + 1;
-  const deckDraftState = createDeckDraftState(state.player.id, 3, nextWinStreak); //TODO configure number
+  const basePicks = 3; //TODO configure number
+  const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
+  const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextWinStreak, state.activeArtefacts);
 
   return {
     ...state,
@@ -106,11 +110,16 @@ function getNextCenterPool(state: GameState): Rune[] {
 function getOverloadResult(
   currentHealth: number,
   overloadRunesPlaced: number,
-  strain: number
-): { overloadDamage: number; nextHealth: number } {
-  const overloadDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
-  const nextHealth = overloadDamage > 0 ? Math.max(0, currentHealth - overloadDamage) : currentHealth;
-  return { overloadDamage, nextHealth };
+  strain: number,
+  state: GameState
+): { overloadDamage: number; nextHealth: number; scoreBonus: number } {
+  const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
+  
+  // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
+  const { damage: modifiedDamage, scoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
+  
+  const nextHealth = modifiedDamage > 0 ? Math.max(0, currentHealth - modifiedDamage) : currentHealth;
+  return { overloadDamage: modifiedDamage, nextHealth, scoreBonus };
 }
 
 function handlePlayerDefeat(
@@ -322,8 +331,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         };
 
         const resolvedSegment = resolveSegment(updatedWall, index, col);
-        totalDamage += resolvedSegment.damage;
-        totalHealing += resolvedSegment.healing;
+        
+        // Apply artefact modifiers to damage and healing
+        const modifiedDamage = applyOutgoingDamageModifiers(resolvedSegment.damage, resolvedSegment.segmentSize, state);
+        const modifiedHealing = applyOutgoingHealingModifiers(resolvedSegment.healing, resolvedSegment.segmentSize, state);
+        
+        totalDamage += modifiedDamage;
+        totalHealing += modifiedHealing;
 
         if (state.soloPatternLineLock) {
           const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
@@ -491,7 +505,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadRunesPlaced = overflowRunes.length;
-      const { overloadDamage, nextHealth } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain);
+      const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
 
       const completedLines = updatedPatternLines
         .map((line, index) => ({ line, index }))
@@ -530,6 +544,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         turnPhase: nextTurnPhase,
         shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
         overloadSoundPending: overloadDamage > 0,
+        runePowerTotal: state.runePowerTotal + scoreBonus,
       };
     });
   },
@@ -553,7 +568,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadRunesPlaced = selectedRunes.length;
-      const { overloadDamage, nextHealth } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain);
+      const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
       
       // Update player
       const updatedPlayer = {
@@ -580,6 +595,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
         shouldTriggerEndRound: shouldEndRound,
         overloadSoundPending: overloadDamage > 0,
+        runePowerTotal: state.runePowerTotal + scoreBonus,
       };
     });
   },
@@ -654,9 +670,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   startSoloRun: (config?: Partial<SoloRunConfig>) => {
     set(() => {
       const baseState = initializeSoloGame(config);
+      const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
       return {
         ...baseState,
         gameStarted: true,
+        activeArtefacts: selectedArtefacts,
       };
     });
   },
@@ -750,7 +768,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextDraftState = advanceDeckDraftState(
         state.deckDraftState,
         state.player.id,
-        state.soloWinStreak
+        state.soloWinStreak,
+        state.activeArtefacts
       );
       const updatedPlayer: Player = {
         ...state.player,
@@ -815,6 +834,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         soloBaseTargetScore: state.soloBaseTargetScore || nextTarget,
         deckDraftState: null,
         deckDraftReadyForNextGame: false,
+        activeArtefacts: state.activeArtefacts,
       };
     });
   },

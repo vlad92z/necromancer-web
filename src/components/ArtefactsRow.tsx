@@ -4,6 +4,7 @@
 
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
+import { getArtefactEffectDescription } from '../utils/artefactEffects';
 
 interface ArtefactsRowProps {
   selectedArtefactIds: ArtefactId[];
@@ -25,11 +26,14 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
         const artefact = ARTEFACTS[artefactId];
         if (!artefact) return null;
 
+        const effectDescription = getArtefactEffectDescription(artefactId);
+        const tooltipText = `${artefact.name}\n${effectDescription}`;
+        
         return (
           <div
             key={artefactId}
             className={`${iconSize} rounded-lg overflow-hidden border border-slate-600/50 bg-slate-900/50 shadow-lg`}
-            title={artefact.name}
+            title={tooltipText}
           >
             <img
               src={artefact.image}
