@@ -23,7 +23,6 @@ interface PlayerBoardProps {
   onCancelSelection?: () => void;
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
-  hiddenFloorSlotIndexes?: Set<number>;
   game: number;
   soloRuneScore?: {
     currentScore: number;
