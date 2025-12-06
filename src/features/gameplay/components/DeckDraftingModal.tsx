@@ -241,7 +241,7 @@ export function DeckDraftingModal({
               onClick={handleStartNextGame}
               className="w-full sm:w-auto rounded-xl border border-emerald-300/60 bg-gradient-to-r from-emerald-500/85 to-cyan-500/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Next Chapter
+              Next Game
             </button>
           <button
             type="button"

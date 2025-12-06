@@ -8,7 +8,6 @@ import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
-import { GameLogOverlay } from './GameLogOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -57,7 +56,7 @@ export interface GameBoardSharedProps {
   player: GameState['player'];
   currentPlayerIndex: number;
   currentPlayerId: string;
-  chapter: number;
+  game: number;
   isDraftPhase: boolean;
   isGameOver: boolean;
 
@@ -104,7 +103,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     strain,
     soloDeckTemplate,
   } = gameState;
-  const currentChapter = useGameplayStore((state) => state.chapter);
+  const currentGame = useGameplayStore((state) => state.game);
   const soloOutcome = gameState.soloOutcome;
   const runePowerTotal = gameState.runePowerTotal;
   const soloTargetScore = gameState.soloTargetScore;
@@ -184,7 +183,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         return {
           isActive: true,
           overloadMultiplier,
-          chapter: currentChapter,
+          game: currentGame,
           deckCount: player.deck.length,
         };
       })();
@@ -282,7 +281,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     player,
     currentPlayerIndex: 0,
     currentPlayerId: player.id,
-    chapter: currentChapter,
+    game: currentGame,
     isDraftPhase,
     isGameOver,
 
@@ -317,7 +316,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         soloStats,
         soloTargetScore,
         runePowerTotal,
-      arcaneDustReward: getArcaneDustReward(currentChapter),
+      arcaneDustReward: getArcaneDustReward(currentGame),
         deckDraftState: gameState.deckDraftState,
         isDeckDrafting,
         onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
@@ -349,8 +348,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           Quit Run
         </button>
         <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Chapter</div>
-          <div className="text-2xl font-extrabold text-white leading-tight">{currentChapter}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Game</div>
+          <div className="text-2xl font-extrabold text-white leading-tight">{currentGame}</div>
         </div>
       </div>
       <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
@@ -384,8 +383,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           onDisenchantRune={disenchantRuneFromDeck}
         />
       )}
-
-      {showLogOverlay && <GameLogOverlay chapterHistory={gameState.chapterHistory} onClose={() => setShowLogOverlay(false)} />}
 
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
       <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />

@@ -34,7 +34,7 @@ export function addArcaneDust(amount: number): number {
   return saveArcaneDust(nextTotal);
 }
 
-export function getArcaneDustReward(chapter: number): number {
-  const normalizedChapter = Math.max(0, Math.floor(chapter));
-  return normalizedChapter * 50;
+export function getArcaneDustReward(game: number): number {
+  const normalizedGame = Math.max(0, Math.floor(game));
+  return normalizedGame * 50;
 }

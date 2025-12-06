@@ -108,14 +108,6 @@ export interface Player {
 export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
 
 /**
- * Chapter history entry for game log
- */
-export interface ChapterScore {
-  chapter: number;
-  playerName: string;
-}
-
-/**
  * Animation state for rune movement
  */
 export interface AnimatingRune {
@@ -141,14 +133,14 @@ export interface GameState {
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   turnPhase: TurnPhase;
-  chapter: number; // Current chapter in this run (increments after each deck draft)
+  game: number; // Current game in this run (increments after each deck draft)
   /**
    * Damage dealt for every overload rune
-   * Starts at a tunable value and is multiplied each chapter by `strainMultiplier`.
+   * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
    */
   strain: number;
   /**
-   * Factor used to multiply `strain` at the end of each chapter. Kept in state
+   * Factor used to multiply `strain` at the end of each round. Kept in state
    * so it can be tuned or modified by runes in the future.
    */
   strainMultiplier: number;
@@ -161,15 +153,13 @@ export interface GameState {
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
-  chapterHistory: ChapterScore[]; // History of completed chapters for game log
-  chapterDamage: number; // Damage dealt by the player during the current chapter
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
   soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
-  longestRun: number; // Furthest chapter reached in any run
+  longestRun: number; // Furthest game reached in any run
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   soloBaseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run

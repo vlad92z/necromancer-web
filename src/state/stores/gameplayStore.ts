@@ -33,11 +33,11 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
 
 function enterDeckDraftMode(state: GameState): GameState {
   const deckTemplate = getSoloDeckTemplate(state);
-  const nextLongestRun = Math.max(state.longestRun, state.chapter - 1);
+  const nextLongestRun = Math.max(state.longestRun, state.game - 1);
   const basePicks = 3; //TODO configure number
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
-  const arcaneDustReward = getArcaneDustReward(state.chapter);
+  const arcaneDustReward = getArcaneDustReward(state.game);
 
   if (arcaneDustReward > 0) {
     const newDustTotal = addArcaneDust(arcaneDustReward);
@@ -62,7 +62,7 @@ function enterDeckDraftMode(state: GameState): GameState {
 }
 
 // NOTE: overload multiplier is now stored in state.strain and adjusted at
-// chapter end. The old getOverloadMultiplier(round) helper is no longer used.
+// Game end. The old getOverloadMultiplier(round) helper is no longer used.
 
 // Navigation callback registry for routing integration
 let navigationCallback: (() => void) | null = null;
@@ -136,7 +136,7 @@ function handlePlayerDefeat(
   nextCenterPool: Rune[],
   overloadDamage: number
 ): GameState {
-  const nextLongestRun = Math.max(state.longestRun, state.chapter);
+  const nextLongestRun = Math.max(state.longestRun, state.game);
   return {
     ...state,
     player: updatedPlayer,
@@ -164,9 +164,8 @@ function prepareSoloChapterReset(state: GameState): GameState {
         player: clearedPlayer,
         runeforges: [],
         centerPool: [],
-        chapter: state.chapter,
+        game: state.game,
         shouldTriggerEndRound: false,
-        chapterDamage: 0,
         lockedPatternLines: { [clearedPlayer.id]: [] },
         selectedRunes: [],
         draftSource: null,
@@ -177,18 +176,17 @@ function prepareSoloChapterReset(state: GameState): GameState {
       });
     }
 
-    const nextLongestRun = Math.max(state.longestRun, state.chapter - 1);
+    const nextLongestRun = Math.max(state.longestRun, state.game - 1);
     return {
       ...state,
       player: clearedPlayer,
       runeforges: [],
       centerPool: [],
       turnPhase: 'game-over',
-      chapter: state.chapter,
+      game: state.game,
       soloOutcome: 'defeat' as SoloOutcome,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
-      chapterDamage: 0,
       lockedPatternLines: { [clearedPlayer.id]: [] },
       selectedRunes: [],
       draftSource: null,
@@ -216,11 +214,10 @@ function prepareSoloChapterReset(state: GameState): GameState {
     runeforges: filledRuneforges,
     centerPool: [],
     turnPhase: 'draft',
-    chapter: state.chapter,
+    game: state.game,
     strain: state.strain * state.strainMultiplier,
     strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
     soloOutcome: null,
-    chapterDamage: 0,
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
     selectedRunes: [],
@@ -396,7 +393,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       });
 
       let nextRunePowerTotal = state.runePowerTotal;
-      let updatedChapterDamage: number = state.chapterDamage;
       let soloOutcome: SoloOutcome = state.soloOutcome;
       let nextHealth = currentPlayer.health;
 
@@ -406,7 +402,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
 
       nextRunePowerTotal += totalDamage;
-      updatedChapterDamage = updatedChapterDamage + totalDamage;
         if (nextRunePowerTotal >= state.soloTargetScore) {
           soloOutcome = 'victory';
         }
@@ -425,7 +420,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...state,
           player: updatedPlayer,
           runePowerTotal: nextRunePowerTotal,
-          chapterDamage: updatedChapterDamage,
           lockedPatternLines: updatedLockedPatternLines,
           selectedRunes: [],
           draftSource: null,
@@ -443,7 +437,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
         shouldTriggerEndRound: shouldEndRound,
         runePowerTotal: nextRunePowerTotal,
-        chapterDamage: updatedChapterDamage,
         lockedPatternLines: updatedLockedPatternLines,
         soloOutcome,
       };
@@ -922,7 +915,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           longestRun: state.longestRun,
         }
       );
-      nextGameState.chapter += 1;
+      nextGameState.game += 1;
       return {
         ...nextGameState,
         gameStarted: true,

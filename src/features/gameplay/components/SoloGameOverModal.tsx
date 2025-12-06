@@ -9,12 +9,12 @@ interface SoloGameOverModalProps {
   player: Player;
   outcome: SoloOutcome;
   runePowerTotal: number;
-  chapter: number;
+  game: number;
   targetScore?: number;
   onReturnToStart?: () => void;
 }
 
-export function SoloGameOverModal({ player, outcome, runePowerTotal, chapter, targetScore, onReturnToStart }: SoloGameOverModalProps) {
+export function SoloGameOverModal({ player, outcome, runePowerTotal, game, targetScore, onReturnToStart }: SoloGameOverModalProps) {
   const playClickSound = useClickSound();
   const heading = outcome === 'victory' ? 'Solo Victory' : outcome === 'defeat' ? 'Defeat' : 'Run Complete';
   const missedTarget = typeof targetScore === 'number' ? runePowerTotal < targetScore : false;
@@ -44,7 +44,7 @@ export function SoloGameOverModal({ player, outcome, runePowerTotal, chapter, ta
 
       <div className="mb-5 grid grid-cols-3 gap-3">
         <StatCard label="Health" value={`${player.health}/${player.maxHealth ?? player.health}`} accent="#34d399" />
-        <StatCard label="Chapters Cleared" value={chapter} accent="#60a5fa" />
+        <StatCard label="Games Cleared" value={game} accent="#60a5fa" />
         <StatCard label="Rune Power" value={targetScore ? `${runePowerTotal} / ${targetScore}` : runePowerTotal} accent="#facc15" />
         <StatCard label="Player" value={player.name} accent="#a5b4fc" />
       </div>

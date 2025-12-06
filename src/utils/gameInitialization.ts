@@ -285,14 +285,12 @@ export function initializeSoloGame(
     runeforges: filledRuneforges,
     centerPool: [],
     turnPhase: 'draft',
-    chapter: 1,
+    game: 1,
     selectedRunes: [],
     draftSource: null,
     animatingRunes: [],
     pendingPlacement: null,
     overloadSoundPending: false,
-    chapterHistory: [],
-    chapterDamage: 0,
     lockedPatternLines: {
       [soloPlayer.id]: []
     },

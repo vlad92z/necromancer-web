@@ -32,8 +32,8 @@ export function Solo() {
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
     const savedState = loadSoloState();
-    const savedChapter = savedState?.chapter ?? 0;
-    return Math.max(storedBest, savedChapter);
+    const savedGame = savedState?.game ?? 0;
+    return Math.max(storedBest, savedGame);
   });
   const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
@@ -55,7 +55,7 @@ export function Solo() {
         saveSoloState(persistableState);
         setHasSavedSoloRun(true);
         setLongestSoloRun((previousBest) => {
-          const nextBest = Math.max(previousBest, persistableState.chapter);
+          const nextBest = Math.max(previousBest, persistableState.game); //todo -1?
           if (nextBest === previousBest) {
             return previousBest;
           }

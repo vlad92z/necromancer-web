@@ -140,14 +140,14 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   />
                 </FieldConfig>
                 <SliderConfig
-                  label="Fatigue Multiplier"
-                  description="Chapter-by-chapter growth applied to fatigue."
+                  label="Strain Multiplier"
+                  description="round-by-round growth applied to strain."
                   min={1}
                   max={2}
                   step={0.1}
                   value={soloConfig.strainMultiplier}
                   onChange={(value) => updateConfigValue('strainMultiplier', value)}
-                  valueLabel={`${soloConfig.strainMultiplier.toFixed(1)}x fatigue growth`}
+                  valueLabel={`${soloConfig.strainMultiplier.toFixed(1)}x strain growth`}
                 />
                 <FieldConfig label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
                   <input

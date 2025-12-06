@@ -9,7 +9,7 @@ import fatigueSvg from '../../../../assets/stats/fatigue.svg';
 export interface SoloStatsProps {
   isActive: boolean;
   overloadMultiplier: number;
-  chapter: number;
+  game: number;
   deckCount?: number;
 }
 

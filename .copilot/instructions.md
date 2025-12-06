@@ -106,7 +106,7 @@ src/
 
 **`src/features/gameplay/components/`**: Game-specific UI components
 - ✅ `GameBoard`, `PlayerView`, `Runeforge`, `PatternLines`, `ScoringWall`
-- ✅ Overlay components (`DeckOverlay`, `RuneforgeOverlay`, `GameLogOverlay`, etc.)
+- ✅ Overlay components (`DeckOverlay`, `RuneforgeOverlay`, etc.)
 - ❌ Reusable components unrelated to gameplay
 
 **`src/hooks/`**: Custom React hooks for state access and actions
