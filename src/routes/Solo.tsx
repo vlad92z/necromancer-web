@@ -51,17 +51,21 @@ export function Solo() {
   useEffect(() => {
     const unsubscribe = useGameplayStore.subscribe((state) => {
       const persistableState = selectPersistableSoloState(state);
+
+      // Persist solo state only while a run is active
       if (persistableState.gameStarted) {
         saveSoloState(persistableState);
         setHasSavedSoloRun(true);
-        setLongestSoloRun((previousBest) => {
-          const nextBest = Math.max(previousBest, persistableState.game); //todo -1?
-          if (nextBest === previousBest) {
-            return previousBest;
-          }
-          return updateLongestSoloRun(nextBest);
-        });
       }
+
+      // Always update the local `longestSoloRun` if store's longestRun or game increased.
+      setLongestSoloRun((previousBest) => {
+        const nextBest = Math.max(previousBest, persistableState.longestRun ?? 0, persistableState.game ?? 0);
+        if (nextBest === previousBest) {
+          return previousBest;
+        }
+        return updateLongestSoloRun(nextBest);
+      });
     });
 
     return () => {
