@@ -164,7 +164,7 @@ export interface GameState {
   chapterHistory: ChapterScore[]; // History of completed chapters for game log
   chapterDamage: number; // Damage dealt by the player during the current chapter
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
-  shouldTriggerEndChapter: boolean; // Flag to trigger endChapter in component useEffect
+  shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)

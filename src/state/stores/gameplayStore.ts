@@ -53,8 +53,8 @@ function enterDeckDraftMode(state: GameState): GameState {
     runeforges: [],
     centerPool: [],
     selectedRunes: [],
-    draftSource: null,
-    shouldTriggerEndChapter: false,
+    draftSource: null, 
+    shouldTriggerEndRound: false,
     overloadSoundPending: false,
     soloOutcome: 'victory',
     longestRun: nextLongestRun
@@ -144,7 +144,7 @@ function handlePlayerDefeat(
     draftSource: null,
     centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
-    shouldTriggerEndChapter: false,
+    shouldTriggerEndRound: false,
     soloOutcome: 'defeat' as SoloOutcome,
     longestRun: nextLongestRun,
     overloadSoundPending: overloadDamage > 0,
@@ -165,7 +165,7 @@ function prepareSoloChapterReset(state: GameState): GameState {
         runeforges: [],
         centerPool: [],
         chapter: state.chapter,
-        shouldTriggerEndChapter: false,
+        shouldTriggerEndRound: false,
         chapterDamage: 0,
         lockedPatternLines: { [clearedPlayer.id]: [] },
         selectedRunes: [],
@@ -187,7 +187,7 @@ function prepareSoloChapterReset(state: GameState): GameState {
       chapter: state.chapter,
       soloOutcome: 'defeat' as SoloOutcome,
       longestRun: nextLongestRun,
-      shouldTriggerEndChapter: false,
+      shouldTriggerEndRound: false,
       chapterDamage: 0,
       lockedPatternLines: { [clearedPlayer.id]: [] },
       selectedRunes: [],
@@ -222,7 +222,7 @@ function prepareSoloChapterReset(state: GameState): GameState {
     soloOutcome: null,
     chapterDamage: 0,
     lockedPatternLines: { [updatedPlayer.id]: [], },
-    shouldTriggerEndChapter: false,
+    shouldTriggerEndRound: false,
     selectedRunes: [],
     draftSource: null,
     pendingPlacement: null,
@@ -246,7 +246,7 @@ export interface GameplayStore extends GameState {
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
   acknowledgeOverloadSound: () => void;
-  endChapter: () => void;
+  endRound: () => void;
   resetGame: () => void;
   triggerChapterEnd: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
@@ -268,7 +268,7 @@ function selectPersistableGameState(state: GameplayStore): GameState {
     placeRunesInFloor,
     cancelSelection,
     acknowledgeOverloadSound,
-    endChapter,
+    endRound,
     resetGame,
     triggerChapterEnd,
     selectDeckDraftRuneforge,
@@ -353,8 +353,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         return {
           ...state,
-          turnPhase: shouldEndRound ? ('end-of-chapter' as const) : ('draft' as const),
-          shouldTriggerEndChapter: shouldEndRound,
+          turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
+          shouldTriggerEndRound: shouldEndRound,
         };
       }
 
@@ -431,7 +431,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           draftSource: null,
           pendingPlacement: null,
           animatingRunes: [],
-          shouldTriggerEndChapter: false,
+          shouldTriggerEndRound: false,
         });
       }
 
@@ -440,8 +440,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return {
         ...state,
         player: updatedPlayer,
-        turnPhase: shouldEndRound ? ('end-of-chapter' as const) : ('draft' as const),
-        shouldTriggerEndChapter: shouldEndRound,
+        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
+        shouldTriggerEndRound: shouldEndRound,
         runePowerTotal: nextRunePowerTotal,
         chapterDamage: updatedChapterDamage,
         lockedPatternLines: updatedLockedPatternLines,
@@ -580,7 +580,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         completedLines.length > 0
           ? ('cast' as const)
           : shouldEndRound
-            ? ('end-of-chapter' as const)
+            ? ('end-of-round' as const)
             : ('draft' as const);
       
       return {
@@ -590,7 +590,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         draftSource: null,
         centerPool: nextCenterPool,
         turnPhase: nextTurnPhase,
-        shouldTriggerEndChapter: completedLines.length > 0 ? false : shouldEndRound,
+        shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
         overloadSoundPending: overloadDamage > 0,
         runePowerTotal: state.runePowerTotal + scoreBonus,
       };
@@ -640,8 +640,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         selectedRunes: [],
         draftSource: null,
         centerPool: nextCenterPool,
-        turnPhase: shouldEndRound ? ('end-of-chapter' as const) : ('draft' as const),
-        shouldTriggerEndChapter: shouldEndRound,
+        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
+        shouldTriggerEndRound: shouldEndRound,
         overloadSoundPending: overloadDamage > 0,
         runePowerTotal: state.runePowerTotal + scoreBonus,
       };
@@ -694,21 +694,21 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   triggerChapterEnd: () => {
     set((state) => {
       const roundExhausted = isRoundExhausted(state.runeforges, state.centerPool);
-      if (!roundExhausted || state.selectedRunes.length > 0 || state.turnPhase === 'end-of-chapter') {
+      if (!roundExhausted || state.selectedRunes.length > 0 || state.turnPhase === 'end-of-round') {
         return state;
       }
 
       return {
         ...state,
-        turnPhase: 'end-of-chapter' as const,
-        shouldTriggerEndChapter: true,
+        turnPhase: 'end-of-round' as const,
+        shouldTriggerEndRound: true,
       };
     });
   },
   
-  endChapter: () => {
+  endRound: () => {
     set((state) => {
-      if (!state.shouldTriggerEndChapter && state.turnPhase !== 'end-of-chapter') {
+      if (!state.shouldTriggerEndRound && state.turnPhase !== 'end-of-round') {
         return state;
       }
       return prepareSoloChapterReset(state);
@@ -747,7 +747,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         draftSource: null,
         pendingPlacement: null,
         animatingRunes: [],
-        shouldTriggerEndChapter: false,
+        shouldTriggerEndRound: false,
       });
     });
   },

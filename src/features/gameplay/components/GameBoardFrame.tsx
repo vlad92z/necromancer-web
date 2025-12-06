@@ -99,7 +99,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     selectedRunes,
     turnPhase,
     lockedPatternLines,
-    shouldTriggerEndChapter,
+    shouldTriggerEndRound,
     draftSource,
     strain,
     soloDeckTemplate,
@@ -121,7 +121,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     startNextSoloGame,
   } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
-  const endChapter = useGameplayStore((state) => state.endChapter);
+  const endRound = useGameplayStore((state) => state.endRound);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
@@ -235,14 +235,14 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   };
 
   useEffect(() => {
-    if (shouldTriggerEndChapter) {
+    if (shouldTriggerEndRound) {
       const timer = setTimeout(() => {
-        endChapter();
+        endRound();
       }, 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [shouldTriggerEndChapter, endChapter]);
+  }, [shouldTriggerEndRound, endRound]);
 
   useEffect(() => {
     if (turnPhase !== 'cast') return;

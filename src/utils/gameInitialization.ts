@@ -296,7 +296,7 @@ export function initializeSoloGame(
     lockedPatternLines: {
       [soloPlayer.id]: []
     },
-    shouldTriggerEndChapter: false,
+    shouldTriggerEndRound: false,
     runePowerTotal: 0,
     soloTargetScore: targetScore,
     soloOutcome: null,
