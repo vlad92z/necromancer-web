@@ -98,11 +98,7 @@ export function PlayerBoard({
                 />
                 <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
               </div>
-              {selectedArtefactIds.length > 0 && (
-                <div className="flex justify-center">
-                  <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
-                </div>
-              )}
+ 
             </div>
           </div>
           <div className="grid grid-cols-2 items-start gap-[min(1.2vmin,14px)]">
@@ -137,6 +133,11 @@ export function PlayerBoard({
               hiddenSlotIndexes={hiddenFloorSlotIndexes}
             />
           </div>
+          {selectedArtefactIds.length > 0 && (
+            <div className="flex justify-center mt-2">
+              <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
+            </div>
+          )}
         </div>
       </div>
     </div>
