@@ -12,6 +12,9 @@ interface RuneAnimationProps {
   onAnimationComplete: () => void;
 }
 
+// Constants for animation easing
+const ANIMATION_EASE = [0.4, 0.0, 0.2, 1] as const;
+
 export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnimationProps) {
   if (animatingRunes.length === 0) return null;
 
@@ -51,12 +54,12 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
               duration: 0.7,
               delay: index * 0.05,
               times: [0, 0.7, 1], // Reach destination at 70%, then disappear
-              ease: [0.4, 0.0, 0.2, 1] as const,
+              ease: ANIMATION_EASE,
             }
           : {
               duration: 0.5,
               delay: index * 0.05,
-              ease: [0.4, 0.0, 0.2, 1] as const,
+              ease: ANIMATION_EASE,
             };
         
         return (

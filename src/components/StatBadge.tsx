@@ -1,7 +1,7 @@
 /**
  * StatBadge - reusable stat display with tooltip and icon
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
@@ -29,6 +29,18 @@ function StatIcon({ name }: { name: string }) {
   );
 }
 
+// Constants for glow animation
+const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
+const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
+const SELECTABLE_GLOW_RANGE: [string, string] = [SELECTABLE_GLOW_REST, SELECTABLE_GLOW_PEAK];
+
+const PULSE_TRANSITION: Transition = {
+  duration: 1.2,
+  repeat: Infinity,
+  repeatType: 'reverse' as const,
+  ease: 'easeInOut' as const
+};
+
 /**
  * StatBadge - shows a small icon, a value and a hover tooltip.
  */
@@ -37,28 +49,21 @@ export function StatBadge({ label, value, borderColor, tooltip, image, onClick, 
   const isClickable = typeof onClick === 'function';
   const baseShadowClass = alert ? 'shadow-[0_0_16px_rgba(248,113,113,0.4)]' : 'shadow-[0_10px_26px_rgba(0,0,0,0.45)]';
 
-  // Red glow animation for overload state
-  const selectableGlowRest = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
-  const selectableGlowPeak = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
-  const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
+  // Memoize animation properties to avoid recreating on every render
+  const buttonMotionProps = useMemo(() => 
+    canOverload
+      ? {
+          animate: { boxShadow: SELECTABLE_GLOW_RANGE },
+          transition: PULSE_TRANSITION
+        }
+      : {}
+  , [canOverload]);
 
-  const cellPulseTransition: Transition = {
-    duration: 1.2,
-    repeat: Infinity,
-    repeatType: 'reverse' as const,
-    ease: 'easeInOut' as const
-  };
-
-  const buttonMotionProps = canOverload
-    ? {
-        animate: { boxShadow: selectableGlowRange },
-        transition: cellPulseTransition
-      }
-    : {};
-
-  const buttonStyle = canOverload
-    ? { borderColor, boxShadow: selectableGlowRest }
-    : { borderColor };
+  const buttonStyle = useMemo(() => 
+    canOverload
+      ? { borderColor, boxShadow: SELECTABLE_GLOW_REST }
+      : { borderColor }
+  , [canOverload, borderColor]);
 
   const ButtonComponent = canOverload ? motion.button : 'button';
 
