@@ -16,7 +16,7 @@ import { getWallColumnForRune } from './scoring';
  * @returns The index of the best pattern line to place runes, or null if no suitable line found
  * 
  * Algorithm:
- * 1. First, try to find an unfinished pattern line of the matching rune type with enough space
+ * 1. First, try to find an unfinished pattern line that already has the matching rune type (regardless of capacity)
  * 2. If not found, try to find an empty pattern line with exact capacity match
  * 3. If still not found, return null (fallback to cancel selection)
  */
@@ -43,7 +43,8 @@ export function findBestPatternLineForAutoPlacement(
 
   const wallSize = wall.length;
 
-  // Step 1: Look for unfinished pattern line of matching type with enough space
+  // Step 1: Look for unfinished pattern line that already has the matching rune type
+  // Send runes there regardless of capacity (overflow will go to floor line)
   for (let i = 0; i < patternLines.length; i++) {
     const line = patternLines[i];
     
@@ -58,16 +59,9 @@ export function findBestPatternLineForAutoPlacement(
       continue;
     }
 
-    // Check if line matches the rune type (or is empty but will become this type)
-    const matchesType = line.runeType === null || line.runeType === selectionType;
-    if (!matchesType) {
-      continue;
-    }
-
-    // Check if there's enough space
-    const availableSpace = line.tier - line.count;
-    const hasEnoughSpace = selectionCount <= availableSpace;
-    if (!hasEnoughSpace) {
+    // Check if line already has the matching rune type (not empty)
+    const alreadyHasType = line.runeType === selectionType && line.count > 0;
+    if (!alreadyHasType) {
       continue;
     }
 
@@ -78,7 +72,7 @@ export function findBestPatternLineForAutoPlacement(
       continue;
     }
 
-    // Found a suitable line!
+    // Found a suitable line! Send runes here even if there's overflow
     return i;
   }
 
