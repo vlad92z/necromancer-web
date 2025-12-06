@@ -2,15 +2,22 @@
  * ArtefactsRow - displays a horizontal row of selected artefact icons
  */
 
+import { useEffect, useState } from 'react';
+import type { PointerEvent } from 'react';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
-import { useState } from 'react';
+import { TooltipBubble, type TooltipAnchorRect } from './TooltipBubble';
 
 interface ArtefactsRowProps {
   selectedArtefactIds: ArtefactId[];
   compact?: boolean;
 }
+
+const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
+  const rect = element.getBoundingClientRect();
+  return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+};
 
 export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
   if (selectedArtefactIds.length === 0) {
@@ -21,10 +28,45 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
   const iconSize = compact ? 'w-[60px] h-[60px]' : 'w-[100px] h-[100px]';
   const gap = compact ? 'gap-1.5' : 'gap-2';
 
-  const [hovered, setHovered] = useState<{
-    id: ArtefactId | null;
-    rect: { left: number; top: number; width: number; height: number } | null;
-  }>({ id: null, rect: null });
+  const [tooltip, setTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);
+  const [touchHideTimer, setTouchHideTimer] = useState<number | null>(null);
+
+  const clearTouchHideTimer = () => {
+    if (touchHideTimer !== null) {
+      window.clearTimeout(touchHideTimer);
+      setTouchHideTimer(null);
+    }
+  };
+
+  const showTooltip = (artefactId: ArtefactId, element: HTMLElement) => {
+    clearTouchHideTimer();
+    setTooltip({ id: artefactId, rect: toAnchorRect(element) });
+  };
+
+  const hideTooltip = () => {
+    clearTouchHideTimer();
+    setTooltip(null);
+  };
+
+  const handlePointerEnter = (artefactId: ArtefactId, event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'touch') {
+      showTooltip(artefactId, event.currentTarget);
+    }
+  };
+
+  const handlePointerDown = (artefactId: ArtefactId, event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'touch') {
+      showTooltip(artefactId, event.currentTarget);
+      const timer = window.setTimeout(() => setTooltip(null), 2000);
+      setTouchHideTimer(timer);
+    }
+  };
+
+  useEffect(() => () => {
+    if (touchHideTimer !== null) {
+      window.clearTimeout(touchHideTimer);
+    }
+  }, [touchHideTimer]);
 
   return (
     <div className={`relative flex items-center ${gap} flex-wrap`}>
@@ -39,19 +81,9 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
           <div
             key={artefactId}
             className={`${iconSize} rounded-lg overflow-hidden border border-slate-600/50 bg-slate-900/50 shadow-lg`}
-            onMouseEnter={(event) => {
-              const rect = event.currentTarget.getBoundingClientRect();
-              setHovered({
-                id: artefactId,
-                rect: {
-                  left: rect.left,
-                  top: rect.top,
-                  width: rect.width,
-                  height: rect.height,
-                },
-              });
-            }}
-            onMouseLeave={() => setHovered({ id: null, rect: null })}
+            onPointerEnter={(event) => handlePointerEnter(artefactId, event)}
+            onPointerLeave={hideTooltip}
+            onPointerDown={(event) => handlePointerDown(artefactId, event)}
             role="img"
             aria-label={tooltipText}
           >
@@ -64,25 +96,16 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
         );
       })}
 
-      {hovered.id && hovered.rect && (
-        (() => {
-          const art = ARTEFACTS[hovered.id as ArtefactId];
-          if (!art) return null;
-          const desc = getArtefactEffectDescription(hovered.id as ArtefactId);
-          return (
-            <div
-              className="pointer-events-none fixed z-50 max-w-[320px] rounded-md border border-slate-700/60 bg-slate-900/95 px-3 py-2 text-xs text-slate-100 shadow-lg"
-              style={{
-                left: hovered.rect.left + hovered.rect.width / 2,
-                transform: 'translate(-50%, -100%)',
-              }}
-            >
-              <div className="text-sm font-semibold text-slate-50">{art.name}</div>
-              <div className="mt-1 text-[12px] text-slate-300 whitespace-pre-wrap">{desc}</div>
-            </div>
-          );
-        })()
-      )}
+      {tooltip && (() => {
+        const artefact = ARTEFACTS[tooltip.id];
+        if (!artefact) return null;
+        return (
+          <TooltipBubble
+            text={`${artefact.name}\n${getArtefactEffectDescription(tooltip.id)}`}
+            anchorRect={tooltip.rect}
+          />
+        );
+      })()}
     </div>
   );
 }

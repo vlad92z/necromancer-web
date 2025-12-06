@@ -2,7 +2,10 @@
  * ArtefactsView - modal for selecting and purchasing artefacts
  */
 
+import { useEffect, useState } from 'react';
+import type { FocusEvent, MouseEvent, PointerEvent } from 'react';
 import { Modal } from './layout/Modal';
+import { TooltipBubble, type TooltipAnchorRect } from './TooltipBubble';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS, getAllArtefacts, MAX_SELECTED_ARTEFACTS } from '../types/artefacts';
 import { useArtefactStore } from '../state/stores/artefactStore';
@@ -14,8 +17,64 @@ interface ArtefactsViewProps {
   onClose: () => void;
 }
 
+const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
+  const rect = element.getBoundingClientRect();
+  return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+};
+
 export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
   const { selectedArtefactIds, ownedArtefactIds, arcaneDust, selectArtefact, unselectArtefact, buyArtefact } = useArtefactStore();
+
+  const [activeTooltip, setActiveTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);
+  const [touchHideTimer, setTouchHideTimer] = useState<number | null>(null);
+
+  const clearTouchHideTimer = () => {
+    if (touchHideTimer !== null) {
+      window.clearTimeout(touchHideTimer);
+      setTouchHideTimer(null);
+    }
+  };
+
+  const showTooltip = (artefactId: ArtefactId, element: HTMLElement) => {
+    clearTouchHideTimer();
+    setActiveTooltip({ id: artefactId, rect: toAnchorRect(element) });
+  };
+
+  const hideTooltip = () => {
+    clearTouchHideTimer();
+    setActiveTooltip(null);
+  };
+
+  const handlePointerEnterTooltip = (artefactId: ArtefactId, event: PointerEvent<HTMLElement>) => {
+    if (event.pointerType !== 'touch') {
+      showTooltip(artefactId, event.currentTarget);
+    }
+  };
+
+  const handlePointerDownTooltip = (artefactId: ArtefactId, event: PointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'touch') {
+      showTooltip(artefactId, event.currentTarget);
+      const timer = window.setTimeout(() => setActiveTooltip(null), 2000);
+      setTouchHideTimer(timer);
+    }
+  };
+
+  const handleFocusTooltip = (artefactId: ArtefactId, event: FocusEvent<HTMLElement>) => {
+    showTooltip(artefactId, event.currentTarget);
+  };
+
+  useEffect(() => () => {
+    if (touchHideTimer !== null) {
+      window.clearTimeout(touchHideTimer);
+    }
+  }, [touchHideTimer]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      clearTouchHideTimer();
+      setActiveTooltip(null);
+    }
+  }, [isOpen, touchHideTimer]);
 
   const allArtefacts = getAllArtefacts();
 
@@ -27,7 +86,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
     }
   };
 
-  const handleBuyClick = (artefactId: ArtefactId, event: React.MouseEvent) => {
+  const handleBuyClick = (artefactId: ArtefactId, event: MouseEvent) => {
     event.stopPropagation();
     buyArtefact(artefactId);
   };
@@ -55,13 +114,20 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                 {selectedArtefactIds.map((artefactId) => {
                   const artefact = ARTEFACTS[artefactId];
                   if (!artefact) return null;
+                  const effectDescription = getArtefactEffectDescription(artefactId);
+                  const tooltipText = `${artefact.name}\n${effectDescription}`;
 
                   return (
                     <button
                       key={artefactId}
                       onClick={() => unselectArtefact(artefactId)}
                       className="group relative h-16 w-16 overflow-hidden rounded-lg border border-sky-400/50 bg-slate-800 shadow-lg transition hover:border-sky-400 hover:shadow-xl"
-                      title={`${artefact.name}\n${getArtefactEffectDescription(artefactId)}`}
+                      onPointerEnter={(event) => handlePointerEnterTooltip(artefactId, event)}
+                      onPointerLeave={hideTooltip}
+                      onPointerDown={(event) => handlePointerDownTooltip(artefactId, event)}
+                      onFocus={(event) => handleFocusTooltip(artefactId, event)}
+                      onBlur={hideTooltip}
+                      aria-label={tooltipText}
                     >
                       <img
                         src={artefact.image}
@@ -69,6 +135,10 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                         className="h-full w-full object-cover"
                       />
                       <div className="absolute inset-0 bg-red-500/0 transition group-hover:bg-red-500/20" />
+                      <TooltipBubble
+                        text={tooltipText}
+                        anchorRect={activeTooltip?.id === artefactId ? activeTooltip.rect : null}
+                      />
                     </button>
                   );
                 })}
@@ -86,6 +156,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
               const isSelected = selectedArtefactIds.includes(artefact.id);
               const canAfford = arcaneDust >= artefact.cost;
               const effectDescription = getArtefactEffectDescription(artefact.id);
+              const tooltipText = `${artefact.name}\n${effectDescription}`;
 
               return (
                 <div
@@ -99,7 +170,20 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                       : 'border-slate-700/40 bg-slate-900/30'
                   }`}
                   onClick={() => handleArtefactClick(artefact.id)}
-                  title={ `${artefact.name}\n${effectDescription}`}
+                  onPointerEnter={(event) => handlePointerEnterTooltip(artefact.id, event)}
+                  onPointerLeave={hideTooltip}
+                  onPointerDown={(event) => handlePointerDownTooltip(artefact.id, event)}
+                  onFocus={(event) => handleFocusTooltip(artefact.id, event)}
+                  onBlur={hideTooltip}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleArtefactClick(artefact.id);
+                    }
+                  }}
+                  aria-label={tooltipText}
+                  role="button"
+                  tabIndex={0}
                 >
                   {/* Artefact Image */}
                   <div className={`aspect-square ${isOwned ? 'opacity-100' : 'opacity-40'}`}>
@@ -137,6 +221,10 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                       ✓
                     </div>
                   )}
+                  <TooltipBubble
+                    text={tooltipText}
+                    anchorRect={activeTooltip?.id === artefact.id ? activeTooltip.rect : null}
+                  />
                 </div>
               );
             })}

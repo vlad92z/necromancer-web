@@ -182,7 +182,7 @@ export function getArtefactEffectDescription(artefactId: ArtefactId): string {
     rod: 'All damage taken is also added to Rune Score',
     potion: 'Double all damage dealt, but triple all damage taken',
     robe: 'Increase total picks by 1 during deck drafting',
-    tome: 'Segments of size 1 deal 10× damage and 10× healing',
+    tome: 'Segments of size 1 deal 5× damage and 5× healing',
   };
   
   return descriptions[artefactId];
