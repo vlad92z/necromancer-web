@@ -5,7 +5,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, SoloOutcome, SoloRunConfig } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, createStartingDeck, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
@@ -459,7 +459,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const overloadDamage = overloadRunesPlaced > 0
         ? overloadRunesPlaced * state.strain
         : 0;
-      let nextHealth = overloadDamage > 0
+      const nextHealth = overloadDamage > 0
         ? Math.max(0, currentPlayer.health - overloadDamage)
         : currentPlayer.health;
 
@@ -803,7 +803,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const deckTemplate = getSoloDeckTemplate(state);
       const nextTarget = state.soloTargetScore;
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / state.runeTypeCount));
-      let nextGameState = initializeSoloGame(
+      const nextGameState = initializeSoloGame(
         state.runeTypeCount,
         {
           startingHealth: state.startingHealth,
