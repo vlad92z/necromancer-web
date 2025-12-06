@@ -7,7 +7,7 @@ import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, SoloOutcome, SoloRunConfig } from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, DEFAULT_SOLO_CONFIG, RUNE_TYPES } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
-import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
+import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
 import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
 import castSoundUrl from '../../assets/sounds/cast.mp3';
@@ -250,6 +250,7 @@ export interface GameplayStore extends GameState {
   resetGame: () => void;
   triggerChapterEnd: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
+  disenchantRuneFromDeck: (runeId: string) => number;
 }
 
 function selectPersistableGameState(state: GameplayStore): GameState {
@@ -271,6 +272,7 @@ function selectPersistableGameState(state: GameplayStore): GameState {
     resetGame,
     triggerChapterEnd,
     selectDeckDraftRuneforge,
+    disenchantRuneFromDeck,
     ...persistableState
   } = state;
 
@@ -797,6 +799,49 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   
   resetGame: () => {
     set(() => initializeSoloGame());
+  },
+
+  disenchantRuneFromDeck: (runeId: string) => {
+    let dustAwarded = 0;
+
+    set((state) => {
+      if (state.turnPhase !== 'deck-draft') {
+        return state;
+      }
+
+      const runeToRemove = state.player.deck.find((rune) => rune.id === runeId);
+      if (!runeToRemove) {
+        return state;
+      }
+
+      const rarity = getRuneRarity(runeToRemove.effects);
+      const rarityDustMap: Record<NonNullable<typeof rarity>, number> = {
+        uncommon: 1,
+        rare: 5,
+        epic: 25,
+      } as const;
+      dustAwarded = rarity ? rarityDustMap[rarity] ?? 0 : 0;
+
+      const updatedDeck = state.player.deck.filter((rune) => rune.id !== runeId);
+      const updatedDeckTemplate = state.soloDeckTemplate.filter((rune) => rune.id !== runeId);
+
+      if (dustAwarded > 0) {
+        const nextDustTotal = addArcaneDust(dustAwarded);
+        useArtefactStore.getState().updateArcaneDust(nextDustTotal);
+      }
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          deck: updatedDeck,
+        },
+        soloDeckTemplate: updatedDeckTemplate,
+        totalRunesPerPlayer: updatedDeckTemplate.length,
+      };
+    });
+
+    return dustAwarded;
   },
 
   selectDeckDraftRuneforge: (runeforgeId: string) => {

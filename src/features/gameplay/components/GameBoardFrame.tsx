@@ -116,6 +116,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     placeRunesInFloor,
     cancelSelection,
     selectDeckDraftRuneforge,
+    disenchantRuneFromDeck,
     forceSoloVictory,
     startNextSoloGame,
   } = useGameActions();
@@ -373,7 +374,16 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
       {showRulesOverlay && <RulesOverlay onClose={() => setShowRulesOverlay(false)} />}
 
-      {showDeckOverlay && <DeckOverlay deck={player.deck} fullDeck={fullDeck} playerName={player.name} onClose={() => setShowDeckOverlay(false)} />}
+      {showDeckOverlay && (
+        <DeckOverlay
+          deck={player.deck}
+          fullDeck={fullDeck}
+          playerName={player.name}
+          onClose={() => setShowDeckOverlay(false)}
+          isDeckDrafting={isDeckDrafting}
+          onDisenchantRune={disenchantRuneFromDeck}
+        />
+      )}
 
       {showLogOverlay && <GameLogOverlay chapterHistory={gameState.chapterHistory} onClose={() => setShowLogOverlay(false)} />}
 
