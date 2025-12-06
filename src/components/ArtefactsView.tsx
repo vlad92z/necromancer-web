@@ -6,6 +6,7 @@ import { Modal } from './layout/Modal';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS, getAllArtefacts, MAX_SELECTED_ARTEFACTS } from '../types/artefacts';
 import { useArtefactStore } from '../state/stores/artefactStore';
+import { getArtefactEffectDescription } from '../utils/artefactEffects';
 
 interface ArtefactsViewProps {
   isOpen: boolean;
@@ -60,7 +61,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                       key={artefactId}
                       onClick={() => unselectArtefact(artefactId)}
                       className="group relative h-16 w-16 overflow-hidden rounded-lg border border-sky-400/50 bg-slate-800 shadow-lg transition hover:border-sky-400 hover:shadow-xl"
-                      title={`${artefact.name} - Click to unselect`}
+                      title={`${artefact.name}\n${getArtefactEffectDescription(artefactId)}\n\nClick to unselect`}
                     >
                       <img
                         src={artefact.image}
@@ -84,6 +85,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
               const isOwned = ownedArtefactIds.includes(artefact.id);
               const isSelected = selectedArtefactIds.includes(artefact.id);
               const canAfford = arcaneDust >= artefact.cost;
+              const effectDescription = getArtefactEffectDescription(artefact.id);
 
               return (
                 <div
@@ -100,9 +102,9 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                   title={
                     isOwned
                       ? isSelected
-                        ? `${artefact.name} - Click to unselect`
-                        : `${artefact.name} - Click to select`
-                      : `${artefact.name} - ${artefact.cost} Arcane Dust`
+                        ? `${artefact.name}\n${effectDescription}\n\nClick to unselect`
+                        : `${artefact.name}\n${effectDescription}\n\nClick to select`
+                      : `${artefact.name}\n${effectDescription}\n\nCost: ${artefact.cost} Arcane Dust`
                   }
                 >
                   {/* Artefact Image */}
