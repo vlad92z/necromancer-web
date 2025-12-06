@@ -7,6 +7,7 @@ import { getDraftEffectsForType } from './runeEffects';
 import { getRuneTypes } from './gameInitialization';
 import type { Runeforge } from '../types/game';
 
+const DEFAULT_DRAFT_PICK_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
 
@@ -65,7 +66,7 @@ function createDraftRuneforges(
 
 export function createDeckDraftState(
   ownerId: string,
-  totalPicks: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
+  totalPicks: number = DEFAULT_DRAFT_PICK_COUNT,
   winStreak: number = 0
 ): DeckDraftState {
   return {
