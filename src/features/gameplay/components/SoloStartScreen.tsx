@@ -66,14 +66,19 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
           </p>
           <div className="flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
-              <span className="text-[11px] text-sky-300">Best Round</span>
-              <span className="text-lg font-extrabold text-slate-50">{bestRound > 0 ? bestRound : '--'}</span>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
-              <span className="text-[11px] font-semibold text-amber-200/90">Arcane Dust</span>
-              <span className="text-lg text-amber-200">{formattedDust}</span>
-            </div>
+            {bestRound > 2 && (
+              <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+                <span className="text-[11px] text-sky-300">Best Round</span>
+                <span className="text-lg font-extrabold text-slate-50">{bestRound}</span>
+              </div>
+            )}
+
+            {arcaneDust > 0 && (
+              <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+                <span className="text-[11px] font-semibold text-amber-200/90">Arcane Dust</span>
+                <span className="text-lg text-amber-200">{formattedDust}</span>
+              </div>
+            )}
           </div>
         </div>
 
