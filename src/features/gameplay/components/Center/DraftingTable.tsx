@@ -21,6 +21,7 @@ interface DraftingTableProps {
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
   onCancelSelection: () => void;
+  onClickSelectedRunes: () => void;
   animatingRuneIds?: string[];
   hiddenCenterRuneIds?: Set<string>;
   hideOpponentRow?: boolean;
@@ -37,6 +38,7 @@ export function DraftingTable({
   selectedRunes,
   draftSource,
   onCancelSelection,
+  onClickSelectedRunes,
   animatingRuneIds,
   hiddenCenterRuneIds
 }: DraftingTableProps) {
@@ -97,6 +99,7 @@ export function DraftingTable({
               }
               selectionSourceActive={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes}
               onCancelSelection={hasSelectedRunes ? onCancelSelection : undefined}
+              onClickSelectedRunes={selectedFromRuneforgeId === runeforge.id ? onClickSelectedRunes : undefined}
               animatingRuneIds={animatingRuneIdSet}
             />
           ))}
@@ -116,6 +119,7 @@ export function DraftingTable({
         selectedRunes={selectionFromCenter ? selectedRunes : []}
         selectionFromCenter={Boolean(selectionFromCenter)}
         onCancelSelection={selectionFromCenter ? onCancelSelection : undefined}
+        onClickSelectedRunes={selectionFromCenter ? onClickSelectedRunes : undefined}
         displayRunesOverride={centerSelectionOriginalRunes}
         animatingRuneIds={animatingRuneIdSet}
         hiddenRuneIds={hiddenCenterRuneIds}

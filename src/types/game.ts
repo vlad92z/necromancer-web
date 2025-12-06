@@ -147,6 +147,7 @@ export interface GameState {
   strainMultiplier: number;
   soloStartingStrain: number; // Configured strain at the start of the run
   selectedRunes: Rune[]; // Runes currently selected by active player
+  selectionTimestamp: number | null; // Timestamp (in ms) when runes were selected, for double-click timeout
   draftSource:
     | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
     | { type: 'center'; originalRunes: Rune[] }

@@ -16,6 +16,7 @@ interface CenterPoolProps {
   selectedRunes: Rune[];
   selectionFromCenter: boolean;
   onCancelSelection?: () => void;
+  onClickSelectedRunes?: () => void;
   displayRunesOverride?: Rune[];
   animatingRuneIds?: Set<string> | null;
   hiddenRuneIds?: Set<string>;
@@ -29,7 +30,7 @@ export function CenterPool({
   canDraftFromCenter,
   selectedRunes,
   selectionFromCenter,
-  onCancelSelection,
+  onClickSelectedRunes,
   displayRunesOverride,
   animatingRuneIds = null,
   hiddenRuneIds
@@ -73,8 +74,9 @@ export function CenterPool({
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedDisplay: boolean) => {
     e.stopPropagation();
-    if (isSelectedDisplay && onCancelSelection) {
-      onCancelSelection();
+    if (isSelectedDisplay && onClickSelectedRunes) {
+      // Clicking on selected runes - try auto-placement with timeout check
+      onClickSelectedRunes();
       return;
     }
     if (!centerDisabled && onRuneClick) {

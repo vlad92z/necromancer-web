@@ -55,6 +55,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     runeforges: [],
     centerPool: [],
     selectedRunes: [],
+        selectionTimestamp: null,
     draftSource: null, 
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
@@ -144,6 +145,7 @@ function handlePlayerDefeat(
     ...state,
     player: updatedPlayer,
     selectedRunes: [],
+        selectionTimestamp: null,
     draftSource: null,
     centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
@@ -172,6 +174,7 @@ function prepareRoundReset(state: GameState): GameState {
         shouldTriggerEndRound: false,
         lockedPatternLines: { [clearedPlayer.id]: [] },
         selectedRunes: [],
+        selectionTimestamp: null,
         draftSource: null,
         pendingPlacement: null,
         animatingRunes: [],
@@ -193,6 +196,7 @@ function prepareRoundReset(state: GameState): GameState {
       shouldTriggerEndRound: false,
       lockedPatternLines: { [clearedPlayer.id]: [] },
       selectedRunes: [],
+        selectionTimestamp: null,
       draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
@@ -225,6 +229,7 @@ function prepareRoundReset(state: GameState): GameState {
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
     selectedRunes: [],
+        selectionTimestamp: null,
     draftSource: null,
     pendingPlacement: null,
     animatingRunes: [],
@@ -329,6 +334,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         runeforges: updatedRuneforges,
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
+        selectionTimestamp: Date.now(),
         draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
         turnPhase: 'place' as const,
       };
@@ -427,6 +433,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           runePowerTotal: nextRunePowerTotal,
           lockedPatternLines: updatedLockedPatternLines,
           selectedRunes: [],
+        selectionTimestamp: null,
           draftSource: null,
           pendingPlacement: null,
           animatingRunes: [],
@@ -476,6 +483,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
+        selectionTimestamp: Date.now(),
         draftSource: { type: 'center', originalRunes: originalCenterRunes },
         turnPhase: 'place' as const,
       };
@@ -579,6 +587,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           player: updatedPlayer,
           centerPool: nextCenterPool,
           selectedRunes: [],
+        selectionTimestamp: null,
           draftSource: null,
           pendingPlacement: null,
           animatingRunes: [],
@@ -602,6 +611,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         player: updatedPlayer,
         selectedRunes: [],
+        selectionTimestamp: null,
         draftSource: null,
         centerPool: nextCenterPool,
         turnPhase: nextTurnPhase,
@@ -654,6 +664,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           player: updatedPlayer,
           centerPool: nextCenterPool,
           selectedRunes: [],
+        selectionTimestamp: null,
           draftSource: null,
           pendingPlacement: null,
           animatingRunes: [],
@@ -670,6 +681,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         player: updatedPlayer,
         selectedRunes: [],
+        selectionTimestamp: null,
         draftSource: null,
         centerPool: nextCenterPool,
         turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
@@ -694,6 +706,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...state,
           centerPool: [...state.draftSource.originalRunes],
           selectedRunes: [],
+        selectionTimestamp: null,
           draftSource: null,
           turnPhase: 'draft' as const,
         };
@@ -712,6 +725,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...state,
           runeforges: updatedRuneforges,
           selectedRunes: [],
+        selectionTimestamp: null,
           draftSource: null,
           turnPhase: 'draft' as const,
         };
@@ -721,12 +735,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   
   /**
    * Try to automatically place the current rune selection on an appropriate pattern line.
-   * This implements the "double-click to send runes" feature.
+   * This implements the "double-click to send runes" feature with a 1-second timeout.
    * 
    * Algorithm:
-   * 1. If there's an unfinished pattern line of the same rune type with enough space, place runes there
-   * 2. Otherwise, if there's an empty pattern line whose capacity exactly matches the selection size, place runes there
-   * 3. Otherwise, fall back to cancelling the selection (returning runes to their source)
+   * 1. Check if the selection was made within the last 1 second (for double-click behavior)
+   * 2. If yes, try to find an unfinished pattern line or empty line with exact match
+   * 3. If found, place runes there; otherwise cancel selection
+   * 4. If more than 1 second has passed, just cancel the selection
    * 
    * Only works when in the 'place' phase with selected runes.
    */
@@ -735,6 +750,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     
     // Only works if we're in place phase and have selected runes
     if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+      return;
+    }
+
+    // Check if selection is within 1 second (1000ms) for double-click behavior
+    const now = Date.now();
+    const timeSinceSelection = state.selectionTimestamp ? now - state.selectionTimestamp : Infinity;
+    const isWithinDoubleClickWindow = timeSinceSelection <= 1000;
+
+    if (!isWithinDoubleClickWindow) {
+      // More than 1 second has passed, just cancel the selection
+      state.cancelSelection();
       return;
     }
 
@@ -802,6 +828,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         runePowerTotal: nextRunePowerTotal,
         selectedRunes: [],
+        selectionTimestamp: null,
         draftSource: null,
         pendingPlacement: null,
         animatingRunes: [],

@@ -81,6 +81,7 @@ export interface GameBoardSharedProps {
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onCancelSelection: () => void;
+  onClickSelectedRunes: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
   onPlaceRunesInFloor: () => void;
   returnToStartScreen: () => void;
@@ -114,6 +115,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     placeRunes,
     moveRunesToWall,
     placeRunesInFloor,
+    cancelSelection,
     tryAutoPlaceSelection,
     selectDeckDraftRuneforge,
     disenchantRuneFromDeck,
@@ -214,6 +216,13 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     if (isAnimatingPlacement) {
       return;
     }
+    cancelSelection();
+  };
+
+  const handleClickSelectedRunes = () => {
+    if (isAnimatingPlacement) {
+      return;
+    }
     tryAutoPlaceSelection();
   };
 
@@ -304,6 +313,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     onRuneClick: handleRuneClick,
     onCenterRuneClick: handleCenterRuneClick,
     onCancelSelection: handleCancelSelection,
+    onClickSelectedRunes: handleClickSelectedRunes,
     onPlaceRunes: handlePatternLinePlacement,
     onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
     returnToStartScreen,

@@ -32,6 +32,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     onRuneClick,
     onCenterRuneClick,
     onCancelSelection,
+    onClickSelectedRunes,
     onPlaceRunes,
     onPlaceRunesInFloor,
     game,
@@ -69,6 +70,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             selectedRunes={selectedRunes}
             draftSource={draftSource}
             onCancelSelection={onCancelSelection}
+            onClickSelectedRunes={onClickSelectedRunes}
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}
           />

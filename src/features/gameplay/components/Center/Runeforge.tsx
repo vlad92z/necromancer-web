@@ -21,6 +21,7 @@ interface RuneforgeProps {
   displayOverride?: SelectedDisplayOverride;
   selectionSourceActive?: boolean;
   onCancelSelection?: () => void;
+  onClickSelectedRunes?: () => void;
   animatingRuneIds?: Set<string> | null;
 }
 
@@ -32,6 +33,7 @@ export function Runeforge({
   displayOverride,
   selectionSourceActive = false,
   onCancelSelection,
+  onClickSelectedRunes,
   animatingRuneIds = null
 }: RuneforgeProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
@@ -54,8 +56,9 @@ export function Runeforge({
       onCancelSelection();
       return;
     }
-    if (isSelectedForDisplay && onCancelSelection) {
-      onCancelSelection();
+    if (isSelectedForDisplay && onClickSelectedRunes) {
+      // Clicking on selected runes - try auto-placement with timeout check
+      onClickSelectedRunes();
       return;
     }
     if (onRuneforgeSelect && !disabled) {
