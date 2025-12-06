@@ -105,7 +105,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-chapter' | 'deck-draft' | 'game-over';
+export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
 
 /**
  * Chapter history entry for game log
