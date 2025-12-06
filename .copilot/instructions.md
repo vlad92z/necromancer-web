@@ -2,17 +2,17 @@
 
 ## Project Overview
 
-**Massive Spell: Arcane Arena** is a roguelite deck-building 1v1 duel game inspired by Azul's drafting mechanics. Players draft runes from runeforges, place them on pattern lines, and complete lines to add runes to their 5×5 scoring wall. The goal is to build connected segments of runes to maximize spell damage while surviving arcane overload.
+**Massive Spell: Arcane Arena** is a single-player roguelite rune-drafting game inspired by Azul's drafting mechanics. Players draft runes from runeforges, place them on pattern lines, and complete lines to add runes to their scoring wall. The goal is to build connected segments of runes to maximize spell damage while surviving arcane overload.
 
 ### Tech Stack
 - **React 19** + **TypeScript** (strict mode)
 - **Vite 7** for development and builds
 - **Zustand 5** for global state management
 - **Framer Motion 12** for all animations
-- **Inline CSS** styling with JavaScript style objects (no CSS-in-JS libraries, no Tailwind, no CSS Modules)
+- **Inline CSS + Tailwind** styling (existing inline styles remain; Tailwind used for newer view shells; no CSS Modules or CSS-in-JS libraries)
 
 ### Current Scope
-- Solo Game Mode, where players try to reach the target RuneScore before they succumb to Arcane Overload
+- Solo Game Mode only: reach the target RuneScore before succumbing to Arcane Overload (no duel mode or AI opponents)
 
 ---
 
@@ -66,31 +66,21 @@ src/
 ├── assets/
 │   └── runes/              # SVG graphics for rune types (Fire, Frost, Poison, Void, Wind)
 ├── components/             # Reusable UI components (domain-agnostic)
-│   ├── RuneAnimation.tsx   # Framer Motion rune movement animations
-│   ├── RuneCell.tsx        # Enhanced rune display with variants and animations
-│   └── RuneToken.tsx       # Basic clickable rune display
+│   ├── RuneAnimation.tsx
+│   ├── RuneCell.tsx
+│   ├── RuneToken.tsx
+│   └── VolumeControl.tsx
 ├── features/
-│   └── gameplay/           # All gameplay-specific features
-│       └── components/     # Gameplay UI components (game-specific)
-│           ├── CenterPool.tsx
+│   └── gameplay/
+│       └── components/
+│           ├── Center/ (CenterPool, Runeforge, RuneTypeTotals)
+│           ├── DeckDraftingModal.tsx
 │           ├── DeckOverlay.tsx
-│           ├── FloorLine.tsx
-│           ├── GameBoard.tsx
-│           ├── GameLogOverlay.tsx
-│           ├── GameOverModal.tsx
-│           ├── OpponentView.tsx
-│           ├── PatternLines.tsx
-│           ├── PlayerBoard.tsx
-│           ├── PlayerView.tsx
-│           ├── RulesOverlay.tsx
-│           ├── Runeforge.tsx
-│           ├── RuneforgeOverlay.tsx
-│           ├── DraftingTable.tsx
-│           ├── RunePower.tsx
-│           ├── ScoringWall.tsx
-│           ├── SelectedRunesOverlay.tsx
-│           ├── StartGameScreen.tsx
-│           ├── VoidEffectOverlay.tsx
+│           ├── GameBoardFrame.tsx
+│           ├── SoloGameBoard.tsx
+│           ├── SoloGameOverModal.tsx
+│           ├── SoloRuneScoreOverlay.tsx
+│           ├── SoloStartScreen.tsx
 │           └── WallCell.tsx
 ├── hooks/                  # Custom React hooks
 │   ├── useGameActions.ts   # Zustand action hooks
@@ -100,10 +90,10 @@ src/
 ├── types/                  # TypeScript type definitions
 │   └── game.ts             # Core game domain types
 ├── utils/                  # Pure utility functions and game logic
-│   ├── gameInitialization.ts  # Game setup and initialization
-│   ├── runeHelpers.ts      # Rune-related utilities
-│   └── scoring.ts          # Scoring calculations (spellpower, segments)
-├── App.tsx                 # Root component, AI turn orchestration
+│   ├── gameInitialization.ts
+│   ├── runeHelpers.ts
+│   └── scoring.ts
+├── App.tsx                 # Root component for routing
 ├── main.tsx                # Application entry point
 └── index.css               # Global styles (minimal)
 ```
@@ -134,7 +124,7 @@ src/
 - ❌ Component prop types (define inline or colocated with components)
 
 **`src/utils/`**: Pure functions and game logic
-- ✅ Scoring calculations, AI logic, game initialization, rune helpers
+- ✅ Scoring calculations, solo initialization, rune helpers
 - ✅ Pure functions with no React dependencies
 - ❌ UI components, hooks, or state management
 
@@ -332,7 +322,7 @@ export function useGameActions() {
 - **UI-only state** (overlay visibility, hover states, etc.) should use component-level `useState`
 - **Derived state** should be computed in selectors or components, not stored
 - **State must be serializable** (no functions, class instances, or DOM references in state)
-- **Actions must be synchronous** (use `useEffect` in components for side effects like AI turns)
+- **Actions must be synchronous** (use `useEffect` in components for side effects like timers or audio cues)
 
 ---
 

@@ -1,5 +1,5 @@
 /**
- * GameBoardFrame - shared logic and layout shell for solo and duel boards
+ * GameBoardFrame - shared logic and layout shell for the solo board
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -32,8 +32,6 @@ const computeBoardScale = (width: number, height: number): number => {
   const clamped = Math.min(rawScale, 1);
   return Math.max(clamped, MIN_BOARD_SCALE);
 };
-
-export type GameBoardVariant = 'solo' | 'duel';
 
 export interface GameBoardProps {
   gameState: GameState;
@@ -89,11 +87,10 @@ export interface GameBoardSharedProps {
 }
 
 export interface GameBoardFrameProps extends GameBoardProps {
-  variant: GameBoardVariant;
   renderContent: (shared: GameBoardSharedProps, variantData: SoloVariantData) => ReactElement | null;
 }
 
-export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardFrameProps) {
+export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {
   const {
     player,
     runeforges,
@@ -127,7 +124,6 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
-  const isSoloVariant = variant === 'solo';
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
@@ -335,28 +331,26 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     <div
       className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
     >
-      {isSoloVariant && (
-        <div className="absolute left-4 top-4 z-30 flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={forceSoloVictory}
-            className="rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-50 transition hover:border-emerald-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-          >
-            Instant Win
-          </button>
-          <button
-            type="button"
-            onClick={returnToStartScreen}
-            className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-          >
-            Quit Run
-          </button>
-          <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Current Round</div>
-            <div className="text-2xl font-extrabold text-white leading-tight">Round {currentRound}</div>
-          </div>
+      <div className="absolute left-4 top-4 z-30 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={forceSoloVictory}
+          className="rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-50 transition hover:border-emerald-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+        >
+          Instant Win
+        </button>
+        <button
+          type="button"
+          onClick={returnToStartScreen}
+          className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+        >
+          Quit Run
+        </button>
+        <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Current Round</div>
+          <div className="text-2xl font-extrabold text-white leading-tight">Round {currentRound}</div>
         </div>
-      )}
+      </div>
       <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
         <VolumeControl soundVolume={soundVolume} onVolumeChange={handleVolumeChange} isMusicMuted={isMusicMuted} onToggleMusic={handleToggleMusic} />
       </div>

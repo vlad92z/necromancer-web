@@ -114,10 +114,9 @@ export function Solo() {
   }
 
   return <GameBoardFrame
-        gameState={gameState}
-        variant="solo"
-        renderContent={(shared, variantData) => {
-          return <SoloBoardContent shared={shared} variantData={variantData} />;
-        }}
-      />;
+    gameState={gameState}
+    renderContent={(shared, variantData) => {
+      return <SoloBoardContent shared={shared} variantData={variantData} />;
+    }}
+  />;
 }

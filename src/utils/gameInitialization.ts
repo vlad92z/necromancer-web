@@ -78,7 +78,7 @@ export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
   patternLinesLockOnComplete: true,
 };
 
-export interface QuickPlayConfig {
+export interface SoloSizingConfig {
   factoriesPerPlayer: number;
   totalRunesPerPlayer: number;
   runesPerRuneforge: number;
@@ -107,9 +107,9 @@ export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunCon
 }
 
 /**
- * Derive quick play sizing for factories and rune pool based on wall size.
+ * Derive solo sizing for factories and rune pool based on wall size.
  */
-export function getQuickPlayConfig(runeTypeCount: RuneTypeCount): QuickPlayConfig {
+export function getSoloSizingConfig(runeTypeCount: RuneTypeCount): SoloSizingConfig {
   const sizingByBoardSize: Record<RuneTypeCount, { factoriesPerPlayer: number; totalRunesPerPlayer: number; startingHealth: number; overflowCapacity: number }> = {
     3: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 25, overflowCapacity: 6 },
     4: { factoriesPerPlayer: 2, totalRunesPerPlayer: 24, startingHealth: 50, overflowCapacity: 8 },
@@ -242,7 +242,7 @@ export function fillFactories(
 }
 
 /**
- * Initialize a solo run with the same board sizing options as quick play
+ * Initialize a solo run using sizing driven by rune variety
  */
 export function initializeSoloGame(
   runeTypeCount: RuneTypeCount = 5,
@@ -250,7 +250,7 @@ export function initializeSoloGame(
   options?: SoloInitializationOptions
 ): GameState {
   const soloConfig = normalizeSoloConfig(config);
-  const quickPlayConfig = getQuickPlayConfig(runeTypeCount);
+  const soloSizingConfig = getSoloSizingConfig(runeTypeCount);
   const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
   const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
   const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * runeTypeCount;
@@ -263,7 +263,7 @@ export function initializeSoloGame(
     soloConfig.startingHealth,
     runeTypeCount,
     soloDeckSize,
-    quickPlayConfig.overflowCapacity,
+    soloSizingConfig.overflowCapacity,
     soloMaxHealth,
   );
   if (options?.startingDeck) {
@@ -277,7 +277,7 @@ export function initializeSoloGame(
     {
       [soloPlayer.id]: soloPlayer.deck,
     },
-    quickPlayConfig.runesPerRuneforge
+    soloSizingConfig.runesPerRuneforge
   );
 
   soloPlayer.deck = decksByPlayer[soloPlayer.id] ?? [];
@@ -286,9 +286,9 @@ export function initializeSoloGame(
     gameStarted: false,
     runeTypeCount,
     factoriesPerPlayer: soloRuneforgeCount,
-    runesPerRuneforge: quickPlayConfig.runesPerRuneforge,
+    runesPerRuneforge: soloSizingConfig.runesPerRuneforge,
     startingHealth: soloConfig.startingHealth,
-    overflowCapacity: quickPlayConfig.overflowCapacity,
+    overflowCapacity: soloSizingConfig.overflowCapacity,
     strain: soloConfig.startingStrain,
     strainMultiplier: soloConfig.strainMultiplier,
     soloStartingStrain: soloConfig.startingStrain,

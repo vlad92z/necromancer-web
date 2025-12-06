@@ -27,17 +27,14 @@ npm run lint
 ```
 
 ## Game Modes
-- **Solo**: Draft from your own runeforges and survive increasing overload while chasing a target Rune Power score.
-- **Quick Play (WIP)**: Human bottom seat vs configurable AI/human top seat. Board size and health scale with rune count (3x3 to 6x6 walls; 2-4 runeforges per player).
-- **Spectator**: Watch AI vs AI on any board size.
+- **Solo**: Draft from your own runeforges, manage overload, and race to the target Rune Power score before the deck runs dry.
 
 ## Gameplay Rules (current build)
 
 ### Board & Setup
 - Board sizes track rune variety: 3-6 rune types map to 3x3-6x6 walls with matching pattern lines (tiers 1-6).
-- Each player has personal runeforges; quick play deals 2-4 per player based on board size, with health scaling from 25-150.
-- The center pool only opens once you clear your own runeforges. 
-- In quick play, opponent runeforges are not draftable. Players only get access to enemy runes once they have moved to the shared center pool.
+- Solo runeforge count scales with rune variety, with health scaling alongside the chosen config.
+- The center pool opens once your personal runeforges are empty, carrying leftover runes forward.
 
 ### Draft & Place
 - On your turn, take all runes of one type from a runeforge (leftovers drop to the center).
@@ -51,12 +48,12 @@ npm run lint
 - In Solo, that hit also increases your cumulative Rune Power score.
 
 ### Round End & Victory
-- A round ends when all runeforges and the center are empt. 
+- A round ends when all runeforges and the center are empty.
 - Resolve any end of round effects.
 - Unlock empty pattern lines.
 - Clears floor runes.
 - Strain (overload multiplier) grows each round.
-- Game over triggers at 0 HP or when a player lacks enough runes to refill runeforges. The survivor or higher-health player wins; Solo checks Rune Power against the target score when the deck runs dry.
+- Game over triggers at 0 HP or when there are not enough runes to refill runeforges; Solo checks Rune Power against the target score when the deck runs dry.
 
 ## Rune Effects
 
@@ -81,7 +78,7 @@ src/
 ├── state/stores/           # Zustand stores (gameplay, UI)
 ├── styles/                 # Design tokens and global styles
 ├── types/                  # Domain types (game, rune, controllers)
-├── utils/                  # Pure logic (scoring, init, AI helpers, rune effects)
+├── utils/                  # Pure logic (scoring, init, rune effects)
 ├── App.tsx
 └── main.tsx
 ```
@@ -125,12 +122,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [x] Update `RulesOverlay` with rune effect explanations
 - [x] Add overlay buttons for rules, deck, and the game log
 
-#### AI Improvements
-- [ ] Make AI evaluate Fire runes for scoring potential
-- [ ] Add strategic Life collection weighting for survivability
-- [ ] AI should value Wind as floor insurance
-- [ ] Support multiple AI difficulty levels
-- [ ] Make AI behavior pluggable (different strategies for campaign bosses)
 
 ### 🟡 Priority 2: Architecture Refactoring (Before New Features)
 
@@ -156,7 +147,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 #### Code Quality
 - [ ] Add error boundaries (root, GameBoard, overlays)
 - [ ] Create `validateGameState()` function with dev-mode validation
-- [ ] Memoize expensive calculations (`getWallColumnForRune()`, wall power, AI moves)
+ - [ ] Memoize expensive calculations (`getWallColumnForRune()`, wall power, placement previews)
 - [ ] Extract utility functions (`getNextPlayerIndex()`, `isRuneforgeEmpty()`, etc.)
 - [ ] Add error logging service
 
@@ -188,7 +179,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Add ELO rating system
 - [ ] Create lobby/waiting room
 - [ ] Add friend system and private matches
-- [ ] Implement spectator mode
 
 ### 🎨 Priority 5: Visual & Audio Polish
 
@@ -212,7 +202,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Implement undo/redo for moves
 - [ ] Add tutorial/onboarding for new players
 - [ ] Save/load game state for resuming later
-- [ ] Add difficulty settings for AI
 - [ ] Implement end-game bonuses (row/column/type completion)
 
 #### Technical

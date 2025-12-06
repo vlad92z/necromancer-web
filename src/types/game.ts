@@ -140,12 +140,12 @@ export interface AnimatingRune {
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
   runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
-  factoriesPerPlayer: number; // Runeforge count per player (quick play config)
+  factoriesPerPlayer: number; // Runeforge count for the current solo setup
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
   startingHealth: number; // Health pool per player for the current configuration
   overflowCapacity: number; // Floor line capacity that determines overflow penalties
   player: Player;
-  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games (empty for versus)
+  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   turnPhase: TurnPhase;
