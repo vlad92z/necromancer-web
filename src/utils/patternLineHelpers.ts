@@ -9,6 +9,12 @@ import { getWallColumnForRune } from './scoring';
  * Find the best pattern line index to auto-place selected runes.
  * Returns the index of the pattern line to use, or null if no suitable line exists.
  * 
+ * @param selectedRunes - Array of runes currently selected by the player
+ * @param patternLines - Array of pattern lines for the current player
+ * @param wall - The player's scoring wall (2D grid of wall cells)
+ * @param lockedLineIndexes - Array of pattern line indices that are locked (unavailable)
+ * @returns The index of the best pattern line to place runes, or null if no suitable line found
+ * 
  * Algorithm:
  * 1. First, try to find an unfinished pattern line of the matching rune type with enough space
  * 2. If not found, try to find an empty pattern line with exact capacity match
@@ -24,15 +30,16 @@ export function findBestPatternLineForAutoPlacement(
     return null;
   }
 
-  // Get the rune type from selected runes (assume all same type)
-  const selectionType = selectedRunes[0].runeType;
-  const selectionCount = selectedRunes.length;
-  
   // Verify all selected runes are the same type
-  const allSameType = selectedRunes.every((rune) => rune.runeType === selectionType);
+  const firstRuneType = selectedRunes[0].runeType;
+  const allSameType = selectedRunes.every((rune) => rune.runeType === firstRuneType);
   if (!allSameType) {
     return null; // Fallback to cancel if mixed types
   }
+  
+  // All runes verified to be same type
+  const selectionType = firstRuneType;
+  const selectionCount = selectedRunes.length;
 
   const wallSize = wall.length;
 
@@ -65,9 +72,8 @@ export function findBestPatternLineForAutoPlacement(
     }
 
     // Check if this rune type is already on the wall in this row
-    const row = i;
-    const col = getWallColumnForRune(row, selectionType, wallSize);
-    const alreadyOnWall = wall[row][col].runeType !== null;
+    const col = getWallColumnForRune(i, selectionType, wallSize);
+    const alreadyOnWall = wall[i][col].runeType !== null;
     if (alreadyOnWall) {
       continue;
     }
@@ -98,9 +104,8 @@ export function findBestPatternLineForAutoPlacement(
     }
 
     // Check if this rune type is already on the wall in this row
-    const row = i;
-    const col = getWallColumnForRune(row, selectionType, wallSize);
-    const alreadyOnWall = wall[row][col].runeType !== null;
+    const col = getWallColumnForRune(i, selectionType, wallSize);
+    const alreadyOnWall = wall[i][col].runeType !== null;
     if (alreadyOnWall) {
       continue;
     }

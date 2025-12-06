@@ -719,38 +719,43 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
+  /**
+   * Try to automatically place the current rune selection on an appropriate pattern line.
+   * This implements the "double-click to send runes" feature.
+   * 
+   * Algorithm:
+   * 1. If there's an unfinished pattern line of the same rune type with enough space, place runes there
+   * 2. Otherwise, if there's an empty pattern line whose capacity exactly matches the selection size, place runes there
+   * 3. Otherwise, fall back to cancelling the selection (returning runes to their source)
+   * 
+   * Only works when in the 'place' phase with selected runes.
+   */
   tryAutoPlaceSelection: () => {
-    set((state) => {
-      // Only works if we're in place phase and have selected runes
-      if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
-        return state;
-      }
+    const state = useGameplayStore.getState();
+    
+    // Only works if we're in place phase and have selected runes
+    if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+      return;
+    }
 
-      const currentPlayer = state.player;
-      const lockedLineIndexes = state.lockedPatternLines[currentPlayer.id] ?? [];
-      
-      // Find the best pattern line for auto-placement
-      const bestLineIndex = findBestPatternLineForAutoPlacement(
-        state.selectedRunes,
-        currentPlayer.patternLines,
-        currentPlayer.wall,
-        lockedLineIndexes
-      );
+    const currentPlayer = state.player;
+    const lockedLineIndexes = state.lockedPatternLines[currentPlayer.id] ?? [];
+    
+    // Find the best pattern line for auto-placement
+    const bestLineIndex = findBestPatternLineForAutoPlacement(
+      state.selectedRunes,
+      currentPlayer.patternLines,
+      currentPlayer.wall,
+      lockedLineIndexes
+    );
 
-      if (bestLineIndex !== null) {
-        // Found a suitable line - trigger placement using the existing placeRunes logic
-        // We need to call the placeRunes action directly instead of via set
-        // So we get the current store and call placeRunes on it
-        const store = useGameplayStore.getState();
-        store.placeRunes(bestLineIndex);
-        return state; // placeRunes will update state
-      } else {
-        // No suitable line found - fallback to cancel selection
-        const store = useGameplayStore.getState();
-        store.cancelSelection();
-        return state; // cancelSelection will update state
-      }
-    });
+    if (bestLineIndex !== null) {
+      // Found a suitable line - trigger placement using the existing placeRunes logic
+      state.placeRunes(bestLineIndex);
+    } else {
+      // No suitable line found - fallback to cancel selection
+      state.cancelSelection();
+    }
   },
   
   acknowledgeOverloadSound: () => {
