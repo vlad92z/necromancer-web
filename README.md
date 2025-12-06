@@ -82,7 +82,6 @@ src/
 ├── styles/                 # Design tokens and global styles
 ├── types/                  # Domain types (game, rune, controllers)
 ├── utils/                  # Pure logic (scoring, init, AI helpers, rune effects)
-├── stories/                # Storybook-like design previews
 ├── App.tsx
 └── main.tsx
 ```

@@ -2,7 +2,7 @@
  * DeckDraftingModal - post-victory drafting overlay for Solo mode
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, animate, useMotionValue } from 'framer-motion';
 import { Runeforge } from './Center/Runeforge';
 import type { DeckDraftState, Runeforge as RuneforgeType } from '../../../types/game';
@@ -97,28 +97,6 @@ export function DeckDraftingModal({
       deckCountAnimation.current?.stop();
     };
   }, []);
-
-  const runeforgeVariants = useMemo(
-    () => ({
-      initial: { opacity: 0, scale: 0.95, y: 12 },
-      visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 26 } },
-      dimmed: {
-        opacity: 0,
-        scale: 0.97,
-        y: 6,
-        filter: 'blur(2px)',
-        transition: { duration: 0.26, ease: 'easeInOut' },
-      },
-      exit: (isSelected: boolean) => ({
-        opacity: 0,
-        scale: isSelected ? 0.9 : 0.85,
-        y: isSelected ? -10 : 14,
-        filter: 'blur(3px)',
-        transition: { duration: 0.26, ease: 'easeInOut' },
-      }),
-    }),
-    []
-  );
 
   const visibleRuneforges = displayedRuneforges.filter((runeforge) => {
     if (animationPhase === 'selectedExit' && runeforge.id === selectedRuneforgeId) {
@@ -217,7 +195,6 @@ export function DeckDraftingModal({
               <motion.div
                 layout="position"
                 key={runeforge.id}
-                variants={runeforgeVariants}
                 initial="initial"
                 animate={animationState}
                 exit="exit"
