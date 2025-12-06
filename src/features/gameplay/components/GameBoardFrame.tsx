@@ -74,7 +74,6 @@ export interface GameBoardSharedProps {
   // Locks and visibility
   playerLockedLines: number[];
   playerHiddenPatternSlots?: Set<string>;
-  playerHiddenFloorSlots?: Set<number>;
   animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
 
@@ -148,7 +147,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     activeAnimatingRunes,
     animatingRuneIds,
     hiddenPatternSlots,
-    hiddenFloorSlots,
     hiddenCenterRuneIds,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,
@@ -198,7 +196,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   };
 
   const playerHiddenPatternSlots = hiddenPatternSlots[player.id];
-  const playerHiddenFloorSlots = hiddenFloorSlots[player.id];
   const playerLockedLines = lockedPatternLines[player.id];
 
   const handleToggleMusic = () => {
@@ -300,7 +297,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     // Locks and visibility
     playerLockedLines,
     playerHiddenPatternSlots,
-    playerHiddenFloorSlots,
     animatingRuneIds,
     hiddenCenterRuneIds,
 

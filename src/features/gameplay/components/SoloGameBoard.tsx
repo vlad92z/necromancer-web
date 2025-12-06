@@ -20,7 +20,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     selectedRuneType,
     hasSelectedRunes,
     playerHiddenPatternSlots,
-    playerHiddenFloorSlots,
     playerLockedLines,
     runeforges,
     centerPool,
@@ -88,7 +87,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             onCancelSelection={onCancelSelection}
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
-            hiddenFloorSlotIndexes={playerHiddenFloorSlots}
             game={game}
             soloRuneScore={soloRuneScore || undefined}
             deckCount={soloStats?.deckCount}

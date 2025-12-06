@@ -16,7 +16,6 @@ interface PlayerViewProps {
   onCancelSelection: () => void;
   lockedPatternLines?: number[];
   hiddenSlotKeys?: Set<string>;
-  hiddenFloorSlotIndexes?: Set<number>;
   game: number;
   soloRuneScore?: {
     currentScore: number;
@@ -38,7 +37,6 @@ export function PlayerView({
   onCancelSelection,
   lockedPatternLines,
   hiddenSlotKeys,
-  hiddenFloorSlotIndexes,
   game,
   soloRuneScore,
   deckCount,
@@ -58,7 +56,6 @@ export function PlayerView({
         onCancelSelection={onCancelSelection}
         lockedLineIndexes={lockedPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
-        hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
         game={game}
         soloRuneScore={soloRuneScore}
         deckCount={deckCount}
