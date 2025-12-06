@@ -12,6 +12,7 @@ import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { GameState, RuneTypeCount, SoloRunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getBestSoloRound, updateBestSoloRound } from '../utils/soloPersistence';
 import { addArcaneDust, getArcaneDust, getArcaneDustReward } from '../utils/arcaneDust';
+import { useArtefactStore } from '../state/stores/artefactStore';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -37,15 +38,18 @@ export function Solo() {
     return Math.max(storedBest, savedRound);
   });
   const [arcaneDust, setArcaneDust] = useState<number>(() => getArcaneDust());
+  const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
+  const updateArcaneDust = useArtefactStore((state) => state.updateArcaneDust);
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
     prepareSoloMode(runeTypeCount);
+    loadArtefactState();
 
     return () => {
       setNavigationCallback(null);
     };
-  }, [navigate, prepareSoloMode, runeTypeCount]);
+  }, [navigate, prepareSoloMode, runeTypeCount, loadArtefactState]);
 
   useEffect(() => {
     let lastCompletionSignature: string | null = null;
@@ -73,7 +77,9 @@ export function Solo() {
         if (completionSignature !== lastCompletionSignature) {
           const reward = getArcaneDustReward(state.round);
           if (reward > 0) {
-            setArcaneDust(addArcaneDust(reward));
+            const newDust = addArcaneDust(reward);
+            setArcaneDust(newDust);
+            updateArcaneDust(newDust);
           }
           lastCompletionSignature = completionSignature;
         }
@@ -85,7 +91,7 @@ export function Solo() {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [updateArcaneDust]);
 
   const handleStartSolo = (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => {
     startSoloRun(runeTypeCount, config);

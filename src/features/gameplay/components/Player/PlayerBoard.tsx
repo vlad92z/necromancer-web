@@ -11,6 +11,8 @@ import { SoloHealthTracker } from '../SoloHealthTracker';
 import { StatBadge } from '../../../../components/StatBadge';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import fatigueSvg from '../../../../assets/stats/fatigue.svg';
+import { ArtefactsRow } from '../../../../components/ArtefactsRow';
+import { useArtefactStore } from '../../../../state/stores/artefactStore';
 
 interface PlayerBoardProps {
   player: Player;
@@ -55,6 +57,7 @@ export function PlayerBoard({
   };
   const deckValue = deckCount ?? player.deck.length ?? 0;
   const fatigueValue = strain ?? 0;
+  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
 
   return (
     <div
@@ -95,6 +98,11 @@ export function PlayerBoard({
                 />
                 <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
               </div>
+              {selectedArtefactIds.length > 0 && (
+                <div className="flex justify-center">
+                  <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
+                </div>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 items-start gap-[min(1.2vmin,14px)]">
