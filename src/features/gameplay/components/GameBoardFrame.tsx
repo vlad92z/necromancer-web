@@ -55,6 +55,7 @@ export interface SoloVariantData {
 export interface GameBoardSharedProps {
   // Core context
   player: GameState['player'];
+  currentPlayerIndex: number;
   currentPlayerId: string;
   round: number;
   isDraftPhase: boolean;
@@ -281,6 +282,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const sharedProps: GameBoardSharedProps = {
     // Core context
     player,
+    currentPlayerIndex: 0,
     currentPlayerId: player.id,
     round: currentRound,
     isDraftPhase,
