@@ -3,12 +3,14 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import type { Rune, RuneEffectRarity, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { getRuneRarity } from '../../../utils/runeEffects';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
+import { useArtefactStore } from '../../../state/stores/artefactStore';
 
 interface DeckOverlayProps {
   deck: Rune[];
@@ -21,6 +23,9 @@ interface DeckOverlayProps {
 
 export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDrafting = false, onDisenchantRune }: DeckOverlayProps) {
   const playArcaneDustSound = useArcaneDustSound();
+  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const [dustGain, setDustGain] = useState<{ amount: number; key: number } | null>(null);
+  const dustGainKeyRef = useRef(0);
   const completeDeck = fullDeck && fullDeck.length > 0 ? fullDeck : deck;
   const deckForTotals = isDeckDrafting ? completeDeck : deck;
   // Group runes by type for ordering and totals
@@ -67,6 +72,20 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
 
   const shouldDimDrafted = !isDeckDrafting;
 
+  useEffect(() => {
+    if (!dustGain) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setDustGain(null);
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [dustGain]);
+
   const handleDisenchant = (rune: Rune) => {
     if (!isDeckDrafting || !onDisenchantRune) {
       return;
@@ -77,6 +96,10 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
     const awardedDust = onDisenchantRune(rune.id);
 
     if (typeof awardedDust === 'number' ? awardedDust > 0 : dustReward > 0) {
+      const gainAmount = typeof awardedDust === 'number' ? awardedDust : dustReward;
+      const nextKey = dustGainKeyRef.current + 1;
+      dustGainKeyRef.current = nextKey;
+      setDustGain({ amount: gainAmount, key: nextKey });
       playArcaneDustSound();
     }
   };
@@ -98,12 +121,12 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
           className="flex aspect-[3/2] w-[min(1100px,92vw)] max-h-[88vh] flex-col overflow-hidden rounded-[28px] border border-[#9575ff]/35 bg-[radial-gradient(circle_at_20%_20%,rgba(92,40,160,0.22),transparent_40%),linear-gradient(145deg,rgba(20,12,38,0.96),rgba(8,4,18,0.94))] p-7 text-[#e8e5ff] shadow-[0_40px_140px_rgba(0,0,0,0.7)]"
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div className="inline-flex justify-between w-full">
+              <div>
+                
               <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">Deck Overview</div>
               <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{playerName}&apos;s Deck ({totalRuneCount})</h2>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts} className="mt-0" />
+              </div>
               <button
                 onClick={onClose}
                 type="button"
@@ -111,6 +134,30 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
               >
                 Close
               </button>
+            </div>
+            <div className="flex flex-wrap justify-between w-full items-center gap-3" >
+              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts} className="mt-0" />
+              <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+                <img src={arcaneDustIcon} alt="Arcane Dust" className="h-7 w-7" />
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg text-amber-200">{arcaneDust.toLocaleString()}</span>
+                  <AnimatePresence>
+                    {dustGain && dustGain.amount > 0 && (
+                      <motion.span
+                        key={dustGain.key}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.35, ease: 'easeOut' }}
+                        className="text-emerald-200 text-sm font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]"
+                      >
+                        +{dustGain.amount}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+              
+                </div>
             </div>
           </div>
 
