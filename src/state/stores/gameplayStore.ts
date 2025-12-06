@@ -55,6 +55,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     runeforges: [],
     centerPool: [],
     selectedRunes: [],
+    selectionTimestamp: null,
     draftSource: null, 
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
@@ -144,6 +145,7 @@ function handlePlayerDefeat(
     ...state,
     player: updatedPlayer,
     selectedRunes: [],
+    selectionTimestamp: null,
     draftSource: null,
     centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
@@ -172,6 +174,7 @@ function prepareRoundReset(state: GameState): GameState {
         shouldTriggerEndRound: false,
         lockedPatternLines: { [clearedPlayer.id]: [] },
         selectedRunes: [],
+        selectionTimestamp: null,
         draftSource: null,
         pendingPlacement: null,
         animatingRunes: [],
@@ -193,6 +196,7 @@ function prepareRoundReset(state: GameState): GameState {
       shouldTriggerEndRound: false,
       lockedPatternLines: { [clearedPlayer.id]: [] },
       selectedRunes: [],
+      selectionTimestamp: null,
       draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
@@ -225,6 +229,7 @@ function prepareRoundReset(state: GameState): GameState {
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
     selectedRunes: [],
+    selectionTimestamp: null,
     draftSource: null,
     pendingPlacement: null,
     animatingRunes: [],
@@ -252,6 +257,193 @@ export interface GameplayStore extends GameState {
   resetGame: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
   disenchantRuneFromDeck: (runeId: string) => number;
+}
+
+function cancelSelectionState(state: GameplayStore): GameplayStore {
+  if (state.turnPhase === 'deck-draft' || state.selectedRunes.length === 0 || !state.draftSource) {
+    return state;
+  }
+
+  if (state.draftSource.type === 'center') {
+    return {
+      ...state,
+      centerPool: [...state.draftSource.originalRunes],
+      selectedRunes: [],
+      selectionTimestamp: null,
+      draftSource: null,
+      turnPhase: 'draft' as const,
+    };
+  }
+
+  const runeforgeId = state.draftSource.runeforgeId;
+  const originalRunes = state.draftSource.originalRunes;
+
+  const updatedRuneforges = state.runeforges.map((f) =>
+    f.id === runeforgeId
+      ? { ...f, runes: originalRunes }
+      : f
+  );
+
+  return {
+    ...state,
+    runeforges: updatedRuneforges,
+    selectedRunes: [],
+    selectionTimestamp: null,
+    draftSource: null,
+    turnPhase: 'draft' as const,
+  };
+}
+
+function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: number): GameplayStore {
+  if (state.turnPhase !== 'place') {
+    return state;
+  }
+
+  const { selectedRunes } = state;
+  if (selectedRunes.length === 0) return state;
+
+  const currentPlayer = state.player;
+  const patternLine = currentPlayer.patternLines[patternLineIndex];
+  if (!patternLine) {
+    return state;
+  }
+
+  const lockedLinesForPlayer = state.lockedPatternLines[currentPlayer.id] ?? [];
+  if (lockedLinesForPlayer.includes(patternLineIndex)) {
+    console.log(`Pattern line ${patternLineIndex + 1} is unavailable - cannot place runes`);
+    return state;
+  }
+
+  const runeType = selectedRunes[0].runeType;
+
+  if (patternLine.runeType !== null && patternLine.runeType !== runeType) {
+    return state;
+  }
+
+  if (patternLine.count >= patternLine.tier) {
+    return state;
+  }
+
+  const row = patternLineIndex;
+  const wallSize = currentPlayer.wall.length;
+  const col = getWallColumnForRune(row, runeType, wallSize);
+  if (currentPlayer.wall[row][col].runeType !== null) {
+    return state;
+  }
+
+  const availableSpace = patternLine.tier - patternLine.count;
+  const runesToPlace = Math.min(selectedRunes.length, availableSpace);
+  const overflowRunes = selectedRunes.slice(runesToPlace);
+
+  const primaryRune = selectedRunes[0];
+  const nextFirstRuneId = patternLine.firstRuneId ?? primaryRune.id;
+  const nextFirstRuneEffects = patternLine.firstRuneEffects ?? copyRuneEffects(primaryRune.effects);
+
+  const updatedPatternLines = [...currentPlayer.patternLines];
+  updatedPatternLines[patternLineIndex] = {
+    ...patternLine,
+    runeType,
+    count: patternLine.count + runesToPlace,
+    firstRuneId: nextFirstRuneId,
+    firstRuneEffects: nextFirstRuneEffects,
+  };
+
+  const updatedFloorLine = {
+    ...currentPlayer.floorLine,
+    runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
+  };
+
+  const overloadRunesPlaced = overflowRunes.length;
+  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
+
+  const completedLines = updatedPatternLines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => line.count === line.tier && line.runeType !== null);
+
+  const updatedPlayer = {
+    ...currentPlayer,
+    patternLines: updatedPatternLines,
+    floorLine: updatedFloorLine,
+    health: nextHealth,
+  };
+
+  const nextCenterPool = getNextCenterPool(state);
+  const defeatedByOverload = nextHealth === 0;
+  if (defeatedByOverload) {
+    const defeatedState = handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+    return { ...state, ...defeatedState, selectionTimestamp: null };
+  }
+
+  const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
+  if (nextRunePowerTotal >= state.soloTargetScore) {
+    const deckDraftReadyState = enterDeckDraftMode({
+      ...selectPersistableGameState(state),
+      player: updatedPlayer,
+      centerPool: nextCenterPool,
+      selectedRunes: [],
+      selectionTimestamp: null,
+      draftSource: null,
+      pendingPlacement: null,
+      animatingRunes: [],
+      shouldTriggerEndRound: false,
+      overloadSoundPending: overloadDamage > 0,
+      runePowerTotal: nextRunePowerTotal,
+    });
+
+    return { ...state, ...deckDraftReadyState, selectionTimestamp: null };
+  }
+
+  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+
+  const nextTurnPhase =
+    completedLines.length > 0
+      ? ('cast' as const)
+      : shouldEndRound
+        ? ('end-of-round' as const)
+        : ('draft' as const);
+
+  return {
+    ...state,
+    player: updatedPlayer,
+    selectedRunes: [],
+    selectionTimestamp: null,
+    draftSource: null,
+    centerPool: nextCenterPool,
+    turnPhase: nextTurnPhase,
+    shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
+    overloadSoundPending: overloadDamage > 0,
+    runePowerTotal: state.runePowerTotal + scoreBonus,
+  };
+}
+
+function attemptAutoPlacement(state: GameplayStore): GameplayStore {
+  if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+    return state;
+  }
+
+  const now = Date.now();
+  const timeSinceSelection = state.selectionTimestamp ? now - state.selectionTimestamp : Infinity;
+  const isWithinDoubleClickWindow = timeSinceSelection <= 1000;
+
+  if (!isWithinDoubleClickWindow) {
+    return cancelSelectionState(state);
+  }
+
+  const currentPlayer = state.player;
+  const lockedLineIndexes = state.lockedPatternLines[currentPlayer.id] ?? [];
+
+  const bestLineIndex = findBestPatternLineForAutoPlacement(
+    state.selectedRunes,
+    currentPlayer.patternLines,
+    currentPlayer.wall,
+    lockedLineIndexes
+  );
+
+  if (bestLineIndex !== null) {
+    return placeSelectionOnPatternLine(state, bestLineIndex);
+  }
+
+  return cancelSelectionState(state);
 }
 
 function selectPersistableGameState(state: GameplayStore): GameState {
@@ -304,43 +496,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
-      console.log(`gameplayStore: draftRune called with runeforgeId=${state.turnPhase}`);
-      if (state.turnPhase == 'place') {
-
-    // // Check if selection is within 1 second (1000ms) for double-click behavior
-    // const now = Date.now();
-    // const timeSinceSelection = state.selectionTimestamp ? now - state.selectionTimestamp : Infinity;
-    // const isWithinDoubleClickWindow = timeSinceSelection <= 1000;
-
-    // if (!isWithinDoubleClickWindow) {
-    //   // More than 1 second has passed, just cancel the selection
-    //   state.cancelSelection();
-    //   return;
-    // }
-
-        const currentPlayer = state.player;
-        const lockedLineIndexes = state.lockedPatternLines[currentPlayer.id] ?? [];
-
-        // Find the best pattern line for auto-placement
-        const bestLineIndex = findBestPatternLineForAutoPlacement(
-          state.selectedRunes,
-          currentPlayer.patternLines,
-          currentPlayer.wall,
-          lockedLineIndexes
-        );
-
-        if (bestLineIndex !== null) {
-          // Found a suitable line - trigger placement using the existing placeRunes logic
-          state.placeRunes(bestLineIndex);
-        } else {
-          // No suitable line found - fallback to cancel selection
-          state.cancelSelection();
-        }
+      if (state.turnPhase === 'place') {
+        return attemptAutoPlacement(state);
       }
       if (state.turnPhase !== 'draft') {
         return state;
       }
-      console.log('continue')
+      console.log('continue');
       // Find the runeforge
       const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
@@ -365,6 +527,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         runeforges: updatedRuneforges,
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
+        selectionTimestamp: Date.now(),
         draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
         turnPhase: 'place' as const,
       };
@@ -512,6 +675,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         centerPool: remainingRunes,
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
+        selectionTimestamp: Date.now(),
         draftSource: { type: 'center', originalRunes: originalCenterRunes },
         turnPhase: 'place' as const,
       };
@@ -519,133 +683,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   placeRunes: (patternLineIndex: number) => {
-    set((state) => {
-      if (state.turnPhase !== 'place') {
-        return state;
-      }
-      const { selectedRunes } = state;
-      
-      // No runes selected, do nothing
-      if (selectedRunes.length === 0) return state;
-      
-      const currentPlayer = state.player;
-      const patternLine = currentPlayer.patternLines[patternLineIndex];
-      if (!patternLine) {
-        return state;
-      }
-      const lockedLinesForPlayer = state.lockedPatternLines[currentPlayer.id] ?? [];
-      if (lockedLinesForPlayer.includes(patternLineIndex)) {
-        console.log(`Pattern line ${patternLineIndex + 1} is unavailable - cannot place runes`);
-        return state;
-      }
-      const runeType = selectedRunes[0].runeType;
-      
-      // Validation: Pattern line must be empty or have same rune type
-      if (patternLine.runeType !== null && patternLine.runeType !== runeType) {
-        // Invalid placement - different rune type
-        return state;
-      }
-      
-      // Validation: Pattern line must not be full
-      if (patternLine.count >= patternLine.tier) {
-        // Invalid placement - line is full
-        return state;
-      }
-      
-      // Validation: Check if this rune type is already on the wall in this row
-      const row = patternLineIndex;
-      const wallSize = currentPlayer.wall.length;
-      const col = getWallColumnForRune(row, runeType, wallSize);
-      if (currentPlayer.wall[row][col].runeType !== null) {
-        // Invalid placement - rune type already on wall in this row
-        return state;
-      }
-      
-      // Calculate how many runes fit in the pattern line
-      const availableSpace = patternLine.tier - patternLine.count;
-      const runesToPlace = Math.min(selectedRunes.length, availableSpace);
-      const overflowRunes = selectedRunes.slice(runesToPlace);
-
-      const primaryRune = selectedRunes[0];
-      const nextFirstRuneId = patternLine.firstRuneId ?? primaryRune.id;
-      const nextFirstRuneEffects = patternLine.firstRuneEffects ?? copyRuneEffects(primaryRune.effects);
-      
-      // Update pattern line
-      const updatedPatternLines = [...currentPlayer.patternLines];
-      updatedPatternLines[patternLineIndex] = {
-        ...patternLine,
-        runeType,
-        count: patternLine.count + runesToPlace,
-        firstRuneId: nextFirstRuneId,
-        firstRuneEffects: nextFirstRuneEffects,
-      };
-      
-      // Add overflow runes to floor line
-      const updatedFloorLine = {
-        ...currentPlayer.floorLine,
-        runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
-      };
-
-      const overloadRunesPlaced = overflowRunes.length;
-      const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
-
-      const completedLines = updatedPatternLines
-        .map((line, index) => ({ line, index }))
-        .filter(({ line }) => line.count === line.tier && line.runeType !== null);
-
-      // Update player
-      const updatedPlayer = {
-        ...currentPlayer,
-        patternLines: updatedPatternLines,
-        floorLine: updatedFloorLine,
-        health: nextHealth,
-      };
-      
-      const nextCenterPool = getNextCenterPool(state);
-      const defeatedByOverload = nextHealth === 0;
-      if (defeatedByOverload) {
-        return handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
-      }
-
-      const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
-      if (nextRunePowerTotal >= state.soloTargetScore) {
-        // Rod can push the player over the target purely from overload damage
-        return enterDeckDraftMode({
-          ...state,
-          player: updatedPlayer,
-          centerPool: nextCenterPool,
-          selectedRunes: [],
-          draftSource: null,
-          pendingPlacement: null,
-          animatingRunes: [],
-          shouldTriggerEndRound: false,
-          overloadSoundPending: overloadDamage > 0,
-          runePowerTotal: nextRunePowerTotal,
-        });
-      }
-      
-      // Check if round should end (all runeforges and center empty)
-      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
-
-      const nextTurnPhase =
-        completedLines.length > 0
-          ? ('cast' as const)
-          : shouldEndRound
-            ? ('end-of-round' as const)
-            : ('draft' as const);
-      
-      return {
-        ...state,
-        player: updatedPlayer,
-        selectedRunes: [],
-        draftSource: null,
-        centerPool: nextCenterPool,
-        turnPhase: nextTurnPhase,
-        shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
-        overloadSoundPending: overloadDamage > 0,
-        runePowerTotal: state.runePowerTotal + scoreBonus,
-      };
-    });
+    set((state) => placeSelectionOnPatternLine(state, patternLineIndex));
   },
   
   placeRunesInFloor: () => {
@@ -690,6 +728,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           player: updatedPlayer,
           centerPool: nextCenterPool,
           selectedRunes: [],
+          selectionTimestamp: null,
           draftSource: null,
           pendingPlacement: null,
           animatingRunes: [],
@@ -706,6 +745,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         player: updatedPlayer,
         selectedRunes: [],
+        selectionTimestamp: null,
         draftSource: null,
         centerPool: nextCenterPool,
         turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
@@ -717,42 +757,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   cancelSelection: () => {
-    set((state) => {
-      if (state.turnPhase === 'deck-draft') {
-        return state;
-      }
-      // Only allow cancellation if there are selected runes
-      if (state.selectedRunes.length === 0 || !state.draftSource) return state;
-      
-      // Return selected runes to their original source
-      if (state.draftSource.type === 'center') {
-        return {
-          ...state,
-          centerPool: [...state.draftSource.originalRunes],
-          selectedRunes: [],
-          draftSource: null,
-          turnPhase: 'draft' as const,
-        };
-      } else {
-        // Return to runeforge (both selected runes and the ones moved to center)
-        const runeforgeId = state.draftSource.runeforgeId;
-        const originalRunes = state.draftSource.originalRunes;
-        
-        const updatedRuneforges = state.runeforges.map((f) =>
-          f.id === runeforgeId
-            ? { ...f, runes: originalRunes }
-            : f
-        );
-        
-        return {
-          ...state,
-          runeforges: updatedRuneforges,
-          selectedRunes: [],
-          draftSource: null,
-          turnPhase: 'draft' as const,
-        };
-      }
-    });
+    set((state) => cancelSelectionState(state));
   },
 
 
@@ -769,7 +774,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
    * Only works when in the 'place' phase with selected runes.
    */
   autoPlaceSelection: () => {
-    
+    set((state) => attemptAutoPlacement(state));
   },
   
   acknowledgeOverloadSound: () => {
@@ -853,6 +858,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         soloBaseTargetScore,
         soloStartingStrain,
         longestRun,
+        selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
       };
     });

@@ -55,24 +55,6 @@ export function Runeforge({
       console.log('click sent');
       onRuneClick(runeforge.id, rune.runeType, rune.id);
     }
-    // if (disabled && allowCancel && onCancelSelection) {
-    //   onCancelSelection();
-    //   return;
-    // }
-    // if (isSelectedForDisplay && onCancelSelection) {
-    //   onCancelSelection();
-    //   return;
-    // }
-    // if (onRuneforgeSelect && !disabled) {
-    //   onRuneforgeSelect(runeforge.id);
-    //   return;
-    // }
-    // if (selectionActive) {
-    //   return;
-    // }
-    // if (!disabled && onRuneClick) {
-    //   onRuneClick(runeforge.id, rune.runeType, rune.id);
-    // }
   };
   
   // Determine styling based on state

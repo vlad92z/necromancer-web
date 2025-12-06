@@ -73,11 +73,7 @@ export function CenterPool({
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedDisplay: boolean) => {
     e.stopPropagation();
-    if (isSelectedDisplay && onCancelSelection) {
-      onCancelSelection();
-      return;
-    }
-    if (!centerDisabled && onRuneClick) {
+    if (onRuneClick) {
       onRuneClick(rune.runeType, rune.id);
     }
   };
