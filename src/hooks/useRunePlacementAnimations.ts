@@ -41,7 +41,6 @@ export function useRunePlacementAnimations({
   const [animatingRunes, setAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Record<string, Set<string>>>({});
-  const [hiddenFloorSlots, setHiddenFloorSlots] = useState<Record<string, Set<number>>>({});
   const [hiddenCenterRuneIds, setHiddenCenterRuneIds] = useState<Set<string>>(new Set());
   const manualAnimationRef = useRef(false);
   const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
@@ -96,40 +95,7 @@ export function useRunePlacementAnimations({
     });
   }, []);
 
-  const hideFloorSlots = useCallback((playerId: string, slotIndexes: number[]) => {
-    if (slotIndexes.length === 0) {
-      return;
-    }
-    setHiddenFloorSlots((prev) => {
-      const playerSet = prev[playerId] ? new Set(prev[playerId]) : new Set<number>();
-      slotIndexes.forEach((index) => playerSet.add(index));
-      return {
-        ...prev,
-        [playerId]: playerSet,
-      };
-    });
-  }, []);
 
-  const revealFloorSlots = useCallback((playerId: string, slotIndexes: number[]) => {
-    if (slotIndexes.length === 0) {
-      return;
-    }
-    setHiddenFloorSlots((prev) => {
-      const playerSet = prev[playerId];
-      if (!playerSet) {
-        return prev;
-      }
-      const nextSet = new Set(playerSet);
-      slotIndexes.forEach((index) => nextSet.delete(index));
-      const nextState = { ...prev };
-      if (nextSet.size === 0) {
-        delete nextState[playerId];
-      } else {
-        nextState[playerId] = nextSet;
-      }
-      return nextState;
-    });
-  }, []);
 
   const hideCenterRunes = useCallback((runeIds: string[]) => {
     if (runeIds.length === 0) {
@@ -258,28 +224,29 @@ export function useRunePlacementAnimations({
     const floorSlotIndexes: number[] = [];
     if (floorDelta > 0) {
       const overflowRunes = snapshot.runeOrder.slice(patternRunesUsed, patternRunesUsed + floorDelta);
-      overflowRunes.forEach((rune, offset) => {
-        const start = snapshot.runePositions.get(rune.id);
-        if (!start) {
-          return;
-        }
-        const slotIndex = previousFloorCount + offset;
-        const selector = `[data-player-id="${snapshot.playerId}"][data-floor-slot-index="${slotIndex}"]`;
-        const targetElement = document.querySelector<HTMLElement>(selector);
-        if (!targetElement) {
-          return;
-        }
-        const targetRect = targetElement.getBoundingClientRect();
-        overlayRunes.push({
-          id: rune.id,
-          runeType: rune.runeType,
-          startX: start.startX,
-          startY: start.startY,
-          endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-          endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+      // Target the Strain counter instead of floor slots
+      const strainCounterSelector = `[data-player-id="${snapshot.playerId}"][data-strain-counter="true"]`;
+      const strainCounterElement = document.querySelector<HTMLElement>(strainCounterSelector);
+      if (strainCounterElement) {
+        const targetRect = strainCounterElement.getBoundingClientRect();
+        overflowRunes.forEach((rune, offset) => {
+          const start = snapshot.runePositions.get(rune.id);
+          if (!start) {
+            return;
+          }
+          overlayRunes.push({
+            id: rune.id,
+            runeType: rune.runeType,
+            startX: start.startX,
+            startY: start.startY,
+            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
+            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+            shouldDisappear: true, // Add flag for disappear animation
+          });
+          const slotIndex = previousFloorCount + offset;
+          floorSlotIndexes.push(slotIndex);
         });
-        floorSlotIndexes.push(slotIndex);
-      });
+      }
     }
 
     if (overlayRunes.length === 0) {
@@ -291,13 +258,11 @@ export function useRunePlacementAnimations({
       hidePatternSlots(snapshot.playerId, patternSlotKeys);
       meta.pattern = { playerId: snapshot.playerId, slotKeys: patternSlotKeys };
     }
-    if (floorSlotIndexes.length > 0) {
-      hideFloorSlots(snapshot.playerId, floorSlotIndexes);
-      meta.floor = { playerId: snapshot.playerId, slotIndexes: floorSlotIndexes };
-    }
+    // Note: floorSlotIndexes are no longer hidden since FloorLine UI is removed
+    // and runes animate directly to the Strain counter with a disappear effect
     autoAnimationMetaRef.current = Object.keys(meta).length > 0 ? meta : null;
     setAnimatingRunes(overlayRunes);
-  }, [player, hidePatternSlots, hideFloorSlots]);
+  }, [player, hidePatternSlots]);
 
   const animateRuneforgeToCenter = useCallback(
     (snapshot: RuneforgeAnimationSnapshot) => {
@@ -347,12 +312,10 @@ export function useRunePlacementAnimations({
       if (autoMeta.pattern) {
         revealPatternSlots(autoMeta.pattern.playerId, autoMeta.pattern.slotKeys);
       }
-      if (autoMeta.floor) {
-        revealFloorSlots(autoMeta.floor.playerId, autoMeta.floor.slotIndexes);
-      }
+      // Note: floor slots no longer need to be revealed since FloorLine UI is removed
       autoAnimationMetaRef.current = null;
     }
-  }, [revealFloorSlots, revealPatternSlots]);
+  }, [revealPatternSlots]);
 
   const handleRuneforgeAnimationComplete = useCallback(() => {
     const runeIds = runeforgeAnimationMetaRef.current?.runeIds ?? [];
@@ -444,7 +407,6 @@ export function useRunePlacementAnimations({
     activeAnimatingRunes,
     animatingRuneIds,
     hiddenPatternSlots,
-    hiddenFloorSlots,
     hiddenCenterRuneIds,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,

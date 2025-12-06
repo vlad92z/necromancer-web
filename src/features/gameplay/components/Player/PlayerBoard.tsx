@@ -6,12 +6,11 @@ import type { Player, RuneType } from '../../../../types/game';
 import type { ArtefactId } from '../../../../types/artefacts';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
-import { FloorLine } from './FloorLine';
 import { SoloRuneScoreOverlay } from '../SoloRuneScoreOverlay';
 import { SoloHealthTracker } from '../SoloHealthTracker';
 import { StatBadge } from '../../../../components/StatBadge';
 import deckSvg from '../../../../assets/stats/deck.svg';
-import fatigueSvg from '../../../../assets/stats/fatigue.svg';
+import overloadSvg from '../../../../assets/stats/overload.svg';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 
 interface PlayerBoardProps {
@@ -24,7 +23,6 @@ interface PlayerBoardProps {
   onCancelSelection?: () => void;
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
-  hiddenFloorSlotIndexes?: Set<number>;
   game: number;
   soloRuneScore?: {
     currentScore: number;
@@ -45,7 +43,6 @@ export function PlayerBoard({
   onCancelSelection,
   lockedLineIndexes,
   hiddenSlotKeys,
-  hiddenFloorSlotIndexes,
   soloRuneScore,
   deckCount,
   strain,
@@ -89,14 +86,18 @@ export function PlayerBoard({
                 />
               </div>
               <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', gap: '10px', alignItems: 'stretch' }}>
-                <StatBadge
-                  label="Fatigue"
-                  value={fatigueValue}
-                  color="#fa6060ff"
-                  borderColor="rgba(96, 165, 250, 0.35)"
-                  tooltip={`Overloading runes immediately deals ${fatigueValue} damage`}
-                  image={fatigueSvg}
-                />
+                <div data-player-id={player.id} data-strain-counter="true">
+                  <StatBadge
+                    label="Fatigue"
+                    value={fatigueValue}
+                    color="#fa6060ff"
+                    borderColor="rgba(96, 165, 250, 0.35)"
+                    tooltip={`Overloading runes immediately deals ${fatigueValue} damage`}
+                    image={overloadSvg}
+                    onClick={onPlaceRunesInFloor}
+                    canOverload={canPlace}
+                  />
+                </div>
                 <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
               </div>
  
@@ -123,17 +124,7 @@ export function PlayerBoard({
             </div>
           </div>
 
-          {/* Floor Line - spans beneath pattern lines and wall */}
-          <div onClick={(e) => e.stopPropagation()}>
-            <FloorLine
-              floorLine={player.floorLine}
-              onPlaceRunesInFloor={onPlaceRunesInFloor}
-              canPlace={canPlace}
-              mitigatedSlots={0}
-              playerId={player.id}
-              hiddenSlotIndexes={hiddenFloorSlotIndexes}
-            />
-          </div>
+
           {activeArtefactIds.length > 0 && (
             <div className="flex justify-center mt-2">
               <ArtefactsRow selectedArtefactIds={activeArtefactIds} />
