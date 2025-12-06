@@ -103,6 +103,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
     shouldTriggerEndRound,
     draftSource,
     strain,
+    soloDeckTemplate,
   } = gameState;
   const currentRound = useGameplayStore((state) => state.round);
   const soloOutcome = gameState.soloOutcome;
@@ -141,11 +142,7 @@ export function GameBoardFrame({ gameState, renderContent, variant }: GameBoardF
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
-  const fullDeck = useMemo(
-    () =>
-      gameState.soloDeckTemplate,
-    [gameState.runeTypeCount, gameState.soloDeckTemplate, player],
-  );
+  const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]);
   const {
     animatingRunes: placementAnimatingRunes,
     runeforgeAnimatingRunes: centerAnimatingRunes,
