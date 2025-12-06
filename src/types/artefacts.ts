@@ -28,31 +28,31 @@ export const MAX_SELECTED_ARTEFACTS = 5;
 export const ARTEFACTS: Record<ArtefactId, Artefact> = {
   tome: {
     id: 'tome',
-    name: 'Tome',
+    name: 'Primer of Solitude',
     cost: 10000,
     image: tomePng,
   },
   ring: {
     id: 'ring',
-    name: 'Ring',
+    name: 'Signet of Fortune',
     cost: 20000,
     image: ringPng,
   },
   robe: {
     id: 'robe',
-    name: 'Robe',
+    name: 'Weaver\'s Mantle',
     cost: 1000,
     image: robePng,
   },
   potion: {
     id: 'potion',
-    name: 'Potion',
+    name: 'Berserker Potion',
     cost: 50000,
     image: potionPng,
   },
   rod: {
     id: 'rod',
-    name: 'Rod',
+    name: 'Rod of Retribution',
     cost: 500,
     image: rodPng,
   },
