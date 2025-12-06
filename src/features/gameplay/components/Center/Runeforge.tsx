@@ -16,7 +16,6 @@ interface SelectedDisplayOverride {
 interface RuneforgeProps {
   runeforge: RuneforgeType;
   onRuneClick?: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onRuneforgeSelect?: (runeforgeId: string) => void;
   disabled?: boolean;
   displayOverride?: SelectedDisplayOverride;
   selectionSourceActive?: boolean;
@@ -27,7 +26,6 @@ interface RuneforgeProps {
 export function Runeforge({ 
   runeforge, 
   onRuneClick,
-  onRuneforgeSelect,
   disabled = false,
   displayOverride,
   selectionSourceActive = false,
@@ -48,11 +46,9 @@ export function Runeforge({
     : 240;
   const runeforgeWidth = Math.min(420, Math.max(280, baseRuneforgeWidth));
   
-  const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedForDisplay: boolean) => {
+  const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
     e.stopPropagation();
-    console.log('rune clicked inside runeforge');
     if (onRuneClick) {
-      console.log('click sent');
       onRuneClick(runeforge.id, rune.runeType, rune.id);
     }
   };
@@ -70,7 +66,7 @@ export function Runeforge({
   let glowDuration = 1.5;
   
   // Normal selectable state (green highlight when player can select)
-  const isSelectable = !disabled && !selectionActive && runeforge.runes.length > 0 && (onRuneClick || onRuneforgeSelect);
+  const isSelectable = !disabled && !selectionActive && runeforge.runes.length > 0 && onRuneClick;
   if (isSelectable) {
     borderColor = '#c084fc';
     boxShadow = selectableGlowRest;
@@ -91,10 +87,6 @@ export function Runeforge({
     <motion.button
       disabled={buttonDisabled}
       onClick={() => {
-        if (!buttonDisabled && onRuneforgeSelect) {
-          onRuneforgeSelect(runeforge.id);
-          return;
-        }
         if (!buttonDisabled && allowCancel && onCancelSelection && disabled) {
           onCancelSelection();
         }
@@ -175,7 +167,7 @@ export function Runeforge({
                     borderRadius: '50%',
                     opacity: isAnimatingRune ? 0 : 1
                   }}
-                  onClick={(e) => handleRuneClick(e, rune, isSelectedForDisplay)}
+                  onClick={(e) => handleRuneClick(e, rune)}
                   onMouseEnter={() => {
                     if (!canHighlightRunes) {
                       return;
