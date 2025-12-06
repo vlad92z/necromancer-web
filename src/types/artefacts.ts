@@ -41,7 +41,7 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
   robe: {
     id: 'robe',
     name: 'Robe',
-    cost: 10000,
+    cost: 1000,
     image: robePng,
   },
   potion: {
@@ -53,7 +53,7 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
   rod: {
     id: 'rod',
     name: 'Rod',
-    cost: 5000,
+    cost: 500,
     image: rodPng,
   },
 };
