@@ -40,8 +40,6 @@ export function DeckDraftingModal({
   const draftComplete = draftState.picksRemaining === 0;
   const selectionLocked = isAnimating || draftComplete;
 
-  const dummySelect = () => {};
-
   useEffect(() => {
     const unsubscribe = deckCountValue.on('change', (latest) => {
       setDisplayedDeckCount(Math.round(latest));
