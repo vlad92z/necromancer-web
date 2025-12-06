@@ -85,12 +85,52 @@ function playCastSound(): void {
 
 function clearFloorLines(player: Player): Player {
   return {
-      ...player,
-      floorLine: {
-        ...player.floorLine,
-        runes: [],
-      },
-    };
+    ...player,
+    floorLine: {
+      ...player.floorLine,
+      runes: [],
+    },
+  };
+}
+
+function isRoundExhausted(runeforges: GameState['runeforges'], centerPool: GameState['centerPool']): boolean {
+  const allRuneforgesEmpty = runeforges.every((runeforge) => runeforge.runes.length === 0);
+  return allRuneforgesEmpty && centerPool.length === 0;
+}
+
+function getNextCenterPool(state: GameState): Rune[] {
+  const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
+  return movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
+}
+
+function getOverloadResult(
+  currentHealth: number,
+  overloadRunesPlaced: number,
+  strain: number
+): { overloadDamage: number; nextHealth: number } {
+  const overloadDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
+  const nextHealth = overloadDamage > 0 ? Math.max(0, currentHealth - overloadDamage) : currentHealth;
+  return { overloadDamage, nextHealth };
+}
+
+function handlePlayerDefeat(
+  state: GameState,
+  updatedPlayer: Player,
+  nextCenterPool: Rune[],
+  overloadDamage: number
+): GameState {
+  return {
+    ...state,
+    player: updatedPlayer,
+    selectedRunes: [],
+    draftSource: null,
+    centerPool: nextCenterPool,
+    turnPhase: 'game-over' as const,
+    shouldTriggerEndRound: false,
+    soloOutcome: 'defeat' as SoloOutcome,
+    soloWinStreak: 0,
+    overloadSoundPending: overloadDamage > 0,
+  };
 }
 
 function prepareSoloRoundReset(state: GameState): GameState {
@@ -252,9 +292,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
       if (completedLines.length === 0) {
-        const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-        const centerEmpty = state.centerPool.length === 0;
-        const shouldEndRound = allRuneforgesEmpty && centerEmpty;
+        const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
 
         return {
           ...state,
@@ -311,8 +349,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           soloOutcome = 'victory';
         }
 
-      let updatedPlayer = state.player;
-      updatedPlayer = {
+      const updatedPlayer = {
         ...currentPlayer,
         patternLines: updatedPatternLines,
         wall: updatedWall,
@@ -336,9 +373,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         });
       }
 
-      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
+      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
 
       return {
         ...state,
@@ -456,49 +491,28 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadRunesPlaced = overflowRunes.length;
-      const overloadDamage = overloadRunesPlaced > 0
-        ? overloadRunesPlaced * state.strain
-        : 0;
-      const nextHealth = overloadDamage > 0
-        ? Math.max(0, currentPlayer.health - overloadDamage)
-        : currentPlayer.health;
+      const { overloadDamage, nextHealth } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain);
 
       const completedLines = updatedPatternLines
         .map((line, index) => ({ line, index }))
         .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
       // Update player
-      let updatedPlayer = state.player;
-      
-      updatedPlayer = {
+      const updatedPlayer = {
         ...currentPlayer,
         patternLines: updatedPatternLines,
         floorLine: updatedFloorLine,
         health: nextHealth,
       };
       
-      const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
-      const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
+      const nextCenterPool = getNextCenterPool(state);
       const defeatedByOverload = nextHealth === 0;
       if (defeatedByOverload) {
-        return {
-          ...state,
-          player: updatedPlayer,
-          selectedRunes: [],
-          draftSource: null,
-          centerPool: nextCenterPool,
-          turnPhase: 'game-over' as const,
-          shouldTriggerEndRound: false,
-          soloOutcome: ('defeat' as SoloOutcome),
-          soloWinStreak: 0,
-          overloadSoundPending: overloadDamage > 0,
-        };
+        return handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
       }
       
       // Check if round should end (all runeforges and center empty)
-      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
+      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
 
       const nextTurnPhase =
         completedLines.length > 0
@@ -539,44 +553,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       const overloadRunesPlaced = selectedRunes.length;
-      const overloadDamage = overloadRunesPlaced > 0
-        ? overloadRunesPlaced * state.strain
-        : 0;
-      const nextHealth = overloadDamage > 0
-        ? Math.max(0, currentPlayer.health - overloadDamage)
-        : currentPlayer.health;
+      const { overloadDamage, nextHealth } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain);
       
       // Update player
-      let updatedPlayer = state.player;
-      
-      updatedPlayer = {
+      const updatedPlayer = {
         ...currentPlayer,
         floorLine: updatedFloorLine,
         health: nextHealth,
       };
       
-      const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
-      const nextCenterPool = movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
+      const nextCenterPool = getNextCenterPool(state);
       const defeatedByOverload = nextHealth === 0;
       if (defeatedByOverload) {
-        return {
-          ...state,
-          player: updatedPlayer,
-          selectedRunes: [],
-          draftSource: null,
-          centerPool: nextCenterPool,
-          turnPhase: 'game-over' as const,
-          shouldTriggerEndRound: false,
-          soloOutcome: ('defeat' as SoloOutcome),
-          soloWinStreak: 0,
-          overloadSoundPending: overloadDamage > 0,
-        };
+        return handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
       }
       
       // Check if round should end (all runeforges and center empty)
-      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      const shouldEndRound = allRuneforgesEmpty && centerEmpty;
+      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
       
       return {
         ...state,
@@ -636,9 +629,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   triggerRoundEnd: () => {
     set((state) => {
-      const allRuneforgesEmpty = state.runeforges.every((f) => f.runes.length === 0);
-      const centerEmpty = state.centerPool.length === 0;
-      if (!allRuneforgesEmpty || !centerEmpty || state.selectedRunes.length > 0 || state.turnPhase === 'end-of-round') {
+      const roundExhausted = isRoundExhausted(state.runeforges, state.centerPool);
+      if (!roundExhausted || state.selectedRunes.length > 0 || state.turnPhase === 'end-of-round') {
         return state;
       }
 
