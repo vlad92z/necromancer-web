@@ -29,7 +29,7 @@ const inputClasses =
 export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, longestRun = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced] = useState(false);
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
   const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);

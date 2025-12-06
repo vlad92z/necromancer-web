@@ -46,7 +46,6 @@ export function PlayerBoard({
   lockedLineIndexes,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
-  game: _game, // Available for future use
   soloRuneScore,
   deckCount,
   strain,

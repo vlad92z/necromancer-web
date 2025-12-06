@@ -2,11 +2,10 @@
  * SoloGameOverModal - displays the end-of-run summary for Solo mode
  */
 
-import type { Player, SoloOutcome } from '../../../types/game';
+import type { SoloOutcome } from '../../../types/game';
 import { useClickSound } from '../../../hooks/useClickSound';
 
 interface SoloGameOverModalProps {
-  player: Player;
   outcome: SoloOutcome;
   runePowerTotal: number;
   game: number;
@@ -14,7 +13,7 @@ interface SoloGameOverModalProps {
   onReturnToStart?: () => void;
 }
 
-export function SoloGameOverModal({ player, outcome, runePowerTotal, game, targetScore, onReturnToStart }: SoloGameOverModalProps) {
+export function SoloGameOverModal({ outcome, runePowerTotal, game, targetScore, onReturnToStart }: SoloGameOverModalProps) {
   const playClickSound = useClickSound();
   const heading = outcome === 'victory' ? 'Solo Victory' : outcome === 'defeat' ? 'Defeat' : 'Run Complete';
   const missedTarget = typeof targetScore === 'number' ? runePowerTotal < targetScore : false;
