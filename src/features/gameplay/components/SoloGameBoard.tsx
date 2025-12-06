@@ -44,6 +44,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     soloStats,
     runePowerTotal,
     soloTargetScore,
+    arcaneDustReward,
     deckDraftState,
     isDeckDrafting,
     onSelectDeckDraftRuneforge,
@@ -103,6 +104,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             onSelectRuneforge={onSelectDeckDraftRuneforge}
             onOpenDeckOverlay={onOpenDeckOverlay}
             currentDeckSize={player.deck.length}
+            arcaneDustReward={arcaneDustReward}
             onStartNextGame={onStartNextGame}
           />
         </div>

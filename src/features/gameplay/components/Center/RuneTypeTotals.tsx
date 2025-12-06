@@ -33,7 +33,7 @@ export function RuneTypeTotals({ runeTypes, counts, className }: RuneTypeTotalsP
           className="flex min-w-[70px] items-center justify-center gap-2 rounded-[8px] border border-[rgba(255,255,255,0.12)] bg-white/5 px-3 py-1.5"
         >
           <div className="flex h-[26px] w-[26px] items-center justify-center">
-            <img src={RUNE_ICONS[runeType]} alt={`${runeType} rune`} className="h-full w-full object-contain" />
+            <img src={RUNE_ICONS[runeType]} alt={`${runeType}`} className="h-full w-full object-contain" />
           </div>
           <div className="min-w-[16px] text-right text-sm font-bold tracking-wide text-slate-100">
             {counts[runeType] ?? 0}

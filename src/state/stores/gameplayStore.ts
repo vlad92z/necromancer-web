@@ -9,6 +9,7 @@ import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTIN
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
+import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
 import castSoundUrl from '../../assets/sounds/cast.mp3';
 import { useUIStore } from './uiStore';
 import { useArtefactStore } from './artefactStore';
@@ -36,6 +37,12 @@ function enterDeckDraftMode(state: GameState): GameState {
   const basePicks = 3; //TODO configure number
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
+  const arcaneDustReward = getArcaneDustReward(state.chapter);
+
+  if (arcaneDustReward > 0) {
+    const newDustTotal = addArcaneDust(arcaneDustReward);
+    useArtefactStore.getState().updateArcaneDust(newDustTotal);
+  }
 
   return {
     ...state,

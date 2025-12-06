@@ -18,6 +18,7 @@ import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useUIStore } from '../../../state/stores/uiStore';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
+import { getArcaneDustReward } from '../../../utils/arcaneDust';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -43,6 +44,7 @@ export interface SoloVariantData {
   soloStats: SoloStatsProps;
   soloTargetScore: number;
   runePowerTotal: number;
+  arcaneDustReward: number;
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
@@ -314,6 +316,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         soloStats,
         soloTargetScore,
         runePowerTotal,
+      arcaneDustReward: getArcaneDustReward(currentChapter),
         deckDraftState: gameState.deckDraftState,
         isDeckDrafting,
         onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,

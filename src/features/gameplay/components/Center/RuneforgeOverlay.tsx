@@ -16,12 +16,12 @@ export function RuneforgeOverlay({ runes, onSelectRune, onClose }: RuneforgeOver
   // Rune effect descriptions TODO: these are outdated
   const getRuneDescription = (runeType: RuneType): string => {
     const descriptions: Record<RuneType, string> = {
-      Fire: 'Fire rune',
-      Frost: 'Frost rune',
-      Life: 'Life rune',
-      Void: 'Void rune',
-      Wind: 'Wind rune',
-      Lightning: 'Lightning rune',
+      Fire: 'Fire',
+      Frost: 'Frost',
+      Life: 'Life',
+      Void: 'Void',
+      Wind: 'Wind',
+      Lightning: 'Lightning',
     };
     return descriptions[runeType];
   };

@@ -252,7 +252,7 @@ export function RuneCell({
       {runeImage && (
         <img 
           src={runeImage} 
-          alt={`${runeType} rune`}
+          alt={`${runeType}`}
           style={{ 
             width: '100%', 
             height: '100%', 

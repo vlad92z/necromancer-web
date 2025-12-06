@@ -39,12 +39,12 @@ export function getRuneColorClass(runeType: RuneType): string {
  */
 export function getRuneEffectDescription(runeType: RuneType): string {  
   const descriptions: Record<RuneType, string> = {
-    Fire: 'Fire Rune',
-    Frost: 'Frost Rune',
-    Life: 'Life Rune',
-    Void: 'Void Rune',
-    Wind: 'Wind Rune',
-    Lightning: 'Lightning Rune',
+    Fire: 'Fire',
+    Frost: 'Frost',
+    Life: 'Life',
+    Void: 'Void',
+    Wind: 'Wind',
+    Lightning: 'Lightning',
   };
   return descriptions[runeType];
 }

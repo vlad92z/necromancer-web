@@ -11,7 +11,6 @@ import { setNavigationCallback, useGameplayStore } from '../state/stores/gamepla
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { GameState, SoloRunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
-import { addArcaneDust, getArcaneDust, getArcaneDustReward } from '../utils/arcaneDust';
 import { useArtefactStore } from '../state/stores/artefactStore';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
@@ -36,9 +35,8 @@ export function Solo() {
     const savedChapter = savedState?.chapter ?? 0;
     return Math.max(storedBest, savedChapter);
   });
-  const [arcaneDust, setArcaneDust] = useState<number>(() => getArcaneDust());
   const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
-  const updateArcaneDust = useArtefactStore((state) => state.updateArcaneDust);
+  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -51,8 +49,6 @@ export function Solo() {
   }, [navigate, prepareSoloMode, loadArtefactState]);
 
   useEffect(() => {
-    let lastCompletionSignature: string | null = null;
-
     const unsubscribe = useGameplayStore.subscribe((state) => {
       const persistableState = selectPersistableSoloState(state);
       if (persistableState.gameStarted) {
@@ -66,31 +62,12 @@ export function Solo() {
           return updateLongestSoloRun(nextBest);
         });
       }
-
-      const completionAchieved =
-        state.soloOutcome === 'victory' &&
-        (state.turnPhase === 'game-over' || state.turnPhase === 'deck-draft');
-
-      if (completionAchieved) {
-        const completionSignature = `${state.soloOutcome}-${state.turnPhase}-${state.chapter}`;
-        if (completionSignature !== lastCompletionSignature) {
-          const reward = getArcaneDustReward(state.chapter);
-          if (reward > 0) {
-            const newDust = addArcaneDust(reward);
-            setArcaneDust(newDust);
-            updateArcaneDust(newDust);
-          }
-          lastCompletionSignature = completionSignature;
-        }
-      } else {
-        lastCompletionSignature = null;
-      }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [updateArcaneDust]);
+  }, []);
 
   const handleStartSolo = (config: SoloRunConfig) => {
     startSoloRun(config);

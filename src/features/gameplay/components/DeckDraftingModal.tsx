@@ -13,6 +13,7 @@ interface DeckDraftingModalProps {
   onSelectRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
   currentDeckSize: number;
+  arcaneDustReward: number;
   onStartNextGame: () => void;
 }
 
@@ -21,6 +22,7 @@ export function DeckDraftingModal({
   onSelectRuneforge,
   onOpenDeckOverlay,
   currentDeckSize,
+  arcaneDustReward,
   onStartNextGame,
 }: DeckDraftingModalProps) {
   const playClickSound = useClickSound();
@@ -172,7 +174,7 @@ export function DeckDraftingModal({
         </div>
         <div className="rounded-2xl border border-sky-400/40 bg-sky-900/30 px-4 py-3 text-left">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Bonus</div>
-          <div className="text-lg font-extrabold text-white">50</div>
+          <div className="text-lg font-extrabold text-white">{arcaneDustReward.toLocaleString()}</div>
           <div className="text-xs text-slate-200/80">Arcane Dust Received</div>
         </div>
       </div>
