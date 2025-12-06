@@ -32,7 +32,7 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
 
 function enterDeckDraftMode(state: GameState): GameState {
   const deckTemplate = getSoloDeckTemplate(state);
-  const nextLongestRun = Math.max(state.longestRun, state.chapter);
+  const nextLongestRun = Math.max(state.longestRun, state.chapter - 1);
   const basePicks = 3; //TODO configure number
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
