@@ -61,7 +61,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           >
             ← Back
           </button>
-          <div className="text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Solo Mode</div>
         </div>
 
         <div className="space-y-1">
@@ -95,16 +94,12 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
               onClick={() => setShowArtefactsModal(true)}
               className="rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
             >
-              Manage Artefacts
+              Manage
             </button>
           </div>
-          {selectedArtefactIds.length > 0 ? (
+          {selectedArtefactIds.length > 0 && (
             <div className="rounded-xl border border-slate-600/40 bg-slate-900/50 p-4">
               <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
-            </div>
-          ) : (
-            <div className="rounded-xl border border-slate-600/40 bg-slate-900/50 p-4 text-center text-sm text-slate-400">
-              No artefacts selected
             </div>
           )}
         </section>
@@ -117,7 +112,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
               onClick={() => setShowAdvanced((s) => !s)}
               className="rounded-xl border border-slate-600/30 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-sky-300 transition hover:border-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
             >
-              {showAdvanced ? 'Hide Advanced' : 'Advanced Options'}
+              {showAdvanced ? 'Hide' : 'Advanced'}
             </button>
           </div>
 

@@ -48,7 +48,6 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
           <div className="min-h-[80px] rounded-xl border border-slate-600/40 bg-slate-900/50 p-4">
             {selectedArtefactIds.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                No artefacts selected
               </div>
             ) : (
               <div className="flex flex-wrap gap-3">
@@ -61,7 +60,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                       key={artefactId}
                       onClick={() => unselectArtefact(artefactId)}
                       className="group relative h-16 w-16 overflow-hidden rounded-lg border border-sky-400/50 bg-slate-800 shadow-lg transition hover:border-sky-400 hover:shadow-xl"
-                      title={`${artefact.name}\n${getArtefactEffectDescription(artefactId)}\n\nClick to unselect`}
+                      title={`${artefact.name}\n${getArtefactEffectDescription(artefactId)}`}
                     >
                       <img
                         src={artefact.image}
@@ -99,13 +98,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                       : 'border-slate-700/40 bg-slate-900/30'
                   }`}
                   onClick={() => handleArtefactClick(artefact.id)}
-                  title={
-                    isOwned
-                      ? isSelected
-                        ? `${artefact.name}\n${effectDescription}\n\nClick to unselect`
-                        : `${artefact.name}\n${effectDescription}\n\nClick to select`
-                      : `${artefact.name}\n${effectDescription}\n\nCost: ${artefact.cost} Arcane Dust`
-                  }
+                  title={ `${artefact.name}\n${effectDescription}`}
                 >
                   {/* Artefact Image */}
                   <div className={`aspect-square ${isOwned ? 'opacity-100' : 'opacity-40'}`}>
