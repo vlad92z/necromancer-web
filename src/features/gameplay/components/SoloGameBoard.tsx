@@ -24,6 +24,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     playerLockedLines,
     runeforges,
     centerPool,
+    activeArtefactIds,
     isDraftPhase,
     selectedRunes,
     draftSource,
@@ -93,6 +94,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             deckCount={soloStats?.deckCount}
             strain={soloStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}
+            activeArtefactIds={activeArtefactIds}
           />
         </div>
       </div>

@@ -121,7 +121,7 @@ export function applyOutgoingDamageModifiers(
   
   // Tome applies first (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    damage = damage * 10;
+    damage = damage * 5;
   }
   
   // Potion applies to final damage

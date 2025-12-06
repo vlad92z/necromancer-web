@@ -3,6 +3,7 @@
  */
 
 import type { Player, RuneType } from '../../../../types/game';
+import type { ArtefactId } from '../../../../types/artefacts';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
@@ -12,7 +13,6 @@ import { StatBadge } from '../../../../components/StatBadge';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import fatigueSvg from '../../../../assets/stats/fatigue.svg';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
-import { useArtefactStore } from '../../../../state/stores/artefactStore';
 
 interface PlayerBoardProps {
   player: Player;
@@ -33,6 +33,7 @@ interface PlayerBoardProps {
   deckCount?: number;
   strain?: number;
   onOpenDeck?: () => void;
+  activeArtefactIds: ArtefactId[];
 }
 
 export function PlayerBoard({
@@ -50,6 +51,7 @@ export function PlayerBoard({
   deckCount,
   strain,
   onOpenDeck,
+  activeArtefactIds,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
@@ -58,7 +60,6 @@ export function PlayerBoard({
   };
   const deckValue = deckCount ?? player.deck.length ?? 0;
   const fatigueValue = strain ?? 0;
-  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
 
   return (
     <div
@@ -134,9 +135,9 @@ export function PlayerBoard({
               hiddenSlotIndexes={hiddenFloorSlotIndexes}
             />
           </div>
-          {selectedArtefactIds.length > 0 && (
+          {activeArtefactIds.length > 0 && (
             <div className="flex justify-center mt-2">
-              <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
+              <ArtefactsRow selectedArtefactIds={activeArtefactIds} />
             </div>
           )}
         </div>

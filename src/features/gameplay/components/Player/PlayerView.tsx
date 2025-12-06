@@ -3,6 +3,7 @@
  */
 
 import type { Player, RuneType } from '../../../../types/game';
+import type { ArtefactId } from '../../../../types/artefacts';
 import { PlayerBoard } from './PlayerBoard';
 
 interface PlayerViewProps {
@@ -24,6 +25,7 @@ interface PlayerViewProps {
   deckCount?: number;
   strain?: number;
   onOpenDeck?: () => void;
+  activeArtefactIds: ArtefactId[];
 }
 
 export function PlayerView({
@@ -42,6 +44,7 @@ export function PlayerView({
   deckCount,
   strain,
   onOpenDeck,
+  activeArtefactIds,
 }: PlayerViewProps) {
   return (
     <div>
@@ -61,6 +64,7 @@ export function PlayerView({
         deckCount={deckCount}
         strain={strain}
         onOpenDeck={onOpenDeck}
+        activeArtefactIds={activeArtefactIds}
       />
     </div>
   );

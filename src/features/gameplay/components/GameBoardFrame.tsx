@@ -59,6 +59,7 @@ export interface GameBoardSharedProps {
   game: number;
   isDraftPhase: boolean;
   isGameOver: boolean;
+  activeArtefactIds: GameState['activeArtefacts'];
 
   // Selection state
   selectedRuneType: RuneType | null;
@@ -102,6 +103,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     draftSource,
     strain,
     soloDeckTemplate,
+    activeArtefacts,
   } = gameState;
   const currentGame = useGameplayStore((state) => state.game);
   const soloOutcome = gameState.soloOutcome;
@@ -128,7 +130,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
-  const [showLogOverlay, setShowLogOverlay] = useState(false);
   const [isMusicMuted, setIsMusicMuted] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -284,6 +285,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     game: currentGame,
     isDraftPhase,
     isGameOver,
+    activeArtefactIds: activeArtefacts,
 
     // Selection state
     selectedRuneType,
