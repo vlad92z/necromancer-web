@@ -120,13 +120,14 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                     <button
                       onClick={(e) => handleBuyClick(artefact.id, e)}
                       disabled={!canAfford}
-                      className={`absolute bottom-2 right-2 rounded-lg px-2 py-1 text-xs font-bold uppercase tracking-wide transition ${
+                      className={`absolute bottom-2 right-2 flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold uppercase tracking-wide transition ${
                         canAfford
                           ? 'border border-amber-400/50 bg-amber-500/90 text-slate-900 hover:bg-amber-400'
                           : 'cursor-not-allowed border border-slate-700 bg-slate-800 text-slate-500'
                       }`}
                     >
-                      {artefact.cost}
+                      <img src={arcaneDustIcon} alt="" aria-hidden className="h-3 w-3" />
+                      <span>{artefact.cost}</span>
                     </button>
                   )}
 

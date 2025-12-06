@@ -174,10 +174,9 @@ export function DeckDraftingModal({
           <h2 className="text-2xl font-bold text-white">{draftComplete ? 'Draft complete' : 'Choose your new runes'}</h2>
         </div>
         <div className="rounded-2xl border border-sky-400/40 bg-sky-900/30 px-4 py-3 text-left">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Bonus</div>
           <div className="flex items-center gap-2">
             <img src={arcaneDustIcon} alt="Arcane Dust" className="h-5 w-5 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]" />
-            <div className="text-lg font-extrabold text-white">{arcaneDustReward.toLocaleString()}</div>
+            <div className="text-lg font-extrabold text-white">+{arcaneDustReward.toLocaleString()}</div>
           </div>
           <div className="sr-only">Arcane Dust Received</div>
         </div>
