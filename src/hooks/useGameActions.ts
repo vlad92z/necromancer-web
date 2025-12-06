@@ -12,6 +12,7 @@ export function useGameActions() {
   const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
   const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
   const cancelSelection = useGameplayStore((state) => state.cancelSelection);
+  const tryAutoPlaceSelection = useGameplayStore((state) => state.tryAutoPlaceSelection);
   const endRound = useGameplayStore((state) => state.endRound);
   const resetGame = useGameplayStore((state) => state.resetGame);
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
@@ -28,6 +29,7 @@ export function useGameActions() {
     moveRunesToWall,
     placeRunesInFloor,
     cancelSelection,
+    tryAutoPlaceSelection,
     endRound,
     resetGame,
     startSoloRun,

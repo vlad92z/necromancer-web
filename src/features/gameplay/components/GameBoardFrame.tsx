@@ -114,7 +114,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     placeRunes,
     moveRunesToWall,
     placeRunesInFloor,
-    cancelSelection,
+    tryAutoPlaceSelection,
     selectDeckDraftRuneforge,
     disenchantRuneFromDeck,
     forceSoloVictory,
@@ -214,7 +214,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     if (isAnimatingPlacement) {
       return;
     }
-    cancelSelection();
+    tryAutoPlaceSelection();
   };
 
   const handlePlaceRunesInFloorWrapper = () => {

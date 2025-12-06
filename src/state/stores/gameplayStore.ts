@@ -15,6 +15,7 @@ import { useUIStore } from './uiStore';
 import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
 import { saveSoloState } from '../../utils/soloPersistence';
+import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
@@ -245,6 +246,7 @@ export interface GameplayStore extends GameState {
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
+  tryAutoPlaceSelection: () => void;
   acknowledgeOverloadSound: () => void;
   endRound: () => void;
   resetGame: () => void;
@@ -266,6 +268,7 @@ function selectPersistableGameState(state: GameplayStore): GameState {
     moveRunesToWall,
     placeRunesInFloor,
     cancelSelection,
+    tryAutoPlaceSelection,
     acknowledgeOverloadSound,
     endRound,
     resetGame,
@@ -712,6 +715,40 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           draftSource: null,
           turnPhase: 'draft' as const,
         };
+      }
+    });
+  },
+  
+  tryAutoPlaceSelection: () => {
+    set((state) => {
+      // Only works if we're in place phase and have selected runes
+      if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+        return state;
+      }
+
+      const currentPlayer = state.player;
+      const lockedLineIndexes = state.lockedPatternLines[currentPlayer.id] ?? [];
+      
+      // Find the best pattern line for auto-placement
+      const bestLineIndex = findBestPatternLineForAutoPlacement(
+        state.selectedRunes,
+        currentPlayer.patternLines,
+        currentPlayer.wall,
+        lockedLineIndexes
+      );
+
+      if (bestLineIndex !== null) {
+        // Found a suitable line - trigger placement using the existing placeRunes logic
+        // We need to call the placeRunes action directly instead of via set
+        // So we get the current store and call placeRunes on it
+        const store = useGameplayStore.getState();
+        store.placeRunes(bestLineIndex);
+        return state; // placeRunes will update state
+      } else {
+        // No suitable line found - fallback to cancel selection
+        const store = useGameplayStore.getState();
+        store.cancelSelection();
+        return state; // cancelSelection will update state
       }
     });
   },
