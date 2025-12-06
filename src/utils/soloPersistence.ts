@@ -27,9 +27,6 @@ export function loadSoloState(): GameState | null {
 
   try {
     const parsedState = JSON.parse(rawState) as GameState;
-    if (parsedState?.matchType !== 'solo') {
-      return null;
-    }
     return parsedState;
   } catch (error) {
     console.error('Failed to parse saved solo state', error);
