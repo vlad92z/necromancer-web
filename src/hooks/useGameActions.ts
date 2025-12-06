@@ -17,6 +17,7 @@ export function useGameActions() {
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
   const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
   const selectDeckDraftRuneforge = useGameplayStore((state) => state.selectDeckDraftRuneforge);
+  const disenchantRuneFromDeck = useGameplayStore((state) => state.disenchantRuneFromDeck);
   const forceSoloVictory = useGameplayStore((state) => state.forceSoloVictory);
   const startNextSoloGame = useGameplayStore((state) => state.startNextSoloGame);
   
@@ -32,6 +33,7 @@ export function useGameActions() {
     startSoloRun,
     prepareSoloMode,
     selectDeckDraftRuneforge,
+    disenchantRuneFromDeck,
     forceSoloVictory,
     startNextSoloGame,
   };

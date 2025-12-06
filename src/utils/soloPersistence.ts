@@ -48,7 +48,7 @@ export function clearSoloState(): void {
   }
 }
 
-export function getBestSoloRound(): number {
+export function getLongestSoloRun(): number {
   if (!canAccessStorage()) return 0;
   const rawValue = window.localStorage.getItem(SOLO_BEST_ROUND_KEY);
   if (!rawValue) return 0;
@@ -57,11 +57,11 @@ export function getBestSoloRound(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
-export function updateBestSoloRound(round: number): number {
+export function updateLongestSoloRun(game: number): number {
   if (!canAccessStorage()) return 0;
-  const sanitizedRound = Math.max(0, Math.floor(round));
-  const currentBest = getBestSoloRound();
-  const nextBest = Math.max(currentBest, sanitizedRound);
+  const sanitizedGame = Math.max(0, Math.floor(game));
+  const currentBest = getLongestSoloRun();
+  const nextBest = Math.max(currentBest, sanitizedGame);
 
   if (nextBest === currentBest) {
     return currentBest;
@@ -70,7 +70,7 @@ export function updateBestSoloRound(round: number): number {
   try {
     window.localStorage.setItem(SOLO_BEST_ROUND_KEY, nextBest.toString());
   } catch (error) {
-    console.error('Failed to save best solo round', error);
+    console.error('Failed to save longest solo run', error);
   }
 
   return nextBest;

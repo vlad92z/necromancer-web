@@ -9,9 +9,9 @@ import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
-import type { GameState, RuneTypeCount, SoloRunConfig } from '../types/game';
-import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getBestSoloRound, updateBestSoloRound } from '../utils/soloPersistence';
-import { addArcaneDust, getArcaneDust, getArcaneDustReward } from '../utils/arcaneDust';
+import type { GameState, SoloRunConfig } from '../types/game';
+import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
+import { useArtefactStore } from '../state/stores/artefactStore';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -27,59 +27,45 @@ export function Solo() {
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
   const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
   const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
-  const runeTypeCount = useGameplayStore((state) => state.runeTypeCount);
   const gameState = useGameplayStore();
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
-  const [bestSoloRound, setBestSoloRound] = useState<number>(() => {
-    const storedBest = getBestSoloRound();
+  const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
+    const storedBest = getLongestSoloRun();
     const savedState = loadSoloState();
-    const savedRound = savedState?.round ?? 0;
-    return Math.max(storedBest, savedRound);
+    const savedGame = savedState?.game ?? 0;
+    return Math.max(storedBest, savedGame);
   });
-  const [arcaneDust, setArcaneDust] = useState<number>(() => getArcaneDust());
+  const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
+  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
-    prepareSoloMode(runeTypeCount);
+    prepareSoloMode();
+    loadArtefactState();
 
     return () => {
       setNavigationCallback(null);
     };
-  }, [navigate, prepareSoloMode, runeTypeCount]);
+  }, [navigate, prepareSoloMode, loadArtefactState]);
 
   useEffect(() => {
-    let lastCompletionSignature: string | null = null;
-
     const unsubscribe = useGameplayStore.subscribe((state) => {
       const persistableState = selectPersistableSoloState(state);
+
+      // Persist solo state only while a run is active
       if (persistableState.gameStarted) {
         saveSoloState(persistableState);
         setHasSavedSoloRun(true);
-        setBestSoloRound((previousBest) => {
-          const nextBest = Math.max(previousBest, persistableState.round);
-          if (nextBest === previousBest) {
-            return previousBest;
-          }
-          return updateBestSoloRound(nextBest);
-        });
       }
 
-      const completionAchieved =
-        state.soloOutcome === 'victory' &&
-        (state.turnPhase === 'game-over' || state.turnPhase === 'deck-draft');
-
-      if (completionAchieved) {
-        const completionSignature = `${state.soloOutcome}-${state.turnPhase}-${state.round}`;
-        if (completionSignature !== lastCompletionSignature) {
-          const reward = getArcaneDustReward(state.round);
-          if (reward > 0) {
-            setArcaneDust(addArcaneDust(reward));
-          }
-          lastCompletionSignature = completionSignature;
+      // Always update the local `longestSoloRun` if store's longestRun or game increased.
+      setLongestSoloRun((previousBest) => {
+        const nextBest = Math.max(previousBest, persistableState.longestRun ?? 0, persistableState.game ?? 0);
+        if (nextBest === previousBest) {
+          return previousBest;
         }
-      } else {
-        lastCompletionSignature = null;
-      }
+        return updateLongestSoloRun(nextBest);
+      });
     });
 
     return () => {
@@ -87,8 +73,8 @@ export function Solo() {
     };
   }, []);
 
-  const handleStartSolo = (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => {
-    startSoloRun(runeTypeCount, config);
+  const handleStartSolo = (config: SoloRunConfig) => {
+    startSoloRun(config);
   };
 
   const handleContinueSolo = () => {
@@ -107,17 +93,16 @@ export function Solo() {
         onStartSolo={handleStartSolo}
         onContinueSolo={handleContinueSolo}
         canContinue={hasSavedSoloRun}
-        bestRound={bestSoloRound}
+        longestRun={longestSoloRun}
         arcaneDust={arcaneDust}
       />
     );
   }
 
   return <GameBoardFrame
-        gameState={gameState}
-        variant="solo"
-        renderContent={(shared, variantData) => {
-          return <SoloBoardContent shared={shared} variantData={variantData} />;
-        }}
-      />;
+    gameState={gameState}
+    renderContent={(shared, variantData) => {
+      return <SoloBoardContent shared={shared} variantData={variantData} />;
+    }}
+  />;
 }

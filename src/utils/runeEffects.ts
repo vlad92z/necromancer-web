@@ -105,11 +105,11 @@ export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffect
   const effectLines = resolvedEffects.map(formatRuneEffect).filter(Boolean);
 
   if (effectLines.length === 0) {
-    return `${runeType} rune`;
+    return `${runeType}`;
   }
 
   const bulletList = effectLines.map((line) => `${line}`).join('\n');
-  return `${runeType} rune\n${bulletList}`;
+  return `${runeType}\n${bulletList}`;
 }
 
 const RARITY_ORDER: RuneEffectRarity[] = ['uncommon', 'rare', 'epic'];

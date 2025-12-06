@@ -30,8 +30,8 @@ export function useSelectedRunes() {
 }
 
 /**
- * Get current round number
+ * Get current game number
  */
-export function useRound() {
-  return useGameplayStore((state) => state.round);
+export function useGame() {
+  return useGameplayStore((state) => state.game);
 }

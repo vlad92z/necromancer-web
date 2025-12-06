@@ -3,8 +3,8 @@
  */
 
 import { useMemo } from 'react';
-import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType, RuneTypeCount } from '../../../../types/game';
-import { getRuneTypesForCount } from '../../../../utils/gameInitialization';
+import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
+import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
@@ -13,7 +13,6 @@ import { RuneTypeTotals } from './RuneTypeTotals';
 interface DraftingTableProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
-  runeTypeCount: RuneTypeCount;
   player: Player;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
@@ -30,7 +29,6 @@ interface DraftingTableProps {
 export function DraftingTable({ 
   runeforges, 
   centerPool, 
-  runeTypeCount,
   player,
   onRuneClick,
   onCenterRuneClick,
@@ -54,7 +52,7 @@ export function DraftingTable({
   const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
   const selectedRuneIds = selectedRunes.map((rune) => rune.id);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
-  const runeTypes = useMemo(() => getRuneTypesForCount(runeTypeCount), [runeTypeCount]);
+  const runeTypes = useMemo(() => RUNE_TYPES, []);
   const runeCounts = useMemo(
     () => {
       const counts = getRuneTypeCounts({
@@ -63,8 +61,6 @@ export function DraftingTable({
         selectedRunes,
         draftSource
       });
-      // Log runeCounts whenever it's computed for debugging
-      console.log('runeCounts computed:', counts);
       return counts;
     },
     [centerPool, draftSource, runeforges, selectedRunes]
@@ -100,7 +96,7 @@ export function DraftingTable({
                   : undefined
               }
               selectionSourceActive={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes}
-              onCancelSelection={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes ? onCancelSelection : undefined}
+              onCancelSelection={hasSelectedRunes ? onCancelSelection : undefined}
               animatingRuneIds={animatingRuneIdSet}
             />
           ))}
@@ -127,8 +123,14 @@ export function DraftingTable({
     </div>
   );
   
+  const handleDraftingTableClick = () => {
+    if (hasSelectedRunes) {
+      onCancelSelection();
+    }
+  };
+
   return (
-    <div className="h-full w-full flex flex-col justify-center gap-4">
+    <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
       {renderRuneforgeRow(player, runeforges, 'center', 'player')}
       {renderCenterSection()}
       <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />

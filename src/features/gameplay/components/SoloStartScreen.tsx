@@ -5,29 +5,34 @@
 import type { ChangeEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { RuneTypeCount, SoloRunConfig } from '../../../types/game';
-import { DEFAULT_SOLO_CONFIG, normalizeSoloConfig } from '../../../utils/gameInitialization';
+import type { SoloRunConfig } from '../../../types/game';
+import { DEFAULT_SOLO_CONFIG, RUNE_TYPES, normalizeSoloConfig } from '../../../utils/gameInitialization';
 import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
 import { FieldConfig } from '../../../components/FieldConfig';
 import { SliderConfig } from '../../../components/SliderConfig';
+import { ArtefactsView } from '../../../components/ArtefactsView';
+import { ArtefactsRow } from '../../../components/ArtefactsRow';
+import { useArtefactStore } from '../../../state/stores/artefactStore';
+import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
 interface SoloStartScreenProps {
-  onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
+  onStartSolo: (config: SoloRunConfig) => void;
   onContinueSolo?: () => void;
   canContinue?: boolean;
-  bestRound?: number;
+  longestRun?: number;
   arcaneDust?: number;
 }
 
 const inputClasses =
   'w-full rounded-lg border border-slate-600/70 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400';
 
-export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, bestRound = 0, arcaneDust = 0 }: SoloStartScreenProps) {
+export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, longestRun = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
-  const [runeTypeCount] = useState<RuneTypeCount>(6);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced] = useState(false);
+  const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
+  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
 
   const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: SoloRunConfig[K]) => {
     setSoloConfig((prev) => ({ ...prev, [key]: value }));
@@ -57,37 +62,60 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           >
             ← Back
           </button>
-          <div className="text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Solo Mode</div>
         </div>
 
         <div className="space-y-1">
           <h1 className="text-4xl font-bold uppercase tracking-tight text-slate-50">Solo Run</h1>
           <p className="text-base text-slate-300">
-            Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
+            Draft runes to cast increeasingly powerful spells while surviving overload damage
           </p>
           <div className="flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
-              <span className="text-[11px] text-sky-300">Best Round</span>
-              <span className="text-lg font-extrabold text-slate-50">{bestRound > 0 ? bestRound : '--'}</span>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
-              <span className="text-[11px] font-semibold text-amber-200/90">Arcane Dust</span>
-              <span className="text-lg text-amber-200">{formattedDust}</span>
-            </div>
+            {longestRun > 0 && (
+              <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+                <span className="text-[11px] text-sky-300">Longest Run</span>
+                <span className="text-lg font-extrabold text-slate-50">{longestRun}</span>
+              </div>
+            )}
+
+            {arcaneDust > 0 && (
+              <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+                <img src={arcaneDustIcon} alt="Arcane Dust" className="h-8 w-8" />
+                <span className="text-lg text-amber-200">{formattedDust}</span>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Artefacts Section */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Artefacts</div>
+            <button
+              type="button"
+              onClick={() => setShowArtefactsModal(true)}
+              className="rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
+            >
+              Manage
+            </button>
+          </div>
+          {selectedArtefactIds.length > 0 && (
+            <div className="rounded-xl border border-slate-600/40 bg-slate-900/50 p-4">
+              <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-2">
+          {/* <div className="flex items-center justify-between">
             <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Run Setup</div>
             <button
               type="button"
               onClick={() => setShowAdvanced((s) => !s)}
               className="rounded-xl border border-slate-600/30 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-sky-300 transition hover:border-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
             >
-              {showAdvanced ? 'Hide Advanced' : 'Advanced Options'}
+              {showAdvanced ? 'Hide' : 'Advanced'}
             </button>
-          </div>
+          </div> */}
 
           {showAdvanced && (
             <div className="space-y-4 rounded-2xl border border-slate-600/40 bg-slate-900/50 p-4 backdrop-blur">
@@ -112,14 +140,14 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   />
                 </FieldConfig>
                 <SliderConfig
-                  label="Fatigue Multiplier"
-                  description="Round-by-round growth applied to fatigue."
+                  label="Strain Multiplier"
+                  description="round-by-round growth applied to strain."
                   min={1}
                   max={2}
                   step={0.1}
                   value={soloConfig.strainMultiplier}
                   onChange={(value) => updateConfigValue('strainMultiplier', value)}
-                  valueLabel={`${soloConfig.strainMultiplier.toFixed(1)}x fatigue growth`}
+                  valueLabel={`${soloConfig.strainMultiplier.toFixed(1)}x strain growth`}
                 />
                 <FieldConfig label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
                   <input
@@ -139,7 +167,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
                   step={1}
                   value={soloConfig.deckRunesPerType}
                   onChange={(value) => updateConfigValue('deckRunesPerType', value)}
-                  valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * runeTypeCount} total)`}
+                  valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * RUNE_TYPES.length} total)`}
                 />
               </div>
             </div>
@@ -158,13 +186,16 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           )}
           <button
             type="button"
-            onClick={() => onStartSolo(runeTypeCount, normalizedConfig)}
+            onClick={() => onStartSolo(normalizedConfig)}
             className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
           >
             New Game
           </button>
         </div>
       </div>
+
+      {/* Artefacts Modal */}
+      <ArtefactsView isOpen={showArtefactsModal} onClose={() => setShowArtefactsModal(false)} />
     </div>
   );
 }

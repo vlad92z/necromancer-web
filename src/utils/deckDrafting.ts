@@ -2,22 +2,33 @@
  * DeckDrafting utilities - helpers for post-victory deck upgrades
  */
 
-import type { DeckDraftState, Rune, RuneEffectRarity, RuneType, RuneTypeCount } from '../types/game';
+import type { DeckDraftState, Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { ArtefactId } from '../types/artefacts';
 import { getDraftEffectsForType } from './runeEffects';
-import { getRuneTypesForCount } from './gameInitialization';
+import { getRuneTypes } from './gameInitialization';
 import type { Runeforge } from '../types/game';
+import { modifyDraftRarityWithRing } from './artefactEffects';
 
+const DEFAULT_DRAFT_PICK_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
 
-const BASE_EPIC_CHANCE = 1;
-const BASE_RARE_CHANCE = 5;
+const BASE_EPIC_CHANCE = 0;
+const BASE_RARE_CHANCE = 0;
 const EPIC_INCREMENT_PER_WIN = 1;
 const RARE_INCREMENT_PER_WIN = 5;
 
-function getDraftRarity(winStreak: number): RuneEffectRarity {
-  const epicChance = Math.min(100, BASE_EPIC_CHANCE + winStreak * EPIC_INCREMENT_PER_WIN);
-  const rareChance = Math.min(100 - epicChance, BASE_RARE_CHANCE + winStreak * RARE_INCREMENT_PER_WIN);
+function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): RuneEffectRarity {
+  const baseEpicChance = Math.min(100, BASE_EPIC_CHANCE + winStreak * EPIC_INCREMENT_PER_WIN);
+  const baseRareChance = Math.min(100 - baseEpicChance, BASE_RARE_CHANCE + winStreak * RARE_INCREMENT_PER_WIN);
+  
+  const hasRing = activeArtefacts.includes('ring');
+  const { epicChance, rareChance } = modifyDraftRarityWithRing(
+    baseEpicChance,
+    baseRareChance,
+    hasRing
+  );
+  
   const roll = Math.random() * 100;
 
   if (roll < epicChance) {
@@ -29,8 +40,8 @@ function getDraftRarity(winStreak: number): RuneEffectRarity {
   return 'uncommon';
 }
 
-const createDraftRune = (ownerId: string, runeType: RuneType, index: number, winStreak: number): Rune => {
-  const rarity = getDraftRarity(winStreak);
+const createDraftRune = (ownerId: string, runeType: RuneType, index: number, winStreak: number, activeArtefacts: ArtefactId[] = []): Rune => {
+  const rarity = getDraftRarity(winStreak - 1, activeArtefacts);
   return {
     id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
     runeType,
@@ -39,13 +50,13 @@ const createDraftRune = (ownerId: string, runeType: RuneType, index: number, win
 };
 
 function createDraftRuneforges(
-  runeTypeCount: RuneTypeCount,
   ownerId: string,
   runeforgeCount: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
   runesPerRuneforge: number = DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
-  winStreak: number = 0
+  winStreak: number = 0,
+  activeArtefacts: ArtefactId[] = []
 ): Runeforge[] {
-  const runeTypes = getRuneTypesForCount(runeTypeCount);
+  const runeTypes = getRuneTypes();
 
   return Array(runeforgeCount)
     .fill(null)
@@ -53,7 +64,7 @@ function createDraftRuneforges(
       const runes: Rune[] = [];
       for (let i = 0; i < runesPerRuneforge; i++) {
         const runeType = runeTypes[Math.floor(Math.random() * runeTypes.length)];
-        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i, winStreak));
+        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i, winStreak, activeArtefacts));
       }
 
       return {
@@ -65,18 +76,18 @@ function createDraftRuneforges(
 }
 
 export function createDeckDraftState(
-  runeTypeCount: RuneTypeCount,
   ownerId: string,
-  totalPicks: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-  winStreak: number = 0
+  totalPicks: number = DEFAULT_DRAFT_PICK_COUNT,
+  winStreak: number = 0,
+  activeArtefacts: ArtefactId[] = []
 ): DeckDraftState {
   return {
     runeforges: createDraftRuneforges(
-      runeTypeCount,
       ownerId,
       DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
       DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
-      winStreak
+      winStreak,
+      activeArtefacts
     ),
     picksRemaining: totalPicks,
     totalPicks,
@@ -85,9 +96,9 @@ export function createDeckDraftState(
 
 export function advanceDeckDraftState(
   current: DeckDraftState,
-  runeTypeCount: RuneTypeCount,
   ownerId: string,
-  winStreak: number = 0
+  winStreak: number = 0,
+  activeArtefacts: ArtefactId[] = []
 ): DeckDraftState | null {
   const nextPicks = Math.max(0, current.picksRemaining - 1);
   if (nextPicks === 0) {
@@ -96,11 +107,11 @@ export function advanceDeckDraftState(
 
   return {
     runeforges: createDraftRuneforges(
-      runeTypeCount,
       ownerId,
       DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
       DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
-      winStreak
+      winStreak,
+      activeArtefacts
     ),
     picksRemaining: nextPicks,
     totalPicks: current.totalPicks,

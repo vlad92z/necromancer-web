@@ -8,7 +8,6 @@ import { create } from 'zustand';
 interface UIStore {
   // Overlay visibility states
   showRulesOverlay: boolean;
-  showGameLogOverlay: boolean;
   showDeckOverlay: boolean;
   showRuneforgeOverlay: boolean;
   selectedRuneforgeId: string | null; // For runeforge overlay
@@ -16,7 +15,6 @@ interface UIStore {
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
-  toggleGameLogOverlay: () => void;
   toggleDeckOverlay: () => void;
   openRuneforgeOverlay: (runeforgeId: string) => void;
   closeRuneforgeOverlay: () => void;
@@ -36,7 +34,6 @@ const getInitialVolume = (): number => {
 export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
-  showGameLogOverlay: false,
   showDeckOverlay: false,
   showRuneforgeOverlay: false,
   selectedRuneforgeId: null,
@@ -45,10 +42,6 @@ export const useUIStore = create<UIStore>((set) => ({
   // Actions
   toggleRulesOverlay: () => {
     set((state) => ({ showRulesOverlay: !state.showRulesOverlay }));
-  },
-  
-  toggleGameLogOverlay: () => {
-    set((state) => ({ showGameLogOverlay: !state.showGameLogOverlay }));
   },
   
   toggleDeckOverlay: () => {
@@ -66,7 +59,6 @@ export const useUIStore = create<UIStore>((set) => ({
   closeAllOverlays: () => {
     set({
       showRulesOverlay: false,
-      showGameLogOverlay: false,
       showDeckOverlay: false,
       showRuneforgeOverlay: false,
       selectedRuneforgeId: null,

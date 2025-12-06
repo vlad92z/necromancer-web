@@ -3,6 +3,7 @@
  */
 
 import type { Player, RuneType } from '../../../../types/game';
+import type { ArtefactId } from '../../../../types/artefacts';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { FloorLine } from './FloorLine';
@@ -11,6 +12,7 @@ import { SoloHealthTracker } from '../SoloHealthTracker';
 import { StatBadge } from '../../../../components/StatBadge';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import fatigueSvg from '../../../../assets/stats/fatigue.svg';
+import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 
 interface PlayerBoardProps {
   player: Player;
@@ -23,7 +25,7 @@ interface PlayerBoardProps {
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
-  round: number;
+  game: number;
   soloRuneScore?: {
     currentScore: number;
     targetScore: number;
@@ -31,6 +33,7 @@ interface PlayerBoardProps {
   deckCount?: number;
   strain?: number;
   onOpenDeck?: () => void;
+  activeArtefactIds: ArtefactId[];
 }
 
 export function PlayerBoard({
@@ -47,6 +50,7 @@ export function PlayerBoard({
   deckCount,
   strain,
   onOpenDeck,
+  activeArtefactIds,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
@@ -95,6 +99,7 @@ export function PlayerBoard({
                 />
                 <SoloHealthTracker health={player.health} maxHealth={player.maxHealth} />
               </div>
+ 
             </div>
           </div>
           <div className="grid grid-cols-2 items-start gap-[min(1.2vmin,14px)]">
@@ -129,6 +134,11 @@ export function PlayerBoard({
               hiddenSlotIndexes={hiddenFloorSlotIndexes}
             />
           </div>
+          {activeArtefactIds.length > 0 && (
+            <div className="flex justify-center mt-2">
+              <ArtefactsRow selectedArtefactIds={activeArtefactIds} />
+            </div>
+          )}
         </div>
       </div>
     </div>

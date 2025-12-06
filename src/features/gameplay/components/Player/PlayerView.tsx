@@ -3,6 +3,7 @@
  */
 
 import type { Player, RuneType } from '../../../../types/game';
+import type { ArtefactId } from '../../../../types/artefacts';
 import { PlayerBoard } from './PlayerBoard';
 
 interface PlayerViewProps {
@@ -16,7 +17,7 @@ interface PlayerViewProps {
   lockedPatternLines?: number[];
   hiddenSlotKeys?: Set<string>;
   hiddenFloorSlotIndexes?: Set<number>;
-  round: number;
+  game: number;
   soloRuneScore?: {
     currentScore: number;
     targetScore: number;
@@ -24,6 +25,7 @@ interface PlayerViewProps {
   deckCount?: number;
   strain?: number;
   onOpenDeck?: () => void;
+  activeArtefactIds: ArtefactId[];
 }
 
 export function PlayerView({
@@ -37,11 +39,12 @@ export function PlayerView({
   lockedPatternLines,
   hiddenSlotKeys,
   hiddenFloorSlotIndexes,
-  round,
+  game,
   soloRuneScore,
   deckCount,
   strain,
   onOpenDeck,
+  activeArtefactIds,
 }: PlayerViewProps) {
   return (
     <div>
@@ -56,11 +59,12 @@ export function PlayerView({
         lockedLineIndexes={lockedPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
         hiddenFloorSlotIndexes={hiddenFloorSlotIndexes}
-        round={round}
+        game={game}
         soloRuneScore={soloRuneScore}
         deckCount={deckCount}
         strain={strain}
         onOpenDeck={onOpenDeck}
+        activeArtefactIds={activeArtefactIds}
       />
     </div>
   );

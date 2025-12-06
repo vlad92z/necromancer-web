@@ -24,7 +24,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     playerLockedLines,
     runeforges,
     centerPool,
-    runeTypeCount,
+    activeArtefactIds,
     isDraftPhase,
     selectedRunes,
     draftSource,
@@ -35,7 +35,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     onCancelSelection,
     onPlaceRunes,
     onPlaceRunesInFloor,
-    round,
+    game,
     isGameOver,
     returnToStartScreen,
   } = shared;
@@ -45,6 +45,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     soloStats,
     runePowerTotal,
     soloTargetScore,
+    arcaneDustReward,
     deckDraftState,
     isDeckDrafting,
     onSelectDeckDraftRuneforge,
@@ -62,7 +63,6 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             runeforges={runeforges}
             centerPool={centerPool}
             player={player}
-            runeTypeCount={runeTypeCount}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
             isDraftPhase={isDraftPhase}
@@ -89,11 +89,12 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             hiddenFloorSlotIndexes={playerHiddenFloorSlots}
-            round={round}
+            game={game}
             soloRuneScore={soloRuneScore || undefined}
             deckCount={soloStats?.deckCount}
             strain={soloStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}
+            activeArtefactIds={activeArtefactIds}
           />
         </div>
       </div>
@@ -105,6 +106,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             onSelectRuneforge={onSelectDeckDraftRuneforge}
             onOpenDeckOverlay={onOpenDeckOverlay}
             currentDeckSize={player.deck.length}
+            arcaneDustReward={arcaneDustReward}
             onStartNextGame={onStartNextGame}
           />
         </div>
@@ -113,10 +115,9 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
       {isGameOver && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-auto">
           <SoloGameOverModal
-            player={player}
             outcome={soloOutcome}
             runePowerTotal={runePowerTotal}
-            round={round}
+            game={game}
             targetScore={soloTargetScore}
             onReturnToStart={returnToStartScreen}
           />

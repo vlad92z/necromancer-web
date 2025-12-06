@@ -1,6 +1,6 @@
 # Massive Spell: Arcane Arena
 
-An Roguelite deck-building game where players draft magical runes, balancing increasing magical powers against increasingly difficult arcane overload.
+A Roguelite deck-building game where players draft magical runes to cast spells while trying to survive arcane overload damage
 
 ## Tech Stack
 
@@ -26,48 +26,33 @@ npm run build
 npm run lint
 ```
 
-## Game Modes
-- **Solo**: Draft from your own runeforges and survive increasing overload while chasing a target Rune Power score.
-- **Quick Play (WIP)**: Human bottom seat vs configurable AI/human top seat. Board size and health scale with rune count (3x3 to 6x6 walls; 2-4 runeforges per player).
-- **Spectator**: Watch AI vs AI on any board size.
-
 ## Gameplay Rules (current build)
 
 ### Board & Setup
-- Board sizes track rune variety: 3-6 rune types map to 3x3-6x6 walls with matching pattern lines (tiers 1-6).
-- Each player has personal runeforges; quick play deals 2-4 per player based on board size, with health scaling from 25-150.
-- The center pool only opens once you clear your own runeforges. 
-- In quick play, opponent runeforges are not draftable. Players only get access to enemy runes once they have moved to the shared center pool.
+- Board size 6x6 with 6 unique rune types.
+- The center pool opens once your personal runeforges are empty, carrying leftover runes forward.
 
-### Draft & Place
+### Draft & Place (Actions)
 - On your turn, take all runes of one type from a runeforge (leftovers drop to the center).
 - Once all your Runeforges are empty - draft from the shared center pool.
 - Place all drafted runes on a single pattern line that is empty or already holds that type. You cannot place a rune type in a row where it already sits on your wall.
-- Overflow goes to the floor, damaging the player. This damage scales every round.
+- Overflow goes to the floor, damaging the player. This damage scales every round (strain).
 
 ### Segment Damage (instant scoring)
 - When a pattern line fills, the first rune jumps to your wall immediately and clears that line.
-- The placement deals instant damage equal to the size of the connected segment it joins (orthogonal adjacency, minimum 1). Build dense clusters so every later placement hits harder.
-- In Solo, that hit also increases your cumulative Rune Power score.
+- The placement deals instant damage (increase rune score) equal to the size of the connected segment it joins (orthogonal adjacency, minimum 1). Build dense clusters so every later placement hits harder.
 
-### Round End & Victory
-- A round ends when all runeforges and the center are empt. 
-- Resolve any end of round effects.
+### Round End & Run Progression
+- A **Round** ends when all runeforges and the center are empty, then runeforges are repopulated from the player's deck.
+- Resolve any end-of-round effects.
 - Unlock empty pattern lines.
 - Clears floor runes.
 - Strain (overload multiplier) grows each round.
-- Game over triggers at 0 HP or when a player lacks enough runes to refill runeforges. The survivor or higher-health player wins; Solo checks Rune Power against the target score when the deck runs dry.
 
-## Rune Effects
+- A **Game** completes when the player reaches the target Rune Score and drafts new runes for their deck.
 
-Currently runes have no active or passive effects applied. These will be unlocked as deck building is implemented.
-
-## Solo Mode
-- **Objective**: Accumulate Rune Power (total segment damage from placements) to reach the target score before you run out of runes or health.
-- **Drafting**: Only from your own runeforges until they are empty; then from the center. Opponent runeforges are disabled.
-- **Overload & Strain**: Overflowing to the floor immediately deals overload damage equal to added penalty x current strain. Strain starts at 1x by default and multiplies each round (configurable 1.0-2.0x); Frost mitigation hooks reduce it.
-- **Config Defaults**: 100 HP (cap 1000), 5 personal runeforges, 15 of each rune type, 5 healing per support rune, 200 Rune Power target, pattern-line locking enabled (cleared between rounds).
-- **Victory/Defeat**: Victory when Rune Power meets the target before the deck runs dry; defeat at 0 HP or by failing to hit the target once no new round can start.
+- A **Run** ends when the player dies (0 HP).
+- Game over triggers at 0 HP or when there are not enough runes to refill runeforges; Solo checks Rune Power against the target score when the deck runs dry.
 
 ## Project Structure
 
@@ -81,7 +66,7 @@ src/
 ├── state/stores/           # Zustand stores (gameplay, UI)
 ├── styles/                 # Design tokens and global styles
 ├── types/                  # Domain types (game, rune, controllers)
-├── utils/                  # Pure logic (scoring, init, AI helpers, rune effects)
+├── utils/                  # Pure logic (scoring, init, rune effects)
 ├── App.tsx
 └── main.tsx
 ```
@@ -125,12 +110,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [x] Update `RulesOverlay` with rune effect explanations
 - [x] Add overlay buttons for rules, deck, and the game log
 
-#### AI Improvements
-- [ ] Make AI evaluate Fire runes for scoring potential
-- [ ] Add strategic Life collection weighting for survivability
-- [ ] AI should value Wind as floor insurance
-- [ ] Support multiple AI difficulty levels
-- [ ] Make AI behavior pluggable (different strategies for campaign bosses)
 
 ### 🟡 Priority 2: Architecture Refactoring (Before New Features)
 
@@ -156,7 +135,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 #### Code Quality
 - [ ] Add error boundaries (root, GameBoard, overlays)
 - [ ] Create `validateGameState()` function with dev-mode validation
-- [ ] Memoize expensive calculations (`getWallColumnForRune()`, wall power, AI moves)
+ - [ ] Memoize expensive calculations (`getWallColumnForRune()`, wall power, placement previews)
 - [ ] Extract utility functions (`getNextPlayerIndex()`, `isRuneforgeEmpty()`, etc.)
 - [ ] Add error logging service
 
@@ -188,7 +167,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Add ELO rating system
 - [ ] Create lobby/waiting room
 - [ ] Add friend system and private matches
-- [ ] Implement spectator mode
 
 ### 🎨 Priority 5: Visual & Audio Polish
 
@@ -212,7 +190,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Implement undo/redo for moves
 - [ ] Add tutorial/onboarding for new players
 - [ ] Save/load game state for resuming later
-- [ ] Add difficulty settings for AI
 - [ ] Implement end-game bonuses (row/column/type completion)
 
 #### Technical

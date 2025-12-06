@@ -2,19 +2,12 @@
  * Core game types for Massive Spell: Arcane Arena
  */
 
+import type { ArtefactId } from './artefacts';
+
 /**
  * Rune types (elemental identities)
  */
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
-
-/**
- * Number of rune types in the game
- * 3 types: Fire, Life, Wind (3x3 wall, 3 pattern lines)
- * 4 types: Fire, Life, Wind, Frost (4x4 wall, 4 pattern lines)
- * 5 types: Fire, Life, Wind, Frost, Void (5x5 wall, 5 pattern lines)
- * 6 types: Fire, Life, Wind, Frost, Void, Lightning (6x6 wall, 6 pattern lines)
- */
-export type RuneTypeCount = 3 | 4 | 5 | 6;
 
 /**
  * Rune effect modifiers
@@ -115,14 +108,6 @@ export interface Player {
 export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
 
 /**
- * Round history entry for game log
- */
-export interface RoundScore {
-  round: number;
-  playerName: string;
-}
-
-/**
  * Animation state for rune movement
  */
 export interface AnimatingRune {
@@ -139,17 +124,16 @@ export interface AnimatingRune {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
-  runeTypeCount: RuneTypeCount; // Number of rune types (3, 4, or 5)
-  factoriesPerPlayer: number; // Runeforge count per player (quick play config)
+  factoriesPerPlayer: number; // Runeforge count for the current solo setup
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
   startingHealth: number; // Health pool per player for the current configuration
   overflowCapacity: number; // Floor line capacity that determines overflow penalties
   player: Player;
-  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games (empty for versus)
+  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   turnPhase: TurnPhase;
-  round: number;
+  game: number; // Current game in this run (increments after each deck draft)
   /**
    * Damage dealt for every overload rune
    * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
@@ -169,18 +153,17 @@ export interface GameState {
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
-  roundHistory: RoundScore[]; // History of completed rounds for game log
-  roundDamage: number; // Damage dealt by the player during the current round
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
-  shouldTriggerEndRound: boolean; // Flag to trigger endRound in component useEffect
+  shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
   soloTargetScore: number; // Solo target score required for victory
   soloOutcome: SoloOutcome; // Solo result (victory/defeat)
   soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
-  soloWinStreak: number; // Consecutive solo victories used for draft bonuses
+  longestRun: number; // Furthest game reached in any run
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   soloBaseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
+  activeArtefacts: ArtefactId[]; // Artefacts active for this game run
 }
 
 export interface DeckDraftState {

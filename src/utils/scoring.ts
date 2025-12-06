@@ -175,7 +175,6 @@ export function resolveSegmentFromCells(
     const effects = cell.effects ?? [];
     effects.forEach((effect) => {
       if (effect.type === 'Healing') {
-        console.log(`Healing +${effect.amount} at (${cell.row},${cell.col})`);
         healing += effect.amount;
       }
     });
@@ -259,6 +258,7 @@ export function calculateFloorPenalty(floorLineCount: number): number {
 
 /**
  * Calculate overload by adding the current round number to the effective penalty.
+ * @deprecated - This function is not currently used
  */
 export function calculateOverloadPenalty(effectivePenalty: number, round: number): number {
   const normalizedPenalty = Math.max(0, effectivePenalty);
