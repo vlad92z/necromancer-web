@@ -175,7 +175,6 @@ export function resolveSegmentFromCells(
     const effects = cell.effects ?? [];
     effects.forEach((effect) => {
       if (effect.type === 'Healing') {
-        console.log(`Healing +${effect.amount} at (${cell.row},${cell.col})`);
         healing += effect.amount;
       }
     });

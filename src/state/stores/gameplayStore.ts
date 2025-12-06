@@ -32,8 +32,9 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
 }
 
 function enterDeckDraftMode(state: GameState): GameState {
+  console.log('gameplayStore: enterDeckDraftMode');
   const deckTemplate = getSoloDeckTemplate(state);
-  const nextLongestRun = Math.max(state.longestRun, state.game - 1);
+  const nextLongestRun = Math.max(state.longestRun, state.game);
   const basePicks = 3; //TODO configure number
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
@@ -136,6 +137,7 @@ function handlePlayerDefeat(
   nextCenterPool: Rune[],
   overloadDamage: number
 ): GameState {
+  console.log('gameplayStore: handlePlayerDefeat');
   const nextLongestRun = Math.max(state.longestRun, state.game);
   return {
     ...state,
@@ -151,7 +153,8 @@ function handlePlayerDefeat(
   };
 }
 
-function prepareSoloChapterReset(state: GameState): GameState {
+function prepareRoundReset(state: GameState): GameState {
+  console.log('gameplayStore: prepareRoundReset');
   const clearedPlayer = clearFloorLines(state.player);
   const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
   const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
@@ -176,7 +179,7 @@ function prepareSoloChapterReset(state: GameState): GameState {
       });
     }
 
-    const nextLongestRun = Math.max(state.longestRun, state.game - 1);
+    const nextLongestRun = Math.max(state.longestRun, state.game);
     return {
       ...state,
       player: clearedPlayer,
@@ -277,6 +280,7 @@ function selectPersistableGameState(state: GameplayStore): GameState {
 }
 
 function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
+  console.log('attachSoloPersistence: subscribing to store changes');
   return store.subscribe((state) => {
     if (!state.gameStarted) {
       return;
@@ -700,11 +704,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   endRound: () => {
+    console.log('gameplayStoreConfig: endRound triggered');
     set((state) => {
       if (!state.shouldTriggerEndRound && state.turnPhase !== 'end-of-round') {
         return state;
       }
-      return prepareSoloChapterReset(state);
+      console.log('gameplayStoreConfig: prepareRoundReset');
+      return prepareRoundReset(state);
     });
   },
 
@@ -915,6 +921,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           longestRun: state.longestRun,
         }
       );
+      console.log('gameplayStore: startNextSoloGame +1');
       nextGameState.game += 1;
       return {
         ...nextGameState,

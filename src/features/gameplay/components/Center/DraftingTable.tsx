@@ -61,8 +61,6 @@ export function DraftingTable({
         selectedRunes,
         draftSource
       });
-      // Log runeCounts whenever it's computed for debugging
-      console.log('runeCounts computed:', counts);
       return counts;
     },
     [centerPool, draftSource, runeforges, selectedRunes]
