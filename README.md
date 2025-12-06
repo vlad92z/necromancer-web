@@ -77,7 +77,7 @@ src/
 ├── components/             # Reusable UI (layout primitives, runes, stats)
 ├── features/gameplay/      # Gameboard, overlays, Solo UI
 ├── hooks/                  # Zustand selector/action hooks
-├── routes/                 # MainMenu, GameMatch, Solo, Developer, etc.
+├── routes/                 # MainMenu, Solo, Developer, etc.
 ├── state/stores/           # Zustand stores (gameplay, UI)
 ├── styles/                 # Design tokens and global styles
 ├── types/                  # Domain types (game, rune, controllers)

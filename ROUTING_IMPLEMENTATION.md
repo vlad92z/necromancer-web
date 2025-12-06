@@ -17,12 +17,6 @@ Successfully implemented React Router for Massive Spell: Arcane Arena, establish
   - Campaign, Deck Builder, and Matchmaking buttons (disabled, coming soon)
   - Clean, themed UI with hover effects
 
-- **`GameMatch.tsx`** - Main game route
-  - Moved all game logic from `App.tsx`
-  - Handles AI turn triggering via useEffect hooks
-  - Integrates with navigation callback system
-  - Cleans up game state when navigating away
-
 #### Stub Routes (Future Features):
 - **`CampaignMap.tsx`** - Boss selection and progression (stub)
 - **`DeckBuilder.tsx`** - Pre-match deck drafting (stub)
@@ -92,7 +86,6 @@ useEffect(() => {
 3. **State Management**: Game state properly cleans up when navigating away
 4. **Deep Linking**: Direct navigation to specific screens (e.g., `/game`)
 5. **Browser Integration**: Back/forward buttons work correctly
-6. **Code Organization**: Game logic moved from App.tsx to GameMatch.tsx
 
 ## Testing Results
 - ✅ Build succeeds without errors
