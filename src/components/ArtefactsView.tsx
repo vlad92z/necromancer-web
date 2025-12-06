@@ -7,6 +7,7 @@ import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS, getAllArtefacts, MAX_SELECTED_ARTEFACTS } from '../types/artefacts';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
+import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 
 interface ArtefactsViewProps {
   isOpen: boolean;
@@ -35,8 +36,8 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
     <Modal isOpen={isOpen} onClose={onClose} title="Artefacts" maxWidth={800}>
       <div className="space-y-6">
         {/* Arcane Dust Display */}
-        <div className="flex items-center justify-between rounded-xl border border-amber-300/30 bg-amber-100/5 px-4 py-3">
-          <span className="text-sm font-semibold uppercase tracking-wide text-amber-200/90">Arcane Dust</span>
+        <div className="flex items-center rounded-xl border border-amber-300/30 bg-amber-100/5 px-4 py-3">
+          <img src={arcaneDustIcon} alt="Arcane Dust" className="h-8 w-8" />
           <span className="text-2xl font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</span>
         </div>
 

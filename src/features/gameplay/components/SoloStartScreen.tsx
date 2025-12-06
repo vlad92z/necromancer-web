@@ -13,6 +13,7 @@ import { SliderConfig } from '../../../components/SliderConfig';
 import { ArtefactsView } from '../../../components/ArtefactsView';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
+import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
 interface SoloStartScreenProps {
   onStartSolo: (config: SoloRunConfig) => void;
@@ -66,7 +67,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
         <div className="space-y-1">
           <h1 className="text-4xl font-bold uppercase tracking-tight text-slate-50">Solo Run</h1>
           <p className="text-base text-slate-300">
-            Draft from your own Runeforges, withstand overload, and chase the highest Rune Power.
+            Draft runes to cast increeasingly powerful spells while surviving overload damage
           </p>
           <div className="flex flex-wrap gap-3">
             {longestRun > 2 && (
@@ -78,7 +79,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
 
             {arcaneDust > 0 && (
               <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
-                <span className="text-[11px] font-semibold text-amber-200/90">Arcane Dust</span>
+                <img src={arcaneDustIcon} alt="Arcane Dust" className="h-8 w-8" />
                 <span className="text-lg text-amber-200">{formattedDust}</span>
               </div>
             )}
