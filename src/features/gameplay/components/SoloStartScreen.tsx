@@ -10,6 +10,7 @@ import { DEFAULT_SOLO_CONFIG, normalizeSoloConfig } from '../../../utils/gameIni
 import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
 import { FieldConfig } from '../../../components/FieldConfig';
 import { SliderConfig } from '../../../components/SliderConfig';
+import { useGameplayStore } from '../../../state/stores/gameplayStore';
 
 interface SoloStartScreenProps {
   onStartSolo: (runeTypeCount: RuneTypeCount, config: SoloRunConfig) => void;
@@ -24,7 +25,7 @@ const inputClasses =
 
 export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, bestRound = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
-  const [runeTypeCount] = useState<RuneTypeCount>(6);
+  const runeTypeCount = useGameplayStore((state) => state.runeTypeCount);
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
