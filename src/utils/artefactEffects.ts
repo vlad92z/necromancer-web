@@ -91,7 +91,7 @@ export function getDamageToScoreBonusWithRod(damage: number, hasRod: boolean): n
 }
 
 /**
- * Tome effect: Segments of size 1 deal 10× damage (rune score) and 10× healing
+ * Tome effect: Segments of size 1 deal 5× damage (rune score) and 5× healing
  */
 export function modifySegmentResultWithTome(
   segment: ResolvedSegment,
@@ -103,8 +103,8 @@ export function modifySegmentResultWithTome(
 
   return {
     ...segment,
-    damage: segment.damage * 10,
-    healing: segment.healing * 10,
+    damage: segment.damage * 5,
+    healing: segment.healing * 5,
   };
 }
 

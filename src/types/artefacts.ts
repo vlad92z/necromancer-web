@@ -29,31 +29,31 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
   tome: {
     id: 'tome',
     name: 'Tome',
-    cost: 100,
+    cost: 10000,
     image: tomePng,
   },
   ring: {
     id: 'ring',
     name: 'Ring',
-    cost: 100,
+    cost: 20000,
     image: ringPng,
   },
   robe: {
     id: 'robe',
     name: 'Robe',
-    cost: 100,
+    cost: 10000,
     image: robePng,
   },
   potion: {
     id: 'potion',
     name: 'Potion',
-    cost: 100,
+    cost: 50000,
     image: potionPng,
   },
   rod: {
     id: 'rod',
     name: 'Rod',
-    cost: 100,
+    cost: 5000,
     image: rodPng,
   },
 };

@@ -13,6 +13,7 @@ import castSoundUrl from '../../assets/sounds/cast.mp3';
 import { useUIStore } from './uiStore';
 import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
+import { saveSoloState } from '../../utils/soloPersistence';
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
@@ -169,7 +170,7 @@ function prepareSoloChapterReset(state: GameState): GameState {
       });
     }
 
-    const nextLongestRun = Math.max(state.longestRun, state.chapter);
+    const nextLongestRun = Math.max(state.longestRun, state.chapter - 1);
     return {
       ...state,
       player: clearedPlayer,
@@ -242,6 +243,42 @@ export interface GameplayStore extends GameState {
   resetGame: () => void;
   triggerChapterEnd: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
+}
+
+function selectPersistableGameState(state: GameplayStore): GameState {
+  const {
+    startSoloRun,
+    prepareSoloMode,
+    forceSoloVictory,
+    hydrateGameState,
+    returnToStartScreen,
+    startNextSoloGame,
+    draftRune,
+    draftFromCenter,
+    placeRunes,
+    moveRunesToWall,
+    placeRunesInFloor,
+    cancelSelection,
+    acknowledgeOverloadSound,
+    endChapter,
+    resetGame,
+    triggerChapterEnd,
+    selectDeckDraftRuneforge,
+    ...persistableState
+  } = state;
+
+  return persistableState;
+}
+
+function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
+  return store.subscribe((state) => {
+    if (!state.gameStarted) {
+      return;
+    }
+
+    const persistableState = selectPersistableGameState(state);
+    saveSoloState(persistableState);
+  });
 }
 
 export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
@@ -843,7 +880,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 });
 
 export const useGameplayStore = create<GameplayStore>((set) => gameplayStoreConfig(set));
+attachSoloPersistence(useGameplayStore);
 
 export function createGameplayStoreInstance() {
-  return create<GameplayStore>((set) => gameplayStoreConfig(set));
+  const store = create<GameplayStore>((set) => gameplayStoreConfig(set));
+  attachSoloPersistence(store);
+  return store;
 }
