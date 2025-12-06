@@ -32,6 +32,33 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
           effects: getRuneEffectsForType(rune.runeType),
         };
         
+        // If shouldDisappear is true, add a fade out and scale down animation
+        const animateProps = rune.shouldDisappear
+          ? {
+              x: [rune.startX, rune.endX + 7, rune.endX + 7],
+              y: [rune.startY, rune.endY + 7, rune.endY + 7],
+              scale: [1, 1, 0],
+              opacity: [1, 1, 0],
+            }
+          : {
+              x: rune.endX + 7,
+              y: rune.endY + 7,
+              scale: 1,
+            };
+
+        const transitionProps = rune.shouldDisappear
+          ? {
+              duration: 0.7,
+              delay: index * 0.05,
+              times: [0, 0.7, 1], // Reach destination at 70%, then disappear
+              ease: [0.4, 0.0, 0.2, 1] as const,
+            }
+          : {
+              duration: 0.5,
+              delay: index * 0.05,
+              ease: [0.4, 0.0, 0.2, 1] as const,
+            };
+        
         return (
           <motion.div
             key={rune.id}
@@ -39,17 +66,10 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
               x: rune.startX,
               y: rune.startY,
               scale: 1,
+              opacity: 1,
             }}
-            animate={{
-              x: rune.endX + 7,
-              y: rune.endY + 7,
-              scale: 1,
-            }}
-            transition={{
-              duration: 0.5,
-              delay: index * 0.05, // Stagger animations slightly
-              ease: [0.4, 0.0, 0.2, 1], // Custom easing
-            }}
+            animate={animateProps}
+            transition={transitionProps}
             onAnimationComplete={() => {
               // Only trigger callback on last rune
               if (index === animatingRunes.length - 1) {

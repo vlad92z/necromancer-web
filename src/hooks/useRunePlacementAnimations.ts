@@ -258,28 +258,29 @@ export function useRunePlacementAnimations({
     const floorSlotIndexes: number[] = [];
     if (floorDelta > 0) {
       const overflowRunes = snapshot.runeOrder.slice(patternRunesUsed, patternRunesUsed + floorDelta);
-      overflowRunes.forEach((rune, offset) => {
-        const start = snapshot.runePositions.get(rune.id);
-        if (!start) {
-          return;
-        }
-        const slotIndex = previousFloorCount + offset;
-        const selector = `[data-player-id="${snapshot.playerId}"][data-floor-slot-index="${slotIndex}"]`;
-        const targetElement = document.querySelector<HTMLElement>(selector);
-        if (!targetElement) {
-          return;
-        }
-        const targetRect = targetElement.getBoundingClientRect();
-        overlayRunes.push({
-          id: rune.id,
-          runeType: rune.runeType,
-          startX: start.startX,
-          startY: start.startY,
-          endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-          endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+      // Target the Strain counter instead of floor slots
+      const strainCounterSelector = `[data-player-id="${snapshot.playerId}"][data-strain-counter="true"]`;
+      const strainCounterElement = document.querySelector<HTMLElement>(strainCounterSelector);
+      if (strainCounterElement) {
+        const targetRect = strainCounterElement.getBoundingClientRect();
+        overflowRunes.forEach((rune, offset) => {
+          const start = snapshot.runePositions.get(rune.id);
+          if (!start) {
+            return;
+          }
+          overlayRunes.push({
+            id: rune.id,
+            runeType: rune.runeType,
+            startX: start.startX,
+            startY: start.startY,
+            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
+            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+            shouldDisappear: true, // Add flag for disappear animation
+          });
+          const slotIndex = previousFloorCount + offset;
+          floorSlotIndexes.push(slotIndex);
         });
-        floorSlotIndexes.push(slotIndex);
-      });
+      }
     }
 
     if (overlayRunes.length === 0) {

@@ -4,7 +4,7 @@
 
 import { StatBadge } from '../../../../components/StatBadge';
 import deckSvg from '../../../../assets/stats/deck.svg';
-import fatigueSvg from '../../../../assets/stats/fatigue.svg';
+import overloadSvg from '../../../../assets/stats/overload.svg';
 
 export interface SoloStatsProps {
   isActive: boolean;
@@ -31,7 +31,7 @@ export function SoloStats({ overloadMultiplier, deckCount }: SoloStatsProps) {
         color="#fa6060ff"
         borderColor="rgba(154, 147, 23, 0.35)"
         tooltip={`Overloading runes immediately deals ${overloadMultiplier} damage`}
-        image={fatigueSvg}
+        image={overloadSvg}
       />
       <StatBadge
         label="Deck"
