@@ -140,7 +140,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - [ ] Move all `setTimeout` calls from stores to components (`useEffect` hooks)
 - [ ] Create `src/systems/turnManager.ts` for turn flow management
 - [ ] Create `src/systems/effectResolver.ts` for unified effect handling
-- [ ] Extract repeated hooks: `useIsAITurn()`, `useCurrentPlayer()`, `useOpponent()`, `useGamePhase()`
+- [ ] Extract repeated hooks: `useGamePhase()`
 
 #### Persistence Layer
 - [ ] Create `src/services/storage/localStorage.ts` - persistent client storage

@@ -561,7 +561,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (defeatedByOverload) {
         return {
           ...state,
-          players: updatedPlayer,
+          player: updatedPlayer,
           selectedRunes: [],
           draftSource: null,
           centerPool: nextCenterPool,

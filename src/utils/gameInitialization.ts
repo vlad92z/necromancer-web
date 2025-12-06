@@ -185,16 +185,14 @@ export function createPlayer(
 /**
  * Create empty runeforges for each player
  */
-export function createEmptyFactories(players: [Player, Player], perPlayerCount: number): Runeforge[] {
-  return players.flatMap((player) =>
-    Array(perPlayerCount)
+export function createEmptyFactories(player: Player, perPlayerCount: number): Runeforge[] {
+  return Array(perPlayerCount)
       .fill(null)
       .map((_, index) => ({
         id: `${player.id}-runeforge-${index + 1}`,
         ownerId: player.id,
         runes: [],
       }))
-  );
 }
 
 /**
