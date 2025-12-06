@@ -41,7 +41,7 @@ function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): 
 }
 
 const createDraftRune = (ownerId: string, runeType: RuneType, index: number, winStreak: number, activeArtefacts: ArtefactId[] = []): Rune => {
-  const rarity = getDraftRarity(winStreak, activeArtefacts);
+  const rarity = getDraftRarity(winStreak - 1, activeArtefacts);
   return {
     id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
     runeType,

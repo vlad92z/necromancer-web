@@ -888,6 +888,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const deckTemplate = getSoloDeckTemplate(state);
       const nextTarget = state.soloTargetScore;
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
+      const nextGame = state.game + 1;
       const nextGameState = initializeSoloGame(
         {
           startingHealth: state.startingHealth,
@@ -905,9 +906,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         }
       );
       console.log('gameplayStore: startNextSoloGame +1');
-      nextGameState.game += 1;
       return {
         ...nextGameState,
+        game: nextGame,
         gameStarted: true,
         soloDeckTemplate: deckTemplate,
         soloBaseTargetScore: state.soloBaseTargetScore || nextTarget,
