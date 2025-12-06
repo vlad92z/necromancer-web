@@ -567,6 +567,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (defeatedByOverload) {
         return handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
       }
+
+      const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
+      if (nextRunePowerTotal >= state.soloTargetScore) {
+        // Rod can push the player over the target purely from overload damage
+        return enterDeckDraftMode({
+          ...state,
+          player: updatedPlayer,
+          centerPool: nextCenterPool,
+          selectedRunes: [],
+          draftSource: null,
+          pendingPlacement: null,
+          animatingRunes: [],
+          shouldTriggerEndRound: false,
+          overloadSoundPending: overloadDamage > 0,
+          runePowerTotal: nextRunePowerTotal,
+        });
+      }
       
       // Check if round should end (all runeforges and center empty)
       const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
@@ -624,6 +641,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const defeatedByOverload = nextHealth === 0;
       if (defeatedByOverload) {
         return handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+      }
+
+      const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
+      if (nextRunePowerTotal >= state.soloTargetScore) {
+        // Rod can trigger a victory directly from overload damage
+        return enterDeckDraftMode({
+          ...state,
+          player: updatedPlayer,
+          centerPool: nextCenterPool,
+          selectedRunes: [],
+          draftSource: null,
+          pendingPlacement: null,
+          animatingRunes: [],
+          shouldTriggerEndRound: false,
+          overloadSoundPending: overloadDamage > 0,
+          runePowerTotal: nextRunePowerTotal,
+        });
       }
       
       // Check if round should end (all runeforges and center empty)

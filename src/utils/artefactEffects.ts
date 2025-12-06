@@ -145,7 +145,7 @@ export function applyOutgoingHealingModifiers(
   
   // Tome applies to healing (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    healing = healing * 10;
+    healing = healing * 5;
   }
   
   return healing;
