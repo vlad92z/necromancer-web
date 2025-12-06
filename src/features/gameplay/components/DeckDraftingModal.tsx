@@ -209,7 +209,7 @@ export function DeckDraftingModal({
                   pointerEvents: animationState === 'dimmed' ? 'none' : 'auto',
                 }}
               >
-                <Runeforge runeforge={runeforge} onRuneforgeSelect={dummySelect} />
+                <Runeforge runeforge={runeforge}/>
                 <button
                   type="button"
                   onClick={() => handleSelect(runeforge)}

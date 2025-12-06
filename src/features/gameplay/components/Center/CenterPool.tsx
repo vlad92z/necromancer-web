@@ -15,7 +15,6 @@ interface CenterPoolProps {
   canDraftFromCenter: boolean;
   selectedRunes: Rune[];
   selectionFromCenter: boolean;
-  onCancelSelection?: () => void;
   displayRunesOverride?: Rune[];
   animatingRuneIds?: Set<string> | null;
   hiddenRuneIds?: Set<string>;
@@ -29,7 +28,6 @@ export function CenterPool({
   canDraftFromCenter,
   selectedRunes,
   selectionFromCenter,
-  onCancelSelection,
   displayRunesOverride,
   animatingRuneIds = null,
   hiddenRuneIds
@@ -71,7 +69,7 @@ export function CenterPool({
       }
     : {};
   
-  const handleRuneClick = (e: React.MouseEvent, rune: Rune, isSelectedDisplay: boolean) => {
+  const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
     e.stopPropagation();
     if (onRuneClick) {
       onRuneClick(rune.runeType, rune.id);
@@ -143,7 +141,7 @@ export function CenterPool({
                     ? 'none'
                     : (isSelected ? 'auto' : (centerDisabled ? 'none' : 'auto'))
                 }}
-                onClick={(e) => handleRuneClick(e, rune, isSelected)}
+                onClick={(e) => handleRuneClick(e, rune)}
                 onMouseEnter={() => {
                   if (!canHighlightRunes({ isSelected })) {
                     return;

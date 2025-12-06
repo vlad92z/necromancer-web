@@ -115,7 +115,6 @@ export function DraftingTable({
         canDraftFromCenter={canDraftFromCenter}
         selectedRunes={selectionFromCenter ? selectedRunes : []}
         selectionFromCenter={Boolean(selectionFromCenter)}
-        onCancelSelection={selectionFromCenter ? onCancelSelection : undefined}
         displayRunesOverride={centerSelectionOriginalRunes}
         animatingRuneIds={animatingRuneIdSet}
         hiddenRuneIds={hiddenCenterRuneIds}
