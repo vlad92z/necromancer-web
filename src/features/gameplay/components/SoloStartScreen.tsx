@@ -105,7 +105,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
         </section>
 
         <section className="space-y-2">
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Run Setup</div>
             <button
               type="button"
@@ -114,7 +114,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             >
               {showAdvanced ? 'Hide' : 'Advanced'}
             </button>
-          </div>
+          </div> */}
 
           {showAdvanced && (
             <div className="space-y-4 rounded-2xl border border-slate-600/40 bg-slate-900/50 p-4 backdrop-blur">
