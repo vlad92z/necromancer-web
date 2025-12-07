@@ -12,6 +12,7 @@ import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { GameState, SoloRunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -21,13 +22,48 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
   return gameState as GameState;
 };
 
+const selectGameBoardState = (state: GameplayStore): GameState => ({
+  gameStarted: state.gameStarted,
+  factoriesPerPlayer: state.factoriesPerPlayer,
+  runesPerRuneforge: state.runesPerRuneforge,
+  startingHealth: state.startingHealth,
+  overflowCapacity: state.overflowCapacity,
+  player: state.player,
+  soloDeckTemplate: state.soloDeckTemplate,
+  runeforges: state.runeforges,
+  centerPool: state.centerPool,
+  turnPhase: state.turnPhase,
+  game: state.game,
+  strain: state.strain,
+  strainMultiplier: state.strainMultiplier,
+  soloStartingStrain: state.soloStartingStrain,
+  selectedRunes: state.selectedRunes,
+  overloadRunes: state.overloadRunes,
+  draftSource: state.draftSource,
+  animatingRunes: state.animatingRunes,
+  pendingPlacement: state.pendingPlacement,
+  overloadSoundPending: state.overloadSoundPending,
+  selectionTimestamp: state.selectionTimestamp,
+  lockedPatternLines: state.lockedPatternLines,
+  shouldTriggerEndRound: state.shouldTriggerEndRound,
+  runePowerTotal: state.runePowerTotal,
+  soloTargetScore: state.soloTargetScore,
+  soloOutcome: state.soloOutcome,
+  soloPatternLineLock: state.soloPatternLineLock,
+  longestRun: state.longestRun,
+  deckDraftState: state.deckDraftState,
+  soloBaseTargetScore: state.soloBaseTargetScore,
+  deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
+  activeArtefacts: state.activeArtefacts,
+});
+
 export function Solo() {
   const navigate = useNavigate();
   const gameStarted = useGameplayStore((state) => state.gameStarted);
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
   const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
   const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
-  const gameState = useGameplayStore();
+  const gameState = useGameplayStore(useShallow(selectGameBoardState));
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
