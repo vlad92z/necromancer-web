@@ -41,7 +41,7 @@ export function SoloGameOverModal({ outcome, runePowerTotal, game, targetScore, 
       <div className="mb-5 text-[15px] text-slate-300">{subline}</div>
 
       <div className="mb-5 grid grid-cols-3 gap-3">
-        <StatCard label="Games Cleared" value={game} accent="#60a5fa" />
+        <StatCard label="Games Cleared" value={game - 1} accent="#60a5fa" />
         <StatCard label="Rune Power" value={targetScore ? `${runePowerTotal} / ${targetScore}` : runePowerTotal} accent="#facc15" />
       </div>
 
