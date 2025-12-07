@@ -17,6 +17,8 @@ import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoi
 import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 
+const SOLO_TARGET_INCREMENT = 50;
+
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
     return runes;
@@ -40,6 +42,7 @@ function enterDeckDraftMode(state: GameState): GameState {
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
   const arcaneDustReward = getArcaneDustReward(state.game);
+  const nextTargetScore = state.soloTargetScore + SOLO_TARGET_INCREMENT;
 
   if (arcaneDustReward > 0) {
     const newDustTotal = addArcaneDust(arcaneDustReward);
@@ -60,7 +63,9 @@ function enterDeckDraftMode(state: GameState): GameState {
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
     soloOutcome: 'victory',
-    longestRun: nextLongestRun
+    longestRun: nextLongestRun,
+    soloTargetScore: nextTargetScore,
+    soloBaseTargetScore: state.soloBaseTargetScore || nextTargetScore,
   };
 }
 
@@ -1013,19 +1018,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       if (!nextDraftState) {
-        const nextTarget = state.soloTargetScore + 50;
         return {
           ...state,
           player: updatedPlayer,
           soloDeckTemplate: updatedDeckTemplate,
           totalRunesPerPlayer: updatedDeckTemplate.length,
-          soloTargetScore: nextTarget,
-          soloBaseTargetScore: state.soloBaseTargetScore || nextTarget,
           deckDraftState: {
             runeforges: [],
             picksRemaining: 0,
             totalPicks: state.deckDraftState.totalPicks,
           },
+          soloBaseTargetScore: state.soloBaseTargetScore || state.soloTargetScore,
           deckDraftReadyForNextGame: true,
         };
       }
