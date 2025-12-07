@@ -14,6 +14,7 @@ import { ArtefactsView } from '../../../components/ArtefactsView';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
+import { useClickSound } from '../../../hooks/useClickSound';
 
 interface SoloStartScreenProps {
   onStartSolo: (config: SoloRunConfig) => void;
@@ -28,6 +29,7 @@ const inputClasses =
 
 export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, longestRun = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
+  const playClick = useClickSound();
   const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced] = useState(false);
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
@@ -178,7 +180,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           {canContinue && onContinueSolo && (
             <button
               type="button"
-              onClick={onContinueSolo}
+              onClick={() => {
+                playClick();
+                onContinueSolo();
+              }}
               className="w-full rounded-xl border border-slate-500/70 bg-slate-900/70 px-6 py-4 text-center text-base font-bold uppercase tracking-[0.2em] text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
             >
               Continue Run
@@ -186,7 +191,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           )}
           <button
             type="button"
-            onClick={() => onStartSolo(normalizedConfig)}
+            onClick={() => {
+              playClick();
+              onStartSolo(normalizedConfig);
+            }}
             className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
           >
             New Game

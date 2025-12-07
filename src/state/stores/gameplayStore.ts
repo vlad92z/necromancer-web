@@ -14,7 +14,7 @@ import castSoundUrl from '../../assets/sounds/cast.mp3';
 import { useUIStore } from './uiStore';
 import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
-import { saveSoloState } from '../../utils/soloPersistence';
+import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
@@ -580,6 +580,12 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
       return;
     }
 
+    // If the player has been defeated, clear any saved solo run from localStorage
+    if (state.soloOutcome === 'defeat') {
+      clearSoloState();
+      return;
+    }
+
     const persistableState = selectPersistableGameState(state);
     saveSoloState(persistableState);
   });
@@ -910,10 +916,21 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   returnToStartScreen: () => {
-    set(() => ({
-      ...initializeSoloGame(),
-      gameStarted: false,
-    }));
+    set((state) => {
+      // If the last run ended in defeat, ensure persisted state is cleared immediately
+      if (state.soloOutcome === 'defeat') {
+        try {
+          clearSoloState();
+        } catch (e) {
+          // no-op
+        }
+      }
+
+      return {
+        ...initializeSoloGame(),
+        gameStarted: false,
+      };
+    });
     // Call navigation callback if registered (for router integration)
     if (navigationCallback) {
       navigationCallback();

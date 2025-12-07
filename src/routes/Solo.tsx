@@ -53,10 +53,16 @@ export function Solo() {
       const persistableState = selectPersistableSoloState(state);
 
       // Persist solo state only while a run is active
-      if (persistableState.gameStarted) {
-        saveSoloState(persistableState);
-        setHasSavedSoloRun(true);
-      }
+        if (persistableState.gameStarted) {
+          saveSoloState(persistableState);
+          setHasSavedSoloRun(true);
+        }
+
+        // If run ended in defeat, remove saved run from storage and update UI
+        if (persistableState.soloOutcome === 'defeat') {
+          clearSoloState();
+          setHasSavedSoloRun(false);
+        }
 
       // Always update the local `longestSoloRun` if store's longestRun or game increased.
       setLongestSoloRun((previousBest) => {
