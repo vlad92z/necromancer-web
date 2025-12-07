@@ -2,9 +2,9 @@
  * ScoringWall component - displays the scoring grid
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
-import { getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
+import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
 
@@ -22,6 +22,16 @@ const cellKey = (row: number, col: number) => `${row}-${col}`;
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
 export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
+  const [pulseKey, setPulseKey] = useState(0);
+  const hasMountedRef = useRef(false);
+  const previousWallRef = useRef<ScoringWallType | null>(null);
+  const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
+
+  const wallSignature = useMemo(
+    () => wall.map(row => row.map(cell => cell.runeType ?? '0').join(',')).join('|'),
+    [wall]
+  );
+
   // Compute pixel centers for all occupied or pending cells and short
   // neighbor-to-neighbor edges (right + down) so every adjacent pair is
   // connected by a single line segment.
@@ -66,6 +76,50 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     const points = Array.from(pointsMap.values()).map(p => ({ x: p.x, y: p.y, isPending: p.isPending }));
     return { points, edges };
   }, [wall, patternLines]);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      previousWallRef.current = wall;
+      return;
+    }
+
+    const previousWall = previousWallRef.current;
+    previousWallRef.current = wall;
+
+    if (!previousWall) {
+      return;
+    }
+
+    const anchors: Array<{ row: number; col: number }> = [];
+    for (let r = 0; r < wall.length; r++) {
+      for (let c = 0; c < wall.length; c++) {
+        const wasEmpty = previousWall[r]?.[c]?.runeType === null;
+        const isFilled = wall[r]?.[c]?.runeType !== null;
+        if (wasEmpty && isFilled) {
+          anchors.push({ row: r, col: c });
+        }
+      }
+    }
+
+    if (anchors.length === 0) {
+      setPulseTargets(new Set());
+      return;
+    }
+
+    const newTargets = new Set<string>();
+    anchors.forEach(({ row, col }) => {
+      const segmentCells = collectSegmentCells(wall, row, col);
+      segmentCells.forEach(cell => newTargets.add(cellKey(cell.row, cell.col)));
+    });
+
+    if (newTargets.size > 0) {
+      setPulseTargets(newTargets);
+      setPulseKey(prev => prev + 1);
+    } else {
+      setPulseTargets(new Set());
+    }
+  }, [wall, wallSignature]);
 
   const gridSize = wall.length;
   const availableRuneTypes: RuneType[] = getRuneOrderForSize(gridSize);
@@ -131,6 +185,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
                 col={colIndex}
                 wallSize={gridSize}
                 availableRuneTypes={availableRuneTypes}
+                pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}
               />
             ))}
           </div>

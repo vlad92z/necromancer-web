@@ -15,6 +15,7 @@ interface WallCellProps {
   wallSize: number;
   // Rune types available for this wall size (ordered)
   availableRuneTypes: RuneType[];
+  pulseKey?: number;
 }
 
 // Calculate which rune type belongs in this cell based on Azul pattern
@@ -37,7 +38,7 @@ function getExpectedRuneType(
   return fallback[baseIndex];
 }
 
-export function WallCell({ cell, row, col, wallSize, availableRuneTypes }: WallCellProps) {
+export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKey }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col, wallSize, availableRuneTypes);
   
   // Convert WallCell to Rune format if occupied
@@ -63,6 +64,7 @@ export function WallCell({ cell, row, col, wallSize, availableRuneTypes }: WallC
         }}
         showEffect
         showTooltip
+        runePulseKey={pulseKey}
       />
     </div>
   );
