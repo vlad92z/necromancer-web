@@ -180,7 +180,7 @@ export function RuneCell({
     if (!showTooltip || !rune) {
       return null;
     }
-    return getRuneEffectDescription(rune.runeType, rune.effects);
+    return getRuneEffectDescription(rune.effects);
   }, [rune, showTooltip]);
   
   // Use occupied background for wall cells that have runes
