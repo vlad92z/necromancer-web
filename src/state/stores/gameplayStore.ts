@@ -16,6 +16,7 @@ import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
 import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
+import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 
 const SOLO_TARGET_INCREMENT = 50;
 
@@ -147,6 +148,18 @@ function handlePlayerDefeat(
 ): GameState {
   console.log('gameplayStore: handlePlayerDefeat');
   const nextLongestRun = Math.max(state.longestRun, state.game);
+
+  trackDefeatEvent({
+    gameNumber: state.game,
+    deck: updatedPlayer.deck,
+    runePowerTotal: state.runePowerTotal,
+    activeArtefacts: state.activeArtefacts,
+    cause: 'overload',
+    strain: state.strain,
+    health: updatedPlayer.health,
+    targetScore: state.soloTargetScore,
+  });
+
   return {
     ...state,
     player: updatedPlayer,
@@ -191,6 +204,18 @@ function prepareRoundReset(state: GameState): GameState {
     }
 
     const nextLongestRun = Math.max(state.longestRun, state.game);
+
+    trackDefeatEvent({
+      gameNumber: state.game,
+      deck: clearedPlayer.deck,
+      runePowerTotal: state.runePowerTotal,
+      activeArtefacts: state.activeArtefacts,
+      cause: 'deck-empty',
+      strain: state.strain,
+      health: clearedPlayer.health,
+      targetScore: state.soloTargetScore,
+    });
+
     return {
       ...state,
       player: clearedPlayer,
@@ -855,11 +880,22 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set(() => {
       const baseState = initializeSoloGame(config);
       const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
-      return {
+      const nextState = {
         ...baseState,
         gameStarted: true,
         activeArtefacts: selectedArtefacts,
       };
+
+      trackNewGameEvent({
+        gameNumber: nextState.game,
+        activeArtefacts: nextState.activeArtefacts,
+        deck: nextState.player.deck,
+        targetScore: nextState.soloTargetScore,
+        strain: nextState.strain,
+        startingHealth: nextState.startingHealth,
+      });
+
+      return nextState;
     });
   },
 
@@ -1070,7 +1106,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         }
       );
       console.log('gameplayStore: startNextSoloGame +1');
-      return {
+      const nextState = {
         ...nextGameState,
         game: nextGame,
         gameStarted: true,
@@ -1080,6 +1116,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         deckDraftReadyForNextGame: false,
         activeArtefacts: state.activeArtefacts,
       };
+
+      trackNewGameEvent({
+        gameNumber: nextState.game,
+        activeArtefacts: nextState.activeArtefacts,
+        deck: nextState.player.deck,
+        targetScore: nextState.soloTargetScore,
+        strain: nextState.strain,
+        startingHealth: nextState.startingHealth,
+      });
+
+      return nextState;
     });
   },
 });
