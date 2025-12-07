@@ -150,6 +150,7 @@ export interface GameState {
   strainMultiplier: number;
   soloStartingStrain: number; // Configured strain at the start of the run
   selectedRunes: Rune[]; // Runes currently selected by active player
+  overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   draftSource:
     | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
     | { type: 'center'; originalRunes: Rune[] }
