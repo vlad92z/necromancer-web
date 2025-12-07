@@ -8,6 +8,7 @@ import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
+import { OverloadOverlay } from './OverloadOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -51,6 +52,7 @@ export interface SoloVariantData {
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
+  onOpenOverloadOverlay: () => void;
   onStartNextGame: () => void;
 }
 
@@ -106,6 +108,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     strain,
     soloDeckTemplate,
     activeArtefacts,
+    overloadRunes,
   } = gameState;
   const currentGame = useGameplayStore((state) => state.game);
   const soloOutcome = gameState.soloOutcome;
@@ -134,6 +137,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
+  const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
   const [isMusicMuted, setIsMusicMuted] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -333,6 +337,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         isDeckDrafting,
         onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
         onOpenDeckOverlay: () => setShowDeckOverlay(true),
+        onOpenOverloadOverlay: () => setShowOverloadOverlay(true),
         onStartNextGame: startNextSoloGame,
       };
   const boardContent = renderContent(
@@ -403,6 +408,14 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           onClose={() => setShowDeckOverlay(false)}
           isDeckDrafting={isDeckDrafting}
           onDisenchantRune={disenchantRuneFromDeck}
+        />
+      )}
+
+      {showOverloadOverlay && (
+        <OverloadOverlay
+          overloadRunes={overloadRunes}
+          playerName={player.name}
+          onClose={() => setShowOverloadOverlay(false)}
         />
       )}
 

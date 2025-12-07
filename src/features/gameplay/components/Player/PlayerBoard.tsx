@@ -31,6 +31,7 @@ interface PlayerBoardProps {
   deckCount?: number;
   strain?: number;
   onOpenDeck?: () => void;
+  onOpenOverload?: () => void;
   activeArtefactIds: ArtefactId[];
 }
 
@@ -47,6 +48,7 @@ export function PlayerBoard({
   deckCount,
   strain,
   onOpenDeck,
+  onOpenOverload,
   activeArtefactIds,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
@@ -56,6 +58,16 @@ export function PlayerBoard({
   };
   const deckValue = deckCount ?? player.deck.length ?? 0;
   const fatigueValue = strain ?? 0;
+
+  const handleFatigueClick = () => {
+    if (canPlace && onPlaceRunesInFloor) {
+      // If runes are selected, overload them
+      onPlaceRunesInFloor();
+    } else if (!canPlace && onOpenOverload) {
+      // If no runes are selected, open the overload overlay
+      onOpenOverload();
+    }
+  };
 
   return (
     <div
@@ -94,7 +106,7 @@ export function PlayerBoard({
                     borderColor="rgba(96, 165, 250, 0.35)"
                     tooltip={`Overloading runes immediately deals ${fatigueValue} damage`}
                     image={overloadSvg}
-                    onClick={onPlaceRunesInFloor}
+                    onClick={handleFatigueClick}
                     canOverload={canPlace}
                   />
                 </div>

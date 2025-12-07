@@ -287,6 +287,7 @@ export function initializeSoloGame(
     turnPhase: 'draft',
     game: 1,
     selectedRunes: [],
+    overloadRunes: [],
     selectionTimestamp: null,
     draftSource: null,
     animatingRunes: [],
