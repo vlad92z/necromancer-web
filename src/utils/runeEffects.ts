@@ -106,7 +106,7 @@ export function hasEffectType(
   return effects.some((effect) => effect.type === type);
 }
 
-export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffects | null | undefined): string {
+export function getRuneEffectDescription(effects: RuneEffects | null | undefined): string {
   const resolvedEffects = effects ?? [];
   const effectLines = resolvedEffects.map(formatRuneEffect).filter(Boolean);
   const bulletList = effectLines.map((line) => `${line}`).join('\n');
