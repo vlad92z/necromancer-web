@@ -5,12 +5,12 @@
 import type { RuneEffect, RuneEffectRarity, RuneEffects, RuneType } from '../types/game';
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: [],//[{ type: 'Damage', amount: 1 }],
-  Frost:[],// [{ type: 'Healing', amount: 1 }],
-  Life: [],//[{ type: 'Healing', amount: 1 }],
-  Void: [],//[{ type: 'Damage', amount: 1 }],
-  Wind: [],//[{ type: 'Healing', amount: 1 }],
-  Lightning: [],//[{ type: 'Damage', amount: 1 }],
+  Fire: [],
+  Frost:[],
+  Life: [],
+  Void: [],
+  Wind: [],
+  Lightning: [],
 };
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -51,13 +51,13 @@ function formatRuneEffect(effect: RuneEffect): string {
     case 'Healing':
       return `+${effect.amount} healing`;
     case 'Synergy':
-      return `+${effect.amount} synergy with ${effect.synergyType}`;
+      return `+${effect.amount} damage for every ${effect.synergyType} rune`;
     case 'Fortune':
-      return `+${effect.amount} Fortune`;
+      return `+${effect.amount} Arcane Dust`;
     case 'Fragile':
-      return `+${effect.amount} fragile with ${effect.fragileType}`;
+      return `+${effect.amount} damage, negated by ${effect.fragileType}`;
     default:
-      return "Common Rune";
+      return "";
   }
 }
 
@@ -109,13 +109,8 @@ export function hasEffectType(
 export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffects | null | undefined): string {
   const resolvedEffects = effects ?? [];
   const effectLines = resolvedEffects.map(formatRuneEffect).filter(Boolean);
-
-  if (effectLines.length === 0) {
-    return `${runeType}`;
-  }
-
   const bulletList = effectLines.map((line) => `${line}`).join('\n');
-  return `${runeType}\n${bulletList}`;
+  return `${bulletList}`;
 }
 
 const RARITY_ORDER: RuneEffectRarity[] = ['uncommon', 'rare', 'epic'];
