@@ -72,7 +72,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             Draft runes to cast increeasingly powerful spells while surviving overload damage
           </p>
           <div className="flex flex-wrap gap-3">
-            {longestRun > 0 && (
+            {longestRun > 1 && (
               <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
                 <span className="text-[11px] text-sky-300">Longest Run</span>
                 <span className="text-lg font-extrabold text-slate-50">{longestRun}</span>

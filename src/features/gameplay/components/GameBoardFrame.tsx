@@ -365,8 +365,12 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
             <div className="text-sm font-extrabold text-white leading-tight">{currentGame}</div>
           </div>
           <div className="mt-2 flex items-center gap-3">
-            <img src={arcaneDustIcon} alt="Arcane Dust" className="h-6 w-6 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]" />
-            <div className="text-sm font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</div>
+            {arcaneDust > 0 && (
+              <>
+                <img src={arcaneDustIcon} alt="Arcane Dust" className="h-6 w-6 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]" />
+                <div className="text-sm font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</div>
+              </>
+            )}
           </div>
         </div>
       </div>
