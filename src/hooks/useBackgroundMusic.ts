@@ -208,7 +208,7 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
           }, waitMs);
         };
 
-        const beginLoop: EventListener = () => {
+        const beginLoop = () => {
           clearInteractionListeners();
           playAtIndex(0)
             .then(() => {
@@ -264,7 +264,7 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
     };
 
     if (isEnabled) {
-      const resumeAndStart: EventListener = () => {
+    const resumeAndStart = () => {
         clearInteractionListeners();
         void context.resume()
           .then(() => {
