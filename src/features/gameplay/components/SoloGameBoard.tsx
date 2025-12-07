@@ -29,6 +29,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     draftSource,
     animatingRuneIds,
     hiddenCenterRuneIds,
+    hintsEnabled,
     onRuneClick,
     onCenterRuneClick,
     onCancelSelection,
@@ -72,6 +73,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             onCancelSelection={onCancelSelection}
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}
+            hintsEnabled={hintsEnabled}
           />
         </div>
       </div>

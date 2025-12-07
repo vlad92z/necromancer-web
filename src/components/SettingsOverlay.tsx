@@ -9,8 +9,10 @@ interface SettingsOverlayProps {
   onClose: () => void;
   soundVolume: number;
   isMusicMuted: boolean;
+  hintsEnabled: boolean;
   onVolumeChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onToggleMusic: () => void;
+  onToggleHints: () => void;
   onQuitRun?: () => void;
   showQuitRun?: boolean;
   playClickSound?: () => void;
@@ -21,8 +23,10 @@ export function SettingsOverlay({
   onClose,
   soundVolume,
   isMusicMuted,
+  hintsEnabled,
   onVolumeChange,
   onToggleMusic,
+  onToggleHints,
   onQuitRun,
   showQuitRun = false,
   playClickSound,
@@ -43,6 +47,13 @@ export function SettingsOverlay({
       playClickSound();
     }
     onToggleMusic();
+  };
+
+  const handleToggleHints = () => {
+    if (playClickSound) {
+      playClickSound();
+    }
+    onToggleHints();
   };
 
   return (
@@ -112,6 +123,35 @@ export function SettingsOverlay({
                   aria-hidden={true}
                 />
                 {isMusicMuted ? 'Off' : 'On'}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Gameplay Settings */}
+        <section className="space-y-3">
+          <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Gameplay</div>
+          <div className="space-y-4 rounded-xl border border-slate-600/40 bg-slate-900/50 p-5">
+            {/* Hints Toggle */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold uppercase tracking-wide text-slate-300">Hints</span>
+              <button
+                type="button"
+                onClick={handleToggleHints}
+                aria-pressed={hintsEnabled}
+                className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 ${
+                  hintsEnabled
+                    ? 'bg-gradient-to-r from-sky-500/30 to-purple-700/50'
+                    : 'bg-gradient-to-r from-rose-400/30 to-rose-900/60'
+                }`}
+              >
+                <span
+                  className={`h-3 w-3 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.35)] ${
+                    hintsEnabled ? 'bg-emerald-400' : 'bg-rose-400'
+                  }`}
+                  aria-hidden={true}
+                />
+                {hintsEnabled ? 'On' : 'Off'}
               </button>
             </div>
           </div>

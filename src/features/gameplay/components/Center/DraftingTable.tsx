@@ -9,6 +9,7 @@ import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { Runeforge } from './Runeforge';
 import { CenterPool } from './CenterPool';
 import { RuneTypeTotals } from './RuneTypeTotals';
+import { HintBox } from '../../../../components/HintBox';
 
 interface DraftingTableProps {
   runeforges: RuneforgeType[];
@@ -24,6 +25,7 @@ interface DraftingTableProps {
   animatingRuneIds?: string[];
   hiddenCenterRuneIds?: Set<string>;
   hideOpponentRow?: boolean;
+  hintsEnabled?: boolean;
 }
 
 export function DraftingTable({ 
@@ -38,7 +40,8 @@ export function DraftingTable({
   draftSource,
   onCancelSelection,
   animatingRuneIds,
-  hiddenCenterRuneIds
+  hiddenCenterRuneIds,
+  hintsEnabled = false
 }: DraftingTableProps) {
   const hasAccessibleRuneforges = runeforges.some((forge) => forge.runes.length > 0);
   const canDraftFromCenter = !hasAccessibleRuneforges;
@@ -128,8 +131,26 @@ export function DraftingTable({
     }
   };
 
+  // Determine which hint to display
+  const getHintText = (): string | null => {
+    if (!hintsEnabled) return null;
+    
+    if (hasSelectedRunes) {
+      return "Pick a pattern line to place your runes. If you have selected too many, you will take Overload Damage.";
+    }
+    
+    if (canDraftFromCenter && centerPool.length > 0) {
+      return "You can pick runes from the center after all your Rune Forges are empty; all runes of that type will be selected";
+    }
+    
+    return "Select a rune; all runes of that type will be selected";
+  };
+
+  const hintText = getHintText();
+
   return (
     <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
+      {hintText && <HintBox text={hintText} />}
       {renderRuneforgeRow(player, runeforges, 'center', 'player')}
       {renderCenterSection()}
       <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />

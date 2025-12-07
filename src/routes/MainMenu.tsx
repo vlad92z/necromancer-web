@@ -15,6 +15,8 @@ export function MainMenu() {
   const setSoundVolume = useUIStore((state) => state.setSoundVolume)
   const isMusicMuted = useUIStore((state) => state.isMusicMuted)
   const setMusicMuted = useUIStore((state) => state.setMusicMuted)
+  const hintsEnabled = useUIStore((state) => state.hintsEnabled)
+  const setHintsEnabled = useUIStore((state) => state.setHintsEnabled)
   const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false
@@ -47,6 +49,10 @@ export function MainMenu() {
 
   const handleToggleMusic = () => {
     setMusicMuted(!isMusicMuted)
+  }
+
+  const handleToggleHints = () => {
+    setHintsEnabled(!hintsEnabled)
   }
 
   const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -97,8 +103,10 @@ export function MainMenu() {
             onClose={toggleSettingsOverlay}
             soundVolume={soundVolume}
             isMusicMuted={isMusicMuted}
+            hintsEnabled={hintsEnabled}
             onVolumeChange={handleVolumeChange}
             onToggleMusic={handleToggleMusic}
+            onToggleHints={handleToggleHints}
             showQuitRun={false}
             playClickSound={playClickSound}
           />

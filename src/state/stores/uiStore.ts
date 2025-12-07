@@ -14,6 +14,7 @@ interface UIStore {
   selectedRuneforgeId: string | null; // For runeforge overlay
   soundVolume: number;
   isMusicMuted: boolean;
+  hintsEnabled: boolean;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
@@ -24,6 +25,7 @@ interface UIStore {
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
   setMusicMuted: (muted: boolean) => void;
+  setHintsEnabled: (enabled: boolean) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -42,6 +44,14 @@ const getInitialMusicMuted = (): boolean => {
   return window.localStorage.getItem('musicMuted') === 'true';
 };
 
+const getInitialHintsEnabled = (): boolean => {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+  const stored = window.localStorage.getItem('hintsEnabled');
+  return stored === null ? true : stored === 'true';
+};
+
 export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
@@ -51,6 +61,7 @@ export const useUIStore = create<UIStore>((set) => ({
   selectedRuneforgeId: null,
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
+  hintsEnabled: getInitialHintsEnabled(),
   
   // Actions
   toggleRulesOverlay: () => {
@@ -95,6 +106,13 @@ export const useUIStore = create<UIStore>((set) => ({
     set({ isMusicMuted: muted });
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('musicMuted', muted ? 'true' : 'false');
+    }
+  },
+
+  setHintsEnabled: (enabled: boolean) => {
+    set({ hintsEnabled: enabled });
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('hintsEnabled', enabled ? 'true' : 'false');
     }
   },
 }));

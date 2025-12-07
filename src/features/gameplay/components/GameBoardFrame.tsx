@@ -82,6 +82,9 @@ export interface GameBoardSharedProps {
   animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
 
+  // UI settings
+  hintsEnabled: boolean;
+
   // Actions
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
@@ -134,6 +137,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
   const isMusicMuted = useUIStore((state) => state.isMusicMuted);
   const setMusicMuted = useUIStore((state) => state.setMusicMuted);
+  const hintsEnabled = useUIStore((state) => state.hintsEnabled);
+  const setHintsEnabled = useUIStore((state) => state.setHintsEnabled);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
   const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
@@ -209,6 +214,10 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
   const handleToggleMusic = () => {
     setMusicMuted(!isMusicMuted);
+  };
+
+  const handleToggleHints = () => {
+    setHintsEnabled(!hintsEnabled);
   };
 
   const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -308,6 +317,9 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     playerHiddenPatternSlots,
     animatingRuneIds,
     hiddenCenterRuneIds,
+
+    // UI settings
+    hintsEnabled,
 
     // Actions
     onRuneClick: handleRuneClick,
@@ -414,8 +426,10 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         onClose={toggleSettingsOverlay}
         soundVolume={soundVolume}
         isMusicMuted={isMusicMuted}
+        hintsEnabled={hintsEnabled}
         onVolumeChange={handleVolumeChange}
         onToggleMusic={handleToggleMusic}
+        onToggleHints={handleToggleHints}
         onQuitRun={returnToStartScreen}
         showQuitRun={true}
         playClickSound={playClickSound}
