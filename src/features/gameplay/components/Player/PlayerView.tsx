@@ -24,6 +24,7 @@ interface PlayerViewProps {
   deckCount?: number;
   strain?: number;
   onOpenDeck?: () => void;
+  onOpenOverload?: () => void;
   activeArtefactIds: ArtefactId[];
 }
 
@@ -42,6 +43,7 @@ export function PlayerView({
   deckCount,
   strain,
   onOpenDeck,
+  onOpenOverload,
   activeArtefactIds,
 }: PlayerViewProps) {
   return (
@@ -61,6 +63,7 @@ export function PlayerView({
         deckCount={deckCount}
         strain={strain}
         onOpenDeck={onOpenDeck}
+        onOpenOverload={onOpenOverload}
         activeArtefactIds={activeArtefactIds}
       />
     </div>

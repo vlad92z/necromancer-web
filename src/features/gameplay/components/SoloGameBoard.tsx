@@ -49,6 +49,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     isDeckDrafting,
     onSelectDeckDraftRuneforge,
     onOpenDeckOverlay,
+    onOpenOverloadOverlay,
     onStartNextGame,
   } = variantData;
 
@@ -92,6 +93,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             deckCount={soloStats?.deckCount}
             strain={soloStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}
+            onOpenOverload={onOpenOverloadOverlay}
             activeArtefactIds={activeArtefactIds}
           />
         </div>
