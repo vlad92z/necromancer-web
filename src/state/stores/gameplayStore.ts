@@ -664,6 +664,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       let totalDamage = 0;
       let totalHealing = 0;
+      let totalArcaneDust = 0;
 
       completedLines.forEach(({ line, index }) => {
         const runeType = line.runeType as RuneType;
@@ -688,6 +689,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         
         totalDamage += modifiedDamage;
         totalHealing += modifiedHealing;
+        totalArcaneDust += resolvedSegment.arcaneDust;
 
         if (state.soloPatternLineLock) {
           const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
@@ -704,6 +706,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (totalHealing > 0) {
         const maxHealth = currentPlayer.maxHealth ?? state.startingHealth;
         nextHealth = Math.min(maxHealth, nextHealth + totalHealing);
+      }
+
+      if (totalArcaneDust > 0) {
+        const newDustTotal = addArcaneDust(totalArcaneDust);
+        useArtefactStore.getState().updateArcaneDust(newDustTotal);
       }
 
       nextRunePowerTotal += totalDamage;
