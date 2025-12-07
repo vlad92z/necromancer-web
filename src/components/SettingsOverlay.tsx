@@ -13,6 +13,7 @@ interface SettingsOverlayProps {
   onToggleMusic: () => void;
   onQuitRun?: () => void;
   showQuitRun?: boolean;
+  playClickSound?: () => void;
 }
 
 export function SettingsOverlay({
@@ -24,15 +25,30 @@ export function SettingsOverlay({
   onToggleMusic,
   onQuitRun,
   showQuitRun = false,
+  playClickSound,
 }: SettingsOverlayProps): ReactElement | null {
   if (!isOpen) {
     return null;
   }
 
+  const handleClose = () => {
+    if (playClickSound) {
+      playClickSound();
+    }
+    onClose();
+  };
+
+  const handleToggleMusic = () => {
+    if (playClickSound) {
+      playClickSound();
+    }
+    onToggleMusic();
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="w-[min(600px,_94vw)] space-y-6 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)] relative"
@@ -41,7 +57,7 @@ export function SettingsOverlay({
         {/* Close Button - Top Right */}
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/80 text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
           aria-label="Close settings"
         >
@@ -81,7 +97,7 @@ export function SettingsOverlay({
               <span className="text-sm font-semibold uppercase tracking-wide text-slate-300">Music</span>
               <button
                 type="button"
-                onClick={onToggleMusic}
+                onClick={handleToggleMusic}
                 aria-pressed={isMusicMuted}
                 className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 ${
                   isMusicMuted

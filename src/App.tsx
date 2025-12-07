@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { MainMenu } from './routes/MainMenu'
 import { CampaignMap } from './routes/CampaignMap'
@@ -14,6 +15,34 @@ function App() {
   
   // Play background music everywhere
   useBackgroundMusic(!isMusicMuted, soundVolume)
+
+  // Attempt to resume audio context on first user interaction to enable autoplay
+  useEffect(() => {
+    const resumeAudioContext = async () => {
+      // Try to resume any suspended audio contexts
+      if (typeof window !== 'undefined' && window.AudioContext) {
+        const contexts = (window as any).__audioContexts as AudioContext[] | undefined
+        if (contexts) {
+          for (const context of contexts) {
+            if (context.state === 'suspended') {
+              await context.resume().catch(() => {})
+            }
+          }
+        }
+      }
+    }
+
+    const events = ['click', 'touchstart', 'keydown']
+    events.forEach(event => {
+      document.addEventListener(event, resumeAudioContext, { once: true })
+    })
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, resumeAudioContext)
+      })
+    }
+  }, [])
 
   return (
     <BrowserRouter>

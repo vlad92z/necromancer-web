@@ -14,6 +14,7 @@ import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
+import { useClickSound } from '../../../hooks/useClickSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
@@ -137,6 +138,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
   const playArcaneDust = useArcaneDustSound();
+  const playClickSound = useClickSound();
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
@@ -416,6 +418,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         onToggleMusic={handleToggleMusic}
         onQuitRun={returnToStartScreen}
         showQuitRun={true}
+        playClickSound={playClickSound}
       />
 
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />

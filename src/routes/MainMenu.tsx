@@ -71,6 +71,7 @@ export function MainMenu() {
         onVolumeChange={handleVolumeChange}
         onToggleMusic={handleToggleMusic}
         showQuitRun={false}
+        playClickSound={playClickSound}
       />
     </main>
   )
