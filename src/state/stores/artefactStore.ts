@@ -7,6 +7,7 @@ import type { ArtefactId } from '../../types/artefacts';
 import { ARTEFACTS, MAX_SELECTED_ARTEFACTS } from '../../types/artefacts';
 import { getOwnedArtefacts, saveOwnedArtefacts, getSelectedArtefacts, saveSelectedArtefacts } from '../../utils/artefactPersistence';
 import { getArcaneDust, saveArcaneDust } from '../../utils/arcaneDust';
+import { trackArtefactPurchaseEvent } from '../../utils/mixpanel';
 
 export interface ArtefactStore {
   ownedArtefactIds: ArtefactId[];
@@ -90,6 +91,8 @@ export const useArtefactStore = create<ArtefactStore>((set, get) => ({
       arcaneDust: newDust,
       ownedArtefactIds: updatedOwned,
     });
+
+    trackArtefactPurchaseEvent({ artefactId: id, remainingDust: newDust });
 
     return true;
   },
