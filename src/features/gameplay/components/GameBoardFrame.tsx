@@ -2,7 +2,7 @@
  * GameBoardFrame - shared logic and layout shell for the solo board
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import type { ReactElement } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
@@ -18,6 +18,9 @@ import { useUIStore } from '../../../state/stores/uiStore';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
+import { useArtefactStore } from '../../../state/stores/artefactStore';
+import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
+import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -126,6 +129,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
+  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const playArcaneDust = useArcaneDustSound();
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
@@ -186,6 +191,14 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           deckCount: player.deck.length,
         };
       })();
+
+  const prevArcaneDustRef = useRef<number>(arcaneDust);
+  useEffect(() => {
+    if (arcaneDust > prevArcaneDustRef.current) {
+      playArcaneDust();
+    }
+    prevArcaneDustRef.current = arcaneDust;
+  }, [arcaneDust, playArcaneDust]);
 
   const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
     console.log('rune clicked');
@@ -347,8 +360,14 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           Quit Run
         </button>
         <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Game</div>
-          <div className="text-2xl font-extrabold text-white leading-tight">{currentGame}</div>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Game</div>
+            <div className="text-sm font-extrabold text-white leading-tight">{currentGame}</div>
+          </div>
+          <div className="mt-2 flex items-center gap-3">
+            <img src={arcaneDustIcon} alt="Arcane Dust" className="h-6 w-6 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]" />
+            <div className="text-sm font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</div>
+          </div>
         </div>
       </div>
       <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
