@@ -15,11 +15,11 @@ const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 1, rarity: 'uncommon' }],
-  Frost: [{ type: 'Healing', amount: 1, rarity: 'uncommon' }],
+  Frost: [{ type: 'Fragile', amount: 2, fragileType: 'Fire', rarity: 'uncommon' }],
   Life: [{ type: 'Healing', amount: 1, rarity: 'uncommon' }],
-  Void: [{ type: 'Damage', amount: 1, rarity: 'uncommon' }],
-  Wind: [{ type: 'Healing', amount: 1, rarity: 'uncommon' }],
-  Lightning: [{ type: 'Damage', amount: 1, rarity: 'uncommon' }],
+  Void: [{ type: 'Synergy', amount: 1, synergyType: 'Void', rarity: 'uncommon' }],
+  Wind: [{ type: 'Fortune', amount: 1, rarity: 'uncommon' }],
+  Lightning: [{ type: 'Synergy', amount: 1, synergyType: 'Frost', rarity: 'uncommon' }],
 };
 
 const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -50,6 +50,12 @@ function formatRuneEffect(effect: RuneEffect): string {
       return `+${effect.amount} damage`;
     case 'Healing':
       return `+${effect.amount} healing`;
+    case 'Synergy':
+      return `+${effect.amount} synergy with ${effect.synergyType}`;
+    case 'Fortune':
+      return `+${effect.amount} Fortune`;
+    case 'Fragile':
+      return `+${effect.amount} fragile with ${effect.fragileType}`;
     default:
       return "Common Rune";
   }

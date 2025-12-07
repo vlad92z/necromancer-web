@@ -29,8 +29,8 @@
      inkscape:cy="367.43509"
      inkscape:window-width="1800"
      inkscape:window-height="940"
-     inkscape:window-x="3000"
-     inkscape:window-y="544"
+     inkscape:window-x="1121"
+     inkscape:window-y="401"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1" />
   <defs
@@ -39,11 +39,11 @@
        id="linearGradient6"
        inkscape:collect="always">
       <stop
-         style="stop-color:#004b8f;stop-opacity:1;"
+         style="stop-color:#23efff;stop-opacity:1;"
          offset="0"
          id="stop6" />
       <stop
-         style="stop-color:#0cf8ff;stop-opacity:0.30769235;"
+         style="stop-color:#00e5ec;stop-opacity:0.30769235;"
          offset="1"
          id="stop8" />
       <stop
