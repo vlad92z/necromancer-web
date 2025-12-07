@@ -8,7 +8,7 @@ import robePng from '../assets/artefacts/robe.png';
 import potionPng from '../assets/artefacts/potion.png';
 import rodPng from '../assets/artefacts/rod.png';
 
-export type ArtefactId = 'tome' | 'ring' | 'robe' | 'potion' | 'rod';
+export type ArtefactId = 'rod' | 'robe' | 'tome' | 'ring' | 'potion';
 
 export interface Artefact {
   id: ArtefactId;
@@ -26,6 +26,18 @@ export const MAX_SELECTED_ARTEFACTS = 5;
  * All available artefacts in the game
  */
 export const ARTEFACTS: Record<ArtefactId, Artefact> = {
+  rod: {
+    id: 'rod',
+    name: 'Rod of Retribution',
+    cost: 500,
+    image: rodPng,
+  },
+  robe: {
+    id: 'robe',
+    name: 'Weaver\'s Mantle',
+    cost: 1000,
+    image: robePng,
+  },
   tome: {
     id: 'tome',
     name: 'Primer of Solitude',
@@ -38,23 +50,11 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
     cost: 20000,
     image: ringPng,
   },
-  robe: {
-    id: 'robe',
-    name: 'Weaver\'s Mantle',
-    cost: 1000,
-    image: robePng,
-  },
   potion: {
     id: 'potion',
     name: 'Berserker Potion',
     cost: 50000,
     image: potionPng,
-  },
-  rod: {
-    id: 'rod',
-    name: 'Rod of Retribution',
-    cost: 500,
-    image: rodPng,
   },
 };
 
