@@ -100,6 +100,14 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 #### State Management
 - [ ] Split `gameplayStore.ts` into modular stores (gameplay, deck, campaign, player stats, matchmaking)
 
+#### Performance
+- [ ] In `routes/Solo.tsx`, stop subscribing to the entire gameplay store (use selector + `useShallow` or `useStoreWithEqualityFn`) before passing props into `GameBoardFrame` to avoid whole-board rerenders on every state change.
+- [ ] In `GameBoardFrame`, pass only the minimal slices needed by children (memoize derived props) to reduce prop churn and Framer Motion re-renders.
+- [ ] Refactor `useRunePlacementAnimations` to batch DOM reads/writes (single `requestAnimationFrame`, cached refs) instead of multiple `querySelector` + `getBoundingClientRect` calls in `useLayoutEffect`, which currently force repeated sync layout and can jank selections.
+- [ ] Trim always-on Framer Motion loops in `Runeforge` and `CenterPool` (glow + per-rune pulsing) and replace with cheap CSS transitions that only run when actually selectable/hovered.
+- [ ] Cache scoring overlay calculations in `ScoringWall` (only recompute affected rows/cells) instead of walking the entire wall and rebuilding edge maps every render.
+- [ ] Avoid recalculating rune effect data during animations (e.g., `RuneAnimation` recreates runes with `getRuneEffectsForType` per frame); pass real rune objects or precomputed effects.
+
 ## Architecture Decision Records
 
 See `Agents.md` for detailed AI agent workflows and coding standards.
