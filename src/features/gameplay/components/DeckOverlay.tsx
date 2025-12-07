@@ -2,7 +2,7 @@
  * DeckOverlay component - displays player's remaining deck runes in a grid
  */
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Rune, RuneEffectRarity, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
@@ -28,6 +28,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   const dustGainKeyRef = useRef(0);
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
   const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
+  const selectionControls = useAnimation();
   const completeDeck = fullDeck && fullDeck.length > 0 ? fullDeck : deck;
   const deckForTotals = isDeckDrafting ? completeDeck : deck;
   // Group runes by type for ordering and totals
@@ -106,6 +107,21 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
       window.clearTimeout(timeout);
     };
   }, [dustGain]);
+
+  useEffect(() => {
+    if (selectedRuneIds.length === 0) {
+      selectionControls.stop();
+      selectionControls.set({ scale: 1, y: 0, rotate: 0 });
+      return;
+    }
+
+    selectionControls.start({
+      scale: [1.04, 1.08, 1.04],
+      y: [-1, 1, -1],
+      rotate: [-1.5, 1.5, -1.5],
+      transition: { duration: 2, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' },
+    });
+  }, [selectedRuneIds.length, selectionControls]);
 
   const toggleRuneSelection = (runeId: string) => {
     if (!canSelectRunes) {
@@ -215,8 +231,8 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                   {sortedRunes.map(({ rune, isDrafted, isSelected }, index) => {
                     const selectionMotionProps = isSelected
                       ? {
-                          animate: { scale: [1.08, 1.16, 1.08], y: [-1.5, 1.5, -1.5], rotate: [-1.8, 1.8, -1.8] },
-                          transition: { duration: 1, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const },
+                          animate: selectionControls,
+                          initial: { scale: 1, y: 0, rotate: 0 },
                         }
                       : {
                           animate: { scale: 1, y: 0, rotate: 0 },
