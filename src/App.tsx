@@ -5,8 +5,16 @@ import { DeckBuilder } from './routes/DeckBuilder'
 import { PostMatchRewards } from './routes/PostMatchRewards'
 import { Matchmaking } from './routes/Matchmaking'
 import { Solo } from './routes/Solo'
+import { useBackgroundMusic } from './hooks/useBackgroundMusic'
+import { useUIStore } from './state/stores/uiStore'
 
 function App() {
+  const isMusicMuted = useUIStore((state) => state.isMusicMuted)
+  const soundVolume = useUIStore((state) => state.soundVolume)
+  
+  // Play background music everywhere
+  useBackgroundMusic(!isMusicMuted, soundVolume)
+
   return (
     <BrowserRouter>
       <Routes>

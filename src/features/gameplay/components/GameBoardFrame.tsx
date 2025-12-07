@@ -12,9 +12,8 @@ import { OverloadOverlay } from './OverloadOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
-import { VolumeControl } from '../../../components/VolumeControl';
+import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
-import { useBackgroundMusic } from '../../../hooks/useBackgroundMusic';
 import { useUIStore } from '../../../state/stores/uiStore';
 import type { SoloStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
@@ -132,18 +131,16 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
+  const isMusicMuted = useUIStore((state) => state.isMusicMuted);
+  const setMusicMuted = useUIStore((state) => state.setMusicMuted);
+  const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
+  const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
   const playArcaneDust = useArcaneDustSound();
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
-  const [isMusicMuted, setIsMusicMuted] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return window.localStorage.getItem('musicMuted') === 'true';
-  });
   const isDraftPhase = turnPhase === 'draft';
   const isDeckDrafting = turnPhase === 'deck-draft';
   const isGameOver = turnPhase === 'game-over';
@@ -168,14 +165,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   });
   
   useRunePlacementSounds([player], activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
-  useBackgroundMusic(!isMusicMuted, soundVolume);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    window.localStorage.setItem('musicMuted', isMusicMuted ? 'true' : 'false');
-  }, [isMusicMuted]);
 
   const soloRuneScore = {
         currentScore: runePowerTotal,
@@ -217,7 +206,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const playerLockedLines = lockedPatternLines[player.id];
 
   const handleToggleMusic = () => {
-    setIsMusicMuted((prev) => !prev);
+    setMusicMuted(!isMusicMuted);
   };
 
   const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -357,13 +346,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         >
           Instant Win
         </button>
-        <button
-          type="button"
-          onClick={returnToStartScreen}
-          className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-        >
-          Quit Run
-        </button>
         <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
           <div className="mt-2 flex items-center gap-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Game</div>
@@ -379,8 +361,14 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           </div>
         </div>
       </div>
-      <div className="absolute top-4 right-4 w-full flex justify-end pointer-events-none z-30">
-        <VolumeControl soundVolume={soundVolume} onVolumeChange={handleVolumeChange} isMusicMuted={isMusicMuted} onToggleMusic={handleToggleMusic} />
+      <div className="absolute top-4 right-4 z-30">
+        <button
+          type="button"
+          onClick={toggleSettingsOverlay}
+          className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+        >
+          ⚙ Settings
+        </button>
       </div>
 
       <div className="relative" style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px` }}>
@@ -418,6 +406,17 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           onClose={() => setShowOverloadOverlay(false)}
         />
       )}
+
+      <SettingsOverlay
+        isOpen={showSettingsOverlay}
+        onClose={toggleSettingsOverlay}
+        soundVolume={soundVolume}
+        isMusicMuted={isMusicMuted}
+        onVolumeChange={handleVolumeChange}
+        onToggleMusic={handleToggleMusic}
+        onQuitRun={returnToStartScreen}
+        showQuitRun={true}
+      />
 
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
       <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
