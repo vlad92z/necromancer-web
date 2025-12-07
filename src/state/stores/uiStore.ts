@@ -10,16 +10,20 @@ interface UIStore {
   showRulesOverlay: boolean;
   showDeckOverlay: boolean;
   showRuneforgeOverlay: boolean;
+  showSettingsOverlay: boolean;
   selectedRuneforgeId: string | null; // For runeforge overlay
   soundVolume: number;
+  isMusicMuted: boolean;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
   toggleDeckOverlay: () => void;
   openRuneforgeOverlay: (runeforgeId: string) => void;
   closeRuneforgeOverlay: () => void;
+  toggleSettingsOverlay: () => void;
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
+  setMusicMuted: (muted: boolean) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -31,13 +35,22 @@ const getInitialVolume = (): number => {
   return normalized;
 };
 
+const getInitialMusicMuted = (): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  return window.localStorage.getItem('musicMuted') === 'true';
+};
+
 export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
   showDeckOverlay: false,
   showRuneforgeOverlay: false,
+  showSettingsOverlay: false,
   selectedRuneforgeId: null,
   soundVolume: getInitialVolume(),
+  isMusicMuted: getInitialMusicMuted(),
   
   // Actions
   toggleRulesOverlay: () => {
@@ -56,11 +69,16 @@ export const useUIStore = create<UIStore>((set) => ({
     set({ showRuneforgeOverlay: false, selectedRuneforgeId: null });
   },
   
+  toggleSettingsOverlay: () => {
+    set((state) => ({ showSettingsOverlay: !state.showSettingsOverlay }));
+  },
+  
   closeAllOverlays: () => {
     set({
       showRulesOverlay: false,
       showDeckOverlay: false,
       showRuneforgeOverlay: false,
+      showSettingsOverlay: false,
       selectedRuneforgeId: null,
     });
   },
@@ -70,6 +88,13 @@ export const useUIStore = create<UIStore>((set) => ({
     set({ soundVolume: clamped });
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('soundVolume', clamped.toString());
+    }
+  },
+
+  setMusicMuted: (muted: boolean) => {
+    set({ isMusicMuted: muted });
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('musicMuted', muted ? 'true' : 'false');
     }
   },
 }));
