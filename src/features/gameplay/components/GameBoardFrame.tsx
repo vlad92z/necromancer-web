@@ -366,7 +366,10 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       <div className="absolute top-4 right-4 z-30">
         <button
           type="button"
-          onClick={toggleSettingsOverlay}
+          onClick={() => {
+            playClickSound();
+            toggleSettingsOverlay();
+          }}
           className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
         >
           ⚙ Settings

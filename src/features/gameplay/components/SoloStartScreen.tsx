@@ -59,7 +59,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
         <div className="flex items-center justify-between gap-4">
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => {
+              playClick();
+              navigate('/');
+            }}
             className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
           >
             ← Back
@@ -94,7 +97,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Artefacts</div>
             <button
               type="button"
-              onClick={() => setShowArtefactsModal(true)}
+              onClick={() => {
+                playClick();
+                setShowArtefactsModal(true);
+              }}
               className="rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
             >
               Manage
