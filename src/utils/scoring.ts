@@ -15,6 +15,7 @@ export function getRuneOrderForSize(wallSize: number): RuneType[] {
 export interface SegmentCell {
   row: number;
   col: number;
+  runeType: RuneType | null;
   effects: RuneEffects | null;
 }
 
@@ -52,7 +53,7 @@ export function collectSegmentCells(
     }
 
     visited[r][c] = true;
-    cells.push({ row: r, col: c, effects: wall[r][c].effects });
+    cells.push({ row: r, col: c, runeType: wall[r][c].runeType, effects: wall[r][c].effects });
 
     stack.push([r - 1, c]);
     stack.push([r + 1, c]);
@@ -86,7 +87,7 @@ function collectLineSegmentCells(
   const addCell = (r: number, c: number) => {
     const key = `${r}-${c}`;
     if (!cellsByKey.has(key)) {
-      cellsByKey.set(key, { row: r, col: c, effects: wall[r][c].effects });
+      cellsByKey.set(key, { row: r, col: c, runeType: wall[r][c].runeType, effects: wall[r][c].effects });
     }
   };
 
@@ -129,6 +130,7 @@ export interface ResolvedSegment {
   segmentSize: number;
   damage: number;
   healing: number;
+  arcaneDust: number;
   orderedCells: SegmentCell[];
 }
 
@@ -151,7 +153,7 @@ export function resolveSegmentFromCells(
   effectCells?: SegmentCell[]
 ): ResolvedSegment {
   if (connectedCells.length === 0) {
-    return { segmentSize: 0, damage: 0, healing: 0, orderedCells: [] };
+    return { segmentSize: 0, damage: 0, healing: 0, arcaneDust: 0, orderedCells: [] };
   }
 
   // Effects resolve along the scored line (row + column) to avoid pulling in
@@ -161,21 +163,36 @@ export function resolveSegmentFromCells(
   );
   let damage = Math.max(1, connectedCells.length);
   let healing = 0;
+  let arcaneDust = 0;
+
+  // Count runes by type for Synergy and Fragile effects
+  const runeTypeCounts = new Map<RuneType, number>();
+  connectedCells.forEach((cell) => {
+    if (cell.runeType) {
+      runeTypeCounts.set(cell.runeType, (runeTypeCounts.get(cell.runeType) ?? 0) + 1);
+    }
+  });
 
   connectedCells.forEach((cell) => {
     const effects = cell.effects ?? [];
     effects.forEach((effect) => {
       if (effect.type === 'Damage') {
         damage += effect.amount;
-      }
-    });
-  });
-
-  connectedCells.forEach((cell) => {
-    const effects = cell.effects ?? [];
-    effects.forEach((effect) => {
-      if (effect.type === 'Healing') {
+      } else if (effect.type === 'Healing') {
         healing += effect.amount;
+      } else if (effect.type === 'Synergy') {
+        // Add amount to damage for each synergyType rune in the segment
+        const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
+        damage += effect.amount * synergyCount;
+      } else if (effect.type === 'Fortune') {
+        // Add amount to arcane dust
+        arcaneDust += effect.amount;
+      } else if (effect.type === 'Fragile') {
+        // Add amount to damage if the segment has no fragileType runes
+        const fragileTypeCount = runeTypeCounts.get(effect.fragileType) ?? 0;
+        if (fragileTypeCount === 0) {
+          damage += effect.amount;
+        }
       }
     });
   });
@@ -184,6 +201,7 @@ export function resolveSegmentFromCells(
     segmentSize: connectedCells.length,
     damage,
     healing,
+    arcaneDust,
     orderedCells: orderedEffectCells,
   };
 }
