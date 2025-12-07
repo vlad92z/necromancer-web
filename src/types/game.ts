@@ -17,6 +17,9 @@ export type RuneEffectRarity = 'uncommon' | 'rare' | 'epic';
 export type RuneEffect =
   | { type: 'Damage'; amount: number; rarity: RuneEffectRarity }
   | { type: 'Healing'; amount: number; rarity: RuneEffectRarity }
+  | { type: 'Synergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
+  | { type: 'Fortune'; amount: number; rarity: RuneEffectRarity }
+  | { type: 'Fragile'; amount: number; fragileType: RuneType; rarity: RuneEffectRarity }
 
 export type RuneEffects = RuneEffect[];
 
