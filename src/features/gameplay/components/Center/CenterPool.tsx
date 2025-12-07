@@ -34,6 +34,7 @@ export function CenterPool({
 }: CenterPoolProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const [hoveredVoidRuneId, setHoveredVoidRuneId] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const selectedRuneIdSet = selectionFromCenter ? new Set(selectedRunes.map((rune) => rune.id)) : null;
   const baseDisplayRunes =
     selectionFromCenter && displayRunesOverride && displayRunesOverride.length > 0
@@ -60,14 +61,10 @@ export function CenterPool({
   const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
   const isCenterSelectable = !selectionFromCenter && !centerDisabled && totalRunes > 0 && Boolean(onRuneClick);
   const baseBoxShadow = '0 25px 45px rgba(2, 6, 23, 0.6)';
-  const containerBoxShadow = isCenterSelectable ? selectableGlowRest : baseBoxShadow;
+  const containerBoxShadow = isCenterSelectable
+    ? (isHovered ? selectableGlowPeak : selectableGlowRest)
+    : baseBoxShadow;
   const containerBorder = isCenterSelectable ? '1px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.08)';
-  const containerMotionProps = isCenterSelectable
-    ? {
-        animate: { boxShadow: [selectableGlowRest, selectableGlowPeak] },
-        transition: { duration: 1.5, repeat: Infinity, repeatType: 'reverse' as const, ease: 'easeInOut' as const }
-      }
-    : {};
   
   const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
     e.stopPropagation();
@@ -83,42 +80,62 @@ export function CenterPool({
   
   return (
     <div style={{ width: '100%', display: 'flex', justifyContent: 'center', pointerEvents: totalRunes === 0 ? 'none' : 'auto' }}>
-        <motion.div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-          justifyItems: 'center',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '14px 16px',
-          borderRadius: '24px',
-          background: totalRunes === 0 ? 'transparent' : 'rgba(12, 6, 29, 0.85)',
-          border: totalRunes === 0 ? 'none' : containerBorder,
-          boxShadow: totalRunes === 0 ? 'none' : containerBoxShadow,
-          minWidth: 'min(340px, 90%)',
-          maxWidth: '520px',
-          width: '100%',
-        }} {...containerMotionProps}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+            justifyItems: 'center',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '14px 16px',
+            borderRadius: '24px',
+            background: totalRunes === 0 ? 'transparent' : 'rgba(12, 6, 29, 0.85)',
+            border: totalRunes === 0 ? 'none' : containerBorder,
+            boxShadow: totalRunes === 0 ? 'none' : containerBoxShadow,
+            minWidth: 'min(340px, 90%)',
+            maxWidth: '520px',
+            width: '100%',
+            transition: 'box-shadow 200ms ease, border-color 160ms ease'
+          }}
+          onMouseEnter={() => {
+            if (!isCenterSelectable) {
+              return;
+            }
+            setIsHovered(true);
+          }}
+          onMouseLeave={() => {
+            setIsHovered(false);
+          }}
+        >
           {displayRunes.map(({ rune, isSelected }) => {
             const highlightByType = hoveredRuneType === rune.runeType && !isSelected;
             const highlightByVoidSelection = hoveredVoidRuneId === rune.id;
             const isHighlighted = highlightByType || highlightByVoidSelection;
             const isAnimatingRune = animatingRuneIds?.has(rune.id) ?? false;
             const isHiddenRune = hiddenRuneIds?.has(rune.id) ?? false;
-            const glowStyle = isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none';
             const runeSize = 60;
             const isDisabledRune = (centerDisabled && !isSelected);
             const baseOpacity = isDisabledRune ? 0.5 : 1;
             const shouldHideRune = isAnimatingRune || isHiddenRune;
             const opacity = shouldHideRune ? 0 : baseOpacity;
-            const motionProps = isSelected
+            const transform = isSelected
+              ? 'translateY(-1.5px) scale(1.07)'
+              : isHighlighted
+                ? 'scale(1.05)'
+                : 'scale(1)';
+            const shadow = isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none';
+            const filter = isSelected ? 'brightness(1.12)' : isHighlighted ? 'brightness(1.06)' : 'none';
+
+            const selectedAnimation = isSelected
               ? {
-                  animate: { scale: [1.08, 1.16, 1.08], y: [-1.5, 1.5, -1.5], rotate: [-1.8, 1.8, -1.8] },
-                  transition: { duration: 1, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+                  scale: [1.08, 1.16, 1.08],
+                  y: [-1.5, 1.5, -1.5],
+                  rotate: [-1.8, 1.8, -1.8]
                 }
-              : {
-                  animate: { scale: isHighlighted ? 1.08 : 1, y: 0, rotate: 0 },
-                  transition: { duration: 0.2 }
-                };
+              : undefined;
+            const selectedTransition = isSelected
+              ? { duration: 2, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+              : undefined;
 
             return (
               <motion.div
@@ -134,13 +151,18 @@ export function CenterPool({
                   justifyContent: 'center',
                   cursor: isSelected || !centerDisabled ? 'pointer' : 'not-allowed',
                   opacity,
-                  boxShadow: glowStyle,
+                  boxShadow: shadow,
                   borderRadius: '50%',
                   backgroundColor: 'rgba(9, 4, 30, 0.82)',
                   pointerEvents: shouldHideRune
                     ? 'none'
-                    : (isSelected ? 'auto' : (centerDisabled ? 'none' : 'auto'))
+                    : (isSelected ? 'auto' : (centerDisabled ? 'none' : 'auto')),
+                  transform,
+                  filter,
+                  transition: 'transform 160ms ease, filter 160ms ease, box-shadow 180ms ease, opacity 160ms ease'
                 }}
+                animate={selectedAnimation}
+                transition={selectedTransition}
                 onClick={(e) => handleRuneClick(e, rune)}
                 onMouseEnter={() => {
                   if (!canHighlightRunes({ isSelected })) {
@@ -153,7 +175,6 @@ export function CenterPool({
                   setHoveredRuneType(null);
                   setHoveredVoidRuneId(null);
                 }}
-                {...motionProps}
               >
                 <RuneCell
                   rune={rune}
@@ -165,7 +186,7 @@ export function CenterPool({
               </motion.div>
             );
           })}
-        </motion.div>
+        </div>
       
     </div>
   );

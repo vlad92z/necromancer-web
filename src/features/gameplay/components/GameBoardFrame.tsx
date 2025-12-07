@@ -2,7 +2,7 @@
  * GameBoardFrame - shared logic and layout shell for the solo board
  */
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import type { ReactElement } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
@@ -168,24 +168,23 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   
   useRunePlacementSounds([player], activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
 
-  const soloRuneScore = {
-        currentScore: runePowerTotal,
-        targetScore: soloTargetScore,
-      };
+  const soloRuneScore = useMemo(
+    () => ({
+      currentScore: runePowerTotal,
+      targetScore: soloTargetScore,
+    }),
+    [runePowerTotal, soloTargetScore],
+  );
 
-  const soloStats = (() => {
-        // const strainMitigation = player.wall
-        //   .flat()
-          // .reduce((total, cell) => total + getEffectValue(cell.effects, 'StrainMitigation'), 0);
-        const overloadMultiplier = strain;//applyStressMitigation(strain, strainMitigation);
-
-        return {
-          isActive: true,
-          overloadMultiplier,
-          game: currentGame,
-          deckCount: player.deck.length,
-        };
-      })();
+  const soloStats = useMemo(
+    () => ({
+      isActive: true,
+      overloadMultiplier: strain,
+      game: currentGame,
+      deckCount: player.deck.length,
+    }),
+    [currentGame, player.deck.length, strain],
+  );
 
   const prevArcaneDustRef = useRef<number>(arcaneDust);
   useEffect(() => {
@@ -195,50 +194,74 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     prevArcaneDustRef.current = arcaneDust;
   }, [arcaneDust, playArcaneDust]);
 
-  const handleRuneClick = (runeforgeId: string, runeType: RuneType, runeId: string) => {
-    console.log('rune clicked');
-    draftRune(runeforgeId, runeType, runeId);
-  };
+  const handleRuneClick = useCallback(
+    (runeforgeId: string, runeType: RuneType, runeId: string) => {
+      draftRune(runeforgeId, runeType, runeId);
+    },
+    [draftRune],
+  );
 
-  const handleCenterRuneClick = (runeType: RuneType, runeId: string) => {
-    draftFromCenter(runeType, runeId);
-  };
+  const handleCenterRuneClick = useCallback(
+    (runeType: RuneType, runeId: string) => {
+      draftFromCenter(runeType, runeId);
+    },
+    [draftFromCenter],
+  );
 
-  const playerHiddenPatternSlots = hiddenPatternSlots[player.id];
-  const playerLockedLines = lockedPatternLines[player.id];
+  const playerHiddenPatternSlots = useMemo(
+    () => hiddenPatternSlots[player.id],
+    [hiddenPatternSlots, player.id],
+  );
+  const playerLockedLines = useMemo(() => lockedPatternLines[player.id], [lockedPatternLines, player.id]);
 
-  const handleToggleMusic = () => {
+  const handleToggleMusic = useCallback(() => {
     setMusicMuted(!isMusicMuted);
-  };
+  }, [isMusicMuted, setMusicMuted]);
 
-  const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = Number.parseFloat(event.currentTarget.value);
-    if (!Number.isFinite(nextValue)) {
-      return;
-    }
-    setSoundVolume(nextValue / 100);
-  };
+  const handleVolumeChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const nextValue = Number.parseFloat(event.currentTarget.value);
+      if (!Number.isFinite(nextValue)) {
+        return;
+      }
+      setSoundVolume(nextValue / 100);
+    },
+    [setSoundVolume],
+  );
 
-  const handleCancelSelection = () => {
+  const handleCancelSelection = useCallback(() => {
     if (isAnimatingPlacement) {
       return;
     }
     cancelSelection();
-  };
+  }, [cancelSelection, isAnimatingPlacement]);
 
-  const handlePlaceRunesInFloorWrapper = () => {
+  const handlePlaceRunesInFloorWrapper = useCallback(() => {
     if (isAnimatingPlacement) {
       return;
     }
     placeRunesInFloor();
-  };
+  }, [isAnimatingPlacement, placeRunesInFloor]);
 
-  const handlePatternLinePlacement = (patternLineIndex: number) => {
-    if (isAnimatingPlacement) {
-      return;
-    }
-    placeRunes(patternLineIndex);
-  };
+  const handlePatternLinePlacement = useCallback(
+    (patternLineIndex: number) => {
+      if (isAnimatingPlacement) {
+        return;
+      }
+      placeRunes(patternLineIndex);
+    },
+    [isAnimatingPlacement, placeRunes],
+  );
+
+  const handleOpenDeckOverlay = useCallback(() => setShowDeckOverlay(true), []);
+  const handleCloseDeckOverlay = useCallback(() => setShowDeckOverlay(false), []);
+  const handleOpenOverloadOverlay = useCallback(() => setShowOverloadOverlay(true), []);
+  const handleCloseOverloadOverlay = useCallback(() => setShowOverloadOverlay(false), []);
+
+  const handleOpenSettings = useCallback(() => {
+    playClickSound();
+    toggleSettingsOverlay();
+  }, [playClickSound, toggleSettingsOverlay]);
 
   useEffect(() => {
     if (shouldTriggerEndRound) {
@@ -283,58 +306,89 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
 
   const scaledBoardWidth = BOARD_BASE_WIDTH * boardScale;
   const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
-  const sharedProps: GameBoardSharedProps = {
-    // Core context
-    player,
-    currentPlayerIndex: 0,
-    currentPlayerId: player.id,
-    game: currentGame,
-    isDraftPhase,
-    isGameOver,
-    activeArtefactIds: activeArtefacts,
-
-    // Selection state
-    selectedRuneType,
-    selectedRunes,
-    hasSelectedRunes,
-    draftSource,
-
-    // Board data
-    runeforges,
-    centerPool,
-
-    // Locks and visibility
-    playerLockedLines,
-    playerHiddenPatternSlots,
-    animatingRuneIds,
-    hiddenCenterRuneIds,
-
-    // Actions
-    onRuneClick: handleRuneClick,
-    onCenterRuneClick: handleCenterRuneClick,
-    onCancelSelection: handleCancelSelection,
-    onPlaceRunes: handlePatternLinePlacement,
-    onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
-    returnToStartScreen,
-  };
-  const variantData: SoloVariantData = {
-        soloOutcome,
-        soloRuneScore,
-        soloStats,
-        soloTargetScore,
-        runePowerTotal,
-      arcaneDustReward: getArcaneDustReward(currentGame),
-        deckDraftState: gameState.deckDraftState,
-        isDeckDrafting,
-        onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
-        onOpenDeckOverlay: () => setShowDeckOverlay(true),
-        onOpenOverloadOverlay: () => setShowOverloadOverlay(true),
-        onStartNextGame: startNextSoloGame,
-      };
-  const boardContent = renderContent(
-    sharedProps,
-    variantData,
+  const sharedProps: GameBoardSharedProps = useMemo(
+    () => ({
+      player,
+      currentPlayerIndex: 0,
+      currentPlayerId: player.id,
+      game: currentGame,
+      isDraftPhase,
+      isGameOver,
+      activeArtefactIds: activeArtefacts,
+      selectedRuneType,
+      selectedRunes,
+      hasSelectedRunes,
+      draftSource,
+      runeforges,
+      centerPool,
+      playerLockedLines,
+      playerHiddenPatternSlots,
+      animatingRuneIds,
+      hiddenCenterRuneIds,
+      onRuneClick: handleRuneClick,
+      onCenterRuneClick: handleCenterRuneClick,
+      onCancelSelection: handleCancelSelection,
+      onPlaceRunes: handlePatternLinePlacement,
+      onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
+      returnToStartScreen,
+    }),
+    [
+      activeArtefacts,
+      animatingRuneIds,
+      centerPool,
+      currentGame,
+      draftSource,
+      handleCancelSelection,
+      handleCenterRuneClick,
+      handlePatternLinePlacement,
+      handlePlaceRunesInFloorWrapper,
+      handleRuneClick,
+      hasSelectedRunes,
+      hiddenCenterRuneIds,
+      isDraftPhase,
+      isGameOver,
+      player,
+      playerHiddenPatternSlots,
+      playerLockedLines,
+      returnToStartScreen,
+      runeforges,
+      selectedRuneType,
+      selectedRunes,
+    ],
   );
+
+  const variantData: SoloVariantData = useMemo(
+    () => ({
+      soloOutcome,
+      soloRuneScore,
+      soloStats,
+      soloTargetScore,
+      runePowerTotal,
+      arcaneDustReward: getArcaneDustReward(currentGame),
+      deckDraftState: gameState.deckDraftState,
+      isDeckDrafting,
+      onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
+      onOpenDeckOverlay: handleOpenDeckOverlay,
+      onOpenOverloadOverlay: handleOpenOverloadOverlay,
+      onStartNextGame: startNextSoloGame,
+    }),
+    [
+      currentGame,
+      gameState.deckDraftState,
+      handleOpenDeckOverlay,
+      handleOpenOverloadOverlay,
+      isDeckDrafting,
+      runePowerTotal,
+      selectDeckDraftRuneforge,
+      soloOutcome,
+      soloRuneScore,
+      soloStats,
+      soloTargetScore,
+      startNextSoloGame,
+    ],
+  );
+
+  const boardContent = useMemo(() => renderContent(sharedProps, variantData), [renderContent, sharedProps, variantData]);
 
   return (
     <div
@@ -366,7 +420,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       <div className="absolute top-4 right-4 z-30">
         <button
           type="button"
-          onClick={toggleSettingsOverlay}
+          onClick={handleOpenSettings}
           className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
         >
           ⚙ Settings
@@ -395,7 +449,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           deck={player.deck}
           fullDeck={fullDeck}
           playerName={player.name}
-          onClose={() => setShowDeckOverlay(false)}
+          onClose={handleCloseDeckOverlay}
           isDeckDrafting={isDeckDrafting}
           onDisenchantRune={disenchantRuneFromDeck}
         />
@@ -405,7 +459,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         <OverloadOverlay
           overloadRunes={overloadRunes}
           playerName={player.name}
-          onClose={() => setShowOverloadOverlay(false)}
+          onClose={handleCloseOverloadOverlay}
         />
       )}
 

@@ -1,7 +1,7 @@
 /**
  * useRunePlacementAnimations - manages rune placement overlay animations and temporary hides
  */
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AnimatingRune, GameState, Rune } from '../types/game';
 
 interface SelectionSnapshot {
@@ -49,6 +49,8 @@ export function useRunePlacementAnimations({
   const runeforgeAnimationMetaRef = useRef<{ runeIds: string[] } | null>(null);
   const lastRuneforgeAnimationKeyRef = useRef<string | null>(null);
   const runeforgeAnimationSnapshotRef = useRef<RuneforgeAnimationSnapshot | null>(null);
+  const selectionMeasurementRafRef = useRef<number | undefined>(undefined);
+  const runeforgeMeasurementRafRef = useRef<number | undefined>(undefined);
 
   const isAnimatingPlacement = animatingRunes.length > 0;
   const activeAnimatingRunes = useMemo(
@@ -133,37 +135,43 @@ export function useRunePlacementAnimations({
     });
   }, []);
 
-  const captureSelectedRunePositions = (runes: Rune[]): Map<string, { startX: number; startY: number }> => {
+  const captureSelectedRunePositions = useCallback((runes: Rune[]): Map<string, { startX: number; startY: number }> => {
     const positions = new Map<string, { startX: number; startY: number }>();
-    if (typeof document === 'undefined') {
+    if (typeof document === 'undefined' || runes.length === 0) {
       return positions;
     }
-    runes.forEach((rune) => {
-      const runeElement = document.querySelector<HTMLElement>(`[data-selected-rune="true"][data-rune-id="${rune.id}"]`);
-      if (!runeElement) {
+
+    const runeIdSet = new Set(runes.map((rune) => rune.id));
+    const elements = document.querySelectorAll<HTMLElement>('[data-selected-rune="true"][data-rune-id]');
+    elements.forEach((element) => {
+      const runeId = element.dataset.runeId;
+      if (!runeId || !runeIdSet.has(runeId)) {
         return;
       }
-      const rect = runeElement.getBoundingClientRect();
-      positions.set(rune.id, {
+      const rect = element.getBoundingClientRect();
+      positions.set(runeId, {
         startX: rect.left + rect.width / 2 - OVERLAY_RUNE_SIZE / 2,
         startY: rect.top + rect.height / 2 - OVERLAY_RUNE_SIZE / 2,
       });
     });
     return positions;
-  };
+  }, []);
 
   const captureRuneforgeRunePositions = useCallback((runes: Rune[]): Map<string, { startX: number; startY: number }> => {
     const positions = new Map<string, { startX: number; startY: number }>();
-    if (typeof document === 'undefined') {
+    if (typeof document === 'undefined' || runes.length === 0) {
       return positions;
     }
-    runes.forEach((rune) => {
-      const runeElement = document.querySelector<HTMLElement>(`[data-rune-id="${rune.id}"][data-rune-source="runeforge"]`);
-      if (!runeElement) {
+
+    const runeIdSet = new Set(runes.map((rune) => rune.id));
+    const elements = document.querySelectorAll<HTMLElement>('[data-rune-source="runeforge"][data-rune-id]');
+    elements.forEach((element) => {
+      const runeId = element.dataset.runeId;
+      if (!runeId || !runeIdSet.has(runeId)) {
         return;
       }
-      const rect = runeElement.getBoundingClientRect();
-      positions.set(rune.id, {
+      const rect = element.getBoundingClientRect();
+      positions.set(runeId, {
         startX: rect.left + rect.width / 2 - OVERLAY_RUNE_SIZE / 2,
         startY: rect.top + rect.height / 2 - OVERLAY_RUNE_SIZE / 2,
       });
@@ -172,34 +180,66 @@ export function useRunePlacementAnimations({
   }, []);
 
   const triggerAutoPlacementAnimation = useCallback(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
     const snapshot = selectionSnapshotRef.current;
     selectionSnapshotRef.current = null;
-    if (!snapshot) {
+    if (!snapshot || typeof document === 'undefined') {
       return;
     }
+
     const targetPlayer = player;
     const updatedCounts = targetPlayer.patternLines.map((line) => line.count);
     const previousCounts = snapshot.patternLineCounts;
     const changedLineIndex = updatedCounts.findIndex((count, index) => count > (previousCounts[index] ?? 0));
-    const overlayRunes: AnimatingRune[] = [];
     const patternSlotKeys: string[] = [];
     let patternRunesUsed = 0;
 
     if (changedLineIndex !== -1) {
       const placedCount = updatedCounts[changedLineIndex] - (previousCounts[changedLineIndex] ?? 0);
       if (placedCount > 0) {
-        const runesToAnimate = snapshot.runeOrder.slice(0, placedCount);
+        for (let offset = 0; offset < placedCount; offset += 1) {
+          const slotIndex = (previousCounts[changedLineIndex] ?? 0) + offset;
+          patternSlotKeys.push(`${changedLineIndex}-${slotIndex}`);
+        }
+        patternRunesUsed = placedCount;
+      }
+    }
+
+    let autoMeta: AutoAnimationMeta | null = null;
+    if (patternSlotKeys.length > 0) {
+      hidePatternSlots(snapshot.playerId, patternSlotKeys);
+      autoMeta = { pattern: { playerId: snapshot.playerId, slotKeys: patternSlotKeys } };
+    }
+
+    const patternSlotLookup = new Map<string, HTMLElement>();
+    if (changedLineIndex !== -1) {
+      const candidates = document.querySelectorAll<HTMLElement>(
+        `[data-player-id="${snapshot.playerId}"][data-pattern-line-index="${changedLineIndex}"][data-pattern-slot-index]`,
+      );
+      candidates.forEach((element) => {
+        const lineIndex = element.getAttribute('data-pattern-line-index');
+        const slotIndex = element.getAttribute('data-pattern-slot-index');
+        if (lineIndex !== null && slotIndex !== null) {
+          patternSlotLookup.set(`${lineIndex}-${slotIndex}`, element);
+        }
+      });
+    }
+
+    const strainCounterElement = document.querySelector<HTMLElement>(
+      `[data-player-id="${snapshot.playerId}"][data-strain-counter="true"]`,
+    );
+
+    requestAnimationFrame(() => {
+      const overlayRunes: AnimatingRune[] = [];
+
+      if (changedLineIndex !== -1 && patternRunesUsed > 0) {
+        const runesToAnimate = snapshot.runeOrder.slice(0, patternRunesUsed);
         runesToAnimate.forEach((rune, offset) => {
           const start = snapshot.runePositions.get(rune.id);
           if (!start) {
             return;
           }
           const slotIndex = (previousCounts[changedLineIndex] ?? 0) + offset;
-          const selector = `[data-player-id="${snapshot.playerId}"][data-pattern-line-index="${changedLineIndex}"][data-pattern-slot-index="${slotIndex}"]`;
-          const targetElement = document.querySelector<HTMLElement>(selector);
+          const targetElement = patternSlotLookup.get(`${changedLineIndex}-${slotIndex}`);
           if (!targetElement) {
             return;
           }
@@ -212,24 +252,16 @@ export function useRunePlacementAnimations({
             endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
             endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
           });
-          patternSlotKeys.push(`${changedLineIndex}-${slotIndex}`);
         });
-        patternRunesUsed = placedCount;
       }
-    }
 
-    const previousFloorCount = snapshot.floorRuneCount;
-    const newFloorCount = targetPlayer.floorLine.runes.length;
-    const floorDelta = newFloorCount - previousFloorCount;
-    const floorSlotIndexes: number[] = [];
-    if (floorDelta > 0) {
-      const overflowRunes = snapshot.runeOrder.slice(patternRunesUsed, patternRunesUsed + floorDelta);
-      // Target the Strain counter instead of floor slots
-      const strainCounterSelector = `[data-player-id="${snapshot.playerId}"][data-strain-counter="true"]`;
-      const strainCounterElement = document.querySelector<HTMLElement>(strainCounterSelector);
-      if (strainCounterElement) {
+      const previousFloorCount = snapshot.floorRuneCount;
+      const newFloorCount = targetPlayer.floorLine.runes.length;
+      const floorDelta = newFloorCount - previousFloorCount;
+      if (floorDelta > 0 && strainCounterElement) {
+        const overflowRunes = snapshot.runeOrder.slice(patternRunesUsed, patternRunesUsed + floorDelta);
         const targetRect = strainCounterElement.getBoundingClientRect();
-        overflowRunes.forEach((rune, offset) => {
+        overflowRunes.forEach((rune) => {
           const start = snapshot.runePositions.get(rune.id);
           if (!start) {
             return;
@@ -241,28 +273,22 @@ export function useRunePlacementAnimations({
             startY: start.startY,
             endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
             endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-            shouldDisappear: true, // Add flag for disappear animation
+            shouldDisappear: true,
           });
-          const slotIndex = previousFloorCount + offset;
-          floorSlotIndexes.push(slotIndex);
         });
       }
-    }
 
-    if (overlayRunes.length === 0) {
-      return;
-    }
+      if (overlayRunes.length === 0) {
+        if (autoMeta?.pattern) {
+          revealPatternSlots(autoMeta.pattern.playerId, autoMeta.pattern.slotKeys);
+        }
+        return;
+      }
 
-    const meta: AutoAnimationMeta = {};
-    if (patternSlotKeys.length > 0) {
-      hidePatternSlots(snapshot.playerId, patternSlotKeys);
-      meta.pattern = { playerId: snapshot.playerId, slotKeys: patternSlotKeys };
-    }
-    // Note: floorSlotIndexes are no longer hidden since FloorLine UI is removed
-    // and runes animate directly to the Strain counter with a disappear effect
-    autoAnimationMetaRef.current = Object.keys(meta).length > 0 ? meta : null;
-    setAnimatingRunes(overlayRunes);
-  }, [player, hidePatternSlots]);
+      autoAnimationMetaRef.current = autoMeta;
+      setAnimatingRunes(overlayRunes);
+    });
+  }, [player, hidePatternSlots, revealPatternSlots]);
 
   const animateRuneforgeToCenter = useCallback(
     (snapshot: RuneforgeAnimationSnapshot) => {
@@ -326,19 +352,39 @@ export function useRunePlacementAnimations({
     }
   }, [revealCenterRunes]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (selectedRunes.length === 0) {
-      return;
+      selectionSnapshotRef.current = null;
+      return undefined;
     }
-    const runePositions = captureSelectedRunePositions(selectedRunes);
-    selectionSnapshotRef.current = {
-      playerId: player.id,
-      runeOrder: [...selectedRunes],
-      patternLineCounts: player.patternLines.map((line) => line.count),
-      runePositions,
-      floorRuneCount: player.floorLine.runes.length,
+    if (typeof document === 'undefined') {
+      selectionSnapshotRef.current = {
+        playerId: player.id,
+        runeOrder: [...selectedRunes],
+        patternLineCounts: player.patternLines.map((line) => line.count),
+        runePositions: new Map(),
+        floorRuneCount: player.floorLine.runes.length,
+      };
+      return undefined;
+    }
+
+    const rafId = requestAnimationFrame(() => {
+      const runePositions = captureSelectedRunePositions(selectedRunes);
+      selectionSnapshotRef.current = {
+        playerId: player.id,
+        runeOrder: [...selectedRunes],
+        patternLineCounts: player.patternLines.map((line) => line.count),
+        runePositions,
+        floorRuneCount: player.floorLine.runes.length,
+      };
+    });
+    selectionMeasurementRafRef.current = rafId;
+    return () => {
+      if (selectionMeasurementRafRef.current !== undefined) {
+        cancelAnimationFrame(selectionMeasurementRafRef.current);
+      }
     };
-  }, [selectedRunes, player]);
+  }, [captureSelectedRunePositions, player, selectedRunes]);
 
   useLayoutEffect(() => {
     const previousCount = previousSelectedCountRef.current;
@@ -353,29 +399,38 @@ export function useRunePlacementAnimations({
     previousSelectedCountRef.current = selectedRunes.length;
   }, [selectedRunes.length, triggerAutoPlacementAnimation]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!draftSource || draftSource.type !== 'runeforge') {
-      return;
+      return undefined;
     }
     const movedRunes = draftSource.movedToCenter;
     if (movedRunes.length === 0) {
       lastRuneforgeAnimationKeyRef.current = null;
       runeforgeAnimationSnapshotRef.current = null;
-      return;
+      return undefined;
     }
     const selectionKey = `${draftSource.runeforgeId}-${movedRunes.map((rune) => rune.id).join(',')}`;
     if (lastRuneforgeAnimationKeyRef.current === selectionKey) {
-      return;
+      return undefined;
     }
     lastRuneforgeAnimationKeyRef.current = selectionKey;
-    const runePositions = captureRuneforgeRunePositions(movedRunes);
-    runeforgeAnimationSnapshotRef.current = {
-      key: selectionKey,
-      runes: movedRunes,
-      runePositions,
+
+    const rafId = requestAnimationFrame(() => {
+      const runePositions = captureRuneforgeRunePositions(movedRunes);
+      runeforgeAnimationSnapshotRef.current = {
+        key: selectionKey,
+        runes: movedRunes,
+        runePositions,
+      };
+      hideCenterRunes(movedRunes.map((rune) => rune.id));
+    });
+    runeforgeMeasurementRafRef.current = rafId;
+    return () => {
+      if (runeforgeMeasurementRafRef.current !== undefined) {
+        cancelAnimationFrame(runeforgeMeasurementRafRef.current);
+      }
     };
-    hideCenterRunes(movedRunes.map((rune) => rune.id));
-  }, [draftSource, hideCenterRunes, captureRuneforgeRunePositions]);
+  }, [captureRuneforgeRunePositions, draftSource, hideCenterRunes]);
 
   useLayoutEffect(() => {
     const snapshot = runeforgeAnimationSnapshotRef.current;

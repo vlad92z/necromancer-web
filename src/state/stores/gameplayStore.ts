@@ -528,7 +528,7 @@ function attemptAutoPlacement(state: GameplayStore): GameplayStore {
 
   const now = Date.now();
   const timeSinceSelection = state.selectionTimestamp ? now - state.selectionTimestamp : Infinity;
-  const isWithinDoubleClickWindow = timeSinceSelection <= 1000;
+  const isWithinDoubleClickWindow = timeSinceSelection <= 250;
 
   if (!isWithinDoubleClickWindow) {
     return cancelSelectionState(state);

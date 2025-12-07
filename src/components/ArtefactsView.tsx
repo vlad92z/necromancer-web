@@ -11,6 +11,7 @@ import { ARTEFACTS, getAllArtefacts, MAX_SELECTED_ARTEFACTS } from '../types/art
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
+import { useClickSound } from '../hooks/useClickSound';
 
 interface ArtefactsViewProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
 
 export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
   const { selectedArtefactIds, ownedArtefactIds, arcaneDust, selectArtefact, unselectArtefact, buyArtefact } = useArtefactStore();
+  const playClick = useClickSound();
 
   const [activeTooltip, setActiveTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);
   const [touchHideTimer, setTouchHideTimer] = useState<number | null>(null);
@@ -79,6 +81,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
   const allArtefacts = getAllArtefacts();
 
   const handleArtefactClick = (artefactId: ArtefactId) => {
+    playClick();
     if (selectedArtefactIds.includes(artefactId)) {
       unselectArtefact(artefactId);
     } else if (ownedArtefactIds.includes(artefactId)) {
@@ -88,11 +91,12 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
 
   const handleBuyClick = (artefactId: ArtefactId, event: MouseEvent) => {
     event.stopPropagation();
+    playClick();
     buyArtefact(artefactId);
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Artefacts" maxWidth={800}>
+    <Modal isOpen={isOpen} onClose={() => { playClick(); onClose(); }} title="Artefacts" maxWidth={800}>
       <div className="space-y-6">
         {/* Arcane Dust Display */}
         <div className="flex items-center rounded-xl border border-amber-300/30 bg-amber-100/5 px-4 py-3">
@@ -120,7 +124,10 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                   return (
                     <button
                       key={artefactId}
-                      onClick={() => unselectArtefact(artefactId)}
+                      onClick={() => {
+                        playClick();
+                        unselectArtefact(artefactId);
+                      }}
                       className="group relative h-16 w-16 overflow-hidden rounded-lg border border-sky-400/50 bg-slate-800 shadow-lg transition hover:border-sky-400 hover:shadow-xl"
                       onPointerEnter={(event) => handlePointerEnterTooltip(artefactId, event)}
                       onPointerLeave={hideTooltip}

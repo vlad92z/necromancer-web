@@ -59,7 +59,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
         <div className="flex items-center justify-between gap-4">
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => {
+              playClick();
+              navigate('/');
+            }}
             className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
           >
             ← Back
@@ -72,10 +75,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             Draft runes to cast increeasingly powerful spells while surviving overload damage
           </p>
           <div className="flex flex-wrap gap-3">
-            {longestRun > 1 && (
+            {longestRun > 2 && (
               <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
                 <span className="text-[11px] text-sky-300">Longest Run</span>
-                <span className="text-lg font-extrabold text-slate-50">{longestRun}</span>
+                <span className="text-lg font-extrabold text-slate-50">{longestRun - 1}</span>
               </div>
             )}
 
@@ -94,7 +97,10 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Artefacts</div>
             <button
               type="button"
-              onClick={() => setShowArtefactsModal(true)}
+              onClick={() => {
+                playClick();
+                setShowArtefactsModal(true);
+              }}
               className="rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
             >
               Manage

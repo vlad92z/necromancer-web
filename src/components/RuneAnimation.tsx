@@ -4,7 +4,7 @@
 
 import { motion } from 'framer-motion';
 import { RuneCell } from './RuneCell';
-import type { AnimatingRune, Rune } from '../types/game';
+import type { AnimatingRune, Rune, RuneEffect, RuneType } from '../types/game';
 import { getRuneEffectsForType } from '../utils/runeEffects';
 
 interface RuneAnimationProps {
@@ -14,6 +14,17 @@ interface RuneAnimationProps {
 
 // Constants for animation easing
 const ANIMATION_EASE = [0.4, 0.0, 0.2, 1] as const;
+const RUNE_EFFECT_CACHE = new Map<RuneType, RuneEffect[]>();
+
+const getCachedRuneEffects = (runeType: RuneType) => {
+  const cached = RUNE_EFFECT_CACHE.get(runeType);
+  if (cached) {
+    return cached;
+  }
+  const effects = getRuneEffectsForType(runeType);
+  RUNE_EFFECT_CACHE.set(runeType, effects);
+  return effects;
+};
 
 export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnimationProps) {
   if (animatingRunes.length === 0) return null;
@@ -32,7 +43,7 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
         const runeObj: Rune = {
           id: rune.id,
           runeType: rune.runeType,
-          effects: getRuneEffectsForType(rune.runeType),
+          effects: getCachedRuneEffects(rune.runeType),
         };
         
         // If shouldDisappear is true, add a fade out and scale down animation

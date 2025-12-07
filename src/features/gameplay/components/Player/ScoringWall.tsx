@@ -17,6 +17,29 @@ interface ScoringWallProps {
 const CELL_SIZE = 60; // matches RuneCell size="large"
 const GAP = 4; // gap used between cells in ScoringWall layout
 const cellKey = (row: number, col: number) => `${row}-${col}`;
+const parseCellKey = (key: string) => {
+  const [row, col] = key.split('-').map(Number);
+  return { row, col };
+};
+
+interface OverlayPoint {
+  x: number;
+  y: number;
+  isPending: boolean;
+}
+
+interface OverlayEdge {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  connectsPending: boolean;
+}
+
+interface OverlayData {
+  points: OverlayPoint[];
+  edges: OverlayEdge[];
+}
 
 // We no longer compute the largest connected component. Instead we connect
 // every occupied or pending cell to its orthogonal neighbors (right + down).
@@ -25,6 +48,10 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
   const previousWallRef = useRef<ScoringWallType | null>(null);
+  const overlayWallRef = useRef<ScoringWallType | null>(null);
+  const pendingCellsRef = useRef<Set<string>>(new Set());
+  const overlayRef = useRef<{ points: Map<string, OverlayPoint>; edges: Map<string, OverlayEdge> } | null>(null);
+  const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
 
   const wallSignature = useMemo(
@@ -32,49 +59,200 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     [wall]
   );
 
-  // Compute pixel centers for all occupied or pending cells and short
-  // neighbor-to-neighbor edges (right + down) so every adjacent pair is
-  // connected by a single line segment.
-  const overlay = useMemo(() => {
+  const getCellCenter = (row: number, col: number) => {
+    const x = col * (CELL_SIZE + GAP) + CELL_SIZE / 2;
+    const y = row * (CELL_SIZE + GAP) + CELL_SIZE / 2;
+    return { x, y };
+  };
+
+  const computePendingCells = (currentWall: ScoringWallType, currentPatternLines: PatternLine[]) => {
     const pendingCells = new Set<string>();
-    const wallSize = wall.length;
-    patternLines.forEach((line, rowIndex) => {
+    const wallSize = currentWall.length;
+    currentPatternLines.forEach((line, rowIndex) => {
       if (line.count === line.tier && line.runeType) {
         const col = getWallColumnForRune(rowIndex, line.runeType, wallSize);
-        if (!wall[rowIndex][col].runeType) {
+        if (!currentWall[rowIndex][col].runeType) {
           pendingCells.add(cellKey(rowIndex, col));
         }
       }
     });
+    return pendingCells;
+  };
 
-    const pointsMap = new Map<string, { x: number; y: number; row: number; col: number; isPending: boolean }>();
+  const buildFullOverlay = (currentWall: ScoringWallType, pendingCells: Set<string>) => {
+    const pointsMap = new Map<string, OverlayPoint>();
+    const edgesMap = new Map<string, OverlayEdge>();
+    const wallSize = currentWall.length;
+
     for (let r = 0; r < wallSize; r++) {
       for (let c = 0; c < wallSize; c++) {
         const key = cellKey(r, c);
-        const occupied = Boolean(wall[r]?.[c]?.runeType) || pendingCells.has(key);
-        if (!occupied) continue;
-        const x = c * (CELL_SIZE + GAP) + CELL_SIZE / 2;
-        const y = r * (CELL_SIZE + GAP) + CELL_SIZE / 2;
-        pointsMap.set(key, { x, y, row: r, col: c, isPending: pendingCells.has(key) });
+        const occupied = Boolean(currentWall[r]?.[c]?.runeType) || pendingCells.has(key);
+        if (!occupied) {
+          continue;
+        }
+        const { x, y } = getCellCenter(r, c);
+        pointsMap.set(key, { x, y, isPending: pendingCells.has(key) });
       }
     }
 
-    if (pointsMap.size === 0) return null;
+    const updateEdge = (rowA: number, colA: number, rowB: number, colB: number) => {
+      if (rowB >= wallSize || colB >= wallSize || rowB < 0 || colB < 0) return;
+      const keyA = cellKey(rowA, colA);
+      const keyB = cellKey(rowB, colB);
+      const a = pointsMap.get(keyA);
+      const b = pointsMap.get(keyB);
+      if (!a || !b) return;
+      const edgeKey = keyA < keyB ? `${keyA}|${keyB}` : `${keyB}|${keyA}`;
+      edgesMap.set(edgeKey, {
+        x1: a.x,
+        y1: a.y,
+        x2: b.x,
+        y2: b.y,
+        connectsPending: a.isPending || b.isPending,
+      });
+    };
 
-    const edges: { x1: number; y1: number; x2: number; y2: number; connectsPending: boolean }[] = [];
-    for (const [, a] of pointsMap) {
-      const right = pointsMap.get(cellKey(a.row, a.col + 1));
-      if (right) {
-        edges.push({ x1: a.x, y1: a.y, x2: right.x, y2: right.y, connectsPending: a.isPending || right.isPending });
-      }
-      const down = pointsMap.get(cellKey(a.row + 1, a.col));
-      if (down) {
-        edges.push({ x1: a.x, y1: a.y, x2: down.x, y2: down.y, connectsPending: a.isPending || down.isPending });
+    for (let r = 0; r < wallSize; r++) {
+      for (let c = 0; c < wallSize; c++) {
+        updateEdge(r, c, r, c + 1);
+        updateEdge(r, c, r + 1, c);
       }
     }
 
-    const points = Array.from(pointsMap.values()).map(p => ({ x: p.x, y: p.y, isPending: p.isPending }));
-    return { points, edges };
+    return { pointsMap, edgesMap };
+  };
+
+  useEffect(() => {
+    const wallSize = wall.length;
+    const pendingCells = computePendingCells(wall, patternLines);
+
+    const rebuildFromScratch = () => {
+      const built = buildFullOverlay(wall, pendingCells);
+      overlayRef.current = { points: built.pointsMap, edges: built.edgesMap };
+      pendingCellsRef.current = pendingCells;
+      overlayWallRef.current = wall;
+      setOverlay({
+        points: Array.from(built.pointsMap.values()),
+        edges: Array.from(built.edgesMap.values()),
+      });
+    };
+
+    if (!overlayRef.current) {
+      rebuildFromScratch();
+      return;
+    }
+
+    const previousWall = overlayWallRef.current;
+    const previousPending = pendingCellsRef.current;
+
+    // If wall size changes, fallback to full rebuild
+    if (!previousWall || previousWall.length !== wallSize) {
+      rebuildFromScratch();
+      return;
+    }
+
+    const dirtyCells = new Set<string>();
+
+    // Detect wall changes row-by-row to avoid full grid walks when row references are stable
+    for (let r = 0; r < wallSize; r++) {
+      if (previousWall[r] === wall[r]) {
+        continue;
+      }
+      const prevRow = previousWall[r];
+      const nextRow = wall[r];
+      for (let c = 0; c < nextRow.length; c++) {
+        const prevRune = prevRow?.[c]?.runeType ?? null;
+        const nextRune = nextRow?.[c]?.runeType ?? null;
+        if (prevRune !== nextRune) {
+          dirtyCells.add(cellKey(r, c));
+        }
+      }
+    }
+
+    // Detect pending cell changes
+    pendingCells.forEach(key => {
+      if (!previousPending.has(key)) {
+        dirtyCells.add(key);
+      }
+    });
+    previousPending.forEach(key => {
+      if (!pendingCells.has(key)) {
+        dirtyCells.add(key);
+      }
+    });
+
+    if (dirtyCells.size === 0) {
+      pendingCellsRef.current = pendingCells;
+      overlayWallRef.current = wall;
+      return;
+    }
+
+    const points = new Map(overlayRef.current.points);
+    const edges = new Map(overlayRef.current.edges);
+
+    // Update points for dirty cells
+    dirtyCells.forEach(key => {
+      const { row, col } = parseCellKey(key);
+      const occupied = Boolean(wall[row]?.[col]?.runeType) || pendingCells.has(key);
+      if (occupied) {
+        const { x, y } = getCellCenter(row, col);
+        points.set(key, { x, y, isPending: pendingCells.has(key) });
+      } else {
+        points.delete(key);
+      }
+    });
+
+    const edgeCells = new Set<string>();
+    dirtyCells.forEach(key => {
+      edgeCells.add(key);
+      const { row, col } = parseCellKey(key);
+      const neighbors: Array<[number, number]> = [
+        [row - 1, col],
+        [row + 1, col],
+        [row, col - 1],
+        [row, col + 1],
+      ];
+      neighbors.forEach(([nr, nc]) => {
+        if (nr >= 0 && nc >= 0 && nr < wallSize && nc < wallSize) {
+          edgeCells.add(cellKey(nr, nc));
+        }
+      });
+    });
+
+    const updateEdge = (rowA: number, colA: number, rowB: number, colB: number) => {
+      if (rowB >= wallSize || colB >= wallSize || rowB < 0 || colB < 0) return;
+      const keyA = cellKey(rowA, colA);
+      const keyB = cellKey(rowB, colB);
+      const a = points.get(keyA);
+      const b = points.get(keyB);
+      const edgeKey = keyA < keyB ? `${keyA}|${keyB}` : `${keyB}|${keyA}`;
+      if (a && b) {
+        edges.set(edgeKey, {
+          x1: a.x,
+          y1: a.y,
+          x2: b.x,
+          y2: b.y,
+          connectsPending: a.isPending || b.isPending,
+        });
+      } else {
+        edges.delete(edgeKey);
+      }
+    };
+
+    edgeCells.forEach(key => {
+      const { row, col } = parseCellKey(key);
+      updateEdge(row, col, row, col + 1);
+      updateEdge(row, col, row + 1, col);
+    });
+
+    overlayRef.current = { points, edges };
+    pendingCellsRef.current = pendingCells;
+    overlayWallRef.current = wall;
+    setOverlay({
+      points: Array.from(points.values()),
+      edges: Array.from(edges.values()),
+    });
   }, [wall, patternLines]);
 
   useEffect(() => {
