@@ -91,6 +91,30 @@ npm run build
 wrangler pages deploy dist --project-name=necromancer-web
 ```
 
+## Mixpanel (Analytics)
+
+To avoid committing sensitive tokens, Mixpanel is configured to read the token from an environment variable when the app starts.
+
+- Create a local environment file at the project root named `.env.local` (this file is ignored by Git by default).
+- Add your Mixpanel token using the `VITE_` prefix so Vite exposes it to the app:
+
+```env
+# .env.local (DO NOT COMMIT)
+VITE_MIXPANEL_TOKEN=your_mixpanel_project_token_here
+```
+
+- The app reads `import.meta.env.VITE_MIXPANEL_TOKEN` and will skip initialization if the value is missing.
+- Use the helper in `src/utils/mixpanel.ts` to track events:
+
+```ts
+import { trackEvent, identify } from './utils/mixpanel'
+
+trackEvent('game_started', { mode: 'solo' })
+identify('player-1234')
+```
+
+If you prefer injecting the token programmatically, `initMixpanel(token)` accepts a token argument.
+
 Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `public/_redirects`
 
 ---

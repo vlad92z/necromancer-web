@@ -583,7 +583,6 @@ function selectPersistableGameState(state: GameplayStore): GameState {
 }
 
 function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
-  console.log('attachSoloPersistence: subscribing to store changes');
   return store.subscribe((state) => {
     if (!state.gameStarted) {
       return;
