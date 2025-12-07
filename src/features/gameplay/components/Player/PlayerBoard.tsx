@@ -12,6 +12,7 @@ import { StatBadge } from '../../../../components/StatBadge';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
+import { HintBox } from '../../../../components/HintBox';
 
 interface PlayerBoardProps {
   player: Player;
@@ -33,6 +34,7 @@ interface PlayerBoardProps {
   onOpenDeck?: () => void;
   onOpenOverload?: () => void;
   activeArtefactIds: ArtefactId[];
+  hintsEnabled?: boolean;
 }
 
 export function PlayerBoard({
@@ -50,6 +52,7 @@ export function PlayerBoard({
   onOpenDeck,
   onOpenOverload,
   activeArtefactIds,
+  hintsEnabled = false,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
@@ -69,6 +72,39 @@ export function PlayerBoard({
     }
   };
 
+  // Determine which hint to display
+  const getHintText = (): string | null => {
+    if (!hintsEnabled) return null;
+
+    // Check if any pattern line is complete
+    const hasCompletedLine = player.patternLines.some(
+      (line) => line.count === line.tier && line.count > 0
+    );
+    if (hasCompletedLine) {
+      return "Completing a pattern line will cast the rune onto the Spell-Wall";
+    }
+
+    // Check if player is placing runes and they have effects
+    if (canPlace && selectedRuneType) {
+      // Check if any pattern line has runes with effects (firstRuneEffects)
+      const hasRuneWithEffect = player.patternLines.some(
+        (line) => line.firstRuneEffects && line.firstRuneEffects.length > 0
+      );
+      if (hasRuneWithEffect) {
+        return "Only your chosen rune's effect will be applied; the other runes will be destroyed upon casting";
+      }
+    }
+
+    // Check for recent damage (strain > 0)
+    if (strain && strain > 0) {
+      return "When you place too many runes or directly overload runes, you will take damage for every overloaded rune. This damage increases every round";
+    }
+
+    return null;
+  };
+
+  const hintText = getHintText();
+
   return (
     <div
       onClick={handleBoardClick}
@@ -80,6 +116,7 @@ export function PlayerBoard({
     >
       <div className="flex items-stretch justify-between gap-[min(1.5vmin,18px)] w-full h-full">
         <div className="flex-1 flex flex-col gap-[min(1.2vmin,12px)]">
+          {hintText && <HintBox text={hintText} />}
           <div className="flex justify-center" onClick={(event) => event.stopPropagation()}>
             <div className="w-full max-w-[640px] flex flex-col gap-[10px]">
               <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', gap: '10px', alignItems: 'stretch' }}>

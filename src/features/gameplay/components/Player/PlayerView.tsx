@@ -26,6 +26,7 @@ interface PlayerViewProps {
   onOpenDeck?: () => void;
   onOpenOverload?: () => void;
   activeArtefactIds: ArtefactId[];
+  hintsEnabled?: boolean;
 }
 
 export function PlayerView({
@@ -45,6 +46,7 @@ export function PlayerView({
   onOpenDeck,
   onOpenOverload,
   activeArtefactIds,
+  hintsEnabled,
 }: PlayerViewProps) {
   return (
     <div>
@@ -65,6 +67,7 @@ export function PlayerView({
         onOpenDeck={onOpenDeck}
         onOpenOverload={onOpenOverload}
         activeArtefactIds={activeArtefactIds}
+        hintsEnabled={hintsEnabled}
       />
     </div>
   );

@@ -97,6 +97,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             onOpenDeck={onOpenDeckOverlay}
             onOpenOverload={onOpenOverloadOverlay}
             activeArtefactIds={activeArtefactIds}
+            hintsEnabled={hintsEnabled}
           />
         </div>
       </div>
