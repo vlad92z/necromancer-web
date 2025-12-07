@@ -5,12 +5,12 @@
 import type { RuneEffect, RuneEffectRarity, RuneEffects, RuneType } from '../types/game';
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: [],//[{ type: 'Damage', amount: 1 }],
-  Frost:[],// [{ type: 'Healing', amount: 1 }],
-  Life: [],//[{ type: 'Healing', amount: 1 }],
-  Void: [],//[{ type: 'Damage', amount: 1 }],
-  Wind: [],//[{ type: 'Healing', amount: 1 }],
-  Lightning: [],//[{ type: 'Damage', amount: 1 }],
+  Fire: [],
+  Frost:[],
+  Life: [],
+  Void: [],
+  Wind: [],
+  Lightning: [],
 };
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -24,20 +24,20 @@ const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 
 const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 2, rarity: 'rare' }],
-  Frost: [{ type: 'Healing', amount: 2, rarity: 'rare' }],
+  Frost: [{ type: 'Fragile', amount: 4, fragileType: 'Fire', rarity: 'rare' }],
   Life: [{ type: 'Healing', amount: 2, rarity: 'rare' }],
-  Void: [{ type: 'Damage', amount: 2, rarity: 'rare' }],
-  Wind: [{ type: 'Healing', amount: 2, rarity: 'rare' }],
-  Lightning: [{ type: 'Damage', amount: 2, rarity: 'rare' }],
+  Void: [{ type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'rare' }],
+  Wind: [{ type: 'Fortune', amount: 2, rarity: 'rare' }],
+  Lightning: [{ type: 'Synergy', amount: 2, synergyType: 'Frost', rarity: 'rare' }],
 };
 
 const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 5, rarity: 'epic' }],
-  Frost: [{ type: 'Healing', amount: 5, rarity: 'epic' }],
+  Frost: [{ type: 'Fragile', amount: 10, fragileType: 'Fire', rarity: 'epic' }],
   Life: [{ type: 'Healing', amount: 5, rarity: 'epic' }],
-  Void: [{ type: 'Damage', amount: 5, rarity: 'epic' }],
-  Wind: [{ type: 'Healing', amount: 5, rarity: 'epic' }],
-  Lightning: [{ type: 'Damage', amount: 5, rarity: 'epic' }],
+  Void: [{ type: 'Synergy', amount: 5, synergyType: 'Void', rarity: 'epic' }],
+  Wind: [{ type: 'Fortune', amount: 5, rarity: 'epic' }],
+  Lightning: [{ type: 'Synergy', amount: 5, synergyType: 'Frost', rarity: 'epic' }],
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {
@@ -51,13 +51,13 @@ function formatRuneEffect(effect: RuneEffect): string {
     case 'Healing':
       return `+${effect.amount} healing`;
     case 'Synergy':
-      return `+${effect.amount} synergy with ${effect.synergyType}`;
+      return `+${effect.amount} damage for every ${effect.synergyType} rune`;
     case 'Fortune':
-      return `+${effect.amount} Fortune`;
+      return `+${effect.amount} Arcane Dust`;
     case 'Fragile':
-      return `+${effect.amount} fragile with ${effect.fragileType}`;
+      return `+${effect.amount} damage, negated by ${effect.fragileType}`;
     default:
-      return "Common Rune";
+      return "";
   }
 }
 
@@ -106,16 +106,11 @@ export function hasEffectType(
   return effects.some((effect) => effect.type === type);
 }
 
-export function getRuneEffectDescription(runeType: RuneType, effects: RuneEffects | null | undefined): string {
+export function getRuneEffectDescription(effects: RuneEffects | null | undefined): string {
   const resolvedEffects = effects ?? [];
   const effectLines = resolvedEffects.map(formatRuneEffect).filter(Boolean);
-
-  if (effectLines.length === 0) {
-    return `${runeType}`;
-  }
-
   const bulletList = effectLines.map((line) => `${line}`).join('\n');
-  return `${runeType}\n${bulletList}`;
+  return `${bulletList}`;
 }
 
 const RARITY_ORDER: RuneEffectRarity[] = ['uncommon', 'rare', 'epic'];

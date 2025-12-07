@@ -14,8 +14,10 @@ import castSoundUrl from '../../assets/sounds/cast.mp3';
 import { useUIStore } from './uiStore';
 import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
-import { saveSoloState } from '../../utils/soloPersistence';
+import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
+
+const SOLO_TARGET_INCREMENT = 50;
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
@@ -40,6 +42,7 @@ function enterDeckDraftMode(state: GameState): GameState {
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
   const arcaneDustReward = getArcaneDustReward(state.game);
+  const nextTargetScore = state.soloTargetScore + SOLO_TARGET_INCREMENT;
 
   if (arcaneDustReward > 0) {
     const newDustTotal = addArcaneDust(arcaneDustReward);
@@ -60,7 +63,9 @@ function enterDeckDraftMode(state: GameState): GameState {
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
     soloOutcome: 'victory',
-    longestRun: nextLongestRun
+    longestRun: nextLongestRun,
+    soloTargetScore: nextTargetScore,
+    soloBaseTargetScore: state.soloBaseTargetScore || nextTargetScore,
   };
 }
 
@@ -580,6 +585,12 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
       return;
     }
 
+    // If the player has been defeated, clear any saved solo run from localStorage
+    if (state.soloOutcome === 'defeat') {
+      clearSoloState();
+      return;
+    }
+
     const persistableState = selectPersistableGameState(state);
     saveSoloState(persistableState);
   });
@@ -910,10 +921,21 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   returnToStartScreen: () => {
-    set(() => ({
-      ...initializeSoloGame(),
-      gameStarted: false,
-    }));
+    set((state) => {
+      // If the last run ended in defeat, ensure persisted state is cleared immediately
+      if (state.soloOutcome === 'defeat') {
+        try {
+          clearSoloState();
+        } catch (e) {
+          // no-op
+        }
+      }
+
+      return {
+        ...initializeSoloGame(),
+        gameStarted: false,
+      };
+    });
     // Call navigation callback if registered (for router integration)
     if (navigationCallback) {
       navigationCallback();
@@ -996,19 +1018,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       if (!nextDraftState) {
-        const nextTarget = state.soloTargetScore + 50;
         return {
           ...state,
           player: updatedPlayer,
           soloDeckTemplate: updatedDeckTemplate,
           totalRunesPerPlayer: updatedDeckTemplate.length,
-          soloTargetScore: nextTarget,
-          soloBaseTargetScore: state.soloBaseTargetScore || nextTarget,
           deckDraftState: {
             runeforges: [],
             picksRemaining: 0,
             totalPicks: state.deckDraftState.totalPicks,
           },
+          soloBaseTargetScore: state.soloBaseTargetScore || state.soloTargetScore,
           deckDraftReadyForNextGame: true,
         };
       }
