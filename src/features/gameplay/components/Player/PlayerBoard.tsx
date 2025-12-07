@@ -84,6 +84,14 @@ export function PlayerBoard({
       return "Completing a pattern line will cast the rune onto the Spell-Wall";
     }
 
+    // Check if wall has runes with effects (for segment scoring)
+    const wallHasEffects = player.wall.some(
+      (row) => row.some((cell) => cell.effects && cell.effects.length > 0)
+    );
+    if (wallHasEffects) {
+      return "Every rune from the active segment will trigger its effect";
+    }
+
     // Check if player is placing runes and they have effects
     if (canPlace && selectedRuneType) {
       // Check if any pattern line has runes with effects (firstRuneEffects)
