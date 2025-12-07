@@ -79,6 +79,13 @@ export function Solo() {
     };
   }, []);
 
+  // When the board returns to the start screen, re-check storage to ensure the Continue CTA reflects reality.
+  useEffect(() => {
+    if (!gameStarted) {
+      setHasSavedSoloRun(hasSavedSoloState());
+    }
+  }, [gameStarted]);
+
   const handleStartSolo = (config: SoloRunConfig) => {
     startSoloRun(config);
   };
