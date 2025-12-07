@@ -3,7 +3,6 @@
  * Follows the same UI theme as SoloStartScreen
  */
 import type { ChangeEvent, ReactElement } from 'react';
-import { gradientButtonClasses } from '../styles/gradientButtonClasses';
 
 interface SettingsOverlayProps {
   isOpen: boolean;
@@ -36,9 +35,21 @@ export function SettingsOverlay({
       onClick={onClose}
     >
       <div
-        className="w-[min(600px,_94vw)] space-y-6 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+        className="w-[min(600px,_94vw)] space-y-6 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)] relative"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close Button - Top Right */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/80 text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+          aria-label="Close settings"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+
         <div className="space-y-1">
           <h2 className="text-3xl font-bold uppercase tracking-tight text-slate-50">Settings</h2>
         </div>
@@ -106,17 +117,6 @@ export function SettingsOverlay({
             </button>
           </section>
         )}
-
-        {/* Close Button */}
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={onClose}
-            className={`${gradientButtonClasses} px-8 py-3 text-center text-base font-bold uppercase tracking-[0.2em] focus-visible:outline-sky-300`}
-          >
-            Close
-          </button>
-        </div>
       </div>
     </div>
   );
