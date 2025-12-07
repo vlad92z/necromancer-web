@@ -105,6 +105,8 @@ export interface RuneCellProps {
   showTooltip?: boolean;
   tooltipPlacement?: 'top' | 'bottom';
   runeOpacity?: number;
+  runePulseKey?: number;
+  runePulseScale?: number;
 }
 
 const SIZE_CONFIG = {
@@ -160,6 +162,8 @@ export function RuneCell({
   showTooltip = false,
   tooltipPlacement = 'top',
   runeOpacity = 1,
+  runePulseKey,
+  runePulseScale = 1.12,
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = SIZE_CONFIG[size];
@@ -250,8 +254,12 @@ export function RuneCell({
       onMouseLeave={handleMouseLeave}
     >
       {runeImage && (
-        <img 
-          src={runeImage} 
+        <motion.img
+          key={runePulseKey ?? 'rune-static'}
+          initial={{ scale: 1 }}
+          animate={runePulseKey ? { scale: [1, runePulseScale, 1] } : { scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          src={runeImage}
           alt={`${runeType}`}
           style={{ 
             width: '100%', 
