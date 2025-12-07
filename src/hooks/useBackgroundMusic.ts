@@ -17,6 +17,7 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
   const bufferRef = useRef<AudioBuffer | null>(null);
   const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const loopTimeoutRef = useRef<number | null>(null);
+  const interactionHandlerRef = useRef<EventListener | null>(null);
 
   const fallbackAudiosRef = useRef<HTMLAudioElement[]>([]);
   const fallbackLoopTimeoutRef = useRef<number | null>(null);
@@ -66,6 +67,13 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
     const gainNode = context.createGain();
     gainNode.connect(context.destination);
 
+    const globalWithContexts = window as typeof window & { __audioContexts?: AudioContext[] };
+    const contextRegistry = globalWithContexts.__audioContexts ?? [];
+    if (!globalWithContexts.__audioContexts) {
+      globalWithContexts.__audioContexts = contextRegistry;
+    }
+    contextRegistry.push(context);
+
     audioContextRef.current = context;
     gainNodeRef.current = gainNode;
 
@@ -95,6 +103,9 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
       const gain = gainNodeRef.current;
       if (gain) {
         gain.disconnect();
+      }
+      if (globalWithContexts.__audioContexts) {
+        globalWithContexts.__audioContexts = globalWithContexts.__audioContexts.filter((ctx) => ctx !== context);
       }
       context.close().catch(() => {});
       audioContextRef.current = null;
@@ -126,6 +137,26 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
     if (!isBufferReady) {
       return;
     }
+
+    const interactionEvents: Array<keyof DocumentEventMap> = ['pointerdown', 'touchstart', 'keydown'];
+
+    const clearInteractionListeners = () => {
+      if (!interactionHandlerRef.current) {
+        return;
+      }
+      interactionEvents.forEach((event) => {
+        window.removeEventListener(event, interactionHandlerRef.current as EventListener);
+      });
+      interactionHandlerRef.current = null;
+    };
+
+    const addInteractionListeners = (handler: EventListener) => {
+      clearInteractionListeners();
+      interactionHandlerRef.current = handler;
+      interactionEvents.forEach((event) => {
+        window.addEventListener(event, handler, { once: true });
+      });
+    };
 
     if (!useWebAudioRef.current) {
       stopFallbackPlayback();
@@ -159,8 +190,9 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
           audio.currentTime = 0;
           const playPromise = audio.play();
           if (playPromise) {
-            void playPromise.catch(() => {});
+            return playPromise;
           }
+          return Promise.resolve();
         };
 
         const scheduleNext = () => {
@@ -176,8 +208,18 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
           }, waitMs);
         };
 
-        playAtIndex(0);
-        scheduleNext();
+        const beginLoop: EventListener = () => {
+          clearInteractionListeners();
+          playAtIndex(0)
+            .then(() => {
+              scheduleNext();
+            })
+            .catch(() => {
+              addInteractionListeners(beginLoop);
+            });
+        };
+
+        beginLoop();
       };
 
       if (isEnabled) {
@@ -185,9 +227,11 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
         startFallbackLoop();
       } else {
         stopFallbackPlayback();
+        clearInteractionListeners();
       }
 
       return () => {
+        clearInteractionListeners();
         stopFallbackPlayback();
       };
     }
@@ -220,14 +264,25 @@ export function useBackgroundMusic(isEnabled: boolean, volume: number = 0.35): v
     };
 
     if (isEnabled) {
-      void context.resume().then(() => {
-        startBufferSource();
-      }).catch(() => {});
+      const resumeAndStart: EventListener = () => {
+        clearInteractionListeners();
+        void context.resume()
+          .then(() => {
+            startBufferSource();
+          })
+          .catch(() => {
+            addInteractionListeners(resumeAndStart);
+          });
+      };
+
+      resumeAndStart();
     } else {
       stopWebAudioPlayback();
+      clearInteractionListeners();
     }
 
     return () => {
+      clearInteractionListeners();
       stopWebAudioPlayback();
     };
   }, [isBufferReady, isEnabled]);
