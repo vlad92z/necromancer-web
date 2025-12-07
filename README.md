@@ -100,11 +100,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 #### State Management
 - [ ] Split `gameplayStore.ts` into modular stores (gameplay, deck, campaign, player stats, matchmaking)
 
-#### Performance
-- [ ] Trim always-on Framer Motion loops in `Runeforge` and `CenterPool` (glow + per-rune pulsing) and replace with cheap CSS transitions that only run when actually selectable/hovered.
-- [ ] Cache scoring overlay calculations in `ScoringWall` (only recompute affected rows/cells) instead of walking the entire wall and rebuilding edge maps every render.
-- [ ] Avoid recalculating rune effect data during animations (e.g., `RuneAnimation` recreates runes with `getRuneEffectsForType` per frame); pass real rune objects or precomputed effects.
-
 ## Architecture Decision Records
 
 See `Agents.md` for detailed AI agent workflows and coding standards.
