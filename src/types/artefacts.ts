@@ -41,13 +41,13 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
   tome: {
     id: 'tome',
     name: 'Primer of Solitude',
-    cost: 10000,
+    cost: 2500,
     image: tomePng,
   },
   ring: {
     id: 'ring',
     name: 'Signet of Fortune',
-    cost: 20000,
+    cost: 5000,
     image: ringPng,
   },
   potion: {
