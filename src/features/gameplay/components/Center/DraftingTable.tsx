@@ -3,7 +3,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
@@ -24,6 +24,7 @@ interface DraftingTableProps {
   hiddenCenterRuneIds?: Set<string>;
   hideOpponentRow?: boolean;
   runesPerRuneforge: number;
+  runeforgeDraftStage: GameState['runeforgeDraftStage'];
 }
 
 export function DraftingTable({ 
@@ -36,9 +37,30 @@ export function DraftingTable({
   onCancelSelection,
   animatingRuneIds,
   runesPerRuneforge,
+  runeforgeDraftStage,
 }: DraftingTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const runeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
+  const isGlobalDraftStage = runeforgeDraftStage === 'global';
+
+  const computeGlobalHoverState = useCallback(
+    (runeType: RuneType): Record<string, RuneType | null> => {
+      if (!isGlobalDraftStage) {
+        return {};
+      }
+      const hoverMap: Record<string, RuneType | null> = {};
+      runeforges.forEach((runeforge) => {
+        const hasRuneType = runeforge.runes.some((rune) => rune.runeType === runeType);
+        hoverMap[runeforge.id] = hasRuneType ? runeType : null;
+      });
+      return hoverMap;
+    },
+    [isGlobalDraftStage, runeforges]
+  );
+
+  useEffect(() => {
+    setHoveredRuneTypeByRuneforge({});
+  }, [runeforgeDraftStage]);
 
   const computeSlots = useCallback((runeforgeId: string, runes: Rune[], totalSlots: number): (Rune | null)[] => {
     const existingAssignments = runeSlotAssignmentsRef.current[runeforgeId] ?? {};
@@ -114,10 +136,19 @@ export function DraftingTable({
     if (selectionActive || hasSelectedRunes || disabled) {
       return;
     }
+    if (isGlobalDraftStage) {
+      const hoverState = computeGlobalHoverState(runeType);
+      setHoveredRuneTypeByRuneforge(hoverState);
+      return;
+    }
     setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: runeType }));
   };
 
   const handleRuneMouseLeave = (runeforgeId: string) => {
+    if (isGlobalDraftStage) {
+      setHoveredRuneTypeByRuneforge({});
+      return;
+    }
     setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: null }));
   };
 

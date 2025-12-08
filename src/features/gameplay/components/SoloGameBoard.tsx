@@ -26,6 +26,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
     isDraftPhase,
     selectedRunes,
     draftSource,
+    runeforgeDraftStage,
     animatingRuneIds,
     hiddenCenterRuneIds,
     onRuneClick,
@@ -74,6 +75,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
             hasSelectedRunes={hasSelectedRunes}
             selectedRunes={selectedRunes}
             draftSource={draftSource}
+            runeforgeDraftStage={runeforgeDraftStage}
             onCancelSelection={onCancelSelection}
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}

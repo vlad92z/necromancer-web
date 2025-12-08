@@ -67,6 +67,7 @@ export interface GameBoardSharedProps {
   isGameOver: boolean;
   activeArtefactIds: GameState['activeArtefacts'];
   runesPerRuneforge: number;
+  runeforgeDraftStage: GameState['runeforgeDraftStage'];
 
   // Selection state
   selectedRuneType: RuneType | null;
@@ -103,6 +104,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     runeforges,
     centerPool,
     runesPerRuneforge,
+    runeforgeDraftStage,
     selectedRunes,
     turnPhase,
     lockedPatternLines,
@@ -318,6 +320,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       isGameOver,
       activeArtefactIds: activeArtefacts,
       runesPerRuneforge,
+      runeforgeDraftStage,
       selectedRuneType,
       selectedRunes,
       hasSelectedRunes,
@@ -357,6 +360,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       returnToStartScreen,
       runeforges,
       selectedRuneType,
+      runeforgeDraftStage,
       selectedRunes,
     ],
   );
