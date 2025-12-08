@@ -155,8 +155,8 @@ export function DraftingTable({
           width: `${runeforgeWidth}px`,
           padding: '12px',
           borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          backgroundColor: '#1c1034',
+          border: (runeforge.disabled) ? 'transparent' : '1px solid rgba(255, 255, 255, 0.12)',
+          backgroundColor: (runeforge.disabled) ? 'transparent' : '#1c1034',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
           display: 'flex',
           alignItems: 'center',
@@ -170,7 +170,7 @@ export function DraftingTable({
         onMouseLeave={() => handleRuneMouseLeave(runeforge.id)}
       >
         {displayedRunes.length === 0 ? (
-          <div style={{ color: 'rgba(255, 255, 255, 0.35)', fontSize: '14px' }}>Empty</div>
+          <div></div>
         ) : (
           <div
             style={{
@@ -190,10 +190,6 @@ export function DraftingTable({
                     style={{
                       width: `${runeSize}px`,
                       height: `${runeSize}px`,
-                      borderRadius: '50%',
-                      border: '1px dashed rgba(255, 255, 255, 0.08)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                      opacity: 0.6,
                     }}
                   />
                 );
@@ -291,11 +287,11 @@ export function DraftingTable({
 
   return (
     <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
-      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
+      
       <div className="flex flex-col items-center gap-[14px] w-full">
         {runeforges.map((runeforge) => renderRuneforgeRow(runeforge))}
       </div>
-      
+      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
     </div>
   );
 }
