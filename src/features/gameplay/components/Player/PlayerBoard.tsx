@@ -11,7 +11,6 @@ import { StatsView } from './StatsView';
 
 interface PlayerBoardProps {
   player: Player;
-  isActive: boolean;
   onPlaceRunes?: (patternLineIndex: number) => void;
   onPlaceRunesInFloor?: () => void;
   selectedRuneType?: RuneType | null;
@@ -84,7 +83,7 @@ export function PlayerBoard({
             canOverload={Boolean(canPlace)}
             onDeckClick={onOpenDeck}
             onStrainClick={handleFatigueClick}
-            soloRuneScore={runeScore}
+            runeScore={runeScore}
             health={player.health}
             maxHealth={player.maxHealth ?? player.health}
             onOpenSettings={onOpenSettings}

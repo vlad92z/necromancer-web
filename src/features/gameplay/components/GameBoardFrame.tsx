@@ -42,7 +42,7 @@ export interface GameBoardProps {
 
 export interface GameData {
   outcome: GameState['outcome'];
-  runeScore: { currentScore: number; targetScore: number } | null;
+  runeScore: { currentScore: number; targetScore: number };
   playerStats: PlayerStatsProps;
   targetScore: number;
   runePowerTotal: number;

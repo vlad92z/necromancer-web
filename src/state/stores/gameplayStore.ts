@@ -935,7 +935,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const soloBaseTargetScore =
         typeof nextState.baseTargetScore === 'number'
           ? nextState.baseTargetScore
-          : nextState.targetScore ?? DEFAULT_SOLO_CONFIG.targetRuneScore;
+          : nextState.targetScore;// ?? DEFAULT_SOLO_CONFIG.targetRuneScore;
       const soloStartingStrain =
         typeof nextState.startingStrain === 'number'
           ? nextState.startingStrain

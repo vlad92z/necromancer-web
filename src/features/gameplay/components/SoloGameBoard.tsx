@@ -89,7 +89,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             game={game}
-            runeScore={runeScore || undefined}
+            runeScore={runeScore}
             deckCount={playerStats?.deckCount}
             strain={playerStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}

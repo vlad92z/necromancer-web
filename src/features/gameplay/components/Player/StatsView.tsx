@@ -71,8 +71,8 @@ export function StatsView({
 
       <div className="flex flex-col gap-[min(0.8vmin,10px)] h-full">
         <SoloRuneScoreOverlay
-          currentScore={runeScore.currentScore ?? 0}
-          targetScore={runeScore.targetScore ?? 0}
+          currentScore={runeScore.currentScore}
+          targetScore={runeScore.targetScore}
         />
         <SoloHealthTracker health={health} maxHealth={maxHealth} />
       </div>

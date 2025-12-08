@@ -8,7 +8,6 @@ import { PlayerBoard } from './PlayerBoard';
 
 interface PlayerViewProps {
   player: Player;
-  isActive: boolean;
   onPlaceRunes?: (patternLineIndex: number) => void;
   onPlaceRunesInFloor?: () => void;
   selectedRuneType: RuneType | null;
@@ -17,7 +16,7 @@ interface PlayerViewProps {
   lockedPatternLines?: number[];
   hiddenSlotKeys?: Set<string>;
   game: number;
-  runeScore?: {
+  runeScore: {
     currentScore: number;
     targetScore: number;
   };
@@ -32,7 +31,6 @@ interface PlayerViewProps {
 
 export function PlayerView({
   player,
-  isActive,
   onPlaceRunes,
   onPlaceRunesInFloor,
   selectedRuneType,
@@ -54,7 +52,6 @@ export function PlayerView({
     <div>
       <PlayerBoard
         player={player}
-        isActive={isActive}
         onPlaceRunes={onPlaceRunes}
         onPlaceRunesInFloor={onPlaceRunesInFloor}
         selectedRuneType={selectedRuneType}
@@ -62,13 +59,13 @@ export function PlayerView({
         onCancelSelection={onCancelSelection}
         lockedLineIndexes={lockedPatternLines}
         hiddenSlotKeys={hiddenSlotKeys}
-        game={game}
         runeScore={runeScore}
         deckCount={deckCount}
         strain={strain}
         onOpenDeck={onOpenDeck}
         onOpenOverload={onOpenOverload}
         onOpenSettings={onOpenSettings}
+        game={game}
         arcaneDust={arcaneDust}
         activeArtefactIds={activeArtefactIds}
       />
