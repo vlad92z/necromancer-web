@@ -20,7 +20,7 @@ interface PlayerBoardProps {
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
   game: number;
-  soloRuneScore?: {
+  runeScore: {
     currentScore: number;
     targetScore: number;
   };
@@ -42,7 +42,7 @@ export function PlayerBoard({
   onCancelSelection,
   lockedLineIndexes,
   hiddenSlotKeys,
-  soloRuneScore,
+  runeScore,
   deckCount,
   strain,
   onOpenDeck,
@@ -84,7 +84,7 @@ export function PlayerBoard({
             canOverload={Boolean(canPlace)}
             onDeckClick={onOpenDeck}
             onStrainClick={handleFatigueClick}
-            soloRuneScore={soloRuneScore}
+            soloRuneScore={runeScore}
             health={player.health}
             maxHealth={player.maxHealth ?? player.health}
             onOpenSettings={onOpenSettings}

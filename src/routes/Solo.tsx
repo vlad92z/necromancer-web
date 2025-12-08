@@ -4,12 +4,12 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SoloBoardContent } from '../features/gameplay/components/SoloGameBoard';
+import { BoardContent } from '../features/gameplay/components/SoloGameBoard';
 import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
-import type { GameState, SoloRunConfig } from '../types/game';
+import type { GameState, RunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -122,7 +122,7 @@ export function Solo() {
     }
   }, [gameStarted]);
 
-  const handleStartSolo = (config: SoloRunConfig) => {
+  const handleStartSolo = (config: RunConfig) => {
     startSoloRun(config);
   };
 
@@ -151,7 +151,7 @@ export function Solo() {
   return <GameBoardFrame
     gameState={gameState}
     renderContent={(shared, variantData) => {
-      return <SoloBoardContent shared={shared} variantData={variantData} />;
+      return <BoardContent shared={shared} variantData={variantData} />;
     }}
   />;
 }

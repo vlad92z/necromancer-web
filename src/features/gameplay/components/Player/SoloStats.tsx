@@ -6,25 +6,16 @@ import { StatBadge } from '../../../../components/StatBadge';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
 
-export interface SoloStatsProps {
+export interface PlayerStatsProps {
   isActive: boolean;
   overloadMultiplier: number;
   game: number;
   deckCount?: number;
 }
 
-export function SoloStats({ overloadMultiplier, deckCount }: SoloStatsProps) {
+export function PlayerStats({ overloadMultiplier, deckCount }: PlayerStatsProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: '0.9em',
-        flexWrap: 'wrap',
-        justifyContent: 'flex-start',
-      }}
-    >
+    <div className="flex items-center gap-[0.9em] flex-wrap justify-start">
       <StatBadge
         label="Strain"
         value={overloadMultiplier ?? 0}

@@ -15,7 +15,7 @@ interface StatsViewProps {
   canOverload: boolean;
   onDeckClick?: () => void;
   onStrainClick?: () => void;
-  soloRuneScore?: {
+  runeScore: {
     currentScore: number;
     targetScore: number;
   };
@@ -32,7 +32,7 @@ export function StatsView({
   canOverload,
   onDeckClick,
   onStrainClick,
-  soloRuneScore,
+  runeScore,
   health,
   maxHealth,
   onOpenSettings,
@@ -71,8 +71,8 @@ export function StatsView({
 
       <div className="flex flex-col gap-[min(0.8vmin,10px)] h-full">
         <SoloRuneScoreOverlay
-          currentScore={soloRuneScore?.currentScore ?? 0}
-          targetScore={soloRuneScore?.targetScore ?? 0}
+          currentScore={runeScore.currentScore ?? 0}
+          targetScore={runeScore.targetScore ?? 0}
         />
         <SoloHealthTracker health={health} maxHealth={maxHealth} />
       </div>

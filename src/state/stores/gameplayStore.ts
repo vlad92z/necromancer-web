@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, SoloOutcome, SoloRunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig } from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, DEFAULT_SOLO_CONFIG, RUNE_TYPES } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
@@ -170,7 +170,7 @@ function handlePlayerDefeat(
     centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
-    outcome: 'defeat' as SoloOutcome,
+    outcome: 'defeat' as GameOutcome,
     longestRun: nextLongestRun,
     overloadSoundPending: overloadDamage > 0,
   };
@@ -223,7 +223,7 @@ function prepareRoundReset(state: GameState): GameState {
       centerPool: [],
       turnPhase: 'game-over',
       game: state.game,
-      outcome: 'defeat' as SoloOutcome,
+      outcome: 'defeat' as GameOutcome,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
       lockedPatternLines: { [clearedPlayer.id]: [] },
@@ -271,8 +271,8 @@ function prepareRoundReset(state: GameState): GameState {
 
 export interface GameplayStore extends GameState {
   // Actions
-  startSoloRun: (config?: Partial<SoloRunConfig>) => void;
-  prepareSoloMode: (config?: Partial<SoloRunConfig>) => void;
+  startSoloRun: (config?: Partial<RunConfig>) => void;
+  prepareSoloMode: (config?: Partial<RunConfig>) => void;
   forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
@@ -739,7 +739,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       });
 
       let nextRunePowerTotal = state.runePowerTotal;
-      let soloOutcome: SoloOutcome = state.outcome;
+      let outcome: GameOutcome = state.outcome;
       let nextHealth = currentPlayer.health;
 
       if (totalHealing > 0) {
@@ -754,7 +754,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       nextRunePowerTotal += totalDamage;
         if (nextRunePowerTotal >= state.targetScore) {
-          soloOutcome = 'victory';
+          outcome = 'victory';
         }
 
       const updatedPlayer = {
@@ -764,9 +764,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         health: nextHealth,
       };
 
-      const soloVictoryAchieved = soloOutcome === 'victory';
+      const victoryAchieved = outcome === 'victory';
 
-      if (soloVictoryAchieved) {
+      if (victoryAchieved) {
         return enterDeckDraftMode({
           ...state,
           player: updatedPlayer,
@@ -789,7 +789,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         shouldTriggerEndRound: shouldEndRound,
         runePowerTotal: nextRunePowerTotal,
         lockedPatternLines: updatedLockedPatternLines,
-        outcome: soloOutcome,
+        outcome: outcome,
       };
     });
   },
@@ -876,7 +876,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  startSoloRun: (config?: Partial<SoloRunConfig>) => {
+  startSoloRun: (config?: Partial<RunConfig>) => {
     set(() => {
       const baseState = initializeSoloGame(config);
       const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
@@ -899,7 +899,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  prepareSoloMode: (config?: Partial<SoloRunConfig>) => {
+  prepareSoloMode: (config?: Partial<RunConfig>) => {
     set(() => ({
       ...initializeSoloGame(config),
       gameStarted: false,

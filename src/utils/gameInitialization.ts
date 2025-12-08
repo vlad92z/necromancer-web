@@ -10,7 +10,7 @@ import type {
   ScoringWall,
   Rune,
   RuneType,
-  SoloRunConfig,
+  RunConfig,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 
@@ -63,7 +63,7 @@ const SOLO_FACTORIES_PER_PLAYER = 5;
 const DEFAULT_SOLO_RUNES_PER_TYPE = 20;
 const DEFAULT_SOLO_TARGET_SCORE = 50;
 
-export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
+export const DEFAULT_SOLO_CONFIG: RunConfig = {
   startingHealth: SOLO_STARTING_HEALTH,
   startingStrain: DEFAULT_STARTING_STRAIN,
   strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
@@ -87,7 +87,7 @@ export interface SoloInitializationOptions {
   longestRun?: number;
 }
 
-export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunConfig {
+export function normalizeSoloConfig(config?: Partial<RunConfig>): RunConfig {
   const merged = { ...DEFAULT_SOLO_CONFIG, ...config };
 
   return {
@@ -236,7 +236,7 @@ export function fillFactories(
  * Initialize a solo run using the fixed six-rune setup.
  */
 export function initializeSoloGame(
-  config?: Partial<SoloRunConfig>,
+  config?: Partial<RunConfig>,
   options?: SoloInitializationOptions
 ): GameState {
   const soloConfig = normalizeSoloConfig(config);

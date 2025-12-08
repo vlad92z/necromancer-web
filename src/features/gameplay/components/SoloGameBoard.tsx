@@ -2,24 +2,23 @@
  * SoloGameBoard - solo mode game board layout
  */
 
-import type { GameBoardSharedProps, SoloVariantData } from './GameBoardFrame';
+import type { GameBoardSharedProps, GameData } from './GameBoardFrame';
 import { DraftingTable } from './Center/DraftingTable';
 import { PlayerView } from './Player/PlayerView';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 
-interface SoloBoardContentProps {
+interface BoardContentProps {
   shared: GameBoardSharedProps;
-  variantData: SoloVariantData;
+  gameData: GameData;
 }
 
-export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps) {
+export function BoardContent({ shared, gameData }: BoardContentProps) {
   const {
     player,
-    currentPlayerIndex,
     selectedRuneType,
     hasSelectedRunes,
-    playerHiddenPatternSlots,
+    playerHiddenPatternSlots,//TODO this vs playerLocked?
     playerLockedLines,
     runeforges,
     centerPool,
@@ -39,11 +38,11 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     returnToStartScreen,
   } = shared;
   const {
-    soloOutcome,
-    soloRuneScore,
-    soloStats,
+    outcome: outcome,
+    runeScore: runeScore,
+    playerStats: playerStats,
     runePowerTotal,
-    soloTargetScore,
+    targetScore: targetScore,
     arcaneDustReward,
     arcaneDust,
     deckDraftState,
@@ -53,7 +52,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     onOpenOverloadOverlay,
     onOpenSettings,
     onStartNextGame,
-  } = variantData;
+  } = gameData;
 
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1.1fr) 1.9fr' }}>
@@ -82,18 +81,17 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
         <div className="w-full h-full flex items-center justify-center">
           <PlayerView
             player={player}
-            isActive={currentPlayerIndex === 0}
-            onPlaceRunes={currentPlayerIndex === 0 ? onPlaceRunes : undefined}
-            onPlaceRunesInFloor={currentPlayerIndex === 0 ? onPlaceRunesInFloor : undefined}
-            selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-            canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+            onPlaceRunes={onPlaceRunes}
+            onPlaceRunesInFloor={onPlaceRunesInFloor}
+            selectedRuneType={selectedRuneType}
+            canPlace={hasSelectedRunes}
             onCancelSelection={onCancelSelection}
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             game={game}
-            soloRuneScore={soloRuneScore || undefined}
-            deckCount={soloStats?.deckCount}
-            strain={soloStats?.overloadMultiplier}
+            runeScore={runeScore || undefined}
+            deckCount={playerStats?.deckCount}
+            strain={playerStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}
             onOpenOverload={onOpenOverloadOverlay}
             onOpenSettings={onOpenSettings}
@@ -119,10 +117,10 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
       {isGameOver && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-auto">
           <SoloGameOverModal
-            outcome={soloOutcome}
+            outcome={outcome}
             runePowerTotal={runePowerTotal}
             game={game}
-            targetScore={soloTargetScore}
+            targetScore={targetScore}
             onReturnToStart={returnToStartScreen}
           />
         </div>

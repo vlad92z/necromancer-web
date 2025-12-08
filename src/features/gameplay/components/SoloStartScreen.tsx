@@ -5,7 +5,7 @@
 import type { ChangeEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { SoloRunConfig } from '../../../types/game';
+import type { RunConfig } from '../../../types/game';
 import { DEFAULT_SOLO_CONFIG, RUNE_TYPES, normalizeSoloConfig } from '../../../utils/gameInitialization';
 import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
 import { FieldConfig } from '../../../components/FieldConfig';
@@ -17,7 +17,7 @@ import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useClickSound } from '../../../hooks/useClickSound';
 
 interface SoloStartScreenProps {
-  onStartSolo: (config: SoloRunConfig) => void;
+  onStartSolo: (config: RunConfig) => void;
   onContinueSolo?: () => void;
   canContinue?: boolean;
   longestRun?: number;
@@ -30,23 +30,23 @@ const inputClasses =
 export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, longestRun = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
   const playClick = useClickSound();
-  const [soloConfig, setSoloConfig] = useState<SoloRunConfig>({ ...DEFAULT_SOLO_CONFIG });
+  const [soloConfig, setSoloConfig] = useState<RunConfig>({ ...DEFAULT_SOLO_CONFIG });
   const [showAdvanced] = useState(false);
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
   const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
 
-  const updateConfigValue = <K extends keyof SoloRunConfig>(key: K, value: SoloRunConfig[K]) => {
+  const updateConfigValue = <K extends keyof RunConfig>(key: K, value: RunConfig[K]) => {
     setSoloConfig((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleNumberInput =
-    <K extends keyof SoloRunConfig>(key: K, clamp?: (value: number) => number) =>
+    <K extends keyof RunConfig>(key: K, clamp?: (value: number) => number) =>
     (event: ChangeEvent<HTMLInputElement>) => {
       const rawValue = Number(event.target.value);
       const parsedValue = Number.isNaN(rawValue) ? 0 : rawValue;
       const nextValue = clamp ? clamp(parsedValue) : parsedValue;
-      updateConfigValue(key, nextValue as SoloRunConfig[typeof key]);
+      updateConfigValue(key, nextValue as RunConfig[typeof key]);
     };
 
   const normalizedConfig = normalizeSoloConfig(soloConfig);

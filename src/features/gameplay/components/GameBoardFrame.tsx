@@ -16,7 +16,7 @@ import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useClickSound } from '../../../hooks/useClickSound';
 import { useUIStore } from '../../../state/stores/uiStore';
-import type { SoloStatsProps } from './Player/SoloStats';
+import type { PlayerStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
@@ -40,11 +40,11 @@ export interface GameBoardProps {
   gameState: GameState;
 }
 
-export interface SoloVariantData {
-  soloOutcome: GameState['outcome'];
-  soloRuneScore: { currentScore: number; targetScore: number } | null;
-  soloStats: SoloStatsProps;
-  soloTargetScore: number;
+export interface GameData {
+  outcome: GameState['outcome'];
+  runeScore: { currentScore: number; targetScore: number } | null;
+  playerStats: PlayerStatsProps;
+  targetScore: number;
   runePowerTotal: number;
   arcaneDust: number;
   arcaneDustReward: number;
@@ -93,7 +93,7 @@ export interface GameBoardSharedProps {
 }
 
 export interface GameBoardFrameProps extends GameBoardProps {
-  renderContent: (shared: GameBoardSharedProps, variantData: SoloVariantData) => ReactElement | null;
+  renderContent: (shared: GameBoardSharedProps, variantData: GameData) => ReactElement | null;
 }
 
 export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {
@@ -112,9 +112,9 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     overloadRunes,
   } = gameState;
   const currentGame = useGameplayStore((state) => state.game);
-  const soloOutcome = gameState.outcome;
+  const outcome = gameState.outcome;
   const runePowerTotal = gameState.runePowerTotal;
-  const soloTargetScore = gameState.targetScore;
+  const targetScore = gameState.targetScore;
   const {
     draftRune,
     draftFromCenter,
@@ -168,15 +168,15 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   
   useRunePlacementSounds([player], activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
 
-  const soloRuneScore = useMemo(
+  const runeScore = useMemo(
     () => ({
       currentScore: runePowerTotal,
-      targetScore: soloTargetScore,
+      targetScore: targetScore,
     }),
-    [runePowerTotal, soloTargetScore],
+    [runePowerTotal, targetScore],
   );
 
-  const soloStats = useMemo(
+  const playerStats = useMemo(
     () => ({
       isActive: true,
       overloadMultiplier: strain,
@@ -357,12 +357,12 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     ],
   );
 
-  const variantData: SoloVariantData = useMemo(
+  const gameData: GameData = useMemo(
     () => ({
-      soloOutcome,
-      soloRuneScore,
-      soloStats,
-      soloTargetScore,
+      outcome,
+      runeScore,
+      playerStats,
+      targetScore,
       runePowerTotal,
       arcaneDust,
       arcaneDustReward: getArcaneDustReward(currentGame),
@@ -383,15 +383,15 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       isDeckDrafting,
       runePowerTotal,
       selectDeckDraftRuneforge,
-      soloOutcome,
-      soloRuneScore,
-      soloStats,
-      soloTargetScore,
+      outcome,
+      runeScore,
+      playerStats,
+      targetScore,
       startNextSoloGame,
     ],
   );
 
-  const boardContent = useMemo(() => renderContent(sharedProps, variantData), [renderContent, sharedProps, variantData]);
+  const boardContent = useMemo(() => renderContent(sharedProps, gameData), [renderContent, sharedProps, gameData]);
 
   return (
     <div
