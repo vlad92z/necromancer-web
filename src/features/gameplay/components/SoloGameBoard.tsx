@@ -10,10 +10,12 @@ import { DeckDraftingModal } from './DeckDraftingModal';
 
 interface BoardContentProps {
   shared: GameBoardSharedProps;
-  gameData: GameData;
+  gameData?: GameData;
+  // Some callers use `variantData` prop name; accept it for backwards compatibility
+  variantData?: GameData;
 }
 
-export function BoardContent({ shared, gameData }: BoardContentProps) {
+export function BoardContent({ shared, gameData, variantData }: BoardContentProps) {
   const {
     player,
     selectedRuneType,
@@ -37,12 +39,16 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
     isGameOver,
     returnToStartScreen,
   } = shared;
+  // `gameData` may be undefined at runtime (caller sometimes omits it).
+  // Guard the destructuring to avoid runtime TypeError.
+  const effectiveGameData = gameData ?? variantData;
+
   const {
-    outcome: outcome,
-    runeScore: runeScore,
-    playerStats: playerStats,
+    outcome,
+    runeScore,
+    playerStats,
     runePowerTotal,
-    targetScore: targetScore,
+    targetScore,
     arcaneDustReward,
     arcaneDust,
     deckDraftState,
@@ -52,7 +58,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
     onOpenOverloadOverlay,
     onOpenSettings,
     onStartNextGame,
-  } = gameData;
+  } = effectiveGameData ?? ({} as Partial<GameData>);
 
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1.1fr) 1.9fr' }}>
@@ -89,7 +95,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             game={game}
-            runeScore={runeScore}
+            runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
             deckCount={playerStats?.deckCount}
             strain={playerStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}
@@ -101,7 +107,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
         </div>
       </div>
 
-      {isDeckDrafting && deckDraftState && (
+      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && onStartNextGame && arcaneDustReward != null && (
         <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-sm px-4">
           <DeckDraftingModal
             draftState={deckDraftState}
@@ -114,7 +120,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
         </div>
       )}
 
-      {isGameOver && (
+      {isGameOver && outcome != null && runePowerTotal != null && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-auto">
           <SoloGameOverModal
             outcome={outcome}
