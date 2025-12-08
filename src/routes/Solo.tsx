@@ -32,6 +32,7 @@ const selectGameBoardState = (state: GameplayStore): GameState => ({
   soloDeckTemplate: state.soloDeckTemplate,
   runeforges: state.runeforges,
   centerPool: state.centerPool,
+  runeforgeDraftStage: state.runeforgeDraftStage,
   turnPhase: state.turnPhase,
   game: state.game,
   strain: state.strain,

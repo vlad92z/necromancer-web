@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge } from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, RUNE_TYPES } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
@@ -19,6 +19,21 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 
 const SOLO_TARGET_INCREMENT = 50;
+
+function withRuneforgeDefaults(runeforge: Runeforge): Runeforge {
+  return {
+    ...runeforge,
+    disabled: Boolean(runeforge.disabled),
+  };
+}
+
+function withRuneforgeListDefaults(runeforges: Runeforge[]): Runeforge[] {
+  return runeforges.map(withRuneforgeDefaults);
+}
+
+function areRuneforgesDisabled(runeforges: Runeforge[]): boolean {
+  return runeforges.every((runeforge) => (runeforge.disabled ?? false) || runeforge.runes.length === 0);
+}
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
@@ -58,6 +73,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     turnPhase: 'deck-draft' as const,
     runeforges: [],
     centerPool: [],
+    runeforgeDraftStage: 'single' as const,
     selectedRunes: [],
     overloadRunes: [],
     selectionTimestamp: null,
@@ -190,6 +206,7 @@ function prepareRoundReset(state: GameState): GameState {
         player: clearedPlayer,
         runeforges: [],
         centerPool: [],
+        runeforgeDraftStage: 'single',
         game: state.game,
         shouldTriggerEndRound: false,
         lockedPatternLines: { [clearedPlayer.id]: [] },
@@ -232,7 +249,8 @@ function prepareRoundReset(state: GameState): GameState {
       draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
-      overloadSoundPending: false,
+        overloadSoundPending: false,
+        runeforgeDraftStage: 'single',
     };
   }
 
@@ -251,7 +269,7 @@ function prepareRoundReset(state: GameState): GameState {
   return {
     ...state,
     player: updatedPlayer,
-    runeforges: filledRuneforges,
+    runeforges: withRuneforgeListDefaults(filledRuneforges).map((runeforge) => ({ ...runeforge, disabled: false })),
     centerPool: [],
     turnPhase: 'draft',
     game: state.game,
@@ -266,6 +284,7 @@ function prepareRoundReset(state: GameState): GameState {
     pendingPlacement: null,
     animatingRunes: [],
     overloadSoundPending: false,
+    runeforgeDraftStage: 'single',
   };
 }
 
@@ -309,16 +328,29 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
 
   const runeforgeId = state.draftSource.runeforgeId;
   const originalRunes = state.draftSource.originalRunes;
+  const affectedRuneforges = state.draftSource.affectedRuneforges ?? [{ runeforgeId, originalRunes }];
+  const previousDisabledRuneforgeIds = state.draftSource.previousDisabledRuneforgeIds ?? [];
+  const previousRuneforgeDraftStage = state.draftSource.previousRuneforgeDraftStage ?? state.runeforgeDraftStage;
 
-  const updatedRuneforges = state.runeforges.map((f) =>
-    f.id === runeforgeId
-      ? { ...f, runes: originalRunes }
-      : f
-  );
+  const updatedRuneforges = state.runeforges.map((f) => {
+    const match = affectedRuneforges.find((target) => target.runeforgeId === f.id);
+    if (match) {
+      return {
+        ...f,
+        runes: match.originalRunes,
+        disabled: previousDisabledRuneforgeIds.includes(f.id),
+      };
+    }
+    return {
+      ...f,
+      disabled: previousDisabledRuneforgeIds.includes(f.id),
+    };
+  });
 
   return {
     ...state,
     runeforges: updatedRuneforges,
+    runeforgeDraftStage: previousRuneforgeDraftStage,
     selectedRunes: [],
     selectionTimestamp: null,
     draftSource: null,
@@ -642,33 +674,95 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase !== 'draft') {
         return state;
       }
-      console.log('continue');
-      // Find the runeforge
-      const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
+      const normalizedRuneforges = withRuneforgeListDefaults(state.runeforges);
+      const runeforge = normalizedRuneforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
-//       
-      // Separate runes by selected type
-      const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
-      const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
-      
-      // If no runes of this type, do nothing
-      if (selectedRunes.length === 0) return state;
-      const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
-      
-      // Capture original order before clearing for display restoration
-      const originalRunes = runeforge.runes;
 
-      // Update runeforges (remove all runes from this runeforge)
-      const updatedRuneforges = state.runeforges.map((f) =>
-        f.id === runeforgeId ? { ...f, runes: remainingRunes } : f
+      const selectionMode = state.runeforgeDraftStage ?? 'single';
+      const wasDisabled = runeforge.disabled ?? false;
+
+      if (selectionMode === 'single') {
+        if (wasDisabled) {
+          return state;
+        }
+
+        const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
+        const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
+        if (selectedRunes.length === 0) return state;
+
+        const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
+        const originalRunes = runeforge.runes;
+        const previousDisabledRuneforgeIds = normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id);
+
+        const updatedRuneforges = normalizedRuneforges.map((f) =>
+          f.id === runeforgeId ? { ...f, runes: remainingRunes, disabled: true } : f
+        );
+
+        const shouldUnlockRuneforges = areRuneforgesDisabled(updatedRuneforges);
+        const nextRuneforgeDraftStage = shouldUnlockRuneforges ? ('global' as const) : ('single' as const);
+        const unlockedRuneforges = shouldUnlockRuneforges
+          ? updatedRuneforges.map((f) => ({ ...f, disabled: false }))
+          : updatedRuneforges;
+
+        return {
+          ...state,
+          runeforges: unlockedRuneforges,
+          runeforgeDraftStage: nextRuneforgeDraftStage,
+          selectedRunes: [...state.selectedRunes, ...orderedRunes],
+          selectionTimestamp: Date.now(),
+          draftSource: {
+            type: 'runeforge',
+            runeforgeId,
+            movedToCenter: [],
+            originalRunes,
+            affectedRuneforges: [{ runeforgeId, originalRunes }],
+            previousDisabledRuneforgeIds,
+            previousRuneforgeDraftStage: 'single',
+            selectionMode: 'single',
+          },
+          turnPhase: 'place' as const,
+        };
+      }
+
+      // Global selection mode: pick the rune type from every runeforge
+      const affectedRuneforges: { runeforgeId: string; originalRunes: Rune[] }[] = [];
+      const nextRuneforges = normalizedRuneforges.map((forge) => {
+        const matchingRunes = forge.runes.filter((rune) => rune.runeType === runeType);
+        if (matchingRunes.length > 0) {
+          affectedRuneforges.push({ runeforgeId: forge.id, originalRunes: forge.runes });
+        }
+        return {
+          ...forge,
+          runes: forge.runes.filter((rune) => rune.runeType !== runeType),
+        };
+      });
+
+      const selectedFromAllRuneforges = normalizedRuneforges.flatMap((forge) =>
+        forge.runes.filter((rune) => rune.runeType === runeType)
       );
-      
+
+      if (selectedFromAllRuneforges.length === 0) {
+        return state;
+      }
+
+      const orderedRunes = prioritizeRuneById(selectedFromAllRuneforges, primaryRuneId);
+
       return {
         ...state,
-        runeforges: updatedRuneforges,
+        runeforges: nextRuneforges,
+        runeforgeDraftStage: 'global',
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
         selectionTimestamp: Date.now(),
-        draftSource: { type: 'runeforge', runeforgeId, movedToCenter: [], originalRunes },
+        draftSource: {
+          type: 'runeforge',
+          runeforgeId,
+          movedToCenter: [],
+          originalRunes: runeforge.runes,
+          affectedRuneforges,
+          previousDisabledRuneforgeIds: normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id),
+          previousRuneforgeDraftStage: 'global',
+          selectionMode: 'global',
+        },
         turnPhase: 'place' as const,
       };
     });
@@ -945,6 +1039,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return {
         ...state,
         ...nextState,
+        runeforges: withRuneforgeListDefaults(nextState.runeforges ?? state.runeforges),
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
         soloDeckTemplate: deckTemplate,
@@ -953,6 +1048,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         longestRun,
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
+        runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
       };
     });
   },

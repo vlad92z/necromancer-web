@@ -183,6 +183,7 @@ export function createEmptyFactories(player: Player, perPlayerCount: number): Ru
         id: `${player.id}-runeforge-${index + 1}`,
         ownerId: player.id,
         runes: [],
+        disabled: false,
       }))
 }
 
@@ -196,6 +197,7 @@ export function createSoloFactories(player: Player, perPlayerCount: number): Run
       id: `${player.id}-runeforge-${index + 1}`,
       ownerId: player.id,
       runes: [],
+      disabled: false,
     }));
 }
 
@@ -223,6 +225,7 @@ export function fillFactories(
     return {
       ...runeforge,
       runes: runesForForge,
+      disabled: Boolean(runeforge.disabled),
     };
   });
 
@@ -282,8 +285,9 @@ export function initializeSoloGame(
     startingStrain: soloConfig.startingStrain,
     player: soloPlayer,
     soloDeckTemplate: startingDeckTemplate,
-    runeforges: filledRuneforges,
+    runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     centerPool: [],
+    runeforgeDraftStage: 'single',
     turnPhase: 'draft',
     game: 1,
     selectedRunes: [],

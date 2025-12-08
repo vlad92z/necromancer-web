@@ -84,8 +84,16 @@ export function DraftingTable({
     () => (draftSource?.type === 'runeforge' ? draftSource.originalRunes : []),
     [draftSource]
   );
-  const selectionFromCenter = draftSource?.type === 'center';
-  const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
+  const globalSelectionOriginals = useMemo(() => {
+    if (draftSource?.type !== 'runeforge' || draftSource.selectionMode !== 'global') {
+      return null;
+    }
+    const map = new Map<string, Rune[]>();
+    (draftSource.affectedRuneforges ?? []).forEach(({ runeforgeId, originalRunes }) => {
+      map.set(runeforgeId, originalRunes);
+    });
+    return map;
+  }, [draftSource]);
   const selectedRuneIdSet = useMemo(() => new Set(selectedRunes.map((rune) => rune.id)), [selectedRunes]);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
   const runeTypes = useMemo(() => RUNE_TYPES, []);
@@ -102,8 +110,8 @@ export function DraftingTable({
     [centerPool, draftSource, runeforges, selectedRunes]
   );
 
-  const handleRuneMouseEnter = (runeforgeId: string, runeType: RuneType, selectionActive: boolean) => {
-    if (selectionActive || hasSelectedRunes) {
+  const handleRuneMouseEnter = (runeforgeId: string, runeType: RuneType, selectionActive: boolean, disabled: boolean) => {
+    if (selectionActive || hasSelectedRunes || disabled) {
       return;
     }
     setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: runeType }));
@@ -117,8 +125,16 @@ export function DraftingTable({
     const runeSize = 60;
     const runeGap = 14;
     const containerPadding = 24;
-    const selectionActive = selectedFromRuneforgeId === runeforge.id && hasSelectedRunes;
-    const displayedRunes = selectionActive ? selectedRuneforgeOriginalRunes : runeforge.runes;
+    const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
+    const isRuneforgeDisabled = runeforge.disabled ?? false;
+    const selectionActive = isGlobalSelection
+      ? hasSelectedRunes && Boolean(globalSelectionOriginals?.has(runeforge.id))
+      : selectedFromRuneforgeId === runeforge.id && hasSelectedRunes;
+    const displayedRunes = selectionActive
+      ? isGlobalSelection
+        ? (globalSelectionOriginals?.get(runeforge.id) ?? runeforge.runes)
+        : selectedRuneforgeOriginalRunes
+      : runeforge.runes;
     const hoveredRuneType = hoveredRuneTypeByRuneforge[runeforge.id] ?? null;
     const slotCount = Math.max(runesPerRuneforge, displayedRunes.length, 1);
 
@@ -129,6 +145,8 @@ export function DraftingTable({
 
     const baseRuneforgeWidth = (slotCount * runeSize) + (Math.max(0, slotCount - 1) * runeGap) + containerPadding;
     const runeforgeWidth = Math.min(520, Math.max(280, baseRuneforgeWidth));
+    const containerOpacity = isRuneforgeDisabled && !selectionActive ? 0.6 : 1;
+    const containerCursor = isRuneforgeDisabled && !hasSelectedRunes ? 'not-allowed' : 'default';
 
     return (
       <div
@@ -145,7 +163,9 @@ export function DraftingTable({
           justifyContent: 'center',
           minHeight: '96px',
           transition: 'border-color 160ms ease, box-shadow 200ms ease',
-          margin: '0 auto'
+          margin: '0 auto',
+          opacity: containerOpacity,
+          cursor: containerCursor,
         }}
         onMouseLeave={() => handleRuneMouseLeave(runeforge.id)}
       >
@@ -187,7 +207,7 @@ export function DraftingTable({
                 ? 'none'
                 : (selectionActive
                   ? (isSelectedForDisplay ? 'auto' : 'none')
-                  : (!hasSelectedRunes ? 'auto' : 'none'));
+                  : (!hasSelectedRunes && !isRuneforgeDisabled ? 'auto' : 'none'));
               const cursor = pointerEvents === 'auto' ? 'pointer' : 'not-allowed';
               const transform = isSelectedForDisplay
                 ? 'translateY(-2px) scale(1.08)'
@@ -242,7 +262,7 @@ export function DraftingTable({
                       onRuneClick(runeforge.id, rune.runeType, rune.id);
                     }
                   }}
-                  onMouseEnter={() => handleRuneMouseEnter(runeforge.id, rune.runeType, selectionActive)}
+                  onMouseEnter={() => handleRuneMouseEnter(runeforge.id, rune.runeType, selectionActive, isRuneforgeDisabled)}
                   onMouseLeave={() => handleRuneMouseLeave(runeforge.id)}
                   animate={selectedAnimation}
                   transition={selectedTransition}

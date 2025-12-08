@@ -39,6 +39,7 @@ export interface Runeforge {
   id: string;
   ownerId: Player['id'];
   runes: Rune[];
+  disabled?: boolean;
 }
 
 /**
@@ -136,6 +137,7 @@ export interface GameState {
   soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
+  runeforgeDraftStage: 'single' | 'global';
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   /**
@@ -152,7 +154,16 @@ export interface GameState {
   selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   draftSource:
-    | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
+    | {
+        type: 'runeforge';
+        runeforgeId: string;
+        movedToCenter: Rune[];
+        originalRunes: Rune[];
+        affectedRuneforges?: { runeforgeId: string; originalRunes: Rune[] }[];
+        previousDisabledRuneforgeIds?: string[];
+        previousRuneforgeDraftStage?: 'single' | 'global';
+        selectionMode?: 'single' | 'global';
+      }
     | { type: 'center'; originalRunes: Rune[] }
     | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
