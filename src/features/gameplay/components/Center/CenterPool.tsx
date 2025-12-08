@@ -83,11 +83,11 @@ export function CenterPool({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+            gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
             justifyItems: 'center',
             alignItems: 'center',
-            gap: '12px',
-            padding: '14px 16px',
+            gap: '8px',
+            padding: '10px 10px',
             borderRadius: '24px',
             background: totalRunes === 0 ? 'transparent' : 'rgba(12, 6, 29, 0.85)',
             border: totalRunes === 0 ? 'none' : containerBorder,
@@ -123,7 +123,11 @@ export function CenterPool({
               : isHighlighted
                 ? 'scale(1.05)'
                 : 'scale(1)';
-            const shadow = isSelected ? '0 0 14px rgba(255, 255, 255, 0.28)' : 'none';
+            const shadow = isSelected
+              ? '0 0 14px rgba(255, 255, 255, 0.28)'
+              : isHighlighted
+                ? '0 0 10px rgba(255, 255, 255, 0.4)'
+                : 'none';
             const filter = isSelected ? 'brightness(1.12)' : isHighlighted ? 'brightness(1.06)' : 'none';
 
             const selectedAnimation = isSelected
