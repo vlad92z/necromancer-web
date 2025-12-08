@@ -79,13 +79,16 @@ export function DraftingTable({
                   runes: selectedRuneforgeOriginalRunes,
                   selectedRuneIds,
                 }
-              : selectionFromAllRuneforges && draftSource?.originalRunesByForge[runeforge.id]
-              ? {
-                  runes: draftSource.originalRunesByForge[runeforge.id],
-                  selectedRuneIds: draftSource.originalRunesByForge[runeforge.id]
-                    .filter(r => selectedRuneIds.includes(r.id))
-                    .map(r => r.id),
-                }
+              : selectionFromAllRuneforges && draftSource?.originalRunesByForge
+              ? (() => {
+                  const originalRunes = draftSource.originalRunesByForge[runeforge.id];
+                  return originalRunes ? {
+                    runes: originalRunes,
+                    selectedRuneIds: originalRunes
+                      .filter(r => selectedRuneIds.includes(r.id))
+                      .map(r => r.id),
+                  } : undefined;
+                })()
               : undefined;
 
             const handleClick = canDraftFromAllRuneforges

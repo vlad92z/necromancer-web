@@ -290,10 +290,9 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
 
   if (state.draftSource.type === 'all-runeforges') {
     // Restore runes to all affected runeforges
+    const originalRunesByForge = state.draftSource.originalRunesByForge;
     const updatedRuneforges = state.runeforges.map((f) => {
-      const originalRunes = state.draftSource?.type === 'all-runeforges' 
-        ? state.draftSource.originalRunesByForge[f.id]
-        : undefined;
+      const originalRunes = originalRunesByForge[f.id];
       return originalRunes 
         ? { ...f, runes: originalRunes, isInactive: false }
         : f;
