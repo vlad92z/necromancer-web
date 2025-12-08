@@ -25,8 +25,8 @@ import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
 const BOARD_PADDING = 80;
-const MIN_BOARD_SCALE = 0.55;
-const MIN_AVAILABLE_SIZE = 520;
+const MIN_BOARD_SCALE = 0.3;
+const MIN_AVAILABLE_SIZE = 300;
 
 const computeBoardScale = (width: number, height: number): number => {
   const availableWidth = Math.max(width - BOARD_PADDING, MIN_AVAILABLE_SIZE);
