@@ -3,7 +3,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
@@ -24,6 +24,7 @@ interface DraftingTableProps {
   animatingRuneIds?: string[];
   hiddenCenterRuneIds?: Set<string>;
   hideOpponentRow?: boolean;
+  runesPerRuneforge: number;
 }
 
 export function DraftingTable({ 
@@ -37,11 +38,52 @@ export function DraftingTable({
   draftSource,
   onCancelSelection,
   animatingRuneIds,
-  hiddenCenterRuneIds
+  hiddenCenterRuneIds,
+  runesPerRuneforge,
 }: DraftingTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const hasAccessibleRuneforges = runeforges.some((forge) => forge.runes.length > 0);
   const canDraftFromCenter = !hasAccessibleRuneforges;
+  const runeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
+
+  const computeSlots = useCallback((runeforgeId: string, runes: Rune[], totalSlots: number): (Rune | null)[] => {
+    const existingAssignments = runeSlotAssignmentsRef.current[runeforgeId] ?? {};
+    const nextAssignments: Record<string, number> = {};
+    const usedSlots = new Set<number>();
+
+    runes.forEach((rune) => {
+      const existingSlot = existingAssignments[rune.id];
+      if (typeof existingSlot === 'number' && existingSlot >= 0 && existingSlot < totalSlots) {
+        nextAssignments[rune.id] = existingSlot;
+        usedSlots.add(existingSlot);
+      }
+    });
+
+    let cursor = 0;
+    runes.forEach((rune) => {
+      if (typeof nextAssignments[rune.id] === 'number') {
+        return;
+      }
+      while (usedSlots.has(cursor)) {
+        cursor += 1;
+      }
+      const assignedSlot = Math.min(cursor, totalSlots - 1);
+      nextAssignments[rune.id] = assignedSlot;
+      usedSlots.add(assignedSlot);
+    });
+
+    runeSlotAssignmentsRef.current[runeforgeId] = nextAssignments;
+
+    const runeBySlot = new Map<number, Rune>();
+    runes.forEach((rune) => {
+      const slotIndex = nextAssignments[rune.id];
+      if (typeof slotIndex === 'number' && slotIndex >= 0 && slotIndex < totalSlots) {
+        runeBySlot.set(slotIndex, rune);
+      }
+    });
+
+    return Array.from({ length: totalSlots }, (_, index) => runeBySlot.get(index) ?? null);
+  }, []);
 
   const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
   const selectedRuneforgeOriginalRunes = useMemo(
@@ -84,10 +126,15 @@ export function DraftingTable({
     const selectionActive = selectedFromRuneforgeId === runeforge.id && hasSelectedRunes;
     const displayedRunes = selectionActive ? selectedRuneforgeOriginalRunes : runeforge.runes;
     const hoveredRuneType = hoveredRuneTypeByRuneforge[runeforge.id] ?? null;
-    const baseRuneforgeWidth = displayedRunes.length > 0
-      ? (displayedRunes.length * runeSize) + (Math.max(0, displayedRunes.length - 1) * runeGap) + containerPadding
-      : 240;
-    const runeforgeWidth = Math.min(420, Math.max(280, baseRuneforgeWidth));
+    const slotCount = Math.max(runesPerRuneforge, displayedRunes.length, 1);
+
+    const slots = useMemo(
+      () => computeSlots(runeforge.id, displayedRunes, slotCount),
+      [computeSlots, displayedRunes, runeforge.id, slotCount]
+    );
+
+    const baseRuneforgeWidth = (slotCount * runeSize) + (Math.max(0, slotCount - 1) * runeGap) + containerPadding;
+    const runeforgeWidth = Math.min(520, Math.max(280, baseRuneforgeWidth));
 
     return (
       <div
@@ -111,8 +158,34 @@ export function DraftingTable({
         {displayedRunes.length === 0 ? (
           <div style={{ color: 'rgba(255, 255, 255, 0.35)', fontSize: '14px' }}>Empty</div>
         ) : (
-          <div style={{ display: 'flex', gap: `${runeGap}px`, alignItems: 'center', justifyContent: 'center' }}>
-            {displayedRunes.map((rune) => {
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${slotCount}, ${runeSize}px)`,
+              gap: `${runeGap}px`,
+              alignItems: 'center',
+              justifyContent: 'center',
+              justifyItems: 'center',
+            }}
+          >
+            {slots.map((slotRune, slotIndex) => {
+              if (!slotRune) {
+                return (
+                  <div
+                    key={`placeholder-${runeforge.id}-${slotIndex}`}
+                    style={{
+                      width: `${runeSize}px`,
+                      height: `${runeSize}px`,
+                      borderRadius: '50%',
+                      border: '1px dashed rgba(255, 255, 255, 0.08)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                      opacity: 0.6,
+                    }}
+                  />
+                );
+              }
+
+              const rune = slotRune;
               const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
               const isAnimatingRune = animatingRuneIdSet?.has(rune.id) ?? false;
               const isHighlighted = hoveredRuneType === rune.runeType && !selectionActive;

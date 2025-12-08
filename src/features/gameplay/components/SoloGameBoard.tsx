@@ -36,6 +36,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
     game,
     isGameOver,
     returnToStartScreen,
+    runesPerRuneforge,
   } = shared;
   // `gameData` may be undefined at runtime (caller sometimes omits it).
   // Guard the destructuring to avoid runtime TypeError.
@@ -76,6 +77,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
             onCancelSelection={onCancelSelection}
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}
+            runesPerRuneforge={runesPerRuneforge}
           />
         </div>
       </div>

@@ -121,8 +121,8 @@ function isRoundExhausted(runeforges: GameState['runeforges'], centerPool: GameS
 }
 
 function getNextCenterPool(state: GameState): Rune[] {
-  const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
-  return movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
+  // Remaining runes now stay in their runeforge; center pool is unchanged here
+  return state.centerPool;
 }
 
 function getOverloadResult(
@@ -660,7 +660,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       // Update runeforges (remove all runes from this runeforge)
       const updatedRuneforges = state.runeforges.map((f) =>
-        f.id === runeforgeId ? { ...f, runes: [] } : f
+        f.id === runeforgeId ? { ...f, runes: remainingRunes } : f
       );
       
       return {
@@ -668,7 +668,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runeforges: updatedRuneforges,
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
         selectionTimestamp: Date.now(),
-        draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
+        draftSource: { type: 'runeforge', runeforgeId, movedToCenter: [], originalRunes },
         turnPhase: 'place' as const,
       };
     });
