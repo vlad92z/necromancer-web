@@ -245,6 +245,7 @@ export function RuneCell({
         border: borderStyle,
         backgroundColor: backgroundColor,
         padding: `${config.padding}px`,
+        boxSizing: 'border-box',
         cursor: clickable ? 'pointer' : 'default',
         
         position: 'relative',
