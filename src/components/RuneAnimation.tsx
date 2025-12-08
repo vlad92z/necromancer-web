@@ -92,15 +92,15 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
             }}
             style={{
               position: 'absolute',
-              width: '60px',
-              height: '60px',
+              width: '70px',
+              height: '70px',
             }}
           >
             <RuneCell
               rune={runeObj}
               variant="selected"
               forceVariant="runeforge"
-              size="medium"
+              size="large"
               showEffect
             />
           </motion.div>

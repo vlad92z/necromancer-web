@@ -110,14 +110,12 @@ export function PlayerBoard({
             <div className="col-start-2 flex flex-col items-center gap-[min(0.7vmin,12px)]">
               <ScoringWall wall={player.wall} patternLines={player.patternLines} />
             </div>
-          </div>
-
-
-          {activeArtefactIds.length > 0 && (
-            <div className="flex justify-center mt-2">
+            {activeArtefactIds.length > 0 && (
+            <div className="flex justify-left mt-2 mb-4">
               <ArtefactsRow selectedArtefactIds={activeArtefactIds} />
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

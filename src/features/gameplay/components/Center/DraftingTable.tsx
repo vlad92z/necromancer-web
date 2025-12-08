@@ -153,7 +153,7 @@ export function DraftingTable({
   };
 
   const renderRuneforgeRow = (runeforge: RuneforgeType) => {
-    const runeSize = 60;
+    const runeSize = 70;
     const runeGap = 14;
     const containerPadding = 24;
     const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';

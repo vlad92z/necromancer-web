@@ -61,7 +61,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
   } = effectiveGameData ?? ({} as Partial<GameData>);
 
   return (
-    <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
+    <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr'}}>
       <div
         className="p-6 border-r flex items-center justify-center relative border-r-[rgba(148,163,184,0.35)] bg-[radial-gradient(circle_at_45%_25%,rgba(86,27,176,0.12),transparent_60%)]"
       >
@@ -84,8 +84,8 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
         </div>
       </div>
 
-      <div className="p-6 grid items-center justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
-        <div className="w-full h-full flex items-center justify-center">
+      <div className="p-6 grid items-start justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
+        <div className="w-full h-full flex items-start justify-center">
           <PlayerView
             player={player}
             onPlaceRunes={onPlaceRunes}
