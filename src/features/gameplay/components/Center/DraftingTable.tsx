@@ -147,7 +147,7 @@ export function DraftingTable({
     const runeforgeWidth = Math.min(520, Math.max(280, baseRuneforgeWidth));
     const containerOpacity = isRuneforgeDisabled && !selectionActive ? 0.6 : 1;
     const containerCursor = isRuneforgeDisabled && !hasSelectedRunes ? 'not-allowed' : 'default';
-
+    const drafted = slots.some((s) => s === null);
     return (
       <div
         key={runeforge.id}
@@ -155,9 +155,9 @@ export function DraftingTable({
           width: `${runeforgeWidth}px`,
           padding: '12px',
           borderRadius: '16px',
-          border: (runeforge.disabled) ? 'transparent' : '1px solid rgba(255, 255, 255, 0.12)',
-          backgroundColor: (runeforge.disabled) ? 'transparent' : '#1c1034',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+          border: drafted ? 'transparent' : '1px solid rgba(255, 255, 255, 0.12)',
+          backgroundColor: drafted ? 'transparent' : '#1c1034',
+          boxShadow: drafted ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
