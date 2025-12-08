@@ -10,6 +10,7 @@ import overloadSvg from '../../../../assets/stats/overload.svg';
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 
 interface StatsViewProps {
+  playerId: string;
   deckRemaining: number;
   strainValue: number;
   canOverload: boolean;
@@ -27,6 +28,7 @@ interface StatsViewProps {
 }
 
 export function StatsView({
+  playerId,
   deckRemaining,
   strainValue,
   canOverload,
@@ -56,16 +58,22 @@ export function StatsView({
           onClick={onDeckClick}
         />
         <div data-strain-column>
-          <StatBadge
-            label="Strain"
-            value={strainValue}
-            color="#fa6060ff"
-            borderColor="rgba(96, 165, 250, 0.35)"
-            tooltip={`Overloading runes immediately deals ${strainValue} damage`}
-            image={overloadSvg}
-            onClick={onStrainClick}
-            canOverload={canOverload}
-          />
+          <div
+            className="inline-flex"
+            data-player-id={playerId}
+            data-strain-counter="true"
+          >
+            <StatBadge
+              label="Strain"
+              value={strainValue}
+              color="#fa6060ff"
+              borderColor="rgba(96, 165, 250, 0.35)"
+              tooltip={`Overloading runes immediately deals ${strainValue} damage`}
+              image={overloadSvg}
+              onClick={onStrainClick}
+              canOverload={canOverload}
+            />
+          </div>
         </div>
       </div>
 
