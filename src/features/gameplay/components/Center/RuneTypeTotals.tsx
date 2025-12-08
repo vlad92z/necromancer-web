@@ -21,10 +21,9 @@ const RUNE_ICONS: Record<RuneType, string> = {
 interface RuneTypeTotalsProps {
   runeTypes: RuneType[];
   counts: Record<RuneType, number>;
-  className?: string;
 }
 
-export function RuneTypeTotals({ runeTypes, counts, className }: RuneTypeTotalsProps) {
+export function RuneTypeTotals({ runeTypes, counts }: RuneTypeTotalsProps) {
   return (
     <div className={`mt-3 flex items-center justify-center gap-3 rounded-[12px]`}>
       {runeTypes.map((runeType) => (

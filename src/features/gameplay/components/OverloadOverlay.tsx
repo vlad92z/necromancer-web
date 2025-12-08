@@ -85,7 +85,7 @@ export function OverloadOverlay({ overloadRunes, playerName, onClose }: Overload
               </button>
             </div>
             <div className="flex flex-wrap justify-between w-full items-center gap-3">
-              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts} className="mt-0" />
+              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts}/>
             </div>
           </div>
 
