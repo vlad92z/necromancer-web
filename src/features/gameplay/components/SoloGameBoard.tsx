@@ -21,15 +21,12 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
     playerHiddenPatternSlots,//TODO this vs playerLocked?
     playerLockedLines,
     runeforges,
-    centerPool,
     activeArtefactIds,
-    isDraftPhase,
     selectedRunes,
     draftSource,
     animatingRuneIds,
-    hiddenCenterRuneIds,
     onRuneClick,
-    onCenterRuneClick,
+    onAllRuneforgesClick,
     onCancelSelection,
     onPlaceRunes,
     onPlaceRunesInFloor,
@@ -66,17 +63,14 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
         <div className="w-full h-full relative">
           <DraftingTable
             runeforges={runeforges}
-            centerPool={centerPool}
             player={player}
             onRuneClick={onRuneClick}
-            onCenterRuneClick={onCenterRuneClick}
-            isDraftPhase={isDraftPhase}
+            onAllRuneforgesClick={onAllRuneforgesClick}
             hasSelectedRunes={hasSelectedRunes}
             selectedRunes={selectedRunes}
             draftSource={draftSource}
             onCancelSelection={onCancelSelection}
             animatingRuneIds={animatingRuneIds}
-            hiddenCenterRuneIds={hiddenCenterRuneIds}
           />
         </div>
       </div>

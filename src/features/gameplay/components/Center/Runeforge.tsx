@@ -21,6 +21,7 @@ interface RuneforgeProps {
   selectionSourceActive?: boolean;
   onCancelSelection?: () => void;
   animatingRuneIds?: Set<string> | null;
+  allInactiveMode?: boolean; // When true, all runeforges are inactive and player can draft from any
 }
 
 export function Runeforge({ 
@@ -30,7 +31,8 @@ export function Runeforge({
   displayOverride,
   selectionSourceActive = false,
   onCancelSelection,
-  animatingRuneIds = null
+  animatingRuneIds = null,
+  allInactiveMode = false
 }: RuneforgeProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -55,23 +57,24 @@ export function Runeforge({
   };
   
   // Determine styling based on state
-  const backgroundColor = '#1c1034';
-  let borderColor = 'rgba(255, 255, 255, 0.15)';
-  const hoverBackgroundColor = '#251646';
-  const baseBoxShadow = '0 8px 24px rgba(0, 0, 0, 0.45)';
+  const isInactive = runeforge.isInactive && !selectionActive;
+  const backgroundColor = isInactive ? 'transparent' : '#1c1034';
+  let borderColor = isInactive ? 'transparent' : 'rgba(255, 255, 255, 0.15)';
+  const hoverBackgroundColor = isInactive ? 'rgba(37, 22, 70, 0.3)' : '#251646';
+  const baseBoxShadow = isInactive ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)';
   const ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
   const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
   const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
   let containerBoxShadow = baseBoxShadow;
   
-  // Normal selectable state (green highlight when player can select)
-  const isSelectable = !disabled && !selectionActive && runeforge.runes.length > 0 && onRuneClick;
-  if (isSelectable) {
+  // Normal selectable state or all-inactive mode
+  const isSelectable = (!disabled && !selectionActive && runeforge.runes.length > 0 && onRuneClick) || (allInactiveMode && runeforge.runes.length > 0);
+  if (isSelectable && !isInactive) {
     borderColor = '#c084fc';
     containerBoxShadow = isHovered ? selectableGlowPeak : selectableGlowRest;
   }
 
-  const buttonDisabled = selectionActive ? false : (((disabled && !allowCancel) || runeforge.runes.length === 0));
+  const buttonDisabled = selectionActive ? false : (((disabled && !allowCancel) || runeforge.runes.length === 0) && !allInactiveMode);
   const effectiveBackgroundColor = isHovered ? hoverBackgroundColor : backgroundColor;
   const effectiveTransform = isHovered ? 'scale(1.02)' : 'scale(1)';
 
@@ -123,9 +126,10 @@ export function Runeforge({
               const highlightByType = hoveredRuneType === rune.runeType && !displayOverride;
               const isHighlighted = highlightByType;
               const baseSize = `${runeSize}px`;
-              const basePointerEvents = (selectionActive && isSelectedForDisplay) || (!selectionActive && (!disabled || allowCancel)) ? 'auto' : 'none';
+              const runeInteractive = (selectionActive && isSelectedForDisplay) || (!selectionActive && (!disabled || allowCancel)) || allInactiveMode;
+              const basePointerEvents = runeInteractive && !isInactive ? 'auto' : 'none';
               const pointerEvents = isAnimatingRune ? 'none' : basePointerEvents;
-              const baseCursor = selectionActive || !disabled ? 'pointer' : 'not-allowed';
+              const baseCursor = (selectionActive || !disabled || allInactiveMode) && !isInactive ? 'pointer' : 'not-allowed';
               const cursor = isAnimatingRune ? 'default' : baseCursor;
               const transform = isSelectedForDisplay
                 ? 'translateY(-2px) scale(1.08)'

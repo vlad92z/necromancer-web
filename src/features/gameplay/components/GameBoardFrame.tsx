@@ -75,17 +75,15 @@ export interface GameBoardSharedProps {
 
   // Board data
   runeforges: GameState['runeforges'];
-  centerPool: GameState['centerPool'];
 
   // Locks and visibility
   playerLockedLines: number[];
   playerHiddenPatternSlots?: Set<string>;
   animatingRuneIds: string[];
-  hiddenCenterRuneIds: Set<string>;
 
   // Actions
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
+  onAllRuneforgesClick: (runeType: RuneType, runeId: string) => void;
   onCancelSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
   onPlaceRunesInFloor: () => void;
@@ -100,7 +98,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const {
     player,
     runeforges,
-    centerPool,
     selectedRunes,
     turnPhase,
     lockedPatternLines,
@@ -117,7 +114,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const targetScore = gameState.targetScore;
   const {
     draftRune,
-    draftFromCenter,
+    draftFromAllRuneforges,
     placeRunes,
     moveRunesToWall,
     placeRunesInFloor,
@@ -155,7 +152,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     activeAnimatingRunes,
     animatingRuneIds,
     hiddenPatternSlots,
-    hiddenCenterRuneIds,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,
     handleRuneforgeAnimationComplete,
@@ -163,7 +159,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     player,
     selectedRunes,
     draftSource,
-    centerPool,
   });
   
   useRunePlacementSounds([player], activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
@@ -201,11 +196,11 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     [draftRune],
   );
 
-  const handleCenterRuneClick = useCallback(
+  const handleAllRuneforgesClick = useCallback(
     (runeType: RuneType, runeId: string) => {
-      draftFromCenter(runeType, runeId);
+      draftFromAllRuneforges(runeType, runeId);
     },
-    [draftFromCenter],
+    [draftFromAllRuneforges],
   );
 
   const playerHiddenPatternSlots = useMemo(
@@ -320,13 +315,11 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       hasSelectedRunes,
       draftSource,
       runeforges,
-      centerPool,
       playerLockedLines,
       playerHiddenPatternSlots,
       animatingRuneIds,
-      hiddenCenterRuneIds,
       onRuneClick: handleRuneClick,
-      onCenterRuneClick: handleCenterRuneClick,
+      onAllRuneforgesClick: handleAllRuneforgesClick,
       onCancelSelection: handleCancelSelection,
       onPlaceRunes: handlePatternLinePlacement,
       onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
@@ -335,16 +328,14 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     [
       activeArtefacts,
       animatingRuneIds,
-      centerPool,
       currentGame,
       draftSource,
       handleCancelSelection,
-      handleCenterRuneClick,
+      handleAllRuneforgesClick,
       handlePatternLinePlacement,
       handlePlaceRunesInFloorWrapper,
       handleRuneClick,
       hasSelectedRunes,
-      hiddenCenterRuneIds,
       isDraftPhase,
       isGameOver,
       player,

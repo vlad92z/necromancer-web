@@ -57,7 +57,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     soloDeckTemplate: deckTemplate,
     turnPhase: 'deck-draft' as const,
     runeforges: [],
-    centerPool: [],
     selectedRunes: [],
     overloadRunes: [],
     selectionTimestamp: null,
@@ -115,14 +114,12 @@ function clearFloorLines(player: Player): Player {
   };
 }
 
-function isRoundExhausted(runeforges: GameState['runeforges'], centerPool: GameState['centerPool']): boolean {
-  const allRuneforgesEmpty = runeforges.every((runeforge) => runeforge.runes.length === 0);
-  return allRuneforgesEmpty && centerPool.length === 0;
+function isRoundExhausted(runeforges: GameState['runeforges']): boolean {
+  return runeforges.every((runeforge) => runeforge.runes.length === 0);
 }
 
-function getNextCenterPool(state: GameState): Rune[] {
-  const movedToCenter = state.draftSource?.type === 'runeforge' ? state.draftSource.movedToCenter : [];
-  return movedToCenter.length > 0 ? [...state.centerPool, ...movedToCenter] : state.centerPool;
+function areAllRuneforgesInactive(runeforges: GameState['runeforges']): boolean {
+  return runeforges.length > 0 && runeforges.every((runeforge) => runeforge.isInactive);
 }
 
 function getOverloadResult(
@@ -143,7 +140,6 @@ function getOverloadResult(
 function handlePlayerDefeat(
   state: GameState,
   updatedPlayer: Player,
-  nextCenterPool: Rune[],
   overloadDamage: number
 ): GameState {
   console.log('gameplayStore: handlePlayerDefeat');
@@ -167,7 +163,6 @@ function handlePlayerDefeat(
     overloadRunes: [],
     selectionTimestamp: null,
     draftSource: null,
-    centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
     outcome: 'defeat' as GameOutcome,
@@ -189,7 +184,6 @@ function prepareRoundReset(state: GameState): GameState {
         ...state,
         player: clearedPlayer,
         runeforges: [],
-        centerPool: [],
         game: state.game,
         shouldTriggerEndRound: false,
         lockedPatternLines: { [clearedPlayer.id]: [] },
@@ -220,7 +214,6 @@ function prepareRoundReset(state: GameState): GameState {
       ...state,
       player: clearedPlayer,
       runeforges: [],
-      centerPool: [],
       turnPhase: 'game-over',
       game: state.game,
       outcome: 'defeat' as GameOutcome,
@@ -252,7 +245,6 @@ function prepareRoundReset(state: GameState): GameState {
     ...state,
     player: updatedPlayer,
     runeforges: filledRuneforges,
-    centerPool: [],
     turnPhase: 'draft',
     game: state.game,
     strain: state.strain * state.strainMultiplier,
@@ -278,7 +270,7 @@ export interface GameplayStore extends GameState {
   returnToStartScreen: () => void;
   startNextSoloGame: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
-  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void;
+  draftFromAllRuneforges: (runeType: RuneType, primaryRuneId?: string) => void;
   placeRunes: (patternLineIndex: number) => void;
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
@@ -296,10 +288,20 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
     return state;
   }
 
-  if (state.draftSource.type === 'center') {
+  if (state.draftSource.type === 'all-runeforges') {
+    // Restore runes to all affected runeforges
+    const updatedRuneforges = state.runeforges.map((f) => {
+      const originalRunes = state.draftSource?.type === 'all-runeforges' 
+        ? state.draftSource.originalRunesByForge[f.id]
+        : undefined;
+      return originalRunes 
+        ? { ...f, runes: originalRunes, isInactive: false }
+        : f;
+    });
+
     return {
       ...state,
-      centerPool: [...state.draftSource.originalRunes],
+      runeforges: updatedRuneforges,
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
@@ -307,12 +309,13 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
     };
   }
 
+  // Single runeforge selection
   const runeforgeId = state.draftSource.runeforgeId;
   const originalRunes = state.draftSource.originalRunes;
 
   const updatedRuneforges = state.runeforges.map((f) =>
     f.id === runeforgeId
-      ? { ...f, runes: originalRunes }
+      ? { ...f, runes: originalRunes, isInactive: false }
       : f
   );
 
@@ -399,10 +402,9 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     health: nextHealth,
   };
 
-  const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
-    const defeatedState = handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+    const defeatedState = handlePlayerDefeat(state, updatedPlayer, overloadDamage);
     return { ...state, ...defeatedState, selectionTimestamp: null };
   }
 
@@ -411,7 +413,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     const deckDraftReadyState = enterDeckDraftMode({
       ...selectPersistableGameState(state),
       player: updatedPlayer,
-      centerPool: nextCenterPool,
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
@@ -425,7 +426,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     return { ...state, ...deckDraftReadyState, selectionTimestamp: null };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+  const shouldEndRound = isRoundExhausted(state.runeforges);
 
   const nextTurnPhase =
     completedLines.length > 0
@@ -441,7 +442,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
     selectionTimestamp: null,
     draftSource: null,
-    centerPool: nextCenterPool,
     turnPhase: nextTurnPhase,
     shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
@@ -473,10 +473,9 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     health: nextHealth,
   };
 
-  const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
-    const defeatedState = handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+    const defeatedState = handlePlayerDefeat(state, updatedPlayer, overloadDamage);
     return { ...state, ...defeatedState, selectionTimestamp: null };
   }
 
@@ -485,7 +484,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     const deckDraftReadyState = enterDeckDraftMode({
       ...selectPersistableGameState(state),
       player: updatedPlayer,
-      centerPool: nextCenterPool,
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
@@ -499,7 +497,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     return { ...state, ...deckDraftReadyState, selectionTimestamp: null };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+  const shouldEndRound = isRoundExhausted(state.runeforges);
 
   return {
     ...state,
@@ -508,7 +506,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     overloadRunes: [...state.overloadRunes, ...selectedRunes],
     selectionTimestamp: null,
     draftSource: null,
-    centerPool: nextCenterPool,
     turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
@@ -590,7 +587,7 @@ function selectPersistableGameState(state: GameplayStore): GameState {
     returnToStartScreen,
     startNextSoloGame,
     draftRune,
-    draftFromCenter,
+    draftFromAllRuneforges,
     placeRunes,
     moveRunesToWall,
     placeRunesInFloor,
@@ -642,11 +639,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase !== 'draft') {
         return state;
       }
-      console.log('continue');
       // Find the runeforge
       const runeforge = state.runeforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
-//       
+      
       // Separate runes by selected type
       const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
       const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
@@ -658,9 +654,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       // Capture original order before clearing for display restoration
       const originalRunes = runeforge.runes;
 
-      // Update runeforges (remove all runes from this runeforge)
+      // Update runeforges - keep remaining runes in the forge and mark it as inactive
       const updatedRuneforges = state.runeforges.map((f) =>
-        f.id === runeforgeId ? { ...f, runes: [] } : f
+        f.id === runeforgeId ? { ...f, runes: remainingRunes, isInactive: true } : f
       );
       
       return {
@@ -668,7 +664,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runeforges: updatedRuneforges,
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
         selectionTimestamp: Date.now(),
-        draftSource: { type: 'runeforge', runeforgeId, movedToCenter: remainingRunes, originalRunes },
+        draftSource: { type: 'runeforge', runeforgeId, originalRunes },
         turnPhase: 'place' as const,
       };
     });
@@ -690,7 +686,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
       if (completedLines.length === 0) {
-        const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+        const shouldEndRound = isRoundExhausted(state.runeforges);
 
         return {
           ...state,
@@ -780,7 +776,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         });
       }
 
-      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+      const shouldEndRound = isRoundExhausted(state.runeforges);
 
       return {
         ...state,
@@ -794,7 +790,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
   
-  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
+  draftFromAllRuneforges: (runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
       if (state.turnPhase === 'place') {
         return attemptAutoPlacement(state);
@@ -802,31 +798,46 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase !== 'draft') {
         return state;
       }
-      const currentPlayer = state.player;
-      const playerRuneforges = state.runeforges.filter((f) => f.ownerId === currentPlayer.id);
-      const hasAccessibleRuneforges = playerRuneforges.some(
-        (f) => f.runes.length > 0
-      );
-
-      if (hasAccessibleRuneforges) {
+      
+      // Check if all runeforges are inactive
+      if (!areAllRuneforgesInactive(state.runeforges)) {
         return state;
       }
 
-      const originalCenterRunes = [...state.centerPool];
-      // Get all runes of selected type from center
-      const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
-      const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);
+      // Collect all runes of the selected type from all runeforges
+      const selectedRunesByForge: Record<string, Rune[]> = {};
+      const allSelectedRunes: Rune[] = [];
+      const originalRunesByForge: Record<string, Rune[]> = {};
+      const affectedForgeIds: string[] = [];
+
+      state.runeforges.forEach((forge) => {
+        originalRunesByForge[forge.id] = [...forge.runes];
+        const selectedFromForge = forge.runes.filter((r: Rune) => r.runeType === runeType);
+        
+        if (selectedFromForge.length > 0) {
+          selectedRunesByForge[forge.id] = selectedFromForge;
+          allSelectedRunes.push(...selectedFromForge);
+          affectedForgeIds.push(forge.id);
+        }
+      });
       
       // If no runes of this type, do nothing
-      if (selectedRunes.length === 0) return state;
-      const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
+      if (allSelectedRunes.length === 0) return state;
+      
+      const orderedRunes = prioritizeRuneById(allSelectedRunes, primaryRuneId);
+
+      // Update runeforges - remove selected runes, keep others
+      const updatedRuneforges = state.runeforges.map((forge) => {
+        const remainingRunes = forge.runes.filter((r: Rune) => r.runeType !== runeType);
+        return { ...forge, runes: remainingRunes };
+      });
       
       return {
         ...state,
-        centerPool: remainingRunes,
+        runeforges: updatedRuneforges,
         selectedRunes: [...state.selectedRunes, ...orderedRunes],
         selectionTimestamp: Date.now(),
-        draftSource: { type: 'center', originalRunes: originalCenterRunes },
+        draftSource: { type: 'all-runeforges', runeforgeIds: affectedForgeIds, originalRunesByForge },
         turnPhase: 'place' as const,
       };
     });

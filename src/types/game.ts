@@ -39,6 +39,7 @@ export interface Runeforge {
   id: string;
   ownerId: Player['id'];
   runes: Rune[];
+  isInactive?: boolean; // True when the runeforge has been drafted from this round
 }
 
 /**
@@ -135,7 +136,6 @@ export interface GameState {
   player: Player;
   soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
-  centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   /**
@@ -152,8 +152,8 @@ export interface GameState {
   selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   draftSource:
-    | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
-    | { type: 'center'; originalRunes: Rune[] }
+    | { type: 'runeforge'; runeforgeId: string; originalRunes: Rune[] }
+    | { type: 'all-runeforges'; runeforgeIds: string[]; originalRunesByForge: Record<string, Rune[]> }
     | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion

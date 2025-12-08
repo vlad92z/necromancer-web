@@ -283,7 +283,6 @@ export function initializeSoloGame(
     player: soloPlayer,
     soloDeckTemplate: startingDeckTemplate,
     runeforges: filledRuneforges,
-    centerPool: [],
     turnPhase: 'draft',
     game: 1,
     selectedRunes: [],

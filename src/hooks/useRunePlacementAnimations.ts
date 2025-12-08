@@ -17,17 +17,12 @@ interface AutoAnimationMeta {
   floor?: { playerId: string; slotIndexes: number[] };
 }
 
-interface RuneforgeAnimationSnapshot {
-  key: string;
-  runes: Rune[];
-  runePositions: Map<string, { startX: number; startY: number }>;
-}
+
 
 interface UseRunePlacementAnimationsParams {
   player: GameState['player'];
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
-  centerPool: GameState['centerPool'];
 }
 
 const OVERLAY_RUNE_SIZE = 48;
@@ -36,21 +31,16 @@ export function useRunePlacementAnimations({
   player,
   selectedRunes,
   draftSource,
-  centerPool,
 }: UseRunePlacementAnimationsParams) {
   const [animatingRunes, setAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Record<string, Set<string>>>({});
-  const [hiddenCenterRuneIds, setHiddenCenterRuneIds] = useState<Set<string>>(new Set());
   const manualAnimationRef = useRef(false);
   const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
   const previousSelectedCountRef = useRef<number>(selectedRunes.length);
   const autoAnimationMetaRef = useRef<AutoAnimationMeta | null>(null);
   const runeforgeAnimationMetaRef = useRef<{ runeIds: string[] } | null>(null);
-  const lastRuneforgeAnimationKeyRef = useRef<string | null>(null);
-  const runeforgeAnimationSnapshotRef = useRef<RuneforgeAnimationSnapshot | null>(null);
   const selectionMeasurementRafRef = useRef<number | undefined>(undefined);
-  const runeforgeMeasurementRafRef = useRef<number | undefined>(undefined);
 
   const isAnimatingPlacement = animatingRunes.length > 0;
   const activeAnimatingRunes = useMemo(
@@ -99,41 +89,7 @@ export function useRunePlacementAnimations({
 
 
 
-  const hideCenterRunes = useCallback((runeIds: string[]) => {
-    if (runeIds.length === 0) {
-      return;
-    }
-    setHiddenCenterRuneIds((prev) => {
-      const nextSet = new Set(prev);
-      let changed = false;
-      runeIds.forEach((id) => {
-        if (!nextSet.has(id)) {
-          nextSet.add(id);
-          changed = true;
-        }
-      });
-      return changed ? nextSet : prev;
-    });
-  }, []);
 
-  const revealCenterRunes = useCallback((runeIds: string[]) => {
-    if (runeIds.length === 0) {
-      return;
-    }
-    setHiddenCenterRuneIds((prev) => {
-      if (prev.size === 0) {
-        return prev;
-      }
-      const nextSet = new Set(prev);
-      let changed = false;
-      runeIds.forEach((id) => {
-        if (nextSet.delete(id)) {
-          changed = true;
-        }
-      });
-      return changed ? nextSet : prev;
-    });
-  }, []);
 
   const captureSelectedRunePositions = useCallback((runes: Rune[]): Map<string, { startX: number; startY: number }> => {
     const positions = new Map<string, { startX: number; startY: number }>();
@@ -143,28 +99,6 @@ export function useRunePlacementAnimations({
 
     const runeIdSet = new Set(runes.map((rune) => rune.id));
     const elements = document.querySelectorAll<HTMLElement>('[data-selected-rune="true"][data-rune-id]');
-    elements.forEach((element) => {
-      const runeId = element.dataset.runeId;
-      if (!runeId || !runeIdSet.has(runeId)) {
-        return;
-      }
-      const rect = element.getBoundingClientRect();
-      positions.set(runeId, {
-        startX: rect.left + rect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-        startY: rect.top + rect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-      });
-    });
-    return positions;
-  }, []);
-
-  const captureRuneforgeRunePositions = useCallback((runes: Rune[]): Map<string, { startX: number; startY: number }> => {
-    const positions = new Map<string, { startX: number; startY: number }>();
-    if (typeof document === 'undefined' || runes.length === 0) {
-      return positions;
-    }
-
-    const runeIdSet = new Set(runes.map((rune) => rune.id));
-    const elements = document.querySelectorAll<HTMLElement>('[data-rune-source="runeforge"][data-rune-id]');
     elements.forEach((element) => {
       const runeId = element.dataset.runeId;
       if (!runeId || !runeIdSet.has(runeId)) {
@@ -290,46 +224,7 @@ export function useRunePlacementAnimations({
     });
   }, [player, hidePatternSlots, revealPatternSlots]);
 
-  const animateRuneforgeToCenter = useCallback(
-    (snapshot: RuneforgeAnimationSnapshot) => {
-      const runes = snapshot.runes;
-      const runeIds = runes.map((rune) => rune.id);
-      if (runes.length === 0) {
-        return;
-      }
-      if (typeof document === 'undefined') {
-        revealCenterRunes(runeIds);
-        return;
-      }
-      requestAnimationFrame(() => {
-        const overlayRunes: AnimatingRune[] = [];
-        runes.forEach((rune) => {
-          const start = snapshot.runePositions.get(rune.id);
-          const targetElement = document.querySelector<HTMLElement>(`[data-rune-id="${rune.id}"][data-rune-source="center"]`);
-          if (!start || !targetElement) {
-            return;
-          }
-          const targetRect = targetElement.getBoundingClientRect();
-          overlayRunes.push({
-            id: rune.id,
-            runeType: rune.runeType,
-            startX: start.startX,
-            startY: start.startY,
-            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
-          });
-        });
-        if (overlayRunes.length === 0) {
-          revealCenterRunes(runeIds);
-          runeforgeAnimationMetaRef.current = null;
-          return;
-        }
-        runeforgeAnimationMetaRef.current = { runeIds };
-        setRuneforgeAnimatingRunes(overlayRunes);
-      });
-    },
-    [revealCenterRunes],
-  );
+
 
   const handlePlacementAnimationComplete = useCallback(() => {
     setAnimatingRunes([]);
@@ -344,13 +239,9 @@ export function useRunePlacementAnimations({
   }, [revealPatternSlots]);
 
   const handleRuneforgeAnimationComplete = useCallback(() => {
-    const runeIds = runeforgeAnimationMetaRef.current?.runeIds ?? [];
     runeforgeAnimationMetaRef.current = null;
     setRuneforgeAnimatingRunes([]);
-    if (runeIds.length > 0) {
-      revealCenterRunes(runeIds);
-    }
-  }, [revealCenterRunes]);
+  }, []);
 
   useEffect(() => {
     if (selectedRunes.length === 0) {
@@ -399,62 +290,9 @@ export function useRunePlacementAnimations({
     previousSelectedCountRef.current = selectedRunes.length;
   }, [selectedRunes.length, triggerAutoPlacementAnimation]);
 
-  useEffect(() => {
-    if (!draftSource || draftSource.type !== 'runeforge') {
-      return undefined;
-    }
-    const movedRunes = draftSource.movedToCenter;
-    if (movedRunes.length === 0) {
-      lastRuneforgeAnimationKeyRef.current = null;
-      runeforgeAnimationSnapshotRef.current = null;
-      return undefined;
-    }
-    const selectionKey = `${draftSource.runeforgeId}-${movedRunes.map((rune) => rune.id).join(',')}`;
-    if (lastRuneforgeAnimationKeyRef.current === selectionKey) {
-      return undefined;
-    }
-    lastRuneforgeAnimationKeyRef.current = selectionKey;
 
-    const rafId = requestAnimationFrame(() => {
-      const runePositions = captureRuneforgeRunePositions(movedRunes);
-      runeforgeAnimationSnapshotRef.current = {
-        key: selectionKey,
-        runes: movedRunes,
-        runePositions,
-      };
-      hideCenterRunes(movedRunes.map((rune) => rune.id));
-    });
-    runeforgeMeasurementRafRef.current = rafId;
-    return () => {
-      if (runeforgeMeasurementRafRef.current !== undefined) {
-        cancelAnimationFrame(runeforgeMeasurementRafRef.current);
-      }
-    };
-  }, [captureRuneforgeRunePositions, draftSource, hideCenterRunes]);
 
-  useLayoutEffect(() => {
-    const snapshot = runeforgeAnimationSnapshotRef.current;
-    if (!snapshot) {
-      return;
-    }
-    if (draftSource && draftSource.type === 'runeforge') {
-      return;
-    }
-    const runeIds = snapshot.runes.map((rune) => rune.id);
-    const centerHasRunes = runeIds.every((runeId) => centerPool.some((rune) => rune.id === runeId));
-    runeforgeAnimationSnapshotRef.current = null;
-    if (!centerHasRunes) {
-      revealCenterRunes(runeIds);
-      return;
-    }
-    animateRuneforgeToCenter(snapshot);
-  }, [draftSource, centerPool, animateRuneforgeToCenter, revealCenterRunes]);
 
-  useLayoutEffect(() => {
-    if (!draftSource || draftSource.type !== 'runeforge') {
-      lastRuneforgeAnimationKeyRef.current = null;
-    }
-  }, [draftSource]);
 
   return {
     animatingRunes,
@@ -462,7 +300,6 @@ export function useRunePlacementAnimations({
     activeAnimatingRunes,
     animatingRuneIds,
     hiddenPatternSlots,
-    hiddenCenterRuneIds,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,
     handleRuneforgeAnimationComplete,
