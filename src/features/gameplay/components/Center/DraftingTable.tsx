@@ -8,7 +8,6 @@ import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../.
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneCell } from '../../../../components/RuneCell';
-import { CenterPool } from './CenterPool';
 import { RuneTypeTotals } from './RuneTypeTotals';
 
 interface DraftingTableProps {
@@ -31,19 +30,14 @@ export function DraftingTable({
   runeforges, 
   centerPool, 
   onRuneClick,
-  onCenterRuneClick,
-  isDraftPhase, 
   hasSelectedRunes,
   selectedRunes,
   draftSource,
   onCancelSelection,
   animatingRuneIds,
-  hiddenCenterRuneIds,
   runesPerRuneforge,
 }: DraftingTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
-  const hasAccessibleRuneforges = runeforges.some((forge) => forge.runes.length > 0);
-  const canDraftFromCenter = !hasAccessibleRuneforges;
   const runeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
 
   const computeSlots = useCallback((runeforgeId: string, runes: Rune[], totalSlots: number): (Rune | null)[] => {
@@ -268,23 +262,6 @@ export function DraftingTable({
       </div>
     );
   };
-
-  const renderCenterSection = () => (
-    <div className="relative w-full flex justify-center mt-1">
-      <CenterPool 
-        centerPool={centerPool}
-        onRuneClick={onCenterRuneClick}
-        isDraftPhase={isDraftPhase}
-        hasSelectedRunes={hasSelectedRunes}
-        canDraftFromCenter={canDraftFromCenter}
-        selectedRunes={selectionFromCenter ? selectedRunes : []}
-        selectionFromCenter={Boolean(selectionFromCenter)}
-        displayRunesOverride={centerSelectionOriginalRunes}
-        animatingRuneIds={animatingRuneIdSet}
-        hiddenRuneIds={hiddenCenterRuneIds}
-      />
-    </div>
-  );
   
   const handleDraftingTableClick = () => {
     if (hasSelectedRunes) {
@@ -298,7 +275,6 @@ export function DraftingTable({
       <div className="flex flex-col items-center gap-[14px] w-full">
         {runeforges.map((runeforge) => renderRuneforgeRow(runeforge))}
       </div>
-      {renderCenterSection()}
       
     </div>
   );
