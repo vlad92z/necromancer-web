@@ -67,7 +67,6 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
           <DraftingTable
             runeforges={runeforges}
             centerPool={centerPool}
-            player={player}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
             isDraftPhase={isDraftPhase}

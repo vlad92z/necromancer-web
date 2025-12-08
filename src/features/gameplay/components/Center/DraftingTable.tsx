@@ -1,19 +1,19 @@
 /**
- * RuneforgesAndCenter component - displays runeforges and center pool
+ * DraftingTable component - displays runeforges as rune rows alongside the center pool
  */
 
-import { useMemo } from 'react';
-import type { GameState, Player, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
+import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
-import { Runeforge } from './Runeforge';
+import { RuneCell } from '../../../../components/RuneCell';
 import { CenterPool } from './CenterPool';
 import { RuneTypeTotals } from './RuneTypeTotals';
 
 interface DraftingTableProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
-  player: Player;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   isDraftPhase: boolean;
@@ -29,7 +29,6 @@ interface DraftingTableProps {
 export function DraftingTable({ 
   runeforges, 
   centerPool, 
-  player,
   onRuneClick,
   onCenterRuneClick,
   isDraftPhase, 
@@ -40,6 +39,7 @@ export function DraftingTable({
   animatingRuneIds,
   hiddenCenterRuneIds
 }: DraftingTableProps) {
+  const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const hasAccessibleRuneforges = runeforges.some((forge) => forge.runes.length > 0);
   const canDraftFromCenter = !hasAccessibleRuneforges;
 
@@ -50,7 +50,7 @@ export function DraftingTable({
   );
   const selectionFromCenter = draftSource?.type === 'center';
   const centerSelectionOriginalRunes = draftSource?.type === 'center' ? draftSource.originalRunes : undefined;
-  const selectedRuneIds = selectedRunes.map((rune) => rune.id);
+  const selectedRuneIdSet = useMemo(() => new Set(selectedRunes.map((rune) => rune.id)), [selectedRunes]);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
   const runeTypes = useMemo(() => RUNE_TYPES, []);
   const runeCounts = useMemo(
@@ -66,41 +66,132 @@ export function DraftingTable({
     [centerPool, draftSource, runeforges, selectedRunes]
   );
 
-  const renderRuneforgeRow = (
-    owner: Player,
-    ownedRuneforges: RuneforgeType[],
-    align: 'flex-start' | 'center' | 'flex-end',
-    keySuffix: string
-  ) => {
-    if (ownedRuneforges.length === 0) {
-      return null;
+  const handleRuneMouseEnter = (runeforgeId: string, runeType: RuneType, selectionActive: boolean) => {
+    if (selectionActive || hasSelectedRunes) {
+      return;
     }
+    setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: runeType }));
+  };
 
-    const alignClass = align === 'flex-start' ? 'items-start' : align === 'center' ? 'items-center' : 'items-end';
+  const handleRuneMouseLeave = (runeforgeId: string) => {
+    setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: null }));
+  };
+
+  const renderRuneforgeRow = (runeforge: RuneforgeType) => {
+    const runeSize = 60;
+    const runeGap = 14;
+    const containerPadding = 24;
+    const selectionActive = selectedFromRuneforgeId === runeforge.id && hasSelectedRunes;
+    const displayedRunes = selectionActive ? selectedRuneforgeOriginalRunes : runeforge.runes;
+    const hoveredRuneType = hoveredRuneTypeByRuneforge[runeforge.id] ?? null;
+    const baseRuneforgeWidth = displayedRunes.length > 0
+      ? (displayedRunes.length * runeSize) + (Math.max(0, displayedRunes.length - 1) * runeGap) + containerPadding
+      : 240;
+    const runeforgeWidth = Math.min(420, Math.max(280, baseRuneforgeWidth));
 
     return (
-      <div key={`${owner.id}-${keySuffix}`} className="w-full">
-        <div className={`flex flex-col ${alignClass} gap-[14px] w-full`}>
-          {ownedRuneforges.map((runeforge) => (
-            <Runeforge 
-              key={runeforge.id} 
-              runeforge={runeforge}
-              onRuneClick={onRuneClick}
-              disabled={hasSelectedRunes}
-              displayOverride={
-                selectedFromRuneforgeId === runeforge.id
-                  ? {
-                      runes: selectedRuneforgeOriginalRunes,
-                      selectedRuneIds,
+      <div
+        key={runeforge.id}
+        style={{
+          width: `${runeforgeWidth}px`,
+          padding: '12px',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          backgroundColor: '#1c1034',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '96px',
+          transition: 'border-color 160ms ease, box-shadow 200ms ease',
+          margin: '0 auto'
+        }}
+        onMouseLeave={() => handleRuneMouseLeave(runeforge.id)}
+      >
+        {displayedRunes.length === 0 ? (
+          <div style={{ color: 'rgba(255, 255, 255, 0.35)', fontSize: '14px' }}>Empty</div>
+        ) : (
+          <div style={{ display: 'flex', gap: `${runeGap}px`, alignItems: 'center', justifyContent: 'center' }}>
+            {displayedRunes.map((rune) => {
+              const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
+              const isAnimatingRune = animatingRuneIdSet?.has(rune.id) ?? false;
+              const isHighlighted = hoveredRuneType === rune.runeType && !selectionActive;
+              const pointerEvents = isAnimatingRune
+                ? 'none'
+                : (selectionActive
+                  ? (isSelectedForDisplay ? 'auto' : 'none')
+                  : (!hasSelectedRunes ? 'auto' : 'none'));
+              const cursor = pointerEvents === 'auto' ? 'pointer' : 'not-allowed';
+              const transform = isSelectedForDisplay
+                ? 'translateY(-2px) scale(1.08)'
+                : isHighlighted
+                  ? 'scale(1.05)'
+                  : 'scale(1)';
+              const boxShadow = isSelectedForDisplay
+                ? '0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(196, 181, 253, 0.35)'
+                : isHighlighted
+                  ? '0 0 10px rgba(255, 255, 255, 0.4)'
+                  : 'none';
+              const filter = isSelectedForDisplay
+                ? 'brightness(1.15)'
+                : isHighlighted
+                  ? 'brightness(1.08)'
+                  : 'none';
+              const selectedAnimation = isSelectedForDisplay
+                ? {
+                    scale: [1.05, 1.12, 1.05],
+                    y: [-2, 2, -2],
+                    rotate: [-1.5, 1.5, -1.5]
+                  }
+                : undefined;
+              const selectedTransition = isSelectedForDisplay
+                ? { duration: 2, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+                : undefined;
+
+              return (
+                <motion.div
+                  key={rune.id}
+                  data-rune-id={rune.id}
+                  data-rune-source="runeforge"
+                  data-selected-rune={isSelectedForDisplay ? 'true' : undefined}
+                  style={{
+                    width: `${runeSize}px`,
+                    height: `${runeSize}px`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents,
+                    cursor,
+                    boxShadow,
+                    filter,
+                    borderRadius: '50%',
+                    opacity: isAnimatingRune ? 0 : 1,
+                    transform,
+                    transition: 'transform 160ms ease, filter 160ms ease, box-shadow 180ms ease, opacity 160ms ease'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isAnimatingRune && pointerEvents === 'auto' && onRuneClick) {
+                      onRuneClick(runeforge.id, rune.runeType, rune.id);
                     }
-                  : undefined
-              }
-              selectionSourceActive={selectedFromRuneforgeId === runeforge.id && hasSelectedRunes}
-              onCancelSelection={hasSelectedRunes ? onCancelSelection : undefined}
-              animatingRuneIds={animatingRuneIdSet}
-            />
-          ))}
-        </div>
+                  }}
+                  onMouseEnter={() => handleRuneMouseEnter(runeforge.id, rune.runeType, selectionActive)}
+                  onMouseLeave={() => handleRuneMouseLeave(runeforge.id)}
+                  animate={selectedAnimation}
+                  transition={selectedTransition}
+                >
+                  <RuneCell
+                    rune={rune}
+                    variant="runeforge"
+                    size="large"
+                    showEffect
+                    showTooltip
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
@@ -131,7 +222,9 @@ export function DraftingTable({
   return (
     <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
       <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
-      {renderRuneforgeRow(player, runeforges, 'center', 'player')}
+      <div className="flex flex-col items-center gap-[14px] w-full">
+        {runeforges.map((runeforge) => renderRuneforgeRow(runeforge))}
+      </div>
       {renderCenterSection()}
       
     </div>
