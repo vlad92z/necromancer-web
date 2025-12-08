@@ -93,7 +93,7 @@ export interface GameBoardSharedProps {
 }
 
 export interface GameBoardFrameProps extends GameBoardProps {
-  renderContent: (shared: GameBoardSharedProps, variantData: GameData) => ReactElement | null;
+  renderContent: (shared: GameBoardSharedProps, gameData: GameData) => ReactElement | null;
 }
 
 export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {

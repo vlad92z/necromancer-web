@@ -11,11 +11,9 @@ import { DeckDraftingModal } from './DeckDraftingModal';
 interface BoardContentProps {
   shared: GameBoardSharedProps;
   gameData?: GameData;
-  // Some callers use `variantData` prop name; accept it for backwards compatibility
-  variantData?: GameData;
 }
 
-export function BoardContent({ shared, gameData, variantData }: BoardContentProps) {
+export function BoardContent({ shared, gameData }: BoardContentProps) {
   const {
     player,
     selectedRuneType,
@@ -41,7 +39,7 @@ export function BoardContent({ shared, gameData, variantData }: BoardContentProp
   } = shared;
   // `gameData` may be undefined at runtime (caller sometimes omits it).
   // Guard the destructuring to avoid runtime TypeError.
-  const effectiveGameData = gameData ?? variantData;
+  const effectiveGameData = gameData;
 
   const {
     outcome,
