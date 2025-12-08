@@ -40,6 +40,7 @@ export interface Runeforge {
   ownerId: Player['id'];
   runes: Rune[];
   isInactive?: boolean; // True when the runeforge has been drafted from this round
+  originalLayout?: Rune[]; // Original runes for maintaining spacing when some are removed
 }
 
 /**

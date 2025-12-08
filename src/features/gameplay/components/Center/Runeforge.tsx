@@ -36,7 +36,13 @@ export function Runeforge({
 }: RuneforgeProps) {
   const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const displayedRunes = displayOverride ? displayOverride.runes : runeforge.runes;
+  
+  // Use originalLayout to maintain spacing when runes are removed
+  // If inactive and has originalLayout, show layout with missing runes as empty spaces
+  const layoutRunes = runeforge.isInactive && runeforge.originalLayout ? runeforge.originalLayout : runeforge.runes;
+  const currentRuneIds = new Set(runeforge.runes.map(r => r.id));
+  
+  const displayedRunes = displayOverride ? displayOverride.runes : layoutRunes;
   const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
   const selectionActive = selectionSourceActive && Boolean(displayOverride);
   const allowCancel = Boolean(onCancelSelection);
@@ -57,7 +63,8 @@ export function Runeforge({
   };
   
   // Determine styling based on state
-  const isInactive = runeforge.isInactive && !selectionActive;
+  // In all-inactive mode, show normal styling even for inactive runeforges
+  const isInactive = runeforge.isInactive && !selectionActive && !allInactiveMode;
   const backgroundColor = isInactive ? 'transparent' : '#1c1034';
   let borderColor = isInactive ? 'transparent' : 'rgba(255, 255, 255, 0.15)';
   const hoverBackgroundColor = isInactive ? 'rgba(37, 22, 70, 0.3)' : '#251646';
@@ -69,7 +76,8 @@ export function Runeforge({
   
   // Normal selectable state or all-inactive mode
   const isSelectable = (!disabled && !selectionActive && runeforge.runes.length > 0 && onRuneClick) || (allInactiveMode && runeforge.runes.length > 0);
-  if (isSelectable && !isInactive) {
+  // In all-inactive mode, even inactive runeforges should show as selectable
+  if (isSelectable && (!isInactive || allInactiveMode)) {
     borderColor = '#c084fc';
     containerBoxShadow = isHovered ? selectableGlowPeak : selectableGlowRest;
   }
@@ -121,6 +129,24 @@ export function Runeforge({
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ display: 'flex', gap: `${runeGap}px`, alignItems: 'center', justifyContent: 'center' }}>
             {displayedRunes.map((rune) => {
+              // Check if this rune has been removed (not in current runes)
+              const isRemoved = runeforge.isInactive && !currentRuneIds.has(rune.id);
+              
+              // Render empty placeholder for removed runes
+              if (isRemoved) {
+                return (
+                  <div
+                    key={rune.id}
+                    style={{
+                      width: `${runeSize}px`,
+                      height: `${runeSize}px`,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                );
+              }
+              
               const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
               const isAnimatingRune = animatingRuneIds?.has(rune.id) ?? false;
               const highlightByType = hoveredRuneType === rune.runeType && !displayOverride;

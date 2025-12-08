@@ -644,7 +644,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       
       // Separate runes by selected type
       const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
-      const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
       
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
@@ -653,9 +652,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       // Capture original order before clearing for display restoration
       const originalRunes = runeforge.runes;
 
+      // Keep remaining runes in original positions by filtering but NOT re-packing
+      // We filter to get remaining runes for state management
+      const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
+
       // Update runeforges - keep remaining runes in the forge and mark it as inactive
+      // Store originalLayout if this is the first draft from this runeforge
       const updatedRuneforges = state.runeforges.map((f) =>
-        f.id === runeforgeId ? { ...f, runes: remainingRunes, isInactive: true } : f
+        f.id === runeforgeId 
+          ? { ...f, runes: remainingRunes, isInactive: true, originalLayout: f.originalLayout || originalRunes } 
+          : f
       );
       
       return {
