@@ -25,6 +25,8 @@ interface PlayerViewProps {
   strain?: number;
   onOpenDeck?: () => void;
   onOpenOverload?: () => void;
+  onOpenSettings?: () => void;
+  arcaneDust?: number;
   activeArtefactIds: ArtefactId[];
 }
 
@@ -44,6 +46,8 @@ export function PlayerView({
   strain,
   onOpenDeck,
   onOpenOverload,
+  onOpenSettings,
+  arcaneDust,
   activeArtefactIds,
 }: PlayerViewProps) {
   return (
@@ -64,6 +68,8 @@ export function PlayerView({
         strain={strain}
         onOpenDeck={onOpenDeck}
         onOpenOverload={onOpenOverload}
+        onOpenSettings={onOpenSettings}
+        arcaneDust={arcaneDust}
         activeArtefactIds={activeArtefactIds}
       />
     </div>

@@ -45,11 +45,13 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     runePowerTotal,
     soloTargetScore,
     arcaneDustReward,
+    arcaneDust,
     deckDraftState,
     isDeckDrafting,
     onSelectDeckDraftRuneforge,
     onOpenDeckOverlay,
     onOpenOverloadOverlay,
+    onOpenSettings,
     onStartNextGame,
   } = variantData;
 
@@ -94,6 +96,8 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
             strain={soloStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}
             onOpenOverload={onOpenOverloadOverlay}
+            onOpenSettings={onOpenSettings}
+            arcaneDust={arcaneDust}
             activeArtefactIds={activeArtefactIds}
           />
         </div>
