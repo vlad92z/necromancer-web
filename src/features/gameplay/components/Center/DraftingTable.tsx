@@ -130,9 +130,10 @@ export function DraftingTable({
 
   return (
     <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
+      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
       {renderRuneforgeRow(player, runeforges, 'center', 'player')}
       {renderCenterSection()}
-      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
+      
     </div>
   );
 }
