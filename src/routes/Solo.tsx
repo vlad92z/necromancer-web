@@ -36,7 +36,7 @@ const selectGameBoardState = (state: GameplayStore): GameState => ({
   game: state.game,
   strain: state.strain,
   strainMultiplier: state.strainMultiplier,
-  soloStartingStrain: state.soloStartingStrain,
+  startingStrain: state.startingStrain,
   selectedRunes: state.selectedRunes,
   overloadRunes: state.overloadRunes,
   draftSource: state.draftSource,
@@ -47,12 +47,12 @@ const selectGameBoardState = (state: GameplayStore): GameState => ({
   lockedPatternLines: state.lockedPatternLines,
   shouldTriggerEndRound: state.shouldTriggerEndRound,
   runePowerTotal: state.runePowerTotal,
-  soloTargetScore: state.soloTargetScore,
-  soloOutcome: state.soloOutcome,
-  soloPatternLineLock: state.soloPatternLineLock,
+  targetScore: state.targetScore,
+  outcome: state.outcome,
+  patternLineLock: state.patternLineLock,
   longestRun: state.longestRun,
   deckDraftState: state.deckDraftState,
-  soloBaseTargetScore: state.soloBaseTargetScore,
+  baseTargetScore: state.baseTargetScore,
   deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
   activeArtefacts: state.activeArtefacts,
 });
@@ -95,7 +95,7 @@ export function Solo() {
         }
 
         // If run ended in defeat, remove saved run from storage and update UI
-        if (persistableState.soloOutcome === 'defeat') {
+        if (persistableState.outcome === 'defeat') {
           clearSoloState();
           setHasSavedSoloRun(false);
         }

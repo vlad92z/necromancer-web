@@ -43,7 +43,7 @@ function enterDeckDraftMode(state: GameState): GameState {
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
   const arcaneDustReward = getArcaneDustReward(state.game);
-  const nextTargetScore = state.soloTargetScore + SOLO_TARGET_INCREMENT;
+  const nextTargetScore = state.targetScore + SOLO_TARGET_INCREMENT;
 
   if (arcaneDustReward > 0) {
     const newDustTotal = addArcaneDust(arcaneDustReward);
@@ -64,10 +64,10 @@ function enterDeckDraftMode(state: GameState): GameState {
     draftSource: null, 
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
-    soloOutcome: 'victory',
+    outcome: 'victory',
     longestRun: nextLongestRun,
-    soloTargetScore: nextTargetScore,
-    soloBaseTargetScore: state.soloBaseTargetScore || nextTargetScore,
+    targetScore: nextTargetScore,
+    baseTargetScore: state.baseTargetScore || nextTargetScore,
   };
 }
 
@@ -157,7 +157,7 @@ function handlePlayerDefeat(
     cause: 'overload',
     strain: state.strain,
     health: updatedPlayer.health,
-    targetScore: state.soloTargetScore,
+    targetScore: state.targetScore,
   });
 
   return {
@@ -170,7 +170,7 @@ function handlePlayerDefeat(
     centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
-    soloOutcome: 'defeat' as SoloOutcome,
+    outcome: 'defeat' as SoloOutcome,
     longestRun: nextLongestRun,
     overloadSoundPending: overloadDamage > 0,
   };
@@ -183,7 +183,7 @@ function prepareRoundReset(state: GameState): GameState {
   const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
 
   if (!playerHasEnough) {
-    const achievedTarget = state.runePowerTotal >= state.soloTargetScore;
+    const achievedTarget = state.runePowerTotal >= state.targetScore;
     if (achievedTarget) {
       return enterDeckDraftMode({
         ...state,
@@ -213,7 +213,7 @@ function prepareRoundReset(state: GameState): GameState {
       cause: 'deck-empty',
       strain: state.strain,
       health: clearedPlayer.health,
-      targetScore: state.soloTargetScore,
+      targetScore: state.targetScore,
     });
 
     return {
@@ -223,7 +223,7 @@ function prepareRoundReset(state: GameState): GameState {
       centerPool: [],
       turnPhase: 'game-over',
       game: state.game,
-      soloOutcome: 'defeat' as SoloOutcome,
+      outcome: 'defeat' as SoloOutcome,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
       lockedPatternLines: { [clearedPlayer.id]: [] },
@@ -257,7 +257,7 @@ function prepareRoundReset(state: GameState): GameState {
     game: state.game,
     strain: state.strain * state.strainMultiplier,
     strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
-    soloOutcome: null,
+    outcome: null,
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
     selectedRunes: [],
@@ -407,7 +407,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
   }
 
   const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
-  if (nextRunePowerTotal >= state.soloTargetScore) {
+  if (nextRunePowerTotal >= state.targetScore) {
     const deckDraftReadyState = enterDeckDraftMode({
       ...selectPersistableGameState(state),
       player: updatedPlayer,
@@ -481,7 +481,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
   }
 
   const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
-  if (nextRunePowerTotal >= state.soloTargetScore) {
+  if (nextRunePowerTotal >= state.targetScore) {
     const deckDraftReadyState = enterDeckDraftMode({
       ...selectPersistableGameState(state),
       player: updatedPlayer,
@@ -614,7 +614,7 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
     }
 
     // If the player has been defeated, clear any saved solo run from localStorage
-    if (state.soloOutcome === 'defeat') {
+    if (state.outcome === 'defeat') {
       clearSoloState();
       return;
     }
@@ -730,7 +730,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         totalHealing += modifiedHealing;
         totalArcaneDust += resolvedSegment.arcaneDust;
 
-        if (state.soloPatternLineLock) {
+        if (state.patternLineLock) {
           const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
           updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(index)
             ? existingLocked
@@ -739,7 +739,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       });
 
       let nextRunePowerTotal = state.runePowerTotal;
-      let soloOutcome: SoloOutcome = state.soloOutcome;
+      let soloOutcome: SoloOutcome = state.outcome;
       let nextHealth = currentPlayer.health;
 
       if (totalHealing > 0) {
@@ -753,7 +753,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
 
       nextRunePowerTotal += totalDamage;
-        if (nextRunePowerTotal >= state.soloTargetScore) {
+        if (nextRunePowerTotal >= state.targetScore) {
           soloOutcome = 'victory';
         }
 
@@ -789,7 +789,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         shouldTriggerEndRound: shouldEndRound,
         runePowerTotal: nextRunePowerTotal,
         lockedPatternLines: updatedLockedPatternLines,
-        soloOutcome,
+        outcome: soloOutcome,
       };
     });
   },
@@ -890,7 +890,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         gameNumber: nextState.game,
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
-        targetScore: nextState.soloTargetScore,
+        targetScore: nextState.targetScore,
         strain: nextState.strain,
         startingHealth: nextState.startingHealth,
       });
@@ -911,7 +911,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase === 'deck-draft' || state.turnPhase === 'game-over') {
         return state;
       }
-      const nextRunePowerTotal = Math.max(state.soloTargetScore, state.runePowerTotal);
+      const nextRunePowerTotal = Math.max(state.targetScore, state.runePowerTotal);
       return enterDeckDraftMode({
         ...state,
         runePowerTotal: nextRunePowerTotal,
@@ -933,12 +933,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       //TODO WTF is happening?
       const deckTemplate = nextState.soloDeckTemplate;
       const soloBaseTargetScore =
-        typeof nextState.soloBaseTargetScore === 'number'
-          ? nextState.soloBaseTargetScore
-          : nextState.soloTargetScore ?? DEFAULT_SOLO_CONFIG.targetRuneScore;
+        typeof nextState.baseTargetScore === 'number'
+          ? nextState.baseTargetScore
+          : nextState.targetScore ?? DEFAULT_SOLO_CONFIG.targetRuneScore;
       const soloStartingStrain =
-        typeof nextState.soloStartingStrain === 'number'
-          ? nextState.soloStartingStrain
+        typeof nextState.startingStrain === 'number'
+          ? nextState.startingStrain
           : nextState.strain;
       const longestRun =
         typeof nextState.longestRun === 'number'
@@ -950,8 +950,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
         soloDeckTemplate: deckTemplate,
-        soloBaseTargetScore,
-        soloStartingStrain,
+        baseTargetScore: soloBaseTargetScore,
+        startingStrain: soloStartingStrain,
         longestRun,
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
@@ -962,7 +962,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   returnToStartScreen: () => {
     set((state) => {
       // If the last run ended in defeat, ensure persisted state is cleared immediately
-      if (state.soloOutcome === 'defeat') {
+      if (state.outcome === 'defeat') {
         try {
           clearSoloState();
         } catch (e) {
@@ -1067,7 +1067,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             picksRemaining: 0,
             totalPicks: state.deckDraftState.totalPicks,
           },
-          soloBaseTargetScore: state.soloBaseTargetScore || state.soloTargetScore,
+          baseTargetScore: state.baseTargetScore || state.targetScore,
           deckDraftReadyForNextGame: true,
         };
       }
@@ -1086,18 +1086,18 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   startNextSoloGame: () => {
     set((state) => {
       const deckTemplate = getSoloDeckTemplate(state);
-      const nextTarget = state.soloTargetScore;
+      const nextTarget = state.targetScore;
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
       const nextGame = state.game + 1;
       const nextGameState = initializeSoloGame(
         {
           startingHealth: state.startingHealth,
-          startingStrain: state.soloStartingStrain,
+          startingStrain: state.startingStrain,
           strainMultiplier: state.strainMultiplier,
           factoriesPerPlayer: state.factoriesPerPlayer,
           deckRunesPerType,
           targetRuneScore: nextTarget,
-          patternLinesLockOnComplete: state.soloPatternLineLock,
+          patternLinesLockOnComplete: state.patternLineLock,
         },
         {
           startingDeck: deckTemplate,
@@ -1111,7 +1111,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         game: nextGame,
         gameStarted: true,
         soloDeckTemplate: deckTemplate,
-        soloBaseTargetScore: state.soloBaseTargetScore || nextTarget,
+        soloBaseTargetScore: state.baseTargetScore || nextTarget,
         deckDraftState: null,
         deckDraftReadyForNextGame: false,
         activeArtefacts: state.activeArtefacts,
@@ -1121,7 +1121,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         gameNumber: nextState.game,
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
-        targetScore: nextState.soloTargetScore,
+        targetScore: nextState.targetScore,
         strain: nextState.strain,
         startingHealth: nextState.startingHealth,
       });

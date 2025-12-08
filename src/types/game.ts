@@ -148,7 +148,7 @@ export interface GameState {
    * so it can be tuned or modified by runes in the future.
    */
   strainMultiplier: number;
-  soloStartingStrain: number; // Configured strain at the start of the run
+  startingStrain: number; // Configured strain at the start of the run
   selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   draftSource:
@@ -162,12 +162,12 @@ export interface GameState {
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
-  soloTargetScore: number; // Solo target score required for victory
-  soloOutcome: SoloOutcome; // Solo result (victory/defeat)
-  soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
+  targetScore: number; // Solo target score required for victory
+  outcome: SoloOutcome; // Solo result (victory/defeat)
+  patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
   longestRun: number; // Furthest game reached in any run
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
-  soloBaseTargetScore: number; // Configured starting target for reset scenarios
+  baseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
 }

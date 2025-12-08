@@ -41,7 +41,7 @@ export interface GameBoardProps {
 }
 
 export interface SoloVariantData {
-  soloOutcome: GameState['soloOutcome'];
+  soloOutcome: GameState['outcome'];
   soloRuneScore: { currentScore: number; targetScore: number } | null;
   soloStats: SoloStatsProps;
   soloTargetScore: number;
@@ -112,9 +112,9 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     overloadRunes,
   } = gameState;
   const currentGame = useGameplayStore((state) => state.game);
-  const soloOutcome = gameState.soloOutcome;
+  const soloOutcome = gameState.outcome;
   const runePowerTotal = gameState.runePowerTotal;
-  const soloTargetScore = gameState.soloTargetScore;
+  const soloTargetScore = gameState.targetScore;
   const {
     draftRune,
     draftFromCenter,
