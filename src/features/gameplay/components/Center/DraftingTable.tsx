@@ -181,8 +181,8 @@ export function DraftingTable({
     const drafted = slots.some((s) => s === null);
     const containerBoxShadow = drafted ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)';
     const shouldGlow = !drafted && !selectionActive;
-    const glowBase = `${containerBoxShadow}, 0 0 24px rgba(196, 181, 253, 0.30)`;;
-    const glowStrong = `${containerBoxShadow}, 0 0 28px rgba(196, 181, 253, 0.36)`;
+    const glowBase = `${containerBoxShadow}, 0 0 36px rgba(235, 170, 255, 0.48), 0 0 72px rgba(235, 170, 255, 0.22)`;
+    const glowStrong = `${containerBoxShadow}, 0 0 48px rgba(235, 140, 255, 0.60), 0 0 120px rgba(235, 140, 255, 0.28)`;
     const glowAnimation = shouldGlow
       ? {
           boxShadow: [glowBase, glowStrong, glowBase],
@@ -259,14 +259,14 @@ export function DraftingTable({
                   ? 'scale(1.05)'
                   : 'scale(1)';
               const boxShadow = isSelectedForDisplay
-                ? '0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(196, 181, 253, 0.35)'
+                ? '0 0 20px rgba(255, 255, 255, 0.60), 0 0 48px rgba(235, 170, 255, 0.60), 0 0 96px rgba(235, 170, 255, 0.30)'
                 : isHighlighted
-                  ? '0 0 10px rgba(255, 255, 255, 0.4)'
+                  ? '0 0 14px rgba(255, 255, 255, 0.5), 0 0 34px rgba(235, 170, 255, 0.32)'
                   : 'none';
               const filter = isSelectedForDisplay
-                ? 'brightness(1.15)'
+                ? 'brightness(1.22)'
                 : isHighlighted
-                  ? 'brightness(1.08)'
+                  ? 'brightness(1.12)'
                   : 'none';
               const selectedAnimation = isSelectedForDisplay
                 ? {
