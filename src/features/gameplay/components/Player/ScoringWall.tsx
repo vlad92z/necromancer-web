@@ -36,11 +36,6 @@ interface OverlayEdge {
   connectsPending: boolean;
 }
 
-interface OverlayData {
-  points: OverlayPoint[];
-  edges: OverlayEdge[];
-}
-
 // We no longer compute the largest connected component. Instead we connect
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
@@ -51,7 +46,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   const overlayWallRef = useRef<ScoringWallType | null>(null);
   const pendingCellsRef = useRef<Set<string>>(new Set());
   const overlayRef = useRef<{ points: Map<string, OverlayPoint>; edges: Map<string, OverlayEdge> } | null>(null);
-  const [setOverlay] = useState<OverlayData | null>(null);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
 
   const wallSignature = useMemo(
