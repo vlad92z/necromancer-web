@@ -48,8 +48,8 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
         
         // If shouldDisappear is true, add a fade out and scale down animation
         // Small correction to compensate for visual centering (70x70 rune)
-        const FINAL_OFFSET = -10;
-        const START_OFFSET = -9;
+        const FINAL_OFFSET = -14;
+        const START_OFFSET = -14;
         const finalX = rune.endX + FINAL_OFFSET;
         const finalY = rune.endY + FINAL_OFFSET;
         const startX = rune.startX + START_OFFSET;

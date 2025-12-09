@@ -179,8 +179,22 @@ export function DraftingTable({
     const containerOpacity = isRuneforgeDisabled && !selectionActive ? 0.6 : 1;
     const containerCursor = isRuneforgeDisabled && !hasSelectedRunes ? 'not-allowed' : 'default';
     const drafted = slots.some((s) => s === null);
+    const containerBoxShadow = drafted ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)';
+    const shouldGlow = !drafted && !selectionActive;
+    const glowBase = `${containerBoxShadow}, 0 0 24px rgba(196, 181, 253, 0.30)`;;
+    const glowStrong = `${containerBoxShadow}, 0 0 28px rgba(196, 181, 253, 0.36)`;
+    const glowAnimation = shouldGlow
+      ? {
+          boxShadow: [glowBase, glowStrong, glowBase],
+          filter: ['brightness(1)', 'brightness(1.06)', 'brightness(1)'],
+        }
+      : { boxShadow: containerBoxShadow, filter: 'brightness(1)' };
+    const glowTransition = shouldGlow
+      ? { duration: 4, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+      : { duration: 3, ease: 'easeOut' as const };
+
     return (
-      <div
+      <motion.div
         key={runeforge.id}
         style={{
           width: `${runeforgeWidth}px`,
@@ -188,16 +202,19 @@ export function DraftingTable({
           borderRadius: '16px',
           border: drafted ? 'transparent' : '1px solid rgba(255, 255, 255, 0.12)',
           backgroundColor: drafted ? 'transparent' : '#1c1034',
-          boxShadow: drafted ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)',
+          boxShadow: containerBoxShadow,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '96px',
-          transition: 'border-color 160ms ease, box-shadow 200ms ease',
+          transition: 'border-color 160ms ease',
           margin: '0 auto',
           opacity: containerOpacity,
           cursor: containerCursor,
         }}
+        initial={false}
+        animate={glowAnimation}
+        transition={glowTransition}
         onMouseLeave={() => handleRuneMouseLeave(runeforge.id)}
       >
         {displayedRunes.length === 0 ? (
@@ -306,7 +323,7 @@ export function DraftingTable({
             })}
           </div>
         )}
-      </div>
+      </motion.div>
     );
   };
   
