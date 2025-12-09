@@ -14,7 +14,7 @@ interface ScoringWallProps {
 }
 
 // Layout constants (kept in sync with RuneCell size config)
-const CELL_SIZE = 60; // matches RuneCell size="large"
+const CELL_SIZE = 65; // matches RuneCell size="large"
 const GAP = 4; // gap used between cells in ScoringWall layout
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 const parseCellKey = (key: string) => {
@@ -36,11 +36,6 @@ interface OverlayEdge {
   connectsPending: boolean;
 }
 
-interface OverlayData {
-  points: OverlayPoint[];
-  edges: OverlayEdge[];
-}
-
 // We no longer compute the largest connected component. Instead we connect
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
@@ -51,7 +46,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   const overlayWallRef = useRef<ScoringWallType | null>(null);
   const pendingCellsRef = useRef<Set<string>>(new Set());
   const overlayRef = useRef<{ points: Map<string, OverlayPoint>; edges: Map<string, OverlayEdge> } | null>(null);
-  const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
 
   const wallSignature = useMemo(
@@ -132,10 +126,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
       overlayRef.current = { points: built.pointsMap, edges: built.edgesMap };
       pendingCellsRef.current = pendingCells;
       overlayWallRef.current = wall;
-      setOverlay({
-        points: Array.from(built.pointsMap.values()),
-        edges: Array.from(built.edgesMap.values()),
-      });
     };
 
     if (!overlayRef.current) {
@@ -249,10 +239,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     overlayRef.current = { points, edges };
     pendingCellsRef.current = pendingCells;
     overlayWallRef.current = wall;
-    setOverlay({
-      points: Array.from(points.values()),
-      edges: Array.from(edges.values()),
-    });
   }, [wall, patternLines]);
 
   useEffect(() => {
@@ -301,57 +287,8 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
 
   const gridSize = wall.length;
   const availableRuneTypes: RuneType[] = getRuneOrderForSize(gridSize);
-  const totalWidth = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
-  const totalHeight = gridSize * CELL_SIZE + (gridSize - 1) * GAP;
 
   return (
-    <div style={{ position: 'relative', width: `${totalWidth}px`, height: `${totalHeight}px` }}>
-      {/* SVG overlay connecting biggest segment */}
-      {overlay && overlay.points.length > 0 && (
-        <svg
-          viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            overflow: 'visible',
-          }}
-        >
-          {/* draw short edges between orthogonal neighbors */}
-          {overlay.edges && overlay.edges.map((e, i) => (
-            <line
-              key={i}
-              x1={e.x1}
-              y1={e.y1}
-              x2={e.x2}
-              y2={e.y2}
-              stroke={'#35bfff'}
-              strokeWidth={6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={e.connectsPending ? 0.65 : 0.8}
-            />
-          ))}
-
-          {/* highlight nodes */}
-          {overlay.points.map((p, idx) => (
-            <circle
-              key={idx}
-              cx={p.x}
-              cy={p.y}
-              r={6}
-              fill={p.isPending ? '#fde047' : '#f97316'}
-              opacity={p.isPending ? 0.8 : 0.95}
-              pointerEvents="none"
-            />
-          ))}
-        </svg>
-      )}
-
-      {/* Grid */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: `${GAP}px` }}>
         {wall.map((row, rowIndex) => (
           <div key={rowIndex} style={{ display: 'flex', gap: `${GAP}px` }}>
@@ -368,7 +305,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
             ))}
           </div>
         ))}
-      </div>
     </div>
   );
 }

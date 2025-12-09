@@ -4,12 +4,12 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SoloBoardContent } from '../features/gameplay/components/SoloGameBoard';
+import { BoardContent } from '../features/gameplay/components/SoloGameBoard';
 import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
-import type { GameState, SoloRunConfig } from '../types/game';
+import type { GameState, RunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -32,11 +32,12 @@ const selectGameBoardState = (state: GameplayStore): GameState => ({
   soloDeckTemplate: state.soloDeckTemplate,
   runeforges: state.runeforges,
   centerPool: state.centerPool,
+  runeforgeDraftStage: state.runeforgeDraftStage,
   turnPhase: state.turnPhase,
   game: state.game,
   strain: state.strain,
   strainMultiplier: state.strainMultiplier,
-  soloStartingStrain: state.soloStartingStrain,
+  startingStrain: state.startingStrain,
   selectedRunes: state.selectedRunes,
   overloadRunes: state.overloadRunes,
   draftSource: state.draftSource,
@@ -47,12 +48,12 @@ const selectGameBoardState = (state: GameplayStore): GameState => ({
   lockedPatternLines: state.lockedPatternLines,
   shouldTriggerEndRound: state.shouldTriggerEndRound,
   runePowerTotal: state.runePowerTotal,
-  soloTargetScore: state.soloTargetScore,
-  soloOutcome: state.soloOutcome,
-  soloPatternLineLock: state.soloPatternLineLock,
+  targetScore: state.targetScore,
+  outcome: state.outcome,
+  patternLineLock: state.patternLineLock,
   longestRun: state.longestRun,
   deckDraftState: state.deckDraftState,
-  soloBaseTargetScore: state.soloBaseTargetScore,
+  baseTargetScore: state.baseTargetScore,
   deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
   activeArtefacts: state.activeArtefacts,
 });
@@ -95,7 +96,7 @@ export function Solo() {
         }
 
         // If run ended in defeat, remove saved run from storage and update UI
-        if (persistableState.soloOutcome === 'defeat') {
+        if (persistableState.outcome === 'defeat') {
           clearSoloState();
           setHasSavedSoloRun(false);
         }
@@ -122,7 +123,7 @@ export function Solo() {
     }
   }, [gameStarted]);
 
-  const handleStartSolo = (config: SoloRunConfig) => {
+  const handleStartSolo = (config: RunConfig) => {
     startSoloRun(config);
   };
 
@@ -150,8 +151,8 @@ export function Solo() {
 
   return <GameBoardFrame
     gameState={gameState}
-    renderContent={(shared, variantData) => {
-      return <SoloBoardContent shared={shared} variantData={variantData} />;
+    renderContent={(shared, gameData) => {
+      return <BoardContent shared={shared} gameData={gameData} />;
     }}
   />;
 }

@@ -10,7 +10,7 @@ import type {
   ScoringWall,
   Rune,
   RuneType,
-  SoloRunConfig,
+  RunConfig,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 
@@ -63,7 +63,7 @@ const SOLO_FACTORIES_PER_PLAYER = 5;
 const DEFAULT_SOLO_RUNES_PER_TYPE = 20;
 const DEFAULT_SOLO_TARGET_SCORE = 50;
 
-export const DEFAULT_SOLO_CONFIG: SoloRunConfig = {
+export const DEFAULT_SOLO_CONFIG: RunConfig = {
   startingHealth: SOLO_STARTING_HEALTH,
   startingStrain: DEFAULT_STARTING_STRAIN,
   strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
@@ -87,7 +87,7 @@ export interface SoloInitializationOptions {
   longestRun?: number;
 }
 
-export function normalizeSoloConfig(config?: Partial<SoloRunConfig>): SoloRunConfig {
+export function normalizeSoloConfig(config?: Partial<RunConfig>): RunConfig {
   const merged = { ...DEFAULT_SOLO_CONFIG, ...config };
 
   return {
@@ -183,6 +183,7 @@ export function createEmptyFactories(player: Player, perPlayerCount: number): Ru
         id: `${player.id}-runeforge-${index + 1}`,
         ownerId: player.id,
         runes: [],
+        disabled: false,
       }))
 }
 
@@ -196,6 +197,7 @@ export function createSoloFactories(player: Player, perPlayerCount: number): Run
       id: `${player.id}-runeforge-${index + 1}`,
       ownerId: player.id,
       runes: [],
+      disabled: false,
     }));
 }
 
@@ -223,6 +225,7 @@ export function fillFactories(
     return {
       ...runeforge,
       runes: runesForForge,
+      disabled: Boolean(runeforge.disabled),
     };
   });
 
@@ -236,7 +239,7 @@ export function fillFactories(
  * Initialize a solo run using the fixed six-rune setup.
  */
 export function initializeSoloGame(
-  config?: Partial<SoloRunConfig>,
+  config?: Partial<RunConfig>,
   options?: SoloInitializationOptions
 ): GameState {
   const soloConfig = normalizeSoloConfig(config);
@@ -279,11 +282,12 @@ export function initializeSoloGame(
     overflowCapacity: soloSizingConfig.overflowCapacity,
     strain: soloConfig.startingStrain,
     strainMultiplier: soloConfig.strainMultiplier,
-    soloStartingStrain: soloConfig.startingStrain,
+    startingStrain: soloConfig.startingStrain,
     player: soloPlayer,
     soloDeckTemplate: startingDeckTemplate,
-    runeforges: filledRuneforges,
+    runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     centerPool: [],
+    runeforgeDraftStage: 'single',
     turnPhase: 'draft',
     game: 1,
     selectedRunes: [],
@@ -298,12 +302,12 @@ export function initializeSoloGame(
     },
     shouldTriggerEndRound: false,
     runePowerTotal: 0,
-    soloTargetScore: targetScore,
-    soloOutcome: null,
-    soloPatternLineLock: soloConfig.patternLinesLockOnComplete,
+    targetScore: targetScore,
+    outcome: null,
+    patternLineLock: soloConfig.patternLinesLockOnComplete,
     longestRun,
     deckDraftState: null,
-    soloBaseTargetScore: soloConfig.targetRuneScore,
+    baseTargetScore: soloConfig.targetRuneScore,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
   };

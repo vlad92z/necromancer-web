@@ -39,6 +39,7 @@ export interface Runeforge {
   id: string;
   ownerId: Player['id'];
   runes: Rune[];
+  disabled?: boolean;
 }
 
 /**
@@ -76,7 +77,7 @@ export interface FloorLine {
 /**
  * Solo run configuration values entered on the start screen
  */
-export interface SoloRunConfig {
+export interface RunConfig {
   startingHealth: number;
   startingStrain: number;
   strainMultiplier: number;
@@ -89,7 +90,7 @@ export interface SoloRunConfig {
 /**
  * Solo game ending state
  */
-export type SoloOutcome = 'victory' | 'defeat' | null;
+export type GameOutcome = 'victory' | 'defeat' | null;
 
 /**
  * Player state
@@ -136,6 +137,7 @@ export interface GameState {
   soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
+  runeforgeDraftStage: 'single' | 'global';
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   /**
@@ -148,11 +150,20 @@ export interface GameState {
    * so it can be tuned or modified by runes in the future.
    */
   strainMultiplier: number;
-  soloStartingStrain: number; // Configured strain at the start of the run
+  startingStrain: number; // Configured strain at the start of the run
   selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   draftSource:
-    | { type: 'runeforge'; runeforgeId: string; movedToCenter: Rune[]; originalRunes: Rune[] }
+    | {
+        type: 'runeforge';
+        runeforgeId: string;
+        movedToCenter: Rune[];
+        originalRunes: Rune[];
+        affectedRuneforges?: { runeforgeId: string; originalRunes: Rune[] }[];
+        previousDisabledRuneforgeIds?: string[];
+        previousRuneforgeDraftStage?: 'single' | 'global';
+        selectionMode?: 'single' | 'global';
+      }
     | { type: 'center'; originalRunes: Rune[] }
     | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
@@ -162,12 +173,12 @@ export interface GameState {
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
-  soloTargetScore: number; // Solo target score required for victory
-  soloOutcome: SoloOutcome; // Solo result (victory/defeat)
-  soloPatternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
+  targetScore: number; // Solo target score required for victory
+  outcome: GameOutcome; // Solo result (victory/defeat)
+  patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
   longestRun: number; // Furthest game reached in any run
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
-  soloBaseTargetScore: number; // Configured starting target for reset scenarios
+  baseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
 }

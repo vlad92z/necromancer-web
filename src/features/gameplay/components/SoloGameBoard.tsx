@@ -2,24 +2,23 @@
  * SoloGameBoard - solo mode game board layout
  */
 
-import type { GameBoardSharedProps, SoloVariantData } from './GameBoardFrame';
+import type { GameBoardSharedProps, GameData } from './GameBoardFrame';
 import { DraftingTable } from './Center/DraftingTable';
 import { PlayerView } from './Player/PlayerView';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 
-interface SoloBoardContentProps {
+interface BoardContentProps {
   shared: GameBoardSharedProps;
-  variantData: SoloVariantData;
+  gameData?: GameData;
 }
 
-export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps) {
+export function BoardContent({ shared, gameData }: BoardContentProps) {
   const {
     player,
-    currentPlayerIndex,
     selectedRuneType,
     hasSelectedRunes,
-    playerHiddenPatternSlots,
+    playerHiddenPatternSlots,//TODO this vs playerLocked?
     playerLockedLines,
     runeforges,
     centerPool,
@@ -27,6 +26,7 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     isDraftPhase,
     selectedRunes,
     draftSource,
+    runeforgeDraftStage,
     animatingRuneIds,
     hiddenCenterRuneIds,
     onRuneClick,
@@ -37,24 +37,31 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
     game,
     isGameOver,
     returnToStartScreen,
+    runesPerRuneforge,
   } = shared;
+  // `gameData` may be undefined at runtime (caller sometimes omits it).
+  // Guard the destructuring to avoid runtime TypeError.
+  const effectiveGameData = gameData;
+
   const {
-    soloOutcome,
-    soloRuneScore,
-    soloStats,
+    outcome,
+    runeScore,
+    playerStats,
     runePowerTotal,
-    soloTargetScore,
+    targetScore,
     arcaneDustReward,
+    arcaneDust,
     deckDraftState,
     isDeckDrafting,
     onSelectDeckDraftRuneforge,
     onOpenDeckOverlay,
     onOpenOverloadOverlay,
+    onOpenSettings,
     onStartNextGame,
-  } = variantData;
+  } = effectiveGameData ?? ({} as Partial<GameData>);
 
   return (
-    <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1.1fr) 1.9fr' }}>
+    <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr'}}>
       <div
         className="p-6 border-r flex items-center justify-center relative border-r-[rgba(148,163,184,0.35)] bg-[radial-gradient(circle_at_45%_25%,rgba(86,27,176,0.12),transparent_60%)]"
       >
@@ -62,44 +69,46 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
           <DraftingTable
             runeforges={runeforges}
             centerPool={centerPool}
-            player={player}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
             isDraftPhase={isDraftPhase}
             hasSelectedRunes={hasSelectedRunes}
             selectedRunes={selectedRunes}
             draftSource={draftSource}
+            runeforgeDraftStage={runeforgeDraftStage}
             onCancelSelection={onCancelSelection}
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}
+            runesPerRuneforge={runesPerRuneforge}
           />
         </div>
       </div>
 
-      <div className="p-6 grid items-center justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
-        <div className="w-full h-full flex items-center justify-center">
+      <div className="p-6 grid items-start justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
+        <div className="w-full h-full flex items-start justify-center">
           <PlayerView
             player={player}
-            isActive={currentPlayerIndex === 0}
-            onPlaceRunes={currentPlayerIndex === 0 ? onPlaceRunes : undefined}
-            onPlaceRunesInFloor={currentPlayerIndex === 0 ? onPlaceRunesInFloor : undefined}
-            selectedRuneType={currentPlayerIndex === 0 ? selectedRuneType : null}
-            canPlace={currentPlayerIndex === 0 && hasSelectedRunes}
+            onPlaceRunes={onPlaceRunes}
+            onPlaceRunesInFloor={onPlaceRunesInFloor}
+            selectedRuneType={selectedRuneType}
+            canPlace={hasSelectedRunes}
             onCancelSelection={onCancelSelection}
             lockedPatternLines={playerLockedLines}
             hiddenSlotKeys={playerHiddenPatternSlots}
             game={game}
-            soloRuneScore={soloRuneScore || undefined}
-            deckCount={soloStats?.deckCount}
-            strain={soloStats?.overloadMultiplier}
+            runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
+            deckCount={playerStats?.deckCount}
+            strain={playerStats?.overloadMultiplier}
             onOpenDeck={onOpenDeckOverlay}
             onOpenOverload={onOpenOverloadOverlay}
+            onOpenSettings={onOpenSettings}
+            arcaneDust={arcaneDust}
             activeArtefactIds={activeArtefactIds}
           />
         </div>
       </div>
 
-      {isDeckDrafting && deckDraftState && (
+      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && onStartNextGame && arcaneDustReward != null && (
         <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-sm px-4">
           <DeckDraftingModal
             draftState={deckDraftState}
@@ -112,13 +121,13 @@ export function SoloBoardContent({ shared, variantData }: SoloBoardContentProps)
         </div>
       )}
 
-      {isGameOver && (
+      {isGameOver && outcome != null && runePowerTotal != null && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-auto">
           <SoloGameOverModal
-            outcome={soloOutcome}
+            outcome={outcome}
             runePowerTotal={runePowerTotal}
             game={game}
-            targetScore={soloTargetScore}
+            targetScore={targetScore}
             onReturnToStart={returnToStartScreen}
           />
         </div>

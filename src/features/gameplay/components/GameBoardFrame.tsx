@@ -16,18 +16,17 @@ import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useClickSound } from '../../../hooks/useClickSound';
 import { useUIStore } from '../../../state/stores/uiStore';
-import type { SoloStatsProps } from './Player/SoloStats';
+import type { PlayerStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
-import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
 const BOARD_PADDING = 80;
-const MIN_BOARD_SCALE = 0.55;
-const MIN_AVAILABLE_SIZE = 520;
+const MIN_BOARD_SCALE = 0.3;
+const MIN_AVAILABLE_SIZE = 300;
 
 const computeBoardScale = (width: number, height: number): number => {
   const availableWidth = Math.max(width - BOARD_PADDING, MIN_AVAILABLE_SIZE);
@@ -41,18 +40,20 @@ export interface GameBoardProps {
   gameState: GameState;
 }
 
-export interface SoloVariantData {
-  soloOutcome: GameState['soloOutcome'];
-  soloRuneScore: { currentScore: number; targetScore: number } | null;
-  soloStats: SoloStatsProps;
-  soloTargetScore: number;
+export interface GameData {
+  outcome: GameState['outcome'];
+  runeScore: { currentScore: number; targetScore: number };
+  playerStats: PlayerStatsProps;
+  targetScore: number;
   runePowerTotal: number;
+  arcaneDust: number;
   arcaneDustReward: number;
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
   onOpenOverloadOverlay: () => void;
+  onOpenSettings: () => void;
   onStartNextGame: () => void;
 }
 
@@ -65,6 +66,8 @@ export interface GameBoardSharedProps {
   isDraftPhase: boolean;
   isGameOver: boolean;
   activeArtefactIds: GameState['activeArtefacts'];
+  runesPerRuneforge: number;
+  runeforgeDraftStage: GameState['runeforgeDraftStage'];
 
   // Selection state
   selectedRuneType: RuneType | null;
@@ -92,7 +95,7 @@ export interface GameBoardSharedProps {
 }
 
 export interface GameBoardFrameProps extends GameBoardProps {
-  renderContent: (shared: GameBoardSharedProps, variantData: SoloVariantData) => ReactElement | null;
+  renderContent: (shared: GameBoardSharedProps, gameData: GameData) => ReactElement | null;
 }
 
 export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {
@@ -100,6 +103,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     player,
     runeforges,
     centerPool,
+    runesPerRuneforge,
+    runeforgeDraftStage,
     selectedRunes,
     turnPhase,
     lockedPatternLines,
@@ -111,9 +116,9 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     overloadRunes,
   } = gameState;
   const currentGame = useGameplayStore((state) => state.game);
-  const soloOutcome = gameState.soloOutcome;
+  const outcome = gameState.outcome;
   const runePowerTotal = gameState.runePowerTotal;
-  const soloTargetScore = gameState.soloTargetScore;
+  const targetScore = gameState.targetScore;
   const {
     draftRune,
     draftFromCenter,
@@ -123,7 +128,6 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     cancelSelection,
     selectDeckDraftRuneforge,
     disenchantRuneFromDeck,
-    forceSoloVictory,
     startNextSoloGame,
   } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
@@ -168,15 +172,15 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   
   useRunePlacementSounds([player], activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
 
-  const soloRuneScore = useMemo(
+  const runeScore = useMemo(
     () => ({
       currentScore: runePowerTotal,
-      targetScore: soloTargetScore,
+      targetScore: targetScore,
     }),
-    [runePowerTotal, soloTargetScore],
+    [runePowerTotal, targetScore],
   );
 
-  const soloStats = useMemo(
+  const playerStats = useMemo(
     () => ({
       isActive: true,
       overloadMultiplier: strain,
@@ -315,6 +319,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       isDraftPhase,
       isGameOver,
       activeArtefactIds: activeArtefacts,
+      runesPerRuneforge,
+      runeforgeDraftStage,
       selectedRuneType,
       selectedRunes,
       hasSelectedRunes,
@@ -348,31 +354,36 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       isDraftPhase,
       isGameOver,
       player,
+      runesPerRuneforge,
       playerHiddenPatternSlots,
       playerLockedLines,
       returnToStartScreen,
       runeforges,
       selectedRuneType,
+      runeforgeDraftStage,
       selectedRunes,
     ],
   );
 
-  const variantData: SoloVariantData = useMemo(
+  const gameData: GameData = useMemo(
     () => ({
-      soloOutcome,
-      soloRuneScore,
-      soloStats,
-      soloTargetScore,
+      outcome,
+      runeScore,
+      playerStats,
+      targetScore,
       runePowerTotal,
+      arcaneDust,
       arcaneDustReward: getArcaneDustReward(currentGame),
       deckDraftState: gameState.deckDraftState,
       isDeckDrafting,
       onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
       onOpenDeckOverlay: handleOpenDeckOverlay,
       onOpenOverloadOverlay: handleOpenOverloadOverlay,
+      onOpenSettings: handleOpenSettings,
       onStartNextGame: startNextSoloGame,
     }),
     [
+      arcaneDust,
       currentGame,
       gameState.deckDraftState,
       handleOpenDeckOverlay,
@@ -380,53 +391,20 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       isDeckDrafting,
       runePowerTotal,
       selectDeckDraftRuneforge,
-      soloOutcome,
-      soloRuneScore,
-      soloStats,
-      soloTargetScore,
+      outcome,
+      runeScore,
+      playerStats,
+      targetScore,
       startNextSoloGame,
     ],
   );
 
-  const boardContent = useMemo(() => renderContent(sharedProps, variantData), [renderContent, sharedProps, variantData]);
+  const boardContent = useMemo(() => renderContent(sharedProps, gameData), [renderContent, sharedProps, gameData]);
 
   return (
     <div
       className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
     >
-      <div className="absolute left-4 top-4 z-30 flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={forceSoloVictory}
-          className="hidden rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-50 transition hover:border-emerald-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-        >
-          Instant Win
-        </button>
-        <div className="mt-1 rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
-          <div className="mt-2 flex items-center gap-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Game</div>
-            <div className="text-sm font-extrabold text-white leading-tight">{currentGame}</div>
-          </div>
-          <div className="mt-2 flex items-center gap-3">
-            {arcaneDust > 0 && (
-              <>
-                <img src={arcaneDustIcon} alt="Arcane Dust" className="h-6 w-6 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]" />
-                <div className="text-sm font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="absolute top-4 right-4 z-30">
-        <button
-          type="button"
-          onClick={handleOpenSettings}
-          className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-        >
-          ⚙ Settings
-        </button>
-      </div>
-
       <div className="relative" style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px` }}>
         <div
           className="absolute top-0 left-0 origin-top-left bg-[rgba(9,3,24,0.85)] rounded-[36px] border border-white/12 shadow-[0_40px_120px_rgba(0,0,0,0.75)] flex flex-col overflow-hidden backdrop-blur-[14px]"

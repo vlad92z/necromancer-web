@@ -47,16 +47,24 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
         };
         
         // If shouldDisappear is true, add a fade out and scale down animation
+        // Small correction to compensate for visual centering (70x70 rune)
+        const FINAL_OFFSET = -14;
+        const START_OFFSET = -14;
+        const finalX = rune.endX + FINAL_OFFSET;
+        const finalY = rune.endY + FINAL_OFFSET;
+        const startX = rune.startX + START_OFFSET;
+        const startY = rune.startY + START_OFFSET;
+
         const animateProps = rune.shouldDisappear
           ? {
-              x: [rune.startX, rune.endX + 7, rune.endX + 7],
-              y: [rune.startY, rune.endY + 7, rune.endY + 7],
+              x: [startX, finalX, finalX],
+              y: [startY, finalY, finalY],
               scale: [1, 1, 0],
               opacity: [1, 1, 0],
             }
           : {
-              x: rune.endX + 7,
-              y: rune.endY + 7,
+              x: finalX,
+              y: finalY,
               scale: 1,
             };
 
@@ -77,8 +85,8 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
           <motion.div
             key={rune.id}
             initial={{
-              x: rune.startX,
-              y: rune.startY,
+              x: startX,
+              y: startY,
               scale: 1,
               opacity: 1,
             }}
@@ -92,15 +100,15 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
             }}
             style={{
               position: 'absolute',
-              width: '60px',
-              height: '60px',
+              width: '70px',
+              height: '70px',
             }}
           >
             <RuneCell
               rune={runeObj}
               variant="selected"
               forceVariant="runeforge"
-              size="medium"
+              size="large"
               showEffect
             />
           </motion.div>

@@ -194,7 +194,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
               </button>
             </div>
             <div className="flex flex-wrap justify-between w-full items-center gap-3" >
-              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts} className="mt-0" />
+              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts}/>
               <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
                 <img src={arcaneDustIcon} alt="Arcane Dust" className="h-7 w-7" />
                 <div className="flex items-baseline gap-2">

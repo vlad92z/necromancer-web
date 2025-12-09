@@ -2,11 +2,11 @@
  * SoloGameOverModal - displays the end-of-run summary for Solo mode
  */
 
-import type { SoloOutcome } from '../../../types/game';
+import type { GameOutcome } from '../../../types/game';
 import { useClickSound } from '../../../hooks/useClickSound';
 
 interface SoloGameOverModalProps {
-  outcome: SoloOutcome;
+  outcome: GameOutcome;
   runePowerTotal: number;
   game: number;
   targetScore?: number;

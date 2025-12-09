@@ -112,7 +112,7 @@ export interface RuneCellProps {
 const SIZE_CONFIG = {
   small: { width: 30, height: 30, fontSize: 10, padding: 2 },
   medium: { width: 35, height: 35, fontSize: 14, padding: 2 },
-  large: { width: 60, height: 60, fontSize: 20, padding: 4 },
+  large: { width: 75, height: 75, fontSize: 20, padding: 4 },
 };
 
 const VARIANT_STYLES: Record<RuneCellVariant, {
@@ -245,6 +245,7 @@ export function RuneCell({
         border: borderStyle,
         backgroundColor: backgroundColor,
         padding: `${config.padding}px`,
+        boxSizing: 'border-box',
         cursor: clickable ? 'pointer' : 'default',
         
         position: 'relative',

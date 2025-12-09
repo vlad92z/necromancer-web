@@ -21,16 +21,15 @@ const RUNE_ICONS: Record<RuneType, string> = {
 interface RuneTypeTotalsProps {
   runeTypes: RuneType[];
   counts: Record<RuneType, number>;
-  className?: string;
 }
 
-export function RuneTypeTotals({ runeTypes, counts, className }: RuneTypeTotalsProps) {
+export function RuneTypeTotals({ runeTypes, counts }: RuneTypeTotalsProps) {
   return (
-    <div className={`mt-3 flex items-center justify-center gap-3 rounded-[12px] bg-white/5 px-4 py-2.5 ${className ?? ''}`}>
+    <div className={`mt-3 flex items-center justify-center gap-3 rounded-[12px]`}>
       {runeTypes.map((runeType) => (
         <div
           key={runeType}
-          className="flex min-w-[70px] items-center justify-center gap-2 rounded-[8px] border border-[rgba(255,255,255,0.12)] bg-white/5 px-3 py-1.5"
+          className="flex items-center justify-center gap-1 rounded-[8px] border border-[rgba(255,255,255,0.12)] bg-white/5 px-2 py-1"
         >
           <div className="flex h-[26px] w-[26px] items-center justify-center">
             <img src={RUNE_ICONS[runeType]} alt={`${runeType}`} className="h-full w-full object-contain" />
