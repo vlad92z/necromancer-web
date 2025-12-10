@@ -8,13 +8,23 @@ import { Matchmaking } from './routes/Matchmaking'
 import { Solo } from './routes/Solo'
 import { useBackgroundMusic } from './hooks/useBackgroundMusic'
 import { useUIStore } from './state/stores/uiStore'
+import { useGameplayStore } from './state/stores/gameplayStore'
 
 function App() {
   const isMusicMuted = useUIStore((state) => state.isMusicMuted)
   const soundVolume = useUIStore((state) => state.soundVolume)
+  const hasMusicSessionStarted = useUIStore((state) => state.hasMusicSessionStarted)
+  const markMusicSessionStarted = useUIStore((state) => state.markMusicSessionStarted)
+  const gameStarted = useGameplayStore((state) => state.gameStarted)
+
+  useEffect(() => {
+    if (gameStarted) {
+      markMusicSessionStarted()
+    }
+  }, [gameStarted, markMusicSessionStarted])
   
   // Play background music everywhere
-  useBackgroundMusic(!isMusicMuted, soundVolume)
+  useBackgroundMusic(hasMusicSessionStarted && !isMusicMuted, soundVolume)
 
   // Attempt to resume audio context on first user interaction to enable autoplay
   useEffect(() => {
