@@ -102,8 +102,10 @@ export function Solo() {
     hydrateGameState(savedState);
   };
 
-  if (!gameStarted) {
-    return (
+  if (gameStarted) {
+    return <GameBoardFrame gameState={gameState}/>;
+  } else {
+      return (
       <SoloStartScreen
         onStartSolo={handleStartSolo}
         onContinueSolo={handleContinueSolo}
@@ -113,6 +115,4 @@ export function Solo() {
       />
     );
   }
-
-  return <GameBoardFrame gameState={gameState} />;
 }
