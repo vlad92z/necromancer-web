@@ -8,12 +8,12 @@ import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 import { PlayerBoard } from './Player/PlayerBoard';
 
-interface BoardContentProps {
+interface SoloGameBoardProps {
   shared: GameBoardSharedProps;
-  gameData?: GameData;
+  gameData: GameData;
 }
 
-export function BoardContent({ shared, gameData }: BoardContentProps) {
+export function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
   const {
     player,
     selectedRuneType,
@@ -39,10 +39,6 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
     returnToStartScreen,
     runesPerRuneforge,
   } = shared;
-  // `gameData` may be undefined at runtime (caller sometimes omits it).
-  // Guard the destructuring to avoid runtime TypeError.
-  const effectiveGameData = gameData;
-
   const {
     outcome,
     runeScore,
@@ -58,7 +54,7 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
     onOpenOverloadOverlay,
     onOpenSettings,
     onStartNextGame,
-  } = effectiveGameData ?? ({} as Partial<GameData>);
+  } = gameData;
 
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr'}}>

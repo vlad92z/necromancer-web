@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import type { ReactElement } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
@@ -21,6 +20,7 @@ import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnima
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
+import { SoloGameBoard } from './SoloGameBoard';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -94,11 +94,9 @@ export interface GameBoardSharedProps {
   returnToStartScreen: () => void;
 }
 
-export interface GameBoardFrameProps extends GameBoardProps {
-  renderContent: (shared: GameBoardSharedProps, gameData: GameData) => ReactElement | null;
-}
+export interface GameBoardFrameProps extends GameBoardProps {}
 
-export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {
+export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
   const {
     player,
     runeforges,
@@ -399,7 +397,10 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
     ],
   );
 
-  const boardContent = useMemo(() => renderContent(sharedProps, gameData), [renderContent, sharedProps, gameData]);
+  const boardContent = useMemo(
+    () => <SoloGameBoard shared={sharedProps} gameData={gameData} />,
+    [sharedProps, gameData],
+  );
 
   return (
     <div

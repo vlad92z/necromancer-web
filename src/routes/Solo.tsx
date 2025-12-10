@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BoardContent } from '../features/gameplay/components/SoloGameBoard';
 import { SoloStartScreen } from '../features/gameplay/components/SoloStartScreen';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
@@ -149,10 +148,5 @@ export function Solo() {
     );
   }
 
-  return <GameBoardFrame
-    gameState={gameState}
-    renderContent={(shared, gameData) => {
-      return <BoardContent shared={shared} gameData={gameData} />;
-    }}
-  />;
+  return <GameBoardFrame gameState={gameState} />;
 }
