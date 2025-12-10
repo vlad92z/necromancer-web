@@ -5,6 +5,7 @@ import { gradientButtonClasses } from '../styles/gradientButtonClasses'
 import { SettingsOverlay } from '../components/SettingsOverlay'
 import { useUIStore } from '../state/stores/uiStore'
 import { BREAKPOINTS } from '../styles/tokens'
+import { OverloadOverlay } from '../features/gameplay/components/OverloadOverlay'
 
 export function MainMenu() {
   const navigate = useNavigate()
@@ -92,8 +93,8 @@ export function MainMenu() {
             </button>
           </div>
 
-          <SettingsOverlay
-            isOpen={showSettingsOverlay}
+          {showSettingsOverlay && (
+            <SettingsOverlay
             onClose={toggleSettingsOverlay}
             soundVolume={soundVolume}
             isMusicMuted={isMusicMuted}
@@ -102,6 +103,7 @@ export function MainMenu() {
             showQuitRun={false}
             playClickSound={playClickSound}
           />
+        )}
         </>
       )}
     </main>

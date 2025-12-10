@@ -5,7 +5,6 @@
 import type { ChangeEvent, ReactElement } from 'react';
 
 interface SettingsOverlayProps {
-  isOpen: boolean;
   onClose: () => void;
   soundVolume: number;
   isMusicMuted: boolean;
@@ -17,7 +16,6 @@ interface SettingsOverlayProps {
 }
 
 export function SettingsOverlay({
-  isOpen,
   onClose,
   soundVolume,
   isMusicMuted,
@@ -27,10 +25,6 @@ export function SettingsOverlay({
   showQuitRun = false,
   playClickSound,
 }: SettingsOverlayProps): ReactElement | null {
-  if (!isOpen) {
-    return null;
-  }
-
   const handleClose = () => {
     if (playClickSound) {
       playClickSound();

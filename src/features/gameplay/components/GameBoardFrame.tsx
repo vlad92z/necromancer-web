@@ -441,9 +441,8 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
           onClose={handleCloseOverloadOverlay}
         />
       )}
-
-      <SettingsOverlay
-        isOpen={showSettingsOverlay}
+      {showSettingsOverlay && (
+        <SettingsOverlay
         onClose={toggleSettingsOverlay}
         soundVolume={soundVolume}
         isMusicMuted={isMusicMuted}
@@ -453,7 +452,8 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
         showQuitRun={true}
         playClickSound={playClickSound}
       />
-
+      )
+      }
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
       <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
     </div>
