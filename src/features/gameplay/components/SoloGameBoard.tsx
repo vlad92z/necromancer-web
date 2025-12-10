@@ -4,9 +4,9 @@
 
 import type { GameBoardSharedProps, GameData } from './GameBoardFrame';
 import { DraftingTable } from './Center/DraftingTable';
-import { PlayerView } from './Player/PlayerView';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
+import { PlayerBoard } from './Player/PlayerBoard';
 
 interface BoardContentProps {
   shared: GameBoardSharedProps;
@@ -86,25 +86,25 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
 
       <div className="p-6 grid items-start justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
         <div className="w-full h-full flex items-start justify-center">
-          <PlayerView
-            player={player}
-            onPlaceRunes={onPlaceRunes}
-            onPlaceRunesInFloor={onPlaceRunesInFloor}
-            selectedRuneType={selectedRuneType}
-            canPlace={hasSelectedRunes}
-            onCancelSelection={onCancelSelection}
-            lockedPatternLines={playerLockedLines}
-            hiddenSlotKeys={playerHiddenPatternSlots}
-            game={game}
-            runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
-            deckCount={playerStats?.deckCount}
-            strain={playerStats?.overloadMultiplier}
-            onOpenDeck={onOpenDeckOverlay}
-            onOpenOverload={onOpenOverloadOverlay}
-            onOpenSettings={onOpenSettings}
-            arcaneDust={arcaneDust}
-            activeArtefactIds={activeArtefactIds}
-          />
+          <PlayerBoard
+                  player={player}
+                  onPlaceRunes={onPlaceRunes}
+                  onPlaceRunesInFloor={onPlaceRunesInFloor}
+                  selectedRuneType={selectedRuneType}
+                  canPlace={hasSelectedRunes}
+                  onCancelSelection={onCancelSelection}
+                  lockedLineIndexes={playerLockedLines}
+                  hiddenSlotKeys={playerHiddenPatternSlots}
+                  runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }} //TODO?
+                  deckCount={playerStats?.deckCount}
+                  strain={playerStats?.overloadMultiplier}
+                  onOpenDeck={onOpenDeckOverlay}
+                  onOpenOverload={onOpenOverloadOverlay}
+                  onOpenSettings={onOpenSettings}
+                  game={game}
+                  arcaneDust={arcaneDust}
+                  activeArtefactIds={activeArtefactIds}
+                />
         </div>
       </div>
 

@@ -18,17 +18,6 @@ interface StatBadgeProps {
   canOverload?: boolean;
 }
 
-function StatIcon({ name }: { name: string }) {
-  return (
-    <img
-      src={name}
-      alt=""
-      aria-hidden={true}
-      className="inline-flex w-[35px] h-[35px]"
-    />
-  );
-}
-
 // Constants for glow animation
 const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
 const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
@@ -83,7 +72,11 @@ export function StatBadge({ label, value, borderColor, tooltip, image, onClick, 
         aria-label={canOverload ? `${label}: Click to overload runes. ${tooltip}` : `${label}: ${tooltip}`}
         {...buttonMotionProps}
       >
-        <StatIcon name={image} />
+        <img
+          src={image}
+          aria-hidden={true}
+          className="inline-flex w-[35px] h-[35px]"
+        />
         <div className="flex flex-col leading-[1.2] ml-2">
           <span className="text-[1.15rem] font-semibold">{value}</span>
         </div>
