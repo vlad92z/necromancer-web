@@ -21,41 +21,7 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
   return gameState as GameState;
 };
 
-const selectGameBoardState = (state: GameplayStore): GameState => ({
-  gameStarted: state.gameStarted,
-  factoriesPerPlayer: state.factoriesPerPlayer,
-  runesPerRuneforge: state.runesPerRuneforge,
-  startingHealth: state.startingHealth,
-  overflowCapacity: state.overflowCapacity,
-  player: state.player,
-  soloDeckTemplate: state.soloDeckTemplate,
-  runeforges: state.runeforges,
-  centerPool: state.centerPool,
-  runeforgeDraftStage: state.runeforgeDraftStage,
-  turnPhase: state.turnPhase,
-  game: state.game,
-  strain: state.strain,
-  strainMultiplier: state.strainMultiplier,
-  startingStrain: state.startingStrain,
-  selectedRunes: state.selectedRunes,
-  overloadRunes: state.overloadRunes,
-  draftSource: state.draftSource,
-  animatingRunes: state.animatingRunes,
-  pendingPlacement: state.pendingPlacement,
-  overloadSoundPending: state.overloadSoundPending,
-  selectionTimestamp: state.selectionTimestamp,
-  lockedPatternLines: state.lockedPatternLines,
-  shouldTriggerEndRound: state.shouldTriggerEndRound,
-  runePowerTotal: state.runePowerTotal,
-  targetScore: state.targetScore,
-  outcome: state.outcome,
-  patternLineLock: state.patternLineLock,
-  longestRun: state.longestRun,
-  deckDraftState: state.deckDraftState,
-  baseTargetScore: state.baseTargetScore,
-  deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
-  activeArtefacts: state.activeArtefacts,
-});
+const selectGameBoardState = (state: GameplayStore): GameState => state;
 
 export function Solo() {
   const navigate = useNavigate();
