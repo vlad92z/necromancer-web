@@ -165,6 +165,7 @@ export function DeckDraftingModal({
   };
 
   return (
+    <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-sm px-4">
     <div className="w-full max-w-5xl rounded-3xl border border-white/12 bg-[rgba(10,10,24,0.9)] p-6 md:p-8 shadow-[0_34px_80px_rgba(0,0,0,0.7)] backdrop-blur">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
@@ -250,6 +251,7 @@ export function DeckDraftingModal({
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }

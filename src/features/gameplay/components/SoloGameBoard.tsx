@@ -109,8 +109,8 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
       </div>
 
       {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && onStartNextGame && arcaneDustReward != null && (
-        <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-sm px-4">
-          <DeckDraftingModal
+          
+            <DeckDraftingModal
             draftState={deckDraftState}
             onSelectRuneforge={onSelectDeckDraftRuneforge}
             onOpenDeckOverlay={onOpenDeckOverlay}
@@ -118,19 +118,16 @@ export function BoardContent({ shared, gameData }: BoardContentProps) {
             arcaneDustReward={arcaneDustReward}
             onStartNextGame={onStartNextGame}
           />
-        </div>
       )}
 
       {isGameOver && outcome != null && runePowerTotal != null && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-auto">
-          <SoloGameOverModal
+        <SoloGameOverModal
             outcome={outcome}
             runePowerTotal={runePowerTotal}
             game={game}
             targetScore={targetScore}
             onReturnToStart={returnToStartScreen}
           />
-        </div>
       )}
     </div>
   );
