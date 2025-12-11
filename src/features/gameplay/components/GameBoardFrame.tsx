@@ -397,11 +397,6 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
     ],
   );
 
-  const boardContent = useMemo(
-    () => <SoloGameBoard shared={sharedProps} gameData={gameData} />,
-    [sharedProps, gameData],
-  );
-
   return (
     <div
       className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
@@ -417,7 +412,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          {boardContent}
+          <SoloGameBoard shared={sharedProps} gameData={gameData} />
         </div>
       </div>
 

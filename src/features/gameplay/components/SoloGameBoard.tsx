@@ -2,6 +2,7 @@
  * SoloGameBoard - solo mode game board layout
  */
 
+import { memo } from 'react';
 import type { GameBoardSharedProps, GameData } from './GameBoardFrame';
 import { DraftingTable } from './Center/DraftingTable';
 import { SoloGameOverModal } from './SoloGameOverModal';
@@ -13,7 +14,7 @@ interface SoloGameBoardProps {
   gameData: GameData;
 }
 
-export function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
+export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
   const {
     player,
     selectedRuneType,
@@ -128,4 +129,4 @@ export function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
       )}
     </div>
   );
-}
+});
