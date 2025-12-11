@@ -54,7 +54,7 @@ export interface GameData {
   onOpenDeckOverlay: () => void;
   onOpenOverloadOverlay: () => void;
   onOpenSettings: () => void;
-  onStartNextGame: () => void;
+  startNextSoloGame: () => void;
 }
 
 export interface GameBoardSharedProps {
@@ -377,7 +377,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       onOpenDeckOverlay: handleOpenDeckOverlay,
       onOpenOverloadOverlay: handleOpenOverloadOverlay,
       onOpenSettings: handleOpenSettings,
-      onStartNextGame: startNextSoloGame,
+      startNextSoloGame: startNextSoloGame,
     }),
     [
       arcaneDust,

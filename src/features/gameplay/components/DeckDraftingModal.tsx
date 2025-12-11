@@ -15,7 +15,7 @@ interface DeckDraftingModalProps {
   onOpenDeckOverlay: () => void;
   currentDeckSize: number;
   arcaneDustReward: number;
-  onStartNextGame: () => void;
+  startNextSoloGame: () => void;
 }
 
 export function DeckDraftingModal({
@@ -24,7 +24,7 @@ export function DeckDraftingModal({
   onOpenDeckOverlay,
   currentDeckSize,
   arcaneDustReward,
-  onStartNextGame,
+  startNextSoloGame,
 }: DeckDraftingModalProps) {
   const playClickSound = useClickSound();
   const [displayedRuneforges, setDisplayedRuneforges] = useState<RuneforgeType[]>(draftState.runeforges);
@@ -161,7 +161,7 @@ export function DeckDraftingModal({
 
   const handleStartNextGame = () => {
     playClickSound();
-    onStartNextGame();
+    startNextSoloGame();
   };
 
   return (

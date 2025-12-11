@@ -1202,7 +1202,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextStrain = getOverloadDamageForGame(nextGame);
       const nextGameState = initializeSoloGame(
         {
-          startingHealth: state.startingHealth,
+          startingHealth: state.player.health,
           startingStrain: nextStrain,
           strainMultiplier: state.strainMultiplier,
           factoriesPerPlayer: state.factoriesPerPlayer,
@@ -1216,7 +1216,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           longestRun: state.longestRun,
         }
       );
-      console.log('gameplayStore: startNextSoloGame +1');
       const nextState = {
         ...nextGameState,
         game: nextGame,

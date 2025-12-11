@@ -53,7 +53,7 @@ export function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
     onOpenDeckOverlay,
     onOpenOverloadOverlay,
     onOpenSettings,
-    onStartNextGame,
+    startNextSoloGame,
   } = gameData;
 
   return (
@@ -104,7 +104,7 @@ export function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
         </div>
       </div>
 
-      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && onStartNextGame && arcaneDustReward != null && (
+      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && (
           
             <DeckDraftingModal
             draftState={deckDraftState}
@@ -112,7 +112,7 @@ export function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
             onOpenDeckOverlay={onOpenDeckOverlay}
             currentDeckSize={player.deck.length}
             arcaneDustReward={arcaneDustReward}
-            onStartNextGame={onStartNextGame}
+            startNextSoloGame={startNextSoloGame}
           />
       )}
 
