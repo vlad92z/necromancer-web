@@ -17,6 +17,7 @@ import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoi
 import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
+import { getOverloadDamageForGame } from '../../utils/overload';
 
 
 
@@ -87,8 +88,8 @@ function enterDeckDraftMode(state: GameState): GameState {
   };
 }
 
-// NOTE: overload multiplier is now stored in state.strain and adjusted at
-// Game end. The old getOverloadMultiplier(round) helper is no longer used.
+// NOTE: overload damage per rune is derived from the current game number
+// via getOverloadDamageForGame.
 
 // Navigation callback registry for routing integration
 let navigationCallback: (() => void) | null = null;
@@ -144,9 +145,9 @@ function getNextCenterPool(state: GameState): Rune[] {
 function getOverloadResult(
   currentHealth: number,
   overloadRunesPlaced: number,
-  strain: number,
   state: GameState
 ): { overloadDamage: number; nextHealth: number; scoreBonus: number } {
+  const strain = getOverloadDamageForGame(state.game);
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
   
   // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
@@ -171,7 +172,7 @@ function handlePlayerDefeat(
     runePowerTotal: state.runePowerTotal,
     activeArtefacts: state.activeArtefacts,
     cause: 'overload',
-    strain: state.strain,
+    strain: getOverloadDamageForGame(state.game),
     health: updatedPlayer.health,
     targetScore: state.targetScore,
   });
@@ -194,6 +195,7 @@ function handlePlayerDefeat(
 
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
+  const nextStrain = getOverloadDamageForGame(state.game);
   const clearedPlayer = clearFloorLines(state.player);
   const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
   const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
@@ -204,6 +206,8 @@ function prepareRoundReset(state: GameState): GameState {
       return enterDeckDraftMode({
         ...state,
         player: clearedPlayer,
+        strain: nextStrain,
+        startingStrain: nextStrain,
         runeforges: [],
         centerPool: [],
         runeforgeDraftStage: 'single',
@@ -228,7 +232,7 @@ function prepareRoundReset(state: GameState): GameState {
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
       cause: 'deck-empty',
-      strain: state.strain,
+      strain: nextStrain,
       health: clearedPlayer.health,
       targetScore: state.targetScore,
     });
@@ -236,6 +240,8 @@ function prepareRoundReset(state: GameState): GameState {
     return {
       ...state,
       player: clearedPlayer,
+      strain: nextStrain,
+      startingStrain: nextStrain,
       runeforges: [],
       centerPool: [],
       turnPhase: 'game-over',
@@ -249,8 +255,8 @@ function prepareRoundReset(state: GameState): GameState {
       draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
-        overloadSoundPending: false,
-        runeforgeDraftStage: 'single',
+      overloadSoundPending: false,
+      runeforgeDraftStage: 'single',
     };
   }
 
@@ -273,8 +279,9 @@ function prepareRoundReset(state: GameState): GameState {
     centerPool: [],
     turnPhase: 'draft',
     game: state.game,
-    strain: state.strain * state.strainMultiplier,
+    strain: nextStrain,
     strainMultiplier: state.strainMultiplier,
+    startingStrain: nextStrain,
     outcome: null,
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
@@ -418,7 +425,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
   };
 
   const overloadRunesPlaced = overflowRunes.length;
-  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
+  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state);
 
   const completedLines = updatedPatternLines
     .map((line, index) => ({ line, index }))
@@ -497,7 +504,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
   };
 
   const overloadRunesPlaced = selectedRunes.length;
-  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state.strain, state);
+  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state);
 
   const updatedPlayer = {
     ...currentPlayer,
@@ -1025,10 +1032,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         typeof nextState.baseTargetScore === 'number'
           ? nextState.baseTargetScore
           : nextState.targetScore;
-      const soloStartingStrain =
-        typeof nextState.startingStrain === 'number'
-          ? nextState.startingStrain
-          : nextState.strain;
+      const nextGameNumber =
+        typeof nextState.game === 'number'
+          ? nextState.game
+          : typeof state.game === 'number'
+            ? state.game
+            : 1;
+      const soloStartingStrain = getOverloadDamageForGame(nextGameNumber);
       const longestRun =
         typeof nextState.longestRun === 'number'
           ? nextState.longestRun
@@ -1041,6 +1051,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
         soloDeckTemplate: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
+        strain: soloStartingStrain,
         startingStrain: soloStartingStrain,
         longestRun,
         selectionTimestamp: nextState.selectionTimestamp ?? null,
@@ -1188,10 +1199,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextTarget = state.targetScore;
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
       const nextGame = state.game + 1;
+      const nextStrain = getOverloadDamageForGame(nextGame);
       const nextGameState = initializeSoloGame(
         {
           startingHealth: state.startingHealth,
-          startingStrain: state.startingStrain,
+          startingStrain: nextStrain,
           strainMultiplier: state.strainMultiplier,
           factoriesPerPlayer: state.factoriesPerPlayer,
           deckRunesPerType,
@@ -1209,6 +1221,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...nextGameState,
         game: nextGame,
         gameStarted: true,
+        strain: nextStrain,
+        startingStrain: nextStrain,
         soloDeckTemplate: deckTemplate,
         soloBaseTargetScore: state.baseTargetScore || nextTarget,
         deckDraftState: null,

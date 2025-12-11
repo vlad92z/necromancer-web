@@ -13,6 +13,7 @@ import type {
   RunConfig,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
+import { getOverloadDamageForGame } from './overload';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 const WALL_SIZE = RUNE_TYPES.length;
@@ -54,11 +55,11 @@ export function getRuneTypes(): RuneType[] {
   return [...RUNE_TYPES];
 }
 
-const DEFAULT_STARTING_STRAIN = 1;
+const DEFAULT_STARTING_STRAIN = getOverloadDamageForGame(1);
 const DEFAULT_STRAIN_MULTIPLIER = 2;
 const SOLO_TARGET_INCREMENT = 50;
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
-const STARTING_HEALTH = 100;
+const STARTING_HEALTH = 25;
 const FACTORIES_PER_PLAYER = 5;
 const DEFAULT_RUNES_PER_TYPE = 20;
 const DEFAULT_SOLO_TARGET_SCORE = 50;
@@ -249,6 +250,8 @@ export function initializeSoloGame(
   options?: SoloInitializationOptions
 ): GameState {
   const soloConfig = normalizeSoloConfig(config);
+  const initialGameNumber = 1;
+  const startingStrain = getOverloadDamageForGame(initialGameNumber);
   const soloSizingConfig = getSoloSizingConfig();
   const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
   const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
@@ -286,16 +289,16 @@ export function initializeSoloGame(
     runesPerRuneforge: soloSizingConfig.runesPerRuneforge,
     startingHealth: soloConfig.startingHealth,
     overflowCapacity: soloSizingConfig.overflowCapacity,
-    strain: soloConfig.startingStrain,
+    strain: startingStrain,
     strainMultiplier: soloConfig.strainMultiplier,
-    startingStrain: soloConfig.startingStrain,
+    startingStrain,
     player: soloPlayer,
     soloDeckTemplate: startingDeckTemplate,
     runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     centerPool: [],
     runeforgeDraftStage: 'single',
     turnPhase: 'draft',
-    game: 1,
+    game: initialGameNumber,
     selectedRunes: [],
     overloadRunes: [],
     selectionTimestamp: null,

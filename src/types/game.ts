@@ -143,13 +143,12 @@ export interface GameState {
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   /**
-   * Damage dealt for every overload rune
-   * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
+   * Damage dealt for every overload rune, derived from the current game number.
+   * Progression caps at the final configured value for later games.
    */
   strain: number;
   /**
-   * Factor used to multiply `strain` at the end of each round. Kept in state
-   * so it can be tuned or modified by runes in the future.
+   * Reserved for potential future tuning of overload scaling.
    */
   strainMultiplier: number;
   startingStrain: number; // Configured strain at the start of the run
