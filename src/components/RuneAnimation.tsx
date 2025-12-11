@@ -18,8 +18,6 @@ const ANIMATION_EASE = [0.4, 0.0, 0.2, 1] as const;
 export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnimationProps) {
   if (animatingRunes.length === 0) return null;
 
-  const positionOffset = 0;
-
   return (
     <div style={{
       position: 'fixed',
@@ -33,10 +31,10 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
       {animatingRunes.map((animatingRune, index) => {
         // If shouldDisappear is true, add a fade out and scale down animation
         // Small correction to compensate for visual centering
-        const finalX = animatingRune.endX + positionOffset;
-        const finalY = animatingRune.endY + positionOffset;
-        const startX = animatingRune.startX + positionOffset;
-        const startY = animatingRune.startY + positionOffset;
+        const finalX = animatingRune.endX;
+        const finalY = animatingRune.endY;
+        const startX = animatingRune.startX;
+        const startY = animatingRune.startY;
         const runeSize = animatingRune.size ?? RUNE_SIZE_CONFIG.large.dimension;
         const runeScale = runeSize / RUNE_SIZE_CONFIG.large.dimension;
 
