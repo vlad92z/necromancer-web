@@ -21,17 +21,14 @@ const RUNE_CARD_IMAGES: Record<RuneType, string> = {
   Lightning: lightningRune,
 };
 
-interface TooltipViewProps {
-}
-
-export function TooltipView(_: TooltipViewProps) {
+export function TooltipView() {
   const tooltipCards = useGameplayStore((state) => state.tooltipCards);
   const overlapOffset = -60;
 
   return (
     <div className="relative w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
       {tooltipCards.map((card, index) => {
-        const imageSrc = RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
+        const imageSrc = card.imageSrc ?? RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
         return (
           <div
             key={card.id}

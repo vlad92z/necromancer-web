@@ -7,6 +7,8 @@ import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
 import { ProgressStatOverlay } from '../ProgressStatOverlay';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
+import { buildTextTooltipCard } from '../../../../utils/tooltipCards';
+import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 
 interface StatsViewProps {
   playerId: string;
@@ -38,6 +40,29 @@ export function StatsView({
 }: StatsViewProps) {
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   useHealthChangeSound(clampedHealth);
+  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const deckTooltip = `Runes left in deck: ${deckRemaining}`;
+  const overloadTooltip = `Overloaded runes this run: ${overloadedRuneCount}. Each overload currently deals ${strainValue} damage.`;
+
+  const handleDeckTooltipToggle = (visible: boolean) => {
+    if (visible) {
+      setTooltipCards(buildTextTooltipCard('deck-tooltip', 'Deck', deckTooltip, deckSvg));
+    } else {
+      resetTooltipCards();
+    }
+  };
+
+  const handleOverloadTooltipToggle = (visible: boolean) => {
+    if (visible) {
+      setTooltipCards(
+        buildTextTooltipCard('overload-tooltip', 'Overload', overloadTooltip, overloadSvg)
+      );
+    } else {
+      resetTooltipCards();
+    }
+  };
+
   return (
     <div
       className="flex flex-col gap-[min(1.2vmin,12px)] w-full"
@@ -49,9 +74,11 @@ export function StatsView({
           value={deckRemaining}
           color="#60a5fa"
           borderColor="rgba(96, 165, 250, 0.35)"
-          tooltip={`Runes left in deck: ${deckRemaining}`}
+          tooltip={deckTooltip}
           image={deckSvg}
           onClick={onDeckClick}
+          onTooltipToggle={handleDeckTooltipToggle}
+          showTooltipBubble={false}
         />
         <ProgressStatOverlay
           label="Health"
@@ -77,10 +104,12 @@ export function StatsView({
               value={overloadedRuneCount}
               color="#fa6060ff"
               borderColor="rgba(96, 165, 250, 0.35)"
-              tooltip={`Overloaded runes this run: ${overloadedRuneCount}. Each overload currently deals ${strainValue} damage.`}
+              tooltip={overloadTooltip}
               image={overloadSvg}
               onClick={onStrainClick}
               canOverload={canOverload}
+              onTooltipToggle={handleOverloadTooltipToggle}
+              showTooltipBubble={false}
             />
           </div>
         </div>

@@ -20,6 +20,8 @@ export function useGameActions() {
   const disenchantRuneFromDeck = useGameplayStore((state) => state.disenchantRuneFromDeck);
   const forceSoloVictory = useGameplayStore((state) => state.forceSoloVictory);
   const startNextSoloGame = useGameplayStore((state) => state.startNextSoloGame);
+  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   
   return {
     draftRune,
@@ -36,5 +38,7 @@ export function useGameActions() {
     disenchantRuneFromDeck,
     forceSoloVictory,
     startNextSoloGame,
+    setTooltipCards,
+    resetTooltipCards,
   };
 }

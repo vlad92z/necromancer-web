@@ -7,6 +7,8 @@ import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../ty
 import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
+import { useGameplayStore } from '../../../../state/stores/gameplayStore';
+import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 
 interface ScoringWallProps {
   wall: ScoringWallType;
@@ -115,6 +117,45 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
 
     return { pointsMap, edgesMap };
   }, []);
+
+  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+
+  const handleWallCellEnter = useCallback(
+    (rowIndex: number, colIndex: number) => {
+      const segmentCells = collectSegmentCells(wall, rowIndex, colIndex);
+      if (segmentCells.length === 0) {
+        resetTooltipCards();
+        return;
+      }
+
+      const primaryCell = segmentCells.find((cell) => cell.row === rowIndex && cell.col === colIndex);
+      const remainingCells = segmentCells
+        .filter((cell) => !(cell.row === rowIndex && cell.col === colIndex))
+        .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row));
+      const orderedCells = primaryCell ? [primaryCell, ...remainingCells] : remainingCells;
+
+      const tooltipRunes = orderedCells
+        .filter((cell) => cell.runeType !== null)
+        .map((cell) => ({
+          id: `wall-${cell.row}-${cell.col}`,
+          runeType: (cell.runeType ?? 'Life') as RuneType,
+          effects: cell.effects ?? [],
+        }));
+
+      if (tooltipRunes.length === 0) {
+        resetTooltipCards();
+        return;
+      }
+
+      setTooltipCards(buildRuneTooltipCards(tooltipRunes, tooltipRunes[0].id));
+    },
+    [resetTooltipCards, setTooltipCards, wall]
+  );
+
+  const handleWallCellLeave = useCallback(() => {
+    resetTooltipCards();
+  }, [resetTooltipCards]);
 
   useEffect(() => {
     const wallSize = wall.length;
@@ -292,15 +333,20 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
         {wall.map((row, rowIndex) => (
           <div key={rowIndex} style={{ display: 'flex', gap: `${GAP}px` }}>
             {row.map((cell, colIndex) => (
-              <WallCell
+              <div
                 key={colIndex}
-                cell={cell}
-                row={rowIndex}
-                col={colIndex}
-                wallSize={gridSize}
-                availableRuneTypes={availableRuneTypes}
-                pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}
-              />
+                onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
+                onMouseLeave={handleWallCellLeave}
+              >
+                <WallCell
+                  cell={cell}
+                  row={rowIndex}
+                  col={colIndex}
+                  wallSize={gridSize}
+                  availableRuneTypes={availableRuneTypes}
+                  pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}
+                />
+              </div>
             ))}
           </div>
         ))}

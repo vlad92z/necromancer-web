@@ -2,68 +2,38 @@
  * ArtefactsRow - displays a horizontal row of selected artefact icons
  */
 
-import { useEffect, useState } from 'react';
 import type { PointerEvent } from 'react';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
-import { TooltipBubble, type TooltipAnchorRect } from './TooltipBubble';
+import { buildArtefactTooltipCards } from '../utils/tooltipCards';
+import { useGameplayStore } from '../state/stores/gameplayStore';
 
 interface ArtefactsRowProps {
   selectedArtefactIds: ArtefactId[];
   compact?: boolean;
 }
 
-const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
-  const rect = element.getBoundingClientRect();
-  return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
-};
-
 export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
-  const [tooltip, setTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);
-  const [touchHideTimer, setTouchHideTimer] = useState<number | null>(null);
+  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const isEmpty = selectedArtefactIds.length === 0;
 
   // Match rune cell sizes: medium = 35px, large = 60px
   const iconSize = compact ? 'w-[60px] h-[60px]' : 'w-[100px] h-[100px]';
   const gap = compact ? 'gap-1.5' : 'gap-2';
 
-  const clearTouchHideTimer = () => {
-    if (touchHideTimer !== null) {
-      window.clearTimeout(touchHideTimer);
-      setTouchHideTimer(null);
-    }
-  };
-
-  const showTooltip = (artefactId: ArtefactId, element: HTMLElement) => {
-    clearTouchHideTimer();
-    setTooltip({ id: artefactId, rect: toAnchorRect(element) });
-  };
-
-  const hideTooltip = () => {
-    clearTouchHideTimer();
-    setTooltip(null);
-  };
-
   const handlePointerEnter = (artefactId: ArtefactId, event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== 'touch') {
-      showTooltip(artefactId, event.currentTarget);
+      setTooltipCards(buildArtefactTooltipCards(selectedArtefactIds, artefactId));
     }
   };
 
   const handlePointerDown = (artefactId: ArtefactId, event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'touch') {
-      showTooltip(artefactId, event.currentTarget);
-      const timer = window.setTimeout(() => setTooltip(null), 2000);
-      setTouchHideTimer(timer);
+      setTooltipCards(buildArtefactTooltipCards(selectedArtefactIds, artefactId));
     }
   };
-
-  useEffect(() => () => {
-    if (touchHideTimer !== null) {
-      window.clearTimeout(touchHideTimer);
-    }
-  }, [touchHideTimer]);
 
   if (isEmpty) {
     return null;
@@ -83,7 +53,7 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
             key={artefactId}
             className={`${iconSize} rounded-lg overflow-hidden border border-slate-600/50 bg-slate-900/50 shadow-lg`}
             onPointerEnter={(event) => handlePointerEnter(artefactId, event)}
-            onPointerLeave={hideTooltip}
+            onPointerLeave={resetTooltipCards}
             onPointerDown={(event) => handlePointerDown(artefactId, event)}
             role="img"
             aria-label={tooltipText}
@@ -96,17 +66,6 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
           </div>
         );
       })}
-
-      {tooltip && (() => {
-        const artefact = ARTEFACTS[tooltip.id];
-        if (!artefact) return null;
-        return (
-          <TooltipBubble
-            text={`${artefact.name}\n${getArtefactEffectDescription(tooltip.id)}`}
-            anchorRect={tooltip.rect}
-          />
-        );
-      })()}
     </div>
   );
 }

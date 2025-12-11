@@ -315,6 +315,8 @@ export interface GameplayStore extends GameState {
   resetGame: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
   disenchantRuneFromDeck: (runeId: string) => number;
+  setTooltipCards: (cards: GameState['tooltipCards']) => void;
+  resetTooltipCards: () => void;
 }
 
 function cancelSelectionState(state: GameplayStore): GameplayStore {
@@ -642,6 +644,20 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   
   
+  setTooltipCards: (cards) => {
+    set((state) => ({
+      ...state,
+      tooltipCards: cards,
+    }));
+  },
+
+  resetTooltipCards: () => {
+    set((state) => ({
+      ...state,
+      tooltipCards: createDefaultTooltipCards(),
+    }));
+  },
+
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {

@@ -20,7 +20,13 @@ interface RuneforgeProps {
   selectedRuneIdSet: Set<string>;
   animatingRuneIdSet: Set<string> | null;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onRuneMouseEnter: (runeforgeId: string, runeType: RuneType, selectionActive: boolean, disabled: boolean) => void;
+  onRuneMouseEnter: (
+    runeforgeId: string,
+    runeType: RuneType,
+    runeId: string,
+    selectionActive: boolean,
+    disabled: boolean
+  ) => void;
   onRuneMouseLeave: (runeforgeId: string) => void;
 }
 
@@ -239,7 +245,9 @@ export function Runeforge({
                     onRuneClick(runeforge.id, rune.runeType, rune.id);
                   }
                 }}
-                onMouseEnter={() => onRuneMouseEnter(runeforge.id, rune.runeType, selectionActive, isRuneforgeDisabled)}
+                onMouseEnter={() =>
+                  onRuneMouseEnter(runeforge.id, rune.runeType, rune.id, selectionActive, isRuneforgeDisabled)
+                }
                 onMouseLeave={() => onRuneMouseLeave(runeforge.id)}
                 animate={selectedAnimation}
                 transition={selectedTransition}
@@ -249,7 +257,7 @@ export function Runeforge({
                   variant="runeforge"
                   size="large"
                   showEffect
-                  showTooltip
+                  showTooltip={false}
                 />
               </motion.div>
             );

@@ -37,6 +37,7 @@ export interface TooltipCard {
   runeType: RuneType;
   title: string;
   description: string;
+  imageSrc?: string;
 }
 
 /**
