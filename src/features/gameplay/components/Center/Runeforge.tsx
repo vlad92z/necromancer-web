@@ -5,6 +5,7 @@
 import { motion } from 'framer-motion';
 import { useCallback, useMemo, useRef } from 'react';
 import { RuneCell } from '../../../../components/RuneCell';
+import { RUNE_SIZE_CONFIG } from '../../../../styles/tokens';
 import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
 
 interface RuneforgeProps {
@@ -105,7 +106,7 @@ export function Runeforge({
     [computeSlots, displayedRunes, slotCount]
   );
 
-  const runeSize = 70;
+  const runeSize = RUNE_SIZE_CONFIG.large.dimension;
   const runeGap = 14;
   const containerPadding = 24;
   const isRuneforgeDisabled = runeforge.disabled ?? false;

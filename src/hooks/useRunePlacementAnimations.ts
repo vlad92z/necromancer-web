@@ -3,6 +3,7 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AnimatingRune, GameState, Rune } from '../types/game';
+import { RUNE_SIZE_CONFIG } from '../styles/tokens';
 
 interface SelectionSnapshot {
   playerId: string;
@@ -30,7 +31,7 @@ interface UseRunePlacementAnimationsParams {
   centerPool: GameState['centerPool'];
 }
 
-const OVERLAY_RUNE_SIZE = 48;
+const OVERLAY_RUNE_SIZE = RUNE_SIZE_CONFIG.large.dimension;
 
 export function useRunePlacementAnimations({
   player,
@@ -247,6 +248,7 @@ export function useRunePlacementAnimations({
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
+            rune,
             startX: start.startX,
             startY: start.startY,
             endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
@@ -269,6 +271,7 @@ export function useRunePlacementAnimations({
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
+            rune,
             startX: start.startX,
             startY: start.startY,
             endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
@@ -313,6 +316,7 @@ export function useRunePlacementAnimations({
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
+            rune,
             startX: start.startX,
             startY: start.startY,
             endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
