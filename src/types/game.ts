@@ -176,6 +176,7 @@ export interface GameState {
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
+  runeScoreTargetIncrement: number; // Score increase applied after each victory
   outcome: GameOutcome; // Solo result (victory/defeat)
   patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
   longestRun: number; // Furthest game reached in any run
@@ -183,6 +184,7 @@ export interface GameState {
   baseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
+  victoryDraftPicks: number; // Number of draft picks granted after a victory
 }
 
 export interface DeckDraftState {

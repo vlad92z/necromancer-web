@@ -5,7 +5,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
@@ -54,11 +54,11 @@ function enterDeckDraftMode(state: GameState): GameState {
   console.log('gameplayStore: enterDeckDraftMode');
   const deckTemplate = getSoloDeckTemplate(state);
   const nextLongestRun = Math.max(state.longestRun, state.game);
-  const basePicks = DEFAULT_SOLO_CONFIG.victoryDraftPicks;
+  const basePicks = state.victoryDraftPicks;
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
   const arcaneDustReward = getArcaneDustReward(state.game);
-  const nextTargetScore = state.targetScore + DEFAULT_SOLO_CONFIG.runeScoreTargetIncrement;
+  const nextTargetScore = state.targetScore + state.runeScoreTargetIncrement;
 
   if (arcaneDustReward > 0) {
     const newDustTotal = addArcaneDust(arcaneDustReward);
@@ -274,7 +274,7 @@ function prepareRoundReset(state: GameState): GameState {
     turnPhase: 'draft',
     game: state.game,
     strain: state.strain * state.strainMultiplier,
-    strainMultiplier: DEFAULT_SOLO_CONFIG.strainMultiplier,
+    strainMultiplier: state.strainMultiplier,
     outcome: null,
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
@@ -659,9 +659,6 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
 export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
   // Initial state
   ...initializeSoloGame(),
-  // Strain configuration - starting value and multiplier factor (tune here)
-  strain: DEFAULT_SOLO_CONFIG.startingStrain,
-  strainMultiplier: DEFAULT_SOLO_CONFIG.strainMultiplier,
 
   
   
@@ -1027,7 +1024,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const soloBaseTargetScore =
         typeof nextState.baseTargetScore === 'number'
           ? nextState.baseTargetScore
-          : nextState.targetScore;// ?? DEFAULT_SOLO_CONFIG.targetRuneScore;
+          : nextState.targetScore;
       const soloStartingStrain =
         typeof nextState.startingStrain === 'number'
           ? nextState.startingStrain
@@ -1049,6 +1046,14 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
+        runeScoreTargetIncrement:
+          typeof nextState.runeScoreTargetIncrement === 'number'
+            ? nextState.runeScoreTargetIncrement
+            : state.runeScoreTargetIncrement,
+        victoryDraftPicks:
+          typeof nextState.victoryDraftPicks === 'number'
+            ? nextState.victoryDraftPicks
+            : state.victoryDraftPicks,
       };
     });
   },

@@ -10,7 +10,6 @@ import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
 import type { GameState, RunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
-import { useShallow } from 'zustand/react/shallow';
 import { DEFAULT_SOLO_CONFIG } from '../utils/gameInitialization';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
 import { ArtefactsView } from '../components/ArtefactsView';
@@ -26,15 +25,11 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
   return gameState as GameState;
 };
 
-const selectGameBoardState = (state: GameplayStore): GameState => state;
-
 export function SoloStartScreen() {
   const navigate = useNavigate();
-  const gameStarted = useGameplayStore((state) => state.gameStarted);
-  const startSoloRun = useGameplayStore((state) => state.startSoloRun);
-  const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
-  const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
-  const gameState = useGameplayStore(useShallow(selectGameBoardState));
+  const gameplayState = useGameplayStore();
+  const { gameStarted, startSoloRun, prepareSoloMode, hydrateGameState } = gameplayState;
+  const gameState: GameState = gameplayState;
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();

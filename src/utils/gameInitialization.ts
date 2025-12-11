@@ -101,6 +101,8 @@ export function normalizeSoloConfig(config?: Partial<RunConfig>): RunConfig {
     factoriesPerPlayer: Math.min(6, Math.max(1, Math.round(merged.factoriesPerPlayer))),
     deckRunesPerType: Math.max(1, Math.round(merged.deckRunesPerType)),
     targetRuneScore: Math.max(1, Math.round(merged.targetRuneScore)),
+    runeScoreTargetIncrement: Math.max(1, Math.round(merged.runeScoreTargetIncrement)),
+    victoryDraftPicks: Math.max(1, Math.round(merged.victoryDraftPicks)),
     patternLinesLockOnComplete: Boolean(merged.patternLinesLockOnComplete),
   };
 }
@@ -307,6 +309,7 @@ export function initializeSoloGame(
     shouldTriggerEndRound: false,
     runePowerTotal: 0,
     targetScore: targetScore,
+    runeScoreTargetIncrement: soloConfig.runeScoreTargetIncrement,
     outcome: null,
     patternLineLock: soloConfig.patternLinesLockOnComplete,
     longestRun,
@@ -314,5 +317,6 @@ export function initializeSoloGame(
     baseTargetScore: soloConfig.targetRuneScore,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
+    victoryDraftPicks: soloConfig.victoryDraftPicks,
   };
 }
