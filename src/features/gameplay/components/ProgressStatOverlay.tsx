@@ -4,8 +4,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
 
-export type ProgressDeltaMode = 'none' | 'gain-only' | 'signed';
-
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
 interface ProgressStatOverlayProps {
@@ -15,16 +13,15 @@ interface ProgressStatOverlayProps {
   displayMax?: number;
   clampToMax?: boolean;
   showFraction?: boolean;
-  deltaMode?: ProgressDeltaMode;
   containerClassName: string;
   trackClassName: string;
   barClassName: string;
   reachedBarClassName?: string;
-  valueClassName?: string;
-  valueReachedClassName?: string;
+  valueClassColor: string;
   deltaGainClassName?: string;
   deltaLossClassName?: string;
 }
+
 
 export function ProgressStatOverlay({
   label,
@@ -33,13 +30,11 @@ export function ProgressStatOverlay({
   displayMax,
   clampToMax = false,
   showFraction = false,
-  deltaMode = 'none',
   containerClassName,
   trackClassName,
   barClassName,
   reachedBarClassName,
-  valueClassName = 'text-slate-100 font-extrabold text-base text-right',
-  valueReachedClassName,
+  valueClassColor = 'text-slate-100',
   deltaGainClassName = 'text-sky-200 text-sm font-bold',
   deltaLossClassName,
 }: ProgressStatOverlayProps) {
@@ -53,7 +48,7 @@ export function ProgressStatOverlay({
   const [indicator, setIndicator] = useState<DeltaIndicator | null>(null);
   const animatedValue = useMotionValue(normalizedCurrent);
   const [displayedValue, setDisplayedValue] = useState(normalizedCurrent);
-
+  const valueClassName = `${valueClassColor} font-extrabold text-base text-right`
   useMotionValueEvent(animatedValue, 'change', (value) => {
     setDisplayedValue(Math.round(value));
   });
@@ -70,24 +65,14 @@ export function ProgressStatOverlay({
   useEffect(() => {
     const previousValue = previousValueRef.current;
 
-    if (deltaMode === 'none') {
-      previousValueRef.current = normalizedCurrent;
-      return;
-    }
-
-    if (deltaMode === 'gain-only' && normalizedCurrent > previousValue) {
-      sequenceRef.current += 1;
-      setIndicator({ amount: normalizedCurrent - previousValue, key: sequenceRef.current, type: 'gain' });
-    }
-
-    if (deltaMode === 'signed' && normalizedCurrent !== previousValue) {
+    if (normalizedCurrent !== previousValue) {
       sequenceRef.current += 1;
       const isGain = normalizedCurrent > previousValue;
       setIndicator({ amount: Math.abs(normalizedCurrent - previousValue), key: sequenceRef.current, type: isGain ? 'gain' : 'loss' });
     }
 
     previousValueRef.current = normalizedCurrent;
-  }, [deltaMode, normalizedCurrent]);
+  }, [normalizedCurrent]);
 
   useEffect(() => {
     if (!indicator) {
@@ -103,7 +88,7 @@ export function ProgressStatOverlay({
     };
   }, [indicator]);
 
-  const valueClass = reachedTarget && valueReachedClassName ? valueReachedClassName : valueClassName;
+  const valueClass = valueClassName;
   const progressClass = reachedTarget && reachedBarClassName ? reachedBarClassName : barClassName;
   const fractionMax = displayMax ?? max;
 
@@ -113,7 +98,7 @@ export function ProgressStatOverlay({
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">{label}</div>
         <div className="flex items-center gap-2 min-w-[120px] justify-end">
           <AnimatePresence>
-            {indicator && deltaMode !== 'none' && (
+            {indicator && (
               <motion.span
                 key={indicator.key}
                 initial={{ opacity: 0, y: 8 }}
