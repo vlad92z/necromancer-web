@@ -15,7 +15,7 @@ interface DraftingTableProps {
   centerPool: Rune[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
-  isDraftPhase: boolean;
+  isSelectionPhase: boolean;
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
@@ -27,7 +27,7 @@ interface DraftingTableProps {
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
 }
 
-export function DraftingTable({ 
+export function RuneSelectionTable({ 
   runeforges, 
   centerPool, 
   onRuneClick,

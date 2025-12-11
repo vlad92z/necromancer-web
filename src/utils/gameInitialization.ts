@@ -297,7 +297,7 @@ export function initializeSoloGame(
     runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     centerPool: [],
     runeforgeDraftStage: 'single',
-    turnPhase: 'draft',
+    turnPhase: 'select',
     game: initialGameNumber,
     selectedRunes: [],
     overloadRunes: [],

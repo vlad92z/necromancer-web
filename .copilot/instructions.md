@@ -443,9 +443,9 @@ type RuneEffect =
 
 **Turn Phases**:
 ```typescript
-type TurnPhase = 'draft' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
+type TurnPhase = 'select' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 ```
-- `draft`: Player selects runes from runeforge or center
+- `select`: Player selects runes from runeforge or center
 - `place`: Player places selected runes on pattern line or floor
 - `end-of-round`: All runeforges and center are empty, trigger scoring
 - `scoring`: Animated scoring sequence (move to wall, calculate power, clear floor)

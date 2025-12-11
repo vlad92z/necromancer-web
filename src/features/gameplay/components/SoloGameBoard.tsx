@@ -4,7 +4,7 @@
 
 import { memo } from 'react';
 import type { GameBoardSharedProps, GameData } from './GameBoardFrame';
-import { DraftingTable } from './Center/DraftingTable';
+import { RuneSelectionTable } from './Center/RuneSelectionTable';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 import { PlayerBoard } from './Player/PlayerBoard';
@@ -24,7 +24,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
     runeforges,
     centerPool,
     activeArtefactIds,
-    isDraftPhase,
+    isSelectionPhase: isSelectionPhase,
     selectedRunes,
     draftSource,
     runeforgeDraftStage,
@@ -63,12 +63,12 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
         className="p-6 flex items-center justify-center relative"
       >
         <div className="w-full h-full relative">
-          <DraftingTable
+          <RuneSelectionTable
             runeforges={runeforges}
             centerPool={centerPool}
             onRuneClick={onRuneClick}
             onCenterRuneClick={onCenterRuneClick}
-            isDraftPhase={isDraftPhase}
+            isSelectionPhase={isSelectionPhase}
             hasSelectedRunes={hasSelectedRunes}
             selectedRunes={selectedRunes}
             draftSource={draftSource}

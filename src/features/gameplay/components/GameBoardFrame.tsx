@@ -63,7 +63,7 @@ export interface GameBoardSharedProps {
   currentPlayerIndex: number;
   currentPlayerId: string;
   game: number;
-  isDraftPhase: boolean;
+  isSelectionPhase: boolean;
   isGameOver: boolean;
   activeArtefactIds: GameState['activeArtefacts'];
   runesPerRuneforge: number;
@@ -145,7 +145,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
-  const isDraftPhase = turnPhase === 'draft';
+  const isSelectionPhase = turnPhase === 'select';
   const isDeckDrafting = turnPhase === 'deck-draft';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
@@ -314,7 +314,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       currentPlayerIndex: 0,
       currentPlayerId: player.id,
       game: currentGame,
-      isDraftPhase,
+      isSelectionPhase: isSelectionPhase,
       isGameOver,
       activeArtefactIds: activeArtefacts,
       runesPerRuneforge,
@@ -349,7 +349,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       handleRuneClick,
       hasSelectedRunes,
       hiddenCenterRuneIds,
-      isDraftPhase,
+      isSelectionPhase,
       isGameOver,
       player,
       runesPerRuneforge,

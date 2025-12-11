@@ -277,7 +277,7 @@ function prepareRoundReset(state: GameState): GameState {
     player: updatedPlayer,
     runeforges: withRuneforgeListDefaults(filledRuneforges).map((runeforge) => ({ ...runeforge, disabled: false })),
     centerPool: [],
-    turnPhase: 'draft',
+    turnPhase: 'select',
     game: state.game,
     strain: nextStrain,
     strainMultiplier: state.strainMultiplier,
@@ -329,7 +329,7 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
-      turnPhase: 'draft' as const,
+      turnPhase: 'select' as const,
     };
   }
 
@@ -361,7 +361,7 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
     selectedRunes: [],
     selectionTimestamp: null,
     draftSource: null,
-    turnPhase: 'draft' as const,
+    turnPhase: 'select' as const,
   };
 }
 
@@ -471,7 +471,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
       ? ('cast' as const)
       : shouldEndRound
         ? ('end-of-round' as const)
-        : ('draft' as const);
+        : ('select' as const);
 
   return {
     ...state,
@@ -548,7 +548,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     selectionTimestamp: null,
     draftSource: null,
     centerPool: nextCenterPool,
-    turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
+    turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
@@ -675,7 +675,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase === 'place') {
         return attemptAutoPlacement(state);
       }
-      if (state.turnPhase !== 'draft') {
+      if (state.turnPhase !== 'select') {
         return state;
       }
       const normalizedRuneforges = withRuneforgeListDefaults(state.runeforges);
@@ -792,7 +792,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         return {
           ...state,
-          turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
+          turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
           shouldTriggerEndRound: shouldEndRound,
         };
       }
@@ -883,7 +883,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return {
         ...state,
         player: updatedPlayer,
-        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('draft' as const),
+        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
         shouldTriggerEndRound: shouldEndRound,
         runePowerTotal: nextRunePowerTotal,
         lockedPatternLines: updatedLockedPatternLines,
@@ -897,7 +897,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase === 'place') {
         return attemptAutoPlacement(state);
       }
-      if (state.turnPhase !== 'draft') {
+      if (state.turnPhase !== 'select') {
         return state;
       }
       const hasAccessibleRuneforges = state.runeforges.some(
