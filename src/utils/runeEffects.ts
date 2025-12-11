@@ -57,7 +57,7 @@ function formatRuneEffect(effect: RuneEffect): string {
     case 'Fragile':
       return `+${effect.amount} damage, negated by ${effect.fragileType}`;
     default:
-      return "";
+      return "No effect";
   }
 }
 
