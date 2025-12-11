@@ -11,8 +11,7 @@ interface CardViewProps {
 export function CardView({ title, imageSrc, description }: CardViewProps) {
   return (
     <div
-      className="relative max-w-full aspect-[2.5/3.5] overflow-hidden rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 shadow-[0_20px_38px_rgba(0,0,0,0.55)]"
-      style={{ width: 'clamp(190px, 28vmin, 320px)' }}
+      className="relative h-full max-h-full w-auto max-w-full aspect-[2.5/3.5] overflow-hidden rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 shadow-[0_20px_38px_rgba(0,0,0,0.55)]"
     >
       <div className="absolute inset-[10px] rounded-xl border border-slate-500/35 bg-slate-900/60 backdrop-blur-[1px] shadow-inner" />
       <div className="relative z-[1] flex h-full flex-col">

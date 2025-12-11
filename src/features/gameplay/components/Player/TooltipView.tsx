@@ -26,13 +26,13 @@ export function TooltipView() {
   const overlapOffset = -60;
 
   return (
-    <div className="relative w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
+    <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
       {tooltipCards.map((card, index) => {
         const imageSrc = card.imageSrc ?? RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
         return (
           <div
             key={card.id}
-            className="transition-transform duration-200 ease-out"
+            className="h-full transition-transform duration-200 ease-out"
             style={{
               marginLeft: index === 0 ? 0 : overlapOffset,
               zIndex: tooltipCards.length - index,

@@ -110,7 +110,7 @@ export function PlayerBoard({
               </div>
             </div>
           </div>
-          <div className="w-full flex items-center justify-center">
+          <div className="w-full h-[clamp(190px,32vmin,360px)] min-h-0 flex items-center justify-center">
             <TooltipView />
           </div>
         </div>
