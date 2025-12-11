@@ -45,6 +45,11 @@ export function Solo() {
   const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
 
+  const playClick = useClickSound();
+  const [showArtefactsModal, setShowArtefactsModal] = useState(false);
+  const formattedDust = arcaneDust.toLocaleString();
+  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
+
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
     prepareSoloMode();
@@ -109,36 +114,7 @@ export function Solo() {
 
   if (gameStarted) {
     return <GameBoardFrame gameState={gameState} />;
-  } else {
-    return (
-      <SoloStartScreen
-        onStartSolo={handleStartSolo}
-        onContinueSolo={handleContinueSolo}
-        canContinue={hasSavedSoloRun}
-        longestRun={longestSoloRun}
-        arcaneDust={arcaneDust}
-      />
-    );
   }
-}
-
-/**
- * SoloStartScreen - entry screen for Solo mode setup
- */
-interface SoloStartScreenProps {
-  onStartSolo: (config: RunConfig) => void;
-  onContinueSolo?: () => void;
-  canContinue?: boolean;
-  longestRun?: number;
-  arcaneDust?: number;
-}
-
-function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, longestRun = 0, arcaneDust = 0 }: SoloStartScreenProps) {
-  const navigate = useNavigate();
-  const playClick = useClickSound();
-  const [showArtefactsModal, setShowArtefactsModal] = useState(false);
-  const formattedDust = arcaneDust.toLocaleString();
-  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
@@ -162,10 +138,10 @@ function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, lon
             Draft runes to cast increeasingly powerful spells while surviving overload damage
           </p>
           <div className="flex flex-wrap gap-3">
-            {longestRun > 2 && (
+            {longestSoloRun > 2 && (
               <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
                 <span className="text-[11px] text-sky-300">Longest Run</span>
-                <span className="text-lg font-extrabold text-slate-50">{longestRun - 1}</span>
+                <span className="text-lg font-extrabold text-slate-50">{longestSoloRun - 1}</span>
               </div>
             )}
 
@@ -201,12 +177,12 @@ function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, lon
         </section>
 
         <div className="mx-auto flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-          {canContinue && onContinueSolo && (
+          {hasSavedSoloRun && handleContinueSolo && (
             <button
               type="button"
               onClick={() => {
                 playClick();
-                onContinueSolo();
+                handleContinueSolo();
               }}
               className="w-full rounded-xl border border-slate-500/70 bg-slate-900/70 px-6 py-4 text-center text-base font-bold uppercase tracking-[0.2em] text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
             >
@@ -217,7 +193,7 @@ function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, lon
             type="button"
             onClick={() => {
               playClick();
-              onStartSolo(DEFAULT_SOLO_CONFIG);
+              handleStartSolo(DEFAULT_SOLO_CONFIG);
             }}
             className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
           >
