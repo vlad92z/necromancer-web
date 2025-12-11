@@ -136,7 +136,7 @@ export function RuneSelectionTable({
         arcaneDust={arcaneDust}
         activeArtefactIds={activeArtefactIds}
       />
-      <div className="flex flex-col items-center gap-[14px] h-full w-full">
+      <div className="flex-1 flex flex-col items-center justify-center gap-[14px] w-full">
         {runeforges.map((runeforge) => (
           <Runeforge
             key={runeforge.id}
