@@ -261,9 +261,8 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
   const handleCloseOverloadOverlay = useCallback(() => setShowOverloadOverlay(false), []);
 
   const handleOpenSettings = useCallback(() => {
-    playClickSound();
     toggleSettingsOverlay();
-  }, [playClickSound, toggleSettingsOverlay]);
+  }, [toggleSettingsOverlay]);
 
   useEffect(() => {
     if (shouldTriggerEndRound) {
