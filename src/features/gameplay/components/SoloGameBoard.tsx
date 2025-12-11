@@ -59,7 +59,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
   } = gameData;
 
   return (
-    <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr'}}>
+    <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
       <div
         className="p-6 flex items-center justify-center relative"
       >
@@ -89,45 +89,45 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
       <div className="p-6 grid items-start justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
         <div className="w-full h-full flex items-start justify-center">
           <PlayerBoard
-                  player={player}
-                  onPlaceRunes={onPlaceRunes}
-                  onPlaceRunesInFloor={onPlaceRunesInFloor}
-                  selectedRuneType={selectedRuneType}
-                  canPlace={hasSelectedRunes}
-                  onCancelSelection={onCancelSelection}
-                  lockedLineIndexes={playerLockedLines}
-                  hiddenSlotKeys={playerHiddenPatternSlots}
-                  runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }} //TODO?
-                  deckCount={playerStats?.deckCount}
-                  strain={playerStats?.overloadMultiplier}
-                  overloadedRuneCount={playerStats?.overloadedRuneCount}
-                  onOpenDeck={onOpenDeckOverlay}
-                  onOpenOverload={onOpenOverloadOverlay}
-                  onOpenSettings={onOpenSettings}
-                />
+            player={player}
+            onPlaceRunes={onPlaceRunes}
+            onPlaceRunesInFloor={onPlaceRunesInFloor}
+            selectedRuneType={selectedRuneType}
+            canPlace={hasSelectedRunes}
+            onCancelSelection={onCancelSelection}
+            lockedLineIndexes={playerLockedLines}
+            hiddenSlotKeys={playerHiddenPatternSlots}
+            runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }} //TODO?
+            deckCount={playerStats?.deckCount}
+            strain={playerStats?.overloadMultiplier}
+            overloadedRuneCount={playerStats?.overloadedRuneCount}
+            onOpenDeck={onOpenDeckOverlay}
+            onOpenOverload={onOpenOverloadOverlay}
+            onOpenSettings={onOpenSettings}
+          />
         </div>
       </div>
 
       {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && (
-          
-            <DeckDraftingModal
-            draftState={deckDraftState}
-            onSelectRuneforge={onSelectDeckDraftRuneforge}
-            onOpenDeckOverlay={onOpenDeckOverlay}
-            currentDeckSize={player.deck.length}
-            arcaneDustReward={arcaneDustReward}
-            startNextSoloGame={startNextSoloGame}
-          />
+
+        <DeckDraftingModal
+          draftState={deckDraftState}
+          onSelectRuneforge={onSelectDeckDraftRuneforge}
+          onOpenDeckOverlay={onOpenDeckOverlay}
+          currentDeckSize={player.deck.length}
+          arcaneDustReward={arcaneDustReward}
+          startNextSoloGame={startNextSoloGame}
+        />
       )}
 
       {isGameOver && outcome != null && runePowerTotal != null && (
         <SoloGameOverModal
-            outcome={outcome}
-            runePowerTotal={runePowerTotal}
-            game={game}
-            targetScore={targetScore}
-            onReturnToStart={returnToStartScreen}
-          />
+          outcome={outcome}
+          runePowerTotal={runePowerTotal}
+          game={game}
+          targetScore={targetScore}
+          onReturnToStart={returnToStartScreen}
+        />
       )}
     </div>
   );
