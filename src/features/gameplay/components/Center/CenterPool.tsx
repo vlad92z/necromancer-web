@@ -10,7 +10,7 @@ import { RuneCell } from '../../../../components/RuneCell';
 interface CenterPoolProps {
   centerPool: Rune[];
   onRuneClick?: (runeType: RuneType, runeId: string) => void;
-  isDraftPhase: boolean;
+  isSelectionPhase: boolean;
   hasSelectedRunes: boolean;
   canDraftFromCenter: boolean;
   selectedRunes: Rune[];
@@ -23,7 +23,7 @@ interface CenterPoolProps {
 export function CenterPool({ 
   centerPool, 
   onRuneClick,
-  isDraftPhase, 
+  isSelectionPhase: isSelectionPhase, 
   hasSelectedRunes,
   canDraftFromCenter,
   selectedRunes,
@@ -55,7 +55,7 @@ export function CenterPool({
     ...fallbackSelectedRunes,
   ];
   const totalRunes = displayRunes.length;
-  const centerDisabled = !isDraftPhase || hasSelectedRunes || !canDraftFromCenter;
+  const centerDisabled = !isSelectionPhase || hasSelectedRunes || !canDraftFromCenter;
   const canHighlightRunes = (condition: { isSelected: boolean }) => !condition.isSelected && !centerDisabled;
   const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
   const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
