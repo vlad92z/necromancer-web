@@ -5,7 +5,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
@@ -1022,6 +1022,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runeforges: withRuneforgeListDefaults(nextState.runeforges ?? state.runeforges),
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
+        tooltipCards: nextState.tooltipCards ?? state.tooltipCards ?? createDefaultTooltipCards(),
         soloDeckTemplate: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
         strain: soloStartingStrain,

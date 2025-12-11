@@ -11,6 +11,7 @@ import type {
   Rune,
   RuneType,
   RunConfig,
+  TooltipCard,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 import { getOverloadDamageForGame } from './overload';
@@ -152,6 +153,15 @@ export function createStartingDeck(
   });
   
   return deck;
+}
+
+export function createDefaultTooltipCards(): TooltipCard[] {
+  return Array.from({ length: 5 }, (_, index) => ({
+    id: `life-rune-tooltip-${index + 1}`,
+    runeType: 'Life',
+    title: 'Life Rune',
+    description: 'Healing +3',
+  }));
 }
 
 /**
@@ -299,6 +309,7 @@ export function initializeSoloGame(
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
     game: initialGameNumber,
+    tooltipCards: createDefaultTooltipCards(),
     selectedRunes: [],
     overloadRunes: [],
     selectionTimestamp: null,

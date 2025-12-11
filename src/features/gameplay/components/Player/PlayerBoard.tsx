@@ -7,8 +7,7 @@ import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { StatsView } from './StatsView';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
-import { CardView } from './CardView';
-import lifeRune from '../../../../assets/runes/life_rune.svg';
+import { TooltipView } from './TooltipView';
 
 interface PlayerBoardProps {
   player: Player;
@@ -111,14 +110,13 @@ export function PlayerBoard({
               </div>
             </div>
           </div>
-          <div
-            className="w-full flex items-center justify-center">
-            <CardView title="Life Rune" imageSrc={lifeRune} description="Healing +3" />
+          <div className="w-full flex items-center justify-center">
+            <TooltipView />
           </div>
         </div>
       </div>
       <div
-        className="absolute bottom-[min(1.2vmin,16px)] right-[min(1.2vmin,16px)]"
+        className="absolute bottom-[min(1.2vmin,16px)] right-[min(1.2vmin,16px)] z-20"
       >
         <ClickSoundButton
           title="⚙ Settings"

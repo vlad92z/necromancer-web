@@ -32,6 +32,13 @@ export interface Rune {
   effects: RuneEffects;
 }
 
+export interface TooltipCard {
+  id: string;
+  runeType: RuneType;
+  title: string;
+  description: string;
+}
+
 /**
  * A runeforge containing runes to draft from
  */
@@ -142,6 +149,7 @@ export interface GameState {
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   runeforgeDraftStage: 'single' | 'global';
+  tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   /**
