@@ -31,7 +31,7 @@ function App() {
     const resumeAudioContext = async () => {
       // Try to resume any suspended audio contexts
       if (typeof window !== 'undefined' && window.AudioContext) {
-        const contexts = (window as any).__audioContexts as AudioContext[] | undefined
+        const contexts = (window as Window & { __audioContexts?: AudioContext[] }).__audioContexts
         if (contexts) {
           for (const context of contexts) {
             if (context.state === 'suspended') {

@@ -20,16 +20,13 @@ const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
 };
 
 export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
-  if (selectedArtefactIds.length === 0) {
-    return null;
-  }
+  const [tooltip, setTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);
+  const [touchHideTimer, setTouchHideTimer] = useState<number | null>(null);
+  const isEmpty = selectedArtefactIds.length === 0;
 
   // Match rune cell sizes: medium = 35px, large = 60px
   const iconSize = compact ? 'w-[60px] h-[60px]' : 'w-[100px] h-[100px]';
   const gap = compact ? 'gap-1.5' : 'gap-2';
-
-  const [tooltip, setTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);
-  const [touchHideTimer, setTouchHideTimer] = useState<number | null>(null);
 
   const clearTouchHideTimer = () => {
     if (touchHideTimer !== null) {
@@ -67,6 +64,10 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
       window.clearTimeout(touchHideTimer);
     }
   }, [touchHideTimer]);
+
+  if (isEmpty) {
+    return null;
+  }
 
   return (
     <div className={`relative flex items-center ${gap} flex-wrap`}>

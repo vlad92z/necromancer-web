@@ -12,6 +12,12 @@ import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 
+const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
+  uncommon: 1,
+  rare: 5,
+  epic: 25,
+};
+
 interface DeckOverlayProps {
   deck: Rune[];
   fullDeck?: Rune[];
@@ -69,11 +75,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   );
 
   const totalRuneCount = deckForTotals.length;
-  const rarityDustReward: Record<RuneEffectRarity, number> = {
-    uncommon: 1,
-    rare: 5,
-    epic: 25,
-  };
 
   const canSelectRunes = isDeckDrafting && Boolean(onDisenchantRune);
   const shouldDimDrafted = !isDeckDrafting;
@@ -88,9 +89,9 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
     () =>
       selectedRunes.reduce((acc, rune) => {
         const rarity = getRuneRarity(rune.effects);
-        return acc + (rarity ? rarityDustReward[rarity] ?? 0 : 0);
+        return acc + (rarity ? RARITY_DUST_REWARD[rarity] ?? 0 : 0);
       }, 0),
-    [rarityDustReward, selectedRunes],
+    [selectedRunes],
   );
 
   useEffect(() => {

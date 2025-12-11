@@ -95,7 +95,7 @@ export interface GameBoardSharedProps {
   returnToStartScreen: () => void;
 }
 
-export interface GameBoardFrameProps extends GameBoardProps {}
+export type GameBoardFrameProps = GameBoardProps;
 
 export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
   const {
@@ -397,6 +397,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       playerStats,
       targetScore,
       startNextSoloGame,
+      handleOpenSettings,
     ],
   );
 

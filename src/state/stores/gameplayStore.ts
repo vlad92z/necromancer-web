@@ -448,7 +448,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
   const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
   if (nextRunePowerTotal >= state.targetScore) {
     const deckDraftReadyState = enterDeckDraftMode({
-      ...selectPersistableGameState(state),
+      ...state,
       player: updatedPlayer,
       centerPool: nextCenterPool,
       selectedRunes: [],
@@ -522,7 +522,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
   const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
   if (nextRunePowerTotal >= state.targetScore) {
     const deckDraftReadyState = enterDeckDraftMode({
-      ...selectPersistableGameState(state),
+      ...state,
       player: updatedPlayer,
       centerPool: nextCenterPool,
       selectedRunes: [],
@@ -620,32 +620,6 @@ function attemptAutoPlacement(state: GameplayStore): GameplayStore {
   return cancelSelectionState(state);
 }
 
-function selectPersistableGameState(state: GameplayStore): GameState {
-  const {
-    startSoloRun,
-    prepareSoloMode,
-    forceSoloVictory,
-    hydrateGameState,
-    returnToStartScreen,
-    startNextSoloGame,
-    draftRune,
-    draftFromCenter,
-    placeRunes,
-    moveRunesToWall,
-    placeRunesInFloor,
-    cancelSelection,
-    autoPlaceSelection,
-    acknowledgeOverloadSound,
-    endRound,
-    resetGame,
-    selectDeckDraftRuneforge,
-    disenchantRuneFromDeck,
-    ...persistableState
-  } = state;
-
-  return persistableState;
-}
-
 function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
   return store.subscribe((state) => {
     if (!state.gameStarted) {
@@ -658,8 +632,7 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
       return;
     }
 
-    const persistableState = selectPersistableGameState(state);
-    saveSoloState(persistableState);
+    saveSoloState(state);
   });
 }
 
@@ -1075,8 +1048,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.outcome === 'defeat') {
         try {
           clearSoloState();
-        } catch (e) {
-          // no-op
+        } catch (error) {
+          console.log(error)
         }
       }
 
