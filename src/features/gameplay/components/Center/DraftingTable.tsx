@@ -169,10 +169,7 @@ export function DraftingTable({
     const hoveredRuneType = hoveredRuneTypeByRuneforge[runeforge.id] ?? null;
     const slotCount = Math.max(runesPerRuneforge, displayedRunes.length, 1);
 
-    const slots = useMemo(
-      () => computeSlots(runeforge.id, displayedRunes, slotCount),
-      [computeSlots, displayedRunes, runeforge.id, slotCount]
-    );
+    const slots = computeSlots(runeforge.id, displayedRunes, slotCount);
 
     const baseRuneforgeWidth = (slotCount * runeSize) + (Math.max(0, slotCount - 1) * runeGap) + containerPadding;
     const runeforgeWidth = Math.min(520, Math.max(280, baseRuneforgeWidth));
