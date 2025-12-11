@@ -339,7 +339,7 @@ export function RuneSelectionTable({
   };
 
   return (
-     <div className="h-full w-full flex flex-col justify-start gap-4" onClick={handleDraftingTableClick}>
+     <div className="h-full w-full flex flex-col justify-start gap-4 p-[min(1.2vmin,16px)]" onClick={handleDraftingTableClick}>
       <GameMetadataView
         gameNumber={gameNumber}
         strainValue={strainValue}
