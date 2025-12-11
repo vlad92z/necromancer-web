@@ -119,10 +119,12 @@ export type TurnPhase = 'select' | 'place' | 'cast' | 'end-of-round' | 'deck-dra
 export interface AnimatingRune {
   id: string;
   runeType: RuneType;
+  rune: Rune;
   startX: number;
   startY: number;
   endX: number;
   endY: number;
+  size?: number;
   shouldDisappear?: boolean;
 }
 
