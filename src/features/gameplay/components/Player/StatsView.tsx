@@ -3,7 +3,6 @@
  */
 
 import { StatBadge } from '../../../../components/StatBadge';
-import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
@@ -14,6 +13,7 @@ interface StatsViewProps {
   playerId: string;
   deckRemaining: number;
   strainValue: number;
+  overloadedRuneCount: number;
   canOverload: boolean;
   onDeckClick?: () => void;
   onStrainClick?: () => void;
@@ -23,7 +23,6 @@ interface StatsViewProps {
   };
   health: number;
   maxHealth: number;
-  onOpenSettings?: () => void;
   gameNumber: number;
   arcaneDust?: number;
 }
@@ -32,13 +31,13 @@ export function StatsView({
   playerId,
   deckRemaining,
   strainValue,
+  overloadedRuneCount,
   canOverload,
   onDeckClick,
   onStrainClick,
   runeScore,
   health,
   maxHealth,
-  onOpenSettings,
   gameNumber,
   arcaneDust,
 }: StatsViewProps) {
@@ -67,11 +66,11 @@ export function StatsView({
             data-strain-counter="true"
           >
             <StatBadge
-              label="Strain"
-              value={strainValue}
+              label="Overloaded Runes"
+              value={overloadedRuneCount}
               color="#fa6060ff"
               borderColor="rgba(96, 165, 250, 0.35)"
-              tooltip={`Overloading runes immediately deals ${strainValue} damage`}
+              tooltip={`Overloaded runes this run: ${overloadedRuneCount}. Each overload currently deals ${strainValue} damage.`}
               image={overloadSvg}
               onClick={onStrainClick}
               canOverload={canOverload}
@@ -112,15 +111,6 @@ export function StatsView({
       </div>
 
       <div className="flex flex-col gap-[min(0.8vmin,10px)] h-full">
-        <ClickSoundButton
-          title="⚙ Settings"
-          action={() => {
-            if (onOpenSettings) {
-              onOpenSettings();
-            }
-          }}
-          className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-        />
         <div className="rounded-xl border border-sky-400/40 bg-[rgba(9,12,26,0.9)] px-4 py-3 text-left shadow-[0_14px_36px_rgba(0,0,0,0.45)] flex-1 flex flex-col justify-center gap-2">
           <div className="flex items-center gap-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Game</div>

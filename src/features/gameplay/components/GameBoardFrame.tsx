@@ -184,8 +184,9 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       overloadMultiplier: strain,
       game: currentGame,
       deckCount: player.deck.length,
+      overloadedRuneCount: overloadRunes.length,
     }),
-    [currentGame, player.deck.length, strain],
+    [currentGame, overloadRunes.length, player.deck.length, strain],
   );
 
   const prevArcaneDustRef = useRef<number>(arcaneDust);

@@ -8,6 +8,7 @@ import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { StatsView } from './StatsView';
+import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 
 interface PlayerBoardProps {
   player: Player;
@@ -25,6 +26,7 @@ interface PlayerBoardProps {
   };
   deckCount?: number;
   strain?: number;
+  overloadedRuneCount?: number;
   onOpenDeck?: () => void;
   onOpenOverload?: () => void;
   onOpenSettings?: () => void;
@@ -44,6 +46,7 @@ export function PlayerBoard({
   runeScore,
   deckCount,
   strain,
+  overloadedRuneCount,
   onOpenDeck,
   onOpenOverload,
   onOpenSettings,
@@ -58,6 +61,7 @@ export function PlayerBoard({
   };
   const deckValue = deckCount ?? player.deck.length ?? 0;
   const fatigueValue = strain ?? 0;
+  const overloadedRunes = overloadedRuneCount ?? 0;
   const deckRemaining = deckValue - 20;
 
   const handleFatigueClick = () => {
@@ -73,7 +77,7 @@ export function PlayerBoard({
   return (
     <div
       onClick={handleBoardClick}
-      className={ "w-full h-full p-[min(1.2vmin,16px)] rounded-[28px]"}
+      className={ "relative w-full h-full p-[min(1.2vmin,16px)] rounded-[28px]"}
     >
       <div className="flex items-stretch justify-between gap-[min(1.5vmin,18px)] w-full h-full">
         <div className="flex-1 flex flex-col gap-[min(1.2vmin,12px)]">
@@ -81,13 +85,13 @@ export function PlayerBoard({
             playerId={player.id}
             deckRemaining={deckRemaining}
             strainValue={fatigueValue}
+            overloadedRuneCount={overloadedRunes}
             canOverload={Boolean(canPlace)}
             onDeckClick={onOpenDeck}
             onStrainClick={handleFatigueClick}
             runeScore={runeScore}
             health={player.health}
             maxHealth={player.maxHealth ?? player.health}
-            onOpenSettings={onOpenSettings}
             gameNumber={game}
             arcaneDust={arcaneDust}
           />
@@ -117,6 +121,20 @@ export function PlayerBoard({
           )}
           </div>
         </div>
+      </div>
+      <div
+        className="absolute bottom-[min(1.2vmin,16px)] right-[min(1.2vmin,16px)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <ClickSoundButton
+          title="⚙ Settings"
+          action={() => {
+            if (onOpenSettings) {
+              onOpenSettings();
+            }
+          }}
+          className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+        />
       </div>
     </div>
   );

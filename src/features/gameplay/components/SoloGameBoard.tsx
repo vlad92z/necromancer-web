@@ -94,6 +94,7 @@ export function SoloGameBoard({ shared, gameData }: SoloGameBoardProps) {
                   runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }} //TODO?
                   deckCount={playerStats?.deckCount}
                   strain={playerStats?.overloadMultiplier}
+                  overloadedRuneCount={playerStats?.overloadedRuneCount}
                   onOpenDeck={onOpenDeckOverlay}
                   onOpenOverload={onOpenOverloadOverlay}
                   onOpenSettings={onOpenSettings}

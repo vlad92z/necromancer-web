@@ -1200,9 +1200,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
       const nextGame = state.game + 1;
       const nextStrain = getOverloadDamageForGame(nextGame);
+      const previousHealth = Math.max(0, state.player.health);
+      const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
+      const clampedHealth = Math.min(nextMaxHealth, previousHealth);
       const nextGameState = initializeSoloGame(
         {
-          startingHealth: state.player.health,
+          startingHealth: state.startingHealth,
           startingStrain: nextStrain,
           strainMultiplier: state.strainMultiplier,
           factoriesPerPlayer: state.factoriesPerPlayer,
@@ -1218,6 +1221,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       );
       const nextState = {
         ...nextGameState,
+        player: {
+          ...nextGameState.player,
+          health: clampedHealth,
+          maxHealth: nextMaxHealth,
+        },
         game: nextGame,
         gameStarted: true,
         strain: nextStrain,
