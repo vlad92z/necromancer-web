@@ -5,7 +5,7 @@ import { CampaignMap } from './routes/CampaignMap'
 import { DeckBuilder } from './routes/DeckBuilder'
 import { PostMatchRewards } from './routes/PostMatchRewards'
 import { Matchmaking } from './routes/Matchmaking'
-import { Solo } from './routes/Solo'
+import { SoloStartScreen } from './routes/Solo'
 import { useBackgroundMusic } from './hooks/useBackgroundMusic'
 import { useUIStore } from './state/stores/uiStore'
 import { useGameplayStore } from './state/stores/gameplayStore'
@@ -58,7 +58,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainMenu />} />
-        <Route path="/solo" element={<Solo />} />
+        <Route path="/solo" element={<SoloStartScreen />} />
         
         {/* Future feature routes - currently inaccessible stubs */}
         <Route path="/campaign" element={<CampaignMap />} />

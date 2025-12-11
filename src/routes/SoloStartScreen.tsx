@@ -28,7 +28,7 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
 
 const selectGameBoardState = (state: GameplayStore): GameState => state;
 
-export function Solo() {
+export function SoloStartScreen() {
   const navigate = useNavigate();
   const gameStarted = useGameplayStore((state) => state.gameStarted);
   const startSoloRun = useGameplayStore((state) => state.startSoloRun);
