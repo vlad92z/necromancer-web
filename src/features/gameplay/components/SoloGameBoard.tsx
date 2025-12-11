@@ -60,7 +60,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr'}}>
       <div
-        className="p-6 border-r flex items-center justify-center relative border-r-[rgba(148,163,184,0.35)] bg-[radial-gradient(circle_at_45%_25%,rgba(86,27,176,0.12),transparent_60%)]"
+        className="p-6 flex items-center justify-center relative"
       >
         <div className="w-full h-full relative">
           <DraftingTable
