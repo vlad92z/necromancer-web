@@ -32,7 +32,7 @@ export function SoloGameOverModal({ outcome, runePowerTotal, game, targetScore, 
       : 'border-amber-300/70 from-amber-300/25';
 
   return (
-    <div className="min-w-[360px] rounded-[28px] border bg-[rgba(6,4,18,0.95)] px-7 py-8 text-center text-[#f8fafc] shadow-[0_40px_90px_rgba(0,0,0,0.65)]">
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-automin-w-[360px] rounded-[28px] border bg-[rgba(6,4,18,0.95)] px-7 py-8 text-center text-[#f8fafc] shadow-[0_40px_90px_rgba(0,0,0,0.65)]">
       <div
         className={`mb-4 rounded-xl border ${accentClasses} bg-gradient-to-r to-purple-900/50 px-3.5 py-2 text-[12px] font-extrabold uppercase tracking-[0.12em]`}
       >

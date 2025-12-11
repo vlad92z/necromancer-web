@@ -73,7 +73,10 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
 
   useEffect(() => {
     if (!isOpen) {
-      clearTouchHideTimer();
+      if (touchHideTimer !== null) {
+        window.clearTimeout(touchHideTimer);
+        setTouchHideTimer(null);
+      }
       setActiveTooltip(null);
     }
   }, [isOpen, touchHideTimer]);

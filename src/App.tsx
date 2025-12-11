@@ -5,23 +5,33 @@ import { CampaignMap } from './routes/CampaignMap'
 import { DeckBuilder } from './routes/DeckBuilder'
 import { PostMatchRewards } from './routes/PostMatchRewards'
 import { Matchmaking } from './routes/Matchmaking'
-import { Solo } from './routes/Solo'
+import { SoloStartScreen } from './routes/SoloStartScreen'
 import { useBackgroundMusic } from './hooks/useBackgroundMusic'
 import { useUIStore } from './state/stores/uiStore'
+import { useGameplayStore } from './state/stores/gameplayStore'
 
 function App() {
   const isMusicMuted = useUIStore((state) => state.isMusicMuted)
   const soundVolume = useUIStore((state) => state.soundVolume)
+  const hasMusicSessionStarted = useUIStore((state) => state.hasMusicSessionStarted)
+  const markMusicSessionStarted = useUIStore((state) => state.markMusicSessionStarted)
+  const gameStarted = useGameplayStore((state) => state.gameStarted)
+
+  useEffect(() => {
+    if (gameStarted) {
+      markMusicSessionStarted()
+    }
+  }, [gameStarted, markMusicSessionStarted])
   
   // Play background music everywhere
-  useBackgroundMusic(!isMusicMuted, soundVolume)
+  useBackgroundMusic(hasMusicSessionStarted && !isMusicMuted, soundVolume)
 
   // Attempt to resume audio context on first user interaction to enable autoplay
   useEffect(() => {
     const resumeAudioContext = async () => {
       // Try to resume any suspended audio contexts
       if (typeof window !== 'undefined' && window.AudioContext) {
-        const contexts = (window as any).__audioContexts as AudioContext[] | undefined
+        const contexts = (window as Window & { __audioContexts?: AudioContext[] }).__audioContexts
         if (contexts) {
           for (const context of contexts) {
             if (context.state === 'suspended') {
@@ -48,7 +58,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainMenu />} />
-        <Route path="/solo" element={<Solo />} />
+        <Route path="/solo" element={<SoloStartScreen />} />
         
         {/* Future feature routes - currently inaccessible stubs */}
         <Route path="/campaign" element={<CampaignMap />} />

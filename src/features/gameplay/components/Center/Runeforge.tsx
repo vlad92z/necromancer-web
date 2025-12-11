@@ -1,204 +1,260 @@
 /**
- * Runeforge component - displays a runeforge with runes
- * Implements drafting: click a rune type to select all of that type
+ * Runeforge - renders a single runeforge row within the selection table
  */
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { Runeforge as RuneforgeType, RuneType, Rune } from '../../../../types/game';
+import { useCallback, useMemo, useRef } from 'react';
 import { RuneCell } from '../../../../components/RuneCell';
-
-interface SelectedDisplayOverride {
-  runes: Rune[];
-  selectedRuneIds: string[];
-}
+import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
 
 interface RuneforgeProps {
   runeforge: RuneforgeType;
-  onRuneClick?: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  disabled?: boolean;
-  displayOverride?: SelectedDisplayOverride;
-  selectionSourceActive?: boolean;
-  onCancelSelection?: () => void;
-  animatingRuneIds?: Set<string> | null;
+  runesPerRuneforge: number;
+  hoveredRuneType: RuneType | null;
+  hasSelectedRunes: boolean;
+  isGlobalSelection: boolean;
+  selectedFromRuneforgeId: string | null;
+  selectedRuneforgeOriginalRunes: Rune[];
+  globalSelectionOriginals: Map<string, Rune[]> | null;
+  selectedRuneIdSet: Set<string>;
+  animatingRuneIdSet: Set<string> | null;
+  onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
+  onRuneMouseEnter: (runeforgeId: string, runeType: RuneType, selectionActive: boolean, disabled: boolean) => void;
+  onRuneMouseLeave: (runeforgeId: string) => void;
 }
 
-export function Runeforge({ 
-  runeforge, 
+export function Runeforge({
+  runeforge,
+  runesPerRuneforge,
+  hoveredRuneType,
+  hasSelectedRunes,
+  isGlobalSelection,
+  selectedFromRuneforgeId,
+  selectedRuneforgeOriginalRunes,
+  globalSelectionOriginals,
+  selectedRuneIdSet,
+  animatingRuneIdSet,
   onRuneClick,
-  disabled = false,
-  displayOverride,
-  selectionSourceActive = false,
-  onCancelSelection,
-  animatingRuneIds = null
+  onRuneMouseEnter,
+  onRuneMouseLeave
 }: RuneforgeProps) {
-  const [hoveredRuneType, setHoveredRuneType] = useState<RuneType | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const displayedRunes = displayOverride ? displayOverride.runes : runeforge.runes;
-  const selectedRuneIdSet = new Set(displayOverride?.selectedRuneIds ?? []);
-  const selectionActive = selectionSourceActive && Boolean(displayOverride);
-  const allowCancel = Boolean(onCancelSelection);
-  const canHighlightRunes = !selectionActive && !disabled;
-  const runeSize = 60;
+  const runeSlotAssignmentsRef = useRef<Record<string, number>>({});
+
+  const computeSlots = useCallback((runes: Rune[], totalSlots: number): (Rune | null)[] => {
+    const existingAssignments = runeSlotAssignmentsRef.current;
+    const nextAssignments: Record<string, number> = {};
+    const usedSlots = new Set<number>();
+
+    runes.forEach((rune) => {
+      const existingSlot = existingAssignments[rune.id];
+      if (typeof existingSlot === 'number' && existingSlot >= 0 && existingSlot < totalSlots) {
+        nextAssignments[rune.id] = existingSlot;
+        usedSlots.add(existingSlot);
+      }
+    });
+
+    let cursor = 0;
+    runes.forEach((rune) => {
+      if (typeof nextAssignments[rune.id] === 'number') {
+        return;
+      }
+      while (usedSlots.has(cursor)) {
+        cursor += 1;
+      }
+      const assignedSlot = Math.min(cursor, totalSlots - 1);
+      nextAssignments[rune.id] = assignedSlot;
+      usedSlots.add(assignedSlot);
+    });
+
+    runeSlotAssignmentsRef.current = nextAssignments;
+
+    const runeBySlot = new Map<number, Rune>();
+    runes.forEach((rune) => {
+      const slotIndex = nextAssignments[rune.id];
+      if (typeof slotIndex === 'number' && slotIndex >= 0 && slotIndex < totalSlots) {
+        runeBySlot.set(slotIndex, rune);
+      }
+    });
+
+    return Array.from({ length: totalSlots }, (_, index) => runeBySlot.get(index) ?? null);
+  }, []);
+
+  const selectionActive = useMemo(
+    () => (isGlobalSelection
+      ? hasSelectedRunes && Boolean(globalSelectionOriginals?.has(runeforge.id))
+      : selectedFromRuneforgeId === runeforge.id && hasSelectedRunes),
+    [globalSelectionOriginals, hasSelectedRunes, isGlobalSelection, runeforge.id, selectedFromRuneforgeId]
+  );
+
+  const displayedRunes = useMemo(
+    () => (selectionActive
+      ? (isGlobalSelection
+        ? (globalSelectionOriginals?.get(runeforge.id) ?? runeforge.runes)
+        : selectedRuneforgeOriginalRunes)
+      : runeforge.runes),
+    [globalSelectionOriginals, isGlobalSelection, runeforge.id, runeforge.runes, selectionActive, selectedRuneforgeOriginalRunes]
+  );
+
+  const slotCount = useMemo(
+    () => Math.max(runesPerRuneforge, displayedRunes.length, 1),
+    [displayedRunes.length, runesPerRuneforge]
+  );
+
+  const slots = useMemo(
+    () => computeSlots(displayedRunes, slotCount),
+    [computeSlots, displayedRunes, slotCount]
+  );
+
+  const runeSize = 70;
   const runeGap = 14;
   const containerPadding = 24;
-  const baseRuneforgeWidth = displayedRunes.length > 0
-    ? (displayedRunes.length * runeSize) + (Math.max(0, displayedRunes.length - 1) * runeGap) + containerPadding
-    : 240;
-  const runeforgeWidth = Math.min(420, Math.max(280, baseRuneforgeWidth));
-  
-  const handleRuneClick = (e: React.MouseEvent, rune: Rune) => {
-    e.stopPropagation();
-    if (onRuneClick) {
-      onRuneClick(runeforge.id, rune.runeType, rune.id);
-    }
-  };
-  
-  // Determine styling based on state
-  const backgroundColor = '#1c1034';
-  let borderColor = 'rgba(255, 255, 255, 0.15)';
-  const hoverBackgroundColor = '#251646';
-  const baseBoxShadow = '0 8px 24px rgba(0, 0, 0, 0.45)';
-  const ariaLabel = `Open runeforge with ${runeforge.runes.length} runes`;
-  const selectableGlowRest = '0 0 20px rgba(168, 85, 247, 0.75), 0 0 48px rgba(129, 140, 248, 0.45)';
-  const selectableGlowPeak = '0 0 32px rgba(196, 181, 253, 1), 0 0 70px rgba(129, 140, 248, 0.65)';
-  let containerBoxShadow = baseBoxShadow;
-  
-  // Normal selectable state (green highlight when player can select)
-  const isSelectable = !disabled && !selectionActive && runeforge.runes.length > 0 && onRuneClick;
-  if (isSelectable) {
-    borderColor = '#c084fc';
-    containerBoxShadow = isHovered ? selectableGlowPeak : selectableGlowRest;
-  }
-
-  const buttonDisabled = selectionActive ? false : (((disabled && !allowCancel) || runeforge.runes.length === 0));
-  const effectiveBackgroundColor = isHovered ? hoverBackgroundColor : backgroundColor;
-  const effectiveTransform = isHovered ? 'scale(1.02)' : 'scale(1)';
+  const isRuneforgeDisabled = runeforge.disabled ?? false;
+  const baseRuneforgeWidth = (slotCount * runeSize) + (Math.max(0, slotCount - 1) * runeGap) + containerPadding;
+  const runeforgeWidth = Math.min(520, Math.max(280, baseRuneforgeWidth));
+  const containerOpacity = isRuneforgeDisabled && !selectionActive ? 0.6 : 1;
+  const containerCursor = isRuneforgeDisabled && !hasSelectedRunes ? 'not-allowed' : 'default';
+  const drafted = slots.some((slotRune) => slotRune === null);
+  const containerBoxShadow = drafted ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)';
+  const shouldGlow = !drafted && !selectionActive;
+  const glowBase = `${containerBoxShadow}, 0 0 36px rgba(235, 170, 255, 0.48), 0 0 72px rgba(235, 170, 255, 0.22)`;
+  const glowStrong = `${containerBoxShadow}, 0 0 48px rgba(235, 140, 255, 0.60), 0 0 120px rgba(235, 140, 255, 0.28)`;
+  const glowAnimation = shouldGlow
+    ? {
+        boxShadow: [glowBase, glowStrong, glowBase],
+        filter: ['brightness(1)', 'brightness(1.06)', 'brightness(1)'],
+      }
+    : { boxShadow: containerBoxShadow, filter: 'brightness(1)' };
+  const glowTransition = shouldGlow
+    ? { duration: 4, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+    : { duration: 3, ease: 'easeOut' as const };
 
   return (
-    <button
-      disabled={buttonDisabled}
-      onClick={() => {
-        if (!buttonDisabled && allowCancel && onCancelSelection && disabled) {
-          onCancelSelection();
-        }
-      }}
-      onMouseEnter={() => {
-        if (buttonDisabled) {
-          return;
-        }
-        setIsHovered(true);
-      }}
-      onMouseLeave={() => {
-        setIsHovered(false);
-      }}
+    <motion.div
       style={{
-        backgroundColor: effectiveBackgroundColor,
-        borderRadius: '16px',
         width: `${runeforgeWidth}px`,
-        height: '96px',
         padding: '12px',
+        borderRadius: '16px',
+        border: drafted ? 'transparent' : '1px solid rgba(255, 255, 255, 0.12)',
+        backgroundColor: drafted ? 'transparent' : '#1c1034',
+        boxShadow: containerBoxShadow,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'background-color 160ms ease, transform 160ms ease, box-shadow 200ms ease, border-color 160ms ease',
-        border: `1px solid ${borderColor}`,
-        cursor: selectionActive || !buttonDisabled ? 'pointer' : 'not-allowed',
-        outline: 'none',
-        boxShadow: containerBoxShadow,
-        position: 'relative',
-        transform: effectiveTransform
+        minHeight: '96px',
+        transition: 'border-color 160ms ease',
+        margin: '0 auto',
+        opacity: containerOpacity,
+        cursor: containerCursor,
       }}
-      aria-label={ariaLabel}
+      initial={false}
+      animate={glowAnimation}
+      transition={glowTransition}
+      onMouseLeave={() => onRuneMouseLeave(runeforge.id)}
     >
-      {displayedRunes.length === 0 ? (
-        <div>
-        </div>
-      ) : (
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', gap: `${runeGap}px`, alignItems: 'center', justifyContent: 'center' }}>
-            {displayedRunes.map((rune) => {
-              const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
-              const isAnimatingRune = animatingRuneIds?.has(rune.id) ?? false;
-              const highlightByType = hoveredRuneType === rune.runeType && !displayOverride;
-              const isHighlighted = highlightByType;
-              const baseSize = `${runeSize}px`;
-              const basePointerEvents = (selectionActive && isSelectedForDisplay) || (!selectionActive && (!disabled || allowCancel)) ? 'auto' : 'none';
-              const pointerEvents = isAnimatingRune ? 'none' : basePointerEvents;
-              const baseCursor = selectionActive || !disabled ? 'pointer' : 'not-allowed';
-              const cursor = isAnimatingRune ? 'default' : baseCursor;
-              const transform = isSelectedForDisplay
-                ? 'translateY(-2px) scale(1.08)'
-                : isHighlighted
-                  ? 'scale(1.05)'
-                  : 'scale(1)';
-              const shadow = isSelectedForDisplay
-                ? '0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(196, 181, 253, 0.35)'
-                : isHighlighted
-                  ? '0 0 10px rgba(255, 255, 255, 0.4)'
-                  : 'none';
-              const filter = isSelectedForDisplay
-                ? 'brightness(1.15)'
-                : isHighlighted
-                  ? 'brightness(1.08)'
-                  : 'none';
-              const selectedAnimation = isSelectedForDisplay
-                ? {
-                    scale: [1.05, 1.12, 1.05],
-                    y: [-2, 2, -2],
-                    rotate: [-1.5, 1.5, -1.5]
-                  }
-                : undefined;
-              const selectedTransition = isSelectedForDisplay
-                ? { duration: 2, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
-                : undefined;
+      {displayedRunes.length !== 0 && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${slotCount}, ${runeSize}px)`,
+            gap: `${runeGap}px`,
+            alignItems: 'center',
+            justifyContent: 'center',
+            justifyItems: 'center',
+          }}
+        >
+          {slots.map((slotRune, slotIndex) => {
+            if (!slotRune) {
               return (
-                <motion.div
-                  key={rune.id}
-                  data-rune-id={rune.id}
-                  data-rune-source="runeforge"
-                  data-selected-rune={isSelectedForDisplay ? 'true' : undefined}
+                <div
+                  key={`placeholder-${runeforge.id}-${slotIndex}`}
                   style={{
-                    width: baseSize,
-                    height: baseSize,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    pointerEvents,
-                    cursor,
-                    boxShadow: shadow,
-                    filter,
-                    borderRadius: '50%',
-                    opacity: isAnimatingRune ? 0 : 1,
-                    transform,
-                    transition: 'transform 160ms ease, filter 160ms ease, box-shadow 180ms ease, opacity 160ms ease'
+                    width: `${runeSize}px`,
+                    height: `${runeSize}px`,
                   }}
-                  onClick={(e) => handleRuneClick(e, rune)}
-                  onMouseEnter={() => {
-                    if (!canHighlightRunes) {
-                      return;
-                    }
-                    setHoveredRuneType(rune.runeType);
-                  }}
-                  onMouseLeave={() => {
-                    setHoveredRuneType(null);
-                  }}
-                  animate={selectedAnimation}
-                  transition={selectedTransition}
-                >
-                  <RuneCell
-                    rune={rune}
-                    variant="runeforge"
-                    size='large'
-                    showEffect
-                    showTooltip
-                  />
-                </motion.div>
+                />
               );
-            })}
-          </div>
+            }
+
+            const rune = slotRune;
+            const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
+            const isAnimatingRune = animatingRuneIdSet?.has(rune.id) ?? false;
+            const isHighlighted = hoveredRuneType === rune.runeType && !selectionActive;
+            const pointerEvents = isAnimatingRune
+              ? 'none'
+              : (selectionActive
+                ? (isSelectedForDisplay ? 'auto' : 'none')
+                : (!hasSelectedRunes && !isRuneforgeDisabled ? 'auto' : 'none'));
+            const cursor = pointerEvents === 'auto' ? 'pointer' : 'not-allowed';
+            const transform = isSelectedForDisplay
+              ? 'translateY(-2px) scale(1.08)'
+              : isHighlighted
+                ? 'scale(1.05)'
+                : 'scale(1)';
+            const boxShadow = isSelectedForDisplay
+              ? '0 0 20px rgba(255, 255, 255, 0.60), 0 0 48px rgba(235, 170, 255, 0.60), 0 0 96px rgba(235, 170, 255, 0.30)'
+              : isHighlighted
+                ? '0 0 14px rgba(255, 255, 255, 0.5), 0 0 34px rgba(235, 170, 255, 0.32)'
+                : 'none';
+            const filter = isSelectedForDisplay
+              ? 'brightness(1.22)'
+              : isHighlighted
+                ? 'brightness(1.12)'
+                : 'none';
+            const selectedAnimation = isSelectedForDisplay
+              ? {
+                  scale: [1.05, 1.12, 1.05],
+                  y: [-2, 2, -2],
+                  rotate: [-1.5, 1.5, -1.5]
+                }
+              : undefined;
+            const selectedTransition = isSelectedForDisplay
+              ? { duration: 2, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
+              : undefined;
+
+            return (
+              <motion.div
+                key={rune.id}
+                data-rune-id={rune.id}
+                data-rune-source="runeforge"
+                data-selected-rune={isSelectedForDisplay ? 'true' : undefined}
+                style={{
+                  width: `${runeSize}px`,
+                  height: `${runeSize}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents,
+                  cursor,
+                  boxShadow,
+                  filter,
+                  borderRadius: '50%',
+                  opacity: isAnimatingRune ? 0 : 1,
+                  transform,
+                  transition: 'transform 160ms ease, filter 160ms ease, box-shadow 180ms ease, opacity 160ms ease'
+                }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (!isAnimatingRune && pointerEvents === 'auto') {
+                    onRuneClick(runeforge.id, rune.runeType, rune.id);
+                  }
+                }}
+                onMouseEnter={() => onRuneMouseEnter(runeforge.id, rune.runeType, selectionActive, isRuneforgeDisabled)}
+                onMouseLeave={() => onRuneMouseLeave(runeforge.id)}
+                animate={selectedAnimation}
+                transition={selectedTransition}
+              >
+                <RuneCell
+                  rune={rune}
+                  variant="runeforge"
+                  size="large"
+                  showEffect
+                  showTooltip
+                />
+              </motion.div>
+            );
+          })}
         </div>
       )}
-    </button>
+    </motion.div>
   );
 }

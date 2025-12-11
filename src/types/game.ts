@@ -84,6 +84,8 @@ export interface RunConfig {
   factoriesPerPlayer: number;
   deckRunesPerType: number;
   targetRuneScore: number;
+  runeScoreTargetIncrement: number;
+  victoryDraftPicks: number;
   patternLinesLockOnComplete: boolean;
 }
 
@@ -109,7 +111,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'draft' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
+export type TurnPhase = 'select' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
 
 /**
  * Animation state for rune movement
@@ -141,13 +143,12 @@ export interface GameState {
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   /**
-   * Damage dealt for every overload rune
-   * Starts at a tunable value and is multiplied each round by `strainMultiplier`.
+   * Damage dealt for every overload rune, derived from the current game number.
+   * Progression caps at the final configured value for later games.
    */
   strain: number;
   /**
-   * Factor used to multiply `strain` at the end of each round. Kept in state
-   * so it can be tuned or modified by runes in the future.
+   * Reserved for potential future tuning of overload scaling.
    */
   strainMultiplier: number;
   startingStrain: number; // Configured strain at the start of the run
@@ -174,6 +175,7 @@ export interface GameState {
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
+  runeScoreTargetIncrement: number; // Score increase applied after each victory
   outcome: GameOutcome; // Solo result (victory/defeat)
   patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
   longestRun: number; // Furthest game reached in any run
@@ -181,6 +183,7 @@ export interface GameState {
   baseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
+  victoryDraftPicks: number; // Number of draft picks granted after a victory
 }
 
 export interface DeckDraftState {

@@ -2,7 +2,7 @@
  * DeckOverlay component - displays player's remaining deck runes in a grid
  */
 
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Rune, RuneEffectRarity, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
@@ -11,6 +11,12 @@ import { getRuneRarity } from '../../../utils/runeEffects';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
+
+const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
+  uncommon: 1,
+  rare: 5,
+  epic: 25,
+};
 
 interface DeckOverlayProps {
   deck: Rune[];
@@ -28,7 +34,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   const dustGainKeyRef = useRef(0);
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
   const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
-  const selectionControls = useAnimation();
   const completeDeck = fullDeck && fullDeck.length > 0 ? fullDeck : deck;
   const deckForTotals = isDeckDrafting ? completeDeck : deck;
   // Group runes by type for ordering and totals
@@ -70,11 +75,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   );
 
   const totalRuneCount = deckForTotals.length;
-  const rarityDustReward: Record<RuneEffectRarity, number> = {
-    uncommon: 1,
-    rare: 5,
-    epic: 25,
-  };
 
   const canSelectRunes = isDeckDrafting && Boolean(onDisenchantRune);
   const shouldDimDrafted = !isDeckDrafting;
@@ -89,9 +89,9 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
     () =>
       selectedRunes.reduce((acc, rune) => {
         const rarity = getRuneRarity(rune.effects);
-        return acc + (rarity ? rarityDustReward[rarity] ?? 0 : 0);
+        return acc + (rarity ? RARITY_DUST_REWARD[rarity] ?? 0 : 0);
       }, 0),
-    [rarityDustReward, selectedRunes],
+    [selectedRunes],
   );
 
   useEffect(() => {
@@ -107,21 +107,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
       window.clearTimeout(timeout);
     };
   }, [dustGain]);
-
-  useEffect(() => {
-    if (selectedRuneIds.length === 0) {
-      selectionControls.stop();
-      selectionControls.set({ scale: 1, y: 0, rotate: 0 });
-      return;
-    }
-
-    selectionControls.start({
-      scale: [1.04, 1.08, 1.04],
-      y: [-1, 1, -1],
-      rotate: [-1.5, 1.5, -1.5],
-      transition: { duration: 2, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' },
-    });
-  }, [selectedRuneIds.length, selectionControls]);
 
   const toggleRuneSelection = (runeId: string) => {
     if (!canSelectRunes) {
@@ -148,7 +133,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
       if (typeof awardedDust === 'number') {
         totalDustAwarded += awardedDust;
       } else if (rarity) {
-        totalDustAwarded += rarityDustReward[rarity] ?? 0;
+        totalDustAwarded += RARITY_DUST_REWARD[rarity] ?? 0;
       }
     });
 
@@ -228,32 +213,12 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                 className="rounded-2xl border border-[#9575ff]/30 bg-[linear-gradient(135deg,rgba(67,31,120,0.35),rgba(21,10,46,0.92))] p-3.5 shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
               >
                 <div className="grid grid-cols-[repeat(auto-fill,_minmax(38px,_1fr))] gap-2.5">
-                  {sortedRunes.map(({ rune, isDrafted, isSelected }, index) => {
-                    const selectionMotionProps = isSelected
-                      ? {
-                          animate: selectionControls,
-                          initial: { scale: 1, y: 0, rotate: 0 },
-                        }
-                      : {
-                          animate: { scale: 1, y: 0, rotate: 0 },
-                          transition: { duration: 0.2 },
-                        };
-
+                  {sortedRunes.map(({ rune, isDrafted, isSelected }) => {
                     const isHovered = hoveredRuneId === rune.id;
 
                     return (
-                      <motion.div
-                        key={rune.id}
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                          delay: index * 0.015,
-                          type: 'spring',
-                          stiffness: 300,
-                          damping: 20,
-                        }}
-                      >
-                        <motion.button
+                      <div key={rune.id}>
+                        <button
                           type="button"
                           onClick={() => toggleRuneSelection(rune.id)}
                           disabled={!canSelectRunes}
@@ -273,7 +238,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                           }}
                           onMouseEnter={() => setHoveredRuneId(rune.id)}
                           onMouseLeave={() => setHoveredRuneId(null)}
-                          {...selectionMotionProps}
                         >
                           <RuneCell
                             rune={rune}
@@ -285,8 +249,8 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                             tooltipPlacement="bottom"
                             clickable={canSelectRunes}
                           />
-                        </motion.button>
-                      </motion.div>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>

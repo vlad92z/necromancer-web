@@ -32,7 +32,6 @@ export function initMixpanel(token?: string) {
     initialized = true
   } catch (e) {
     // Keep app robust if Mixpanel fails
-    // eslint-disable-next-line no-console
     console.warn('Mixpanel init failed', e)
   }
 }
@@ -45,7 +44,6 @@ export function trackEvent(name: string, props?: Record<string, unknown>) {
   try {
     mixpanel.track(name, props)
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn('Mixpanel track failed', e)
   }
 }
@@ -126,7 +124,6 @@ export function identify(id: string) {
   try {
     mixpanel.identify(id)
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn('Mixpanel identify failed', e)
   }
 }

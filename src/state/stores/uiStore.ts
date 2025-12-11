@@ -14,6 +14,7 @@ interface UIStore {
   selectedRuneforgeId: string | null; // For runeforge overlay
   soundVolume: number;
   isMusicMuted: boolean;
+  hasMusicSessionStarted: boolean;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
@@ -24,6 +25,7 @@ interface UIStore {
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
   setMusicMuted: (muted: boolean) => void;
+  markMusicSessionStarted: () => void;
 }
 
 const getInitialVolume = (): number => {
@@ -51,6 +53,7 @@ export const useUIStore = create<UIStore>((set) => ({
   selectedRuneforgeId: null,
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
+  hasMusicSessionStarted: false,
   
   // Actions
   toggleRulesOverlay: () => {
@@ -96,5 +99,9 @@ export const useUIStore = create<UIStore>((set) => ({
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('musicMuted', muted ? 'true' : 'false');
     }
+  },
+
+  markMusicSessionStarted: () => {
+    set({ hasMusicSessionStarted: true });
   },
 }));

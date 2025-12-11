@@ -2,7 +2,7 @@
  * ScoringWall component - displays the scoring grid
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
 import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
@@ -20,6 +20,11 @@ const cellKey = (row: number, col: number) => `${row}-${col}`;
 const parseCellKey = (key: string) => {
   const [row, col] = key.split('-').map(Number);
   return { row, col };
+};
+const getCellCenter = (row: number, col: number) => {
+  const x = col * (CELL_SIZE + GAP) + CELL_SIZE / 2;
+  const y = row * (CELL_SIZE + GAP) + CELL_SIZE / 2;
+  return { x, y };
 };
 
 interface OverlayPoint {
@@ -53,13 +58,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     [wall]
   );
 
-  const getCellCenter = (row: number, col: number) => {
-    const x = col * (CELL_SIZE + GAP) + CELL_SIZE / 2;
-    const y = row * (CELL_SIZE + GAP) + CELL_SIZE / 2;
-    return { x, y };
-  };
-
-  const computePendingCells = (currentWall: ScoringWallType, currentPatternLines: PatternLine[]) => {
+  const computePendingCells = useCallback((currentWall: ScoringWallType, currentPatternLines: PatternLine[]) => {
     const pendingCells = new Set<string>();
     const wallSize = currentWall.length;
     currentPatternLines.forEach((line, rowIndex) => {
@@ -71,9 +70,9 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
       }
     });
     return pendingCells;
-  };
+  }, []);
 
-  const buildFullOverlay = (currentWall: ScoringWallType, pendingCells: Set<string>) => {
+  const buildFullOverlay = useCallback((currentWall: ScoringWallType, pendingCells: Set<string>) => {
     const pointsMap = new Map<string, OverlayPoint>();
     const edgesMap = new Map<string, OverlayEdge>();
     const wallSize = currentWall.length;
@@ -115,7 +114,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     }
 
     return { pointsMap, edgesMap };
-  };
+  }, []);
 
   useEffect(() => {
     const wallSize = wall.length;
@@ -239,7 +238,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     overlayRef.current = { points, edges };
     pendingCellsRef.current = pendingCells;
     overlayWallRef.current = wall;
-  }, [wall, patternLines]);
+  }, [buildFullOverlay, computePendingCells, wall, patternLines]);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
