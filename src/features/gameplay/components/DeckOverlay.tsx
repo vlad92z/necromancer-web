@@ -229,31 +229,11 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
               >
                 <div className="grid grid-cols-[repeat(auto-fill,_minmax(38px,_1fr))] gap-2.5">
                   {sortedRunes.map(({ rune, isDrafted, isSelected }, index) => {
-                    const selectionMotionProps = isSelected
-                      ? {
-                          animate: selectionControls,
-                          initial: { scale: 1, y: 0, rotate: 0 },
-                        }
-                      : {
-                          animate: { scale: 1, y: 0, rotate: 0 },
-                          transition: { duration: 0.2 },
-                        };
-
                     const isHovered = hoveredRuneId === rune.id;
 
                     return (
-                      <motion.div
-                        key={rune.id}
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                          delay: index * 0.015,
-                          type: 'spring',
-                          stiffness: 300,
-                          damping: 20,
-                        }}
-                      >
-                        <motion.button
+                      <div key={rune.id}>
+                        <button
                           type="button"
                           onClick={() => toggleRuneSelection(rune.id)}
                           disabled={!canSelectRunes}
@@ -273,7 +253,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                           }}
                           onMouseEnter={() => setHoveredRuneId(rune.id)}
                           onMouseLeave={() => setHoveredRuneId(null)}
-                          {...selectionMotionProps}
                         >
                           <RuneCell
                             rune={rune}
@@ -285,8 +264,8 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                             tooltipPlacement="bottom"
                             clickable={canSelectRunes}
                           />
-                        </motion.button>
-                      </motion.div>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
