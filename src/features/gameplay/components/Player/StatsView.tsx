@@ -9,6 +9,7 @@ import { ProgressStatOverlay } from '../ProgressStatOverlay';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
 
 interface StatsViewProps {
+  playerId: string;
   deckRemaining: number;
   strainValue: number;
   overloadedRuneCount: number;
@@ -24,6 +25,7 @@ interface StatsViewProps {
 }
 
 export function StatsView({
+  playerId,
   deckRemaining,
   strainValue,
   overloadedRuneCount,
@@ -51,16 +53,18 @@ export function StatsView({
           image={deckSvg}
           onClick={onDeckClick}
         />
-        <StatBadge
-          label="Overloaded Runes"
-          value={overloadedRuneCount}
-          color="#fa6060ff"
-          borderColor="rgba(96, 165, 250, 0.35)"
-          tooltip={`Overloaded runes this run: ${overloadedRuneCount}. Each overload currently deals ${strainValue} damage.`}
-          image={overloadSvg}
-          onClick={onStrainClick}
-          canOverload={canOverload}
-        />
+        <div data-player-id={playerId} data-strain-counter="true" className="flex">
+          <StatBadge
+            label="Overloaded Runes"
+            value={overloadedRuneCount}
+            color="#fa6060ff"
+            borderColor="rgba(96, 165, 250, 0.35)"
+            tooltip={`Overloaded runes this run: ${overloadedRuneCount}. Each overload currently deals ${strainValue} damage.`}
+            image={overloadSvg}
+            onClick={onStrainClick}
+            canOverload={canOverload}
+          />
+        </div>
       </div>
       <div className="flex flex-col gap-[min(0.8vmin,10px)] w-full">
         <ProgressStatOverlay
