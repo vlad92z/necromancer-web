@@ -8,8 +8,7 @@ import overloadSvg from '../../../../assets/stats/overload.svg';
 import { ProgressStatOverlay } from '../ProgressStatOverlay';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
 
-interface StatsViewProps {//TODO just pass player
-  playerId: string;
+interface StatsViewProps {
   deckRemaining: number;
   strainValue: number;
   overloadedRuneCount: number;
@@ -25,7 +24,6 @@ interface StatsViewProps {//TODO just pass player
 }
 
 export function StatsView({
-  playerId,
   deckRemaining,
   strainValue,
   overloadedRuneCount,

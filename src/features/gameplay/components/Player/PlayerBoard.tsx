@@ -74,7 +74,6 @@ export function PlayerBoard({
       <div className="flex items-stretch justify-between gap-[min(1.5vmin,18px)] w-full h-full">
         <div className="flex-1 flex flex-col gap-[min(1.2vmin,12px)]">
           <StatsView
-            playerId={player.id}
             deckRemaining={deckRemaining}
             strainValue={fatigueValue}
             overloadedRuneCount={overloadedRunes}
