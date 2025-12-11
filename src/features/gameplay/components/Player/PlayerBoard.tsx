@@ -3,10 +3,8 @@
  */
 
 import type { Player, RuneType } from '../../../../types/game';
-import type { ArtefactId } from '../../../../types/artefacts';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
-import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { StatsView } from './StatsView';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 
@@ -19,7 +17,6 @@ interface PlayerBoardProps {
   onCancelSelection?: () => void;
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
-  game: number;
   runeScore: {
     currentScore: number;
     targetScore: number;
@@ -30,7 +27,6 @@ interface PlayerBoardProps {
   onOpenDeck?: () => void;
   onOpenOverload?: () => void;
   onOpenSettings?: () => void;
-  activeArtefactIds: ArtefactId[];
 }
 
 export function PlayerBoard({
@@ -49,8 +45,6 @@ export function PlayerBoard({
   onOpenDeck,
   onOpenOverload,
   onOpenSettings,
-  game,
-  activeArtefactIds,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
@@ -75,7 +69,7 @@ export function PlayerBoard({
   return (
     <div
       onClick={handleBoardClick}
-      className={ "relative w-full h-full p-[min(1.2vmin,16px)] rounded-[28px]"}
+      className={ "relative w-full h-full p-[min(1.2vmin,16px)]"}
     >
       <div className="flex items-stretch justify-between gap-[min(1.5vmin,18px)] w-full h-full">
         <div className="flex-1 flex flex-col gap-[min(1.2vmin,12px)]">
@@ -109,11 +103,6 @@ export function PlayerBoard({
             <div className="col-start-2 flex flex-col items-center gap-[min(0.7vmin,12px)]">
               <ScoringWall wall={player.wall} patternLines={player.patternLines} />
             </div>
-            {activeArtefactIds.length > 0 && (
-            <div className="flex justify-left mt-2 mb-4">
-              <ArtefactsRow selectedArtefactIds={activeArtefactIds} />
-            </div>
-          )}
           </div>
         </div>
       </div>

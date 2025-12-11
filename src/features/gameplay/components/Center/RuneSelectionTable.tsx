@@ -10,6 +10,7 @@ import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneCell } from '../../../../components/RuneCell';
 import { RuneTypeTotals } from './RuneTypeTotals';
 import { GameMetadataView } from './GameMetadataView';
+import type { ArtefactId } from '../../../../types/artefacts';
 
 interface DraftingTableProps {
   runeforges: RuneforgeType[];
@@ -29,6 +30,7 @@ interface DraftingTableProps {
   gameNumber: number;
   strainValue: number;
   arcaneDust?: number;
+  activeArtefactIds: ArtefactId[];
 }
 
 export function RuneSelectionTable({ 
@@ -45,6 +47,7 @@ export function RuneSelectionTable({
   gameNumber,
   strainValue,
   arcaneDust,
+  activeArtefactIds,
 }: DraftingTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const runeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
@@ -221,9 +224,7 @@ export function RuneSelectionTable({
         transition={glowTransition}
         onMouseLeave={() => handleRuneMouseLeave(runeforge.id)}
       >
-        {displayedRunes.length === 0 ? (
-          <div></div>
-        ) : (
+        {displayedRunes.length !== 0 && (
           <div
             style={{
               display: 'grid',
@@ -343,6 +344,7 @@ export function RuneSelectionTable({
         gameNumber={gameNumber}
         strainValue={strainValue}
         arcaneDust={arcaneDust}
+        activeArtefactIds={activeArtefactIds}
       />
       
       <div className="flex flex-col items-center gap-[14px] h-full w-full">

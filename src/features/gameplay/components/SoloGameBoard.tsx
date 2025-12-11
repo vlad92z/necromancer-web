@@ -81,6 +81,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
             gameNumber={game}
             strainValue={strain}
             arcaneDust={arcaneDust}
+            activeArtefactIds={activeArtefactIds}
           />
         </div>
       </div>
@@ -103,8 +104,6 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
                   onOpenDeck={onOpenDeckOverlay}
                   onOpenOverload={onOpenOverloadOverlay}
                   onOpenSettings={onOpenSettings}
-                  game={game}
-                  activeArtefactIds={activeArtefactIds}
                 />
         </div>
       </div>
