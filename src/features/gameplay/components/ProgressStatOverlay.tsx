@@ -10,14 +10,11 @@ interface ProgressStatOverlayProps {
   label: string;
   current: number;
   max: number;
-  displayMax?: number;
-  clampToMax?: boolean;
   showFraction?: boolean;
-  containerClassName: string;
-  trackClassName: string;
+  containerBorderColor: string;
+  progressBackground: string;
   barClassName: string;
-  reachedBarClassName?: string;
-  valueClassColor: string;
+  valueColor: string;
   deltaGainClassName?: string;
   deltaLossClassName?: string;
 }
@@ -27,28 +24,24 @@ export function ProgressStatOverlay({
   label,
   current,
   max,
-  displayMax,
-  clampToMax = false,
   showFraction = false,
-  containerClassName,
-  trackClassName,
+  containerBorderColor,
+  progressBackground,
   barClassName,
-  reachedBarClassName,
-  valueClassColor = 'text-slate-100',
+  valueColor = 'text-slate-100',
   deltaGainClassName = 'text-sky-200 text-sm font-bold',
-  deltaLossClassName,
+  deltaLossClassName = "text-rose-300 text-sm font-bold drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]",
 }: ProgressStatOverlayProps) {
   const safeMax = Math.max(1, max);
-  const normalizedCurrent = clampToMax ? Math.min(Math.max(0, current), safeMax) : Math.max(0, current);
+  const normalizedCurrent = current;
   const progress = Math.min(1, normalizedCurrent / safeMax);
   const progressPercent = Math.round(progress * 100);
-  const reachedTarget = normalizedCurrent >= safeMax;
   const previousValueRef = useRef(normalizedCurrent);
   const sequenceRef = useRef(0);
   const [indicator, setIndicator] = useState<DeltaIndicator | null>(null);
   const animatedValue = useMotionValue(normalizedCurrent);
   const [displayedValue, setDisplayedValue] = useState(normalizedCurrent);
-  const valueClassName = `${valueClassColor} font-extrabold text-base text-right`
+  const valueClassName = `${valueColor} font-extrabold text-base text-right`
   useMotionValueEvent(animatedValue, 'change', (value) => {
     setDisplayedValue(Math.round(value));
   });
@@ -89,11 +82,11 @@ export function ProgressStatOverlay({
   }, [indicator]);
 
   const valueClass = valueClassName;
-  const progressClass = reachedTarget && reachedBarClassName ? reachedBarClassName : barClassName;
-  const fractionMax = displayMax ?? max;
+  const progressClass = barClassName;
+  const fractionMax = max;
 
   return (
-    <div className={`flex flex-col gap-2 ${containerClassName}`}>
+    <div className={`flex flex-col gap-2 py-3 px-3.5 rounded-[16px] border ${containerBorderColor}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">{label}</div>
         <div className="flex items-center gap-2 min-w-[120px] justify-end">
@@ -117,7 +110,7 @@ export function ProgressStatOverlay({
           </motion.span>
         </div>
       </div>
-      <div className={`rounded-full overflow-hidden relative ${trackClassName}`}>
+      <div className={`rounded-full overflow-hidden relative h-[10px] ${progressBackground}`}>
         <motion.div
           className={`absolute top-0 left-0 h-full rounded-full ${progressClass}`}
           initial={{ width: `${progressPercent}%` }}
