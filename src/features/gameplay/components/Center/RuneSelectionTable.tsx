@@ -13,7 +13,7 @@ import type { ArtefactId } from '../../../../types/artefacts';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 
-interface DraftingTableProps {
+interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
@@ -49,7 +49,7 @@ export function RuneSelectionTable({
   strainValue,
   arcaneDust,
   activeArtefactIds,
-}: DraftingTableProps) {
+}: RuneSelectionTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const isGlobalDraftStage = runeforgeDraftStage === 'global';
   const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
