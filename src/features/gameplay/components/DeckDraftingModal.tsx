@@ -208,7 +208,7 @@ export function DeckDraftingModal({
   );
 
   const renderRuneforgeRow = (runeforge: RuneforgeType) => {
-    const runeSize = 70;
+    const runeSize = 55;
     const runeGap = 14;
     const containerPadding = 24;
     const hasRunes = runeforge.runes.length > 0;
