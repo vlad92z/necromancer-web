@@ -133,7 +133,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
       if (typeof awardedDust === 'number') {
         totalDustAwarded += awardedDust;
       } else if (rarity) {
-        totalDustAwarded += rarityDustReward[rarity] ?? 0;
+        totalDustAwarded += RARITY_DUST_REWARD[rarity] ?? 0;
       }
     });
 
