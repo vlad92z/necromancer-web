@@ -9,7 +9,7 @@ interface SelectionSnapshot {
   playerId: string;
   runeOrder: Rune[];
   patternLineCounts: number[];
-  runePositions: Map<string, { startX: number; startY: number }>;
+  runePositions: Map<string, MeasuredRunePosition>;
   floorRuneCount: number;
 }
 
@@ -21,7 +21,13 @@ interface AutoAnimationMeta {
 interface RuneforgeAnimationSnapshot {
   key: string;
   runes: Rune[];
-  runePositions: Map<string, { startX: number; startY: number }>;
+  runePositions: Map<string, MeasuredRunePosition>;
+}
+
+interface MeasuredRunePosition {
+  centerX: number;
+  centerY: number;
+  size: number;
 }
 
 interface UseRunePlacementAnimationsParams {
@@ -136,8 +142,8 @@ export function useRunePlacementAnimations({
     });
   }, []);
 
-  const captureSelectedRunePositions = useCallback((runes: Rune[]): Map<string, { startX: number; startY: number }> => {
-    const positions = new Map<string, { startX: number; startY: number }>();
+  const captureSelectedRunePositions = useCallback((runes: Rune[]): Map<string, MeasuredRunePosition> => {
+    const positions = new Map<string, MeasuredRunePosition>();
     if (typeof document === 'undefined' || runes.length === 0) {
       return positions;
     }
@@ -151,15 +157,16 @@ export function useRunePlacementAnimations({
       }
       const rect = element.getBoundingClientRect();
       positions.set(runeId, {
-        startX: rect.left + rect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-        startY: rect.top + rect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+        centerX: rect.left + rect.width / 2,
+        centerY: rect.top + rect.height / 2,
+        size: rect.width,
       });
     });
     return positions;
   }, []);
 
-  const captureRuneforgeRunePositions = useCallback((runes: Rune[]): Map<string, { startX: number; startY: number }> => {
-    const positions = new Map<string, { startX: number; startY: number }>();
+  const captureRuneforgeRunePositions = useCallback((runes: Rune[]): Map<string, MeasuredRunePosition> => {
+    const positions = new Map<string, MeasuredRunePosition>();
     if (typeof document === 'undefined' || runes.length === 0) {
       return positions;
     }
@@ -173,8 +180,9 @@ export function useRunePlacementAnimations({
       }
       const rect = element.getBoundingClientRect();
       positions.set(runeId, {
-        startX: rect.left + rect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-        startY: rect.top + rect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+        centerX: rect.left + rect.width / 2,
+        centerY: rect.top + rect.height / 2,
+        size: rect.width,
       });
     });
     return positions;
@@ -245,14 +253,16 @@ export function useRunePlacementAnimations({
             return;
           }
           const targetRect = targetElement.getBoundingClientRect();
+          const overlaySize = targetRect.width || start.size || OVERLAY_RUNE_SIZE;
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
             rune,
-            startX: start.startX,
-            startY: start.startY,
-            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+            size: overlaySize,
+            startX: start.centerX - overlaySize / 2,
+            startY: start.centerY - overlaySize / 2,
+            endX: targetRect.left + targetRect.width / 2 - overlaySize / 2,
+            endY: targetRect.top + targetRect.height / 2 - overlaySize / 2,
           });
         });
       }
@@ -268,14 +278,16 @@ export function useRunePlacementAnimations({
           if (!start) {
             return;
           }
+          const overlaySize = targetRect.width || start.size || OVERLAY_RUNE_SIZE;
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
             rune,
-            startX: start.startX,
-            startY: start.startY,
-            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+            size: overlaySize,
+            startX: start.centerX - overlaySize / 2,
+            startY: start.centerY - overlaySize / 2,
+            endX: targetRect.left + targetRect.width / 2 - overlaySize / 2,
+            endY: targetRect.top + targetRect.height / 2 - overlaySize / 2,
             shouldDisappear: true,
           });
         });
@@ -313,14 +325,16 @@ export function useRunePlacementAnimations({
             return;
           }
           const targetRect = targetElement.getBoundingClientRect();
+          const overlaySize = targetRect.width || start.size || OVERLAY_RUNE_SIZE;
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
             rune,
-            startX: start.startX,
-            startY: start.startY,
-            endX: targetRect.left + targetRect.width / 2 - OVERLAY_RUNE_SIZE / 2,
-            endY: targetRect.top + targetRect.height / 2 - OVERLAY_RUNE_SIZE / 2,
+            size: overlaySize,
+            startX: start.centerX - overlaySize / 2,
+            startY: start.centerY - overlaySize / 2,
+            endX: targetRect.left + targetRect.width / 2 - overlaySize / 2,
+            endY: targetRect.top + targetRect.height / 2 - overlaySize / 2,
           });
         });
         if (overlayRunes.length === 0) {

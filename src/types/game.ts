@@ -124,6 +124,7 @@ export interface AnimatingRune {
   startY: number;
   endX: number;
   endY: number;
+  size?: number;
   shouldDisappear?: boolean;
 }
 

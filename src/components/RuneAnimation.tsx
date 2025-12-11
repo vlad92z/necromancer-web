@@ -5,7 +5,7 @@
 import { motion } from 'framer-motion';
 import { RuneCell } from './RuneCell';
 import type { AnimatingRune } from '../types/game';
-import { RUNE_ANIMATION_OFFSET_RATIO, RUNE_SIZE_CONFIG } from '../styles/tokens';
+import { RUNE_SIZE_CONFIG } from '../styles/tokens';
 
 interface RuneAnimationProps {
   animatingRunes: AnimatingRune[];
@@ -37,6 +37,8 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
         const finalY = animatingRune.endY + positionOffset;
         const startX = animatingRune.startX + positionOffset;
         const startY = animatingRune.startY + positionOffset;
+        const runeSize = animatingRune.size ?? RUNE_SIZE_CONFIG.large.dimension;
+        const runeScale = runeSize / RUNE_SIZE_CONFIG.large.dimension;
 
         const animateProps = animatingRune.shouldDisappear
           ? {
@@ -81,14 +83,27 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
                 onAnimationComplete();
               }
             }}
+            style={{
+              width: runeSize,
+              height: runeSize,
+            }}
           >
-            <RuneCell
-              rune={animatingRune.rune}
-              variant="selected"
-              forceVariant="runeforge"
-              size="large"
-              showEffect
-            />
+            <div
+              style={{
+                width: RUNE_SIZE_CONFIG.large.dimension,
+                height: RUNE_SIZE_CONFIG.large.dimension,
+                transform: `scale(${runeScale})`,
+                transformOrigin: 'top left',
+              }}
+            >
+              <RuneCell
+                rune={animatingRune.rune}
+                variant="selected"
+                forceVariant="runeforge"
+                size="large"
+                showEffect
+              />
+            </div>
           </motion.div>
         );
       })}
