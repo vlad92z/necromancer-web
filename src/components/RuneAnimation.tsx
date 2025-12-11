@@ -82,6 +82,9 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
               }
             }}
             style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
               width: runeSize,
               height: runeSize,
             }}

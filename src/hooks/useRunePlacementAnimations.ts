@@ -253,7 +253,7 @@ export function useRunePlacementAnimations({
             return;
           }
           const targetRect = targetElement.getBoundingClientRect();
-          const overlaySize = targetRect.width || start.size || OVERLAY_RUNE_SIZE;
+          const overlaySize = start.size || targetRect.width || OVERLAY_RUNE_SIZE;
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
@@ -278,7 +278,7 @@ export function useRunePlacementAnimations({
           if (!start) {
             return;
           }
-          const overlaySize = targetRect.width || start.size || OVERLAY_RUNE_SIZE;
+          const overlaySize = start.size || targetRect.width || OVERLAY_RUNE_SIZE;
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
@@ -325,7 +325,7 @@ export function useRunePlacementAnimations({
             return;
           }
           const targetRect = targetElement.getBoundingClientRect();
-          const overlaySize = targetRect.width || start.size || OVERLAY_RUNE_SIZE;
+          const overlaySize = start.size || targetRect.width || OVERLAY_RUNE_SIZE;
           overlayRunes.push({
             id: rune.id,
             runeType: rune.runeType,
