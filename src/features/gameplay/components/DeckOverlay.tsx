@@ -2,7 +2,7 @@
  * DeckOverlay component - displays player's remaining deck runes in a grid
  */
 
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Rune, RuneEffectRarity, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
@@ -28,7 +28,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   const dustGainKeyRef = useRef(0);
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
   const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
-  const selectionControls = useAnimation();
   const completeDeck = fullDeck && fullDeck.length > 0 ? fullDeck : deck;
   const deckForTotals = isDeckDrafting ? completeDeck : deck;
   // Group runes by type for ordering and totals
@@ -107,21 +106,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
       window.clearTimeout(timeout);
     };
   }, [dustGain]);
-
-  useEffect(() => {
-    if (selectedRuneIds.length === 0) {
-      selectionControls.stop();
-      selectionControls.set({ scale: 1, y: 0, rotate: 0 });
-      return;
-    }
-
-    selectionControls.start({
-      scale: [1.04, 1.08, 1.04],
-      y: [-1, 1, -1],
-      rotate: [-1.5, 1.5, -1.5],
-      transition: { duration: 2, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' },
-    });
-  }, [selectedRuneIds.length, selectionControls]);
 
   const toggleRuneSelection = (runeId: string) => {
     if (!canSelectRunes) {
@@ -228,7 +212,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                 className="rounded-2xl border border-[#9575ff]/30 bg-[linear-gradient(135deg,rgba(67,31,120,0.35),rgba(21,10,46,0.92))] p-3.5 shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
               >
                 <div className="grid grid-cols-[repeat(auto-fill,_minmax(38px,_1fr))] gap-2.5">
-                  {sortedRunes.map(({ rune, isDrafted, isSelected }, index) => {
+                  {sortedRunes.map(({ rune, isDrafted, isSelected }) => {
                     const isHovered = hoveredRuneId === rune.id;
 
                     return (
