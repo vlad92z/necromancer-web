@@ -9,7 +9,6 @@ import { ProgressStatOverlay } from '../ProgressStatOverlay';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
 
 interface StatsViewProps {
-  playerId: string;
   deckRemaining: number;
   strainValue: number;
   overloadedRuneCount: number;
@@ -25,7 +24,6 @@ interface StatsViewProps {
 }
 
 export function StatsView({
-  playerId,
   deckRemaining,
   strainValue,
   overloadedRuneCount,
@@ -40,11 +38,10 @@ export function StatsView({
   useHealthChangeSound(clampedHealth);
   return (
     <div
-      className="grid gap-[min(1.2vmin,12px)] items-stretch w-full"
-      style={{ gridTemplateColumns: 'auto 1fr' }}
+      className="flex flex-row gap-[min(1.2vmin, 12px)] w-full"
       onClick={(event) => event.stopPropagation()}
     >
-      <div className="flex flex-col gap-[min(0.8vmin,10px)] h-full">
+      <div className="flex flex-col gap-[min(0.8vmin,10px)]">
         <StatBadge
           label="Deck"
           value={deckRemaining}
@@ -54,27 +51,18 @@ export function StatsView({
           image={deckSvg}
           onClick={onDeckClick}
         />
-        <div data-strain-column>
-          <div
-            className="inline-flex"
-            data-player-id={playerId}
-            data-strain-counter="true"
-          >
-            <StatBadge
-              label="Overloaded Runes"
-              value={overloadedRuneCount}
-              color="#fa6060ff"
-              borderColor="rgba(96, 165, 250, 0.35)"
-              tooltip={`Overloaded runes this run: ${overloadedRuneCount}. Each overload currently deals ${strainValue} damage.`}
-              image={overloadSvg}
-              onClick={onStrainClick}
-              canOverload={canOverload}
-            />
-          </div>
-        </div>
+        <StatBadge
+          label="Overloaded Runes"
+          value={overloadedRuneCount}
+          color="#fa6060ff"
+          borderColor="rgba(96, 165, 250, 0.35)"
+          tooltip={`Overloaded runes this run: ${overloadedRuneCount}. Each overload currently deals ${strainValue} damage.`}
+          image={overloadSvg}
+          onClick={onStrainClick}
+          canOverload={canOverload}
+        />
       </div>
-
-      <div className="flex flex-col gap-[min(0.8vmin,10px)] h-full">
+      <div className="flex flex-col gap-[min(0.8vmin,10px)] w-full">
         <ProgressStatOverlay
           label="Rune Score"
           current={runeScore.currentScore}

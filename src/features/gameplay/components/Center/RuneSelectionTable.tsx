@@ -338,14 +338,14 @@ export function RuneSelectionTable({
   };
 
   return (
-    <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
+     <div className="h-full w-full flex flex-col justify-start gap-4" onClick={handleDraftingTableClick}>
       <GameMetadataView
         gameNumber={gameNumber}
         strainValue={strainValue}
         arcaneDust={arcaneDust}
       />
       
-      <div className="flex flex-col items-center gap-[14px] w-full">
+      <div className="flex flex-col items-center gap-[14px] h-full w-full">
         {runeforges.map((runeforge) => renderRuneforgeRow(runeforge))}
       </div>
       <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
