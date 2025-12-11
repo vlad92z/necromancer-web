@@ -36,6 +36,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
     onPlaceRunes,
     onPlaceRunesInFloor,
     game,
+    strain,
     isGameOver,
     returnToStartScreen,
     runesPerRuneforge,
@@ -77,6 +78,9 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
             animatingRuneIds={animatingRuneIds}
             hiddenCenterRuneIds={hiddenCenterRuneIds}
             runesPerRuneforge={runesPerRuneforge}
+            gameNumber={game}
+            strainValue={strain}
+            arcaneDust={arcaneDust}
           />
         </div>
       </div>
@@ -100,7 +104,6 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
                   onOpenOverload={onOpenOverloadOverlay}
                   onOpenSettings={onOpenSettings}
                   game={game}
-                  arcaneDust={arcaneDust}
                   activeArtefactIds={activeArtefactIds}
                 />
         </div>

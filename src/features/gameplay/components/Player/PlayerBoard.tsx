@@ -31,7 +31,6 @@ interface PlayerBoardProps {
   onOpenOverload?: () => void;
   onOpenSettings?: () => void;
   activeArtefactIds: ArtefactId[];
-  arcaneDust?: number;
 }
 
 export function PlayerBoard({
@@ -52,7 +51,6 @@ export function PlayerBoard({
   onOpenSettings,
   game,
   activeArtefactIds,
-  arcaneDust,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
@@ -92,8 +90,6 @@ export function PlayerBoard({
             runeScore={runeScore}
             health={player.health}
             maxHealth={player.maxHealth ?? player.health}
-            gameNumber={game}
-            arcaneDust={arcaneDust}
           />
           <div className="grid grid-cols-2 items-start gap-[min(1.2vmin,14px)]">
             {/* Pattern Lines */}

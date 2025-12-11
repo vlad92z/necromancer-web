@@ -9,6 +9,7 @@ import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneCell } from '../../../../components/RuneCell';
 import { RuneTypeTotals } from './RuneTypeTotals';
+import { GameMetadataView } from './GameMetadataView';
 
 interface DraftingTableProps {
   runeforges: RuneforgeType[];
@@ -25,6 +26,9 @@ interface DraftingTableProps {
   hideOpponentRow?: boolean;
   runesPerRuneforge: number;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
+  gameNumber: number;
+  strainValue: number;
+  arcaneDust?: number;
 }
 
 export function RuneSelectionTable({ 
@@ -38,6 +42,9 @@ export function RuneSelectionTable({
   animatingRuneIds,
   runesPerRuneforge,
   runeforgeDraftStage,
+  gameNumber,
+  strainValue,
+  arcaneDust,
 }: DraftingTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const runeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
@@ -332,6 +339,11 @@ export function RuneSelectionTable({
 
   return (
     <div className="h-full w-full flex flex-col justify-center gap-4" onClick={handleDraftingTableClick}>
+      <GameMetadataView
+        gameNumber={gameNumber}
+        strainValue={strainValue}
+        arcaneDust={arcaneDust}
+      />
       
       <div className="flex flex-col items-center gap-[14px] w-full">
         {runeforges.map((runeforge) => renderRuneforgeRow(runeforge))}

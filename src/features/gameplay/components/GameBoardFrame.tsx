@@ -63,6 +63,7 @@ export interface GameBoardSharedProps {
   currentPlayerIndex: number;
   currentPlayerId: string;
   game: number;
+  strain: number;
   isSelectionPhase: boolean;
   isGameOver: boolean;
   activeArtefactIds: GameState['activeArtefacts'];
@@ -314,6 +315,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       currentPlayerIndex: 0,
       currentPlayerId: player.id,
       game: currentGame,
+      strain,
       isSelectionPhase: isSelectionPhase,
       isGameOver,
       activeArtefactIds: activeArtefacts,
@@ -355,6 +357,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       runesPerRuneforge,
       playerHiddenPatternSlots,
       playerLockedLines,
+      strain,
       returnToStartScreen,
       runeforges,
       selectedRuneType,
