@@ -11,6 +11,7 @@ export interface PlayerStatsProps {
   overloadMultiplier: number;
   game: number;
   deckCount?: number;
+  overloadedRuneCount?: number;
 }
 
 export function PlayerStats({ overloadMultiplier, deckCount }: PlayerStatsProps) {

@@ -91,6 +91,16 @@ export const TRANSITIONS = {
   spring: '350ms cubic-bezier(0.68, -0.55, 0.265, 1.55)',
 } as const;
 
+export const RUNE_SIZE_CONFIG = {
+  small: { dimension: 30, fontSize: 10, padding: 2 },
+  medium: { dimension: 35, fontSize: 14, padding: 2 },
+  large: { dimension: 70, fontSize: 20, padding: 4 },
+} as const;
+
+export type RuneSize = keyof typeof RUNE_SIZE_CONFIG;
+
+export const RUNE_ANIMATION_OFFSET_RATIO = 0.2;
+
 export const ANIMATION = {
   HEAL_ANIMATION_DURATION_MS: 500,
   HEAL_TO_DAMAGE_DELAY_MS: 250,

@@ -8,7 +8,8 @@ import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
-import { COLORS, RADIUS, TRANSITIONS, SHADOWS } from '../styles/tokens';
+import { COLORS, RADIUS, TRANSITIONS, SHADOWS, RUNE_SIZE_CONFIG } from '../styles/tokens';
+import type { RuneSize } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
 import fireRuneUncommon from '../assets/runes/fire_rune_uncommon.svg';
 import fireRuneRare from '../assets/runes/fire_rune_rare.svg';
@@ -93,7 +94,7 @@ export interface RuneCellProps {
    * Useful for showing contextual markers like the overload indicator in floor cells.
    */
   emptyIcon?: string;
-  size?: 'small' | 'medium' | 'large';
+  size?: RuneSize;
   placeholder?: {
     type: 'rune' | 'text';
     runeType?: RuneType; // For wall cells
@@ -108,12 +109,6 @@ export interface RuneCellProps {
   runePulseKey?: number;
   runePulseScale?: number;
 }
-
-const SIZE_CONFIG = {
-  small: { width: 30, height: 30, fontSize: 10, padding: 2 },
-  medium: { width: 35, height: 35, fontSize: 14, padding: 2 },
-  large: { width: 65, height: 65, fontSize: 20, padding: 4 },
-};
 
 const VARIANT_STYLES: Record<RuneCellVariant, {
   border: string;
@@ -166,7 +161,7 @@ export function RuneCell({
   runePulseScale = 1.12,
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-  const config = SIZE_CONFIG[size];
+  const config = RUNE_SIZE_CONFIG[size];
   const usedVariant = forceVariant ?? variant;
   const variantStyle = VARIANT_STYLES[usedVariant];
   
@@ -235,8 +230,8 @@ export function RuneCell({
       {...animationProps}
       onClick={clickable ? onClick : undefined}
       style={{
-        width: `${config.width}px`,
-        height: `${config.height}px`,
+        width: `${config.dimension}px`,
+        height: `${config.dimension}px`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -1,7 +1,8 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ClickSoundButton } from '../components/ClickSoundButton'
 import { useClickSound } from '../hooks/useClickSound'
-import { gradientButtonClasses } from '../styles/gradientButtonClasses'
+import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses'
 import { SettingsOverlay } from '../components/SettingsOverlay'
 import { useUIStore } from '../state/stores/uiStore'
 import { BREAKPOINTS } from '../styles/tokens'
@@ -36,12 +37,10 @@ export function MainMenu() {
   }, [])
 
   const handleSolo = () => {
-    playClickSound()
     navigate('/solo')
   }
 
   const handleSettings = () => {
-    playClickSound()
     toggleSettingsOverlay()
   }
 
@@ -76,32 +75,29 @@ export function MainMenu() {
       ) : (
         <>
           <div className="mt-10 flex w-full max-w-[320px] flex-col gap-4">
-            <button
-              type="button"
-              className={`${gradientButtonClasses} px-10 py-4 text-lg font-bold uppercase tracking-[0.25em] focus-visible:outline-slate-900`}
-              onClick={handleSolo}
-            >
-              Solo
-            </button>
-            <button
-              type="button"
-              className="rounded-xl border border-slate-600/70 bg-slate-900/70 px-10 py-4 text-lg font-bold uppercase tracking-[0.25em] text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-              onClick={handleSettings}
-            >
-              Settings
-            </button>
+            <ClickSoundButton
+              title="Solo"
+              className={gradientButtonClasses}
+              action={handleSolo}
+            />
+            <ClickSoundButton
+              title="Settings"
+              className={simpleButtonClasses}
+              action={handleSettings}
+            />
           </div>
 
-          <SettingsOverlay
-            isOpen={showSettingsOverlay}
-            onClose={toggleSettingsOverlay}
-            soundVolume={soundVolume}
-            isMusicMuted={isMusicMuted}
-            onVolumeChange={handleVolumeChange}
-            onToggleMusic={handleToggleMusic}
-            showQuitRun={false}
-            playClickSound={playClickSound}
-          />
+          {showSettingsOverlay && (
+            <SettingsOverlay
+              onClose={toggleSettingsOverlay}
+              soundVolume={soundVolume}
+              isMusicMuted={isMusicMuted}
+              onVolumeChange={handleVolumeChange}
+              onToggleMusic={handleToggleMusic}
+              showQuitRun={false}
+              playClickSound={playClickSound}
+            />
+          )}
         </>
       )}
     </main>

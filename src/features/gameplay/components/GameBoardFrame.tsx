@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import type { ReactElement } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
@@ -21,6 +20,7 @@ import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnima
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
+import { SoloGameBoard } from './SoloGameBoard';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -54,7 +54,7 @@ export interface GameData {
   onOpenDeckOverlay: () => void;
   onOpenOverloadOverlay: () => void;
   onOpenSettings: () => void;
-  onStartNextGame: () => void;
+  startNextSoloGame: () => void;
 }
 
 export interface GameBoardSharedProps {
@@ -63,9 +63,12 @@ export interface GameBoardSharedProps {
   currentPlayerIndex: number;
   currentPlayerId: string;
   game: number;
-  isDraftPhase: boolean;
+  strain: number;
+  isSelectionPhase: boolean;
   isGameOver: boolean;
   activeArtefactIds: GameState['activeArtefacts'];
+  runesPerRuneforge: number;
+  runeforgeDraftStage: GameState['runeforgeDraftStage'];
 
   // Selection state
   selectedRuneType: RuneType | null;
@@ -92,15 +95,15 @@ export interface GameBoardSharedProps {
   returnToStartScreen: () => void;
 }
 
-export interface GameBoardFrameProps extends GameBoardProps {
-  renderContent: (shared: GameBoardSharedProps, gameData: GameData) => ReactElement | null;
-}
+export type GameBoardFrameProps = GameBoardProps;
 
-export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps) {
+export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
   const {
     player,
     runeforges,
     centerPool,
+    runesPerRuneforge,
+    runeforgeDraftStage,
     selectedRunes,
     turnPhase,
     lockedPatternLines,
@@ -143,7 +146,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
-  const isDraftPhase = turnPhase === 'draft';
+  const isSelectionPhase = turnPhase === 'select';
   const isDeckDrafting = turnPhase === 'deck-draft';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
@@ -182,8 +185,9 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       overloadMultiplier: strain,
       game: currentGame,
       deckCount: player.deck.length,
+      overloadedRuneCount: overloadRunes.length,
     }),
-    [currentGame, player.deck.length, strain],
+    [currentGame, overloadRunes.length, player.deck.length, strain],
   );
 
   const prevArcaneDustRef = useRef<number>(arcaneDust);
@@ -259,9 +263,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
   const handleCloseOverloadOverlay = useCallback(() => setShowOverloadOverlay(false), []);
 
   const handleOpenSettings = useCallback(() => {
-    playClickSound();
     toggleSettingsOverlay();
-  }, [playClickSound, toggleSettingsOverlay]);
+  }, [toggleSettingsOverlay]);
 
   useEffect(() => {
     if (shouldTriggerEndRound) {
@@ -312,9 +315,12 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       currentPlayerIndex: 0,
       currentPlayerId: player.id,
       game: currentGame,
-      isDraftPhase,
+      strain,
+      isSelectionPhase: isSelectionPhase,
       isGameOver,
       activeArtefactIds: activeArtefacts,
+      runesPerRuneforge,
+      runeforgeDraftStage,
       selectedRuneType,
       selectedRunes,
       hasSelectedRunes,
@@ -345,14 +351,17 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       handleRuneClick,
       hasSelectedRunes,
       hiddenCenterRuneIds,
-      isDraftPhase,
+      isSelectionPhase,
       isGameOver,
       player,
+      runesPerRuneforge,
       playerHiddenPatternSlots,
       playerLockedLines,
+      strain,
       returnToStartScreen,
       runeforges,
       selectedRuneType,
+      runeforgeDraftStage,
       selectedRunes,
     ],
   );
@@ -372,7 +381,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       onOpenDeckOverlay: handleOpenDeckOverlay,
       onOpenOverloadOverlay: handleOpenOverloadOverlay,
       onOpenSettings: handleOpenSettings,
-      onStartNextGame: startNextSoloGame,
+      startNextSoloGame: startNextSoloGame,
     }),
     [
       arcaneDust,
@@ -388,10 +397,9 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
       playerStats,
       targetScore,
       startNextSoloGame,
+      handleOpenSettings,
     ],
   );
-
-  const boardContent = useMemo(() => renderContent(sharedProps, gameData), [renderContent, sharedProps, gameData]);
 
   return (
     <div
@@ -408,7 +416,7 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          {boardContent}
+          <SoloGameBoard shared={sharedProps} gameData={gameData} />
         </div>
       </div>
 
@@ -432,9 +440,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
           onClose={handleCloseOverloadOverlay}
         />
       )}
-
-      <SettingsOverlay
-        isOpen={showSettingsOverlay}
+      {showSettingsOverlay && (
+        <SettingsOverlay
         onClose={toggleSettingsOverlay}
         soundVolume={soundVolume}
         isMusicMuted={isMusicMuted}
@@ -444,7 +451,8 @@ export function GameBoardFrame({ gameState, renderContent }: GameBoardFrameProps
         showQuitRun={true}
         playClickSound={playClickSound}
       />
-
+      )
+      }
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
       <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
     </div>
