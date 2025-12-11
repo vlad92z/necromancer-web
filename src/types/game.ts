@@ -84,6 +84,8 @@ export interface RunConfig {
   factoriesPerPlayer: number;
   deckRunesPerType: number;
   targetRuneScore: number;
+  runeScoreTargetIncrement: number;
+  victoryDraftPicks: number;
   patternLinesLockOnComplete: boolean;
 }
 

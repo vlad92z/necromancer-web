@@ -54,23 +54,27 @@ export function getRuneTypes(): RuneType[] {
   return [...RUNE_TYPES];
 }
 
+const DEFAULT_STARTING_STRAIN = 1;
+const DEFAULT_STRAIN_MULTIPLIER = 2;
+const SOLO_TARGET_INCREMENT = 50;
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
-export const DEFAULT_STARTING_STRAIN = 1;
-export const DEFAULT_STRAIN_MULTIPLIER = 2;
-const SOLO_STARTING_HEALTH = 100;
-const SOLO_MAX_HEALTH = 100;
-const SOLO_FACTORIES_PER_PLAYER = 5;
-const DEFAULT_SOLO_RUNES_PER_TYPE = 20;
+const STARTING_HEALTH = 100;
+const FACTORIES_PER_PLAYER = 5;
+const DEFAULT_RUNES_PER_TYPE = 20;
 const DEFAULT_SOLO_TARGET_SCORE = 50;
+const DEFAULT_VICTORY_DRAFT_PICKS = 3;
+const DEFAULT_PATTERN_LINE_LOCK = true;
 
 export const DEFAULT_SOLO_CONFIG: RunConfig = {
-  startingHealth: SOLO_STARTING_HEALTH,
+  startingHealth: STARTING_HEALTH,
   startingStrain: DEFAULT_STARTING_STRAIN,
   strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
-  factoriesPerPlayer: SOLO_FACTORIES_PER_PLAYER,
-  deckRunesPerType: DEFAULT_SOLO_RUNES_PER_TYPE,
+  factoriesPerPlayer: FACTORIES_PER_PLAYER,
+  deckRunesPerType: DEFAULT_RUNES_PER_TYPE,
   targetRuneScore: DEFAULT_SOLO_TARGET_SCORE,
-  patternLinesLockOnComplete: true,
+  runeScoreTargetIncrement: SOLO_TARGET_INCREMENT,
+  victoryDraftPicks: DEFAULT_VICTORY_DRAFT_PICKS,
+  patternLinesLockOnComplete: DEFAULT_PATTERN_LINE_LOCK,
 };
 
 export interface SoloSizingConfig {
@@ -248,7 +252,7 @@ export function initializeSoloGame(
   const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
   const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * RUNE_TYPES.length;
   const longestRun = options?.longestRun ?? 0;
-  const soloMaxHealth = Math.max(SOLO_MAX_HEALTH, soloConfig.startingHealth);
+  const soloMaxHealth = soloConfig.startingHealth;
 
   const soloPlayer = createPlayer(
     'player-1',

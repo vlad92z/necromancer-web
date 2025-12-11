@@ -2,14 +2,11 @@
  * SoloStartScreen - entry screen for Solo mode setup
  */
 
-import type { ChangeEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { RunConfig } from '../../../types/game';
-import { DEFAULT_SOLO_CONFIG, RUNE_TYPES, normalizeSoloConfig } from '../../../utils/gameInitialization';
+import { DEFAULT_SOLO_CONFIG } from '../../../utils/gameInitialization';
 import { gradientButtonClasses } from '../../../styles/gradientButtonClasses';
-import { FieldConfig } from '../../../components/FieldConfig';
-import { SliderConfig } from '../../../components/SliderConfig';
 import { ArtefactsView } from '../../../components/ArtefactsView';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
@@ -24,32 +21,12 @@ interface SoloStartScreenProps {
   arcaneDust?: number;
 }
 
-const inputClasses =
-  'w-full rounded-lg border border-slate-600/70 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400';
-
 export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = false, longestRun = 0, arcaneDust = 0 }: SoloStartScreenProps) {
   const navigate = useNavigate();
   const playClick = useClickSound();
-  const [soloConfig, setSoloConfig] = useState<RunConfig>({ ...DEFAULT_SOLO_CONFIG });
-  const [showAdvanced] = useState(false);
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
   const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
-
-  const updateConfigValue = <K extends keyof RunConfig>(key: K, value: RunConfig[K]) => {
-    setSoloConfig((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleNumberInput =
-    <K extends keyof RunConfig>(key: K, clamp?: (value: number) => number) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const rawValue = Number(event.target.value);
-      const parsedValue = Number.isNaN(rawValue) ? 0 : rawValue;
-      const nextValue = clamp ? clamp(parsedValue) : parsedValue;
-      updateConfigValue(key, nextValue as RunConfig[typeof key]);
-    };
-
-  const normalizedConfig = normalizeSoloConfig(soloConfig);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
@@ -113,77 +90,6 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
           )}
         </section>
 
-        <section className="space-y-2">
-          {
-          /* <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Run Setup</div>
-            <button
-              type="button"
-              onClick={() => setShowAdvanced((s) => !s)}
-              className="rounded-xl border border-slate-600/30 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-sky-300 transition hover:border-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-            >
-              {showAdvanced ? 'Hide' : 'Advanced'}
-            </button>
-          </div> */
-          }
-
-          {showAdvanced && (
-            <div className="space-y-4 rounded-2xl border border-slate-600/40 bg-slate-900/50 p-4 backdrop-blur">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
-                <FieldConfig label="Starting Health" description="Health pool when the run begins.">
-                  <input
-                    type="number"
-                    min={1}
-                    value={soloConfig.startingHealth}
-                    onChange={handleNumberInput('startingHealth', (value) => Math.max(1, value))}
-                    className={inputClasses}
-                  />
-                </FieldConfig>
-                <FieldConfig label="Starting Fatigue" description="Base overload (strain) applied during scoring.">
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={soloConfig.startingStrain}
-                    onChange={handleNumberInput('startingStrain', (value) => Math.max(0, value))}
-                    className={inputClasses}
-                  />
-                </FieldConfig>
-                <SliderConfig
-                  label="Strain Multiplier"
-                  description="round-by-round growth applied to strain."
-                  min={1}
-                  max={2}
-                  step={0.1}
-                  value={soloConfig.strainMultiplier}
-                  onChange={(value) => updateConfigValue('strainMultiplier', value)}
-                  valueLabel={`${soloConfig.strainMultiplier.toFixed(1)}x strain growth`}
-                />
-                <FieldConfig label="Rune Target Score" description="Minimum Rune Power needed before the run ends.">
-                  <input
-                    type="number"
-                    min={1}
-                    step={10}
-                    value={soloConfig.targetRuneScore}
-                    onChange={handleNumberInput('targetRuneScore', (value) => Math.max(1, value))}
-                    className={inputClasses}
-                  />
-                </FieldConfig>
-                <SliderConfig
-                  label="Deck Size"
-                  description="How many of each rune type appear in your deck."
-                  min={8}
-                  max={30}
-                  step={1}
-                  value={soloConfig.deckRunesPerType}
-                  onChange={(value) => updateConfigValue('deckRunesPerType', value)}
-                  valueLabel={`${soloConfig.deckRunesPerType} of each rune (${soloConfig.deckRunesPerType * RUNE_TYPES.length} total)`}
-                />
-              </div>
-            </div>
-          )}
-        </section>
-
         <div className="mx-auto flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
           {canContinue && onContinueSolo && (
             <button
@@ -201,7 +107,7 @@ export function SoloStartScreen({ onStartSolo, onContinueSolo, canContinue = fal
             type="button"
             onClick={() => {
               playClick();
-              onStartSolo(normalizedConfig);
+              onStartSolo(DEFAULT_SOLO_CONFIG);
             }}
             className={`${gradientButtonClasses} w-full px-6 py-4 text-center text-lg font-extrabold uppercase tracking-[0.3em] focus-visible:outline-sky-300`}
           >

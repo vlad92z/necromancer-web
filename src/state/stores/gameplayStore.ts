@@ -5,7 +5,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, DEFAULT_STARTING_STRAIN, DEFAULT_STRAIN_MULTIPLIER, RUNE_TYPES } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, DEFAULT_SOLO_CONFIG } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
@@ -18,7 +18,7 @@ import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 
-const SOLO_TARGET_INCREMENT = 50;
+
 
 function withRuneforgeDefaults(runeforge: Runeforge): Runeforge {
   return {
@@ -54,11 +54,11 @@ function enterDeckDraftMode(state: GameState): GameState {
   console.log('gameplayStore: enterDeckDraftMode');
   const deckTemplate = getSoloDeckTemplate(state);
   const nextLongestRun = Math.max(state.longestRun, state.game);
-  const basePicks = 3; //TODO configure number
+  const basePicks = DEFAULT_SOLO_CONFIG.victoryDraftPicks;
   const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
   const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
   const arcaneDustReward = getArcaneDustReward(state.game);
-  const nextTargetScore = state.targetScore + SOLO_TARGET_INCREMENT;
+  const nextTargetScore = state.targetScore + DEFAULT_SOLO_CONFIG.runeScoreTargetIncrement;
 
   if (arcaneDustReward > 0) {
     const newDustTotal = addArcaneDust(arcaneDustReward);
@@ -274,7 +274,7 @@ function prepareRoundReset(state: GameState): GameState {
     turnPhase: 'draft',
     game: state.game,
     strain: state.strain * state.strainMultiplier,
-    strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
+    strainMultiplier: DEFAULT_SOLO_CONFIG.strainMultiplier,
     outcome: null,
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
@@ -660,8 +660,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   // Initial state
   ...initializeSoloGame(),
   // Strain configuration - starting value and multiplier factor (tune here)
-  strain: DEFAULT_STARTING_STRAIN,
-  strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
+  strain: DEFAULT_SOLO_CONFIG.startingStrain,
+  strainMultiplier: DEFAULT_SOLO_CONFIG.strainMultiplier,
 
   
   
