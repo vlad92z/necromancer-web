@@ -73,6 +73,7 @@ const RUNE_EPIC_ASSETS = {
 };
 
 const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> = {
+  common: RUNE_ASSETS,
   uncommon: RUNE_UNCOMMON_ASSETS,
   rare: RUNE_RARE_ASSETS,
   epic: RUNE_EPIC_ASSETS,

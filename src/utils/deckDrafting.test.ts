@@ -90,7 +90,7 @@ describe('deckDrafting with artefact effects', () => {
       // but we can verify runes are generated with effects
       allRunes.forEach(rune => {
         expect(rune.effects.length).toBeGreaterThan(0);
-        expect(['uncommon', 'rare', 'epic']).toContain(rune.effects[0].rarity);
+        expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.effects[0].rarity);
       });
     });
 
@@ -107,7 +107,7 @@ describe('deckDrafting with artefact effects', () => {
       
       // All runes should have valid rarities
       allRunes.forEach(rune => {
-        expect(['uncommon', 'rare', 'epic']).toContain(rune.effects[0].rarity);
+        expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.effects[0].rarity);
       });
     });
   });

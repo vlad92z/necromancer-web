@@ -161,7 +161,7 @@ export function resolveSegmentFromCells(
   const orderedEffectCells = [...(effectCells ?? connectedCells)].sort((a, b) =>
     a.row === b.row ? a.col - b.col : a.row - b.row
   );
-  let damage = Math.max(1, connectedCells.length);
+  let damage = 0;
   let healing = 0;
   let arcaneDust = 0;
 

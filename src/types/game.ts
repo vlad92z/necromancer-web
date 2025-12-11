@@ -12,7 +12,7 @@ export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning'
 /**
  * Rune effect modifiers
  */
-export type RuneEffectRarity = 'uncommon' | 'rare' | 'epic';
+export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 
 export type RuneEffect =
   | { type: 'Damage'; amount: number; rarity: RuneEffectRarity }

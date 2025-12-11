@@ -156,13 +156,13 @@ export function createStartingDeck(
 }
 
 export function createDefaultTooltipCards(): TooltipCard[] {
-  // return [];
-  return Array.from({ length: 5 }, (_, index) => ({
-    id: `life-rune-tooltip-${index + 1}`,
-    runeType: 'Life',
-    title: 'Life Rune',
-    description: 'Healing +3',
-  }));
+  return [];
+  // return Array.from({ length: 5 }, (_, index) => ({
+  //   id: `life-rune-tooltip-${index + 1}`,
+  //   runeType: 'Life',
+  //   title: 'Life Rune',
+  //   description: 'Healing +3',
+  // }));
 }
 
 /**

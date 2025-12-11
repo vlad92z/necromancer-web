@@ -1,7 +1,7 @@
 /**
  * StatBadge - reusable stat display with tooltip and icon
  */
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
@@ -17,7 +17,6 @@ interface StatBadgeProps {
   alert?: boolean;
   canOverload?: boolean;
   onTooltipToggle?: (isVisible: boolean) => void;
-  showTooltipBubble?: boolean;
 }
 
 // Constants for glow animation
@@ -36,18 +35,14 @@ const PULSE_TRANSITION: Transition = {
  * StatBadge - shows a small icon, a value and a hover tooltip.
  */
 export function StatBadge({
-  label,
   value,
   borderColor,
-  tooltip,
   image,
   onClick,
   alert,
   canOverload,
   onTooltipToggle,
-  showTooltipBubble = true,
 }: StatBadgeProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const isClickable = typeof onClick === 'function';
   const baseShadowClass = alert ? 'shadow-[0_0_16px_rgba(248,113,113,0.4)]' : 'shadow-[0_10px_26px_rgba(0,0,0,0.45)]';
 
@@ -70,14 +65,13 @@ export function StatBadge({
   const ButtonComponent = canOverload ? motion.button : 'button';
 
   const handleHoverChange = (visible: boolean) => {
-    setIsHovered(visible);
     if (onTooltipToggle) {
       onTooltipToggle(visible);
     }
   };
 
   return (
-    <div className="relative flex justify-center">
+    <div className="relative flex justify-center h-full">
       <ButtonComponent
         type="button"
         onMouseEnter={() => handleHoverChange(true)}
@@ -85,11 +79,10 @@ export function StatBadge({
         onFocus={() => handleHoverChange(true)}
         onBlur={() => handleHoverChange(false)}
         onClick={onClick}
-        className={`flex min-w-[110px] items-center rounded-[0.6rem] border bg-[rgba(8,17,35,0.85)] px-2 py-2 text-slate-50 transition-shadow ${baseShadowClass} ${
+        className={`h-full flex min-w-[110px] items-center rounded-[0.6rem] border bg-[rgba(8,17,35,0.85)] px-2 py-2 text-slate-50 transition-shadow ${baseShadowClass} ${
           isClickable ? 'cursor-pointer' : 'cursor-default'
         }`}
         style={buttonStyle}
-        aria-label={canOverload ? `${label}: Click to overload runes. ${tooltip}` : `${label}: ${tooltip}`}
         {...buttonMotionProps}
       >
         <img
@@ -101,13 +94,6 @@ export function StatBadge({
           <span className="text-[1.15rem] font-semibold">{value}</span>
         </div>
       </ButtonComponent>
-      {showTooltipBubble && isHovered && (
-        <div
-          className="absolute left-1/2 bottom-[calc(100%+8px)] w-[min(240px,70vw)] -translate-x-1/2 transform rounded-[12px] border border-white/12 bg-[rgba(3,7,18,0.95)] px-[14px] py-[10px] text-[1rem] leading-[1.6] text-slate-300 shadow-[0_20px_45px_rgba(0,0,0,0.55)] drop-shadow-lg"
-        >
-          {tooltip}
-        </div>
-      )}
     </div>
   );
 }
