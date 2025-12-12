@@ -1,18 +1,22 @@
 /**
  * ScoringWall component - displays the scoring grid
+ * Now supports direct rune placement
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
+import type { ScoringWall as ScoringWallType, PatternLine, RuneType } from '../../../../types/game';
 import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
-import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
+import { isCellSelectable, getWallCellState } from '../../../../utils/wallCellHelpers';
 
 interface ScoringWallProps {
   wall: ScoringWallType;
   patternLines: PatternLine[];
+  onPlaceRunes?: (row: number, col: number) => void;
+  selectedRuneType?: RuneType | null;
+  canPlace?: boolean;
 }
 
 // Layout constants (kept in sync with RuneCell size config)
@@ -46,7 +50,7 @@ interface OverlayEdge {
 // We no longer compute the largest connected component. Instead we connect
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
-export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
+export function ScoringWall({ wall, patternLines, onPlaceRunes, selectedRuneType, canPlace }: ScoringWallProps) {
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
   const previousWallRef = useRef<ScoringWallType | null>(null);
@@ -353,22 +357,38 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: `${GAP}px` }}>
         {wall.map((row, rowIndex) => (
           <div key={rowIndex} style={{ display: 'flex', gap: `${GAP}px` }}>
-            {row.map((cell, colIndex) => (
-              <div
-                key={colIndex}
-                onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
-                onMouseLeave={handleWallCellLeave}
-              >
-                <WallCell
-                  cell={cell}
-                  row={rowIndex}
-                  col={colIndex}
-                  wallSize={gridSize}
-                  availableRuneTypes={availableRuneTypes}
-                  pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}
-                />
-              </div>
-            ))}
+            {row.map((cell, colIndex) => {
+              const isSelectable = canPlace && selectedRuneType 
+                ? isCellSelectable(cell, rowIndex, selectedRuneType)
+                : false;
+              
+              const handleClick = isSelectable && onPlaceRunes
+                ? () => onPlaceRunes(rowIndex, colIndex)
+                : undefined;
+              
+              // Show tooltip for InProgress and Completed cells
+              const cellState = getWallCellState(cell, rowIndex);
+              const showTooltip = cellState === 'InProgress' || cellState === 'Completed';
+              
+              return (
+                <div
+                  key={colIndex}
+                  onMouseEnter={showTooltip ? () => handleWallCellEnter(rowIndex, colIndex) : undefined}
+                  onMouseLeave={showTooltip ? handleWallCellLeave : undefined}
+                >
+                  <WallCell
+                    cell={cell}
+                    row={rowIndex}
+                    col={colIndex}
+                    wallSize={gridSize}
+                    availableRuneTypes={availableRuneTypes}
+                    pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}
+                    onClick={handleClick}
+                    isSelectable={isSelectable}
+                  />
+                </div>
+              );
+            })}
           </div>
         ))}
     </div>

@@ -96,6 +96,7 @@ export interface GameBoardSharedProps {
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onCancelSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
+  onPlaceRunesOnWall: (row: number, col: number) => void; // New handler for wall placement
   onPlaceRunesInFloor: () => void;
   returnToStartScreen: () => void;
 }
@@ -127,6 +128,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
     draftRune,
     draftFromCenter,
     placeRunes,
+    placeRunesOnWall,
     moveRunesToWall,
     placeRunesInFloor,
     cancelSelection,
@@ -262,6 +264,16 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
     [isAnimatingPlacement, placeRunes],
   );
 
+  const handleWallCellPlacement = useCallback(
+    (row: number, col: number) => {
+      if (isAnimatingPlacement) {
+        return;
+      }
+      placeRunesOnWall(row, col);
+    },
+    [isAnimatingPlacement, placeRunesOnWall],
+  );
+
   const handleOpenDeckOverlay = useCallback(() => setShowDeckOverlay(true), []);
   const handleCloseDeckOverlay = useCallback(() => setShowDeckOverlay(false), []);
   const handleOpenOverloadOverlay = useCallback(() => setShowOverloadOverlay(true), []);
@@ -340,6 +352,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       onCenterRuneClick: handleCenterRuneClick,
       onCancelSelection: handleCancelSelection,
       onPlaceRunes: handlePatternLinePlacement,
+      onPlaceRunesOnWall: handleWallCellPlacement,
       onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
       returnToStartScreen,
     }),
@@ -352,6 +365,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       handleCancelSelection,
       handleCenterRuneClick,
       handlePatternLinePlacement,
+      handleWallCellPlacement,
       handlePlaceRunesInFloorWrapper,
       handleRuneClick,
       hasSelectedRunes,

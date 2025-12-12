@@ -84,6 +84,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
       <PlayerBoard
         player={player}
         onPlaceRunes={onPlaceRunes}
+        onPlaceRunesOnWall={shared.onPlaceRunesOnWall}
         onPlaceRunesInFloor={onPlaceRunesInFloor}
         selectedRuneType={selectedRuneType}
         canPlace={hasSelectedRunes}

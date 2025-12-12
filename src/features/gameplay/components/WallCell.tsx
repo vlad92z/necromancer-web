@@ -147,6 +147,33 @@ export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKe
           }}
         />
       )}
+      
+      {/* Selectable cell indicator (green glow) */}
+      {isSelectable && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: '-2px',
+            borderRadius: '14px',
+            border: '2px solid rgba(34, 197, 94, 0.8)',
+            boxShadow: '0 0 18px rgba(34, 197, 94, 0.6), 0 0 38px rgba(34, 197, 94, 0.3)',
+            pointerEvents: 'none',
+            zIndex: 2,
+            animation: 'pulse-glow 1.2s ease-in-out infinite alternate',
+          }}
+        />
+      )}
+      
+      <style>{`
+        @keyframes pulse-glow {
+          from {
+            box-shadow: 0 0 18px rgba(34, 197, 94, 0.6), 0 0 38px rgba(34, 197, 94, 0.3);
+          }
+          to {
+            box-shadow: 0 0 28px rgba(16, 185, 129, 0.8), 0 0 56px rgba(21, 128, 61, 0.4);
+          }
+        }
+      `}</style>
     </div>
   );
 }
