@@ -176,22 +176,30 @@ export function resolveSegmentFromCells(
   connectedCells.forEach((cell) => {
     const effects = cell.effects ?? [];
     effects.forEach((effect) => {
-      if (effect.type === 'Damage') {
-        damage += effect.amount;
-      } else if (effect.type === 'Healing') {
-        healing += effect.amount;
-      } else if (effect.type === 'Synergy') {
-        // Add amount to damage for each synergyType rune in the segment
-        const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
-        damage += effect.amount * synergyCount;
-      } else if (effect.type === 'Fortune') {
-        // Add amount to arcane dust
-        arcaneDust += effect.amount;
-      } else if (effect.type === 'Fragile') {
-        // Add amount to damage if the segment has no fragileType runes
-        const fragileTypeCount = runeTypeCounts.get(effect.fragileType) ?? 0;
-        if (fragileTypeCount === 0) {
+      switch (effect.type) {
+        case 'Damage':
           damage += effect.amount;
+          break;
+        case 'Healing':
+          healing += effect.amount;
+          break;
+        case 'Synergy': {
+          // Add amount to damage for each synergyType rune in the segment
+          const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
+          damage += effect.amount * synergyCount;
+          break;
+        }
+        case 'Fortune':
+          // Add amount to arcane dust
+          arcaneDust += effect.amount;
+          break;
+        case 'Fragile': {
+          // Add amount to damage if the segment has no fragileType runes
+          const fragileTypeCount = runeTypeCounts.get(effect.fragileType) ?? 0;
+          if (fragileTypeCount === 0) {
+            damage += effect.amount;
+          }
+          break;
         }
       }
     });

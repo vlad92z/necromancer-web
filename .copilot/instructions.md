@@ -2,14 +2,14 @@
 
 ## Project Overview
 
-**Massive Spell: Arcane Arena** is a single-player roguelite rune-drafting game inspired by Azul's drafting mechanics. Players draft runes from runeforges, place them on pattern lines, and complete lines to add runes to their scoring wall. The goal is to build connected segments of runes to maximize spell damage while surviving arcane overload.
+**Massive Spell: Arcane Arena** is a single-player roguelite rune-drafting game inspired by Azul's drafting mechanics. Players select runes from runeforges, place them on pattern lines, and complete lines to add runes to their scoring wall. The goal is to build connected segments of runes to maximize spell damage while surviving arcane overload.
 
 ### Tech Stack
 - **React 19** + **TypeScript** (strict mode)
 - **Vite 7** for development and builds
 - **Zustand 5** for global state management
 - **Framer Motion 12** for all animations
-- **Inline CSS + Tailwind** styling (existing inline styles remain; Tailwind used for newer view shells; no CSS Modules or CSS-in-JS libraries)
+- **Inline CSS + Tailwind** styling (Tailwind used wherever possible; no CSS Modules or CSS-in-JS libraries)
 
 ### Current Scope
 - Solo Game Mode only: reach the target RuneScore before succumbing to Arcane Overload (no duel mode or AI opponents)
@@ -63,74 +63,134 @@
 
 ```
 src/
-├── assets/
-│   └── runes/              # SVG graphics for rune types (Fire, Frost, Poison, Void, Wind)
+├── assets/                 # Static assets (SVGs, sounds, images)
+│   ├── artefacts/
+│   ├── runes/
+│   ├── sounds/
+│   └── stats/
 ├── components/             # Reusable UI components (domain-agnostic)
+│   ├── ArtefactsRow.tsx
+│   ├── ArtefactsView.tsx
+│   ├── ClickSoundButton.tsx
+│   ├── FieldConfig.tsx
 │   ├── RuneAnimation.tsx
 │   ├── RuneCell.tsx
-│   ├── RuneToken.tsx
-│   └── VolumeControl.tsx
-├── features/
+│   ├── SettingsOverlay.tsx
+│   ├── SliderConfig.tsx
+│   ├── StatBadge.tsx
+│   ├── TooltipBubble.tsx
+│   ├── VolumeControl.tsx
+│   └── layout/
+│       ├── Button.tsx
+│       ├── Grid.tsx
+│       ├── index.ts
+│       └── Modal.tsx
+├── examples/               # Example / demo components or pages
+├── features/               # Feature-scoped UI (gameplay screens)
 │   └── gameplay/
 │       └── components/
-│           ├── Center/ (CenterPool, Runeforge, RuneTypeTotals)
+│           ├── Center/
+│           │   ├── GameMetadataView.tsx
+│           │   ├── Runeforge.tsx
+│           │   ├── RuneSelectionTable.tsx
+│           │   └── RuneTypeTotals.tsx
 │           ├── DeckDraftingModal.tsx
 │           ├── DeckOverlay.tsx
 │           ├── GameBoardFrame.tsx
+│           ├── OverloadOverlay.tsx
+│           ├── ProgressStatOverlay.tsx
+│           ├── RulesOverlay.tsx
 │           ├── SoloGameBoard.tsx
 │           ├── SoloGameOverModal.tsx
-│           ├── SoloRuneScoreOverlay.tsx
 │           ├── SoloStartScreen.tsx
-│           └── WallCell.tsx
+│           ├── SoloRuneScoreOverlay.tsx
+│           ├── WallCell.tsx
+│           └── Player/
+│               ├── CardView.tsx
+│               ├── PatternLines.tsx
+│               ├── PlayerBoard.tsx
+│               ├── ScoringWall.tsx
+│               └── StatsView.tsx
 ├── hooks/                  # Custom React hooks
-│   ├── useGameActions.ts   # Zustand action hooks
-│   └── useGameState.ts     # Zustand state selector hooks
-├── state/                  # Global state management
-│   └── gameStore.ts        # Main Zustand store (game state + actions)
-├── types/                  # TypeScript type definitions
-│   └── game.ts             # Core game domain types
+│   ├── useArcaneDustSound.ts
+│   ├── useBackgroundMusic.ts
+│   ├── useClickSound.ts
+│   ├── useGameActions.ts
+│   ├── useGameState.ts
+│   ├── useHealthChangeSound.ts
+│   ├── useRunePlacementAnimations.ts
+│   └── useRunePlacementSounds.ts
+├── routes/                 # Minimal route/screens
+│   ├── CampaignMap.tsx
+│   ├── DeckBuilder.tsx
+│   ├── Developer.tsx
+│   ├── MainMenu.tsx
+│   ├── Matchmaking.tsx
+│   ├── PostMatchRewards.tsx
+│   └── SoloStartScreen.tsx
+├── state/                  # Global state (Zustand stores)
+│   └── stores/
+│       ├── artefactStore.ts
+│       ├── gameplayStore.ts
+│       ├── index.ts
+│       └── uiStore.ts
+├── styles/                 # Style tokens and helpers
+│   ├── gradientButtonClasses.ts
+│   ├── tokens.ts
+│   └── uiClasses.ts
+├── systems/                # Game systems and side-effect orchestration
+├── types/                  # TypeScript definitions
+│   ├── artefacts.ts
+│   └── game.ts
 ├── utils/                  # Pure utility functions and game logic
+│   ├── arcaneDust.ts
+│   ├── artefactEffects.ts
+│   ├── artefactPersistence.ts
+│   ├── deckDrafting.ts
 │   ├── gameInitialization.ts
+│   ├── mixpanel.ts
+│   ├── overload.ts
+│   ├── patternLineHelpers.ts
+│   ├── runeCounting.ts
+│   ├── runeEffects.ts
 │   ├── runeHelpers.ts
-│   └── scoring.ts
-├── App.tsx                 # Root component for routing
+│   ├── scoring.ts
+│   ├── soloPersistence.ts
+│   └── tooltipCards.ts
+├── App.tsx                 # Root component
 ├── main.tsx                # Application entry point
 └── index.css               # Global styles (minimal)
 ```
 
 ### Placement Rules
 
+
 **`src/components/`**: Reusable, domain-agnostic UI components
-- ✅ `RuneCell`, `RuneToken`, `RuneAnimation` (generic rune display/animation)
-- ❌ `GameBoard`, `PatternLines`, `ScoringWall` (game-specific)
+- ✅ `RuneCell`, `RuneAnimation`, `VolumeControl` and other small UI pieces
+- ❌ Game-specific screens like `SoloGameBoard` or `ScoringWall`
 
 **`src/features/gameplay/components/`**: Game-specific UI components
-- ✅ `GameBoard`, `PlayerView`, `Runeforge`, `PatternLines`, `ScoringWall`
-- ✅ Overlay components (`DeckOverlay`, `RuneforgeOverlay`, etc.)
-- ❌ Reusable components unrelated to gameplay
+- ✅ `GameBoard`, `PlayerView`, `Runeforge`, `PatternLines`, `ScoringWall`, overlays
+- ✅ Player-centered components under `Player/` and center UI under `Center/`
 
-**`src/hooks/`**: Custom React hooks for state access and actions
-- ✅ `useGameState`, `useGameActions`, `useFactories`
-- ❌ Game logic (belongs in `src/utils/`)
+**`src/hooks/`**: Custom React hooks for state access, audio and action adapters
+- ✅ `useGameState`, `useGameActions`, audio hooks (e.g. `useClickSound`, `useBackgroundMusic`)
+- ❌ Game rules — those belong in `src/utils/`
 
-**`src/state/`**: Global state management (Zustand stores)
-- ✅ `gameStore.ts` (main game state + actions)
-- ❌ UI-only state (use component-level `useState`)
-- ❌ Derived state (use selectors in hooks)
+**`src/state/stores/`**: Global state management (Zustand stores)
+- ✅ `gameplayStore.ts`, `artefactStore.ts`, `uiStore.ts`, and an index aggregator
+- ❌ Storing non-serializable values or DOM refs in stores
 
 **`src/types/`**: TypeScript type definitions
 - ✅ Core domain types (`Rune`, `RuneType`, `RuneEffect`, `Player`, `GameState`, etc.)
-- ✅ Discriminated unions for game concepts
-- ❌ Component prop types (define inline or colocated with components)
+- ✅ Discriminated unions and explicit interfaces
 
 **`src/utils/`**: Pure functions and game logic
-- ✅ Scoring calculations, solo initialization, rune helpers
-- ✅ Pure functions with no React dependencies
-- ❌ UI components, hooks, or state management
+- ✅ Scoring calculations, rune helpers, deck/drafting logic, persistence helpers
+- ❌ React components, hooks, or direct DOM interactions
 
-**`src/assets/`**: Static assets (images, SVGs, fonts)
-- ✅ Rune SVG graphics (`fire.svg`, `frost.svg`, etc.)
-- ❌ Component files, logic, or styles
+**`src/assets/`**: Static assets (images, SVGs, audio). Keep these serialized and stable for builds.
+
 
 ---
 
@@ -189,7 +249,7 @@ export function ComponentName({ someProp, onAction }: ComponentNameProps) {
 
 **Discriminated Unions**: Use discriminated unions for game domain concepts:
 ```typescript
-export type RuneType = 'Fire' | 'Frost' | 'Poison' | 'Void' | 'Wind';
+export type RuneType = 'Fire' | 'Frost' | 'Poison' | 'Void' | 'Wind' | 'Lightning';
 
 export type RuneEffect =
   | { type: 'PlusOne'; target: 'placement' }
@@ -428,10 +488,11 @@ const fadeInUp = {
 **Rune Effects** (discriminated union):
 ```typescript
 type RuneEffect =
-  | { type: 'PlusOne'; target: 'placement' }  // Place +1 extra rune
-  | { type: 'Double'; target: 'scoring' }     // Double scoring points
-  | { type: 'MinusCost'; amount: number }     // Reduce cost by N
-  | { type: 'None' };                         // No effect
+  | { type: 'Damage'; amount: number; rarity: RuneEffectRarity } // Deals Damage
+  | { type: 'Healing'; amount: number; rarity: RuneEffectRarity } // Heals
+  | { type: 'Synergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity } // Deals damage for every other rune of synergyType in the segment
+  | { type: 'Fortune'; amount: number; rarity: RuneEffectRarity } // Adds Arcane Dust
+  | { type: 'Fragile'; amount: number; fragileType: RuneType; rarity: RuneEffectRarity } // Deals damage only if fragileType is not present in the segment
 ```
 
 **Game Structure**:
@@ -459,7 +520,7 @@ type TurnPhase = 'select' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 - Use `runeforge`, not `factory` (legacy term)
 - Use `wall`, not `grid` or `board`
 - Use `patternLines`, not `buildLines` or `staging`
-- Use `centerPool`, not `centerFactory` or `center`
+- Use `selectionTable`, not `centerPool`, `centerFactory` or `center`
 
 **Serializable State**: All game state must be serializable (no functions, class instances, DOM refs). This ensures future multiplayer/backend integration.
 
@@ -469,17 +530,30 @@ type TurnPhase = 'select' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
 ```typescript
 function handleEffect(effect: RuneEffect) {
   switch (effect.type) {
-    case 'PlusOne':
-      return handlePlusOne(effect.target);
-    case 'Double':
-      return handleDouble(effect.target);
-    case 'MinusCost':
-      return handleMinusCost(effect.amount);
-    case 'None':
-      return null;
-    default:
-      const _exhaustive: never = effect; // TypeScript error if case is missed
-      return _exhaustive;
+    case 'Damage':
+      damage += effect.amount;
+      break;
+    case 'Healing':
+      healing += effect.amount;
+      break;
+    case 'Synergy': {
+      // Add amount to damage for each synergyType rune in the segment
+      const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
+      damage += effect.amount * synergyCount;
+      break;
+    }
+    case 'Fortune':
+      // Add amount to arcane dust
+      arcaneDust += effect.amount;
+      break;
+    case 'Fragile': {
+      // Add amount to damage if the segment has no fragileType runes
+      const fragileTypeCount = runeTypeCounts.get(effect.fragileType) ?? 0;
+      if (fragileTypeCount === 0) {
+        damage += effect.amount;
+      }
+      break;
+    }
   }
 }
 ```
