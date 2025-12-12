@@ -4,6 +4,7 @@
  */
 
 import type { RuneEffects, RuneType, ScoringWall } from '../types/game';
+import { getRuneEffectsForType } from './runeEffects';
 
 const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 
@@ -65,56 +66,6 @@ export function collectSegmentCells(
 }
 
 /**
- * Collects the straight-line cross (row + column) that includes the target cell,
- * stopping when an empty cell is encountered in any direction.
- */
-function collectLineSegmentCells(
-  wall: ScoringWall,
-  row: number,
-  col: number
-): SegmentCell[] {
-  const wallSize = wall.length;
-  if (row < 0 || row >= wallSize || col < 0 || col >= wallSize) {
-    return [];
-  }
-
-  if (wall[row][col].runeType === null) {
-    return [];
-  }
-
-  const cellsByKey = new Map<string, SegmentCell>();
-
-  const addCell = (r: number, c: number) => {
-    const key = `${r}-${c}`;
-    if (!cellsByKey.has(key)) {
-      cellsByKey.set(key, { row: r, col: c, runeType: wall[r][c].runeType, effects: wall[r][c].effects });
-    }
-  };
-
-  // Walk horizontally (left and right) from the anchor
-  for (let c = col; c >= 0; c--) {
-    if (wall[row][c].runeType === null) break;
-    addCell(row, c);
-  }
-  for (let c = col + 1; c < wallSize; c++) {
-    if (wall[row][c].runeType === null) break;
-    addCell(row, c);
-  }
-
-  // Walk vertically (up and down) from the anchor
-  for (let r = row - 1; r >= 0; r--) {
-    if (wall[r][col].runeType === null) break;
-    addCell(r, col);
-  }
-  for (let r = row + 1; r < wallSize; r++) {
-    if (wall[r][col].runeType === null) break;
-    addCell(r, col);
-  }
-
-  return Array.from(cellsByKey.values());
-}
-
-/**
  * Calculate the size of the connected segment that includes a specific cell.
  * Counts all orthogonally-adjacent runes regardless of type; returns 0 if empty.
  */
@@ -132,6 +83,14 @@ export interface ResolvedSegment {
   healing: number;
   arcaneDust: number;
   orderedCells: SegmentCell[];
+  resolutionSteps: RuneResolutionStep[];
+}
+
+export interface RuneResolutionStep {
+  cell: SegmentCell;
+  damageDelta: number;
+  healingDelta: number;
+  arcaneDustDelta: number;
 }
 
 /**
@@ -144,26 +103,17 @@ export function resolveSegment(
   col: number
 ): ResolvedSegment {
   const connectedCells = collectSegmentCells(wall, row, col);
-  const effectCells = collectLineSegmentCells(wall, row, col);
-  return resolveSegmentFromCells(connectedCells, effectCells);
+  return resolveSegmentFromCells(connectedCells);
 }
 
-export function resolveSegmentFromCells(
-  connectedCells: SegmentCell[],
-  effectCells?: SegmentCell[]
-): ResolvedSegment {
+export function resolveSegmentFromCells(connectedCells: SegmentCell[]): ResolvedSegment {
   if (connectedCells.length === 0) {
-    return { segmentSize: 0, damage: 0, healing: 0, arcaneDust: 0, orderedCells: [] };
+    return { segmentSize: 0, damage: 0, healing: 0, arcaneDust: 0, orderedCells: [], resolutionSteps: [] };
   }
 
-  // Effects resolve along the scored line (row + column) to avoid pulling in
-  // the entire connected wall when large clusters exist.
-  const orderedEffectCells = [...(effectCells ?? connectedCells)].sort((a, b) =>
+  const orderedCells = [...connectedCells].sort((a, b) =>
     a.row === b.row ? a.col - b.col : a.row - b.row
   );
-  let damage = 0;
-  let healing = 0;
-  let arcaneDust = 0;
 
   // Count runes by type for Synergy and Fragile effects
   const runeTypeCounts = new Map<RuneType, number>();
@@ -173,9 +123,33 @@ export function resolveSegmentFromCells(
     }
   });
 
-  connectedCells.forEach((cell) => {
-    const effects = cell.effects ?? [];
-    effects.forEach((effect) => {
+  const resolutionSteps: RuneResolutionStep[] = orderedCells.map((cell) => {
+    const baseEffects = cell.runeType ? getRuneEffectsForType(cell.runeType) : [];
+    const providedEffects = cell.effects ?? [];
+    const filteredBaseEffects =
+      providedEffects.length > 0
+        ? baseEffects.filter((baseEffect) => {
+            if (baseEffect.type === 'Damage' || baseEffect.type === 'Healing') {
+              return !providedEffects.some(
+                (effect) =>
+                  effect.type === baseEffect.type &&
+                  'amount' in effect &&
+                  'amount' in baseEffect &&
+                  effect.amount === baseEffect.amount &&
+                  effect.rarity === baseEffect.rarity
+              );
+            }
+            return true;
+          })
+        : baseEffects;
+    const resolvedEffects: RuneEffects =
+      providedEffects.length > 0 ? [...filteredBaseEffects, ...providedEffects] : baseEffects;
+
+    let damage = 0;
+    let healing = 0;
+    let arcaneDust = 0;
+
+    resolvedEffects.forEach((effect) => {
       switch (effect.type) {
         case 'Damage':
           damage += effect.amount;
@@ -203,14 +177,31 @@ export function resolveSegmentFromCells(
         }
       }
     });
+
+    return {
+      cell,
+      damageDelta: damage,
+      healingDelta: healing,
+      arcaneDustDelta: arcaneDust,
+    };
   });
+
+  const totals = resolutionSteps.reduce(
+    (acc, step) => ({
+      damage: acc.damage + step.damageDelta,
+      healing: acc.healing + step.healingDelta,
+      arcaneDust: acc.arcaneDust + step.arcaneDustDelta,
+    }),
+    { damage: 0, healing: 0, arcaneDust: 0 }
+  );
 
   return {
     segmentSize: connectedCells.length,
-    damage,
-    healing,
-    arcaneDust,
-    orderedCells: orderedEffectCells,
+    damage: totals.damage,
+    healing: totals.healing,
+    arcaneDust: totals.arcaneDust,
+    orderedCells,
+    resolutionSteps,
   };
 }
 

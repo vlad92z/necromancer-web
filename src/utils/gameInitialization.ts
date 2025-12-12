@@ -316,6 +316,7 @@ export function initializeSoloGame(
     selectionTimestamp: null,
     draftSource: null,
     animatingRunes: [],
+    scoringSequence: null,
     pendingPlacement: null,
     overloadSoundPending: false,
     lockedPatternLines: {

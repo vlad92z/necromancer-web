@@ -133,28 +133,28 @@ describe('artefactEffects', () => {
 
   describe('Tome effect - modifySegmentResultWithTome', () => {
     it('should not modify segment when Tome is not active', () => {
-      const segment = { segmentSize: 1, damage: 10, healing: 5, arcaneDust: 0, orderedCells: [] };
+      const segment = { segmentSize: 1, damage: 10, healing: 5, arcaneDust: 0, orderedCells: [], resolutionSteps: [] };
       const result = modifySegmentResultWithTome(segment, false);
       expect(result.damage).toBe(10);
       expect(result.healing).toBe(5);
     });
 
     it('should multiply damage and healing by 10 for size-1 segments when Tome is active', () => {
-      const segment = { segmentSize: 1, damage: 10, healing: 5, arcaneDust: 0, orderedCells: [] };
+      const segment = { segmentSize: 1, damage: 10, healing: 5, arcaneDust: 0, orderedCells: [], resolutionSteps: [] };
       const result = modifySegmentResultWithTome(segment, true);
       expect(result.damage).toBe(100);
       expect(result.healing).toBe(50);
     });
 
     it('should not modify segments larger than 1 even when Tome is active', () => {
-      const segment = { segmentSize: 2, damage: 10, healing: 5, arcaneDust: 0, orderedCells: [] };
+      const segment = { segmentSize: 2, damage: 10, healing: 5, arcaneDust: 0, orderedCells: [], resolutionSteps: [] };
       const result = modifySegmentResultWithTome(segment, true);
       expect(result.damage).toBe(10);
       expect(result.healing).toBe(5);
     });
 
     it('should not modify size-3 segment when Tome is active', () => {
-      const segment = { segmentSize: 3, damage: 15, healing: 8, arcaneDust: 0, orderedCells: [] };
+      const segment = { segmentSize: 3, damage: 15, healing: 8, arcaneDust: 0, orderedCells: [], resolutionSteps: [] };
       const result = modifySegmentResultWithTome(segment, true);
       expect(result.damage).toBe(15);
       expect(result.healing).toBe(8);

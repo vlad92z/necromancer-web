@@ -54,6 +54,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   const pendingCellsRef = useRef<Set<string>>(new Set());
   const overlayRef = useRef<{ points: Map<string, OverlayPoint>; edges: Map<string, OverlayEdge> } | null>(null);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
+  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
 
   const wallSignature = useMemo(
     () => wall.map(row => row.map(cell => cell.runeType ?? '0').join(',')).join('|'),
@@ -295,6 +296,11 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
       return;
     }
 
+    if (scoringSequence) {
+      previousWallRef.current = wall;
+      return;
+    }
+
     const anchors: Array<{ row: number; col: number }> = [];
     for (let r = 0; r < wall.length; r++) {
       for (let c = 0; c < wall.length; c++) {
@@ -323,7 +329,22 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     } else {
       setPulseTargets(new Set());
     }
-  }, [wall, wallSignature]);
+  }, [scoringSequence, wall, wallSignature]);
+
+  useEffect(() => {
+    if (!scoringSequence || scoringSequence.activeIndex < 0) {
+      setPulseTargets(new Set());
+      return;
+    }
+
+    const activeStep = scoringSequence.steps[scoringSequence.activeIndex];
+    if (!activeStep) {
+      return;
+    }
+
+    setPulseTargets(new Set([cellKey(activeStep.row, activeStep.col)]));
+    setPulseKey((prev) => prev + 1);
+  }, [scoringSequence]);
 
   const gridSize = wall.length;
   const availableRuneTypes: RuneType[] = getRuneOrderForSize(gridSize);

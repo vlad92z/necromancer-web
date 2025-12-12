@@ -159,7 +159,7 @@ export function RuneCell({
   tooltipPlacement = 'top',
   runeOpacity = 1,
   runePulseKey,
-  runePulseScale = 1.12,
+  runePulseScale = 1.3,
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = RUNE_SIZE_CONFIG[size];

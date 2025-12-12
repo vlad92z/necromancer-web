@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
@@ -34,6 +34,12 @@ function withRuneforgeListDefaults(runeforges: Runeforge[]): Runeforge[] {
 
 function areRuneforgesDisabled(runeforges: Runeforge[]): boolean {
   return runeforges.every((runeforge) => (runeforge.disabled ?? false) || runeforge.runes.length === 0);
+}
+
+interface ScoringPlan {
+  steps: ScoringStep[];
+  sequenceId: number;
+  shouldEndRound: boolean;
 }
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
@@ -77,6 +83,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     runeforgeDraftStage: 'single' as const,
     selectedRunes: [],
     overloadRunes: [],
+    scoringSequence: null,
     selectionTimestamp: null,
     draftSource: null, 
     shouldTriggerEndRound: false,
@@ -119,6 +126,25 @@ function playCastSound(): void {
   const playPromise = audioElement.play();
   if (playPromise) {
     void playPromise.catch(() => {});
+  }
+}
+
+const SCORING_DELAY_BASE_MS = 420;
+const SCORING_DELAY_MIN_MS = 140;
+const SCORING_DELAY_DECAY_MS = 22;
+
+const scoringTimeoutRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
+
+function getRuneResolutionDelayMs(segmentSize: number): number {
+  const normalizedSize = Math.max(1, segmentSize);
+  const scaledDelay = SCORING_DELAY_BASE_MS - (normalizedSize - 1) * SCORING_DELAY_DECAY_MS;
+  return Math.max(SCORING_DELAY_MIN_MS, Math.round(scaledDelay));
+}
+
+function clearScoringTimeout(): void {
+  if (scoringTimeoutRef.current !== null) {
+    clearTimeout(scoringTimeoutRef.current);
+    scoringTimeoutRef.current = null;
   }
 }
 
@@ -193,6 +219,99 @@ function handlePlayerDefeat(
   };
 }
 
+function finalizeScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>['setState']): void {
+  clearScoringTimeout();
+  set((state) => {
+    if (!state.scoringSequence || state.scoringSequence.sequenceId !== plan.sequenceId) {
+      return state;
+    }
+
+    const nextRunePowerTotal = state.runePowerTotal;
+    let outcome: GameOutcome = state.outcome;
+
+    if (nextRunePowerTotal >= state.targetScore) {
+      const deckDraftState = enterDeckDraftMode({
+        ...state,
+        outcome: 'victory',
+        runePowerTotal: nextRunePowerTotal,
+        scoringSequence: null,
+        selectedRunes: [],
+        draftSource: null,
+        pendingPlacement: null,
+        animatingRunes: [],
+        shouldTriggerEndRound: false,
+      });
+      return deckDraftState;
+    }
+
+    const nextTurnPhase = plan.shouldEndRound ? ('end-of-round' as const) : ('select' as const);
+
+    return {
+      ...state,
+      outcome,
+      turnPhase: nextTurnPhase,
+      shouldTriggerEndRound: plan.shouldEndRound,
+      scoringSequence: null,
+    };
+  });
+}
+
+function runScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>['setState']): void {
+  clearScoringTimeout();
+
+  if (plan.steps.length === 0) {
+    finalizeScoringSequence(plan, set);
+    return;
+  }
+
+  const executeStep = (index: number) => {
+    const step = plan.steps[index];
+    playCastSound();
+
+    set((state) => {
+      if (!state.scoringSequence || state.scoringSequence.sequenceId !== plan.sequenceId) {
+        return state;
+      }
+
+      const maxHealth = state.player.maxHealth ?? state.startingHealth;
+      const nextHealth = Math.min(maxHealth, state.player.health + step.healingDelta);
+      const nextRunePowerTotal = state.runePowerTotal + step.damageDelta;
+      const nextScoringSequence: ScoringSequenceState = {
+        ...state.scoringSequence,
+        activeIndex: index,
+      };
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          health: nextHealth,
+        },
+        runePowerTotal: nextRunePowerTotal,
+        scoringSequence: nextScoringSequence,
+      };
+    });
+
+    if (step.arcaneDustDelta > 0) {
+      const newDustTotal = addArcaneDust(step.arcaneDustDelta);
+      useArtefactStore.getState().updateArcaneDust(newDustTotal);
+    }
+
+    const hasNextStep = index + 1 < plan.steps.length;
+    const delay = step.delayMs;
+
+    scoringTimeoutRef.current = setTimeout(() => {
+      if (hasNextStep) {
+        executeStep(index + 1);
+      } else {
+        finalizeScoringSequence(plan, set);
+      }
+    }, delay);
+  };
+
+  executeStep(0);
+}
+
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
   const nextStrain = getOverloadDamageForGame(state.game);
@@ -217,6 +336,7 @@ function prepareRoundReset(state: GameState): GameState {
         selectedRunes: [],
         selectionTimestamp: null,
         draftSource: null,
+        scoringSequence: null,
         pendingPlacement: null,
         animatingRunes: [],
         overloadSoundPending: false,
@@ -253,6 +373,7 @@ function prepareRoundReset(state: GameState): GameState {
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
+      scoringSequence: null,
       pendingPlacement: null,
       animatingRunes: [],
       overloadSoundPending: false,
@@ -288,6 +409,7 @@ function prepareRoundReset(state: GameState): GameState {
     selectedRunes: [],
     selectionTimestamp: null,
     draftSource: null,
+    scoringSequence: null,
     pendingPlacement: null,
     animatingRunes: [],
     overloadSoundPending: false,
@@ -762,6 +884,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   moveRunesToWall: () => {
+    let scoringPlan: ScoringPlan | null = null;
+
     set((state) => {
       if (state.turnPhase !== 'cast') {
         return state;
@@ -786,11 +910,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         };
       }
 
-      playCastSound();
-
-      let totalDamage = 0;
-      let totalHealing = 0;
-      let totalArcaneDust = 0;
+      const scoringSteps: ScoringStep[] = [];
 
       completedLines.forEach(({ line, index }) => {
         const runeType = line.runeType as RuneType;
@@ -808,14 +928,21 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         };
 
         const resolvedSegment = resolveSegment(updatedWall, index, col);
-        
-        // Apply artefact modifiers to damage and healing
-        const modifiedDamage = applyOutgoingDamageModifiers(resolvedSegment.damage, resolvedSegment.segmentSize, state);
-        const modifiedHealing = applyOutgoingHealingModifiers(resolvedSegment.healing, resolvedSegment.segmentSize, state);
-        
-        totalDamage += modifiedDamage;
-        totalHealing += modifiedHealing;
-        totalArcaneDust += resolvedSegment.arcaneDust;
+        const damageMultiplier = applyOutgoingDamageModifiers(1, resolvedSegment.segmentSize, state);
+        const healingMultiplier = applyOutgoingHealingModifiers(1, resolvedSegment.segmentSize, state);
+        const segmentDelay = getRuneResolutionDelayMs(resolvedSegment.segmentSize);
+
+        const segmentSteps = resolvedSegment.resolutionSteps.map((step) => ({
+          row: step.cell.row,
+          col: step.cell.col,
+          runeType: step.cell.runeType ?? runeType,
+          damageDelta: step.damageDelta * damageMultiplier,
+          healingDelta: step.healingDelta * healingMultiplier,
+          arcaneDustDelta: step.arcaneDustDelta,
+          delayMs: segmentDelay,
+        }));
+
+        scoringSteps.push(...segmentSteps);
 
         if (state.patternLineLock) {
           const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
@@ -825,60 +952,42 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         }
       });
 
-      let nextRunePowerTotal = state.runePowerTotal;
-      let outcome: GameOutcome = state.outcome;
-      let nextHealth = currentPlayer.health;
-
-      if (totalHealing > 0) {
-        const maxHealth = currentPlayer.maxHealth ?? state.startingHealth;
-        nextHealth = Math.min(maxHealth, nextHealth + totalHealing);
-      }
-
-      if (totalArcaneDust > 0) {
-        const newDustTotal = addArcaneDust(totalArcaneDust);
-        useArtefactStore.getState().updateArcaneDust(newDustTotal);
-      }
-
-      nextRunePowerTotal += totalDamage;
-        if (nextRunePowerTotal >= state.targetScore) {
-          outcome = 'victory';
-        }
-
-      const updatedPlayer = {
-        ...currentPlayer,
-        patternLines: updatedPatternLines,
-        wall: updatedWall,
-        health: nextHealth,
-      };
-
-      const victoryAchieved = outcome === 'victory';
-
-      if (victoryAchieved) {
-        return enterDeckDraftMode({
-          ...state,
-          player: updatedPlayer,
-          runePowerTotal: nextRunePowerTotal,
-          lockedPatternLines: updatedLockedPatternLines,
-          selectedRunes: [],
-          draftSource: null,
-          pendingPlacement: null,
-          animatingRunes: [],
-          shouldTriggerEndRound: false,
-        });
-      }
-
       const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+      const sequenceId = Date.now();
+      const scoringSequence = scoringSteps.length > 0
+        ? ({
+            steps: scoringSteps,
+            activeIndex: -1,
+            sequenceId,
+          } satisfies ScoringSequenceState)
+        : null;
+
+      scoringPlan = scoringSequence
+        ? {
+            steps: scoringSteps,
+            sequenceId,
+            shouldEndRound,
+          }
+        : null;
 
       return {
         ...state,
-        player: updatedPlayer,
-        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
-        shouldTriggerEndRound: shouldEndRound,
-        runePowerTotal: nextRunePowerTotal,
+        player: {
+          ...currentPlayer,
+          patternLines: updatedPatternLines,
+          wall: updatedWall,
+        },
+        turnPhase: scoringSequence ? ('scoring' as const) : shouldEndRound ? ('end-of-round' as const) : ('select' as const),
+        shouldTriggerEndRound: scoringSequence ? false : shouldEndRound,
+        scoringSequence,
         lockedPatternLines: updatedLockedPatternLines,
-        outcome: outcome,
+        outcome: state.outcome,
       };
     });
+
+    if (scoringPlan) {
+      runScoringSequence(scoringPlan, set);
+    }
   },
   
   draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
@@ -962,6 +1071,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   startSoloRun: (config?: Partial<RunConfig>) => {
+    clearScoringTimeout();
     set(() => {
       const baseState = initializeSoloGame(config);
       const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
@@ -985,6 +1095,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   prepareSoloMode: (config?: Partial<RunConfig>) => {
+    clearScoringTimeout();
     set(() => ({
       ...initializeSoloGame(config),
       gameStarted: false,
@@ -992,6 +1103,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   forceSoloVictory: () => {
+    clearScoringTimeout();
     set((state) => {
       if (state.turnPhase === 'deck-draft' || state.turnPhase === 'game-over') {
         return state;
@@ -1005,11 +1117,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         pendingPlacement: null,
         animatingRunes: [],
         shouldTriggerEndRound: false,
+        scoringSequence: null,
       });
     });
   },
 
   hydrateGameState: (nextState: GameState) => {
+    clearScoringTimeout();
     set((state) => {
       // const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
       // if (!shouldMerge) {
@@ -1047,6 +1161,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
+        scoringSequence: nextState.scoringSequence ?? null,
         runeScoreTargetIncrement:
           typeof nextState.runeScoreTargetIncrement === 'number'
             ? nextState.runeScoreTargetIncrement
@@ -1060,6 +1175,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   returnToStartScreen: () => {
+    clearScoringTimeout();
     set((state) => {
       // If the last run ended in defeat, ensure persisted state is cleared immediately
       if (state.outcome === 'defeat') {
@@ -1082,6 +1198,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
   
   resetGame: () => {
+    clearScoringTimeout();
     set(() => initializeSoloGame());
   },
 

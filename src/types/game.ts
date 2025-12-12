@@ -119,7 +119,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'select' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
+export type TurnPhase = 'select' | 'place' | 'cast' | 'scoring' | 'end-of-round' | 'deck-draft' | 'game-over';
 
 /**
  * Animation state for rune movement
@@ -134,6 +134,22 @@ export interface AnimatingRune {
   endY: number;
   size?: number;
   shouldDisappear?: boolean;
+}
+
+export interface ScoringStep {
+  row: number;
+  col: number;
+  runeType: RuneType;
+  damageDelta: number;
+  healingDelta: number;
+  arcaneDustDelta: number;
+  delayMs: number;
+}
+
+export interface ScoringSequenceState {
+  steps: ScoringStep[];
+  activeIndex: number;
+  sequenceId: number;
 }
 
 /**
@@ -180,6 +196,7 @@ export interface GameState {
     | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
+  scoringSequence: ScoringSequenceState | null; // Active scoring pulses/sequence
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
