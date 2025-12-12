@@ -10,8 +10,10 @@ import { RuneTypeTotals } from './RuneTypeTotals';
 import { GameMetadataView } from './GameMetadataView';
 import { Runeforge } from './Runeforge';
 import type { ArtefactId } from '../../../../types/artefacts';
+import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
+import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 
-interface DraftingTableProps {
+interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
@@ -47,10 +49,12 @@ export function RuneSelectionTable({
   strainValue,
   arcaneDust,
   activeArtefactIds,
-}: DraftingTableProps) {
+}: RuneSelectionTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const isGlobalDraftStage = runeforgeDraftStage === 'global';
   const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
+  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
 
   const computeGlobalHoverState = useCallback(
     (runeType: RuneType): Record<string, RuneType | null> => {
@@ -102,10 +106,43 @@ export function RuneSelectionTable({
     [centerPool, draftSource, runeforges, selectedRunes]
   );
 
-  const handleRuneMouseEnter = (runeforgeId: string, runeType: RuneType, selectionActive: boolean, disabled: boolean) => {
+  const computeSelectionRunes = useCallback(
+    (runeforgeId: string, runeType: RuneType): Rune[] => {
+      if (isGlobalDraftStage) {
+        return runeforges
+          .filter((forge) => !(forge.disabled ?? false))
+          .flatMap((forge) => forge.runes.filter((rune) => rune.runeType === runeType));
+      }
+
+      const runeforge = runeforges.find((forge) => forge.id === runeforgeId);
+      if (!runeforge || runeforge.disabled) {
+        return [];
+      }
+
+      return runeforge.runes.filter((rune) => rune.runeType === runeType);
+    },
+    [isGlobalDraftStage, runeforges]
+  );
+
+  const handleRuneMouseEnter = (
+    runeforgeId: string,
+    runeType: RuneType,
+    runeId: string,
+    selectionActive: boolean,
+    disabled: boolean
+  ) => {
     if (selectionActive || hasSelectedRunes || disabled) {
+      resetTooltipCards();
       return;
     }
+
+    const selectionRunes = computeSelectionRunes(runeforgeId, runeType);
+    if (selectionRunes.length > 0) {
+      setTooltipCards(buildRuneTooltipCards(selectionRunes, runeId));
+    } else {
+      resetTooltipCards();
+    }
+
     if (isGlobalDraftStage) {
       const hoverState = computeGlobalHoverState(runeType);
       setHoveredRuneTypeByRuneforge(hoverState);
@@ -115,6 +152,7 @@ export function RuneSelectionTable({
   };
 
   const handleRuneMouseLeave = (runeforgeId: string) => {
+    resetTooltipCards();
     if (isGlobalDraftStage) {
       setHoveredRuneTypeByRuneforge({});
       return;

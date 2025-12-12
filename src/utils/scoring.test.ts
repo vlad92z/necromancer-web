@@ -145,4 +145,40 @@ describe('scoring with new rune effects', () => {
       expect(result.arcaneDust).toBe(2);
     });
   });
+
+  describe('resolution steps', () => {
+    it('returns steps for each rune in reading order', () => {
+      const cells: SegmentCell[] = [
+        { row: 1, col: 0, runeType: 'Fire', effects: [{ type: 'Damage', amount: 2, rarity: 'uncommon' }] },
+        { row: 0, col: 1, runeType: 'Life', effects: [{ type: 'Healing', amount: 2, rarity: 'uncommon' }] },
+        { row: 0, col: 0, runeType: 'Wind', effects: [{ type: 'Fortune', amount: 1, rarity: 'uncommon' }] },
+      ];
+
+      const result = resolveSegmentFromCells(cells);
+      const stepOrder = result.resolutionSteps.map((step) => [step.cell.row, step.cell.col]);
+
+      expect(stepOrder).toEqual([
+        [0, 0],
+        [0, 1],
+        [1, 0],
+      ]);
+      expect(result.damage).toBe(4);
+      expect(result.healing).toBe(3);
+      expect(result.arcaneDust).toBe(1);
+    });
+
+    it('falls back to base rune effects when effects are missing', () => {
+      const cells: SegmentCell[] = [
+        { row: 0, col: 0, runeType: 'Fire', effects: null },
+        { row: 0, col: 1, runeType: 'Life', effects: null },
+      ];
+
+      const result = resolveSegmentFromCells(cells);
+
+      expect(result.damage).toBe(1);
+      expect(result.healing).toBe(1);
+      expect(result.resolutionSteps[0]?.damageDelta).toBe(1);
+      expect(result.resolutionSteps[1]?.healingDelta).toBe(1);
+    });
+  });
 });

@@ -10,7 +10,7 @@ interface ProgressStatOverlayProps {
   label: string;
   current: number;
   max: number;
-  showFraction?: boolean;
+  forcedDeltaIndicator?: { amount: number; key: number; type: 'gain' | 'loss' } | null;
   containerBorderColor: string;
   progressBackground: string;
   barClassName: string;
@@ -24,7 +24,7 @@ export function ProgressStatOverlay({
   label,
   current,
   max,
-  showFraction = false,
+  forcedDeltaIndicator = null,
   containerBorderColor,
   progressBackground,
   barClassName,
@@ -68,6 +68,14 @@ export function ProgressStatOverlay({
   }, [normalizedCurrent]);
 
   useEffect(() => {
+    if (!forcedDeltaIndicator) {
+      return;
+    }
+
+    setIndicator(forcedDeltaIndicator);
+  }, [forcedDeltaIndicator]);
+
+  useEffect(() => {
     if (!indicator) {
       return;
     }
@@ -106,7 +114,7 @@ export function ProgressStatOverlay({
             )}
           </AnimatePresence>
           <motion.span className={valueClass}>
-            {showFraction ? `${displayedValue} / ${fractionMax}` : displayedValue}
+            {`${displayedValue} / ${fractionMax}`}
           </motion.span>
         </div>
       </div>

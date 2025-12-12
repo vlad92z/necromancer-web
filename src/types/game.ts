@@ -12,7 +12,7 @@ export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning'
 /**
  * Rune effect modifiers
  */
-export type RuneEffectRarity = 'uncommon' | 'rare' | 'epic';
+export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 
 export type RuneEffect =
   | { type: 'Damage'; amount: number; rarity: RuneEffectRarity }
@@ -32,6 +32,19 @@ export interface Rune {
   effects: RuneEffects;
 }
 
+export type DeckDraftEffect =
+  | { type: 'heal'; amount: number }
+  | { type: 'maxHealth'; amount: number }
+  | { type: 'betterRunes'; rarityStep: number };
+
+export interface TooltipCard {
+  id: string;
+  runeType: RuneType;
+  title: string;
+  description: string;
+  imageSrc?: string;
+}
+
 /**
  * A runeforge containing runes to draft from
  */
@@ -39,6 +52,7 @@ export interface Runeforge {
   id: string;
   ownerId: Player['id'];
   runes: Rune[];
+  deckDraftEffect?: DeckDraftEffect;
   disabled?: boolean;
 }
 
@@ -111,7 +125,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'select' | 'place' | 'cast' | 'end-of-round' | 'deck-draft' | 'game-over';
+export type TurnPhase = 'select' | 'place' | 'cast' | 'scoring' | 'end-of-round' | 'deck-draft' | 'game-over';
 
 /**
  * Animation state for rune movement
@@ -128,6 +142,22 @@ export interface AnimatingRune {
   shouldDisappear?: boolean;
 }
 
+export interface ScoringStep {
+  row: number;
+  col: number;
+  runeType: RuneType;
+  damageDelta: number;
+  healingDelta: number;
+  arcaneDustDelta: number;
+  delayMs: number;
+}
+
+export interface ScoringSequenceState {
+  steps: ScoringStep[];
+  activeIndex: number;
+  sequenceId: number;
+}
+
 /**
  * Main game state
  */
@@ -142,6 +172,7 @@ export interface GameState {
   runeforges: Runeforge[];
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   runeforgeDraftStage: 'single' | 'global';
+  tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   /**
@@ -171,6 +202,7 @@ export interface GameState {
     | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
+  scoringSequence: ScoringSequenceState | null; // Active scoring pulses/sequence
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)

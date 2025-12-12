@@ -91,7 +91,7 @@ export function getDamageToScoreBonusWithRod(damage: number, hasRod: boolean): n
 }
 
 /**
- * Tome effect: Segments of size 1 deal 5× damage (rune score) and 5× healing
+ * Tome effect: Segments of size 1 deal 10× damage (rune score) and 10× healing
  */
 export function modifySegmentResultWithTome(
   segment: ResolvedSegment,
@@ -103,8 +103,8 @@ export function modifySegmentResultWithTome(
 
   return {
     ...segment,
-    damage: segment.damage * 5,
-    healing: segment.healing * 5,
+    damage: segment.damage * 10,
+    healing: segment.healing * 10,
   };
 }
 
@@ -121,7 +121,7 @@ export function applyOutgoingDamageModifiers(
   
   // Tome applies first (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    damage = damage * 5;
+    damage = damage * 10;
   }
   
   // Potion applies to final damage
@@ -145,7 +145,7 @@ export function applyOutgoingHealingModifiers(
   
   // Tome applies to healing (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    healing = healing * 5;
+    healing = healing * 10;
   }
   
   return healing;
@@ -182,7 +182,7 @@ export function getArtefactEffectDescription(artefactId: ArtefactId): string {
     rod: 'All damage taken is also added to Rune Score',
     potion: 'Double all damage dealt, but triple all damage taken',
     robe: 'Increase total picks by 1 during deck drafting',
-    tome: 'Segments of size 1 deal 5× damage and 5× healing',
+    tome: 'Segments of size 1 deal 10× damage and 10× healing',
   };
   
   return descriptions[artefactId];

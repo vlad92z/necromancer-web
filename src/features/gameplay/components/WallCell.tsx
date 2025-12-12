@@ -63,7 +63,7 @@ export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKe
           runeType: expectedRuneType,
         }}
         showEffect
-        showTooltip
+        showTooltip={false}
         runePulseKey={pulseKey}
       />
     </div>

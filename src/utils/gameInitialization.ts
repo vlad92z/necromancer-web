@@ -11,6 +11,7 @@ import type {
   Rune,
   RuneType,
   RunConfig,
+  TooltipCard,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 import { getOverloadDamageForGame } from './overload';
@@ -57,13 +58,13 @@ export function getRuneTypes(): RuneType[] {
 
 const DEFAULT_STARTING_STRAIN = getOverloadDamageForGame(1);
 const DEFAULT_STRAIN_MULTIPLIER = 2;
-const SOLO_TARGET_INCREMENT = 50;
+const SOLO_TARGET_INCREMENT = 25;
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
 const STARTING_HEALTH = 25;
 const FACTORIES_PER_PLAYER = 5;
 const DEFAULT_RUNES_PER_TYPE = 20;
-const DEFAULT_SOLO_TARGET_SCORE = 50;
-const DEFAULT_VICTORY_DRAFT_PICKS = 3;
+const DEFAULT_SOLO_TARGET_SCORE = 25;
+const DEFAULT_VICTORY_DRAFT_PICKS = 1;
 const DEFAULT_PATTERN_LINE_LOCK = true;
 
 export const DEFAULT_SOLO_CONFIG: RunConfig = {
@@ -152,6 +153,16 @@ export function createStartingDeck(
   });
   
   return deck;
+}
+
+export function createDefaultTooltipCards(): TooltipCard[] {
+  return [];
+  // return Array.from({ length: 5 }, (_, index) => ({
+  //   id: `life-rune-tooltip-${index + 1}`,
+  //   runeType: 'Life',
+  //   title: 'Life Rune',
+  //   description: 'Healing +3',
+  // }));
 }
 
 /**
@@ -299,11 +310,13 @@ export function initializeSoloGame(
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
     game: initialGameNumber,
+    tooltipCards: createDefaultTooltipCards(),
     selectedRunes: [],
     overloadRunes: [],
     selectionTimestamp: null,
     draftSource: null,
     animatingRunes: [],
+    scoringSequence: null,
     pendingPlacement: null,
     overloadSoundPending: false,
     lockedPatternLines: {

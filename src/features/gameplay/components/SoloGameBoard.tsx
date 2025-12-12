@@ -60,54 +60,45 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
 
   return (
     <div className="grid h-full relative" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
-      <div
-        className="p-6 flex items-center justify-center relative"
-      >
-        <div className="w-full h-full relative">
-          <RuneSelectionTable
-            runeforges={runeforges}
-            centerPool={centerPool}
-            onRuneClick={onRuneClick}
-            onCenterRuneClick={onCenterRuneClick}
-            isSelectionPhase={isSelectionPhase}
-            hasSelectedRunes={hasSelectedRunes}
-            selectedRunes={selectedRunes}
-            draftSource={draftSource}
-            runeforgeDraftStage={runeforgeDraftStage}
-            onCancelSelection={onCancelSelection}
-            animatingRuneIds={animatingRuneIds}
-            hiddenCenterRuneIds={hiddenCenterRuneIds}
-            runesPerRuneforge={runesPerRuneforge}
-            gameNumber={game}
-            strainValue={strain}
-            arcaneDust={arcaneDust}
-            activeArtefactIds={activeArtefactIds}
-          />
-        </div>
-      </div>
+      <RuneSelectionTable
+        runeforges={runeforges}
+        centerPool={centerPool}
+        onRuneClick={onRuneClick}
+        onCenterRuneClick={onCenterRuneClick}
+        isSelectionPhase={isSelectionPhase}
+        hasSelectedRunes={hasSelectedRunes}
+        selectedRunes={selectedRunes}
+        draftSource={draftSource}
+        runeforgeDraftStage={runeforgeDraftStage}
+        onCancelSelection={onCancelSelection}
+        animatingRuneIds={animatingRuneIds}
+        hiddenCenterRuneIds={hiddenCenterRuneIds}
+        runesPerRuneforge={runesPerRuneforge}
+        gameNumber={game}
+        strainValue={strain}
+        arcaneDust={arcaneDust}
+        activeArtefactIds={activeArtefactIds}
+      />
 
-      <div className="p-6 grid items-start justify-items-center gap-3.5" style={{ gridTemplateRows: '1fr auto' }}>
-        <div className="w-full h-full flex items-start justify-center">
-          <PlayerBoard
-            player={player}
-            onPlaceRunes={onPlaceRunes}
-            onPlaceRunesInFloor={onPlaceRunesInFloor}
-            selectedRuneType={selectedRuneType}
-            canPlace={hasSelectedRunes}
-            onCancelSelection={onCancelSelection}
-            lockedLineIndexes={playerLockedLines}
-            hiddenSlotKeys={playerHiddenPatternSlots}
-            runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }} //TODO?
-            deckCount={playerStats?.deckCount}
-            strain={playerStats?.overloadMultiplier}
-            overloadedRuneCount={playerStats?.overloadedRuneCount}
-            onOpenDeck={onOpenDeckOverlay}
-            onOpenOverload={onOpenOverloadOverlay}
-            onOpenSettings={onOpenSettings}
-          />
-        </div>
-      </div>
 
+      <PlayerBoard
+        player={player}
+        onPlaceRunes={onPlaceRunes}
+        onPlaceRunesInFloor={onPlaceRunesInFloor}
+        selectedRuneType={selectedRuneType}
+        canPlace={hasSelectedRunes}
+        onCancelSelection={onCancelSelection}
+        lockedLineIndexes={playerLockedLines}
+        hiddenSlotKeys={playerHiddenPatternSlots}
+        runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }} //TODO?
+        deckCount={playerStats?.deckCount}
+        strain={playerStats?.overloadMultiplier}
+        overloadedRuneCount={playerStats?.overloadedRuneCount}
+        onOpenDeck={onOpenDeckOverlay}
+        onOpenOverload={onOpenOverloadOverlay}
+        onOpenSettings={onOpenSettings}
+      />
+      {/* TODO: Cleanup */}
       {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && (
 
         <DeckDraftingModal

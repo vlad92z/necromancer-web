@@ -13,6 +13,7 @@ import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 
 const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
+  common: 0,
   uncommon: 1,
   rare: 5,
   epic: 25,
