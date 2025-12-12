@@ -68,11 +68,20 @@ export interface PatternLine {
 }
 
 /**
+ * Cell state for direct placement on spell wall
+ */
+export type WallCellState = 'Empty' | 'InProgress' | 'Completed';
+
+/**
  * A position in the scoring wall/grid
  */
 export interface WallCell {
-  runeType: RuneType | null; // null if empty
-  effects: RuneEffects | null; // Effects inherited from the pattern line's first rune
+  runeType: RuneType | null; // null if empty or InProgress with no primary rune yet
+  effects: RuneEffects | null; // Effects inherited from the primary rune
+  // New fields for direct placement model:
+  placedCount: number; // Number of runes placed in this cell
+  primaryRuneId: string | null; // ID of the primary (first) rune placed
+  locked: boolean; // Whether this cell is locked (cannot be interacted with)
 }
 
 /**

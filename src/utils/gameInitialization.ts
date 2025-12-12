@@ -28,7 +28,13 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
     .map(() =>
       Array(size)
         .fill(null)
-        .map(() => ({ runeType: null, effects: null }))
+        .map(() => ({
+          runeType: null,
+          effects: null,
+          placedCount: 0,
+          primaryRuneId: null,
+          locked: false,
+        }))
     );
 }
 
