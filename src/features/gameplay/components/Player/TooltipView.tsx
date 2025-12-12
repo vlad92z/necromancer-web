@@ -32,7 +32,7 @@ export function TooltipView() {
         return (
           <div
             key={card.id}
-            className="h-full transition-transform duration-200 ease-out"
+            className="h-full flex-shrink-0 transition-transform duration-200 ease-out"
             style={{
               marginLeft: index === 0 ? 0 : overlapOffset,
               zIndex: tooltipCards.length - index,
