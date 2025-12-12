@@ -16,6 +16,8 @@ import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForGame } from '../../utils/overload';
+import { getWallCellState, getRequiredRuneCount, isCellSelectable, updateRowLockStates, resetLockedCells } from '../../utils/wallCellHelpers';
+
 
 
 
@@ -289,15 +291,22 @@ function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
   const nextStrain = getOverloadDamageForGame(state.game);
   const clearedPlayer = clearFloorLines(state.player);
+  
+  // Reset locked cells in the wall
+  const playerWithResetWall = {
+    ...clearedPlayer,
+    wall: resetLockedCells(clearedPlayer.wall),
+  };
+  
   const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
-  const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
+  const playerHasEnough = playerWithResetWall.deck.length >= runesNeededForRound;
 
   if (!playerHasEnough) {
     const achievedTarget = state.runePowerTotal >= state.targetScore;
     if (achievedTarget) {
       return enterDeckDraftMode({
         ...state,
-        player: clearedPlayer,
+        player: playerWithResetWall,
         strain: nextStrain,
         startingStrain: nextStrain,
         runeforges: [],
@@ -305,7 +314,7 @@ function prepareRoundReset(state: GameState): GameState {
         runeforgeDraftStage: 'single',
         game: state.game,
         shouldTriggerEndRound: false,
-        lockedPatternLines: { [clearedPlayer.id]: [] },
+        lockedPatternLines: { [playerWithResetWall.id]: [] },
         selectedRunes: [],
         selectionTimestamp: null,
         draftSource: null,
@@ -321,18 +330,18 @@ function prepareRoundReset(state: GameState): GameState {
 
     trackDefeatEvent({
       gameNumber: state.game,
-      deck: clearedPlayer.deck,
+      deck: playerWithResetWall.deck,
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
       cause: 'deck-empty',
       strain: nextStrain,
-      health: clearedPlayer.health,
+      health: playerWithResetWall.health,
       targetScore: state.targetScore,
     });
 
     return {
       ...state,
-      player: clearedPlayer,
+      player: playerWithResetWall,
       strain: nextStrain,
       startingStrain: nextStrain,
       runeforges: [],
@@ -342,7 +351,7 @@ function prepareRoundReset(state: GameState): GameState {
       outcome: 'defeat' as GameOutcome,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
-      lockedPatternLines: { [clearedPlayer.id]: [] },
+      lockedPatternLines: { [playerWithResetWall.id]: [] },
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
@@ -354,16 +363,16 @@ function prepareRoundReset(state: GameState): GameState {
     };
   }
 
-  const emptyFactories = createSoloFactories(clearedPlayer, state.factoriesPerPlayer);
+  const emptyFactories = createSoloFactories(playerWithResetWall, state.factoriesPerPlayer);
   const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
     emptyFactories,
-    { [clearedPlayer.id]: clearedPlayer.deck },
+    { [playerWithResetWall.id]: playerWithResetWall.deck },
     state.runesPerRuneforge
   );
 
   const updatedPlayer: Player = {
-    ...clearedPlayer,
-    deck: decksByPlayer[clearedPlayer.id] ?? [],
+    ...playerWithResetWall,
+    deck: decksByPlayer[playerWithResetWall.id] ?? [],
   };
 
   return {
@@ -401,6 +410,7 @@ export interface GameplayStore extends GameState {
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
   draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void;
   placeRunes: (patternLineIndex: number) => void;
+  placeRunesOnWall: (row: number, col: number) => void; // New action for direct wall placement
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
@@ -652,6 +662,135 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
   };
 }
 
+/**
+ * Place selected runes directly on a wall cell (new direct placement model)
+ */
+function placeSelectionOnWallCell(state: GameplayStore, row: number, col: number): GameplayStore {
+  if (state.turnPhase !== 'place') {
+    return state;
+  }
+
+  const { selectedRunes } = state;
+  if (selectedRunes.length === 0) return state;
+
+  const currentPlayer = state.player;
+  const cell = currentPlayer.wall[row]?.[col];
+  
+  if (!cell) {
+    console.log(`Invalid cell position: row ${row}, col ${col}`);
+    return state;
+  }
+
+  const runeType = selectedRunes[0].runeType;
+  const requiredCount = getRequiredRuneCount(row);
+  
+  // Validate cell is selectable
+  if (!isCellSelectable(cell, row, runeType)) {
+    console.log(`Cell at row ${row}, col ${col} is not selectable`);
+    return state;
+  }
+
+  // Calculate how many runes can be placed
+  const availableSpace = requiredCount - cell.placedCount;
+  const runesToPlace = Math.min(selectedRunes.length, availableSpace);
+  const overflowRunes = selectedRunes.slice(runesToPlace);
+
+  // Determine primary rune and effects
+  const primaryRune = selectedRunes[0];
+  const nextPrimaryRuneId = cell.primaryRuneId ?? primaryRune.id;
+  const nextEffects = cell.effects ?? copyRuneEffects(primaryRune.effects);
+  const nextRuneType = cell.runeType ?? runeType;
+
+  // Update the wall cell
+  const updatedWall = currentPlayer.wall.map((rowCells, r) => 
+    r === row 
+      ? rowCells.map((c, colIndex) => 
+          colIndex === col 
+            ? {
+                ...c,
+                runeType: nextRuneType,
+                effects: nextEffects,
+                placedCount: c.placedCount + runesToPlace,
+                primaryRuneId: nextPrimaryRuneId,
+              }
+            : c
+        )
+      : rowCells
+  );
+
+  // Apply lock state updates
+  const wallWithLocks = updateRowLockStates(updatedWall);
+
+  // Handle overflow to floor
+  const updatedFloorLine = {
+    ...currentPlayer.floorLine,
+    runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
+  };
+
+  const overloadRunesPlaced = overflowRunes.length;
+  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state);
+
+  // Check if cell is now completed
+  const updatedCell = wallWithLocks[row][col];
+  const isCompleted = getWallCellState(updatedCell, row) === 'Completed';
+
+  const updatedPlayer = {
+    ...currentPlayer,
+    wall: wallWithLocks,
+    floorLine: updatedFloorLine,
+    health: nextHealth,
+  };
+
+  const nextCenterPool = getNextCenterPool(state);
+  const defeatedByOverload = nextHealth === 0;
+  if (defeatedByOverload) {
+    const defeatedState = handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+    return { ...state, ...defeatedState, selectionTimestamp: null };
+  }
+
+  const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
+  if (nextRunePowerTotal >= state.targetScore) {
+    const deckDraftReadyState = enterDeckDraftMode({
+      ...state,
+      player: updatedPlayer,
+      centerPool: nextCenterPool,
+      selectedRunes: [],
+      selectionTimestamp: null,
+      draftSource: null,
+      pendingPlacement: null,
+      animatingRunes: [],
+      shouldTriggerEndRound: false,
+      overloadSoundPending: overloadDamage > 0,
+      runePowerTotal: nextRunePowerTotal,
+    });
+
+    return { ...state, ...deckDraftReadyState, selectionTimestamp: null };
+  }
+
+  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+
+  const nextTurnPhase =
+    isCompleted
+      ? ('cast' as const)
+      : shouldEndRound
+        ? ('end-of-round' as const)
+        : ('select' as const);
+
+  return {
+    ...state,
+    player: updatedPlayer,
+    selectedRunes: [],
+    overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
+    selectionTimestamp: null,
+    draftSource: null,
+    centerPool: nextCenterPool,
+    turnPhase: nextTurnPhase,
+    shouldTriggerEndRound: isCompleted ? false : shouldEndRound,
+    overloadSoundPending: overloadDamage > 0,
+    runePowerTotal: state.runePowerTotal + scoreBonus,
+  };
+}
+
 function canPlaceSelectionOnAnyLine(state: GameplayStore): boolean {
   if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
     return false;
@@ -865,15 +1004,29 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
       const currentPlayer = state.player;
 
-      const updatedPatternLines = [...currentPlayer.patternLines];
       const updatedWall = currentPlayer.wall.map((row) => [...row]);
-      const updatedLockedPatternLines: Record<Player['id'], number[]> = { ...state.lockedPatternLines };
 
-      const completedLines = updatedPatternLines
-        .map((line, index) => ({ line, index }))
-        .filter(({ line }) => line.count === line.tier && line.runeType !== null);
+      // Find all completed cells (cells that have reached their required count)
+      const completedCells: Array<{ row: number; col: number; runeType: RuneType; effects: typeof currentPlayer.wall[0][0]['effects'] }> = [];
+      
+      updatedWall.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+          if (getWallCellState(cell, rowIndex) === 'Completed' && cell.runeType) {
+            // Only process if this cell was just completed (not already scored)
+            // We check if the cell already has a runeType set in the wall
+            // For the new model, completed cells should already be on the wall
+            // So we just need to trigger scoring for them
+            completedCells.push({
+              row: rowIndex,
+              col: colIndex,
+              runeType: cell.runeType,
+              effects: cell.effects,
+            });
+          }
+        });
+      });
 
-      if (completedLines.length === 0) {
+      if (completedCells.length === 0) {
         const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
 
         return {
@@ -885,22 +1038,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const scoringSteps: ScoringStep[] = [];
 
-      completedLines.forEach(({ line, index }) => {
-        const runeType = line.runeType as RuneType;
-        const wallSize = updatedWall.length;
-        const col = getWallColumnForRune(index, runeType, wallSize);
-        const effects = line.firstRuneEffects ?? getRuneEffectsForType(runeType);
-
-        updatedWall[index][col] = { runeType, effects: copyRuneEffects(effects) };
-        updatedPatternLines[index] = {
-          tier: line.tier,
-          runeType: null,
-          count: 0,
-          firstRuneId: null,
-          firstRuneEffects: null,
-        };
-
-        const resolvedSegment = resolveSegment(updatedWall, index, col);
+      completedCells.forEach(({ row, col, runeType, effects }) => {
+        // Note: In the new model, cells are already on the wall when completed
+        // We just need to trigger scoring effects
+        
+        const resolvedSegment = resolveSegment(updatedWall, row, col);
         const damageMultiplier = applyOutgoingDamageModifiers(1, resolvedSegment.segmentSize, state);
         const healingMultiplier = applyOutgoingHealingModifiers(1, resolvedSegment.segmentSize, state);
         const segmentDelay = getRuneResolutionDelayMs(resolvedSegment.segmentSize);
@@ -916,13 +1058,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         }));
 
         scoringSteps.push(...segmentSteps);
-
-        if (state.patternLineLock) {
-          const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
-          updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(index)
-            ? existingLocked
-            : [...existingLocked, index];
-        }
       });
 
       const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
@@ -947,13 +1082,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         player: {
           ...currentPlayer,
-          patternLines: updatedPatternLines,
           wall: updatedWall,
         },
         turnPhase: scoringSequence ? ('scoring' as const) : shouldEndRound ? ('end-of-round' as const) : ('select' as const),
         shouldTriggerEndRound: scoringSequence ? false : shouldEndRound,
         scoringSequence,
-        lockedPatternLines: updatedLockedPatternLines,
         outcome: state.outcome,
       };
     });
@@ -1001,6 +1134,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   
   placeRunes: (patternLineIndex: number) => {
     set((state) => placeSelectionOnPatternLine(state, patternLineIndex));
+  },
+  
+  placeRunesOnWall: (row: number, col: number) => {
+    set((state) => placeSelectionOnWallCell(state, row, col));
   },
   
   placeRunesInFloor: () => {
