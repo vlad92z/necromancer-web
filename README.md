@@ -9,7 +9,7 @@ A Roguelite deck-building game where players draft magical runes to cast spells 
 - **Zustand 5** for state
 - **Framer Motion 12** for animation
 - **React Router** for screens (main menu, solo, dev sandbox)
-- **Inline style objects** for styling
+- **Tailwind** for styling
 
 ## Quick Start
 
@@ -30,29 +30,34 @@ npm run lint
 
 ### Board & Setup
 - Board size 6x6 with 6 unique rune types.
-- The center pool opens once your personal runeforges are empty, carrying leftover runes forward.
+- 6 pattern lines of length 1-6.
+- 5 Runeforges.
+- Once each Runeforge has been selected from once, they become one shared pool.
 
-### Draft & Place (Actions)
-- On your turn, take all runes of one type from a runeforge (leftovers drop to the center).
-- Once all your Runeforges are empty - draft from the shared center pool.
-- Place all drafted runes on a single pattern line that is empty or already holds that type. You cannot place a rune type in a row where it already sits on your wall.
-- Overflow goes to the floor, damaging the player. This damage scales every round (strain).
+### Select & Place (Actions)
+- On your turn, take all runes of one type from a runeforge (leftovers stay in te runeforge).
+- Once all your Runeforges have been selected from - select from the remaining shared pool.
+- Place all selected runes on a single pattern line that is empty or already holds that type. You cannot place a rune type in a row where it already sits on your wall.
+- Overflow goes to the Overload Pile, damaging the player. This damage scales every Game throughout a run (strain).
 
 ### Segment Damage (instant scoring)
 - When a pattern line fills, the first rune jumps to your wall immediately and clears that line.
-- The placement deals instant damage (increase rune score) equal to the size of the connected segment it joins (orthogonal adjacency, minimum 1). Build dense clusters so every later placement hits harder.
+- The effects of every rune in the connected segment are resolved one by one. Build dense clusters so every later placement hits harder.
 
 ### Round End & Run Progression
-- A **Round** ends when all runeforges and the center are empty, then runeforges are repopulated from the player's deck.
+- A **Round** ends when all runeforges are empty, then runeforges are repopulated from the player's deck.
 - Resolve any end-of-round effects.
 - Unlock empty pattern lines.
-- Clears floor runes.
-- Strain (overload multiplier) grows each round.
 
+### Game End
 - A **Game** completes when the player reaches the target Rune Score and drafts new runes for their deck.
+- At this stage they can disenchant unwanted runes from their deck. Uncommon, Rare and Epic runes award Arcane Dust when disenchanting.
+- The next game will have higher overload damage and a higher target rune score.
+- Health is not restored to max between games.
 
+### Run End
 - A **Run** ends when the player dies (0 HP).
-- Game over triggers at 0 HP or when there are not enough runes to refill runeforges; Solo checks Rune Power against the target score when the deck runs dry.
+- Game over triggers at 0 HP or when there are not enough runes to refill runeforges;
 
 ## Project Structure
 
@@ -127,10 +132,6 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 ## Architecture Decision Records
 
 See `Agents.md` for detailed AI agent workflows and coding standards.
-
-See `ROUTING_IMPLEMENTATION.md` for routing architecture details.
-
-See `REFACTORING_COMPLETE.md` for state management refactoring history.
 
 ---
 

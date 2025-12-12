@@ -572,7 +572,7 @@ function handleEffect(effect: RuneEffect) {
 **Styling**:
 - Do not add CSS files (except minimal global styles)
 - Do not introduce CSS-in-JS libraries (styled-components, emotion, stitches, etc.)
-- Do not use Tailwind or utility class systems
+- Do not use utility class systems
 - Do not mix CSS animations and Framer Motion on the same element
 
 **Animations**:
@@ -587,8 +587,6 @@ function handleEffect(effect: RuneEffect) {
 **Architecture**:
 - Do not add libraries without explicit user approval
 - Do not introduce routing libraries (this is a single-page app)
-- Do not create meta-progression features (deck building, unlocks, boss selection)—out of scope
-- Do not implement backend integration or multiplayer—out of scope
 
 **TypeScript**:
 - Do not use `any` without documenting why it's necessary
@@ -603,7 +601,7 @@ function handleEffect(effect: RuneEffect) {
 
 The codebase should remain resilient to future features without requiring major refactors. Keep these potential expansions in mind:
 
-**Multiplayer State Syncing**:
+**State Syncing**:
 - Keep game state serializable (no closures, class instances, or DOM references)
 - All game actions should be deterministic (same input = same output)
 - State updates should be described as events (for replay/undo/network sync)
