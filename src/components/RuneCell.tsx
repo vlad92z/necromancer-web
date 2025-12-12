@@ -192,17 +192,6 @@ export function RuneCell({
   
   // Override border for healing runes on the wall
   const borderStyle = variantStyle.border;
-  
-  // Only animate wall placements; pattern/floor entries rely on RuneAnimation overlay
-  const shouldAnimate = usedVariant === 'wall' && Boolean(rune);
-  
-  const animationProps = shouldAnimate ? {
-    initial: { scale: 0, opacity: 0 } as const,
-    animate: { scale: 1, opacity: 1 } as const,
-    transition: { type: 'spring' as const, stiffness: 300, damping: 20 }
-  } : {};
-  
-  const Container = shouldAnimate ? motion.div : 'div';
 
   const handleMouseEnter = (e: MouseEvent<HTMLDivElement>) => {
     if (clickable) {
@@ -227,8 +216,7 @@ export function RuneCell({
     : { bottom: 'calc(100% + 8px)', top: 'auto' };
 
   return (
-    <Container
-      {...animationProps}
+    <div
       onClick={clickable ? onClick : undefined}
       style={{
         width: `${config.dimension}px`,
@@ -236,7 +224,7 @@ export function RuneCell({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: shouldAnimate ? undefined : TRANSITIONS.medium,
+        transition: TRANSITIONS.medium,
         borderRadius: `${RADIUS.md}px`,
         border: borderStyle,
         backgroundColor: backgroundColor,
@@ -314,6 +302,6 @@ export function RuneCell({
           {tooltipText}
         </div>
       )}
-    </Container>
+    </div>
   );
 }

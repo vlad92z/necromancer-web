@@ -11,6 +11,7 @@ interface ProgressStatOverlayProps {
   current: number;
   max: number;
   showFraction?: boolean;
+  forcedDeltaIndicator?: { amount: number; key: number; type: 'gain' | 'loss' } | null;
   containerBorderColor: string;
   progressBackground: string;
   barClassName: string;
@@ -25,6 +26,7 @@ export function ProgressStatOverlay({
   current,
   max,
   showFraction = false,
+  forcedDeltaIndicator = null,
   containerBorderColor,
   progressBackground,
   barClassName,
@@ -66,6 +68,14 @@ export function ProgressStatOverlay({
 
     previousValueRef.current = normalizedCurrent;
   }, [normalizedCurrent]);
+
+  useEffect(() => {
+    if (!forcedDeltaIndicator) {
+      return;
+    }
+
+    setIndicator(forcedDeltaIndicator);
+  }, [forcedDeltaIndicator]);
 
   useEffect(() => {
     if (!indicator) {

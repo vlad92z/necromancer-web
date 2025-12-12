@@ -10,8 +10,6 @@ import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
 import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
-import castSoundUrl from '../../assets/sounds/cast.mp3';
-import { useUIStore } from './uiStore';
 import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
 import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
@@ -103,30 +101,6 @@ let navigationCallback: (() => void) | null = null;
 
 export function setNavigationCallback(callback: (() => void) | null) {
   navigationCallback = callback;
-}
-
-const castAudioRef: { current: HTMLAudioElement | null } = { current: null };
-
-function playCastSound(): void {
-  if (typeof Audio === 'undefined') {
-    return;
-  }
-
-  if (!castAudioRef.current) {
-    castAudioRef.current = new Audio(castSoundUrl);
-  }
-
-  const audioElement = castAudioRef.current;
-  if (!audioElement) {
-    return;
-  }
-
-  audioElement.volume = useUIStore.getState().soundVolume;
-  audioElement.currentTime = 0;
-  const playPromise = audioElement.play();
-  if (playPromise) {
-    void playPromise.catch(() => {});
-  }
 }
 
 const SCORING_DELAY_BASE_MS = 420;
@@ -266,7 +240,6 @@ function runScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>['set
 
   const executeStep = (index: number) => {
     const step = plan.steps[index];
-    playCastSound();
 
     set((state) => {
       if (!state.scoringSequence || state.scoringSequence.sequenceId !== plan.sequenceId) {

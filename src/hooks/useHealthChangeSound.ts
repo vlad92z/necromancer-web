@@ -6,12 +6,13 @@ import damageSoundUrl from '../assets/sounds/damage.mp3';
 import healSoundUrl from '../assets/sounds/heal.mp3';
 import { useUIStore } from '../state/stores/uiStore';
 
-export function useHealthChangeSound(health: number): void {
+export function useHealthChangeSound(health: number, forcedHealSignal?: number | null): void {
   const soundVolume = useUIStore((state) => state.soundVolume);
   const previousHealthRef = useRef(health);
   const healAudioRef = useRef<HTMLAudioElement | null>(null);
   const damageAudioRef = useRef<HTMLAudioElement | null>(null);
   const volumeRef = useRef(soundVolume);
+  const forcedHealSignalRef = useRef<number | null>(forcedHealSignal ?? null);
 
   useEffect(() => {
     volumeRef.current = soundVolume;
@@ -64,4 +65,30 @@ export function useHealthChangeSound(health: number): void {
       void playPromise.catch(() => {});
     }
   }, [health]);
+
+  useEffect(() => {
+    if (forcedHealSignal === undefined || forcedHealSignal === null) {
+      return;
+    }
+    if (forcedHealSignalRef.current === forcedHealSignal) {
+      return;
+    }
+    forcedHealSignalRef.current = forcedHealSignal;
+
+    if (typeof Audio === 'undefined') {
+      return;
+    }
+
+    const audioElement = healAudioRef.current;
+    if (!audioElement) {
+      return;
+    }
+
+    audioElement.volume = volumeRef.current;
+    audioElement.currentTime = 0;
+    const playPromise = audioElement.play();
+    if (playPromise) {
+      void playPromise.catch(() => {});
+    }
+  }, [forcedHealSignal]);
 }

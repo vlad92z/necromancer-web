@@ -9,6 +9,7 @@ import { getRuneTypes } from './gameInitialization';
 import type { Runeforge } from '../types/game';
 import { modifyDraftRarityWithRing } from './artefactEffects';
 
+//TODO: What are all these for?
 const DEFAULT_DRAFT_PICK_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
