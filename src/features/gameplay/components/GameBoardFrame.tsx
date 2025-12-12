@@ -15,7 +15,6 @@ import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useClickSound } from '../../../hooks/useClickSound';
 import { useUIStore } from '../../../state/stores/uiStore';
-import type { PlayerStatsProps } from './Player/SoloStats';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
@@ -43,7 +42,13 @@ export interface GameBoardProps {
 export interface GameData {
   outcome: GameState['outcome'];
   runeScore: { currentScore: number; targetScore: number };
-  playerStats: PlayerStatsProps;
+  playerStats: {
+    isActive: boolean;
+    overloadMultiplier: number;
+    game: number;
+    deckCount: number;
+    overloadedRuneCount: number;
+  };
   targetScore: number;
   runePowerTotal: number;
   arcaneDust: number;

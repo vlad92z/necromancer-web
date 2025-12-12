@@ -1193,6 +1193,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const rarity = getRuneRarity(runeToRemove.effects);
       const rarityDustMap: Record<NonNullable<typeof rarity>, number> = {
+        common: 0,
         uncommon: 1,
         rare: 5,
         epic: 25,

@@ -14,11 +14,11 @@ let initialized = false
  * Initialize Mixpanel. Safe to call multiple times.
  * Reads token from `token` param or `import.meta.env.VITE_MIXPANEL_TOKEN`.
  */
-export function initMixpanel(token?: string) {
+export function initMixpanel() {
   if (typeof window === 'undefined') return
   if (initialized) return
 
-  const finalToken = token ?? MIXPANEL_TOKEN;
+  const finalToken = MIXPANEL_TOKEN ?? '150a8a103393d526b846dd7d68ce65fb';
   if (!finalToken) {
     console.warn('Mixpanel token not provided. Skipping Mixpanel initialization.')
   }

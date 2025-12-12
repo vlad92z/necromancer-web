@@ -51,7 +51,7 @@ export function buildArtefactTooltipCards(
   ).map(({ id }) => id);
 
   return orderedArtefacts
-    .map((artefactId, index) => {
+    .map<TooltipCard | null>((artefactId, index) => {
       const artefact = ARTEFACTS[artefactId];
       if (!artefact) {
         return null;
@@ -64,7 +64,7 @@ export function buildArtefactTooltipCards(
         imageSrc: artefact.image,
       };
     })
-    .filter((card): card is TooltipCard => Boolean(card));
+    .filter((card): card is TooltipCard => card !== null);
 }
 
 /**
