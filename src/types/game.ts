@@ -32,6 +32,11 @@ export interface Rune {
   effects: RuneEffects;
 }
 
+export type DeckDraftEffect =
+  | { type: 'heal'; amount: number }
+  | { type: 'maxHealth'; amount: number }
+  | { type: 'betterRunes'; rarityStep: number };
+
 export interface TooltipCard {
   id: string;
   runeType: RuneType;
@@ -47,6 +52,7 @@ export interface Runeforge {
   id: string;
   ownerId: Player['id'];
   runes: Rune[];
+  deckDraftEffect?: DeckDraftEffect;
   disabled?: boolean;
 }
 

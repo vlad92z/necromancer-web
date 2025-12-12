@@ -138,7 +138,6 @@ export function StatsView({
           label="Rune Score"
           current={runeScore.currentScore}
           max={runeScore.targetScore}
-          showFraction
           containerBorderColor="border-blue-500/35 shadow-[0_12px_28px_rgbargba(16,11,32,0.92)"
           progressBackground="bg-[rgba(128,193,255,0.18)]"
           barClassName="bg-gradient-to-r from-purple-500 to-sky-400 shadow-[0_8px_18px_rgba(129,140,248,0.35)]"

@@ -8,7 +8,7 @@ import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runefor
 import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
-import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge } from '../../utils/deckDrafting';
+import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
 import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
 import { useArtefactStore } from './artefactStore';
 import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
@@ -1234,6 +1234,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
 
       const deckTemplate = getSoloDeckTemplate(state);
+      const playerAfterEffect = applyDeckDraftEffectToPlayer(
+        state.player,
+        selectedRuneforge.deckDraftEffect,
+        state.startingHealth
+      );
       const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
       const nextDraftState = advanceDeckDraftState(
         state.deckDraftState,
@@ -1242,8 +1247,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         state.activeArtefacts
       );
       const updatedPlayer: Player = {
-        ...state.player,
-        deck: mergeDeckWithRuneforge(state.player.deck, selectedRuneforge),
+        ...playerAfterEffect,
+        deck: mergeDeckWithRuneforge(playerAfterEffect.deck, selectedRuneforge),
       };
 
       if (!nextDraftState) {

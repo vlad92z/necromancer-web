@@ -7,6 +7,7 @@ import { AnimatePresence, motion, animate, useMotionValue } from 'framer-motion'
 import type { DeckDraftState, Runeforge as RuneforgeType, Rune } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { useClickSound } from '../../../hooks/useClickSound';
+import { getDeckDraftEffectDescription } from '../../../utils/deckDrafting';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
 interface DeckDraftingModalProps {
@@ -327,6 +328,7 @@ export function DeckDraftingModal({
             {visibleRuneforges.map((runeforge) => {
               const isSelected = runeforge.id === selectedRuneforgeId;
               const animationState = getRuneforgeAnimationState(runeforge.id);
+              const effectDescription = getDeckDraftEffectDescription(runeforge.deckDraftEffect);
               return (
                 <motion.div
                   layout="position"
@@ -341,6 +343,11 @@ export function DeckDraftingModal({
                   }}
                 >
                   {renderRuneforgeRow(runeforge)}
+                  {effectDescription && (
+                    <div className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[0_0_28px_rgba(255,255,255,0.08)]">
+                      {effectDescription}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleSelect(runeforge)}

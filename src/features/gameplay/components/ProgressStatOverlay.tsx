@@ -10,7 +10,6 @@ interface ProgressStatOverlayProps {
   label: string;
   current: number;
   max: number;
-  showFraction?: boolean;
   forcedDeltaIndicator?: { amount: number; key: number; type: 'gain' | 'loss' } | null;
   containerBorderColor: string;
   progressBackground: string;
@@ -25,7 +24,6 @@ export function ProgressStatOverlay({
   label,
   current,
   max,
-  showFraction = false,
   forcedDeltaIndicator = null,
   containerBorderColor,
   progressBackground,
@@ -116,7 +114,7 @@ export function ProgressStatOverlay({
             )}
           </AnimatePresence>
           <motion.span className={valueClass}>
-            {showFraction ? `${displayedValue} / ${fractionMax}` : displayedValue}
+            {`${displayedValue} / ${fractionMax}`}
           </motion.span>
         </div>
       </div>

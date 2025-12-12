@@ -2,7 +2,7 @@
  * DeckDrafting utilities - helpers for post-victory deck upgrades
  */
 
-import type { DeckDraftState, Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { DeckDraftEffect, DeckDraftState, Player, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import type { ArtefactId } from '../types/artefacts';
 import { getDraftEffectsForType } from './runeEffects';
 import { getRuneTypes } from './gameInitialization';
@@ -18,6 +18,28 @@ const BASE_EPIC_CHANCE = 0;
 const BASE_RARE_CHANCE = 0;
 const EPIC_INCREMENT_PER_WIN = 1;
 const RARE_INCREMENT_PER_WIN = 5;
+
+const DECK_DRAFT_EFFECTS: DeckDraftEffect[] = [
+  { type: 'heal', amount: 15 },
+  { type: 'maxHealth', amount: 5 },
+  { type: 'betterRunes', rarityStep: 1 },
+];
+
+const RARITY_SEQUENCE: RuneEffectRarity[] = ['common', 'uncommon', 'rare', 'epic'];
+
+function getDeckDraftEffectForIndex(index: number): DeckDraftEffect {
+  const effectIndex = index % DECK_DRAFT_EFFECTS.length;
+  return DECK_DRAFT_EFFECTS[effectIndex];
+}
+
+function boostRarity(rarity: RuneEffectRarity, steps: number = 1): RuneEffectRarity {
+  const currentIndex = RARITY_SEQUENCE.indexOf(rarity);
+  if (currentIndex === -1) {
+    return rarity;
+  }
+  const boostedIndex = Math.min(RARITY_SEQUENCE.length - 1, currentIndex + steps);
+  return RARITY_SEQUENCE[boostedIndex];
+}
 
 function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): RuneEffectRarity {
   const baseEpicChance = Math.min(100, BASE_EPIC_CHANCE + winStreak * EPIC_INCREMENT_PER_WIN);
@@ -41,8 +63,7 @@ function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): 
   return 'uncommon';
 }
 
-const createDraftRune = (ownerId: string, runeType: RuneType, index: number, winStreak: number, activeArtefacts: ArtefactId[] = []): Rune => {
-  const rarity = getDraftRarity(winStreak - 1, activeArtefacts);
+const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rarity: RuneEffectRarity): Rune => {
   return {
     id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
     runeType,
@@ -62,16 +83,21 @@ function createDraftRuneforges(
   return Array(runeforgeCount)
     .fill(null)
     .map((_, forgeIndex) => {
+      const deckDraftEffect = getDeckDraftEffectForIndex(forgeIndex);
       const runes: Rune[] = [];
       for (let i = 0; i < runesPerRuneforge; i++) {
         const runeType = runeTypes[Math.floor(Math.random() * runeTypes.length)];
-        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i, winStreak, activeArtefacts));
+        const baseRarity = getDraftRarity(winStreak - 1, activeArtefacts);
+        const shouldBoostRarity = deckDraftEffect.type === 'betterRunes' && i === 0;
+        const rarity = shouldBoostRarity ? boostRarity(baseRarity, deckDraftEffect.rarityStep) : baseRarity;
+        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i, rarity));
       }
 
       return {
         id: `${ownerId}-draft-forge-${forgeIndex + 1}`,
         ownerId,
         runes,
+        deckDraftEffect,
       };
     });
 }
@@ -121,4 +147,45 @@ export function advanceDeckDraftState(
 
 export function mergeDeckWithRuneforge(deck: Rune[], selectedRuneforge: Runeforge): Rune[] {
   return [...deck, ...selectedRuneforge.runes];
+}
+
+export function applyDeckDraftEffectToPlayer(
+  player: Player,
+  effect: DeckDraftEffect | undefined,
+  startingHealth: number
+): Player {
+  if (!effect) {
+    return player;
+  }
+
+  const currentMaxHealth = player.maxHealth ?? startingHealth;
+
+  switch (effect.type) {
+    case 'heal': {
+      const nextHealth = Math.min(currentMaxHealth, player.health + effect.amount);
+      return { ...player, health: nextHealth };
+    }
+    case 'maxHealth': {
+      const boostedMaxHealth = currentMaxHealth + effect.amount;
+      const clampedHealth = Math.min(boostedMaxHealth, player.health);
+      return { ...player, maxHealth: boostedMaxHealth, health: clampedHealth };
+    }
+    case 'betterRunes':
+      return player;
+  }
+}
+
+export function getDeckDraftEffectDescription(effect: DeckDraftEffect | undefined): string {
+  if (!effect) {
+    return '';
+  }
+
+  switch (effect.type) {
+    case 'heal':
+      return `Heal ${effect.amount} health`;
+    case 'maxHealth':
+      return `+${effect.amount} max health`;
+    case 'betterRunes':
+      return 'Better Runes';
+  }
 }
