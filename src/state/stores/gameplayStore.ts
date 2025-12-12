@@ -201,7 +201,7 @@ function finalizeScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>
     }
 
     const nextRunePowerTotal = state.runePowerTotal;
-    let outcome: GameOutcome = state.outcome;
+    const outcome: GameOutcome = state.outcome;
 
     if (nextRunePowerTotal >= state.targetScore) {
       const deckDraftState = enterDeckDraftMode({
