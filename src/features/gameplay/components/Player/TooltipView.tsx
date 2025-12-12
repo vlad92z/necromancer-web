@@ -23,7 +23,7 @@ const RUNE_CARD_IMAGES: Record<RuneType, string> = {
 
 export function TooltipView() {
   const tooltipCards = useGameplayStore((state) => state.tooltipCards);
-  const overlapOffset = -100;
+  const overlapOffset = -(tooltipCards.length * 20);
 
   return (
     <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
