@@ -11,7 +11,6 @@ interface ProgressStatOverlayProps {
   current: number;
   max: number;
   forcedDeltaIndicator?: { amount: number; key: number; type: 'gain' | 'loss' } | null;
-  containerBorderColor: string;
   progressBackground: string;
   barClassName: string;
   valueColor: string;
@@ -25,7 +24,6 @@ export function ProgressStatOverlay({
   current,
   max,
   forcedDeltaIndicator = null,
-  containerBorderColor,
   progressBackground,
   barClassName,
   valueColor = 'text-slate-100',
@@ -94,7 +92,7 @@ export function ProgressStatOverlay({
   const fractionMax = max;
 
   return (
-    <div className={`w-full flex flex-col gap-2 py-3 px-3.5 rounded-[16px] border ${containerBorderColor}`}>
+    <div className={`w-full flex flex-col gap-2 py-3 px-3.5`}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">{label}</div>
         <div className="flex items-center gap-2 min-w-[120px] justify-end">

@@ -71,7 +71,6 @@ export interface GameBoardSharedProps {
   strain: number;
   isSelectionPhase: boolean;
   isGameOver: boolean;
-  activeArtefactIds: GameState['activeArtefacts'];
   runesPerRuneforge: number;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
 
@@ -116,7 +115,6 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
     draftSource,
     strain,
     soloDeckTemplate,
-    activeArtefacts,
     overloadRunes,
   } = gameState;
   const currentGame = useGameplayStore((state) => state.game);
@@ -323,7 +321,6 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       strain,
       isSelectionPhase: isSelectionPhase,
       isGameOver,
-      activeArtefactIds: activeArtefacts,
       runesPerRuneforge,
       runeforgeDraftStage,
       selectedRuneType,
@@ -344,7 +341,6 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
       returnToStartScreen,
     }),
     [
-      activeArtefacts,
       animatingRuneIds,
       centerPool,
       currentGame,

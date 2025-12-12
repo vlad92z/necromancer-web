@@ -7,9 +7,7 @@ import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../.
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
-import { GameMetadataView } from './GameMetadataView';
 import { Runeforge } from './Runeforge';
-import type { ArtefactId } from '../../../../types/artefacts';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 
@@ -28,27 +26,22 @@ interface RuneSelectionTableProps {
   hideOpponentRow?: boolean;
   runesPerRuneforge: number;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
-  gameNumber: number;
-  strainValue: number;
-  arcaneDust?: number;
-  activeArtefactIds: ArtefactId[];
 }
 
-export function RuneSelectionTable({ 
-  runeforges, 
-  centerPool, 
+export function RuneSelectionTable({
+  runeforges,
+  centerPool,
   onRuneClick,
+  onCenterRuneClick,
+  isSelectionPhase,
   hasSelectedRunes,
   selectedRunes,
   draftSource,
   onCancelSelection,
   animatingRuneIds,
+  hiddenCenterRuneIds,
   runesPerRuneforge,
   runeforgeDraftStage,
-  gameNumber,
-  strainValue,
-  arcaneDust,
-  activeArtefactIds,
 }: RuneSelectionTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const isGlobalDraftStage = runeforgeDraftStage === 'global';
@@ -168,12 +161,6 @@ export function RuneSelectionTable({
 
   return (
     <div className="h-full w-full flex flex-col justify-start gap-4 p-[min(1.2vmin,16px)]" onClick={handleDraftingTableClick}>
-      <GameMetadataView
-        gameNumber={gameNumber}
-        strainValue={strainValue}
-        arcaneDust={arcaneDust}
-        activeArtefactIds={activeArtefactIds}
-      />
       <div className="flex-1 flex flex-col items-center justify-center gap-[14px] w-full">
         {runeforges.map((runeforge) => (
           <Runeforge
