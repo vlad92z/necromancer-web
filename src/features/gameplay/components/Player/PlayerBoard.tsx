@@ -1,9 +1,8 @@
 /**
- * PlayerBoard component - displays a player's board (pattern lines, wall, floor line)
+ * PlayerBoard component - displays a player's board (wall, floor line)
  */
 
 import type { Player, RuneType } from '../../../../types/game';
-import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { StatsView } from './StatsView';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
@@ -11,14 +10,14 @@ import { TooltipView } from './TooltipView';
 
 interface PlayerBoardProps {
   player: Player;
-  onPlaceRunes?: (patternLineIndex: number) => void;
-  onPlaceRunesOnWall?: (row: number, col: number) => void; // New handler for direct wall placement
+  onPlaceRunes?: (patternLineIndex: number) => void; // Kept for compatibility, unused
+  onPlaceRunesOnWall?: (row: number, col: number) => void;
   onPlaceRunesInFloor?: () => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
-  lockedLineIndexes?: number[];
-  hiddenSlotKeys?: Set<string>;
+  lockedLineIndexes?: number[]; // Kept for compatibility, unused
+  hiddenSlotKeys?: Set<string>; // Kept for compatibility, unused
   runeScore: {
     currentScore: number;
     targetScore: number;
@@ -33,14 +32,11 @@ interface PlayerBoardProps {
 
 export function PlayerBoard({
   player,
-  onPlaceRunes,
   onPlaceRunesOnWall,
   onPlaceRunesInFloor,
   selectedRuneType,
   canPlace,
   onCancelSelection,
-  lockedLineIndexes,
-  hiddenSlotKeys,
   runeScore,
   deckCount,
   strain,
@@ -92,22 +88,6 @@ export function PlayerBoard({
           </div>
           <div className="shrink-0">
             <div className="grid grid-cols-1 items-start gap-[min(1.2vmin,14px)]">
-              {/* Pattern Lines - Hidden for now, will be removed */}
-              {false && (
-                <div className="col-start-1" onClick={(e) => e.stopPropagation()}>
-                  <PatternLines
-                    patternLines={player.patternLines}
-                    wall={player.wall}
-                    onPlaceRunes={onPlaceRunes}
-                    selectedRuneType={selectedRuneType}
-                    canPlace={canPlace}
-                    playerId={player.id}
-                    hiddenSlotKeys={hiddenSlotKeys}
-                    lockedLineIndexes={lockedLineIndexes}
-                  />
-                </div>
-              )}
-
               {/* Wall - Now the primary placement target */}
               <div className="flex flex-col items-center gap-[min(0.7vmin,12px)]">
                 <ScoringWall 

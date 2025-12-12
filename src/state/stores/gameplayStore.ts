@@ -1006,16 +1006,15 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const updatedWall = currentPlayer.wall.map((row) => [...row]);
 
-      // Find all completed cells (cells that have reached their required count)
+      // Find all completed cells that need scoring
+      // Note: In the direct placement model, cells transition to Completed state
+      // immediately when enough runes are placed. The 'cast' phase is triggered
+      // to run scoring for these already-completed cells on the wall.
       const completedCells: Array<{ row: number; col: number; runeType: RuneType; effects: typeof currentPlayer.wall[0][0]['effects'] }> = [];
       
       updatedWall.forEach((row, rowIndex) => {
         row.forEach((cell, colIndex) => {
           if (getWallCellState(cell, rowIndex) === 'Completed' && cell.runeType) {
-            // Only process if this cell was just completed (not already scored)
-            // We check if the cell already has a runeType set in the wall
-            // For the new model, completed cells should already be on the wall
-            // So we just need to trigger scoring for them
             completedCells.push({
               row: rowIndex,
               col: colIndex,

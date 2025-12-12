@@ -128,6 +128,26 @@ export function ScoringWall({ wall, patternLines, onPlaceRunes, selectedRuneType
 
   const handleWallCellEnter = useCallback(
     (rowIndex: number, colIndex: number) => {
+      const cell = wall[rowIndex]?.[colIndex];
+      if (!cell) {
+        resetTooltipCards();
+        return;
+      }
+      
+      const cellState = getWallCellState(cell, rowIndex);
+      
+      // For InProgress cells, show the tooltip with what will be in the segment when completed
+      if (cellState === 'InProgress' && cell.runeType && cell.effects) {
+        const tooltipRune = {
+          id: `wall-${rowIndex}-${colIndex}`,
+          runeType: cell.runeType,
+          effects: cell.effects,
+        };
+        setTooltipCards(buildRuneTooltipCards([tooltipRune], tooltipRune.id));
+        return;
+      }
+      
+      // For Completed cells, show the full connected segment
       const segmentCells = collectSegmentCells(wall, rowIndex, colIndex);
       if (segmentCells.length === 0) {
         resetTooltipCards();
