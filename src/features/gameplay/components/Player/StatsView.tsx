@@ -124,6 +124,23 @@ export function StatsView({
       onClick={(event) => event.stopPropagation()}
     >
       <div className="flex flex-row gap-[min(0.8vmin,10px)] w-full">
+        <div
+          className="inline-flex"
+          data-player-id={playerId}
+          data-strain-counter="true"
+        >
+          <StatBadge
+            label="Overloaded Runes"
+            value={overloadedRuneCount}
+            color="#fa6060ff"
+            borderColor="rgba(96, 165, 250, 0.35)"
+            tooltip={overloadTooltip}
+            image={overloadSvg}
+            onClick={onStrainClick}
+            canOverload={canOverload}
+            onTooltipToggle={handleOverloadTooltipToggle}
+          />
+        </div>
         <StatBadge
           label="Deck"
           value={deckRemaining}
@@ -135,37 +152,6 @@ export function StatsView({
           onTooltipToggle={handleDeckTooltipToggle}
         />
         <ProgressStatOverlay
-          label="Rune Score"
-          current={runeScore.currentScore}
-          max={runeScore.targetScore}
-          containerBorderColor="border-blue-500/35 shadow-[0_12px_28px_rgbargba(16,11,32,0.92)"
-          progressBackground="bg-[rgba(128,193,255,0.18)]"
-          barClassName="bg-gradient-to-r from-purple-500 to-sky-400 shadow-[0_8px_18px_rgba(129,140,248,0.35)]"
-          valueColor="text-yellow-400"
-          deltaGainClassName="text-sky-200 text-sm font-bold drop-shadow-[0_0_8px_rgba(125,211,252,0.55)]"
-        />
-      </div>
-      <div className="flex flex-row gap-[min(0.8vmin,10px)] w-full">
-        <div data-strain-column>
-          <div
-            className="inline-flex"
-            data-player-id={playerId}
-            data-strain-counter="true"
-          >
-            <StatBadge
-              label="Overloaded Runes"
-              value={overloadedRuneCount}
-              color="#fa6060ff"
-              borderColor="rgba(96, 165, 250, 0.35)"
-              tooltip={overloadTooltip}
-              image={overloadSvg}
-              onClick={onStrainClick}
-              canOverload={canOverload}
-              onTooltipToggle={handleOverloadTooltipToggle}
-            />
-          </div>
-        </div>
-        <ProgressStatOverlay
           label="Health"
           current={clampedHealth}
           max={maxHealth}
@@ -176,6 +162,16 @@ export function StatsView({
           valueColor="text-red-500"
           deltaGainClassName="text-emerald-300 text-sm font-bold drop-shadow-[0_0_10px_rgba(52,211,153,0.45)]"
           deltaLossClassName="text-rose-300 text-sm font-bold drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]"
+        />
+        <ProgressStatOverlay
+          label="Rune Score"
+          current={runeScore.currentScore}
+          max={runeScore.targetScore}
+          containerBorderColor="border-blue-500/35 shadow-[0_12px_28px_rgbargba(16,11,32,0.92)"
+          progressBackground="bg-[rgba(128,193,255,0.18)]"
+          barClassName="bg-gradient-to-r from-purple-500 to-sky-400 shadow-[0_8px_18px_rgba(129,140,248,0.35)]"
+          valueColor="text-yellow-400"
+          deltaGainClassName="text-sky-200 text-sm font-bold drop-shadow-[0_0_8px_rgba(125,211,252,0.55)]"
         />
       </div>
     </div>
