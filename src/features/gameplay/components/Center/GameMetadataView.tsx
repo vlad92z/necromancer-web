@@ -9,7 +9,6 @@ import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { StatBadge } from '../../../../components/StatBadge';
-import { ProgressStatOverlay } from '../ProgressStatOverlay';
 import { RuneScoreView } from '../RuneScoreView';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
@@ -292,6 +291,7 @@ export function GameMetadataView({
         <HealthView
           health={clampedHealth}
           maxHealth={maxHealth}
+          armor={armor}
         />
         <RuneScoreView
           score={runeScore.currentScore}

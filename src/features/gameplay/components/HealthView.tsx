@@ -9,93 +9,156 @@ type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 interface HealthViewProps {
   health: number;
   maxHealth: number;
+  armor: number;
 }
 
 
 export function HealthView({
   health,
-  maxHealth
+  maxHealth,
+  armor
 }: HealthViewProps) {
   const progress = Math.min(1, health / maxHealth);
   const progressPercent = Math.round(progress * 100);
-  const previousValueRef = useRef(health);
+  const previousHealthRef = useRef(health);
+  const previousArmorRef = useRef(armor);
   const sequenceRef = useRef(0);
-  const [indicator, setIndicator] = useState<DeltaIndicator | null>(null);
-  const animatedValue = useMotionValue(health);
-  const [displayedValue, setDisplayedValue] = useState(health);
-  useMotionValueEvent(animatedValue, 'change', (value) => {
-    setDisplayedValue(Math.round(value));
+  const [healthIndicator, setHealthIndicator] = useState<DeltaIndicator | null>(null);
+  const [armorIndicator, setArmorIndicator] = useState<DeltaIndicator | null>(null);
+  const animatedHealth = useMotionValue(health);
+  const animatedArmor = useMotionValue(armor);
+  const [displayedHealth, setDisplayedHealth] = useState(health);
+  const [displayedArmor, setDisplayedArmor] = useState(armor);
+  useMotionValueEvent(animatedHealth, 'change', (value) => {
+    setDisplayedHealth(Math.round(value));
+  });
+  useMotionValueEvent(animatedArmor, 'change', (value) => {
+    setDisplayedArmor(Math.round(value));
   });
 
   const deltaGainClassName = 'text-emerald-300 text-sm font-bold';
   const deltaLossClassName = "text-rose-300 text-sm font-bold";
-  let deltaIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
+  let deltaHealthIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
+  let deltaArmorIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
 
   useEffect(() => {
-    const controls = animate(animatedValue, health, {
+    const controls = animate(animatedHealth, health, {
       duration: 0.45,
       ease: [0.25, 0.1, 0.25, 1],
     });
 
     return () => controls.stop();
-  }, [animatedValue, health]);
+  }, [animatedHealth, health]);
 
   useEffect(() => {
-    const previousValue = previousValueRef.current;
+    const controls = animate(animatedArmor, armor, {
+      duration: 0.45,
+      ease: [0.25, 0.1, 0.25, 1],
+    });
+
+    return () => controls.stop();
+  }, [animatedArmor, armor]);
+
+  useEffect(() => {
+    const previousValue = previousHealthRef.current;
 
     if (health !== previousValue) {
       sequenceRef.current += 1;
       const isGain = health > previousValue;
-      setIndicator({ amount: Math.abs(health - previousValue), key: sequenceRef.current, type: isGain ? 'gain' : 'loss' });
+      setHealthIndicator({ amount: Math.abs(health - previousValue), key: sequenceRef.current, type: isGain ? 'gain' : 'loss' });
     }
 
-    previousValueRef.current = health;
+    previousHealthRef.current = health;
   }, [health]);
+
   useEffect(() => {
-    if (!deltaIndicator) {
+    const previousArmor = previousArmorRef.current;
+
+    if (armor !== previousArmor) {
+      sequenceRef.current += 1;
+      const isGain = armor > previousArmor;
+      setArmorIndicator({ amount: Math.abs(armor - previousArmor), key: sequenceRef.current, type: isGain ? 'gain' : 'loss' });
+    }
+
+    previousHealthRef.current = health;
+  }, [health]);
+
+
+  useEffect(() => {
+    if (!deltaHealthIndicator) {
       return;
     }
 
-    setIndicator(deltaIndicator);
-  }, [deltaIndicator]);
+    setHealthIndicator(deltaHealthIndicator);
+  }, [deltaHealthIndicator]);
 
   useEffect(() => {
-    if (!indicator) {
+    if (!deltaArmorIndicator) {
+      return;
+    }
+
+    setArmorIndicator(deltaArmorIndicator);
+  }, [deltaArmorIndicator]);
+
+
+  useEffect(() => {
+    if (!healthIndicator) {
       return;
     }
 
     const timeout = window.setTimeout(() => {
-      setIndicator(null);
+      setHealthIndicator(null);
     }, 900);
 
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [indicator]);
+  }, [healthIndicator]);
 
   return (
     <div className={`w-full flex flex-col gap-2 py-3 px-3.5`}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">HEALTH</div>
-        
+
         <div className="flex items-center gap-2 min-w-[120px] justify-end">
           <AnimatePresence>
-            {indicator && (
+            {armorIndicator && (
               <motion.span
-                key={indicator.key}
+                key={armorIndicator.key}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={indicator.type === 'gain' ? deltaGainClassName : deltaLossClassName ?? deltaGainClassName}
+                className={armorIndicator.type === 'gain' ? deltaGainClassName : deltaLossClassName ?? deltaGainClassName}
               >
-                {indicator.type === 'loss' ? '-' : '+'}
-                {indicator.amount}
+                {armorIndicator.type === 'loss' ? '-' : '+'}
+                {armorIndicator.amount}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <motion.span className='text-blue-400 font-extrabold text-base text-right'>
+            {`🛡${displayedArmor}`}
+          </motion.span>
+        </div>
+
+        <div className="flex items-center gap-2 min-w-[120px] justify-end">
+          <AnimatePresence>
+            {healthIndicator && (
+              <motion.span
+                key={healthIndicator.key}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className={healthIndicator.type === 'gain' ? deltaGainClassName : deltaLossClassName ?? deltaGainClassName}
+              >
+                {healthIndicator.type === 'loss' ? '-' : '+'}
+                {healthIndicator.amount}
               </motion.span>
             )}
           </AnimatePresence>
           <motion.span className='text-red-500 font-extrabold text-base text-right'>
-            {`${displayedValue} / ${maxHealth}`}
+            {`${displayedHealth} / ${maxHealth}`}
           </motion.span>
         </div>
       </div>
