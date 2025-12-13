@@ -153,7 +153,7 @@ export function GameMetadataView({
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2">
       {/* Left side: Game Title, Arcane Dust Counter, Settings Button */}
-      <div className="flex flex-row flex-[1] items-center gap-3">
+      <div className="flex flex-row flex-[29] items-center gap-3">
         <ClickSoundButton
           title="Settings"
           action={onOpenSettings}
@@ -176,7 +176,7 @@ export function GameMetadataView({
       </div>
 
       {/* Right Side */}
-      <div className="flex flex-row flex-[2] items-center gap-3">
+      <div className="flex flex-row flex-[60] items-center gap-3">
         <div
           data-player-id={playerId}
           data-strain-counter="true"
