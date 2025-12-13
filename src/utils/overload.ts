@@ -2,7 +2,7 @@
  * Overload helpers - maps game number to overload damage per rune.
  */
 export const OVERLOAD_DAMAGE_PROGRESSION: readonly number[] = [
-  1, 2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 26, 28, 30, 35, 40, 50, 60, 70, 80, 90, 100,
 ];
 
 function getProgressionIndex(gameNumber: number, roundNumber: number): number {

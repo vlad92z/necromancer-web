@@ -64,8 +64,19 @@ export function modifyDraftRarityWithRing(
 /**
  * Robe effect: Increase total picks by 1 during deck drafting
  */
-export function modifyDraftPicksWithRobe(basePicks: number, hasRobe: boolean): number {
-  return hasRobe ? basePicks + 1 : basePicks; //TODO: This should let the pick an extra from the existing picks
+const DEFAULT_DECK_DRAFT_SELECTION_LIMIT = 1;
+const MAX_DECK_DRAFT_SELECTION_LIMIT = 3;
+
+/**
+ * Determines how many runeforges can be selected from a single deck draft offer.
+ * Robe grants +1 selection up to a maximum of 3 runeforges at once.
+ */
+export function getDeckDraftSelectionLimit(activeArtefacts: ArtefactId[]): number {
+  let limit = DEFAULT_DECK_DRAFT_SELECTION_LIMIT;
+  if (activeArtefacts.includes('robe')) {
+    limit += 1;
+  }
+  return Math.min(limit, MAX_DECK_DRAFT_SELECTION_LIMIT);
 }
 
 /**
@@ -91,7 +102,7 @@ export function getDamageToScoreBonusWithRod(damage: number, hasRod: boolean): n
 }
 
 /**
- * Tome effect: Segments of size 1 deal 10× damage (rune score) and 10× healing and 10x armor
+ * Tome effect: Segments of size 1 deal 5× damage (rune score) and 5× healing and 5x armor
  */
 export function modifySegmentResultWithTome(
   segment: ResolvedSegment,
@@ -103,9 +114,9 @@ export function modifySegmentResultWithTome(
 
   return {
     ...segment,
-    damage: segment.damage * 10,
-    healing: segment.healing * 10,
-    armor: segment.armor * 10,
+    damage: segment.damage * 5,
+    healing: segment.healing * 5,
+    armor: segment.armor * 5,
   };
 }
 
@@ -122,7 +133,7 @@ export function applyOutgoingDamageModifiers(
   
   // Tome applies first (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    damage = damage * 10;
+    damage = damage * 5;
   }
   
   return damage;
@@ -141,7 +152,7 @@ export function applyOutgoingHealingModifiers(
   
   // Tome applies to healing (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    healing = healing * 10;
+    healing = healing * 5;
   }
   
   if (hasArtefact(state, 'rod')) {
@@ -184,7 +195,7 @@ export function getArtefactEffectDescription(artefactId: ArtefactId): string {
     rod: 'Double all healing',
     potion: 'Double all armor gained',
     robe: 'Increase total picks by 1 during deck drafting',
-    tome: 'Segments of size 1 add 10× more runescore, 10× healing, and 10× armor',
+    tome: 'Segments of size 1 add 5× more runescore, 5× healing, and 5× armor',
   };
   
   return descriptions[artefactId];

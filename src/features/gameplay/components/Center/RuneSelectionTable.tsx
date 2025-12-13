@@ -9,7 +9,9 @@ import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
 import { Runeforge } from './Runeforge';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
+import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
+import { useArtefactStore } from '../../../../state/stores/artefactStore';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
@@ -147,6 +149,8 @@ export function RuneSelectionTable({
     setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: null }));
   };
   
+  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
+
   const handleDraftingTableClick = () => {
     if (hasSelectedRunes) {
       onCancelSelection();
@@ -175,7 +179,10 @@ export function RuneSelectionTable({
           />
         ))}
       </div>
-      <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
+      <div className="flex flex-col gap-2">
+        <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
+        <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
+      </div>
     </div>
   );
 }

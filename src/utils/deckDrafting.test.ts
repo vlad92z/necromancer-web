@@ -37,6 +37,18 @@ describe('deckDrafting with artefact effects', () => {
       });
     });
 
+    it('should expose selection limit and start count at zero', () => {
+      const state = createDeckDraftState('player-1', 3, 0, []);
+      expect(state.selectionLimit).toBe(1);
+      expect(state.selectionsThisOffer).toBe(0);
+    });
+
+    it('should respect an explicit selection limit override', () => {
+      const state = createDeckDraftState('player-1', 3, 0, [], 2);
+      expect(state.selectionLimit).toBe(2);
+      expect(state.selectionsThisOffer).toBe(0);
+    });
+
     it('should generate runes with effects based on rarity', () => {
       const state = createDeckDraftState('player-1', 3, 0, []);
       const allRunes = state.runeforges.flatMap(f => f.runes);

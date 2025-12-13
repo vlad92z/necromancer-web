@@ -41,6 +41,9 @@ export function DeckDraftingModal({
   const isAnimating = animationPhase !== 'idle';
   const draftComplete = draftState.picksRemaining === 0;
   const selectionLocked = isAnimating || draftComplete;
+  const selectionLimit = draftState.selectionLimit ?? 1;
+  const selectionsThisOffer = draftState.selectionsThisOffer ?? 0;
+  const selectionsRemaining = Math.max(selectionLimit - selectionsThisOffer, 0);
 
   useEffect(() => {
     const unsubscribe = deckCountValue.on('change', (latest) => {
@@ -322,6 +325,14 @@ export function DeckDraftingModal({
             }}
           />
         </div>
+
+        {selectionLimit > 1 && (
+          <div className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">
+            {selectionsRemaining > 0
+              ? `Select ${selectionsRemaining} more runeforge${selectionsRemaining === 1 ? '' : 's'} from this pool`
+              : 'Preparing the next pool...'}
+          </div>
+        )}
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <AnimatePresence mode="sync" onExitComplete={handleRuneforgeExitComplete}>

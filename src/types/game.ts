@@ -232,4 +232,6 @@ export interface DeckDraftState {
   runeforges: Runeforge[];
   picksRemaining: number;
   totalPicks: number;
+  selectionLimit: number;
+  selectionsThisOffer: number;
 }

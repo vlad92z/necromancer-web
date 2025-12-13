@@ -16,8 +16,7 @@ import {
   applyOutgoingDamageModifiers,
   applyOutgoingHealingModifiers,
   getArmorGainMultiplier,
-  modifyDraftPicksWithRobe,
-  hasArtefact,
+  getDeckDraftSelectionLimit,
 } from '../../utils/artefactEffects';
 import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
@@ -75,8 +74,14 @@ function enterDeckDraftMode(state: GameState): GameState {
   const deckTemplate = getSoloDeckTemplate(state);
   const nextLongestRun = Math.max(state.longestRun, state.game);
   const basePicks = state.victoryDraftPicks;
-  const totalPicks = modifyDraftPicksWithRobe(basePicks, hasArtefact(state, 'robe'));
-  const deckDraftState = createDeckDraftState(state.player.id, totalPicks, nextLongestRun, state.activeArtefacts);
+  const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
+  const deckDraftState = createDeckDraftState(
+    state.player.id,
+    basePicks,
+    nextLongestRun,
+    state.activeArtefacts,
+    selectionLimit
+  );
   const arcaneDustReward = getArcaneDustReward(state.game);
   const nextTargetScore = state.targetScore + state.runeScoreTargetIncrement;
 
@@ -1341,37 +1346,69 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         state.startingHealth
       );
       const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
-      const nextDraftState = advanceDeckDraftState(
-        state.deckDraftState,
-        state.player.id,
-        state.longestRun,
-        state.activeArtefacts
-      );
       const updatedPlayer: Player = {
         ...playerAfterEffect,
         deck: mergeDeckWithRuneforge(playerAfterEffect.deck, selectedRuneforge),
       };
 
-      if (!nextDraftState) {
+      const selectionLimit = state.deckDraftState.selectionLimit ?? 1;
+      const selectionsThisOffer = state.deckDraftState.selectionsThisOffer ?? 0;
+      const nextSelectionsThisOffer = selectionsThisOffer + 1;
+      const remainingRuneforges = state.deckDraftState.runeforges.filter((runeforge) => runeforge.id !== runeforgeId);
+      const shouldAdvanceOffer =
+        nextSelectionsThisOffer >= selectionLimit || remainingRuneforges.length === 0;
+
+      if (shouldAdvanceOffer) {
+        const draftStateAfterSelection = {
+          ...state.deckDraftState,
+          runeforges: remainingRuneforges,
+          selectionsThisOffer: nextSelectionsThisOffer,
+        };
+        const nextDraftState = advanceDeckDraftState(
+          draftStateAfterSelection,
+          state.player.id,
+          state.longestRun,
+          state.activeArtefacts
+        );
+
+        if (!nextDraftState) {
+          return {
+            ...state,
+            player: updatedPlayer,
+            soloDeckTemplate: updatedDeckTemplate,
+            totalRunesPerPlayer: updatedDeckTemplate.length,
+            deckDraftState: {
+              runeforges: [],
+              picksRemaining: 0,
+              totalPicks: state.deckDraftState.totalPicks,
+              selectionLimit,
+              selectionsThisOffer: 0,
+            },
+            baseTargetScore: state.baseTargetScore || state.targetScore,
+            deckDraftReadyForNextGame: true,
+          };
+        }
+
         return {
           ...state,
           player: updatedPlayer,
+          deckDraftState: nextDraftState,
           soloDeckTemplate: updatedDeckTemplate,
           totalRunesPerPlayer: updatedDeckTemplate.length,
-          deckDraftState: {
-            runeforges: [],
-            picksRemaining: 0,
-            totalPicks: state.deckDraftState.totalPicks,
-          },
-          baseTargetScore: state.baseTargetScore || state.targetScore,
-          deckDraftReadyForNextGame: true,
+          deckDraftReadyForNextGame: false,
         };
       }
+
+      const partialDraftState = {
+        ...state.deckDraftState,
+        runeforges: remainingRuneforges,
+        selectionsThisOffer: nextSelectionsThisOffer,
+      };
 
       return {
         ...state,
         player: updatedPlayer,
-        deckDraftState: nextDraftState,
+        deckDraftState: partialDraftState,
         soloDeckTemplate: updatedDeckTemplate,
         totalRunesPerPlayer: updatedDeckTemplate.length,
         deckDraftReadyForNextGame: false,
