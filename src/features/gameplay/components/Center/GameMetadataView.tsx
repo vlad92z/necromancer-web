@@ -148,30 +148,32 @@ export function GameMetadataView({
     onOpenDeck();
   }, [onOpenDeck]);
 
-  const actionButtonBase = 'rounded-lg border border-slate-600/70 bg-slate-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:border-slate-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
+  const settingsHover = 'hover:border-slate-300 hover:text-white';
+  const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
+  const actionButtonBase = `rounded-lg border border-slate-600/70 bg-slate-900 p-4 text-2xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus}`;
 
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2">
       {/* Left side: Game Title, Arcane Dust Counter, Settings Button */}
-      <div className="flex flex-row flex-[29] items-center gap-3">
+      <div className="w-full flex flex-row flex-[29] items-center gap-3">
         <ClickSoundButton
-          title="Settings"
+          title="⚙️"
           action={onOpenSettings}
           className={actionButtonBase}
         />
 
-        <div className="flex flex-row gap-2 p-3">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
-          <span className="text-lg font-extrabold text-white leading-tight">{gameNumber}</span>
+        <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
+          <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
+          <span className="text-xl font-extrabold text-white leading-tight">{gameNumber}</span>
         </div>
 
-        <div className="px-4 py-3 flex items-center gap-3">
+        <div className="px-4 py-3 flex items-center gap-3 pr-20">
           <img
             src={arcaneDustIcon}
             alt="Arcane Dust"
-            className="h-6 w-6 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]"
+            className="h-10 w-10 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]"
           />
-          <span className="text-lg font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</span>
+          <span className="text-xl font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</span>
         </div>
       </div>
 
