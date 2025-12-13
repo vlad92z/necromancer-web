@@ -148,23 +148,26 @@ export function GameMetadataView({
     onOpenDeck();
   }, [onOpenDeck]);
 
-  const settingsHover = 'hover:border-slate-300 hover:text-white';
+  const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
-  const actionButtonBase = `rounded-lg border border-slate-600/70 bg-slate-900 p-4 text-2xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus}`;
+  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus}`;
+
+  const overloadHover = 'hover:border-red-600/50 hover:bg-slate-800';
+  const deckHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
 
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2">
       {/* Left side: Game Title, Arcane Dust Counter, Settings Button */}
-      <div className="w-full flex flex-row flex-[29] items-center gap-3">
+      <div className="w-full flex flex-row flex-[29] items-center">
         <ClickSoundButton
-          title="⚙️"
+          title="⚙"
           action={onOpenSettings}
           className={actionButtonBase}
         />
 
         <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
           <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
-          <span className="text-xl font-extrabold text-white leading-tight">{gameNumber}</span>
+          <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameNumber}</span>
         </div>
 
         <div className="px-4 py-3 flex items-center gap-3 pr-20">
@@ -187,7 +190,7 @@ export function GameMetadataView({
             label="Overloaded Runes"
             value={strainValue}
             color="#fa6060ff"
-            borderColor="rgba(96, 165, 250, 0.35)"
+            borderClass="border-red-600/50"
             tooltip={overloadTooltip}
             image={overloadSvg}
             canOverload={canOverload}
@@ -199,7 +202,7 @@ export function GameMetadataView({
           label="Deck"
           value={deckRemaining}
           color="#60a5fa"
-          borderColor="rgba(59, 130, 246, 0.35)"
+          borderClass="border-sky-400/35"
           tooltip={deckTooltip}
           image={deckSvg}
           onClick={handleDeckClick}
@@ -210,7 +213,7 @@ export function GameMetadataView({
           current={clampedHealth}
           max={maxHealth}
           forcedDeltaIndicator={forcedHealthIndicatorPayload}
-          progressBackground="bg-[rgba(248,113,113,0.12)]"
+          progressBackground="bg-red-500/15"
           barClassName="bg-gradient-to-r from-red-500 to-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.25)]"
           valueColor="text-red-500"
           deltaGainClassName="text-emerald-300 text-sm font-bold drop-shadow-[0_0_10px_rgba(52,211,153,0.45)]"
@@ -221,8 +224,8 @@ export function GameMetadataView({
           label="Rune Score"
           current={runeScore.currentScore}
           max={Math.max(1, runeScore.targetScore)}
-          progressBackground="bg-[rgba(128,193,255,0.18)]"
-          barClassName="bg-gradient-to-r from-purple-500 to-sky-400 shadow-[0_8px_18px_rgba(129,140,248,0.35)]"
+          progressBackground="bg-blue-500/30"
+          barClassName="bg-gradient-to-r from-blue-700 to-blue-400"
           valueColor="text-yellow-400"
           deltaGainClassName="text-sky-200 text-sm font-bold drop-shadow-[0_0_8px_rgba(125,211,252,0.55)]"
         />

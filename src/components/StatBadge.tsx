@@ -10,7 +10,8 @@ interface StatBadgeProps {
   label: string;
   value: ReactNode;
   color: string;
-  borderColor: string;
+  // Tailwind border class (e.g. 'border-red-600/50')
+  borderClass?: string;
   tooltip: string;
   image: string;
   onClick?: () => void;
@@ -36,7 +37,7 @@ const PULSE_TRANSITION: Transition = {
  */
 export function StatBadge({
   value,
-  borderColor,
+  borderClass,
   image,
   onClick,
   alert,
@@ -56,11 +57,12 @@ export function StatBadge({
       : {}
     , [canOverload]);
 
+  // Only use inline style for the glow boxShadow (tailwind handles border color)
   const buttonStyle = useMemo(() =>
-    canOverload
-      ? { borderColor, boxShadow: SELECTABLE_GLOW_REST }
-      : { borderColor }
-    , [canOverload, borderColor]);
+    (canOverload
+      ? { boxShadow: SELECTABLE_GLOW_REST }
+      : undefined)
+    , [canOverload]);
 
   const ButtonComponent = canOverload ? motion.button : 'button';
 
@@ -78,8 +80,7 @@ export function StatBadge({
       onFocus={() => handleHoverChange(true)}
       onBlur={() => handleHoverChange(false)}
       onClick={onClick}
-      className={`flex min-w-[110px] items-center rounded-[16px] border bg-[rgba(8,17,35,0.85)] px-3.5 py-3 text-slate-50 transition-shadow ${baseShadowClass} ${isClickable ? 'cursor-pointer' : 'cursor-default'
-        }`}
+      className={`flex min-w-[110px] items-center rounded-[16px] border bg-[rgba(8,17,35,0.85)] px-3.5 py-3 text-slate-50 transition-shadow ${baseShadowClass} ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${borderClass ?? ''}`}
       style={buttonStyle}
       {...buttonMotionProps}
     >
