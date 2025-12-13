@@ -142,6 +142,7 @@ describe('artefactEffects', () => {
         arcaneDust: 0,
         orderedCells: [],
         resolutionSteps: [],
+        channelSynergyTriggered: false,
       };
       const result = modifySegmentResultWithTome(segment, false);
       expect(result.damage).toBe(10);
@@ -158,6 +159,7 @@ describe('artefactEffects', () => {
         arcaneDust: 0,
         orderedCells: [],
         resolutionSteps: [],
+        channelSynergyTriggered: false,
       };
       const result = modifySegmentResultWithTome(segment, true);
       expect(result.damage).toBe(100);
@@ -174,6 +176,7 @@ describe('artefactEffects', () => {
         arcaneDust: 0,
         orderedCells: [],
         resolutionSteps: [],
+        channelSynergyTriggered: false,
       };
       const result = modifySegmentResultWithTome(segment, true);
       expect(result.damage).toBe(10);
@@ -190,6 +193,7 @@ describe('artefactEffects', () => {
         arcaneDust: 0,
         orderedCells: [],
         resolutionSteps: [],
+        channelSynergyTriggered: false,
       };
       const result = modifySegmentResultWithTome(segment, true);
       expect(result.damage).toBe(15);
