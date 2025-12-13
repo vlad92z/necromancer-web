@@ -22,6 +22,8 @@ export type RuneEffect =
   | { type: 'Fragile'; amount: number; fragileType: RuneType; rarity: RuneEffectRarity }
   | { type: 'Channel'; amount: number; rarity: RuneEffectRarity }
   | { type: 'ChannelSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
+  | { type: 'Armor'; amount: number; rarity: RuneEffectRarity }
+  | { type: 'ArmorSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
 
 export type RuneEffects = RuneEffect[];
 
@@ -121,6 +123,7 @@ export interface Player {
   floorLine: FloorLine;
   health: number; // Current health (starts at configurable amount)
   maxHealth?: number; // Maximum health cap (initialized at game start)
+  armor: number; // Temporary shield that absorbs damage before health
   deck: Rune[]; // Player's deck of runes for this run
 }
 
@@ -151,6 +154,7 @@ export interface ScoringStep {
   damageDelta: number;
   healingDelta: number;
   arcaneDustDelta: number;
+  armorDelta: number;
   delayMs: number;
 }
 

@@ -6,7 +6,7 @@ import type { RuneEffect, RuneEffectRarity, RuneEffects, RuneType } from '../typ
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 1, rarity: 'common' }],
-  Frost:[{ type: 'Damage', amount: 1, rarity: 'common' }],
+  Frost:[{ type: 'Armor', amount: 1, rarity: 'common' }],
   Life: [{ type: 'Healing', amount: 1, rarity: 'common' }],
   Void: [{ type: 'Damage', amount: 1, rarity: 'common' }],
   Wind: [{ type: 'Damage', amount: 1, rarity: 'common' }],
@@ -15,7 +15,7 @@ const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 3, rarity: 'uncommon' }],
-  Frost: [{ type: 'Fragile', amount: 5, fragileType: 'Fire', rarity: 'uncommon' }],
+  Frost: [{ type: 'Armor', amount: 4, rarity: 'uncommon' }],
   Life: [{ type: 'Healing', amount: 3, rarity: 'uncommon' }],
   Void: [{ type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' }],
   Wind: [{ type: 'Fortune', amount: 5, rarity: 'uncommon' }],
@@ -24,7 +24,7 @@ const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 
 const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 5, rarity: 'rare' }],
-  Frost: [{ type: 'Fragile', amount: 9, fragileType: 'Fire', rarity: 'rare' }],
+  Frost: [{ type: 'ArmorSynergy', amount: 4, synergyType: 'Frost', rarity: 'rare' }],
   Life: [{ type: 'Healing', amount: 5, rarity: 'rare' }],
   Void: [{ type: 'Synergy', amount: 3, synergyType: 'Void', rarity: 'rare' }],
   Wind: [{ type: 'Fortune', amount: 10, rarity: 'rare' }],
@@ -33,7 +33,7 @@ const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 
 const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 8, rarity: 'epic' }],
-  Frost: [{ type: 'Fragile', amount: 12, fragileType: 'Fire', rarity: 'epic' }],
+  Frost: [{ type: 'ArmorSynergy', amount: 8, synergyType: 'Frost', rarity: 'epic' }],
   Life: [{ type: 'Healing', amount: 8, rarity: 'epic' }],
   Void: [{ type: 'Synergy', amount: 5, synergyType: 'Void', rarity: 'epic' }],
   Wind: [{ type: 'Fortune', amount: 15, rarity: 'epic' }],
@@ -60,6 +60,10 @@ function formatRuneEffect(effect: RuneEffect): string {
       return `+${effect.amount} rune score when overloaded`;
     case 'ChannelSynergy':
       return `+${effect.amount} rune score per overloaded ${effect.synergyType} rune`;
+    case 'Armor':
+      return `Gain ${effect.amount} armor on cast`;
+    case 'ArmorSynergy':
+      return `Gain ${effect.amount} armor for every ${effect.synergyType} rune`;
   }
 }
 

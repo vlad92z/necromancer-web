@@ -82,6 +82,7 @@ export interface ResolvedSegment {
   damage: number;
   healing: number;
   arcaneDust: number;
+  armor: number;
   orderedCells: SegmentCell[];
   resolutionSteps: RuneResolutionStep[];
 }
@@ -91,6 +92,7 @@ export interface RuneResolutionStep {
   damageDelta: number;
   healingDelta: number;
   arcaneDustDelta: number;
+  armorDelta: number;
 }
 
 /**
@@ -148,6 +150,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     let damage = 0;
     let healing = 0;
     let arcaneDust = 0;
+    let armor = 0;
 
     resolvedEffects.forEach((effect) => {
       switch (effect.type) {
@@ -157,10 +160,18 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
         case 'Healing':
           healing += effect.amount;
           break;
+        case 'Armor':
+          armor += effect.amount;
+          break;
         case 'Synergy': {
           // Add amount to damage for each synergyType rune in the segment
           const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
           damage += effect.amount * synergyCount;
+          break;
+        }
+        case 'ArmorSynergy': {
+          const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
+          armor += effect.amount * synergyCount;
           break;
         }
         case 'Fortune':
@@ -187,6 +198,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
       damageDelta: damage,
       healingDelta: healing,
       arcaneDustDelta: arcaneDust,
+      armorDelta: armor,
     };
   });
 
@@ -195,8 +207,9 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
       damage: acc.damage + step.damageDelta,
       healing: acc.healing + step.healingDelta,
       arcaneDust: acc.arcaneDust + step.arcaneDustDelta,
+      armor: acc.armor + step.armorDelta,
     }),
-    { damage: 0, healing: 0, arcaneDust: 0 }
+    { damage: 0, healing: 0, arcaneDust: 0, armor: 0 }
   );
 
   return {
@@ -204,6 +217,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     damage: totals.damage,
     healing: totals.healing,
     arcaneDust: totals.arcaneDust,
+    armor: totals.armor,
     orderedCells,
     resolutionSteps,
   };

@@ -187,6 +187,7 @@ export function createPlayer(
     },
     health: startingHealth,
     maxHealth: maxHealthOverride ?? startingHealth,
+    armor: 0,
     deck: createStartingDeck(id, totalRunesPerPlayer),
   };
 }

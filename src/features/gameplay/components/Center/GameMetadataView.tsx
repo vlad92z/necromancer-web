@@ -3,13 +3,14 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { StatBadge } from '../../../../components/StatBadge';
 import { ProgressStatOverlay } from '../ProgressStatOverlay';
+import { RuneScoreView } from '../RuneScoreView';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
 import { useCastSound } from '../../../../hooks/useCastSound';
@@ -26,6 +27,7 @@ interface GameMetadataViewProps {
     targetScore: number;
   };
   health: number;
+  armor: number;
   maxHealth: number;
   deckCount: number;
   overloadedRuneCount: number;
@@ -38,6 +40,11 @@ interface GameMetadataViewProps {
 }
 
 type ForcedHealthIndicator = {
+  amount: number;
+  key: number;
+};
+
+type ForcedArmorIndicator = {
   amount: number;
   key: number;
 };
@@ -59,12 +66,13 @@ export function GameMetadataView({
   arcaneDust,
   runeScore,
   health,
+  armor,
   maxHealth,
   deckCount,
   overloadedRuneCount,
   canOverload,
   onOpenOverload,
-  onOpenDeck, 
+  onOpenDeck,
   onOpenSettings,
   onPlaceRunesInFloor,
   hasSelectedRunes,
@@ -84,6 +92,8 @@ export function GameMetadataView({
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
   const [forcedHealthIndicator, setForcedHealthIndicator] = useState<ForcedHealthIndicator | null>(null);
   const lastHealingStepRef = useRef<string | null>(null);
+  const [forcedArmorIndicator, setForcedArmorIndicator] = useState<ForcedArmorIndicator | null>(null);
+  const lastArmorStepRef = useRef<string | null>(null);
   const previousHealthRef = useRef<number>(clampedHealth);
   const forcedHealthIndicatorPayload = useMemo(
     () => (forcedHealthIndicator ? { ...forcedHealthIndicator, type: 'gain' as const } : null),
@@ -93,6 +103,26 @@ export function GameMetadataView({
   useEffect(() => {
     if (!scoringSequence) {
       lastHealingStepRef.current = null;
+    }
+  }, [scoringSequence]);
+
+  useEffect(() => {
+    if (!forcedArmorIndicator) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setForcedArmorIndicator(null);
+    }, 900);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [forcedArmorIndicator]);
+
+  useEffect(() => {
+    if (!scoringSequence) {
+      lastArmorStepRef.current = null;
     }
   }, [scoringSequence]);
 
@@ -124,6 +154,25 @@ export function GameMetadataView({
 
     previousHealthRef.current = clampedHealth;
   }, [clampedHealth, scoringSequence]);
+
+  useEffect(() => {
+    const sequence = scoringSequence;
+
+    if (!sequence || sequence.activeIndex < 0) {
+      return;
+    }
+
+    const step = sequence.steps[sequence.activeIndex];
+    const stepKey = `${sequence.sequenceId}:${sequence.activeIndex}`;
+
+    if (!step || step.armorDelta <= 0 || lastArmorStepRef.current === stepKey) {
+      return;
+    }
+
+    lastArmorStepRef.current = stepKey;
+    const indicatorKey = Date.now();
+    setForcedArmorIndicator({ amount: step.armorDelta, key: indicatorKey });
+  }, [scoringSequence]);
 
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
@@ -239,27 +288,26 @@ export function GameMetadataView({
           onClick={handleDeckClick}
           onTooltipToggle={handleDeckTooltipToggle}
         />
-        <ProgressStatOverlay
-          label="Health"
-          current={clampedHealth}
-          max={maxHealth}
-          forcedDeltaIndicator={forcedHealthIndicatorPayload}
-          progressBackground="bg-red-500/15"
-          barClassName="bg-gradient-to-r from-red-500 to-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.25)]"
-          valueColor="text-red-500"
-          deltaGainClassName="text-emerald-300 text-sm font-bold drop-shadow-[0_0_10px_rgba(52,211,153,0.45)]"
-          deltaLossClassName="text-rose-300 text-sm font-bold drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]"
-        />
+        <div className="flex flex-col gap-1">
+          <ProgressStatOverlay
+            label="Health"
+            current={clampedHealth}
+            max={maxHealth}
+            secondaryValue={armor}
+            forcedDeltaIndicator={forcedHealthIndicatorPayload}
+            // forcedSecondaryDeltaIndicator={forcedArmorIndicator}
+            progressBackground="bg-red-500/15"
+            barClassName="bg-gradient-to-r from-red-500 to-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.25)]"
+            valueColor="text-red-500"
+            deltaGainClassName="text-emerald-300 text-sm font-bold drop-shadow-[0_0_10px_rgba(52,211,153,0.45)]"
+            deltaLossClassName="text-rose-300 text-sm font-bold drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]"
+          />
+        </div>
 
-        <ProgressStatOverlay
-          label="Rune Score"
-          current={runeScore.currentScore}
-          max={Math.max(1, runeScore.targetScore)}
-          progressBackground="bg-blue-500/30"
-          barClassName="bg-gradient-to-r from-blue-700 to-blue-400"
-          valueColor="text-yellow-400"
-          deltaGainClassName="text-sky-200 text-sm font-bold drop-shadow-[0_0_8px_rgba(125,211,252,0.55)]"
-        />
+          <RuneScoreView
+            score={runeScore.currentScore}
+            maxScore={runeScore.targetScore}
+          />
       </div>
     </div>
   );

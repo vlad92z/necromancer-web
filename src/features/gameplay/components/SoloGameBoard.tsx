@@ -65,6 +65,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
           arcaneDust={arcaneDust}
           runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
           health={player.health}
+          armor={player.armor}
           maxHealth={player.maxHealth ?? player.health}
           deckCount={playerStats?.deckCount ?? player.deck.length}
           overloadedRuneCount={playerStats?.overloadedRuneCount ?? 0}

@@ -10,7 +10,9 @@ interface ProgressStatOverlayProps {
   label: string;
   current: number;
   max: number;
+  secondaryValue?: number;
   forcedDeltaIndicator?: { amount: number; key: number; type: 'gain' | 'loss' } | null;
+  forcedSecondaryDeltaIndicator?: { amount: number; key: number; type: 'gain' | 'loss' } | null;
   progressBackground: string;
   barClassName: string;
   valueColor: string;
@@ -23,7 +25,9 @@ export function ProgressStatOverlay({
   label,
   current,
   max,
+  secondaryValue,
   forcedDeltaIndicator = null,
+  forcedSecondaryDeltaIndicator = null,
   progressBackground,
   barClassName,
   valueColor = 'text-slate-100',
@@ -95,6 +99,30 @@ export function ProgressStatOverlay({
     <div className={`w-full flex flex-col gap-2 py-3 px-3.5`}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">{label}</div>
+        
+            {secondaryValue && (
+              <div className="flex items-center gap-2 text-sky-200 text-sm font-semibold">
+            <span className="text-lg font-semibold leading-tight text-sky-100">
+              {secondaryValue}
+            </span>
+            {forcedSecondaryDeltaIndicator &&(
+              <motion.span
+                key={forcedSecondaryDeltaIndicator.key}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className={forcedSecondaryDeltaIndicator.type === 'gain' ? deltaGainClassName : deltaLossClassName ?? deltaGainClassName}
+              >
+                {forcedSecondaryDeltaIndicator.type === 'loss' ? '-' : '+'}
+                {forcedSecondaryDeltaIndicator.amount}
+              </motion.span>
+            )
+            }
+          </div>
+            )
+            }
+        
         <div className="flex items-center gap-2 min-w-[120px] justify-end">
           <AnimatePresence>
             {indicator && (

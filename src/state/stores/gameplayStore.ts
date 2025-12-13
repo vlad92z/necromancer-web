@@ -175,9 +175,10 @@ function getChannelScoreBonusFromOverloadedRunes(
 
 function getOverloadResult(
   currentHealth: number,
+  currentArmor: number,
   newlyOverloadedRunes: Rune[],
   state: GameState
-): { overloadDamage: number; nextHealth: number; scoreBonus: number } {
+): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number } {
   const strain = getOverloadDamageForGame(state.game);
   const overloadRunesPlaced = newlyOverloadedRunes.length;
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
@@ -185,11 +186,14 @@ function getOverloadResult(
   
   // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
   const { damage: modifiedDamage, scoreBonus: rodScoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
-  
-  const nextHealth = modifiedDamage > 0 ? Math.max(0, currentHealth - modifiedDamage) : currentHealth;
+  const armorAbsorbed = Math.min(currentArmor, modifiedDamage);
+  const remainingDamage = modifiedDamage - armorAbsorbed;
+  const nextArmor = currentArmor - armorAbsorbed;
+  const nextHealth = remainingDamage > 0 ? Math.max(0, currentHealth - remainingDamage) : currentHealth;
   return {
-    overloadDamage: modifiedDamage,
+    overloadDamage: remainingDamage,
     nextHealth,
+    nextArmor,
     scoreBonus: rodScoreBonus + channelScoreBonus,
   };
 }
@@ -296,6 +300,7 @@ function runScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>['set
         player: {
           ...state.player,
           health: nextHealth,
+          armor: Math.max(0, state.player.armor + step.armorDelta),
         },
         runePowerTotal: nextRunePowerTotal,
         scoringSequence: nextScoringSequence,
@@ -558,7 +563,12 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
   };
 
-  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overflowRunes, state);
+  const { overloadDamage, nextHealth, nextArmor, scoreBonus } = getOverloadResult(
+    currentPlayer.health,
+    currentPlayer.armor,
+    overflowRunes,
+    state
+  );
 
   const completedLines = updatedPatternLines
     .map((line, index) => ({ line, index }))
@@ -569,6 +579,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     patternLines: updatedPatternLines,
     floorLine: updatedFloorLine,
     health: nextHealth,
+    armor: nextArmor,
   };
 
   const nextCenterPool = getNextCenterPool(state);
@@ -636,12 +647,18 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
   };
 
-  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, selectedRunes, state);
+  const { overloadDamage, nextHealth, nextArmor, scoreBonus } = getOverloadResult(
+    currentPlayer.health,
+    currentPlayer.armor,
+    selectedRunes,
+    state
+  );
 
   const updatedPlayer = {
     ...currentPlayer,
     floorLine: updatedFloorLine,
     health: nextHealth,
+    armor: nextArmor,
   };
 
   const nextCenterPool = getNextCenterPool(state);
@@ -940,6 +957,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const healingMultiplier = applyOutgoingHealingModifiers(1, resolvedSegment.segmentSize, state);
         const segmentDelay = getRuneResolutionDelayMs(resolvedSegment.segmentSize);
 
+        const armorMultiplier = healingMultiplier; // Armor benefits from the same modifiers as healing
         const segmentSteps = resolvedSegment.resolutionSteps.map((step) => ({
           row: step.cell.row,
           col: step.cell.col,
@@ -947,6 +965,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           damageDelta: step.damageDelta * damageMultiplier,
           healingDelta: step.healingDelta * healingMultiplier,
           arcaneDustDelta: step.arcaneDustDelta,
+          armorDelta: step.armorDelta * armorMultiplier,
           delayMs: segmentDelay,
         }));
 
@@ -1157,6 +1176,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return {
         ...state,
         ...nextState,
+        player: {
+          ...state.player,
+          ...nextState.player,
+          armor: nextState.player?.armor ?? state.player.armor ?? 0,
+        },
         runeforges: withRuneforgeListDefaults(nextState.runeforges ?? state.runeforges),
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,

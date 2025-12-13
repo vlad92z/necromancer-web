@@ -31,8 +31,8 @@ describe('scoring with new rune effects', () => {
       
       const result = resolveSegmentFromCells(cells);
       
-      // Base damage (3) + Synergy (1 * 2 Frost runes) = 5
-      expect(result.damage).toBe(5);
+      // Base damage (2) + Synergy (1 * 2 Frost runes) = 4
+      expect(result.damage).toBe(4);
     });
 
     it('should not add damage if no synergyType runes in segment', () => {
@@ -102,6 +102,39 @@ describe('scoring with new rune effects', () => {
     });
   });
 
+  describe('Armor effects', () => {
+    it('adds armor from a single Armor effect', () => {
+    const cells: SegmentCell[] = [
+      { row: 0, col: 0, runeType: 'Life', effects: [{ type: 'Armor', amount: 3, rarity: 'uncommon' }] },
+      { row: 0, col: 1, runeType: 'Life', effects: null },
+    ];
+    
+    const result = resolveSegmentFromCells(cells);
+    
+      expect(result.armor).toBe(3);
+      expect(result.damage).toBe(0); // Life runes only heal
+      expect(result.healing).toBe(2);
+    });
+
+    it('applies ArmorSynergy bonuses for matching runes', () => {
+      const cells: SegmentCell[] = [
+        {
+          row: 0,
+          col: 0,
+          runeType: 'Void',
+          effects: [{ type: 'ArmorSynergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' }],
+        },
+        { row: 0, col: 1, runeType: 'Void', effects: null },
+        { row: 0, col: 2, runeType: 'Void', effects: null },
+      ];
+
+      const result = resolveSegmentFromCells(cells);
+
+      expect(result.armor).toBe(6); // 2 * 3 Void runes
+      expect(result.damage).toBe(3); // base damage only
+    });
+  });
+
   describe('Combined effects', () => {
     it('should handle Damage + Synergy + Fortune together', () => {
       const cells: SegmentCell[] = [
@@ -140,8 +173,8 @@ describe('scoring with new rune effects', () => {
       
       const result = resolveSegmentFromCells(cells);
       
-      // Base damage (3) + Synergy (1 * 2 Void runes) + Fragile (3, no Fire) = 8
-      expect(result.damage).toBe(8);
+      // Base damage (2) + Synergy (1 * 2 Void runes) + Fragile (3, no Fire) = 7
+      expect(result.damage).toBe(7);
       expect(result.arcaneDust).toBe(2);
     });
   });

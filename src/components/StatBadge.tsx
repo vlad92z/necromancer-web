@@ -27,7 +27,6 @@ export function StatBadge({
     }
   };
 
-  const baseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
   return (
     <button
       type="button"
