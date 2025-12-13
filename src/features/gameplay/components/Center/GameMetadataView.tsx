@@ -118,7 +118,7 @@ export function GameMetadataView({
   const deckValue = Math.max(0, deckCount);
   const deckRemaining = Math.max(0, deckValue - 20);
   const deckTooltip = `Runes left in deck: ${deckRemaining}`;
-  const overloadTooltip = `Overloaded runes: ${overloadedRuneCount}\n Each overload deals ${strainValue} damage.`;
+  const overloadTooltip = `Overload deals ${strainValue} damage per rune. ${overloadedRuneCount} runes are currently overloaded.`;
 
   const handleDeckTooltipToggle = (visible: boolean) => {
     if (visible) {
@@ -183,7 +183,7 @@ export function GameMetadataView({
         >
           <StatBadge
             label="Overloaded Runes"
-            value={overloadedRuneCount}
+            value={strainValue}
             color="#fa6060ff"
             borderColor="rgba(96, 165, 250, 0.35)"
             tooltip={overloadTooltip}
