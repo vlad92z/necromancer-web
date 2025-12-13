@@ -13,6 +13,7 @@ import { modifyDraftRarityWithRing } from './artefactEffects';
 const DEFAULT_DRAFT_PICK_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
+const DEFAULT_DECK_DRAFT_SELECTION_LIMIT = 1;
 
 const BASE_EPIC_CHANCE = 0;
 const BASE_RARE_CHANCE = 0;
@@ -20,8 +21,8 @@ const EPIC_INCREMENT_PER_WIN = 1;
 const RARE_INCREMENT_PER_WIN = 5;
 
 const DECK_DRAFT_EFFECTS: DeckDraftEffect[] = [
-  { type: 'heal', amount: 30 },
-  { type: 'maxHealth', amount: 10 },
+  { type: 'heal', amount: 50 },
+  { type: 'maxHealth', amount: 25 },
   { type: 'betterRunes', rarityStep: 1 },
 ];
 
@@ -106,7 +107,8 @@ export function createDeckDraftState(
   ownerId: string,
   totalPicks: number = DEFAULT_DRAFT_PICK_COUNT,
   winStreak: number = 0,
-  activeArtefacts: ArtefactId[] = []
+  activeArtefacts: ArtefactId[] = [],
+  selectionLimit: number = DEFAULT_DECK_DRAFT_SELECTION_LIMIT
 ): DeckDraftState {
   return {
     runeforges: createDraftRuneforges(
@@ -118,6 +120,8 @@ export function createDeckDraftState(
     ),
     picksRemaining: totalPicks,
     totalPicks,
+    selectionLimit,
+    selectionsThisOffer: 0,
   };
 }
 
@@ -132,6 +136,8 @@ export function advanceDeckDraftState(
     return null;
   }
 
+  const selectionLimit = current.selectionLimit ?? DEFAULT_DECK_DRAFT_SELECTION_LIMIT;
+
   return {
     runeforges: createDraftRuneforges(
       ownerId,
@@ -142,6 +148,8 @@ export function advanceDeckDraftState(
     ),
     picksRemaining: nextPicks,
     totalPicks: current.totalPicks,
+    selectionLimit,
+    selectionsThisOffer: 0,
   };
 }
 

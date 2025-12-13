@@ -7,7 +7,7 @@ import {
   getActiveArtefacts,
   hasArtefact,
   modifyDraftRarityWithRing,
-  modifyDraftPicksWithRobe,
+  getDeckDraftSelectionLimit,
   modifyOutgoingDamageWithPotion,
   modifyIncomingDamageWithPotion,
   getDamageToScoreBonusWithRod,
@@ -85,16 +85,18 @@ describe('artefactEffects', () => {
     });
   });
 
-  describe('Robe effect - modifyDraftPicksWithRobe', () => {
-    it('should not modify picks when Robe is not active', () => {
-      expect(modifyDraftPicksWithRobe(3, false)).toBe(3);
-      expect(modifyDraftPicksWithRobe(5, false)).toBe(5);
+  describe('deck draft selection limit', () => {
+    it('defaults to one runeforge when no artefacts are active', () => {
+      expect(getDeckDraftSelectionLimit([])).toBe(1);
     });
 
-    it('should add 1 pick when Robe is active', () => {
-      expect(modifyDraftPicksWithRobe(3, true)).toBe(4);
-      expect(modifyDraftPicksWithRobe(5, true)).toBe(6);
-      expect(modifyDraftPicksWithRobe(1, true)).toBe(2);
+    it('allows selecting two runeforges when Robe is active', () => {
+      expect(getDeckDraftSelectionLimit(['robe'] as ArtefactId[])).toBe(2);
+    });
+
+    it('never exceeds the maximum runeforge selection cap', () => {
+      const artefacts = ['robe', 'rod', 'ring', 'potion', 'tome'] as ArtefactId[];
+      expect(getDeckDraftSelectionLimit(artefacts)).toBeLessThanOrEqual(3);
     });
   });
 
