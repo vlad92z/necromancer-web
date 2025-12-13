@@ -36,8 +36,10 @@ export function HealthView({
     setDisplayedArmor(Math.round(value));
   });
 
-  const deltaGainClassName = 'text-emerald-300 text-sm font-bold';
-  const deltaLossClassName = "text-rose-300 text-sm font-bold";
+  const healthGainClassName = 'text-emerald-300 text-sm font-bold';
+  const healthLossClassName = "text-rose-300 text-sm font-bold";
+    const armorGainClassName = 'text-blue-300 text-sm font-bold';
+  const armorLossClassName = "text-slate-200 text-sm font-bold";
   let deltaHealthIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
   let deltaArmorIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
 
@@ -80,8 +82,8 @@ export function HealthView({
       setArmorIndicator({ amount: Math.abs(armor - previousArmor), key: sequenceRef.current, type: isGain ? 'gain' : 'loss' });
     }
 
-    previousHealthRef.current = health;
-  }, [health]);
+    previousArmorRef.current = armor;
+  }, [armor]);
 
 
   useEffect(() => {
@@ -115,6 +117,20 @@ export function HealthView({
     };
   }, [healthIndicator]);
 
+  useEffect(() => {
+    if (!armorIndicator) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setArmorIndicator(null);
+    }, 900);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [armorIndicator]);
+
   return (
     <div className={`w-full flex flex-col gap-2 py-3 px-3.5`}>
       <div className="flex items-center justify-between gap-2">
@@ -129,7 +145,7 @@ export function HealthView({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={armorIndicator.type === 'gain' ? deltaGainClassName : deltaLossClassName ?? deltaGainClassName}
+                className={armorIndicator.type === 'gain' ? armorGainClassName : armorLossClassName }
               >
                 {armorIndicator.type === 'loss' ? '-' : '+'}
                 {armorIndicator.amount}
@@ -150,7 +166,7 @@ export function HealthView({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={healthIndicator.type === 'gain' ? deltaGainClassName : deltaLossClassName ?? deltaGainClassName}
+                className={healthIndicator.type === 'gain' ? healthGainClassName : healthLossClassName }
               >
                 {healthIndicator.type === 'loss' ? '-' : '+'}
                 {healthIndicator.amount}

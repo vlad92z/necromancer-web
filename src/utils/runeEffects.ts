@@ -10,7 +10,7 @@ const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 1, rarity: 'common' }],
   Void: [{ type: 'Damage', amount: 1, rarity: 'common' }],
   Wind: [{ type: 'Damage', amount: 1, rarity: 'common' }],
-  Lightning: [{ type: 'Channel', amount: 1, rarity: 'common' }],
+  Lightning: [{ type: 'Damage', amount: 1, rarity: 'common' }],
 };
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -19,7 +19,10 @@ const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 3, rarity: 'uncommon' }],
   Void: [{ type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' }],
   Wind: [{ type: 'Fortune', amount: 5, rarity: 'uncommon' }],
-  Lightning: [{ type: 'ChannelSynergy', amount: 1, synergyType: 'Lightning', rarity: 'uncommon' }],
+  Lightning: [
+    { type: 'Damage', amount: 1, rarity: 'uncommon' },
+    { type: 'ChannelSynergy', amount: 1, synergyType: 'Lightning', rarity: 'uncommon' }
+  ],
 };
 
 const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -28,7 +31,10 @@ const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 5, rarity: 'rare' }],
   Void: [{ type: 'Synergy', amount: 3, synergyType: 'Void', rarity: 'rare' }],
   Wind: [{ type: 'Fortune', amount: 10, rarity: 'rare' }],
-  Lightning: [{ type: 'ChannelSynergy', amount: 2, synergyType: 'Lightning', rarity: 'rare' }],
+  Lightning: [
+    { type: 'Damage', amount: 2, rarity: 'rare' },
+    { type: 'ChannelSynergy', amount: 2, synergyType: 'Lightning', rarity: 'rare' }
+  ],
 };
 
 const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -37,7 +43,10 @@ const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 8, rarity: 'epic' }],
   Void: [{ type: 'Synergy', amount: 5, synergyType: 'Void', rarity: 'epic' }],
   Wind: [{ type: 'Fortune', amount: 15, rarity: 'epic' }],
-  Lightning: [{ type: 'ChannelSynergy', amount: 4, synergyType: 'Lightning', rarity: 'epic' }],
+  Lightning: [
+    { type: 'Damage', amount: 3, rarity: 'epic' },
+    { type: 'ChannelSynergy', amount: 5, synergyType: 'Lightning', rarity: 'epic' }
+  ],
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {

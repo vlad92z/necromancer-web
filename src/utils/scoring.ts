@@ -110,7 +110,7 @@ export function resolveSegment(
 
 export function resolveSegmentFromCells(connectedCells: SegmentCell[]): ResolvedSegment {
   if (connectedCells.length === 0) {
-    return { segmentSize: 0, damage: 0, healing: 0, arcaneDust: 0, orderedCells: [], resolutionSteps: [] };
+    return { segmentSize: 0, damage: 0, healing: 0, arcaneDust: 0, armor: 0, orderedCells: [], resolutionSteps: [] };
   }
 
   const orderedCells = [...connectedCells].sort((a, b) =>
@@ -131,7 +131,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     const filteredBaseEffects =
       providedEffects.length > 0
         ? baseEffects.filter((baseEffect) => {
-            if (baseEffect.type === 'Damage' || baseEffect.type === 'Healing') {
+            if (baseEffect.type === 'Damage' || baseEffect.type === 'Healing' || baseEffect.type === 'Armor') {
               return !providedEffects.some(
                 (effect) =>
                   effect.type === baseEffect.type &&
@@ -151,8 +151,8 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     let healing = 0;
     let arcaneDust = 0;
     let armor = 0;
-
     resolvedEffects.forEach((effect) => {
+      console.log('RESOLVING EFFECT', effect);
       switch (effect.type) {
         case 'Damage':
           damage += effect.amount;
@@ -161,6 +161,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
           healing += effect.amount;
           break;
         case 'Armor':
+          console.log('ADDING ARMOR FROM EFFECT', effect.amount);
           armor += effect.amount;
           break;
         case 'Synergy': {
