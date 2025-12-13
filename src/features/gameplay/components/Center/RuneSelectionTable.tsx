@@ -15,14 +15,11 @@ interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
-  isSelectionPhase: boolean;
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
   onCancelSelection: () => void;
   animatingRuneIds?: string[];
-  hiddenCenterRuneIds?: Set<string>;
   hideOpponentRow?: boolean;
   runesPerRuneforge: number;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
@@ -32,14 +29,11 @@ export function RuneSelectionTable({
   runeforges,
   centerPool,
   onRuneClick,
-  onCenterRuneClick,
-  isSelectionPhase,
   hasSelectedRunes,
   selectedRunes,
   draftSource,
   onCancelSelection,
   animatingRuneIds,
-  hiddenCenterRuneIds,
   runesPerRuneforge,
   runeforgeDraftStage,
 }: RuneSelectionTableProps) {
@@ -161,7 +155,7 @@ export function RuneSelectionTable({
 
   return (
     <div className="h-full w-full flex flex-col justify-start gap-4 p-[min(1.2vmin,16px)]" onClick={handleDraftingTableClick}>
-      <div className="flex-1 flex flex-col items-center justify-center gap-[14px] w-full">
+      <div className="flex-1 flex flex-col gap-[14px] w-full">
         {runeforges.map((runeforge) => (
           <Runeforge
             key={runeforge.id}

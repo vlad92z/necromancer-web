@@ -47,15 +47,15 @@ function cloneEffects(effects: RuneEffects): RuneEffects {
 function formatRuneEffect(effect: RuneEffect): string {
   switch (effect.type) {
     case 'Damage':
-      return `+${effect.amount} damage`;
+      return `+${effect.amount} rune power`;
     case 'Healing':
       return `+${effect.amount} healing`;
     case 'Synergy':
-      return `+${effect.amount} damage for every ${effect.synergyType} rune`;
+      return `+${effect.amount} run power for every ${effect.synergyType} rune`;
     case 'Fortune':
-      return `+${effect.amount} Arcane Dust`;
+      return `+${effect.amount} arcane dust`;
     case 'Fragile':
-      return `+${effect.amount} damage, negated by ${effect.fragileType}`;
+      return `+${effect.amount} rune power if the segment contains no ${effect.fragileType} runes.`;
   }
 }
 

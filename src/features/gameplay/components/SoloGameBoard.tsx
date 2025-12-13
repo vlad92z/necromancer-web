@@ -24,14 +24,11 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
     playerLockedLines,
     runeforges,
     centerPool,
-    isSelectionPhase: isSelectionPhase,
     selectedRunes,
     draftSource,
     runeforgeDraftStage,
     animatingRuneIds,
-    hiddenCenterRuneIds,
     onRuneClick,
-    onCenterRuneClick,
     onCancelSelection,
     onPlaceRunes,
     onPlaceRunesInFloor,
@@ -85,15 +82,12 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
           runeforges={runeforges}
           centerPool={centerPool}
           onRuneClick={onRuneClick}
-          onCenterRuneClick={onCenterRuneClick}
-          isSelectionPhase={isSelectionPhase}
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}
           draftSource={draftSource}
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
           animatingRuneIds={animatingRuneIds}
-          hiddenCenterRuneIds={hiddenCenterRuneIds}
           runesPerRuneforge={runesPerRuneforge}
         />
 
