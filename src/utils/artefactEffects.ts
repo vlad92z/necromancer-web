@@ -118,17 +118,12 @@ export function applyOutgoingDamageModifiers(
   segmentSize: number,
   state: GameState
 ): number {
-  const damage = baseDamage;
+  let damage = baseDamage;
   
   // Tome applies first (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
     damage = damage * 10;
   }
-  
-  // // Potion applies to final damage
-  // if (hasArtefact(state, 'potion')) {
-  //   damage = damage * 2;
-  // }
   
   return damage;
 }
@@ -175,13 +170,7 @@ export function applyIncomingDamageModifiers(
 ): { damage: number; scoreBonus: number } {
   const damage = baseDamage;
   console.log('Artefacts:', state.activeArtefacts);
-  // // Potion multiplies incoming damage
-  // if (hasArtefact(state, 'potion')) {
-  //   damage = damage * 3;
-  // }
-  
-  // Rod converts damage to score (uses post-Potion damage)
-  const scoreBonus = 0;//hasArtefact(state, 'rod') ? damage : 0;
+  const scoreBonus = 0;
   
   return { damage, scoreBonus };
 }
@@ -192,8 +181,8 @@ export function applyIncomingDamageModifiers(
 export function getArtefactEffectDescription(artefactId: ArtefactId): string {
   const descriptions: Record<ArtefactId, string> = {
     ring: 'Double the odds of drafting epic runes',
-    rod: 'Double all healing', //TODO Why two effects?
-    potion: 'Double all armor gained', //TODO: This should not double all armor or should it?
+    rod: 'Double all healing',
+    potion: 'Double all armor gained',
     robe: 'Increase total picks by 1 during deck drafting',
     tome: 'Segments of size 1 add 10× more runescore, 10× healing, and 10× armor',
   };
