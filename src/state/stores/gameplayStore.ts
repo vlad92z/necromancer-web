@@ -83,9 +83,10 @@ function enterDeckDraftMode(state: GameState): GameState {
     overloadRunes: [],
     scoringSequence: null,
     selectionTimestamp: null,
-    draftSource: null, 
+    draftSource: null,
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
+    channelSoundPending: state.channelSoundPending,
     outcome: 'victory',
     longestRun: nextLongestRun,
     targetScore: nextTargetScore,
@@ -145,9 +146,9 @@ function getNextCenterPool(state: GameState): Rune[] {
 function getChannelScoreBonusFromOverloadedRunes(
   existingOverloadRunes: Rune[],
   newlyOverloadedRunes: Rune[]
-): number {
+): { scoreBonus: number; triggered: boolean } {
   if (newlyOverloadedRunes.length === 0) {
-    return 0;
+    return { scoreBonus: 0, triggered: false };
   }
 
   const runeTypeCounts = new Map<RuneType, number>();
@@ -156,21 +157,24 @@ function getChannelScoreBonusFromOverloadedRunes(
   });
 
   let bonus = 0;
+  let triggered = false;
   newlyOverloadedRunes.forEach((rune) => {
     rune.effects.forEach((effect) => {
       if (effect.type === 'Channel') {
         bonus += effect.amount;
+        triggered = true;
         return;
       }
 
       if (effect.type === 'ChannelSynergy') {
         const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
         bonus += effect.amount * synergyCount;
+        triggered = true;
       }
     });
   });
 
-  return bonus;
+  return { scoreBonus: bonus, triggered };
 }
 
 function getOverloadResult(
@@ -178,12 +182,15 @@ function getOverloadResult(
   currentArmor: number,
   newlyOverloadedRunes: Rune[],
   state: GameState
-): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number } {
+): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number; channelTriggered: boolean } {
   const strain = getOverloadDamageForGame(state.game);
   const overloadRunesPlaced = newlyOverloadedRunes.length;
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
-  const channelScoreBonus = getChannelScoreBonusFromOverloadedRunes(state.overloadRunes, newlyOverloadedRunes);
-  
+  const { scoreBonus: channelScoreBonus, triggered: channelTriggered } = getChannelScoreBonusFromOverloadedRunes(
+    state.overloadRunes,
+    newlyOverloadedRunes
+  );
+
   // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
   const { damage: modifiedDamage, scoreBonus: rodScoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
   const armorAbsorbed = Math.min(currentArmor, modifiedDamage);
@@ -195,6 +202,7 @@ function getOverloadResult(
     nextHealth,
     nextArmor,
     scoreBonus: rodScoreBonus + channelScoreBonus,
+    channelTriggered,
   };
 }
 
@@ -202,7 +210,8 @@ function handlePlayerDefeat(
   state: GameState,
   updatedPlayer: Player,
   nextCenterPool: Rune[],
-  overloadDamage: number
+  overloadDamage: number,
+  channelTriggered: boolean
 ): GameState {
   console.log('gameplayStore: handlePlayerDefeat');
   const nextLongestRun = Math.max(state.longestRun, state.game);
@@ -231,6 +240,7 @@ function handlePlayerDefeat(
     outcome: 'defeat' as GameOutcome,
     longestRun: nextLongestRun,
     overloadSoundPending: overloadDamage > 0,
+    channelSoundPending: channelTriggered || state.channelSoundPending,
   };
 }
 
@@ -335,30 +345,7 @@ function prepareRoundReset(state: GameState): GameState {
   const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
 
   if (!playerHasEnough) {
-    const achievedTarget = state.runePowerTotal >= state.targetScore;
-    if (achievedTarget) {
-      return enterDeckDraftMode({
-        ...state,
-        player: clearedPlayer,
-        strain: nextStrain,
-        startingStrain: nextStrain,
-        runeforges: [],
-        centerPool: [],
-        runeforgeDraftStage: 'single',
-        game: state.game,
-        shouldTriggerEndRound: false,
-        lockedPatternLines: { [clearedPlayer.id]: [] },
-        selectedRunes: [],
-        selectionTimestamp: null,
-        draftSource: null,
-        scoringSequence: null,
-        pendingPlacement: null,
-        animatingRunes: [],
-        overloadSoundPending: false,
-        turnPhase: 'deck-draft',
-      });
-    }
-
+    // Defeat
     const nextLongestRun = Math.max(state.longestRun, state.game);
 
     trackDefeatEvent({
@@ -392,6 +379,7 @@ function prepareRoundReset(state: GameState): GameState {
       pendingPlacement: null,
       animatingRunes: [],
       overloadSoundPending: false,
+      channelSoundPending: state.channelSoundPending,
       runeforgeDraftStage: 'single',
     };
   }
@@ -448,6 +436,7 @@ export interface GameplayStore extends GameState {
   cancelSelection: () => void;
   autoPlaceSelection: () => void;
   acknowledgeOverloadSound: () => void;
+  acknowledgeChannelSound: () => void;
   endRound: () => void;
   resetGame: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
@@ -563,12 +552,13 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
   };
 
-  const { overloadDamage, nextHealth, nextArmor, scoreBonus } = getOverloadResult(
+  const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
     overflowRunes,
     state
   );
+  const nextChannelSoundPending = channelTriggered || state.channelSoundPending;
 
   const completedLines = updatedPatternLines
     .map((line, index) => ({ line, index }))
@@ -585,7 +575,13 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
   const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
-    const defeatedState = handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+    const defeatedState = handlePlayerDefeat(
+      state,
+      updatedPlayer,
+      nextCenterPool,
+      overloadDamage,
+      channelTriggered
+    );
     return { ...state, ...defeatedState, selectionTimestamp: null };
   }
 
@@ -605,7 +601,12 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
       runePowerTotal: nextRunePowerTotal,
     });
 
-    return { ...state, ...deckDraftReadyState, selectionTimestamp: null };
+    return {
+      ...state,
+      ...deckDraftReadyState,
+      selectionTimestamp: null,
+      channelSoundPending: nextChannelSoundPending,
+    };
   }
 
   const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
@@ -629,6 +630,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
+    channelSoundPending: nextChannelSoundPending,
   };
 }
 
@@ -647,12 +649,13 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
   };
 
-  const { overloadDamage, nextHealth, nextArmor, scoreBonus } = getOverloadResult(
+  const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
     selectedRunes,
     state
   );
+  const nextChannelSoundPending = channelTriggered || state.channelSoundPending;
 
   const updatedPlayer = {
     ...currentPlayer,
@@ -664,7 +667,13 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
   const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
-    const defeatedState = handlePlayerDefeat(state, updatedPlayer, nextCenterPool, overloadDamage);
+    const defeatedState = handlePlayerDefeat(
+      state,
+      updatedPlayer,
+      nextCenterPool,
+      overloadDamage,
+      channelTriggered
+    );
     return { ...state, ...defeatedState, selectionTimestamp: null };
   }
 
@@ -684,7 +693,12 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
       runePowerTotal: nextRunePowerTotal,
     });
 
-    return { ...state, ...deckDraftReadyState, selectionTimestamp: null };
+    return {
+      ...state,
+      ...deckDraftReadyState,
+      selectionTimestamp: null,
+      channelSoundPending: nextChannelSoundPending,
+    };
   }
 
   const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
@@ -701,6 +715,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
+    channelSoundPending: nextChannelSoundPending,
   };
 }
 
@@ -789,8 +804,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   // Initial state
   ...initializeSoloGame(),
 
-  
-  
+
+
   setTooltipCards: (cards) => {
     set((state) => ({
       ...state,
@@ -983,18 +998,18 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const sequenceId = Date.now();
       const scoringSequence = scoringSteps.length > 0
         ? ({
-            steps: scoringSteps,
-            activeIndex: -1,
-            sequenceId,
-          } satisfies ScoringSequenceState)
+          steps: scoringSteps,
+          activeIndex: -1,
+          sequenceId,
+        } satisfies ScoringSequenceState)
         : null;
 
       scoringPlan = scoringSequence
         ? {
-            steps: scoringSteps,
-            sequenceId,
-            shouldEndRound,
-          }
+          steps: scoringSteps,
+          sequenceId,
+          shouldEndRound,
+        }
         : null;
 
       return {
@@ -1016,7 +1031,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       runScoringSequence(scoringPlan, set);
     }
   },
-  
+
   draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
       if (state.turnPhase === 'place') {
@@ -1037,11 +1052,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       // Get all runes of selected type from center
       const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
       const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);
-      
+
       // If no runes of this type, do nothing
       if (selectedRunes.length === 0) return state;
       const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
-      
+
       return {
         ...state,
         centerPool: remainingRunes,
@@ -1052,15 +1067,15 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
     });
   },
-  
+
   placeRunes: (patternLineIndex: number) => {
     set((state) => placeSelectionOnPatternLine(state, patternLineIndex));
   },
-  
+
   placeRunesInFloor: () => {
     set((state) => placeSelectionInFloor(state));
   },
-  
+
   cancelSelection: () => {
     set((state) => cancelSelectionState(state));
   },
@@ -1081,11 +1096,15 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   autoPlaceSelection: () => {
     set((state) => attemptAutoPlacement(state));
   },
-  
+
   acknowledgeOverloadSound: () => {
     set({ overloadSoundPending: false });
   },
-  
+
+  acknowledgeChannelSound: () => {
+    set({ channelSoundPending: false });
+  },
+
   endRound: () => {
     console.log('gameplayStoreConfig: endRound triggered');
     set((state) => {
@@ -1228,7 +1247,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       navigationCallback();
     }
   },
-  
+
   resetGame: () => {
     clearScoringTimeout();
     set(() => initializeSoloGame());

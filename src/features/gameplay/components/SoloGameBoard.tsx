@@ -57,7 +57,7 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
 
   return (
     <div className="flex flex-col h-full relative">
-      <div className="px-[min(1.2vmin,16px)] pt-[min(1.2vmin,16px)]">
+      <div>
         <GameMetadataView
           playerId={player.id}
           gameNumber={game}

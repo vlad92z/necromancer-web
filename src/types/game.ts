@@ -210,6 +210,7 @@ export interface GameState {
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringSequence: ScoringSequenceState | null; // Active scoring pulses/sequence
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
+  channelSoundPending: boolean; // Flag to trigger lightning SFX when channel effects resolve
   selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect

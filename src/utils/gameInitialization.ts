@@ -320,6 +320,7 @@ export function initializeSoloGame(
     scoringSequence: null,
     pendingPlacement: null,
     overloadSoundPending: false,
+    channelSoundPending: false,
     lockedPatternLines: {
       [soloPlayer.id]: []
     },

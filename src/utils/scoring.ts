@@ -128,24 +128,8 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
   const resolutionSteps: RuneResolutionStep[] = orderedCells.map((cell) => {
     const baseEffects = cell.runeType ? getRuneEffectsForType(cell.runeType) : [];
     const providedEffects = cell.effects ?? [];
-    const filteredBaseEffects =
-      providedEffects.length > 0
-        ? baseEffects.filter((baseEffect) => {
-            if (baseEffect.type === 'Damage' || baseEffect.type === 'Healing' || baseEffect.type === 'Armor') {
-              return !providedEffects.some(
-                (effect) =>
-                  effect.type === baseEffect.type &&
-                  'amount' in effect &&
-                  'amount' in baseEffect &&
-                  effect.amount === baseEffect.amount &&
-                  effect.rarity === baseEffect.rarity
-              );
-            }
-            return true;
-          })
-        : baseEffects;
     const resolvedEffects: RuneEffects =
-      providedEffects.length > 0 ? [...filteredBaseEffects, ...providedEffects] : baseEffects;
+      providedEffects.length > 0 ? [...providedEffects] : baseEffects;
 
     let damage = 0;
     let healing = 0;

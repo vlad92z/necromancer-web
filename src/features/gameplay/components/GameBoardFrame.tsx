@@ -136,6 +136,8 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
   const endRound = useGameplayStore((state) => state.endRound);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
+  const channelSoundPending = useGameplayStore((state) => state.channelSoundPending);
+  const acknowledgeChannelSound = useGameplayStore((state) => state.acknowledgeChannelSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
   const isMusicMuted = useUIStore((state) => state.isMusicMuted);
@@ -172,7 +174,15 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
     centerPool,
   });
   
-  useRunePlacementSounds([player], activeAnimatingRunes, soundVolume, overloadSoundPending, acknowledgeOverloadSound);
+  useRunePlacementSounds(
+    [player],
+    activeAnimatingRunes,
+    soundVolume,
+    overloadSoundPending,
+    acknowledgeOverloadSound,
+    channelSoundPending,
+    acknowledgeChannelSound
+  );
 
   const runeScore = useMemo(
     () => ({
@@ -404,7 +414,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
 
   return (
     <div
-      className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center p-6 box-border relative"
+      className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center box-border relative"
     >
       <div className="relative" style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px` }}>
         <div

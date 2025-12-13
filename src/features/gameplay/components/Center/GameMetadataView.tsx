@@ -239,7 +239,7 @@ export function GameMetadataView({
   );
 
   return (
-    <div className="flex flex-row w-full border-b border-slate-600/70 pb-2">
+    <div className="flex flex-row w-full border-b border-slate-600/70 pb-2 bg-slate-900/80 px-5 pt-3">
       {/* Left side: Game Title, Arcane Dust Counter, Settings Button */}
       <div className="w-full flex flex-row flex-[29] items-center">
         <ClickSoundButton

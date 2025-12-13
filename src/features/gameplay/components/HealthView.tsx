@@ -3,6 +3,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import { useArmorChangeSound } from '../../../hooks/useArmorChangeSound';
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
@@ -18,6 +19,7 @@ export function HealthView({
   maxHealth,
   armor
 }: HealthViewProps) {
+  useArmorChangeSound(armor);
   const progress = Math.min(1, health / maxHealth);
   const progressPercent = Math.round(progress * 100);
   const previousHealthRef = useRef(health);
