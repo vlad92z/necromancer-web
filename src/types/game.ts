@@ -20,6 +20,8 @@ export type RuneEffect =
   | { type: 'Synergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
   | { type: 'Fortune'; amount: number; rarity: RuneEffectRarity }
   | { type: 'Fragile'; amount: number; fragileType: RuneType; rarity: RuneEffectRarity }
+  | { type: 'Channel'; amount: number; rarity: RuneEffectRarity }
+  | { type: 'ChannelSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
 
 export type RuneEffects = RuneEffect[];
 

@@ -175,6 +175,10 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
           }
           break;
         }
+        case 'Channel':
+        case 'ChannelSynergy':
+          // Channel effects only apply during overload events, not segment scoring
+          break;
       }
     });
 

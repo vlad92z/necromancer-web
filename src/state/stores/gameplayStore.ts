@@ -142,19 +142,56 @@ function getNextCenterPool(state: GameState): Rune[] {
   return state.centerPool;
 }
 
+function getChannelScoreBonusFromOverloadedRunes(
+  existingOverloadRunes: Rune[],
+  newlyOverloadedRunes: Rune[]
+): number {
+  if (newlyOverloadedRunes.length === 0) {
+    return 0;
+  }
+
+  const runeTypeCounts = new Map<RuneType, number>();
+  [...existingOverloadRunes, ...newlyOverloadedRunes].forEach((rune) => {
+    runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) ?? 0) + 1);
+  });
+
+  let bonus = 0;
+  newlyOverloadedRunes.forEach((rune) => {
+    rune.effects.forEach((effect) => {
+      if (effect.type === 'Channel') {
+        bonus += effect.amount;
+        return;
+      }
+
+      if (effect.type === 'ChannelSynergy') {
+        const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
+        bonus += effect.amount * synergyCount;
+      }
+    });
+  });
+
+  return bonus;
+}
+
 function getOverloadResult(
   currentHealth: number,
-  overloadRunesPlaced: number,
+  newlyOverloadedRunes: Rune[],
   state: GameState
 ): { overloadDamage: number; nextHealth: number; scoreBonus: number } {
   const strain = getOverloadDamageForGame(state.game);
+  const overloadRunesPlaced = newlyOverloadedRunes.length;
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
+  const channelScoreBonus = getChannelScoreBonusFromOverloadedRunes(state.overloadRunes, newlyOverloadedRunes);
   
   // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
-  const { damage: modifiedDamage, scoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
+  const { damage: modifiedDamage, scoreBonus: rodScoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
   
   const nextHealth = modifiedDamage > 0 ? Math.max(0, currentHealth - modifiedDamage) : currentHealth;
-  return { overloadDamage: modifiedDamage, nextHealth, scoreBonus };
+  return {
+    overloadDamage: modifiedDamage,
+    nextHealth,
+    scoreBonus: rodScoreBonus + channelScoreBonus,
+  };
 }
 
 function handlePlayerDefeat(
@@ -521,8 +558,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
   };
 
-  const overloadRunesPlaced = overflowRunes.length;
-  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state);
+  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overflowRunes, state);
 
   const completedLines = updatedPatternLines
     .map((line, index) => ({ line, index }))
@@ -600,8 +636,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
   };
 
-  const overloadRunesPlaced = selectedRunes.length;
-  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, overloadRunesPlaced, state);
+  const { overloadDamage, nextHealth, scoreBonus } = getOverloadResult(currentPlayer.health, selectedRunes, state);
 
   const updatedPlayer = {
     ...currentPlayer,
