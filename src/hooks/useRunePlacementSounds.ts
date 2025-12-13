@@ -9,6 +9,7 @@ import lifeRuneSound from '../assets/sounds/life.mp3';
 import voidRuneSound from '../assets/sounds/void.mp3';
 import windRuneSound from '../assets/sounds/wind.mp3';
 import damageSoundUrl from '../assets/sounds/damage.mp3';
+import lightningSoundUrl from '../assets/sounds/lightning.mp3';
 
 type RuneSoundMap = Record<RuneType, string>;
 type RuneCountMap = Record<RuneType, number>;
@@ -60,7 +61,9 @@ export function useRunePlacementSounds(
   animatingRunes: AnimatingRune[],
   soundVolume: number,
   overloadSoundPending: boolean,
-  clearOverloadSound: () => void
+  clearOverloadSound: () => void,
+  channelSoundPending: boolean,
+  clearChannelSound: () => void
 ) {
   const placementsByType = useMemo(() => countRunePlacements(players), [players]);
   const previousCountsRef = useRef<RuneCountMap>(placementsByType);
@@ -83,6 +86,7 @@ export function useRunePlacementSounds(
 
   const soundVolumeRef = useRef(soundVolume);
   const damageAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lightningAudioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     soundVolumeRef.current = soundVolume;
   }, [soundVolume]);
@@ -130,6 +134,12 @@ export function useRunePlacementSounds(
     }
     if (damageAudioRef.current) {
       damageAudioRef.current.volume = soundVolume;
+    }
+    if (!lightningAudioRef.current) {
+      lightningAudioRef.current = new Audio(lightningSoundUrl);
+    }
+    if (lightningAudioRef.current) {
+      lightningAudioRef.current.volume = soundVolume;
     }
   }, [soundVolume]);
 
@@ -180,6 +190,29 @@ export function useRunePlacementSounds(
 
     clearOverloadSound();
   }, [clearOverloadSound, overloadSoundPending]);
+
+  useEffect(() => {
+    if (!channelSoundPending) {
+      return;
+    }
+
+    if (typeof Audio !== 'undefined') {
+      if (!lightningAudioRef.current) {
+        lightningAudioRef.current = new Audio(lightningSoundUrl);
+      }
+      const audioElement = lightningAudioRef.current;
+      if (audioElement) {
+        audioElement.volume = soundVolumeRef.current;
+        audioElement.currentTime = 0;
+        const playPromise = audioElement.play();
+        if (playPromise) {
+          void playPromise.catch(() => {});
+        }
+      }
+    }
+
+    clearChannelSound();
+  }, [channelSoundPending, clearChannelSound]);
 
   useEffect(() => {
     (Object.keys(placementsByType) as RuneType[]).forEach((runeType) => {

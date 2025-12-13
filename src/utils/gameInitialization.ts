@@ -60,7 +60,7 @@ const DEFAULT_STARTING_STRAIN = getOverloadDamageForGame(1);
 const DEFAULT_STRAIN_MULTIPLIER = 2;
 const SOLO_TARGET_INCREMENT = 25;
 const DEFAULT_RUNES_PER_RUNEFORGE = 4;
-const STARTING_HEALTH = 25;
+const STARTING_HEALTH = 50;
 const FACTORIES_PER_PLAYER = 5;
 const DEFAULT_RUNES_PER_TYPE = 20;
 const DEFAULT_SOLO_TARGET_SCORE = 25;
@@ -187,6 +187,7 @@ export function createPlayer(
     },
     health: startingHealth,
     maxHealth: maxHealthOverride ?? startingHealth,
+    armor: 0,
     deck: createStartingDeck(id, totalRunesPerPlayer),
   };
 }
@@ -310,6 +311,7 @@ export function initializeSoloGame(
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
     game: initialGameNumber,
+    round: 1,
     tooltipCards: createDefaultTooltipCards(),
     selectedRunes: [],
     overloadRunes: [],
@@ -319,6 +321,7 @@ export function initializeSoloGame(
     scoringSequence: null,
     pendingPlacement: null,
     overloadSoundPending: false,
+    channelSoundPending: false,
     lockedPatternLines: {
       [soloPlayer.id]: []
     },

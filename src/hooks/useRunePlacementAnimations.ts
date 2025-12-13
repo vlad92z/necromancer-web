@@ -222,7 +222,7 @@ export function useRunePlacementAnimations({
     const patternSlotLookup = new Map<string, HTMLElement>();
     if (changedLineIndex !== -1) {
       const candidates = document.querySelectorAll<HTMLElement>(
-        `[data-player-id="${snapshot.playerId}"][data-pattern-line-index="${changedLineIndex}"][data-pattern-slot-index]`,
+        `[data-player-id="${snapshot.playerId}"][data-pattern-line-index="${changedLineIndex}"][data-pattern-slot-index]`,//TODO: Just use a static ID
       );
       candidates.forEach((element) => {
         const lineIndex = element.getAttribute('data-pattern-line-index');

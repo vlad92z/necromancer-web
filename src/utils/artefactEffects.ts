@@ -65,7 +65,7 @@ export function modifyDraftRarityWithRing(
  * Robe effect: Increase total picks by 1 during deck drafting
  */
 export function modifyDraftPicksWithRobe(basePicks: number, hasRobe: boolean): number {
-  return hasRobe ? basePicks + 1 : basePicks;
+  return hasRobe ? basePicks + 1 : basePicks; //TODO: This should let the pick an extra from the existing picks
 }
 
 /**
@@ -91,7 +91,7 @@ export function getDamageToScoreBonusWithRod(damage: number, hasRod: boolean): n
 }
 
 /**
- * Tome effect: Segments of size 1 deal 10× damage (rune score) and 10× healing
+ * Tome effect: Segments of size 1 deal 10× damage (rune score) and 10× healing and 10x armor
  */
 export function modifySegmentResultWithTome(
   segment: ResolvedSegment,
@@ -105,6 +105,7 @@ export function modifySegmentResultWithTome(
     ...segment,
     damage: segment.damage * 10,
     healing: segment.healing * 10,
+    armor: segment.armor * 10,
   };
 }
 
@@ -122,11 +123,6 @@ export function applyOutgoingDamageModifiers(
   // Tome applies first (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
     damage = damage * 10;
-  }
-  
-  // Potion applies to final damage
-  if (hasArtefact(state, 'potion')) {
-    damage = damage * 2;
   }
   
   return damage;
@@ -148,7 +144,19 @@ export function applyOutgoingHealingModifiers(
     healing = healing * 10;
   }
   
+  if (hasArtefact(state, 'rod')) {
+    healing = healing * 2;
+  }
   return healing;
+}
+
+/**
+ * Get the armor multiplier for resolved segments after artefact modifiers.
+ */
+export function getArmorGainMultiplier(segmentSize: number, state: GameState): number {
+  const healingMultiplier = applyOutgoingHealingModifiers(1, segmentSize, state);
+  const potionArmorMultiplier = 1;//hasArtefact(state, 'potion') ? 2 : 1;
+  return healingMultiplier * potionArmorMultiplier;
 }
 
 /**
@@ -160,15 +168,9 @@ export function applyIncomingDamageModifiers(
   baseDamage: number,
   state: GameState
 ): { damage: number; scoreBonus: number } {
-  let damage = baseDamage;
-  
-  // Potion multiplies incoming damage
-  if (hasArtefact(state, 'potion')) {
-    damage = damage * 3;
-  }
-  
-  // Rod converts damage to score (uses post-Potion damage)
-  const scoreBonus = hasArtefact(state, 'rod') ? damage : 0;
+  const damage = baseDamage;
+  console.log('Artefacts:', state.activeArtefacts);
+  const scoreBonus = 0;
   
   return { damage, scoreBonus };
 }
@@ -179,10 +181,10 @@ export function applyIncomingDamageModifiers(
 export function getArtefactEffectDescription(artefactId: ArtefactId): string {
   const descriptions: Record<ArtefactId, string> = {
     ring: 'Double the odds of drafting epic runes',
-    rod: 'All damage taken is also added to Rune Score',
-    potion: 'Double all damage dealt, but triple all damage taken',
+    rod: 'Double all healing',
+    potion: 'Double all armor gained',
     robe: 'Increase total picks by 1 during deck drafting',
-    tome: 'Segments of size 1 deal 10× damage and 10× healing',
+    tome: 'Segments of size 1 add 10× more runescore, 10× healing, and 10× armor',
   };
   
   return descriptions[artefactId];

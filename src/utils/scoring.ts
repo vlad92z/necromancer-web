@@ -82,8 +82,10 @@ export interface ResolvedSegment {
   damage: number;
   healing: number;
   arcaneDust: number;
+  armor: number;
   orderedCells: SegmentCell[];
   resolutionSteps: RuneResolutionStep[];
+  channelSynergyTriggered: boolean;
 }
 
 export interface RuneResolutionStep {
@@ -91,6 +93,7 @@ export interface RuneResolutionStep {
   damageDelta: number;
   healingDelta: number;
   arcaneDustDelta: number;
+  armorDelta: number;
 }
 
 /**
@@ -100,15 +103,28 @@ export interface RuneResolutionStep {
 export function resolveSegment(
   wall: ScoringWall,
   row: number,
-  col: number
+  col: number,
+  overloadRuneCounts?: Map<RuneType, number>
 ): ResolvedSegment {
   const connectedCells = collectSegmentCells(wall, row, col);
-  return resolveSegmentFromCells(connectedCells);
+  return resolveSegmentFromCells(connectedCells, overloadRuneCounts);
 }
 
-export function resolveSegmentFromCells(connectedCells: SegmentCell[]): ResolvedSegment {
+export function resolveSegmentFromCells(
+  connectedCells: SegmentCell[],
+  overloadRuneCounts: Map<RuneType, number> = new Map()
+): ResolvedSegment {
   if (connectedCells.length === 0) {
-    return { segmentSize: 0, damage: 0, healing: 0, arcaneDust: 0, orderedCells: [], resolutionSteps: [] };
+    return {
+      segmentSize: 0,
+      damage: 0,
+      healing: 0,
+      arcaneDust: 0,
+      armor: 0,
+      orderedCells: [],
+      resolutionSteps: [],
+      channelSynergyTriggered: false,
+    };
   }
 
   const orderedCells = [...connectedCells].sort((a, b) =>
@@ -123,33 +139,19 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     }
   });
 
+  let channelSynergyTriggered = false;
   const resolutionSteps: RuneResolutionStep[] = orderedCells.map((cell) => {
     const baseEffects = cell.runeType ? getRuneEffectsForType(cell.runeType) : [];
     const providedEffects = cell.effects ?? [];
-    const filteredBaseEffects =
-      providedEffects.length > 0
-        ? baseEffects.filter((baseEffect) => {
-            if (baseEffect.type === 'Damage' || baseEffect.type === 'Healing') {
-              return !providedEffects.some(
-                (effect) =>
-                  effect.type === baseEffect.type &&
-                  'amount' in effect &&
-                  'amount' in baseEffect &&
-                  effect.amount === baseEffect.amount &&
-                  effect.rarity === baseEffect.rarity
-              );
-            }
-            return true;
-          })
-        : baseEffects;
     const resolvedEffects: RuneEffects =
-      providedEffects.length > 0 ? [...filteredBaseEffects, ...providedEffects] : baseEffects;
+      providedEffects.length > 0 ? [...providedEffects] : baseEffects;
 
     let damage = 0;
     let healing = 0;
     let arcaneDust = 0;
-
+    let armor = 0;
     resolvedEffects.forEach((effect) => {
+      console.log('RESOLVING EFFECT', effect);
       switch (effect.type) {
         case 'Damage':
           damage += effect.amount;
@@ -157,10 +159,19 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
         case 'Healing':
           healing += effect.amount;
           break;
+        case 'Armor':
+          console.log('ADDING ARMOR FROM EFFECT', effect.amount);
+          armor += effect.amount;
+          break;
         case 'Synergy': {
           // Add amount to damage for each synergyType rune in the segment
           const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
           damage += effect.amount * synergyCount;
+          break;
+        }
+        case 'ArmorSynergy': {
+          const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
+          armor += effect.amount * synergyCount;
           break;
         }
         case 'Fortune':
@@ -175,6 +186,17 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
           }
           break;
         }
+        case 'Channel':
+          break;
+        case 'ChannelSynergy': {
+          const overloadedCount = overloadRuneCounts.get(effect.synergyType) ?? 0;
+          const bonus = effect.amount * overloadedCount;
+          if (bonus > 0) {
+            channelSynergyTriggered = true;
+          }
+          damage += bonus;
+          break;
+        }
       }
     });
 
@@ -183,6 +205,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
       damageDelta: damage,
       healingDelta: healing,
       arcaneDustDelta: arcaneDust,
+      armorDelta: armor,
     };
   });
 
@@ -191,8 +214,9 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
       damage: acc.damage + step.damageDelta,
       healing: acc.healing + step.healingDelta,
       arcaneDust: acc.arcaneDust + step.arcaneDustDelta,
+      armor: acc.armor + step.armorDelta,
     }),
-    { damage: 0, healing: 0, arcaneDust: 0 }
+    { damage: 0, healing: 0, arcaneDust: 0, armor: 0 }
   );
 
   return {
@@ -200,8 +224,10 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     damage: totals.damage,
     healing: totals.healing,
     arcaneDust: totals.arcaneDust,
+    armor: totals.armor,
     orderedCells,
     resolutionSteps,
+    channelSynergyTriggered,
   };
 }
 

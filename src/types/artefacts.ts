@@ -26,22 +26,22 @@ export const MAX_SELECTED_ARTEFACTS = 5;
  * All available artefacts in the game
  */
 export const ARTEFACTS: Record<ArtefactId, Artefact> = {
+  potion: {
+    id: 'potion',
+    name: 'Frost Potion',
+    cost: 500,
+    image: potionPng,
+  },
   rod: {
     id: 'rod',
-    name: 'Rod of Retribution',
-    cost: 500,
-    image: rodPng,
-  },
-  robe: {
-    id: 'robe',
-    name: 'Weaver\'s Mantle',
+    name: 'Rod of Healing',
     cost: 1000,
-    image: robePng,
+    image: rodPng,
   },
   tome: {
     id: 'tome',
     name: 'Primer of Solitude',
-    cost: 2500,
+    cost: 2000,
     image: tomePng,
   },
   ring: {
@@ -50,11 +50,11 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
     cost: 5000,
     image: ringPng,
   },
-  potion: {
-    id: 'potion',
-    name: 'Berserker Potion',
-    cost: 50000,
-    image: potionPng,
+  robe: {
+    id: 'robe',
+    name: 'Weaver\'s Mantle',
+    cost: 10000,
+    image: robePng,
   },
 };
 

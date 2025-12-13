@@ -8,14 +8,37 @@
    fill="none"
    version="1.1"
    id="svg1"
-   sodipodi:docname="stress.svg"
+   sodipodi:docname="overload.svg"
    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
-     id="defs1" />
+     id="defs1">
+    <linearGradient
+       id="linearGradient1362"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#c50000;stop-opacity:1;"
+         offset="0"
+         id="stop1362" />
+      <stop
+         style="stop-color:#620000;stop-opacity:1;"
+         offset="1"
+         id="stop1363" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1362"
+       id="linearGradient1363"
+       x1="10.981031"
+       y1="11.271808"
+       x2="21.939322"
+       y2="21.95196"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
   <sodipodi:namedview
      id="namedview1"
      pagecolor="#ffffff"
@@ -26,13 +49,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="0.98875"
-     inkscape:cx="399.49431"
-     inkscape:cy="400"
-     inkscape:window-width="1200"
-     inkscape:window-height="968"
-     inkscape:window-x="0"
-     inkscape:window-y="31"
-     inkscape:window-maximized="0"
+     inkscape:cx="465.73957"
+     inkscape:cy="393.42604"
+     inkscape:window-width="1920"
+     inkscape:window-height="1021"
+     inkscape:window-x="1080"
+     inkscape:window-y="351"
+     inkscape:window-maximized="1"
      inkscape:current-layer="svg1" />
   <path
      d="M10 18V21M14 20V21M21 12V13C21 15.2091 19.2091 17 17 17V21H7V17C4.79086 17 3 15.2091 3 13V12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM10 10.5C10 11.6046 9.10457 12.5 8 12.5C6.89543 12.5 6 11.6046 6 10.5C6 9.39543 6.89543 8.5 8 8.5C9.10457 8.5 10 9.39543 10 10.5ZM18 10.5C18 11.6046 17.1046 12.5 16 12.5C14.8954 12.5 14 11.6046 14 10.5C14 9.39543 14.8954 8.5 16 8.5C17.1046 8.5 18 9.39543 18 10.5Z"
@@ -41,5 +64,5 @@
      stroke-linecap="round"
      stroke-linejoin="round"
      id="path1"
-     style="stroke:#b30000;stroke-opacity:1" />
+     style="stroke:url(#linearGradient1363);stroke-opacity:1;stroke-width:2.00001;stroke-dasharray:none" />
 </svg>

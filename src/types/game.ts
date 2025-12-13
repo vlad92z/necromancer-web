@@ -20,6 +20,10 @@ export type RuneEffect =
   | { type: 'Synergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
   | { type: 'Fortune'; amount: number; rarity: RuneEffectRarity }
   | { type: 'Fragile'; amount: number; fragileType: RuneType; rarity: RuneEffectRarity }
+  | { type: 'Channel'; amount: number; rarity: RuneEffectRarity }
+  | { type: 'ChannelSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
+  | { type: 'Armor'; amount: number; rarity: RuneEffectRarity }
+  | { type: 'ArmorSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
 
 export type RuneEffects = RuneEffect[];
 
@@ -119,6 +123,7 @@ export interface Player {
   floorLine: FloorLine;
   health: number; // Current health (starts at configurable amount)
   maxHealth?: number; // Maximum health cap (initialized at game start)
+  armor: number; // Temporary shield that absorbs damage before health
   deck: Rune[]; // Player's deck of runes for this run
 }
 
@@ -149,6 +154,7 @@ export interface ScoringStep {
   damageDelta: number;
   healingDelta: number;
   arcaneDustDelta: number;
+  armorDelta: number;
   delayMs: number;
 }
 
@@ -175,6 +181,7 @@ export interface GameState {
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
+  round: number; // Current round number within the active game run
   /**
    * Damage dealt for every overload rune, derived from the current game number.
    * Progression caps at the final configured value for later games.
@@ -204,6 +211,7 @@ export interface GameState {
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringSequence: ScoringSequenceState | null; // Active scoring pulses/sequence
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
+  channelSoundPending: boolean; // Flag to trigger lightning SFX when channel effects resolve
   selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
