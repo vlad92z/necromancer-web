@@ -11,7 +11,14 @@ import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../uti
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
 import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
 import { useArtefactStore } from './artefactStore';
-import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoingHealingModifiers, modifyDraftPicksWithRobe, hasArtefact } from '../../utils/artefactEffects';
+import {
+  applyIncomingDamageModifiers,
+  applyOutgoingDamageModifiers,
+  applyOutgoingHealingModifiers,
+  getArmorGainMultiplier,
+  modifyDraftPicksWithRobe,
+  hasArtefact,
+} from '../../utils/artefactEffects';
 import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
@@ -973,7 +980,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const healingMultiplier = applyOutgoingHealingModifiers(1, resolvedSegment.segmentSize, state);
         const segmentDelay = getRuneResolutionDelayMs(resolvedSegment.segmentSize);
 
-        const armorMultiplier = healingMultiplier; // Armor benefits from the same modifiers as healing
+        const armorMultiplier = getArmorGainMultiplier(resolvedSegment.segmentSize, state);
         const segmentSteps = resolvedSegment.resolutionSteps.map((step) => ({
           row: step.cell.row,
           col: step.cell.col,
