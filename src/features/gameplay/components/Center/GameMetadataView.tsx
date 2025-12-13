@@ -16,6 +16,7 @@ import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
 import { useCastSound } from '../../../../hooks/useCastSound';
 import { buildTextTooltipCard } from '../../../../utils/tooltipCards';
 import type { Transition } from 'framer-motion';
+import { HealthView } from '../HealthView';
 
 interface GameMetadataViewProps {
   playerId: string;
@@ -288,26 +289,14 @@ export function GameMetadataView({
           onClick={handleDeckClick}
           onTooltipToggle={handleDeckTooltipToggle}
         />
-        <div className="flex flex-col gap-1">
-          <ProgressStatOverlay
-            label="Health"
-            current={clampedHealth}
-            max={maxHealth}
-            secondaryValue={armor}
-            forcedDeltaIndicator={forcedHealthIndicatorPayload}
-            // forcedSecondaryDeltaIndicator={forcedArmorIndicator}
-            progressBackground="bg-red-500/15"
-            barClassName="bg-gradient-to-r from-red-500 to-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.25)]"
-            valueColor="text-red-500"
-            deltaGainClassName="text-emerald-300 text-sm font-bold drop-shadow-[0_0_10px_rgba(52,211,153,0.45)]"
-            deltaLossClassName="text-rose-300 text-sm font-bold drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]"
-          />
-        </div>
-
-          <RuneScoreView
-            score={runeScore.currentScore}
-            maxScore={runeScore.targetScore}
-          />
+        <HealthView
+          health={clampedHealth}
+          maxHealth={maxHealth}
+        />
+        <RuneScoreView
+          score={runeScore.currentScore}
+          maxScore={runeScore.targetScore}
+        />
       </div>
     </div>
   );
