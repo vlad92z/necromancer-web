@@ -42,9 +42,6 @@ export function HealthView({
   const healthLossClassName = "text-rose-300 text-sm font-bold";
     const armorGainClassName = 'text-blue-300 text-sm font-bold';
   const armorLossClassName = "text-slate-200 text-sm font-bold";
-  let deltaHealthIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
-  let deltaArmorIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
-
   useEffect(() => {
     const controls = animate(animatedHealth, health, {
       duration: 0.45,
@@ -87,22 +84,6 @@ export function HealthView({
     previousArmorRef.current = armor;
   }, [armor]);
 
-
-  useEffect(() => {
-    if (!deltaHealthIndicator) {
-      return;
-    }
-
-    setHealthIndicator(deltaHealthIndicator);
-  }, [deltaHealthIndicator]);
-
-  useEffect(() => {
-    if (!deltaArmorIndicator) {
-      return;
-    }
-
-    setArmorIndicator(deltaArmorIndicator);
-  }, [deltaArmorIndicator]);
 
 
   useEffect(() => {

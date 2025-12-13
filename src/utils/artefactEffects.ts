@@ -118,7 +118,7 @@ export function applyOutgoingDamageModifiers(
   segmentSize: number,
   state: GameState
 ): number {
-  let damage = baseDamage;
+  const damage = baseDamage;
   
   // Tome applies first (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
@@ -173,7 +173,7 @@ export function applyIncomingDamageModifiers(
   baseDamage: number,
   state: GameState
 ): { damage: number; scoreBonus: number } {
-  let damage = baseDamage;
+  const damage = baseDamage;
   console.log('Artefacts:', state.activeArtefacts);
   // // Potion multiplies incoming damage
   // if (hasArtefact(state, 'potion')) {

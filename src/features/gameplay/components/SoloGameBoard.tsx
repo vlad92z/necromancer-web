@@ -96,13 +96,11 @@ export const SoloGameBoard = memo(function SoloGameBoard({ shared, gameData }: S
         <PlayerBoard
           player={player}
           onPlaceRunes={onPlaceRunes}
-          onPlaceRunesInFloor={onPlaceRunesInFloor}
           selectedRuneType={selectedRuneType}
           canPlace={hasSelectedRunes}
           onCancelSelection={onCancelSelection}
           lockedLineIndexes={playerLockedLines}
           hiddenSlotKeys={playerHiddenPatternSlots}
-          runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }} //TODO?
         />
       </div>
       {/* TODO: Cleanup */}

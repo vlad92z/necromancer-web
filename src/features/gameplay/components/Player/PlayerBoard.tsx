@@ -10,28 +10,21 @@ import { TooltipView } from './TooltipView';
 interface PlayerBoardProps {
   player: Player;
   onPlaceRunes?: (patternLineIndex: number) => void;
-  onPlaceRunesInFloor?: () => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
-  runeScore: {
-    currentScore: number;
-    targetScore: number;
-  };
 }
 
 export function PlayerBoard({
   player,
   onPlaceRunes,
-  onPlaceRunesInFloor,
   selectedRuneType,
   canPlace,
   onCancelSelection,
   lockedLineIndexes,
   hiddenSlotKeys,
-  runeScore,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {

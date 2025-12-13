@@ -39,11 +39,6 @@ interface GameMetadataViewProps {
   hasSelectedRunes: boolean;
 }
 
-type ForcedHealthIndicator = {
-  amount: number;
-  key: number;
-};
-
 type ForcedArmorIndicator = {
   amount: number;
   key: number;
@@ -90,16 +85,10 @@ export function GameMetadataView({
     previousRuneScoreRef.current = runeScore.currentScore;
   }, [playCastSound, runeScore.currentScore]);
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
-  const [forcedHealthIndicator, setForcedHealthIndicator] = useState<ForcedHealthIndicator | null>(null);
   const lastHealingStepRef = useRef<string | null>(null);
   const [forcedArmorIndicator, setForcedArmorIndicator] = useState<ForcedArmorIndicator | null>(null);
   const lastArmorStepRef = useRef<string | null>(null);
   const previousHealthRef = useRef<number>(clampedHealth);
-  const forcedHealthIndicatorPayload = useMemo(
-    () => (forcedHealthIndicator ? { ...forcedHealthIndicator, type: 'gain' as const } : null),
-    [forcedHealthIndicator],
-  );
-
   useEffect(() => {
     if (!scoringSequence) {
       lastHealingStepRef.current = null;
@@ -149,7 +138,6 @@ export function GameMetadataView({
     if (!healingChangedHealth) {
       const indicatorKey = Date.now();
       setForcedHealSignal(indicatorKey);
-      setForcedHealthIndicator({ amount: step.healingDelta, key: indicatorKey });
     }
 
     previousHealthRef.current = clampedHealth;

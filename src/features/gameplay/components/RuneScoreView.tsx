@@ -29,8 +29,6 @@ export function RuneScoreView({
 
   const deltaGainClassName = 'text-sky-200 text-sm font-bold';
   const deltaLossClassName = "text-rose-300 text-sm font-bold";
-  let deltaIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
-
   useEffect(() => {
     const controls = animate(animatedValue, score, {
       duration: 0.45,
@@ -51,14 +49,6 @@ export function RuneScoreView({
 
     previousValueRef.current = score;
   }, [score]);
-
-  useEffect(() => {
-    if (!deltaIndicator) {
-      return;
-    }
-
-    setIndicator(deltaIndicator);
-  }, [deltaIndicator]);
 
   useEffect(() => {
     if (!indicator) {
