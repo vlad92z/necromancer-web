@@ -23,13 +23,12 @@ export function RuneScoreView({
   const [indicator, setIndicator] = useState<DeltaIndicator | null>(null);
   const animatedValue = useMotionValue(score);
   const [displayedValue, setDisplayedValue] = useState(score);
-  const valueClassName = 'text-yellow-400 font-extrabold text-base text-right'
   useMotionValueEvent(animatedValue, 'change', (value) => {
     setDisplayedValue(Math.round(value));
   });
 
   const deltaGainClassName = 'text-sky-200 text-sm font-bold';
-  const deltaLossClassName = "text-rose-300 text-sm font-bold drop-shadow-[0_0_8px_rgba(248,113,113,0.55)]";
+  const deltaLossClassName = "text-rose-300 text-sm font-bold";
   let deltaIndicator: { amount: number; key: number; type: 'gain' | 'loss' } | null = null;
 
   useEffect(() => {
@@ -75,8 +74,6 @@ export function RuneScoreView({
     };
   }, [indicator]);
 
-  const valueClass = valueClassName;
-
   return (
     <div className={`w-full flex flex-col gap-2 py-3 px-3.5`}>
       <div className="flex items-center justify-between gap-2">
@@ -98,7 +95,7 @@ export function RuneScoreView({
               </motion.span>
             )}
           </AnimatePresence>
-          <motion.span className={valueClass}>
+          <motion.span className='text-yellow-400 font-extrabold text-base text-right'>
             {`${displayedValue} / ${maxScore}`}
           </motion.span>
         </div>
