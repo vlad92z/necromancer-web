@@ -20,8 +20,8 @@ const EPIC_INCREMENT_PER_WIN = 1;
 const RARE_INCREMENT_PER_WIN = 5;
 
 const DECK_DRAFT_EFFECTS: DeckDraftEffect[] = [
-  { type: 'heal', amount: 15 },
-  { type: 'maxHealth', amount: 5 },
+  { type: 'heal', amount: 30 },
+  { type: 'maxHealth', amount: 10 },
   { type: 'betterRunes', rarityStep: 1 },
 ];
 

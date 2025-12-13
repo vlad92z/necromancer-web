@@ -2,6 +2,7 @@
  * Unit tests for scoring utilities with new rune effects
  */
 
+import type { RuneType } from '../types/game';
 import { describe, it, expect } from 'vitest';
 import { resolveSegmentFromCells, type SegmentCell } from './scoring';
 
@@ -212,6 +213,48 @@ describe('scoring with new rune effects', () => {
       expect(result.healing).toBe(1);
       expect(result.resolutionSteps[0]?.damageDelta).toBe(1);
       expect(result.resolutionSteps[1]?.healingDelta).toBe(1);
+    });
+  });
+
+  describe('ChannelSynergy effect', () => {
+    it('adds damage for each overloaded rune of the synergy type', () => {
+      const cells: SegmentCell[] = [
+        {
+          row: 0,
+          col: 0,
+          runeType: 'Lightning',
+          effects: [
+            { type: 'Damage', amount: 1, rarity: 'common' },
+            { type: 'ChannelSynergy', amount: 2, synergyType: 'Lightning', rarity: 'rare' },
+          ],
+        },
+      ];
+
+      const overloadCounts = new Map<RuneType, number>([['Lightning', 3]]);
+      const result = resolveSegmentFromCells(cells, overloadCounts);
+
+      expect(result.damage).toBe(7); // Base 1 + ChannelSynergy (2 * 3)
+      expect(result.channelSynergyTriggered).toBe(true);
+    });
+
+    it('does not add damage when there are no overloaded runes of the synergy type', () => {
+      const cells: SegmentCell[] = [
+        {
+          row: 0,
+          col: 0,
+          runeType: 'Lightning',
+          effects: [
+            { type: 'Damage', amount: 1, rarity: 'common' },
+            { type: 'ChannelSynergy', amount: 2, synergyType: 'Lightning', rarity: 'rare' },
+          ],
+        },
+      ];
+
+      const overloadCounts = new Map<RuneType, number>([['Lightning', 0]]);
+      const result = resolveSegmentFromCells(cells, overloadCounts);
+
+      expect(result.damage).toBe(1); // Base damage only
+      expect(result.channelSynergyTriggered).toBe(false);
     });
   });
 });

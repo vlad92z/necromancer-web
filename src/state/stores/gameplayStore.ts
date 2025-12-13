@@ -15,7 +15,7 @@ import { applyIncomingDamageModifiers, applyOutgoingDamageModifiers, applyOutgoi
 import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
-import { getOverloadDamageForGame } from '../../utils/overload';
+import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 
 
 
@@ -49,6 +49,14 @@ function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[
     return runes;
   }
   return [primaryRune, ...runes.filter((rune) => rune.id !== primaryRuneId)];
+}
+
+function buildRuneTypeCountMap(runes: Rune[]): Map<RuneType, number> {
+  const counts = new Map<RuneType, number>();
+  runes.forEach((rune) => {
+    counts.set(rune.runeType, (counts.get(rune.runeType) ?? 0) + 1);
+  });
+  return counts;
 }
 
 function getSoloDeckTemplate(state: GameState): Rune[] {
@@ -94,8 +102,8 @@ function enterDeckDraftMode(state: GameState): GameState {
   };
 }
 
-// NOTE: overload damage per rune is derived from the current game number
-// via getOverloadDamageForGame.
+// NOTE: overload damage per rune is derived from the current game number and round
+// via getOverloadDamageForRound.
 
 // Navigation callback registry for routing integration
 let navigationCallback: (() => void) | null = null;
@@ -144,17 +152,11 @@ function getNextCenterPool(state: GameState): Rune[] {
 }
 
 function getChannelScoreBonusFromOverloadedRunes(
-  existingOverloadRunes: Rune[],
   newlyOverloadedRunes: Rune[]
 ): { scoreBonus: number; triggered: boolean } {
   if (newlyOverloadedRunes.length === 0) {
     return { scoreBonus: 0, triggered: false };
   }
-
-  const runeTypeCounts = new Map<RuneType, number>();
-  [...existingOverloadRunes, ...newlyOverloadedRunes].forEach((rune) => {
-    runeTypeCounts.set(rune.runeType, (runeTypeCounts.get(rune.runeType) ?? 0) + 1);
-  });
 
   let bonus = 0;
   let triggered = false;
@@ -162,13 +164,6 @@ function getChannelScoreBonusFromOverloadedRunes(
     rune.effects.forEach((effect) => {
       if (effect.type === 'Channel') {
         bonus += effect.amount;
-        triggered = true;
-        return;
-      }
-
-      if (effect.type === 'ChannelSynergy') {
-        const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
-        bonus += effect.amount * synergyCount;
         triggered = true;
       }
     });
@@ -183,13 +178,11 @@ function getOverloadResult(
   newlyOverloadedRunes: Rune[],
   state: GameState
 ): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number; channelTriggered: boolean } {
-  const strain = getOverloadDamageForGame(state.game);
+  const strain = state.strain;
   const overloadRunesPlaced = newlyOverloadedRunes.length;
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
-  const { scoreBonus: channelScoreBonus, triggered: channelTriggered } = getChannelScoreBonusFromOverloadedRunes(
-    state.overloadRunes,
-    newlyOverloadedRunes
-  );
+  const { scoreBonus: channelScoreBonus, triggered: channelTriggered } =
+    getChannelScoreBonusFromOverloadedRunes(newlyOverloadedRunes);
 
   // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
   const { damage: modifiedDamage, scoreBonus: rodScoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
@@ -222,7 +215,7 @@ function handlePlayerDefeat(
     runePowerTotal: state.runePowerTotal,
     activeArtefacts: state.activeArtefacts,
     cause: 'overload',
-    strain: getOverloadDamageForGame(state.game),
+    strain: state.strain,
     health: updatedPlayer.health,
     targetScore: state.targetScore,
   });
@@ -339,7 +332,9 @@ function runScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>['set
 
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
-  const nextStrain = getOverloadDamageForGame(state.game);
+  const currentStrain = state.strain;
+  const nextRound = state.round + 1;
+  const nextStrain = getOverloadDamageForRound(state.game, nextRound);
   const clearedPlayer = clearFloorLines(state.player);
   const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
   const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
@@ -354,7 +349,7 @@ function prepareRoundReset(state: GameState): GameState {
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
       cause: 'deck-empty',
-      strain: nextStrain,
+      strain: currentStrain,
       health: clearedPlayer.health,
       targetScore: state.targetScore,
     });
@@ -403,6 +398,7 @@ function prepareRoundReset(state: GameState): GameState {
     centerPool: [],
     turnPhase: 'select',
     game: state.game,
+    round: nextRound,
     strain: nextStrain,
     strainMultiplier: state.strainMultiplier,
     startingStrain: nextStrain,
@@ -951,6 +947,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
 
       const scoringSteps: ScoringStep[] = [];
+      const overloadRuneCounts = buildRuneTypeCountMap(state.overloadRunes);
+      let scoringChannelTriggered = false;
 
       completedLines.forEach(({ line, index }) => {
         const runeType = line.runeType as RuneType;
@@ -967,7 +965,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           firstRuneEffects: null,
         };
 
-        const resolvedSegment = resolveSegment(updatedWall, index, col);
+        const resolvedSegment = resolveSegment(updatedWall, index, col, overloadRuneCounts);
+        if (resolvedSegment.channelSynergyTriggered) {
+          scoringChannelTriggered = true;
+        }
         const damageMultiplier = applyOutgoingDamageModifiers(1, resolvedSegment.segmentSize, state);
         const healingMultiplier = applyOutgoingHealingModifiers(1, resolvedSegment.segmentSize, state);
         const segmentDelay = getRuneResolutionDelayMs(resolvedSegment.segmentSize);
@@ -1012,6 +1013,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         }
         : null;
 
+      const nextChannelSoundPending = scoringChannelTriggered || state.channelSoundPending;
       return {
         ...state,
         player: {
@@ -1024,6 +1026,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         scoringSequence,
         lockedPatternLines: updatedLockedPatternLines,
         outcome: state.outcome,
+        channelSoundPending: nextChannelSoundPending,
       };
     });
 
@@ -1187,7 +1190,18 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           : typeof state.game === 'number'
             ? state.game
             : 1;
+      const nextRoundNumber =
+        typeof nextState.round === 'number'
+          ? nextState.round
+          : typeof state.round === 'number'
+            ? state.round
+            : 1;
       const soloStartingStrain = getOverloadDamageForGame(nextGameNumber);
+      const calculatedStrain = getOverloadDamageForRound(nextGameNumber, nextRoundNumber);
+      const storedStartingStrain =
+        typeof nextState.startingStrain === 'number'
+          ? nextState.startingStrain
+          : soloStartingStrain;
       const longestRun =
         typeof nextState.longestRun === 'number'
           ? nextState.longestRun
@@ -1206,9 +1220,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         tooltipCards: nextState.tooltipCards ?? state.tooltipCards ?? createDefaultTooltipCards(),
         soloDeckTemplate: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
-        strain: soloStartingStrain,
-        startingStrain: soloStartingStrain,
+        strain: calculatedStrain,
+        startingStrain: storedStartingStrain,
         longestRun,
+        round: nextRoundNumber,
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',

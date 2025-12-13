@@ -19,10 +19,7 @@ const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 2, rarity: 'uncommon' }],
   Void: [{ type: 'Synergy', amount: 1, synergyType: 'Void', rarity: 'uncommon' }],
   Wind: [{ type: 'Fortune', amount: 5, rarity: 'uncommon' }],
-  Lightning: [
-    { type: 'Damage', amount: 1, rarity: 'uncommon' },
-    { type: 'ChannelSynergy', amount: 1, synergyType: 'Lightning', rarity: 'uncommon' }
-  ],
+  Lightning: [ { type: 'ChannelSynergy', amount: 1, synergyType: 'Lightning', rarity: 'uncommon' }],
 };
 
 const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -31,10 +28,7 @@ const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 3, rarity: 'rare' }],
   Void: [{ type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'rare' }],
   Wind: [{ type: 'Fortune', amount: 10, rarity: 'rare' }],
-  Lightning: [
-    { type: 'Damage', amount: 2, rarity: 'rare' },
-    { type: 'ChannelSynergy', amount: 2, synergyType: 'Lightning', rarity: 'rare' }
-  ],
+  Lightning: [{ type: 'ChannelSynergy', amount: 2, synergyType: 'Lightning', rarity: 'rare' }],
 };
 
 const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
@@ -43,10 +37,7 @@ const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 6, rarity: 'epic' }],
   Void: [{ type: 'Synergy', amount: 4, synergyType: 'Void', rarity: 'epic' }],
   Wind: [{ type: 'Fortune', amount: 20, rarity: 'epic' }],
-  Lightning: [
-    { type: 'Damage', amount: 4, rarity: 'epic' },
-    { type: 'ChannelSynergy', amount: 4, synergyType: 'Lightning', rarity: 'epic' }
-  ],
+  Lightning: [{ type: 'ChannelSynergy', amount: 4, synergyType: 'Lightning', rarity: 'epic' }],
 };
 
 function cloneEffects(effects: RuneEffects): RuneEffects {
@@ -68,7 +59,7 @@ function formatRuneEffect(effect: RuneEffect): string {
     case 'Channel':
       return `+${effect.amount} rune score when overloaded`;
     case 'ChannelSynergy':
-      return `+${effect.amount} rune score per overloaded ${effect.synergyType} rune`;
+      return `Gain ${effect.amount} rune score per overloaded ${effect.synergyType} rune on cast`;
     case 'Armor':
       return `Gain ${effect.amount} armor on cast`;
     case 'ArmorSynergy':

@@ -85,6 +85,7 @@ export interface ResolvedSegment {
   armor: number;
   orderedCells: SegmentCell[];
   resolutionSteps: RuneResolutionStep[];
+  channelSynergyTriggered: boolean;
 }
 
 export interface RuneResolutionStep {
@@ -102,15 +103,28 @@ export interface RuneResolutionStep {
 export function resolveSegment(
   wall: ScoringWall,
   row: number,
-  col: number
+  col: number,
+  overloadRuneCounts?: Map<RuneType, number>
 ): ResolvedSegment {
   const connectedCells = collectSegmentCells(wall, row, col);
-  return resolveSegmentFromCells(connectedCells);
+  return resolveSegmentFromCells(connectedCells, overloadRuneCounts);
 }
 
-export function resolveSegmentFromCells(connectedCells: SegmentCell[]): ResolvedSegment {
+export function resolveSegmentFromCells(
+  connectedCells: SegmentCell[],
+  overloadRuneCounts: Map<RuneType, number> = new Map()
+): ResolvedSegment {
   if (connectedCells.length === 0) {
-    return { segmentSize: 0, damage: 0, healing: 0, arcaneDust: 0, armor: 0, orderedCells: [], resolutionSteps: [] };
+    return {
+      segmentSize: 0,
+      damage: 0,
+      healing: 0,
+      arcaneDust: 0,
+      armor: 0,
+      orderedCells: [],
+      resolutionSteps: [],
+      channelSynergyTriggered: false,
+    };
   }
 
   const orderedCells = [...connectedCells].sort((a, b) =>
@@ -125,6 +139,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     }
   });
 
+  let channelSynergyTriggered = false;
   const resolutionSteps: RuneResolutionStep[] = orderedCells.map((cell) => {
     const baseEffects = cell.runeType ? getRuneEffectsForType(cell.runeType) : [];
     const providedEffects = cell.effects ?? [];
@@ -172,9 +187,16 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
           break;
         }
         case 'Channel':
-        case 'ChannelSynergy':
-          // Channel effects only apply during overload events, not segment scoring
           break;
+        case 'ChannelSynergy': {
+          const overloadedCount = overloadRuneCounts.get(effect.synergyType) ?? 0;
+          const bonus = effect.amount * overloadedCount;
+          if (bonus > 0) {
+            channelSynergyTriggered = true;
+          }
+          damage += bonus;
+          break;
+        }
       }
     });
 
@@ -205,6 +227,7 @@ export function resolveSegmentFromCells(connectedCells: SegmentCell[]): Resolved
     armor: totals.armor,
     orderedCells,
     resolutionSteps,
+    channelSynergyTriggered,
   };
 }
 

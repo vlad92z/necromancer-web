@@ -181,6 +181,7 @@ export interface GameState {
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
+  round: number; // Current round number within the active game run
   /**
    * Damage dealt for every overload rune, derived from the current game number.
    * Progression caps at the final configured value for later games.
