@@ -85,7 +85,7 @@ export function RuneScoreView({
               </motion.span>
             )}
           </AnimatePresence>
-          <motion.span className='text-yellow-400 font-extrabold text-base text-right'>
+          <motion.span className='text-yellow-400 font-extrabold text-base text-right whitespace-nowrap flex-shrink-0'>
             {`${displayedValue} / ${maxScore}`}
           </motion.span>
         </div>
