@@ -71,6 +71,7 @@ export function PatternLines({
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
         const ariaLabel = ariaLabelBase;
 
+        const craftingCellLineColor = "rgba(70, 40, 100)";
         return (
           <button
             key={index}
@@ -152,6 +153,19 @@ export function PatternLines({
                           border: '1px solid rgba(192, 132, 252, 0.8)',
                           boxShadow: '0 0 18px rgba(192, 132, 252, 0.55)',
                           pointerEvents: 'none'
+                        }}
+                      />
+                    )}
+                    {slotIndex > 0 && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: '12px',
+                          pointerEvents: 'none',
+                          zIndex: 2,
+                          borderRadius: '25px',
+                          backgroundImage: `linear-gradient(45deg, transparent 46%, ${craftingCellLineColor} 46%, ${craftingCellLineColor} 54%, transparent 54%)`,
+                          opacity: 0.7,
                         }}
                       />
                     )}
