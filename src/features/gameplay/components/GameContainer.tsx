@@ -1,5 +1,5 @@
 /**
- * GameBoardFrame - shared logic and layout shell for the solo board
+ * GameContainer - shared logic and layout shell for the solo board
  */
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
@@ -19,7 +19,7 @@ import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnima
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
-import { SoloGameBoard } from './SoloGameBoard';
+import { SoloGameView } from './SoloGameBoard';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -35,7 +35,7 @@ const computeBoardScale = (width: number, height: number): number => {
   return Math.max(clamped, MIN_BOARD_SCALE);
 };
 
-export interface GameBoardProps {
+export interface GameContainerProps {
   gameState: GameState;
 }
 
@@ -62,7 +62,7 @@ export interface GameData {
   startNextSoloGame: () => void;
 }
 
-export interface GameBoardSharedProps {
+export interface GameContainerSharedProps {
   // Core context
   player: GameState['player'];
   currentPlayerIndex: number;
@@ -99,9 +99,7 @@ export interface GameBoardSharedProps {
   returnToStartScreen: () => void;
 }
 
-export type GameBoardFrameProps = GameBoardProps;
-
-export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
+export function GameContainer({ gameState }: GameContainerProps) {
   const {
     player,
     runeforges,
@@ -322,7 +320,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
 
   const scaledBoardWidth = BOARD_BASE_WIDTH * boardScale;
   const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
-  const sharedProps: GameBoardSharedProps = useMemo(
+  const sharedProps: GameContainerSharedProps = useMemo(
     () => ({
       player,
       currentPlayerIndex: 0,
@@ -427,7 +425,7 @@ export function GameBoardFrame({ gameState }: GameBoardFrameProps) {
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <SoloGameBoard shared={sharedProps} gameData={gameData} />
+          <SoloGameView shared={sharedProps} gameData={gameData} />
         </div>
       </div>
 

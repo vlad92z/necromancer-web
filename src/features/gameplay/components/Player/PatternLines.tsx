@@ -5,10 +5,12 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import type { PatternLine, RuneType, ScoringWall } from '../../../../types/game';
+import type { PatternLine, Rune, RuneType, ScoringWall } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
+import { useGameplayStore } from '../../../../state/stores/gameplayStore';
+import { buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
@@ -19,6 +21,8 @@ interface PatternLinesProps {
   lockedLineIndexes?: number[];
   playerId?: string;
   hiddenSlotKeys?: Set<string>;
+  selectedRunes: Rune[];
+  strain: number;
 }
 
 export function PatternLines({
@@ -30,6 +34,8 @@ export function PatternLines({
   lockedLineIndexes = [],
   playerId,
   hiddenSlotKeys,
+  selectedRunes,
+  strain,
 }: PatternLinesProps) {
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (!canPlace || !selectedRuneType) return false;
@@ -55,6 +61,24 @@ export function PatternLines({
     ease: 'easeInOut' as const
   };
   
+  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+
+  const handleTooltipEnter = (line: PatternLine, isPlacementTarget: boolean) => {
+    if (!isPlacementTarget || selectedRunes.length === 0) {
+      return;
+    }
+    const tooltipCards = buildPatternLinePlacementTooltipCards({
+      selectedRunes,
+      patternLineTier: line.tier,
+      patternLineCount: line.count,
+      strain,
+    });
+    if (tooltipCards.length > 0) {
+      setTooltipCards(tooltipCards, true);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
       {patternLines.map((line, index) => {
@@ -71,14 +95,19 @@ export function PatternLines({
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
         const ariaLabel = ariaLabelBase;
 
+        const craftingCellLineColor = "rgba(70, 40, 100)";
         return (
-          <button
+        <button
             key={index}
             onClick={() => {
               if (isPlacementTarget && onPlaceRunes) {
                 onPlaceRunes(index);
               }
             }}
+            onPointerEnter={() => handleTooltipEnter(line, isPlacementTarget)}
+            onPointerLeave={resetTooltipCards}
+            onFocus={() => handleTooltipEnter(line, isPlacementTarget)}
+            onBlur={resetTooltipCards}
             disabled={buttonDisabled}
             style={{
               display: 'flex',
@@ -152,6 +181,19 @@ export function PatternLines({
                           border: '1px solid rgba(192, 132, 252, 0.8)',
                           boxShadow: '0 0 18px rgba(192, 132, 252, 0.55)',
                           pointerEvents: 'none'
+                        }}
+                      />
+                    )}
+                    {slotIndex > 0 && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: '12px',
+                          pointerEvents: 'none',
+                          zIndex: 2,
+                          borderRadius: '25px',
+                          backgroundImage: `linear-gradient(45deg, transparent 46%, ${craftingCellLineColor} 46%, ${craftingCellLineColor} 54%, transparent 54%)`,
+                          opacity: 0.7,
                         }}
                       />
                     )}

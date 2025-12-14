@@ -449,7 +449,7 @@ export interface GameplayStore extends GameState {
   resetGame: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
   disenchantRuneFromDeck: (runeId: string) => number;
-  setTooltipCards: (cards: GameState['tooltipCards']) => void;
+  setTooltipCards: (cards: GameState['tooltipCards'], overrideSelection?: boolean) => void;
   resetTooltipCards: () => void;
 }
 
@@ -814,10 +814,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
 
 
-  setTooltipCards: (cards) => {
+  setTooltipCards: (cards, overrideSelection = false) => {
     set((state) => ({
       ...state,
       tooltipCards: cards,
+      tooltipOverrideActive: overrideSelection,
     }));
   },
 
@@ -825,6 +826,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => ({
       ...state,
       tooltipCards: createDefaultTooltipCards(),
+      tooltipOverrideActive: false,
     }));
   },
 
@@ -1230,6 +1232,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
         tooltipCards: nextState.tooltipCards ?? state.tooltipCards ?? createDefaultTooltipCards(),
+        tooltipOverrideActive:
+          typeof nextState.tooltipOverrideActive === 'boolean'
+            ? nextState.tooltipOverrideActive
+            : state.tooltipOverrideActive ?? false,
         soloDeckTemplate: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
         strain: calculatedStrain,

@@ -41,12 +41,15 @@ export type DeckDraftEffect =
   | { type: 'maxHealth'; amount: number }
   | { type: 'betterRunes'; rarityStep: number };
 
+export type TooltipCardVariant = 'default' | 'nonPrimary' | 'overload';
+
 export interface TooltipCard {
   id: string;
   runeType: RuneType;
   title: string;
   description: string;
   imageSrc?: string;
+  variant?: TooltipCardVariant;
 }
 
 /**
@@ -179,6 +182,7 @@ export interface GameState {
   centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   runeforgeDraftStage: 'single' | 'global';
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
+  tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
