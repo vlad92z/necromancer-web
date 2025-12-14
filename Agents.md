@@ -233,7 +233,7 @@ export function ComponentName({ someProp, onAction }: ComponentNameProps) {
 
 **Named Exports**: Use named exports for all components, hooks, and utilities unless the file clearly establishes a default export pattern.
 
-**Props Interface Naming**: `ComponentNameProps` (e.g., `RuneTokenProps`, `GameBoardProps`)
+**Props Interface Naming**: `ComponentNameProps` (e.g., `RuneTokenProps`, `GameViewProps`)
 
 **Event Handler Naming**: Use `handle` prefix (e.g., `handleRuneClick`, `handlePlacement`, `handleDraft`)
 

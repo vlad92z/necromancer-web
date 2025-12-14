@@ -96,7 +96,7 @@ src/
 │           │   └── RuneTypeTotals.tsx
 │           ├── DeckDraftingModal.tsx
 │           ├── DeckOverlay.tsx
-│           ├── GameBoardFrame.tsx
+│           ├── GameContainer.tsx
 │           ├── OverloadOverlay.tsx
 │           ├── ProgressStatOverlay.tsx
 │           ├── RulesOverlay.tsx
@@ -233,7 +233,7 @@ export function ComponentName({ someProp, onAction }: ComponentNameProps) {
 
 **Named Exports**: Use named exports for all components, hooks, and utilities unless the file clearly establishes a default export pattern.
 
-**Props Interface Naming**: `ComponentNameProps` (e.g., `RuneTokenProps`, `GameBoardProps`)
+**Props Interface Naming**: `ComponentNameProps` (e.g., `RuneTokenProps`, `GameContainerProps`)
 
 **Event Handler Naming**: Use `handle` prefix (e.g., `handleRuneClick`, `handlePlacement`, `handleDraft`)
 

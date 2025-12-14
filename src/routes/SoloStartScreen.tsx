@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
-import { GameBoardFrame } from '../features/gameplay/components/GameBoardFrame';
+import { GameContainer } from '../features/gameplay/components/GameContainer';
 import type { GameState, RunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
@@ -107,7 +107,7 @@ export function SoloStartScreen() {
   };
 
   if (gameStarted) {
-    return <GameBoardFrame gameState={gameState} />;
+    return <GameContainer gameState={gameState} />;
   }
 
   return (
