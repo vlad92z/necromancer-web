@@ -2,7 +2,7 @@
  * PlayerBoard component - displays a player's board (pattern lines, wall, floor line)
  */
 
-import type { Player, RuneType } from '../../../../types/game';
+import type { Player, Rune, RuneType } from '../../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { TooltipView } from './TooltipView';
@@ -15,6 +15,8 @@ interface PlayerBoardProps {
   onCancelSelection?: () => void;
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
+  selectedRunes: Rune[];
+  strain: number;
 }
 
 export function PlayerBoard({
@@ -25,6 +27,8 @@ export function PlayerBoard({
   onCancelSelection,
   lockedLineIndexes,
   hiddenSlotKeys,
+  selectedRunes,
+  strain,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
@@ -52,6 +56,8 @@ export function PlayerBoard({
                   playerId={player.id}
                   hiddenSlotKeys={hiddenSlotKeys}
                   lockedLineIndexes={lockedLineIndexes}
+                  selectedRunes={selectedRunes}
+                  strain={strain}
                 />
               </div>
 

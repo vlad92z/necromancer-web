@@ -13,7 +13,8 @@ import { RuneScoreView } from '../RuneScoreView';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
 import { useCastSound } from '../../../../hooks/useCastSound';
-import { buildTextTooltipCard } from '../../../../utils/tooltipCards';
+import { buildTextTooltipCard, buildOverloadPlacementTooltipCards } from '../../../../utils/tooltipCards';
+import type { Rune } from '../../../../types/game';
 import type { Transition } from 'framer-motion';
 import { HealthView } from '../HealthView';
 
@@ -37,6 +38,7 @@ interface GameMetadataViewProps {
   onOpenSettings: () => void;
   onPlaceRunesInFloor: () => void;
   hasSelectedRunes: boolean;
+  selectedRunes: Rune[];
 }
 
 type ForcedArmorIndicator = {
@@ -71,6 +73,7 @@ export function GameMetadataView({
   onOpenSettings,
   onPlaceRunesInFloor,
   hasSelectedRunes,
+  selectedRunes,
 }: GameMetadataViewProps) {
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
@@ -177,11 +180,17 @@ export function GameMetadataView({
   };
 
   const handleOverloadTooltipToggle = (visible: boolean) => {
-    if (visible) {
-      setTooltipCards(buildTextTooltipCard('overload-tooltip', 'Overload', overloadTooltip, overloadSvg));
-    } else {
+    if (!visible) {
       resetTooltipCards();
+      return;
     }
+
+    if (hasSelectedRunes) {
+      setTooltipCards(buildOverloadPlacementTooltipCards(selectedRunes, strainValue), true);
+      return;
+    }
+
+    setTooltipCards(buildTextTooltipCard('overload-tooltip', 'Overload', overloadTooltip, overloadSvg));
   };
 
   const handleOverloadClick = useCallback(() => {

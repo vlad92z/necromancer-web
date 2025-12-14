@@ -75,6 +75,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           onOpenSettings={onOpenSettings}
           onPlaceRunesInFloor={onPlaceRunesInFloor}
           hasSelectedRunes={hasSelectedRunes}
+          selectedRunes={selectedRunes}
         />
       </div>
 
@@ -101,6 +102,8 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           onCancelSelection={onCancelSelection}
           lockedLineIndexes={playerLockedLines}
           hiddenSlotKeys={playerHiddenPatternSlots}
+          selectedRunes={selectedRunes}
+          strain={strain}
         />
       </div>
       {/* TODO: Cleanup */}

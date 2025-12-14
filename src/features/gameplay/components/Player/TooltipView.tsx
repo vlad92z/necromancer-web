@@ -2,7 +2,7 @@
  * TooltipView - displays a list of tooltip cards from gameplay state
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
@@ -26,13 +26,21 @@ const RUNE_CARD_IMAGES: Record<RuneType, string> = {
 export function TooltipView() {
   const tooltipCards = useGameplayStore((state) => state.tooltipCards);
   const selectedRunes = useGameplayStore((state) => state.selectedRunes);
-  const activeTooltipCards = useMemo(() => {
-    if (selectedRunes.length === 0) {
-      return tooltipCards;
+  const tooltipOverrideActive = useGameplayStore((state) => state.tooltipOverrideActive);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  useEffect(() => {
+    if (selectedRunes.length === 0 && tooltipOverrideActive) {
+      resetTooltipCards();
     }
-    const primaryRuneId = selectedRunes[0].id;
-    return buildRuneTooltipCards(selectedRunes, primaryRuneId);
-  }, [selectedRunes, tooltipCards]);
+  }, [resetTooltipCards, selectedRunes.length, tooltipOverrideActive]);
+
+  const activeTooltipCards = useMemo(() => {
+    if (selectedRunes.length > 0 && !tooltipOverrideActive) {
+      const primaryRuneId = selectedRunes[0].id;
+      return buildRuneTooltipCards(selectedRunes, primaryRuneId);
+    }
+    return tooltipCards;
+  }, [selectedRunes, tooltipCards, tooltipOverrideActive]);
   const overlapOffset = -(activeTooltipCards.length * 20);
 
   return (
@@ -52,6 +60,7 @@ export function TooltipView() {
               title={card.title}
               imageSrc={imageSrc}
               description={card.description}
+              variant={card.variant}
             />
           </div>
         );
