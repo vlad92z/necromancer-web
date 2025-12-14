@@ -67,6 +67,7 @@ export function TooltipView() {
   }, [selectedRunes, tooltipCards, tooltipOverrideActive]);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [measuredCardWidth, setMeasuredCardWidth] = useState<number>(DEFAULT_CARD_WIDTH);
 
   useLayoutEffect(() => {
@@ -88,26 +89,23 @@ export function TooltipView() {
       window.removeEventListener('resize', handleResize);
     };
   }, [activeTooltipCards.length, activeTooltipCards[0]?.id]);
-  console.log('measuredCardWidth', measuredCardWidth);
-  const cardWidth = measuredCardWidth;
+
+  
   function padding(n: number) {
-    const p = cardWidth * 1.21 * (1 - Math.exp(-0.158 * (n - 2.594)));
+    const p = measuredCardWidth * 1.21 * (1 - Math.exp(-0.158 * (n - 2.594)));
     return Math.round(p);
   }
-
-
-  const overlapOffset = -padding(activeTooltipCards.length) - 10;//(overlapMap.get(activeTooltipCards.length) ?? cardWidth);
+  const overlapOffset = -padding(activeTooltipCards.length) - 10;;
 
   return (
-    <div className="bg-red-500 w-full h-full flex items-center justify-center px-2 overflow-visible">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center px-2 overflow-visible">
       {activeTooltipCards.map((card, index) => {
         const rotation = getTooltipCardRotation(activeTooltipCards.length, index);
         const imageSrc = card.imageSrc ?? RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
         return (
           <div
             key={card.id}
-            className="h-full flex-shrink-0 transition-transform duration-200 ease-out"
-            style={{
+            style={{ //This makes sure the cards overlap and are rotated
               marginLeft: index === 0 ? 0 : overlapOffset,
               zIndex: tooltipCards.length - index,
               transform: `rotate(${rotation}deg)`,

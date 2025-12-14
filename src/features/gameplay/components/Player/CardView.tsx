@@ -17,13 +17,13 @@ export function CardView({
   description,
   variant = 'default',
 }: CardViewProps) {
-  const border = 'rounded-xl border border-slate-400/40';
+  const border = 'border rounded-xl border-slate-400/40';
   const showDestroyedOverlay = variant === 'nonPrimary';
   const showOverloadOverlay = variant === 'overload';
 
   return (
-    <div className={`flex flex-col p-2 gap-2 w-[clamp(140px,22vmin,240px)] aspect-[2/3] flex-shrink-0 ${border} bg-gray-900`}>
-      <div className="p-0 flex-[1] text-center text-sm font-semibold uppercase tracking-[0.22em] text-slate-100 pb-0">
+    <div className={`flex flex-col p-2 gap-2 w-[clamp(14em,22vmin,24em)] aspect-[2/3] ${border} bg-gray-900`}>
+      <div className="flex-[1] text-center text-sm font-semibold uppercase tracking-[0.22em] text-slate-100 pb-0">
         {title}
       </div>
 
@@ -55,7 +55,7 @@ export function CardView({
         )}
       </div>
 
-      <div className={`flex-[4] border ${border} bg-slate-950/70 px-3 py-3 text-lg leading-relaxed text-slate-100/90 shadow-inner min-h-0`}>
+      <div className={`flex-[4] ${border} bg-slate-950/70 px-3 py-3 tracking-[0.1em] leading-relaxed text-slate-100/90`}>
         {description}
       </div>
     </div>
