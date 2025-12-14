@@ -166,6 +166,6 @@ This project follows strict TypeScript practices:
 - Explicit return types on exported functions
 - Discriminated unions for rune types and effects
 - Functional components with hooks only
-- Inline CSS styling (no CSS-in-JS libraries, no Tailwind)
+- Tailwind where possible, inline CSS as a fallback
 
 See `Agents.md` for AI-assisted development workflows and agent specializations.

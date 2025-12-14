@@ -9,7 +9,7 @@
 - **Vite 7** for development and builds
 - **Zustand 5** for global state management
 - **Framer Motion 12** for all animations
-- **Inline CSS + Tailwind** styling (Tailwind used wherever possible; no CSS Modules or CSS-in-JS libraries)
+- **Tailwind** Tailwind used wherever possible; no CSS Modules or CSS-in-JS libraries
 
 ### Current Scope
 - Solo Game Mode only: reach the target RuneScore before succumbing to Arcane Overload (no duel mode or AI opponents)
@@ -277,7 +277,7 @@ import type { Rune, RuneType, GameState } from '../types/game';
 
 ### Styling Rules
 
-**Inline CSS with JavaScript Style Objects**: This project uses inline CSS exclusively.
+**Tailwind**: Use Tailwind wherever possible.
 
 **Do NOT**:
 - Add CSS files (except minimal global `index.css`)
@@ -643,7 +643,7 @@ This document defines how Copilot Agents should work within the **Massive Spell:
 
 1. **Analyze before creating**: Match existing patterns in components, state, types, and styles
 2. **Stay in scope**: PvE gameplay only, no routing, no backend, no meta-progression (yet)
-3. **Use the right tools**: Zustand for state, Framer Motion for animations, inline CSS for styles
+3. **Use the right tools**: Zustand for state, Framer Motion for animations, Tailwind for styles
 4. **Keep logic pure**: Game rules in `src/utils/`, UI in components, state in Zustand
 5. **Think ahead**: Write serializable, deterministic code for future multiplayer/backend expansion
 
