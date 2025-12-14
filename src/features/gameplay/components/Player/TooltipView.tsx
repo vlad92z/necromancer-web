@@ -2,7 +2,7 @@
  * TooltipView - displays a list of tooltip cards from gameplay state
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
@@ -59,6 +59,8 @@ const getTooltipCardRotation = (total: number, index: number): number => {
   return CARD_MAX_ROTATION * ratio;
 };
 
+const DEFAULT_CARD_WIDTH = 230;
+
 const RUNE_CARD_IMAGES: Record<RuneType, string> = {
   Fire: fireRune,
   Frost: frostRune,
@@ -86,7 +88,38 @@ export function TooltipView() {
     }
     return tooltipCards;
   }, [selectedRunes, tooltipCards, tooltipOverrideActive]);
-  const overlapOffset = -(overlapMap.get(activeTooltipCards.length) ?? 230);
+  
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [measuredCardWidth, setMeasuredCardWidth] = useState<number>(DEFAULT_CARD_WIDTH);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const width = cardRef.current?.getBoundingClientRect().width;
+      if (typeof width === 'number' && width > 0) {
+        setMeasuredCardWidth(width);
+      }
+    };
+
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    measure();
+    const handleResize = () => measure();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [activeTooltipCards.length, activeTooltipCards[0]?.id]);
+  console.log('measuredCardWidth', measuredCardWidth);
+  const cardWidth = measuredCardWidth;
+  function padding(n: number) {
+    const p = cardWidth * 1.21 * (1 - Math.exp(-0.158 * (n - 2.594)));
+    return Math.round(p);
+  }
+
+  
+  const overlapOffset = -padding(activeTooltipCards.length);//(overlapMap.get(activeTooltipCards.length) ?? cardWidth);
 
   return (
     <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
@@ -102,6 +135,7 @@ export function TooltipView() {
               zIndex: tooltipCards.length - index,
               transform: `rotate(${rotation}deg)`,
             }}
+            ref={index === 0 ? cardRef : null}
           >
             <CardView
               title={card.title}
