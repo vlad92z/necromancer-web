@@ -119,7 +119,7 @@ export function TooltipView() {
   }
 
   
-  const overlapOffset = -padding(activeTooltipCards.length);//(overlapMap.get(activeTooltipCards.length) ?? cardWidth);
+  const overlapOffset = -padding(activeTooltipCards.length)-10;//(overlapMap.get(activeTooltipCards.length) ?? cardWidth);
 
   return (
     <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
