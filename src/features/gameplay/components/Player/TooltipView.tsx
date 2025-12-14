@@ -70,6 +70,8 @@ export function TooltipView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [measuredCardWidth, setMeasuredCardWidth] = useState<number>(DEFAULT_CARD_WIDTH);
 
+  const firstCardId = activeTooltipCards[0]?.id ?? null;
+
   useLayoutEffect(() => {
     const measure = () => {
       const width = cardRef.current?.getBoundingClientRect().width;
@@ -88,7 +90,7 @@ export function TooltipView() {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [activeTooltipCards.length, activeTooltipCards[0]?.id]);
+  }, [activeTooltipCards.length, firstCardId]);
 
   
   function padding(n: number) {
