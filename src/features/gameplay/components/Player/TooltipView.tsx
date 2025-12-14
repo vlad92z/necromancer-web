@@ -14,29 +14,6 @@ import voidRune from '../../../../assets/runes/void_rune.svg';
 import windRune from '../../../../assets/runes/wind_rune.svg';
 import lightningRune from '../../../../assets/runes/lightning_rune.svg';
 
-const overlapMap = new Map([
-  [0, 10],
-  [1, 10],
-  [2, 10],
-  [3, 10],
-  [4, 10],
-  [5, 60],
-  [6, 100],
-  [7, 120],
-  [8, 145],
-  [9, 150],
-  [10, 160],
-  [11, 170],
-  [12, 180],
-  [13, 180],
-  [14, 190],
-  [15, 190],
-  [16, 200],
-  [17, 200],
-  [18, 210],
-  [19, 220]
-]);
-
 const STATIC_CW_ROTATION = 2;
 const CARD_MAX_ROTATION = 8;
 
@@ -88,7 +65,7 @@ export function TooltipView() {
     }
     return tooltipCards;
   }, [selectedRunes, tooltipCards, tooltipOverrideActive]);
-  
+
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [measuredCardWidth, setMeasuredCardWidth] = useState<number>(DEFAULT_CARD_WIDTH);
 
@@ -118,8 +95,8 @@ export function TooltipView() {
     return Math.round(p);
   }
 
-  
-  const overlapOffset = -padding(activeTooltipCards.length)-10;//(overlapMap.get(activeTooltipCards.length) ?? cardWidth);
+
+  const overlapOffset = -padding(activeTooltipCards.length) - 10;//(overlapMap.get(activeTooltipCards.length) ?? cardWidth);
 
   return (
     <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
