@@ -2,6 +2,8 @@
  * TooltipView - displays a list of tooltip cards from gameplay state
  */
 
+import { useMemo } from 'react';
+import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { CardView } from './CardView';
@@ -23,11 +25,19 @@ const RUNE_CARD_IMAGES: Record<RuneType, string> = {
 
 export function TooltipView() {
   const tooltipCards = useGameplayStore((state) => state.tooltipCards);
-  const overlapOffset = -(tooltipCards.length * 20);
+  const selectedRunes = useGameplayStore((state) => state.selectedRunes);
+  const activeTooltipCards = useMemo(() => {
+    if (selectedRunes.length === 0) {
+      return tooltipCards;
+    }
+    const primaryRuneId = selectedRunes[0].id;
+    return buildRuneTooltipCards(selectedRunes, primaryRuneId);
+  }, [selectedRunes, tooltipCards]);
+  const overlapOffset = -(activeTooltipCards.length * 20);
 
   return (
     <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
-      {tooltipCards.map((card, index) => {
+      {activeTooltipCards.map((card, index) => {
         const imageSrc = card.imageSrc ?? RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
         return (
           <div
