@@ -37,6 +37,28 @@ const overlapMap = new Map([
   [19, 220]
 ]);
 
+const STATIC_CW_ROTATION = 2;
+const CARD_MAX_ROTATION = 8;
+
+const getTooltipCardRotation = (total: number, index: number): number => {
+  if (total <= 1) {
+    return STATIC_CW_ROTATION;
+  }
+
+  const leftCount = Math.floor(total / 2);
+  const rightCount = total - leftCount;
+
+  if (index < leftCount) {
+    const leftPosition = leftCount - index;
+    const ratio = leftPosition / (leftCount + 1);
+    return -CARD_MAX_ROTATION * ratio;
+  }
+
+  const rightIndex = index - leftCount;
+  const ratio = (rightIndex + 1) / (rightCount + 1);
+  return CARD_MAX_ROTATION * ratio;
+};
+
 const RUNE_CARD_IMAGES: Record<RuneType, string> = {
   Fire: fireRune,
   Frost: frostRune,
@@ -69,6 +91,7 @@ export function TooltipView() {
   return (
     <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
       {activeTooltipCards.map((card, index) => {
+        const rotation = getTooltipCardRotation(activeTooltipCards.length, index);
         const imageSrc = card.imageSrc ?? RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
         return (
           <div
@@ -77,6 +100,7 @@ export function TooltipView() {
             style={{
               marginLeft: index === 0 ? 0 : overlapOffset,
               zIndex: tooltipCards.length - index,
+              transform: `rotate(${rotation}deg)`,
             }}
           >
             <CardView
