@@ -1,4 +1,4 @@
-import type { TooltipCardVariant } from '../../../types/game';
+import type { TooltipCardVariant } from '../../../../types/game';
 
 /**
  * CardView - displays a trading card style preview

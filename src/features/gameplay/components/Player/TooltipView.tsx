@@ -99,7 +99,7 @@ export function TooltipView() {
   const overlapOffset = -padding(activeTooltipCards.length) - 10;//(overlapMap.get(activeTooltipCards.length) ?? cardWidth);
 
   return (
-    <div className="relative h-full w-full flex flex-nowrap items-center justify-center px-2 overflow-visible">
+    <div className="bg-red-500 w-full h-full flex items-center justify-center px-2 overflow-visible">
       {activeTooltipCards.map((card, index) => {
         const rotation = getTooltipCardRotation(activeTooltipCards.length, index);
         const imageSrc = card.imageSrc ?? RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
