@@ -170,7 +170,7 @@ export function applyDeckDraftEffectToPlayer(
 
   switch (effect.type) {
     case 'heal': {
-      const nextHealth = Math.min(currentMaxHealth, player.health + effect.amount);
+      const nextHealth = currentMaxHealth;
       return { ...player, health: nextHealth };
     }
     case 'maxHealth': {
@@ -190,9 +190,9 @@ export function getDeckDraftEffectDescription(effect: DeckDraftEffect | undefine
 
   switch (effect.type) {
     case 'heal':
-      return `Heal ${effect.amount} health`;
+      return `Restore Health`;
     case 'maxHealth':
-      return `+${effect.amount} max health`;
+      return `+${effect.amount} Max health`;
     case 'betterRunes':
       return 'Better Runes';
   }
