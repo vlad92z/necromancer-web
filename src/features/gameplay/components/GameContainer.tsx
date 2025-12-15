@@ -221,6 +221,12 @@ export function GameContainer({ gameState }: GameContainerProps) {
     [currentGame, overloadRunes.length, player.deck.length, strain],
   );
 
+  const playerHiddenPatternSlots = useMemo(
+    () => hiddenPatternSlots[player.id],
+    [hiddenPatternSlots, player.id],
+  );
+  const playerLockedLines = useMemo(() => lockedPatternLines[player.id] ?? [], [lockedPatternLines, player.id]);
+
   const navigationGrid = useMemo(
     () =>
       buildNavigationGrid({
@@ -253,6 +259,18 @@ export function GameContainer({ gameState }: GameContainerProps) {
     [player.patternLines, player.wall, runeforges, selectedArtefactIds.length]
   );
 
+  const validPatternLineIndexes = useMemo(() => {
+    if (!hasSelectedRunes || !selectedRuneType) {
+      return [];
+    }
+    return player.patternLines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line, index }) =>
+        isPatternLinePlacementValid(line, index, selectedRuneType, player.wall, playerLockedLines)
+      )
+      .map(({ index }) => index);
+  }, [hasSelectedRunes, player.patternLines, player.wall, playerLockedLines, selectedRuneType]);
+
   useEffect(() => {
     const fallbackElement = getFirstAvailableElement(navigationGrid, isElementActive);
     if (!activeElement && fallbackElement) {
@@ -271,6 +289,17 @@ export function GameContainer({ gameState }: GameContainerProps) {
       }
     }
   }, [activeElement, isElementActive, navigationGrid, resetActiveElement, setActiveElement]);
+
+  useEffect(() => {
+    if (!hasSelectedRunes) {
+      return;
+    }
+    if (validPatternLineIndexes.length > 0) {
+      setActiveElement({ type: 'pattern-line', lineIndex: validPatternLineIndexes[0] });
+      return;
+    }
+    setActiveElement({ type: 'overload' });
+  }, [hasSelectedRunes, setActiveElement, validPatternLineIndexes]);
 
   const prevArcaneDustRef = useRef<number>(arcaneDust);
   useEffect(() => {
@@ -294,12 +323,6 @@ export function GameContainer({ gameState }: GameContainerProps) {
     [draftFromCenter],
   );
 
-  const playerHiddenPatternSlots = useMemo(
-    () => hiddenPatternSlots[player.id],
-    [hiddenPatternSlots, player.id],
-  );
-  const playerLockedLines = useMemo(() => lockedPatternLines[player.id] ?? [], [lockedPatternLines, player.id]);
-
   const handleToggleMusic = useCallback(() => {
     setMusicMuted(!isMusicMuted);
   }, [isMusicMuted, setMusicMuted]);
@@ -320,6 +343,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       return;
     }
     cancelSelection();
+    resetActiveElement();
   }, [cancelSelection, isAnimatingPlacement]);
 
   const handlePlaceRunesInFloorWrapper = useCallback(() => {
@@ -422,7 +446,12 @@ export function GameContainer({ gameState }: GameContainerProps) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        handleOpenSettings();
+        if (hasSelectedRunes) {
+          event.preventDefault();
+          handleCancelSelection();
+        } else {
+          handleOpenSettings();
+        }
         return;
       }
 
@@ -430,18 +459,47 @@ export function GameContainer({ gameState }: GameContainerProps) {
         return;
       }
 
+      const handleVerticalSelection = (direction: 'up' | 'down') => {
+        const targets: ActiveElement[] = [];
+        if (hasSelectedRunes) {
+          targets.push({ type: 'overload' });
+          validPatternLineIndexes.forEach((lineIndex) => targets.push({ type: 'pattern-line', lineIndex }));
+        }
+        if (!hasSelectedRunes || targets.length === 0) {
+          moveActiveElement(direction);
+          return;
+        }
+
+        const currentIndex = targets.findIndex((target) =>
+          activeElement &&
+          target.type === activeElement.type &&
+          ((target.type === 'overload' && activeElement.type === 'overload') ||
+            (target.type === 'pattern-line' &&
+              activeElement.type === 'pattern-line' &&
+              target.lineIndex === activeElement.lineIndex))
+        );
+        const nextIndex = direction === 'up'
+          ? Math.max(0, currentIndex <= 0 ? 0 : currentIndex - 1)
+          : Math.min(targets.length - 1, currentIndex === -1 ? 0 : currentIndex + 1);
+        setActiveElement(targets[nextIndex] ?? targets[0]);
+      };
+
       if (event.key === 'ArrowUp') {
         event.preventDefault();
-        moveActiveElement('up');
+        handleVerticalSelection('up');
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
-        moveActiveElement('down');
+        handleVerticalSelection('down');
       } else if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        moveActiveElement('left');
+        if (!hasSelectedRunes) {
+          event.preventDefault();
+          moveActiveElement('left');
+        }
       } else if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        moveActiveElement('right');
+        if (!hasSelectedRunes) {
+          event.preventDefault();
+          moveActiveElement('right');
+        }
       } else if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         handleSelectActiveElement(activeElement);
@@ -452,10 +510,14 @@ export function GameContainer({ gameState }: GameContainerProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     activeElement,
+    handleCancelSelection,
     handleOpenSettings,
     handleSelectActiveElement,
     isDeckDrafting,
     moveActiveElement,
+    hasSelectedRunes,
+    validPatternLineIndexes,
+    setActiveElement,
     showDeckOverlay,
     showOverloadOverlay,
     showRulesOverlay,
