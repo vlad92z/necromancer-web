@@ -231,7 +231,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
                               ? '0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(196, 181, 253, 0.35)'
                               : 'none',
                             filter: isSelected ? 'brightness(1.12)' : 'none',
-                            // backgroundColor: 'rgba(9, 4, 30, 0.82)',
                             border: isSelected ? '1px solid rgba(196, 181, 253, 0.55)' : '1px solid transparent',
                             padding: '2px',
                             position: 'relative',
