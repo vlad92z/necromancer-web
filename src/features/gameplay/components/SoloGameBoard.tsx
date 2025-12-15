@@ -50,6 +50,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     arcaneDust,
     deckDraftState,
     isDeckDrafting,
+    totalDeckSize,
     onSelectDeckDraftRuneforge,
     onOpenDeckOverlay,
     onOpenOverloadOverlay,
@@ -115,7 +116,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           draftState={deckDraftState}
           onSelectRuneforge={onSelectDeckDraftRuneforge}
           onOpenDeckOverlay={onOpenDeckOverlay}
-          currentDeckSize={player.deck.length}
+          totalDeckSize={totalDeckSize}
           arcaneDustReward={arcaneDustReward}
           startNextSoloGame={startNextSoloGame}
         />

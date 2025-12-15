@@ -53,6 +53,7 @@ export interface GameData {
   runePowerTotal: number;
   arcaneDust: number;
   arcaneDustReward: number;
+  totalDeckSize: number;
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
@@ -394,6 +395,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       runePowerTotal: displayedRunePowerTotal,
       arcaneDust,
       arcaneDustReward: getArcaneDustReward(currentGame),
+      totalDeckSize: fullDeck.length,
       deckDraftState: gameState.deckDraftState,
       isDeckDrafting,
       onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
@@ -406,6 +408,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       arcaneDust,
       currentGame,
       gameState.deckDraftState,
+      fullDeck.length,
       handleOpenDeckOverlay,
       handleOpenOverloadOverlay,
       isDeckDrafting,
