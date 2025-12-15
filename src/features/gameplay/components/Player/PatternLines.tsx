@@ -6,11 +6,11 @@
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
 import type { PatternLine, Rune, RuneType, ScoringWall } from '../../../../types/game';
-import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
+import { isPatternLinePlacementValid } from '../../../../utils/patternLineHelpers';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
@@ -37,20 +37,6 @@ export function PatternLines({
   selectedRunes,
   strain,
 }: PatternLinesProps) {
-  const isPlacementValid = (line: PatternLine, lineIndex: number) => {
-    if (!canPlace || !selectedRuneType) return false;
-    
-    const matchesType = line.runeType === null || line.runeType === selectedRuneType;
-    const notFull = line.count < line.tier;
-    
-    const row = lineIndex;
-    const wallSize = wall.length;
-    const col = getWallColumnForRune(row, selectedRuneType, wallSize);
-    const notOnWall = wall[row][col].runeType === null;
-    
-    return matchesType && notFull && notOnWall;
-  };
-
   const selectableGlowRest = '0 0 18px rgba(34, 197, 94, 0.75), 0 0 38px rgba(34, 197, 94, 0.35)';
   const selectableGlowPeak = '0 0 28px rgba(16, 185, 129, 0.95), 0 0 56px rgba(21, 128, 61, 0.55)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
@@ -63,6 +49,8 @@ export function PatternLines({
   
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const setActiveElement = useGameplayStore((state) => state.setActiveElement);
+  const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
 
   const handleTooltipEnter = (line: PatternLine, isPlacementTarget: boolean) => {
     if (selectedRunes.length > 0) {
@@ -93,7 +81,7 @@ export function PatternLines({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
       {patternLines.map((line, index) => {
         const isLocked = lockedLineIndexes.includes(index);
-        const isPlacementTarget = !isLocked && isPlacementValid(line, index);
+        const isPlacementTarget = !isLocked && canPlace && isPatternLinePlacementValid(line, index, selectedRuneType ?? null, wall, lockedLineIndexes);
         const placementClickable = Boolean(canPlace && onPlaceRunes);
         const showGlow = isPlacementTarget;
         const glowRange = selectableGlowRange;
@@ -114,10 +102,22 @@ export function PatternLines({
                 onPlaceRunes(index);
               }
             }}
-            onPointerEnter={() => handleTooltipEnter(line, isPlacementTarget)}
-            onPointerLeave={resetTooltipCards}
-            onFocus={() => handleTooltipEnter(line, isPlacementTarget)}
-            onBlur={resetTooltipCards}
+            onPointerEnter={() => {
+              setActiveElement({ type: 'pattern-line', lineIndex: index });
+              handleTooltipEnter(line, isPlacementTarget);
+            }}
+            onPointerLeave={() => {
+              resetTooltipCards();
+              resetActiveElement();
+            }}
+            onFocus={() => {
+              setActiveElement({ type: 'pattern-line', lineIndex: index });
+              handleTooltipEnter(line, isPlacementTarget);
+            }}
+            onBlur={() => {
+              resetTooltipCards();
+              resetActiveElement();
+            }}
             disabled={buttonDisabled}
             style={{
               display: 'flex',

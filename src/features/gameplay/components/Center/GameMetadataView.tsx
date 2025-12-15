@@ -167,6 +167,8 @@ export function GameMetadataView({
 
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const setActiveElement = useGameplayStore((state) => state.setActiveElement);
+  const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
   const deckValue = Math.max(0, deckCount);
   const deckRemaining = Math.max(0, deckValue - 20);
   const deckTooltip = `You have ${deckRemaining} runes remaining.`;
@@ -232,8 +234,16 @@ export function GameMetadataView({
       image={overloadSvg}
       onClick={handleOverloadClick}
       onTooltipToggle={handleOverloadTooltipToggle}
+      onActiveChange={(isActive) => (isActive ? setActiveElement({ type: 'overload' }) : resetActiveElement())}
     />
   );
+  const handleDeckActiveChange = (isActive: boolean) => {
+    if (isActive) {
+      setActiveElement({ type: 'deck' });
+      return;
+    }
+    resetActiveElement();
+  };
 
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2 bg-slate-900/80 px-5 pt-3">
@@ -243,6 +253,10 @@ export function GameMetadataView({
           title="⚙"
           action={onOpenSettings}
           className={actionButtonBase}
+          onPointerEnter={() => setActiveElement({ type: 'settings' })}
+          onPointerLeave={resetActiveElement}
+          onFocus={() => setActiveElement({ type: 'settings' })}
+          onBlur={resetActiveElement}
         />
 
         <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
@@ -284,6 +298,7 @@ export function GameMetadataView({
           image={deckSvg}
           onClick={handleDeckClick}
           onTooltipToggle={handleDeckTooltipToggle}
+          onActiveChange={handleDeckActiveChange}
         />
         <HealthView
           health={clampedHealth}

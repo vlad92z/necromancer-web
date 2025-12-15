@@ -314,6 +314,7 @@ export function initializeSoloGame(
     round: 1,
     tooltipCards: createDefaultTooltipCards(),
     tooltipOverrideActive: false,
+    activeElement: null,
     selectedRunes: [],
     overloadRunes: [],
     selectionTimestamp: null,

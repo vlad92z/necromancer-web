@@ -53,6 +53,15 @@ export interface TooltipCard {
   variant?: TooltipCardVariant;
 }
 
+export type ActiveElement =
+  | { type: 'settings' }
+  | { type: 'overload' }
+  | { type: 'deck' }
+  | { type: 'runeforge-rune'; runeforgeIndex: number; runeIndex: number }
+  | { type: 'pattern-line'; lineIndex: number }
+  | { type: 'scoring-wall'; row: number; col: number }
+  | { type: 'artefact'; artefactIndex: number };
+
 /**
  * A runeforge containing runes to draft from
  */
@@ -194,6 +203,7 @@ export interface GameState {
   runeforgeDraftStage: 'single' | 'global';
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected
+  activeElement: ActiveElement | null; // Currently highlighted keyboard/touch target
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run

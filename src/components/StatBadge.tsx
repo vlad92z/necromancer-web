@@ -9,6 +9,7 @@ interface StatBadgeProps {
   image: string;
   onClick?: () => void;
   onTooltipToggle?: (isVisible: boolean) => void;
+  onActiveChange?: (isActive: boolean) => void;
 }
 
 /**
@@ -20,10 +21,14 @@ export function StatBadge({
   image,
   onClick,
   onTooltipToggle,
+  onActiveChange,
 }: StatBadgeProps) {
   const handleHoverChange = (visible: boolean) => {
     if (onTooltipToggle) {
       onTooltipToggle(visible);
+    }
+    if (onActiveChange) {
+      onActiveChange(visible);
     }
   };
 

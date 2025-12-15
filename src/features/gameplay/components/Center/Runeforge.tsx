@@ -10,6 +10,7 @@ import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../typ
 
 interface RuneforgeProps {
   runeforge: RuneforgeType;
+  runeforgeIndex: number;
   runesPerRuneforge: number;
   hoveredRuneType: RuneType | null;
   hasSelectedRunes: boolean;
@@ -22,8 +23,10 @@ interface RuneforgeProps {
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onRuneMouseEnter: (
     runeforgeId: string,
+    runeforgeIndex: number,
     runeType: RuneType,
     runeId: string,
+    slotIndex: number,
     selectionActive: boolean,
     disabled: boolean
   ) => void;
@@ -32,6 +35,7 @@ interface RuneforgeProps {
 
 export function Runeforge({
   runeforge,
+  runeforgeIndex,
   runesPerRuneforge,
   hoveredRuneType,
   hasSelectedRunes,
@@ -242,13 +246,20 @@ export function Runeforge({
                 onClick={(event) => {
                   event.stopPropagation();
                   if (!isAnimatingRune && pointerEvents === 'auto') {
-                    onRuneClick(runeforge.id, rune.runeType, rune.id);
+                  onRuneClick(runeforge.id, rune.runeType, rune.id);
+                }
+              }}
+                onPointerEnter={() =>
+                  onRuneMouseEnter(runeforge.id, runeforgeIndex, rune.runeType, rune.id, slotIndex, selectionActive, isRuneforgeDisabled)
+                }
+                onPointerDown={(event) => {
+                  if (event.pointerType === 'touch') {
+                    onRuneMouseEnter(runeforge.id, runeforgeIndex, rune.runeType, rune.id, slotIndex, selectionActive, isRuneforgeDisabled);
                   }
                 }}
-                onMouseEnter={() =>
-                  onRuneMouseEnter(runeforge.id, rune.runeType, rune.id, selectionActive, isRuneforgeDisabled)
+                onPointerLeave={() =>
+                  onRuneMouseLeave(runeforge.id)
                 }
-                onMouseLeave={() => onRuneMouseLeave(runeforge.id)}
                 animate={selectedAnimation}
                 transition={selectedTransition}
               >

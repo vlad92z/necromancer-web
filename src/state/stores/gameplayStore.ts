@@ -4,7 +4,18 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
+import type {
+  ActiveElement,
+  GameState,
+  RuneType,
+  Player,
+  Rune,
+  GameOutcome,
+  RunConfig,
+  Runeforge,
+  ScoringSequenceState,
+  ScoringStep
+} from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
@@ -463,6 +474,8 @@ export interface GameplayStore extends GameState {
   disenchantRuneFromDeck: (runeId: string) => number;
   setTooltipCards: (cards: GameState['tooltipCards'], overrideSelection?: boolean) => void;
   resetTooltipCards: () => void;
+  setActiveElement: (element: ActiveElement | null) => void;
+  resetActiveElement: () => void;
 }
 
 function cancelSelectionState(state: GameplayStore): GameplayStore {
@@ -839,6 +852,20 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       ...state,
       tooltipCards: createDefaultTooltipCards(),
       tooltipOverrideActive: false,
+    }));
+  },
+
+  setActiveElement: (element) => {
+    set((state) => ({
+      ...state,
+      activeElement: element,
+    }));
+  },
+
+  resetActiveElement: () => {
+    set((state) => ({
+      ...state,
+      activeElement: null,
     }));
   },
 
@@ -1289,6 +1316,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           typeof nextState.tooltipOverrideActive === 'boolean'
             ? nextState.tooltipOverrideActive
             : state.tooltipOverrideActive ?? false,
+        activeElement: nextState.activeElement ?? null,
         soloDeckTemplate: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
         strain: calculatedStrain,
