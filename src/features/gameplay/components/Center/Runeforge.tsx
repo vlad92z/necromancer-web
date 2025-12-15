@@ -212,7 +212,7 @@ export function Runeforge({
             const boxShadow = isSelectedForDisplay
               ? '0 0 20px rgba(255, 255, 255, 0.60), 0 0 48px rgba(235, 170, 255, 0.60), 0 0 96px rgba(235, 170, 255, 0.30)'
               : isActiveRune
-                ? '0 0 18px rgba(74, 222, 128, 0.9), 0 0 36px rgba(34, 197, 94, 0.55)'
+                ? '0 0 18px rgba(74, 225, 245, 0.9), 0 0 36px rgba(34, 225, 245, 0.55)' //TODO: Here
               : isHighlighted
                 ? '0 0 14px rgba(255, 255, 255, 0.5), 0 0 34px rgba(235, 170, 255, 0.32)'
                 : 'none';

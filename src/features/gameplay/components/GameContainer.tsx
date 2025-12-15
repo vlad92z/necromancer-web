@@ -157,6 +157,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const activeElement = useGameplayStore((state) => state.activeElement);
   const setActiveElement = useGameplayStore((state) => state.setActiveElement);
   const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
+  const hasInitializedActiveElementRef = useRef(false);
   const tooltipOverrideActive = useGameplayStore((state) => state.tooltipOverrideActive);
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
@@ -332,8 +333,12 @@ export function GameContainer({ gameState }: GameContainerProps) {
 
   useEffect(() => {
     const fallbackElement = getFirstAvailableElement(navigationGrid, isElementActive);
+    if (activeElement && !hasInitializedActiveElementRef.current) {
+      hasInitializedActiveElementRef.current = true;
+    }
     if (!activeElement) {
-      if (fallbackElement) {
+      if (!hasInitializedActiveElementRef.current && fallbackElement) {
+        hasInitializedActiveElementRef.current = true;
         setActiveElement(fallbackElement);
       }
       return;
