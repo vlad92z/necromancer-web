@@ -169,13 +169,16 @@ export interface ScoringSequenceState {
   startHealth: number;
   startArmor: number;
   startRunePowerTotal: number;
+  startArcaneDust: number;
   maxHealth: number;
   displayHealth: number;
   displayArmor: number;
   displayRunePowerTotal: number;
+  displayArcaneDust: number;
   targetHealth: number;
   targetArmor: number;
   targetRunePowerTotal: number;
+  targetArcaneDust: number;
 }
 
 /**
