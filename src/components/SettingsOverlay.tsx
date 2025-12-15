@@ -115,7 +115,6 @@ export function SettingsOverlay({
         {/* Quit Run Button (only shown when in-game) */}
         {showQuitRun && onQuitRun && (
           <section className="space-y-3">
-            <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Game</div>
             <ClickSoundButton
               title="Quit Run"
               action={() => {
