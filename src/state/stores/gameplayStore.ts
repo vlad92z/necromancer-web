@@ -158,17 +158,20 @@ function getDisplayTotalsForIndex(sequence: ScoringSequenceState, activeIndex: n
   health: number;
   armor: number;
   runePowerTotal: number;
+  arcaneDust: number;
 } {
   const clampedIndex = Math.max(0, Math.min(activeIndex, sequence.steps.length - 1));
   const partialDeltas = accumulateScoringDeltas(sequence.steps.slice(0, clampedIndex + 1));
   const nextHealth = Math.min(sequence.maxHealth, sequence.startHealth + partialDeltas.healing);
   const nextArmor = Math.max(0, sequence.startArmor + partialDeltas.armor);
   const nextRunePowerTotal = sequence.startRunePowerTotal + partialDeltas.damage;
+  const nextArcaneDust = Math.max(0, sequence.startArcaneDust + partialDeltas.arcaneDust);
 
   return {
     health: nextHealth,
     armor: nextArmor,
     runePowerTotal: nextRunePowerTotal,
+    arcaneDust: nextArcaneDust,
   };
 }
 
@@ -309,6 +312,7 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
           displayHealth: nextDisplays.health,
           displayArmor: nextDisplays.armor,
           displayRunePowerTotal: nextDisplays.runePowerTotal,
+          displayArcaneDust: nextDisplays.arcaneDust,
         },
       };
     });
@@ -336,6 +340,7 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
             displayHealth: activeSequence.targetHealth,
             displayArmor: activeSequence.targetArmor,
             displayRunePowerTotal: activeSequence.targetRunePowerTotal,
+            displayArcaneDust: activeSequence.targetArcaneDust,
           },
         };
       });
@@ -948,6 +953,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   moveRunesToWall: () => {
     let scoringSequenceForAnimation: ScoringSequenceState | null = null;
     let arcaneDustGain = 0;
+    const baseArcaneDust = useArtefactStore.getState().arcaneDust;
 
     set((state) => {
       if (state.turnPhase !== 'cast') {
@@ -1033,6 +1039,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const targetHealth = Math.min(maxHealth, baseHealth + scoringDeltas.healing);
       const targetArmor = Math.max(0, baseArmor + scoringDeltas.armor);
       const targetRunePowerTotal = baseRunePowerTotal + scoringDeltas.damage;
+      const targetArcaneDust = baseArcaneDust + scoringDeltas.arcaneDust;
       const scoringSequence = scoringSteps.length > 0
         ? ({
           steps: scoringSteps,
@@ -1041,13 +1048,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           startHealth: baseHealth,
           startArmor: baseArmor,
           startRunePowerTotal: baseRunePowerTotal,
+          startArcaneDust: baseArcaneDust,
           maxHealth,
           displayHealth: baseHealth,
           displayArmor: baseArmor,
           displayRunePowerTotal: baseRunePowerTotal,
+          displayArcaneDust: baseArcaneDust,
           targetHealth,
           targetArmor,
           targetRunePowerTotal,
+          targetArcaneDust,
         } satisfies ScoringSequenceState)
         : null;
 

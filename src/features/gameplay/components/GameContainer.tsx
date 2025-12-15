@@ -126,6 +126,8 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const displayedHealth = scoringSequence ? scoringSequence.displayHealth : player.health;
   const displayedArmor = scoringSequence ? scoringSequence.displayArmor : player.armor;
   const displayedRunePowerTotal = scoringSequence ? scoringSequence.displayRunePowerTotal : runePowerTotal;
+  const arcaneDustTotal = useArtefactStore((state) => state.arcaneDust);
+  const displayedArcaneDust = scoringSequence ? scoringSequence.displayArcaneDust : arcaneDustTotal;
   const {
     draftRune,
     draftFromCenter,
@@ -149,7 +151,6 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const setMusicMuted = useUIStore((state) => state.setMusicMuted);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
   const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay);
-  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
   const playArcaneDust = useArcaneDustSound();
   const playClickSound = useClickSound();
 
@@ -208,13 +209,13 @@ export function GameContainer({ gameState }: GameContainerProps) {
     [currentGame, overloadRunes.length, player.deck.length, strain],
   );
 
-  const prevArcaneDustRef = useRef<number>(arcaneDust);
+  const prevArcaneDustRef = useRef<number>(displayedArcaneDust);
   useEffect(() => {
-    if (arcaneDust > prevArcaneDustRef.current) {
+    if (displayedArcaneDust > prevArcaneDustRef.current) {
       playArcaneDust();
     }
-    prevArcaneDustRef.current = arcaneDust;
-  }, [arcaneDust, playArcaneDust]);
+    prevArcaneDustRef.current = displayedArcaneDust;
+  }, [displayedArcaneDust, playArcaneDust]);
 
   const handleRuneClick = useCallback(
     (runeforgeId: string, runeType: RuneType, runeId: string) => {
@@ -393,7 +394,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       playerStats,
       targetScore,
       runePowerTotal: displayedRunePowerTotal,
-      arcaneDust,
+      arcaneDust: displayedArcaneDust,
       arcaneDustReward: getArcaneDustReward(currentGame),
       totalDeckSize: fullDeck.length,
       deckDraftState: gameState.deckDraftState,
@@ -405,7 +406,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       startNextSoloGame: startNextSoloGame,
     }),
     [
-      arcaneDust,
+      displayedArcaneDust,
       currentGame,
       gameState.deckDraftState,
       fullDeck.length,
