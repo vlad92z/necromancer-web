@@ -10,7 +10,7 @@ import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
-import { buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
+import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
@@ -65,17 +65,27 @@ export function PatternLines({
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
 
   const handleTooltipEnter = (line: PatternLine, isPlacementTarget: boolean) => {
-    if (!isPlacementTarget || selectedRunes.length === 0) {
+    if (selectedRunes.length > 0) {
+      if (!isPlacementTarget) {
+        return;
+      }
+      const tooltipCards = buildPatternLinePlacementTooltipCards({
+        selectedRunes,
+        patternLineTier: line.tier,
+        patternLineCount: line.count,
+        strain,
+      });
+      if (tooltipCards.length > 0) {
+        setTooltipCards(tooltipCards, true);
+      }
       return;
     }
-    const tooltipCards = buildPatternLinePlacementTooltipCards({
-      selectedRunes,
-      patternLineTier: line.tier,
-      patternLineCount: line.count,
-      strain,
-    });
-    if (tooltipCards.length > 0) {
-      setTooltipCards(tooltipCards, true);
+
+    if (line.runeType && line.count > 0) {
+      const tooltipCards = buildPatternLineExistingTooltipCards(line);
+      if (tooltipCards.length > 0) {
+        setTooltipCards(tooltipCards);
+      }
     }
   };
 
