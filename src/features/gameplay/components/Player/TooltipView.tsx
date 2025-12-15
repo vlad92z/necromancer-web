@@ -4,15 +4,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
-import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { CardView } from './CardView';
-import fireRune from '../../../../assets/runes/fire_rune.svg';
-import frostRune from '../../../../assets/runes/frost_rune.svg';
-import lifeRune from '../../../../assets/runes/life_rune.svg';
-import voidRune from '../../../../assets/runes/void_rune.svg';
-import windRune from '../../../../assets/runes/wind_rune.svg';
-import lightningRune from '../../../../assets/runes/lightning_rune.svg';
 
 const STATIC_CW_ROTATION = 2;
 const CARD_MAX_ROTATION = 8;
@@ -37,15 +30,6 @@ const getTooltipCardRotation = (total: number, index: number): number => {
 };
 
 const DEFAULT_CARD_WIDTH = 230;
-
-const RUNE_CARD_IMAGES: Record<RuneType, string> = {
-  Fire: fireRune,
-  Frost: frostRune,
-  Life: lifeRune,
-  Void: voidRune,
-  Wind: windRune,
-  Lightning: lightningRune,
-};
 
 export function TooltipView() {
   const tooltipCards = useGameplayStore((state) => state.tooltipCards);
@@ -103,7 +87,6 @@ export function TooltipView() {
     <div ref={containerRef} className="w-full h-full flex items-center justify-center px-2 overflow-visible">
       {activeTooltipCards.map((card, index) => {
         const rotation = getTooltipCardRotation(activeTooltipCards.length, index);
-        const imageSrc = card.imageSrc ?? RUNE_CARD_IMAGES[card.runeType] ?? RUNE_CARD_IMAGES.Life;
         return (
           <div
             key={card.id}
@@ -116,8 +99,10 @@ export function TooltipView() {
           >
             <CardView
               title={card.title}
-              imageSrc={imageSrc}
+              imageSrc={card.imageSrc}
               description={card.description}
+              runeType={card.runeType}
+              runeRarity={card.runeRarity}
               variant={card.variant}
             />
           </div>

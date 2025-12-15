@@ -14,7 +14,7 @@ interface DeckDraftingModalProps {
   draftState: DeckDraftState;
   onSelectRuneforge: (runeforgeId: string) => void;
   onOpenDeckOverlay: () => void;
-  currentDeckSize: number;
+  totalDeckSize: number;
   arcaneDustReward: number;
   startNextSoloGame: () => void;
 }
@@ -23,7 +23,7 @@ export function DeckDraftingModal({
   draftState,
   onSelectRuneforge,
   onOpenDeckOverlay,
-  currentDeckSize,
+  totalDeckSize,
   arcaneDustReward,
   startNextSoloGame,
 }: DeckDraftingModalProps) {
@@ -33,8 +33,8 @@ export function DeckDraftingModal({
   const [selectedRuneforgeId, setSelectedRuneforgeId] = useState<string | null>(null);
   const [animationPhase, setAnimationPhase] = useState<'idle' | 'hidingOthers' | 'selectedExit'>('idle');
   const [showSelectedRuneforge, setShowSelectedRuneforge] = useState(true);
-  const deckCountValue = useMotionValue(currentDeckSize);
-  const [displayedDeckCount, setDisplayedDeckCount] = useState(currentDeckSize);
+  const deckCountValue = useMotionValue(totalDeckSize);
+  const [displayedDeckCount, setDisplayedDeckCount] = useState(totalDeckSize);
   const deckCountAnimation = useRef<ReturnType<typeof animate> | null>(null);
   const runeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
   const picksUsed = draftState.totalPicks - draftState.picksRemaining;
@@ -56,12 +56,12 @@ export function DeckDraftingModal({
 
   useEffect(() => {
     if (animationPhase === 'idle') {
-      deckCountValue.set(currentDeckSize);
-      setDisplayedDeckCount(currentDeckSize);
-    } else if (currentDeckSize > displayedDeckCount) {
-      deckCountValue.set(currentDeckSize);
+      deckCountValue.set(totalDeckSize);
+      setDisplayedDeckCount(totalDeckSize);
+    } else if (totalDeckSize > displayedDeckCount) {
+      deckCountValue.set(totalDeckSize);
     }
-  }, [animationPhase, currentDeckSize, deckCountValue, displayedDeckCount]);
+  }, [animationPhase, totalDeckSize, deckCountValue, displayedDeckCount]);
 
   useEffect(() => {
     if (animationPhase === 'idle') {
@@ -156,7 +156,7 @@ export function DeckDraftingModal({
     playClickSound();
     setSelectedRuneforgeId(runeforge.id);
     setAnimationPhase('hidingOthers');
-    animateDeckCounter(currentDeckSize + runeforge.runes.length);
+    animateDeckCounter(totalDeckSize + runeforge.runes.length);
   };
 
   const handleOpenDeckOverlay = () => {

@@ -40,12 +40,6 @@ function areRuneforgesDisabled(runeforges: Runeforge[]): boolean {
   return runeforges.every((runeforge) => (runeforge.disabled ?? false) || runeforge.runes.length === 0);
 }
 
-interface ScoringPlan {
-  steps: ScoringStep[];
-  sequenceId: number;
-  shouldEndRound: boolean;
-}
-
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
     return runes;
@@ -141,6 +135,41 @@ function clearScoringTimeout(): void {
     clearTimeout(scoringTimeoutRef.current);
     scoringTimeoutRef.current = null;
   }
+}
+
+function accumulateScoringDeltas(steps: ScoringStep[]): {
+  damage: number;
+  healing: number;
+  armor: number;
+  arcaneDust: number;
+} {
+  return steps.reduce(
+    (totals, step) => ({
+      damage: totals.damage + step.damageDelta,
+      healing: totals.healing + step.healingDelta,
+      armor: totals.armor + step.armorDelta,
+      arcaneDust: totals.arcaneDust + step.arcaneDustDelta,
+    }),
+    { damage: 0, healing: 0, armor: 0, arcaneDust: 0 }
+  );
+}
+
+function getDisplayTotalsForIndex(sequence: ScoringSequenceState, activeIndex: number): {
+  health: number;
+  armor: number;
+  runePowerTotal: number;
+} {
+  const clampedIndex = Math.max(0, Math.min(activeIndex, sequence.steps.length - 1));
+  const partialDeltas = accumulateScoringDeltas(sequence.steps.slice(0, clampedIndex + 1));
+  const nextHealth = Math.min(sequence.maxHealth, sequence.startHealth + partialDeltas.healing);
+  const nextArmor = Math.max(0, sequence.startArmor + partialDeltas.armor);
+  const nextRunePowerTotal = sequence.startRunePowerTotal + partialDeltas.damage;
+
+  return {
+    health: nextHealth,
+    armor: nextArmor,
+    runePowerTotal: nextRunePowerTotal,
+  };
 }
 
 function clearFloorLines(player: Player): Player {
@@ -249,93 +278,76 @@ function handlePlayerDefeat(
   };
 }
 
-function finalizeScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>['setState']): void {
-  clearScoringTimeout();
-  set((state) => {
-    if (!state.scoringSequence || state.scoringSequence.sequenceId !== plan.sequenceId) {
-      return state;
-    }
-
-    const nextRunePowerTotal = state.runePowerTotal;
-    const outcome: GameOutcome = state.outcome;
-
-    if (nextRunePowerTotal >= state.targetScore) {
-      const deckDraftState = enterDeckDraftMode({
-        ...state,
-        outcome: 'victory',
-        runePowerTotal: nextRunePowerTotal,
-        scoringSequence: null,
-        selectedRunes: [],
-        draftSource: null,
-        pendingPlacement: null,
-        animatingRunes: [],
-        shouldTriggerEndRound: false,
-      });
-      return deckDraftState;
-    }
-
-    const nextTurnPhase = plan.shouldEndRound ? ('end-of-round' as const) : ('select' as const);
-
-    return {
-      ...state,
-      outcome,
-      turnPhase: nextTurnPhase,
-      shouldTriggerEndRound: plan.shouldEndRound,
-      scoringSequence: null,
-    };
-  });
-}
-
-function runScoringSequence(plan: ScoringPlan, set: StoreApi<GameplayStore>['setState']): void {
+function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<GameplayStore>['setState']): void {
   clearScoringTimeout();
 
-  if (plan.steps.length === 0) {
-    finalizeScoringSequence(plan, set);
+  if (sequence.steps.length === 0) {
+    set((state) => {
+      if (!state.scoringSequence || state.scoringSequence.sequenceId !== sequence.sequenceId) {
+        return state;
+      }
+      return { ...state, scoringSequence: null };
+    });
     return;
   }
 
   const executeStep = (index: number) => {
-    const step = plan.steps[index];
+    const step = sequence.steps[index];
+    const nextDisplays = getDisplayTotalsForIndex(sequence, index);
 
     set((state) => {
-      if (!state.scoringSequence || state.scoringSequence.sequenceId !== plan.sequenceId) {
+      const activeSequence = state.scoringSequence;
+      if (!activeSequence || activeSequence.sequenceId !== sequence.sequenceId) {
         return state;
       }
 
-      const maxHealth = state.player.maxHealth ?? state.startingHealth;
-      const nextHealth = Math.min(maxHealth, state.player.health + step.healingDelta);
-      const nextRunePowerTotal = state.runePowerTotal + step.damageDelta;
-      const nextScoringSequence: ScoringSequenceState = {
-        ...state.scoringSequence,
-        activeIndex: index,
-      };
-
       return {
         ...state,
-        player: {
-          ...state.player,
-          health: nextHealth,
-          armor: Math.max(0, state.player.armor + step.armorDelta),
+        scoringSequence: {
+          ...activeSequence,
+          activeIndex: index,
+          displayHealth: nextDisplays.health,
+          displayArmor: nextDisplays.armor,
+          displayRunePowerTotal: nextDisplays.runePowerTotal,
         },
-        runePowerTotal: nextRunePowerTotal,
-        scoringSequence: nextScoringSequence,
       };
     });
 
-    if (step.arcaneDustDelta > 0) {
-      const newDustTotal = addArcaneDust(step.arcaneDustDelta);
-      useArtefactStore.getState().updateArcaneDust(newDustTotal);
-    }
-
-    const hasNextStep = index + 1 < plan.steps.length;
+    const hasNextStep = index + 1 < sequence.steps.length;
     const delay = step.delayMs;
 
     scoringTimeoutRef.current = setTimeout(() => {
       if (hasNextStep) {
         executeStep(index + 1);
-      } else {
-        finalizeScoringSequence(plan, set);
+        return;
       }
+
+      set((state) => {
+        const activeSequence = state.scoringSequence;
+        if (!activeSequence || activeSequence.sequenceId !== sequence.sequenceId) {
+          return state;
+        }
+
+        return {
+          ...state,
+          scoringSequence: {
+            ...activeSequence,
+            activeIndex: index,
+            displayHealth: activeSequence.targetHealth,
+            displayArmor: activeSequence.targetArmor,
+            displayRunePowerTotal: activeSequence.targetRunePowerTotal,
+          },
+        };
+      });
+
+      scoringTimeoutRef.current = setTimeout(() => {
+        set((state) => {
+          if (!state.scoringSequence || state.scoringSequence.sequenceId !== sequence.sequenceId) {
+            return state;
+          }
+          return { ...state, scoringSequence: null };
+        });
+      }, delay);
     }, delay);
   };
 
@@ -934,7 +946,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   moveRunesToWall: () => {
-    let scoringPlan: ScoringPlan | null = null;
+    let scoringSequenceForAnimation: ScoringSequenceState | null = null;
+    let arcaneDustGain = 0;
 
     set((state) => {
       if (state.turnPhase !== 'cast') {
@@ -1011,41 +1024,81 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
       const sequenceId = Date.now();
+      const baseHealth = currentPlayer.health;
+      const baseArmor = currentPlayer.armor;
+      const baseRunePowerTotal = state.runePowerTotal;
+      const scoringDeltas = accumulateScoringDeltas(scoringSteps);
+      arcaneDustGain = scoringDeltas.arcaneDust;
+      const maxHealth = currentPlayer.maxHealth ?? state.startingHealth;
+      const targetHealth = Math.min(maxHealth, baseHealth + scoringDeltas.healing);
+      const targetArmor = Math.max(0, baseArmor + scoringDeltas.armor);
+      const targetRunePowerTotal = baseRunePowerTotal + scoringDeltas.damage;
       const scoringSequence = scoringSteps.length > 0
         ? ({
           steps: scoringSteps,
           activeIndex: -1,
           sequenceId,
+          startHealth: baseHealth,
+          startArmor: baseArmor,
+          startRunePowerTotal: baseRunePowerTotal,
+          maxHealth,
+          displayHealth: baseHealth,
+          displayArmor: baseArmor,
+          displayRunePowerTotal: baseRunePowerTotal,
+          targetHealth,
+          targetArmor,
+          targetRunePowerTotal,
         } satisfies ScoringSequenceState)
         : null;
 
-      scoringPlan = scoringSequence
-        ? {
-          steps: scoringSteps,
-          sequenceId,
-          shouldEndRound,
-        }
-        : null;
+      scoringSequenceForAnimation = scoringSequence;
 
       const nextChannelSoundPending = scoringChannelTriggered || state.channelSoundPending;
-      return {
+      const baseNextState = {
         ...state,
         player: {
           ...currentPlayer,
           patternLines: updatedPatternLines,
           wall: updatedWall,
+          health: targetHealth,
+          armor: targetArmor,
         },
-        turnPhase: scoringSequence ? ('scoring' as const) : shouldEndRound ? ('end-of-round' as const) : ('select' as const),
-        shouldTriggerEndRound: scoringSequence ? false : shouldEndRound,
+        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
+        shouldTriggerEndRound: shouldEndRound,
         scoringSequence,
         lockedPatternLines: updatedLockedPatternLines,
         outcome: state.outcome,
         channelSoundPending: nextChannelSoundPending,
+        runePowerTotal: targetRunePowerTotal,
+      };
+
+      if (targetRunePowerTotal >= state.targetScore) {
+        const deckDraftState = enterDeckDraftMode({
+          ...baseNextState,
+          outcome: 'victory',
+          selectedRunes: [],
+          draftSource: null,
+          pendingPlacement: null,
+          animatingRunes: [],
+          shouldTriggerEndRound: false,
+          scoringSequence: null,
+        });
+        scoringSequenceForAnimation = null;
+        return deckDraftState;
+      }
+
+      return {
+        ...baseNextState,
       };
     });
 
-    if (scoringPlan) {
-      runScoringSequence(scoringPlan, set);
+    if (arcaneDustGain > 0) {
+      const newDustTotal = addArcaneDust(arcaneDustGain);
+      useArtefactStore.getState().updateArcaneDust(newDustTotal);
+    }
+
+    if (scoringSequenceForAnimation) {
+      runScoringSequence(scoringSequenceForAnimation, set);
     }
   },
 
@@ -1245,7 +1298,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
-        scoringSequence: nextState.scoringSequence ?? null,
+        scoringSequence: null,
         runeScoreTargetIncrement:
           typeof nextState.runeScoreTargetIncrement === 'number'
             ? nextState.runeScoreTargetIncrement
