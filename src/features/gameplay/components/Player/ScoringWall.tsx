@@ -360,6 +360,9 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
               <div
                 key={colIndex}
                 onMouseEnter={() => {
+                  if (!wall[rowIndex][colIndex].runeType) {
+                    return;
+                  }
                   setActiveElement({ type: 'scoring-wall', row: rowIndex, col: colIndex });
                   handleWallCellEnter(rowIndex, colIndex);
                 }}
@@ -368,6 +371,9 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
                   resetActiveElement();
                 }}
                 onFocus={() => {
+                  if (!wall[rowIndex][colIndex].runeType) {
+                    return;
+                  }
                   setActiveElement({ type: 'scoring-wall', row: rowIndex, col: colIndex });
                   handleWallCellEnter(rowIndex, colIndex);
                 }}

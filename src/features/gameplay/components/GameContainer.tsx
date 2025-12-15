@@ -249,7 +249,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
         case 'pattern-line':
           return Boolean(player.patternLines[element.lineIndex]);
         case 'scoring-wall':
-          return Boolean(player.wall[element.row]?.[element.col]);
+          return Boolean(player.wall[element.row]?.[element.col]?.runeType);
         case 'artefact':
           return element.artefactIndex < selectedArtefactIds.length;
         default:
