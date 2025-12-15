@@ -46,6 +46,8 @@ export function PatternLines({
     repeatType: 'reverse' as const,
     ease: 'easeInOut' as const
   };
+  // Shared spacing value (pixels) used for both vertical and horizontal gaps
+  const LINE_GAP = 5;
   
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
@@ -79,7 +81,7 @@ export function PatternLines({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: LINE_GAP, alignItems: 'flex-start', width: '100%' }}>
       {patternLines.map((line, index) => {
         const isLocked = lockedLineIndexes.includes(index);
         const isPlacementTarget = !isLocked && canPlace && isPatternLinePlacementValid(line, index, selectedRuneType ?? null, wall, lockedLineIndexes);
@@ -125,7 +127,7 @@ export function PatternLines({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              gap: '4px',
+              gap: LINE_GAP,
               width: '100%',
               cursor: cursorStyle,
               backgroundColor: 'transparent',
@@ -133,7 +135,6 @@ export function PatternLines({
               padding: 0,
               borderRadius: '8px',
               transition: 'all 0.2s',
-              marginBottom: '4px',
               position: 'relative',
               opacity: isLocked ? 0.15 : 1,
               boxShadow: isActiveLine
@@ -176,7 +177,8 @@ export function PatternLines({
                       position: 'relative',
                       boxShadow: showGlow ? selectableGlowRest : 'none',
                       borderRadius: '8px',
-                      transition: 'box-shadow 0.2s'
+                      transition: 'box-shadow 0.2s',
+                      gap: LINE_GAP
                     }}
                     {...cellMotionProps}
                   >

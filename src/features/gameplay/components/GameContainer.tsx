@@ -227,6 +227,55 @@ export function GameContainer({ gameState }: GameContainerProps) {
   );
   const playerLockedLines = useMemo(() => lockedPatternLines[player.id] ?? [], [lockedPatternLines, player.id]);
 
+  const findNearestRuneInRuneforge = useCallback(
+    (runeforgeIndex: number, targetRuneIndex: number): ActiveElement | null => {
+      const runeforge = runeforges[runeforgeIndex];
+      if (!runeforge || runeforge.runes.length === 0) {
+        // Find nearest runeforge with runes
+        let bestForgeIndex = -1;
+        let bestForgeDistance = Number.POSITIVE_INFINITY;
+        runeforges.forEach((forge, idx) => {
+          if (!forge || forge.runes.length === 0) {
+            return;
+          }
+          const distance = Math.abs(idx - runeforgeIndex);
+          if (distance < bestForgeDistance) {
+            bestForgeDistance = distance;
+            bestForgeIndex = idx;
+          }
+        });
+        if (bestForgeIndex === -1) {
+          return null;
+        }
+        const nearestForge = runeforges[bestForgeIndex];
+        let bestIndex = 0;
+        let bestDistance = Number.POSITIVE_INFINITY;
+        nearestForge.runes.forEach((_, idx) => {
+          const distance = Math.abs(idx - targetRuneIndex);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = idx;
+          }
+        });
+        return { type: 'runeforge-rune', runeforgeIndex: bestForgeIndex, runeIndex: bestIndex };
+      }
+      let bestIndex = -1;
+      let bestDistance = Number.POSITIVE_INFINITY;
+      runeforge.runes.forEach((_, idx) => {
+        const distance = Math.abs(idx - targetRuneIndex);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestIndex = idx;
+        }
+      });
+      if (bestIndex === -1) {
+        return null;
+      }
+      return { type: 'runeforge-rune', runeforgeIndex, runeIndex: bestIndex };
+    },
+    [runeforges]
+  );
+
   const navigationGrid = useMemo(
     () =>
       buildNavigationGrid({
@@ -273,22 +322,35 @@ export function GameContainer({ gameState }: GameContainerProps) {
 
   useEffect(() => {
     const fallbackElement = getFirstAvailableElement(navigationGrid, isElementActive);
-    if (!activeElement && fallbackElement) {
-      setActiveElement(fallbackElement);
+    if (!activeElement) {
+      if (fallbackElement) {
+        setActiveElement(fallbackElement);
+      }
       return;
     }
 
-    if (
-      activeElement &&
-      (!findElementPosition(navigationGrid, activeElement) || !isElementActive(activeElement))
-    ) {
-      if (fallbackElement) {
-        setActiveElement(fallbackElement);
-      } else {
-        resetActiveElement();
-      }
+    const activePosition = findElementPosition(navigationGrid, activeElement);
+    const isActiveValid = activePosition && isElementActive(activeElement);
+
+    if (isActiveValid) {
+      return;
     }
-  }, [activeElement, isElementActive, navigationGrid, resetActiveElement, setActiveElement]);
+
+    if (activeElement.type === 'runeforge-rune') {
+      const nearestRune = findNearestRuneInRuneforge(activeElement.runeforgeIndex, activeElement.runeIndex);
+      if (nearestRune) {
+        setActiveElement(nearestRune);
+        return;
+      }
+      return;
+    }
+
+    if (fallbackElement) {
+      setActiveElement(fallbackElement);
+    } else {
+      resetActiveElement();
+    }
+  }, [activeElement, findNearestRuneInRuneforge, isElementActive, navigationGrid, resetActiveElement, setActiveElement]);
 
   useEffect(() => {
     if (!hasSelectedRunes) {
@@ -375,11 +437,27 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const moveActiveElement = useCallback(
     (direction: 'up' | 'down' | 'left' | 'right') => {
       const next = findNextElement(navigationGrid, activeElement, direction, isElementActive);
-      if (next) {
+      if (next && next !== activeElement) {
         setActiveElement(next);
+        return;
+      }
+
+      if ((direction === 'left' || direction === 'right') && !hasSelectedRunes) {
+        const rowIndex =
+          activeElement?.type === 'pattern-line'
+            ? activeElement.lineIndex
+            : activeElement?.type === 'scoring-wall'
+              ? activeElement.row
+              : null;
+        if (rowIndex !== null) {
+          const fallbackRune = findNearestRuneInRuneforge(rowIndex, 0);
+          if (fallbackRune) {
+            setActiveElement(fallbackRune);
+          }
+        }
       }
     },
-    [activeElement, isElementActive, navigationGrid, setActiveElement]
+    [activeElement, findNearestRuneInRuneforge, hasSelectedRunes, isElementActive, navigationGrid, setActiveElement]
   );
 
   const handleSelectActiveElement = useCallback(
