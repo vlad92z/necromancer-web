@@ -6,7 +6,7 @@ import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import type { Rune, RuneType, TooltipCard } from '../types/game';
 import { getArtefactEffectDescription } from './artefactEffects';
-import { getRuneEffectDescription } from './runeEffects';
+import { getRuneEffectDescription, getRuneRarity } from './runeEffects';
 import overloadSvg from '../assets/stats/overload.svg';
 
 const FALLBACK_RUNE_TYPE: RuneType = 'Life';
@@ -48,6 +48,7 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
     runeType: rune.runeType,
     title: `${rune.runeType} Rune`,
     description: getRuneEffectDescription(rune.effects),
+    runeRarity: getRuneRarity(rune.effects),
   }));
 }
 
@@ -73,6 +74,7 @@ export function buildPatternLinePlacementTooltipCards({
       runeType: primaryRune.runeType,
       title: getRuneTooltipTitle(primaryRune),
       description: getRuneEffectDescription(primaryRune.effects),
+      runeRarity: getRuneRarity(primaryRune.effects),
     });
     cursor += 1;
   }
@@ -86,6 +88,7 @@ export function buildPatternLinePlacementTooltipCards({
       title: getRuneTooltipTitle(rune),
       description: NON_PRIMARY_DESTROYED_TEXT,
       variant: 'nonPrimary',
+      runeRarity: getRuneRarity(rune.effects),
     });
   });
   cursor += nonPrimaryRunes.length;
@@ -99,6 +102,7 @@ export function buildPatternLinePlacementTooltipCards({
       description: OVERLOAD_DESCRIPTION_SUFFIX(strain),
       imageSrc: overloadSvg,
       variant: 'overload',
+      runeRarity: getRuneRarity(rune.effects),
     });
   });
 
@@ -108,12 +112,13 @@ export function buildPatternLinePlacementTooltipCards({
 export function buildOverloadPlacementTooltipCards(selectedRunes: Rune[], strain: number): TooltipCard[] {
   return selectedRunes.map((rune, index) => ({
     id: `overload-preview-${rune.id}-${index}`,
-    runeType: rune.runeType,
-    title: getRuneTooltipTitle(rune),
-    description: OVERLOAD_DESCRIPTION_SUFFIX(strain),
-    imageSrc: overloadSvg,
-    variant: 'overload',
-  }));
+      runeType: rune.runeType,
+      title: getRuneTooltipTitle(rune),
+      description: OVERLOAD_DESCRIPTION_SUFFIX(strain),
+      imageSrc: overloadSvg,
+      variant: 'overload',
+      runeRarity: getRuneRarity(rune.effects),
+    }));
 }
 
 /**

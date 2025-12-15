@@ -48,6 +48,7 @@ export interface TooltipCard {
   runeType: RuneType;
   title: string;
   description: string;
+  runeRarity?: RuneEffectRarity | null;
   imageSrc?: string;
   variant?: TooltipCardVariant;
 }

@@ -1,4 +1,28 @@
-import type { TooltipCardVariant } from '../../../../types/game';
+import type { RuneEffectRarity, RuneType, TooltipCardVariant } from '../../../../types/game';
+import fireRune from '../../../../assets/runes/fire_rune.svg';
+import fireRuneUncommon from '../../../../assets/runes/fire_rune_uncommon.svg';
+import fireRuneRare from '../../../../assets/runes/fire_rune_rare.svg';
+import fireRuneEpic from '../../../../assets/runes/fire_rune_epic.svg';
+import frostRune from '../../../../assets/runes/frost_rune.svg';
+import frostRuneUncommon from '../../../../assets/runes/frost_rune_uncommon.svg';
+import frostRuneRare from '../../../../assets/runes/frost_rune_rare.svg';
+import frostRuneEpic from '../../../../assets/runes/frost_rune_epic.svg';
+import lifeRune from '../../../../assets/runes/life_rune.svg';
+import lifeRuneUncommon from '../../../../assets/runes/life_rune_uncommon.svg';
+import lifeRuneRare from '../../../../assets/runes/life_rune_rare.svg';
+import lifeRuneEpic from '../../../../assets/runes/life_rune_epic.svg';
+import voidRune from '../../../../assets/runes/void_rune.svg';
+import voidRuneUncommon from '../../../../assets/runes/void_rune_uncommon.svg';
+import voidRuneRare from '../../../../assets/runes/void_rune_rare.svg';
+import voidRuneEpic from '../../../../assets/runes/void_rune_epic.svg';
+import windRune from '../../../../assets/runes/wind_rune.svg';
+import windRuneUncommon from '../../../../assets/runes/wind_rune_uncommon.svg';
+import windRuneRare from '../../../../assets/runes/wind_rune_rare.svg';
+import windRuneEpic from '../../../../assets/runes/wind_rune_epic.svg';
+import lightningRune from '../../../../assets/runes/lightning_rune.svg';
+import lightningRuneUncommon from '../../../../assets/runes/lightning_rune_uncommon.svg';
+import lightningRuneRare from '../../../../assets/runes/lightning_rune_rare.svg';
+import lightningRuneEpic from '../../../../assets/runes/lightning_rune_epic.svg';
 
 /**
  * CardView - displays a trading card style preview
@@ -6,20 +30,74 @@ import type { TooltipCardVariant } from '../../../../types/game';
 
 interface CardViewProps {
   title: string;
-  imageSrc: string;
   description: string;
+  runeType: RuneType;
+  imageSrc?: string;
+  runeRarity?: RuneEffectRarity | null;
   variant?: TooltipCardVariant;
+}
+
+const RUNE_CARD_IMAGES: Record<RuneType, Record<RuneEffectRarity, string>> = {
+  Fire: {
+    common: fireRune,
+    uncommon: fireRuneUncommon,
+    rare: fireRuneRare,
+    epic: fireRuneEpic,
+  },
+  Frost: {
+    common: frostRune,
+    uncommon: frostRuneUncommon,
+    rare: frostRuneRare,
+    epic: frostRuneEpic,
+  },
+  Life: {
+    common: lifeRune,
+    uncommon: lifeRuneUncommon,
+    rare: lifeRuneRare,
+    epic: lifeRuneEpic,
+  },
+  Void: {
+    common: voidRune,
+    uncommon: voidRuneUncommon,
+    rare: voidRuneRare,
+    epic: voidRuneEpic,
+  },
+  Wind: {
+    common: windRune,
+    uncommon: windRuneUncommon,
+    rare: windRuneRare,
+    epic: windRuneEpic,
+  },
+  Lightning: {
+    common: lightningRune,
+    uncommon: lightningRuneUncommon,
+    rare: lightningRuneRare,
+    epic: lightningRuneEpic,
+  },
+};
+
+function resolveRuneImage(runeType: RuneType, runeRarity: RuneEffectRarity | null | undefined, override?: string): string {
+  if (override) {
+    return override;
+  }
+
+  const rarityKey = runeRarity ?? 'common';
+  const runeImages = RUNE_CARD_IMAGES[runeType];
+  return runeImages?.[rarityKey] ?? RUNE_CARD_IMAGES[runeType].common;
 }
 
 export function CardView({
   title,
   imageSrc,
   description,
+  runeType,
+  runeRarity,
   variant = 'default',
 }: CardViewProps) {
   const border = 'border rounded-xl border-slate-400/40';
   const showDestroyedOverlay = variant === 'nonPrimary';
   const showOverloadOverlay = variant === 'overload';
+  const resolvedImageSrc = resolveRuneImage(runeType, runeRarity, imageSrc);
 
   return (
     <div className={`flex flex-col p-2 gap-2 w-[clamp(14em,22vmin,24em)] aspect-[2/3] ${border} bg-gray-900`}>
@@ -30,7 +108,7 @@ export function CardView({
       <div className={`flex-[4] ${border} bg-gradient-to-b from-slate-700/80 to-slate-900 overflow-hidden min-h-0 relative`}>
         <img
           className="h-full w-full object-cover"
-          src={imageSrc}
+          src={resolvedImageSrc}
           alt={title}
         />
         {showDestroyedOverlay && (
