@@ -4,9 +4,9 @@
 
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
-import type { Rune, RuneType, TooltipCard } from '../types/game';
+import type { PatternLine, Rune, RuneType, TooltipCard } from '../types/game';
 import { getArtefactEffectDescription } from './artefactEffects';
-import { getRuneEffectDescription, getRuneRarity } from './runeEffects';
+import { getRuneEffectDescription, getRuneEffectsForType, getRuneRarity } from './runeEffects';
 import overloadSvg from '../assets/stats/overload.svg';
 
 const FALLBACK_RUNE_TYPE: RuneType = 'Life';
@@ -107,6 +107,44 @@ export function buildPatternLinePlacementTooltipCards({
   });
 
   return orderedCards;
+}
+
+export function buildPatternLineExistingTooltipCards(patternLine: PatternLine): TooltipCard[] {
+  if (!patternLine.runeType || patternLine.count === 0) {
+    return [];
+  }
+
+  const runeType = patternLine.runeType;
+  const runeEffects = patternLine.firstRuneEffects ?? getRuneEffectsForType(runeType);
+  const primaryRune: Rune = {
+    id: patternLine.firstRuneId ?? `pattern-line-${runeType}-${patternLine.tier}`,
+    runeType,
+    effects: runeEffects,
+  };
+
+  const tooltipCards: TooltipCard[] = [
+    {
+      id: `pattern-line-primary-${primaryRune.id}`,
+      runeType,
+      title: getRuneTooltipTitle(primaryRune),
+      description: getRuneEffectDescription(primaryRune.effects),
+      runeRarity: getRuneRarity(primaryRune.effects),
+    },
+  ];
+
+  const destroyedCount = Math.max(patternLine.count - 1, 0);
+  for (let index = 0; index < destroyedCount; index += 1) {
+    tooltipCards.push({
+      id: `pattern-line-destroyed-${primaryRune.id}-${index}`,
+      runeType,
+      title: getRuneTooltipTitle(primaryRune),
+      description: NON_PRIMARY_DESTROYED_TEXT,
+      variant: 'nonPrimary',
+      runeRarity: getRuneRarity(primaryRune.effects),
+    });
+  }
+
+  return tooltipCards;
 }
 
 export function buildOverloadPlacementTooltipCards(selectedRunes: Rune[], strain: number): TooltipCard[] {
