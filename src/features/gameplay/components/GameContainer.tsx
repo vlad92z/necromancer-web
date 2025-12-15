@@ -65,6 +65,8 @@ export interface GameData {
 export interface GameContainerSharedProps {
   // Core context
   player: GameState['player'];
+  displayedHealth: number;
+  displayedArmor: number;
   currentPlayerIndex: number;
   currentPlayerId: string;
   game: number;
@@ -119,6 +121,10 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const outcome = gameState.outcome;
   const runePowerTotal = gameState.runePowerTotal;
   const targetScore = gameState.targetScore;
+  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
+  const displayedHealth = scoringSequence ? scoringSequence.displayHealth : player.health;
+  const displayedArmor = scoringSequence ? scoringSequence.displayArmor : player.armor;
+  const displayedRunePowerTotal = scoringSequence ? scoringSequence.displayRunePowerTotal : runePowerTotal;
   const {
     draftRune,
     draftFromCenter,
@@ -184,10 +190,10 @@ export function GameContainer({ gameState }: GameContainerProps) {
 
   const runeScore = useMemo(
     () => ({
-      currentScore: runePowerTotal,
+      currentScore: displayedRunePowerTotal,
       targetScore: targetScore,
     }),
-    [runePowerTotal, targetScore],
+    [displayedRunePowerTotal, targetScore],
   );
 
   const playerStats = useMemo(
@@ -323,6 +329,8 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const sharedProps: GameContainerSharedProps = useMemo(
     () => ({
       player,
+      displayedHealth,
+      displayedArmor,
       currentPlayerIndex: 0,
       currentPlayerId: player.id,
       game: currentGame,
@@ -351,6 +359,8 @@ export function GameContainer({ gameState }: GameContainerProps) {
     [
       animatingRuneIds,
       centerPool,
+      displayedArmor,
+      displayedHealth,
       currentGame,
       draftSource,
       handleCancelSelection,
@@ -381,7 +391,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       runeScore,
       playerStats,
       targetScore,
-      runePowerTotal,
+      runePowerTotal: displayedRunePowerTotal,
       arcaneDust,
       arcaneDustReward: getArcaneDustReward(currentGame),
       deckDraftState: gameState.deckDraftState,
@@ -399,7 +409,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       handleOpenDeckOverlay,
       handleOpenOverloadOverlay,
       isDeckDrafting,
-      runePowerTotal,
+      displayedRunePowerTotal,
       selectDeckDraftRuneforge,
       outcome,
       runeScore,

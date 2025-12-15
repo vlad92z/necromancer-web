@@ -165,6 +165,16 @@ export interface ScoringSequenceState {
   steps: ScoringStep[];
   activeIndex: number;
   sequenceId: number;
+  startHealth: number;
+  startArmor: number;
+  startRunePowerTotal: number;
+  maxHealth: number;
+  displayHealth: number;
+  displayArmor: number;
+  displayRunePowerTotal: number;
+  targetHealth: number;
+  targetArmor: number;
+  targetRunePowerTotal: number;
 }
 
 /**
