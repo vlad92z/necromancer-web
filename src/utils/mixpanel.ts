@@ -19,6 +19,7 @@ export function initMixpanel() {
   if (initialized) return
 
   const finalToken = MIXPANEL_TOKEN ?? '150a8a103393d526b846dd7d68ce65fb';
+  if (finalToken === 'skip') return;
   if (!finalToken) {
     console.warn('Mixpanel token not provided. Skipping Mixpanel initialization.')
   }

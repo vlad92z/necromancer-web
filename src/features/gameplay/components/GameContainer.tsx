@@ -26,6 +26,7 @@ import { isPatternLinePlacementValid } from '../../../utils/patternLineHelpers';
 import { collectSegmentCells } from '../../../utils/scoring';
 import overloadSvg from '../../../assets/stats/overload.svg';
 import deckSvg from '../../../assets/stats/deck.svg';
+import { handleKeyboardNavigation } from '../../../utils/keyboardNavigation';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -320,6 +321,15 @@ export function GameContainer({ gameState }: GameContainerProps) {
       .map(({ index }) => index);
   }, [hasSelectedRunes, player.patternLines, player.wall, playerLockedLines, selectedRuneType]);
 
+  const occupiedPatternLineIndexes = useMemo(
+    () =>
+      player.patternLines
+        .map((line, index) => ({ line, index }))
+        .filter(({ line }) => line.count > 0)
+        .map(({ index }) => index),
+    [player.patternLines]
+  );
+
   useEffect(() => {
     const fallbackElement = getFirstAvailableElement(navigationGrid, isElementActive);
     if (!activeElement) {
@@ -523,65 +533,22 @@ export function GameContainer({ gameState }: GameContainerProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (hasSelectedRunes) {
-          event.preventDefault();
-          handleCancelSelection();
-        } else {
-          handleOpenSettings();
-        }
-        return;
-      }
-
-      if (showSettingsOverlay || showDeckOverlay || showOverloadOverlay || showRulesOverlay || isDeckDrafting) {
-        return;
-      }
-
-      const handleVerticalSelection = (direction: 'up' | 'down') => {
-        const targets: ActiveElement[] = [];
-        if (hasSelectedRunes) {
-          targets.push({ type: 'overload' });
-          validPatternLineIndexes.forEach((lineIndex) => targets.push({ type: 'pattern-line', lineIndex }));
-        }
-        if (!hasSelectedRunes || targets.length === 0) {
-          moveActiveElement(direction);
-          return;
-        }
-
-        const currentIndex = targets.findIndex((target) =>
-          activeElement &&
-          target.type === activeElement.type &&
-          ((target.type === 'overload' && activeElement.type === 'overload') ||
-            (target.type === 'pattern-line' &&
-              activeElement.type === 'pattern-line' &&
-              target.lineIndex === activeElement.lineIndex))
-        );
-        const nextIndex = direction === 'up'
-          ? Math.max(0, currentIndex <= 0 ? 0 : currentIndex - 1)
-          : Math.min(targets.length - 1, currentIndex === -1 ? 0 : currentIndex + 1);
-        setActiveElement(targets[nextIndex] ?? targets[0]);
-      };
-
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        handleVerticalSelection('up');
-      } else if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        handleVerticalSelection('down');
-      } else if (event.key === 'ArrowLeft') {
-        if (!hasSelectedRunes) {
-          event.preventDefault();
-          moveActiveElement('left');
-        }
-      } else if (event.key === 'ArrowRight') {
-        if (!hasSelectedRunes) {
-          event.preventDefault();
-          moveActiveElement('right');
-        }
-      } else if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        handleSelectActiveElement(activeElement);
-      }
+      handleKeyboardNavigation(event, {
+        activeElement,
+        hasSelectedRunes,
+        isDeckDrafting,
+        showSettingsOverlay,
+        showDeckOverlay,
+        showOverloadOverlay,
+        showRulesOverlay,
+        validPatternLineIndexes,
+        occupiedPatternLineIndexes,
+        moveActiveElement,
+        setActiveElement,
+        handleSelectActiveElement,
+        handleCancelSelection,
+        handleOpenSettings,
+      });
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -595,6 +562,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
     moveActiveElement,
     hasSelectedRunes,
     validPatternLineIndexes,
+    occupiedPatternLineIndexes,
     setActiveElement,
     showDeckOverlay,
     showOverloadOverlay,
