@@ -57,6 +57,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
   const setActiveElement = useGameplayStore((state) => state.setActiveElement);
   const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
+  const activeElement = useGameplayStore((state) => state.activeElement);
 
   const wallSignature = useMemo(
     () => wall.map(row => row.map(cell => cell.runeType ?? '0').join(',')).join('|'),
@@ -373,6 +374,15 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
                 onBlur={() => {
                   handleWallCellLeave();
                   resetActiveElement();
+                }}
+                style={{
+                  boxShadow:
+                    activeElement?.type === 'scoring-wall' &&
+                    activeElement.row === rowIndex &&
+                    activeElement.col === colIndex
+                      ? '0 0 0 2px rgba(125, 211, 252, 0.8), 0 0 16px rgba(56, 189, 248, 0.35)'
+                      : undefined,
+                  borderRadius: '12px',
                 }}
               >
                 <WallCell

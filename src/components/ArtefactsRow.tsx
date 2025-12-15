@@ -17,6 +17,7 @@ interface ArtefactsRowProps {
 export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const activeElement = useGameplayStore((state) => state.activeElement);
   const setActiveElement = useGameplayStore((state) => state.setActiveElement);
   const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
   const isEmpty = selectedArtefactIds.length === 0;
@@ -51,6 +52,7 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
 
         const effectDescription = getArtefactEffectDescription(artefactId);
         const tooltipText = `${artefact.name}\n${effectDescription}`;
+        const isActive = activeElement?.type === 'artefact' && activeElement.artefactIndex === artefactIndex;
         
         return (
           <div
@@ -68,6 +70,12 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
             onBlur={() => {
               resetTooltipCards();
               resetActiveElement();
+            }}
+            style={{
+              boxShadow: isActive
+                ? '0 0 0 2px rgba(125, 211, 252, 0.8), 0 0 16px rgba(56, 189, 248, 0.35)'
+                : undefined,
+              borderColor: isActive ? 'rgba(125, 211, 252, 0.9)' : undefined,
             }}
           >
             <img
