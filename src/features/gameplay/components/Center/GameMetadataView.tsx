@@ -167,6 +167,7 @@ export function GameMetadataView({
 
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const activeElement = useGameplayStore((state) => state.activeElement);
   const setActiveElement = useGameplayStore((state) => state.setActiveElement);
   const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
   const deckValue = Math.max(0, deckCount);
@@ -222,11 +223,14 @@ export function GameMetadataView({
 
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
-  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus}`;
+  const isSettingsActive = activeElement?.type === 'settings';
+  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus} ${isSettingsActive ? 'border-sky-300 shadow-[0_0_0_2px_rgba(125,211,252,0.8),0_0_28px_rgba(14,165,233,0.55)]' : ''}`;
 
   const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
-  const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20`;
-  const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20`;
+  const isOverloadActive = activeElement?.type === 'overload';
+  const isDeckActive = activeElement?.type === 'deck';
+  const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20 ${isOverloadActive ? 'shadow-[0_0_0_2px_rgba(248,113,113,0.75),0_0_26px_rgba(248,113,113,0.65)]' : ''}`;
+  const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 ${isDeckActive ? 'shadow-[0_0_0_2px_rgba(125,211,252,0.75),0_0_26px_rgba(56,189,248,0.55)]' : ''}`;
   const overloadBadge = (
     <StatBadge
       value={strainValue}

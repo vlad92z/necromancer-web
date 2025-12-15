@@ -206,6 +206,7 @@ export function RuneSelectionTable({
             onRuneClick={onRuneClick}
             onRuneMouseEnter={handleRuneMouseEnter}
             onRuneMouseLeave={handleRuneMouseLeave}
+            activeElement={activeElement}
           />
         ))}
       </div>

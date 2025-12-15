@@ -51,6 +51,7 @@ export function PatternLines({
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const setActiveElement = useGameplayStore((state) => state.setActiveElement);
   const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
+  const activeElement = useGameplayStore((state) => state.activeElement);
 
   const handleTooltipEnter = (line: PatternLine, isPlacementTarget: boolean) => {
     if (selectedRunes.length > 0) {
@@ -89,6 +90,7 @@ export function PatternLines({
         const cursorStyle = placementClickable
             ? (isPlacementTarget ? 'pointer' : 'not-allowed')
             : 'default';
+        const isActiveLine = activeElement?.type === 'pattern-line' && activeElement.lineIndex === index;
 
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
         const ariaLabel = ariaLabelBase;
@@ -134,6 +136,9 @@ export function PatternLines({
               marginBottom: '4px',
               position: 'relative',
               opacity: isLocked ? 0.15 : 1,
+              boxShadow: isActiveLine
+                ? '0 0 0 2px rgba(125, 211, 252, 0.8), 0 0 16px rgba(56, 189, 248, 0.35)'
+                : 'none',
             }}
             aria-label={ariaLabel}
           >
