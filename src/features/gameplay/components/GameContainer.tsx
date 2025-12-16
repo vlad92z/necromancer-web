@@ -237,7 +237,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   });
 
   useRunePlacementSounds(
-    [player],
+    player,
     activeAnimatingRunes,
     soundVolume,
     overloadSoundPending,

@@ -151,7 +151,6 @@ export function resolveSegmentFromCells(
     let arcaneDust = 0;
     let armor = 0;
     resolvedEffects.forEach((effect) => {
-      console.log('RESOLVING EFFECT', effect);
       switch (effect.type) {
         case 'Damage':
           damage += effect.amount;
