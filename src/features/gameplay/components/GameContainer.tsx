@@ -178,6 +178,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const runeforgeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
   const [activeElement, setActiveElement] = useState<ActiveElement | null>(null);
+  const refocusAfterKeyboardPlacementRef = useRef(false);
   const runeforgeToPatternLineMap = useMemo(() => [0, 1, 3, 4, 5], []);
   const patternLineToRuneforgeMap = useMemo(() => {
     const map = new Map<number, number>();
@@ -509,6 +510,18 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }
     return null;
   }, [runeforgeSlotLayouts]);
+
+  useEffect(() => {
+    if (!refocusAfterKeyboardPlacementRef.current) {
+      return;
+    }
+    if (hasSelectedRunes) {
+      return;
+    }
+    const nextRune = pickFirstAvailableRune();
+    setActiveElement(nextRune);
+    refocusAfterKeyboardPlacementRef.current = false;
+  }, [hasSelectedRunes, pickFirstAvailableRune]);
 
   const chooseBestCandidate = (
     candidates: RunePosition[],
@@ -1018,9 +1031,10 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }
 
     if (activeElement.type === 'pattern-line') {
-      if (!isPatternLineValidTarget(activeElement.lineIndex)) {
+      if (!isPatternLineValidTarget(activeElement.lineIndex) || isAnimatingPlacement) {
         return false;
       }
+      refocusAfterKeyboardPlacementRef.current = true;
       handlePatternLinePlacement(activeElement.lineIndex);
       return true;
     }
@@ -1031,6 +1045,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     handleOpenDeckOverlay,
     handleOverloadAction,
     handlePatternLinePlacement,
+    isAnimatingPlacement,
     isPatternLineValidTarget,
     selectActiveRune,
     toggleSettingsOverlay,
