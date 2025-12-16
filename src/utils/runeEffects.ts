@@ -24,7 +24,7 @@ const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 
 const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 4, rarity: 'rare' }],
-  Frost: [{ type: 'ArmorSynergy', amount: 2, synergyType: 'Frost', rarity: 'rare' }],
+  Frost: [{ type: 'ArmorSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' }],
   Life: [{ type: 'Healing', amount: 3, rarity: 'rare' }],
   Void: [{ type: 'Synergy', amount: 3, synergyType: 'Void', rarity: 'rare' }],
   Wind: [{ type: 'Fortune', amount: 10, rarity: 'rare' }],
@@ -33,7 +33,7 @@ const RARE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
 
 const EPIC_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Fire: [{ type: 'Damage', amount: 8, rarity: 'epic' }],
-  Frost: [{ type: 'ArmorSynergy', amount: 4, synergyType: 'Frost', rarity: 'epic' }],
+  Frost: [{ type: 'ArmorSynergy', amount: 6, synergyType: 'Frost', rarity: 'epic' }],
   Life: [{ type: 'Healing', amount: 6, rarity: 'epic' }],
   Void: [{ type: 'Synergy', amount: 6, synergyType: 'Void', rarity: 'epic' }],
   Wind: [{ type: 'Fortune', amount: 20, rarity: 'epic' }],
