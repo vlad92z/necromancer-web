@@ -16,6 +16,7 @@ import { ArtefactsView } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../components/ClickSoundButton';
+import { useClickSound } from '../hooks/useClickSound';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -39,6 +40,7 @@ export function SoloStartScreen() {
   });
   const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const playClickSound = useClickSound();
 
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
@@ -145,7 +147,11 @@ export function SoloStartScreen() {
         const currentIndex = order.indexOf(current);
         const offset = direction === 'down' ? 1 : -1;
         const nextIndex = (currentIndex + offset + order.length) % order.length;
-        return order[nextIndex];
+        const next = order[nextIndex];
+        if (next !== current) {
+          playClickSound();
+        }
+        return next;
       });
     };
 
@@ -183,14 +189,24 @@ export function SoloStartScreen() {
         case 'ArrowRight': {
           if (activeElement === 'continue' && hasSavedSoloRun) {
             event.preventDefault();
-            setActiveElement('new');
+            setActiveElement((current) => {
+              if (current !== 'new') {
+                playClickSound();
+              }
+              return 'new';
+            });
           }
           break;
         }
         case 'ArrowLeft': {
           if (activeElement === 'new' && hasSavedSoloRun) {
             event.preventDefault();
-            setActiveElement('continue');
+            setActiveElement((current) => {
+              if (current !== 'continue') {
+                playClickSound();
+              }
+              return 'continue';
+            });
           }
           break;
         }
@@ -198,11 +214,13 @@ export function SoloStartScreen() {
         case ' ': // Space
         case 'Spacebar': {
           event.preventDefault();
+          playClickSound();
           triggerAction(activeElement);
           break;
         }
         case 'Escape': {
           event.preventDefault();
+          playClickSound();
           handleBack();
           break;
         }
@@ -213,7 +231,7 @@ export function SoloStartScreen() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeElement, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, showArtefactsModal]);
+  }, [activeElement, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
 
   const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
   const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';

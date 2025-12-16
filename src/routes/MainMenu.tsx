@@ -85,15 +85,23 @@ export function MainMenu() {
 
     const moveSelection = (direction: 'up' | 'down') => {
       setActiveElement((current) => {
-        if (current === null) {
-          return menuOrder[0]
+        const next = (() => {
+          if (current === null) {
+            return menuOrder[0]
+          }
+
+          const currentIndex = menuOrder.indexOf(current)
+          const offset = direction === 'down' ? 1 : -1
+          const nextIndex = (currentIndex + offset + menuOrder.length) % menuOrder.length
+
+          return menuOrder[nextIndex]
+        })()
+
+        if (next !== current) {
+          playClickSound()
         }
 
-        const currentIndex = menuOrder.indexOf(current)
-        const offset = direction === 'down' ? 1 : -1
-        const nextIndex = (currentIndex + offset + menuOrder.length) % menuOrder.length
-
-        return menuOrder[nextIndex]
+        return next
       })
     }
 
