@@ -9,6 +9,8 @@ interface ModalProps {
   showCloseButton?: boolean;
   closeOnBackdrop?: boolean;
   className?: string;
+  closeButtonClassName?: string;
+  closeButtonDataActive?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -20,6 +22,8 @@ export const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
   closeOnBackdrop = true,
   className = '',
+  closeButtonClassName = '',
+  closeButtonDataActive,
 }) => {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -64,7 +68,8 @@ export const Modal: React.FC<ModalProps> = ({
             {title && <h2 className="text-2xl font-bold text-slate-50">{title}</h2>}
             {showCloseButton && (
               <button
-                className="rounded-lg p-2 text-2xl leading-none text-slate-400 transition hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+                data-active={closeButtonDataActive}
+                className={`rounded-lg p-2 text-2xl leading-none text-slate-400 transition hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 ${closeButtonClassName}`.trim()}
                 onClick={onClose}
                 aria-label="Close modal"
               >
