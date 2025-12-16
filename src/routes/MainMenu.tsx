@@ -144,6 +144,7 @@ export function MainMenu() {
           break
         }
         case 'Escape': {
+          console.log('Main Menu Escape pressed')
           event.preventDefault()
           setActiveElement('settings')
           playClickSound()

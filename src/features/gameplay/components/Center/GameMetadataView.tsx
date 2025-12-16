@@ -39,6 +39,7 @@ interface GameMetadataViewProps {
   onPlaceRunesInFloor: () => void;
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
+  isSettingsActive: boolean;
 }
 
 type ForcedArmorIndicator = {
@@ -74,6 +75,7 @@ export function GameMetadataView({
   onPlaceRunesInFloor,
   hasSelectedRunes,
   selectedRunes,
+  isSettingsActive,
 }: GameMetadataViewProps) {
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
@@ -220,7 +222,8 @@ export function GameMetadataView({
 
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
-  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus}`;
+  const settingsActive = 'data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_4px_rgba(56,189,248,0.45)] data-[active=true]:bg-slate-800/80';
+  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus} ${settingsActive}`;
 
   const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
   const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20`;
@@ -242,6 +245,7 @@ export function GameMetadataView({
         <ClickSoundButton
           title="⚙"
           action={onOpenSettings}
+          isActive={isSettingsActive}
           className={actionButtonBase}
         />
 

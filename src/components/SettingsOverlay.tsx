@@ -128,6 +128,7 @@ export function SettingsOverlay({
           break;
         }
         case 'Escape': {
+          console.log('Settings Escape pressed');
           event.preventDefault();
           handleClose();
           break;

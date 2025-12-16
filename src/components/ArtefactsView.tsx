@@ -185,6 +185,7 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      console.log('ArtefactsView KeyDown:', event.key);
       switch (event.key) {
         case 'ArrowUp': {
           event.preventDefault();
@@ -252,7 +253,9 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
           break;
         }
         case 'Escape': {
+          console.log('Artefacts Escape pressed');
           event.preventDefault();
+          event.stopImmediatePropagation();
           handleClose();
           break;
         }

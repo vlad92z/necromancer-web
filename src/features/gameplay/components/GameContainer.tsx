@@ -659,6 +659,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       }
 
       if (event.key === 'Escape') {
+        console.log('Escape pressed in GameContainer');
         event.preventDefault();
         toggleSettingsOverlay();
         return;
