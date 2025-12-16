@@ -95,21 +95,20 @@ export function PatternLines({
       {patternLines.map((line, index) => {
         const isKeyboardActive = activePatternLineIndex === index;
         const hasActiveElement = activePatternLineIndex !== null;
-        const selectableGlowRest = hasActiveElement ? 'none' : '0 0 18px rgba(34, 197, 94, 0.75), 0 0 38px rgba(34, 197, 94, 0.35)';
-        const selectableGlowPeak = hasActiveElement ? 'none' : '0 0 28px rgba(16, 185, 129, 0.95), 0 0 56px rgba(21, 128, 61, 0.55)';
-        const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
+        const keyboardGlowRest = '0 0 18px rgba(125, 211, 252, 0.75), 0 0 38px rgba(125, 211, 252, 0.35)';
+        const keyboardGlowPeak = '0 0 28px  rgba(125, 211, 252, 0.95), 0 0 56px rgba(125, 211, 252, 0.55)';
+        const selectableGlowRest = hasActiveElement ? 'none' : keyboardGlowRest;
+        const selectableGlowPeak = hasActiveElement ? 'none' : keyboardGlowPeak;
+        const glowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
         const isLocked = lockedLineIndexes.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         
         const placementClickable = Boolean(canPlace && onPlaceRunes);
         const showGlow = isPlacementTarget;
-        const glowRange = selectableGlowRange;
         const buttonDisabled = !(isPlacementTarget && placementClickable);
         const cursorStyle = placementClickable
           ? (isPlacementTarget ? 'pointer' : 'not-allowed')
           : 'default';
-        const keyboardGlowRest = '0 0 18px rgba(125, 211, 252, 0.75), 0 0 38px rgba(125, 211, 252, 0.35)';
-        const keyboardGlowPeak = '0 0 28px  rgba(125, 211, 252, 0.95), 0 0 56px rgba(125, 211, 252, 0.55)';
         const keyboardGlowRange: [string, string] = [keyboardGlowRest, keyboardGlowPeak];
         const keyboardBoxShadow = isKeyboardActive ? keyboardGlowRest : 'none';
         const keyboardBackground = isKeyboardActive ? 'rgba(9, 22, 38, 0.75)' : 'transparent';
