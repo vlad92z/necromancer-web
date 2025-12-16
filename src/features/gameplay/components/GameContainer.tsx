@@ -769,6 +769,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const handleNavigation = useCallback(
     (direction: NavigationDirection) => {
+      console.log('Handling navigation', direction, 'with active element', activeElement);
       if (hasSelectedRunes) {
         if (direction === 'left' || direction === 'right') {
           return;
@@ -871,8 +872,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const allowKeyboardNavigation = useMemo(
     () => (
-      isSelectionPhase
-      && !showSettingsOverlay
+      !showSettingsOverlay
       && !showDeckOverlay
       && !showOverloadOverlay
       && !showRulesOverlay
@@ -1002,6 +1002,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   useImperativeHandle(ref, () => ({
     handleKeyDown: (event: KeyboardEvent) => {
+      console.log('GameContainer received keydown:', event.key, allowKeyboardNavigation);
       if (showSettingsOverlay) {
         return false;
       }
