@@ -87,7 +87,7 @@ export function MainMenu() {
       setActiveElement((current) => {
         const next = (() => {
           if (current === null) {
-            return menuOrder[0]
+            return menuOrder[1]
           }
 
           const currentIndex = menuOrder.indexOf(current)
