@@ -1,48 +1,13 @@
 /**
- * useRunePlacementSounds - plays a single rune audio (fire) for the solo player when runes begin animating toward their destinations (pattern lines, floor, or center) with placement fallback detection.
+ * useRunePlacementSounds - plays a single rune audio (fire) when runes begin animating toward their destinations (pattern lines, floor, or center).
  */
 import { useEffect, useMemo, useRef } from 'react';
-import type { AnimatingRune, Player, RuneType } from '../types/game';
+import type { AnimatingRune, RuneType } from '../types/game';
 import fireRuneSound from '../assets/sounds/fire.mp3';
 import damageSoundUrl from '../assets/sounds/damage.mp3';
 import lightningSoundUrl from '../assets/sounds/lightning.mp3';
 
-type RuneCountMap = Record<RuneType, number>;
-
-const createEmptyCountMap = (initialValue: number): RuneCountMap => ({
-  Fire: initialValue,
-  Frost: initialValue,
-  Life: initialValue,
-  Void: initialValue,
-  Wind: initialValue,
-  Lightning: initialValue
-});
-
-const countRunePlacements = (player: Player): RuneCountMap => {
-  const patternTotals = player.patternLines.reduce((lineTotals, line) => {
-    if (line.runeType) {
-      lineTotals[line.runeType] += line.count;
-    }
-    return lineTotals;
-  }, createEmptyCountMap(0));
-
-  const floorTotals = player.floorLine.runes.reduce((floorCounts, rune) => {
-    floorCounts[rune.runeType] += 1;
-    return floorCounts;
-  }, createEmptyCountMap(0));
-
-  return {
-    Fire: patternTotals.Fire + floorTotals.Fire,
-    Frost: patternTotals.Frost + floorTotals.Frost,
-    Life: patternTotals.Life + floorTotals.Life,
-    Void: patternTotals.Void + floorTotals.Void,
-    Wind: patternTotals.Wind + floorTotals.Wind,
-    Lightning: patternTotals.Lightning + floorTotals.Lightning
-  };
-};
-
 export function useRunePlacementSounds(
-  player: Player,
   animatingRunes: AnimatingRune[],
   soundVolume: number,
   overloadSoundPending: boolean,
@@ -50,8 +15,6 @@ export function useRunePlacementSounds(
   channelSoundPending: boolean,
   clearChannelSound: () => void
 ) {
-  const placementsByType = useMemo(() => countRunePlacements(player), [player]);
-  const previousCountsRef = useRef<RuneCountMap>(placementsByType);
   const runeAudioRef = useRef<HTMLAudioElement | null>(null);
   const previousAnimationKeysRef = useRef<Record<RuneType, string>>({
     Fire: '',
@@ -189,14 +152,4 @@ export function useRunePlacementSounds(
     clearChannelSound();
   }, [channelSoundPending, clearChannelSound]);
 
-  useEffect(() => {
-    (Object.keys(placementsByType) as RuneType[]).forEach((runeType) => {
-      const currentCount = placementsByType[runeType];
-      const previousCount = previousCountsRef.current[runeType];
-      if (currentCount > previousCount) {
-        playSound.current(runeType);
-      }
-      previousCountsRef.current[runeType] = currentCount;
-    });
-  }, [placementsByType]);
 }
