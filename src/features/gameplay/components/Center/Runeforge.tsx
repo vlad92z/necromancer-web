@@ -212,7 +212,7 @@ export function Runeforge({
               : isHighlighted
                 ? '0 0 14px rgba(255, 255, 255, 0.5), 0 0 34px rgba(235, 170, 255, 0.32)'
                 : isKeyboardActive
-                  ? '0 0 0 2px rgba(125, 211, 252, 0.70), 0 0 18px rgba(125, 211, 252, 0.55)'
+                  ? '0 0 28px  rgba(125, 211, 252, 0.95), 0 0 56px rgba(125, 211, 252, 0.55)'
                   : 'none';
             const filter = isSelectedForDisplay
               ? 'brightness(1.22)'
