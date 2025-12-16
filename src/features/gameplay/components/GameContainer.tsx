@@ -612,43 +612,16 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     return current;
   }
 
-  const resolveNextElement = useCallback(
-    (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
-      if (current?.type === 'settings') {
-        return navigateFromSettingsbutton(direction, current);
-      }
-
-      if (current?.type === 'overload') {
-        return navigateFromOverloadButton(direction, current);
-      }
-
-      if (current?.type === 'deck') {
-        return navigateFromDeckButton(direction, current);
-      }
-
-      if (current?.type === 'pattern-line') {
-        return navigateFromPatternLine(direction, current);
-      }
-
-      if (availableRunePositions.length === 0) {
-        return current;
-      }
-
-      if (!current || current.type !== 'runeforge-rune') {
-        return pickFirstAvailableRune();
-      }
-
-      const currentRune = availableRunePositions.find(
+  function selectClosestRuneFromRuneforge(direction: NavigationDirection, current: { type: 'runeforge-rune'; runeforgeIndex: number; runeIndex: number }): ActiveElement | null {
+    const currentRune = availableRunePositions.find(
         (position) => position.runeforgeIndex === current.runeforgeIndex && position.runeIndex === current.runeIndex,
       );
 
       if (!currentRune) {
         return pickFirstAvailableRune();
       }
-
-      const sameRowCandidates = availableRunePositions.filter((position) => position.runeforgeIndex === currentRune.runeforgeIndex);
-
-      switch (direction) {
+    const sameRowCandidates = availableRunePositions.filter((position) => position.runeforgeIndex === currentRune.runeforgeIndex);
+    switch (direction) {
         case 'left': {
           const leftCandidates = sameRowCandidates.filter((position) => position.runeIndex < currentRune.runeIndex);
           const bestLeft = chooseBestCandidate(leftCandidates, (candidate) => [currentRune.runeIndex - candidate.runeIndex, 0]);
@@ -709,6 +682,35 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         default:
           return current;
       }
+  }
+
+  const resolveNextElement = useCallback(
+    (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
+      if (current?.type === 'settings') {
+        return navigateFromSettingsbutton(direction, current);
+      }
+
+      if (current?.type === 'overload') {
+        return navigateFromOverloadButton(direction, current);
+      }
+
+      if (current?.type === 'deck') {
+        return navigateFromDeckButton(direction, current);
+      }
+
+      if (current?.type === 'pattern-line') {
+        return navigateFromPatternLine(direction, current);
+      }
+
+      if (availableRunePositions.length === 0) {
+        return current;
+      }
+
+      if (!current || current.type !== 'runeforge-rune') {
+        return pickFirstAvailableRune();
+      }
+
+      return selectClosestRuneFromRuneforge(direction, current);
     },
     [
       availableRunePositions,
