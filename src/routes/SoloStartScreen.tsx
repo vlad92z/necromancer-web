@@ -2,17 +2,17 @@
  * Solo route - entry point for Solo mode runs
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
-import { GameContainer } from '../features/gameplay/components/GameContainer';
+import { GameContainer, type GameContainerHandle } from '../features/gameplay/components/GameContainer';
 import type { GameState, RunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { DEFAULT_SOLO_CONFIG } from '../utils/gameInitialization';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
-import { ArtefactsView } from '../components/ArtefactsView';
+import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../components/ClickSoundButton';
@@ -46,6 +46,8 @@ export function SoloStartScreen() {
   const formattedDust = arcaneDust.toLocaleString();
   const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
   const [activeElement, setActiveElement] = useState<'back' | 'manage' | 'continue' | 'new'>('back');
+  const artefactsRef = useRef<ArtefactsViewHandle | null>(null);
+  const gameContainerRef = useRef<GameContainerHandle | null>(null);
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -134,10 +136,6 @@ export function SoloStartScreen() {
       return;
     }
 
-    if (showArtefactsModal) {
-      return undefined;
-    }
-
     const order: Array<'back' | 'manage' | 'continue' | 'new'> = hasSavedSoloRun
       ? ['back', 'manage', 'continue', 'new']
       : ['back', 'manage', 'new'];
@@ -175,6 +173,20 @@ export function SoloStartScreen() {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      console.log('Solo Start Key:', event.key, showArtefactsModal, gameStarted);
+      
+      if (showArtefactsModal) {
+        artefactsRef.current?.handleKeyDown(event);
+        return;
+      } else if (gameStarted) {
+        gameContainerRef.current?.handleKeyDown(event);
+        return;
+      }
+
+      if (showArtefactsModal || gameStarted) {
+        return;
+      }
+      
       switch (event.key) {
         case 'ArrowUp': {
           event.preventDefault();
@@ -219,6 +231,7 @@ export function SoloStartScreen() {
           break;
         }
         case 'Escape': {
+          console.log('Solo Start Escape pressed');
           event.preventDefault();
           playClickSound();
           handleBack();
@@ -231,7 +244,7 @@ export function SoloStartScreen() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeElement, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
+  }, [activeElement, artefactsRef, gameContainerRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
 
   const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
   const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';
@@ -243,7 +256,7 @@ export function SoloStartScreen() {
     : `${gradientButtonClasses} ${gradientActive}`;
 
   if (gameStarted) {
-    return <GameContainer gameState={gameState} />;
+    return <GameContainer ref={gameContainerRef} gameState={gameState} />;
   }
 
   return (
@@ -317,7 +330,7 @@ export function SoloStartScreen() {
       </div>
 
       {/* Artefacts Modal */}
-      <ArtefactsView isOpen={showArtefactsModal} onClose={() => setShowArtefactsModal(false)} />
+      <ArtefactsView ref={artefactsRef} isOpen={showArtefactsModal} onClose={() => setShowArtefactsModal(false)} />
     </div>
   );
 }

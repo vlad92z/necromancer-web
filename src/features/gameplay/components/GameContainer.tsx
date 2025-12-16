@@ -2,7 +2,7 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
@@ -111,7 +111,11 @@ export interface GameContainerSharedProps {
   returnToStartScreen: () => void;
 }
 
-export function GameContainer({ gameState }: GameContainerProps) {
+export interface GameContainerHandle {
+  handleKeyDown: (event: KeyboardEvent) => boolean;
+}
+
+export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>(function GameContainer({ gameState }, ref) {
   const {
     player,
     runeforges,
@@ -652,60 +656,57 @@ export function GameContainer({ gameState }: GameContainerProps) {
     handleRuneClick(layout.runeforgeId, runeAtSlot.runeType, runeAtSlot.id);
   }, [activeElement, handleRuneClick, hasSelectedRunes, runeforgeSlotLayouts]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+  useImperativeHandle(ref, () => ({
+    handleKeyDown: (event: KeyboardEvent) => {
       if (showSettingsOverlay) {
-        return;
+        return false;
       }
 
       if (event.key === 'Escape') {
-        console.log('Escape pressed in GameContainer');
+        console.log('Toggling settings overlay via Escape key');
         event.preventDefault();
         toggleSettingsOverlay();
-        return;
+        return true;
       }
 
       if (!allowKeyboardNavigation) {
-        return;
+        return false;
       }
 
       switch (event.key) {
         case 'ArrowLeft':
           event.preventDefault();
           handleNavigation('left');
-          break;
+          return true;
         case 'ArrowRight':
           event.preventDefault();
           handleNavigation('right');
-          break;
+          return true;
         case 'ArrowUp':
           event.preventDefault();
           handleNavigation('up');
-          break;
+          return true;
         case 'ArrowDown':
           event.preventDefault();
           handleNavigation('down');
-          break;
+          return true;
         case 'Enter':
         case ' ': // Space
         case 'Spacebar': {
           event.preventDefault();
           if (activeElement?.type === 'settings') {
             toggleSettingsOverlay();
-            return;
+            return true;
           }
 
           selectActiveRune();
-          break;
+          return true;
         }
         default:
-          break;
+          return false;
       }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeElement, allowKeyboardNavigation, handleNavigation, selectActiveRune, showSettingsOverlay, toggleSettingsOverlay]);
+    },
+  }));
 
 
   const [boardScale, setBoardScale] = useState(() => {
@@ -884,4 +885,4 @@ export function GameContainer({ gameState }: GameContainerProps) {
       <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
     </div>
   );
-}
+});

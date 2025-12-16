@@ -26,20 +26,12 @@ export const Modal: React.FC<ModalProps> = ({
   closeButtonDataActive,
 }) => {
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);

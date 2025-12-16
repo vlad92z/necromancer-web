@@ -2,7 +2,7 @@
  * ArtefactsView - modal for selecting and purchasing artefacts
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent } from 'react';
 import { Modal } from './layout/Modal';
 import { TooltipBubble, type TooltipAnchorRect } from './TooltipBubble';
@@ -12,6 +12,10 @@ import { useArtefactStore } from '../state/stores/artefactStore';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { useClickSound } from '../hooks/useClickSound';
+
+export interface ArtefactsViewHandle {
+  handleKeyDown: (event: KeyboardEvent) => boolean;
+}
 
 interface ArtefactsViewProps {
   isOpen: boolean;
@@ -23,7 +27,7 @@ const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
   return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
 };
 
-export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
+export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>(function ArtefactsView({ isOpen, onClose }, ref) {
   const { selectedArtefactIds, ownedArtefactIds, arcaneDust, selectArtefact, unselectArtefact, buyArtefact } = useArtefactStore();
   const playClick = useClickSound();
 
@@ -32,6 +36,200 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
   const [activeSection, setActiveSection] = useState<'close' | 'selected' | 'all'>('close');
   const [activeSelectedIndex, setActiveSelectedIndex] = useState<number>(0);
   const [activeAllIndex, setActiveAllIndex] = useState<number>(0);
+  const sections: Array<'close' | 'selected' | 'all'> = ['close', 'selected', 'all'];
+
+  const moveSection = (direction: 'up' | 'down') => {
+    setActiveSection((current) => {
+      const currentIndex = sections.indexOf(current);
+      const offset = direction === 'down' ? 1 : -1;
+      const nextIndex = (currentIndex + offset + sections.length) % sections.length;
+      const next = sections[nextIndex];
+      if (next !== current) {
+        playClick();
+      }
+      if (next === 'selected') {
+        setActiveSelectedIndex(0);
+      }
+      if (next === 'all') {
+        setActiveAllIndex(0);
+      }
+      return next;
+    });
+  };
+
+  const moveSelected = (direction: 'left' | 'right') => {
+    if (selectedArtefactIds.length === 0) {
+      return;
+    }
+    setActiveSelectedIndex((current) => {
+      const offset = direction === 'right' ? 1 : -1;
+      const nextIndex = (current + offset + selectedArtefactIds.length) % selectedArtefactIds.length;
+      if (nextIndex !== current) {
+        playClick();
+      }
+      return nextIndex;
+    });
+  };
+
+  const allArtefacts = useMemo(() => getAllArtefacts(), []);
+
+  const moveAll = (direction: 'left' | 'right') => {
+    if (allArtefacts.length === 0) {
+      return;
+    }
+    setActiveAllIndex((current) => {
+      const offset = direction === 'right' ? 1 : -1;
+      const nextIndex = (current + offset + allArtefacts.length) % allArtefacts.length;
+      if (nextIndex !== current) {
+        playClick();
+      }
+      return nextIndex;
+    });
+  };
+
+  const handleClose = useCallback(() => {
+    playClick();
+    onClose();
+    setActiveSection('close');
+  }, [onClose, playClick]);
+
+  const handleArtefactClick = useCallback((artefactId: ArtefactId) => {
+    playClick();
+    if (selectedArtefactIds.includes(artefactId)) {
+      unselectArtefact(artefactId);
+      return;
+    }
+
+    if (ownedArtefactIds.includes(artefactId)) {
+      selectArtefact(artefactId);
+    }
+  }, [ownedArtefactIds, playClick, selectArtefact, selectedArtefactIds, unselectArtefact]);
+
+  const handleBuyClick = useCallback((artefactId: ArtefactId, event: MouseEvent) => {
+    event.stopPropagation();
+    playClick();
+    buyArtefact(artefactId);
+  }, [buyArtefact, playClick]);
+
+  useImperativeHandle(ref, () => ({
+    handleKeyDown: (event: KeyboardEvent) => {
+      console.log('ArtefactsView Key:', event.key, isOpen);
+      if (!isOpen) {
+        return false;
+      }
+
+      switch (event.key) {
+        case 'ArrowUp': {
+          event.preventDefault();
+          moveSection('up');
+          return true;
+        }
+        case 'ArrowDown': {
+          event.preventDefault();
+          moveSection('down');
+          return true;
+        }
+        case 'ArrowLeft': {
+          if (activeSection === 'selected') {
+            event.preventDefault();
+            moveSelected('left');
+            return true;
+          }
+          if (activeSection === 'all') {
+            event.preventDefault();
+            moveAll('left');
+            return true;
+          }
+          return false;
+        }
+        case 'ArrowRight': {
+          if (activeSection === 'selected') {
+            event.preventDefault();
+            moveSelected('right');
+            return true;
+          }
+          if (activeSection === 'all') {
+            event.preventDefault();
+            moveAll('right');
+            return true;
+          }
+          return false;
+        }
+        case 'Enter':
+        case ' ': // Space
+        case 'Spacebar': {
+          event.preventDefault();
+          if (activeSection === 'close') {
+            handleClose();
+            return true;
+          }
+          if (activeSection === 'selected') {
+            const targetId = selectedArtefactIds[activeSelectedIndex];
+            if (targetId) {
+              playClick();
+              unselectArtefact(targetId);
+            }
+            return true;
+          }
+          if (activeSection === 'all') {
+            const target = allArtefacts[activeAllIndex];
+            if (!target) {
+              return true;
+            }
+            const isOwned = ownedArtefactIds.includes(target.id);
+            if (isOwned) {
+              handleArtefactClick(target.id);
+              return true;
+            }
+            const canAfford = arcaneDust >= target.cost;
+            playClick();
+            if (canAfford) {
+              buyArtefact(target.id);
+            }
+            return true;
+          }
+          return true;
+        }
+        case 'Escape': {
+          event.preventDefault();
+          handleClose();
+          return true;
+        }
+        default:
+          return false;
+      }
+    },
+  }));
+
+  useEffect(() => {
+    if (!isOpen) {
+      setActiveSection('close');
+      setActiveSelectedIndex(0);
+      setActiveAllIndex(0);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      if (touchHideTimer !== null) {
+        window.clearTimeout(touchHideTimer);
+        setTouchHideTimer(null);
+      }
+      setActiveTooltip(null);
+    }
+  }, [isOpen, touchHideTimer]);
+
+  useEffect(() => {
+    if (activeSelectedIndex >= selectedArtefactIds.length) {
+      setActiveSelectedIndex(Math.max(0, selectedArtefactIds.length - 1));
+    }
+  }, [activeSelectedIndex, selectedArtefactIds]);
+
+  useEffect(() => {
+    if (activeAllIndex >= allArtefacts.length) {
+      setActiveAllIndex(0);
+    }
+  }, [activeAllIndex, allArtefacts.length]);
 
   const clearTouchHideTimer = () => {
     if (touchHideTimer !== null) {
@@ -73,200 +271,6 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
       window.clearTimeout(touchHideTimer);
     }
   }, [touchHideTimer]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      if (touchHideTimer !== null) {
-        window.clearTimeout(touchHideTimer);
-        setTouchHideTimer(null);
-      }
-      setActiveTooltip(null);
-    }
-  }, [isOpen, touchHideTimer]);
-
-  const allArtefacts = useMemo(() => getAllArtefacts(), []);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setActiveSection('close');
-      setActiveSelectedIndex(0);
-      setActiveAllIndex(0);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (activeSelectedIndex >= selectedArtefactIds.length) {
-      setActiveSelectedIndex(Math.max(0, selectedArtefactIds.length - 1));
-    }
-  }, [activeSelectedIndex, selectedArtefactIds]);
-
-  useEffect(() => {
-    if (activeAllIndex >= allArtefacts.length) {
-      setActiveAllIndex(0);
-    }
-  }, [activeAllIndex, allArtefacts.length]);
-
-  const handleClose = useCallback(() => {
-    playClick();
-    onClose();
-    setActiveSection('close');
-  }, [onClose, playClick]);
-
-  const handleArtefactClick = useCallback((artefactId: ArtefactId) => {
-    playClick();
-    if (selectedArtefactIds.includes(artefactId)) {
-      unselectArtefact(artefactId);
-      return;
-    }
-
-    if (ownedArtefactIds.includes(artefactId)) {
-      selectArtefact(artefactId);
-    }
-  }, [ownedArtefactIds, playClick, selectArtefact, selectedArtefactIds, unselectArtefact]);
-
-  const handleBuyClick = useCallback((artefactId: ArtefactId, event: MouseEvent) => {
-    event.stopPropagation();
-    playClick();
-    buyArtefact(artefactId);
-  }, [buyArtefact, playClick]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const sections: Array<'close' | 'selected' | 'all'> = ['close', 'selected', 'all'];
-
-    const moveSection = (direction: 'up' | 'down') => {
-      setActiveSection((current) => {
-        const currentIndex = sections.indexOf(current);
-        const offset = direction === 'down' ? 1 : -1;
-        const nextIndex = (currentIndex + offset + sections.length) % sections.length;
-        const next = sections[nextIndex];
-        if (next !== current) {
-          playClick();
-        }
-        if (next === 'selected') {
-          setActiveSelectedIndex(0);
-        }
-        if (next === 'all') {
-          setActiveAllIndex(0);
-        }
-        return next;
-      });
-    };
-
-    const moveSelected = (direction: 'left' | 'right') => {
-      if (selectedArtefactIds.length === 0) {
-        return;
-      }
-      setActiveSelectedIndex((current) => {
-        const offset = direction === 'right' ? 1 : -1;
-        const nextIndex = (current + offset + selectedArtefactIds.length) % selectedArtefactIds.length;
-        if (nextIndex !== current) {
-          playClick();
-        }
-        return nextIndex;
-      });
-    };
-
-    const moveAll = (direction: 'left' | 'right') => {
-      if (allArtefacts.length === 0) {
-        return;
-      }
-      setActiveAllIndex((current) => {
-        const offset = direction === 'right' ? 1 : -1;
-        const nextIndex = (current + offset + allArtefacts.length) % allArtefacts.length;
-        if (nextIndex !== current) {
-          playClick();
-        }
-        return nextIndex;
-      });
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      console.log('ArtefactsView KeyDown:', event.key);
-      switch (event.key) {
-        case 'ArrowUp': {
-          event.preventDefault();
-          moveSection('up');
-          break;
-        }
-        case 'ArrowDown': {
-          event.preventDefault();
-          moveSection('down');
-          break;
-        }
-        case 'ArrowLeft': {
-          if (activeSection === 'selected') {
-            event.preventDefault();
-            moveSelected('left');
-          } else if (activeSection === 'all') {
-            event.preventDefault();
-            moveAll('left');
-          }
-          break;
-        }
-        case 'ArrowRight': {
-          if (activeSection === 'selected') {
-            event.preventDefault();
-            moveSelected('right');
-          } else if (activeSection === 'all') {
-            event.preventDefault();
-            moveAll('right');
-          }
-          break;
-        }
-        case 'Enter':
-        case ' ': // Space
-        case 'Spacebar': {
-          event.preventDefault();
-          if (activeSection === 'close') {
-            handleClose();
-            return;
-          }
-          if (activeSection === 'selected') {
-            const targetId = selectedArtefactIds[activeSelectedIndex];
-            if (targetId) {
-              playClick();
-              unselectArtefact(targetId);
-            }
-            return;
-          }
-          if (activeSection === 'all') {
-            const target = allArtefacts[activeAllIndex];
-            if (!target) {
-              return;
-            }
-            const isOwned = ownedArtefactIds.includes(target.id);
-            if (isOwned) {
-              handleArtefactClick(target.id);
-              return;
-            }
-            const canAfford = arcaneDust >= target.cost;
-            playClick();
-            if (canAfford) {
-              buyArtefact(target.id);
-            }
-            return;
-          }
-          break;
-        }
-        case 'Escape': {
-          console.log('Artefacts Escape pressed');
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          handleClose();
-          break;
-        }
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeAllIndex, activeSection, activeSelectedIndex, allArtefacts, arcaneDust, buyArtefact, handleArtefactClick, handleClose, isOpen, ownedArtefactIds, playClick, selectedArtefactIds, unselectArtefact]);
 
   return (
     <Modal
@@ -400,21 +404,11 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
                           : 'cursor-not-allowed border border-slate-700 bg-slate-800 text-slate-500'
                       }`}
                     >
-                      <img src={arcaneDustIcon} alt="" aria-hidden className="h-3 w-3" />
+                      <span>Buy</span>
+                      <img src={arcaneDustIcon} alt="Dust" className="h-4 w-4" />
                       <span>{artefact.cost}</span>
                     </button>
                   )}
-
-                  {/* Selected Indicator */}
-                  {isSelected && (
-                    <div className="absolute left-2 top-2 rounded-full border border-sky-400 bg-sky-500 px-2 py-0.5 text-xs font-bold text-white shadow-lg">
-                      ✓
-                    </div>
-                  )}
-                  <TooltipBubble
-                    text={tooltipText}
-                    anchorRect={activeTooltip?.id === artefact.id ? activeTooltip.rect : null}
-                  />
                 </div>
               );
             })}
@@ -423,4 +417,4 @@ export function ArtefactsView({ isOpen, onClose }: ArtefactsViewProps) {
       </div>
     </Modal>
   );
-}
+});
