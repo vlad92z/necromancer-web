@@ -523,23 +523,26 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     refocusAfterKeyboardPlacementRef.current = false;
   }, [hasSelectedRunes, pickFirstAvailableRune]);
 
-  const chooseBestCandidate = (
-    candidates: RunePosition[],
-    score: (candidate: RunePosition) => [number, number],
-  ): RunePosition | null => {
-    let best: RunePosition | null = null;
-    let bestScore: [number, number] | null = null;
+  const chooseBestCandidate = useCallback(
+    (
+      candidates: RunePosition[],
+      score: (candidate: RunePosition) => [number, number],
+    ): RunePosition | null => {
+      let best: RunePosition | null = null;
+      let bestScore: [number, number] | null = null;
 
-    candidates.forEach((candidate) => {
-      const candidateScore = score(candidate);
-      if (!bestScore || candidateScore[0] < bestScore[0] || (candidateScore[0] === bestScore[0] && candidateScore[1] < bestScore[1])) {
-        best = candidate;
-        bestScore = candidateScore;
-      }
-    });
+      candidates.forEach((candidate) => {
+        const candidateScore = score(candidate);
+        if (!bestScore || candidateScore[0] < bestScore[0] || (candidateScore[0] === bestScore[0] && candidateScore[1] < bestScore[1])) {
+          best = candidate;
+          bestScore = candidateScore;
+        }
+      });
 
-    return best;
-  };
+      return best;
+    },
+    [],
+  );
 
   const pickFirstRuneInRuneforge = useCallback(
     (runeforgeIndex: number): ActiveElement | null => {
@@ -550,90 +553,103 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       const best = chooseBestCandidate(candidates, (candidate) => [candidate.runeIndex, 0]);
       return best ? { type: 'runeforge-rune', runeforgeIndex: best.runeforgeIndex, runeIndex: best.runeIndex } : null;
     },
-    [availableRunePositions],
+    [availableRunePositions, chooseBestCandidate],
   );
 
-  function navigateFromSettingsbutton(direction: NavigationDirection, current: ActiveElement): ActiveElement | null {
-    if (direction === 'right') {
-      return { type: 'overload' };
-    }
-    if (direction === 'down') {
-      const fallback = pickFirstAvailableRune();
-      return fallback ?? current;
-    }
-    return current;
-  }
-
-  function navigateFromOverloadButton(direction: NavigationDirection, current: ActiveElement): ActiveElement | null {
-    if (direction === 'right') {
-      return { type: 'deck' };
-    }
-    if (direction === 'left') {
-      return { type: 'settings' };
-    }
-    if (direction === 'down') {
-      if (firstPatternLineElement) {
-        return firstPatternLineElement;
-      }
-      const fallback = pickFirstAvailableRune();
-      return fallback ?? current;
-    }
-    return current;
-  }
-
-  function navigateFromDeckButton(direction: NavigationDirection, current: ActiveElement): ActiveElement | null {
-    if (direction === 'left') {
-      return { type: 'overload' };
-    }
-    if (direction === 'down') {
-      if (firstPatternLineElement) {
-        return firstPatternLineElement;
-      }
-      const fallback = pickFirstAvailableRune();
-      return fallback ?? current;
-    }
-    return current;
-  }
-
-  function navigateFromPatternLine(direction: NavigationDirection, current: { type: 'pattern-line'; lineIndex: number }): ActiveElement | null {
-    if (direction === 'up') {
-      if (current.lineIndex === 0) {
+  const navigateFromSettingsbutton = useCallback(
+    (direction: NavigationDirection, current: ActiveElement): ActiveElement | null => {
+      if (direction === 'right') {
         return { type: 'overload' };
       }
-      return { type: 'pattern-line', lineIndex: Math.max(0, current.lineIndex - 1) };
-    }
-    if (direction === 'down') {
-      const lastIndex = patternLineCount - 1;
-      if (lastIndex < 0) {
-        return current;
+      if (direction === 'down') {
+        const fallback = pickFirstAvailableRune();
+        return fallback ?? current;
       }
-      return { type: 'pattern-line', lineIndex: Math.min(lastIndex, current.lineIndex + 1) };
-    }
+      return current;
+    },
+    [pickFirstAvailableRune],
+  );
 
-    if (direction === 'left' && selectedRunes.length === 0) {
-      const mappedRuneforgeIndex = resolveRuneforgeForPatternLine(current.lineIndex);
-      if (mappedRuneforgeIndex !== null) {
-        const mappedRune = pickFirstRuneInRuneforge(mappedRuneforgeIndex);
-        if (mappedRune) {
-          return mappedRune;
+  const navigateFromOverloadButton = useCallback(
+    (direction: NavigationDirection, current: ActiveElement): ActiveElement | null => {
+      if (direction === 'right') {
+        return { type: 'deck' };
+      }
+      if (direction === 'left') {
+        return { type: 'settings' };
+      }
+      if (direction === 'down') {
+        if (firstPatternLineElement) {
+          return firstPatternLineElement;
         }
+        const fallback = pickFirstAvailableRune();
+        return fallback ?? current;
       }
-      const fallback = pickFirstAvailableRune();
-      return fallback ?? current;
-    }
-    return current;
-  }
+      return current;
+    },
+    [firstPatternLineElement, pickFirstAvailableRune],
+  );
 
-  function selectClosestRuneFromRuneforge(direction: NavigationDirection, current: { type: 'runeforge-rune'; runeforgeIndex: number; runeIndex: number }): ActiveElement | null {
-    const currentRune = availableRunePositions.find(
+  const navigateFromDeckButton = useCallback(
+    (direction: NavigationDirection, current: ActiveElement): ActiveElement | null => {
+      if (direction === 'left') {
+        return { type: 'overload' };
+      }
+      if (direction === 'down') {
+        if (firstPatternLineElement) {
+          return firstPatternLineElement;
+        }
+        const fallback = pickFirstAvailableRune();
+        return fallback ?? current;
+      }
+      return current;
+    },
+    [firstPatternLineElement, pickFirstAvailableRune],
+  );
+
+  const navigateFromPatternLine = useCallback(
+    (direction: NavigationDirection, current: { type: 'pattern-line'; lineIndex: number }): ActiveElement | null => {
+      if (direction === 'up') {
+        if (current.lineIndex === 0) {
+          return { type: 'overload' };
+        }
+        return { type: 'pattern-line', lineIndex: Math.max(0, current.lineIndex - 1) };
+      }
+      if (direction === 'down') {
+        const lastIndex = patternLineCount - 1;
+        if (lastIndex < 0) {
+          return current;
+        }
+        return { type: 'pattern-line', lineIndex: Math.min(lastIndex, current.lineIndex + 1) };
+      }
+
+      if (direction === 'left' && selectedRunes.length === 0) {
+        const mappedRuneforgeIndex = resolveRuneforgeForPatternLine(current.lineIndex);
+        if (mappedRuneforgeIndex !== null) {
+          const mappedRune = pickFirstRuneInRuneforge(mappedRuneforgeIndex);
+          if (mappedRune) {
+            return mappedRune;
+          }
+        }
+        const fallback = pickFirstAvailableRune();
+        return fallback ?? current;
+      }
+      return current;
+    },
+    [patternLineCount, pickFirstAvailableRune, pickFirstRuneInRuneforge, resolveRuneforgeForPatternLine, selectedRunes.length],
+  );
+
+  const selectClosestRuneFromRuneforge = useCallback(
+    (direction: NavigationDirection, current: { type: 'runeforge-rune'; runeforgeIndex: number; runeIndex: number }): ActiveElement | null => {
+      const currentRune = availableRunePositions.find(
         (position) => position.runeforgeIndex === current.runeforgeIndex && position.runeIndex === current.runeIndex,
       );
 
       if (!currentRune) {
         return pickFirstAvailableRune();
       }
-    const sameRowCandidates = availableRunePositions.filter((position) => position.runeforgeIndex === currentRune.runeforgeIndex);
-    switch (direction) {
+      const sameRowCandidates = availableRunePositions.filter((position) => position.runeforgeIndex === currentRune.runeforgeIndex);
+      switch (direction) {
         case 'left': {
           const leftCandidates = sameRowCandidates.filter((position) => position.runeIndex < currentRune.runeIndex);
           const bestLeft = chooseBestCandidate(leftCandidates, (candidate) => [currentRune.runeIndex - candidate.runeIndex, 0]);
@@ -694,11 +710,12 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         default:
           return current;
       }
-  }
+    },
+    [availableRunePositions, chooseBestCandidate, pickFirstAvailableRune, resolvePatternLineForRuneforge],
+  );
 
   const resolveNextElement = useCallback(
     (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
-      console.log('Resolving next element from', current, 'going', direction);
       if (current?.type === 'settings') {
         return navigateFromSettingsbutton(direction, current);
       }
@@ -727,12 +744,12 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     },
     [
       availableRunePositions,
-      firstPatternLineElement,
+      navigateFromDeckButton,
+      navigateFromOverloadButton,
+      navigateFromPatternLine,
+      navigateFromSettingsbutton,
       pickFirstAvailableRune,
-      pickFirstRuneInRuneforge,
-      patternLineCount,
-      resolveRuneforgeForPatternLine,
-      resolvePatternLineForRuneforge,
+      selectClosestRuneFromRuneforge,
     ],
   );
 
@@ -781,7 +798,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const handleNavigation = useCallback(
     (direction: NavigationDirection) => {
-      console.log('Handling navigation', direction, 'with active element', activeElement);
       if (hasSelectedRunes) {
         if (direction === 'left' || direction === 'right') {
           return;
@@ -891,7 +907,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       && !isDeckDrafting
       && !isGameOver
     ),
-    [isDeckDrafting, isGameOver, isSelectionPhase, showDeckOverlay, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
+    [isDeckDrafting, isGameOver, showDeckOverlay, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
   );
 
   useEffect(() => {

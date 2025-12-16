@@ -81,7 +81,7 @@ export function useRunePlacementSounds(
     }
   }, [soundVolume]);
 
-  const playSound = useRef((_runeType: RuneType) => {
+  const playSound = useRef(() => {
     const audioElement = runeAudioRef.current;
     if (audioElement) {
       audioElement.volume = soundVolumeRef.current;
@@ -98,7 +98,7 @@ export function useRunePlacementSounds(
       const currentKey = animationKeys[runeType];
       const previousKey = previousAnimationKeysRef.current[runeType];
       if (currentKey && currentKey !== previousKey) {
-        playSound.current(runeType);
+        playSound.current();
         previousAnimationKeysRef.current[runeType] = currentKey;
       } else if (!currentKey) {
         previousAnimationKeysRef.current[runeType] = '';
