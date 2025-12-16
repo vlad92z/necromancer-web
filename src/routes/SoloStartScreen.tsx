@@ -173,8 +173,6 @@ export function SoloStartScreen() {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log('Solo Start Key:', event.key, showArtefactsModal, gameStarted);
-      
       if (showArtefactsModal) {
         artefactsRef.current?.handleKeyDown(event);
         return;

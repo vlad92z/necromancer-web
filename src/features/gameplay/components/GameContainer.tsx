@@ -235,7 +235,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     draftSource,
     centerPool,
   });
-  
+
   useRunePlacementSounds(
     [player],
     activeAnimatingRunes,
@@ -314,6 +314,32 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     },
     [hasSelectedRunes, player.patternLines, playerLockedLines, player.wall, selectedRuneType],
   );
+
+  const buildPlacementTargets = useCallback((): ActiveElement[] => {
+    if (!hasSelectedRunes) {
+      return [];
+    }
+
+    const targets: ActiveElement[] = [{ type: 'overload' }];
+
+    player.patternLines.forEach((_, lineIndex) => {
+      if (isPatternLineValidTarget(lineIndex)) {
+        targets.push({ type: 'pattern-line', lineIndex });
+      }
+    });
+
+    return targets;
+  }, [hasSelectedRunes, isPatternLineValidTarget, player.patternLines]);
+
+  const pickDefaultPlacementTarget = useCallback((): ActiveElement | null => {
+    const targets = buildPlacementTargets();
+    if (targets.length === 0) {
+      return null;
+    }
+
+    const firstPlaceableLine = targets.find((target) => target.type === 'pattern-line');
+    return firstPlaceableLine ?? targets[0];
+  }, [buildPlacementTargets]);
 
   const handleToggleMusic = useCallback(() => {
     setMusicMuted(!isMusicMuted);
@@ -515,21 +541,21 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     [availableRunePositions],
   );
 
+  function navigateFromSettingsbutton(direction: NavigationDirection, current: ActiveElement): ActiveElement | null {
+    if (direction === 'right') {
+      return { type: 'overload' };
+    }
+    if (direction === 'down') {
+      const fallback = pickFirstAvailableRune();
+      return fallback ?? current;
+    }
+    return current;
+  }
+
   const resolveNextElement = useCallback(
     (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
       if (current?.type === 'settings') {
-        if (direction === 'right') {
-          return { type: 'overload' };
-        }
-        if (direction === 'left') {
-          const fallback = pickFirstAvailableRune();
-          return fallback ?? current;
-        }
-        if (direction === 'down') {
-          const fallback = pickFirstAvailableRune();
-          return fallback ?? current;
-        }
-        return current;
+        return navigateFromSettingsbutton(direction, current);
       }
 
       if (current?.type === 'overload') {
@@ -682,8 +708,79 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     ],
   );
 
+  const resolvePlacementNavigation = useCallback(
+    (direction: Extract<NavigationDirection, 'up' | 'down'>, current: ActiveElement | null): ActiveElement | null => {
+      const targets = buildPlacementTargets();
+      if (targets.length === 0) {
+        return null;
+      }
+
+      const findIndex = (element: ActiveElement | null): number => {
+        if (!element) {
+          return -1;
+        }
+
+        return targets.findIndex((target) => {
+          if (target.type !== element.type) {
+            return false;
+          }
+
+          if (target.type === 'pattern-line' && element.type === 'pattern-line') {
+            return target.lineIndex === element.lineIndex;
+          }
+
+          return true;
+        });
+      };
+
+      const currentIndex = findIndex(current);
+      const firstPlaceableLine = targets.find((target) => target.type === 'pattern-line') ?? targets[0];
+
+      if (currentIndex === -1) {
+        return firstPlaceableLine;
+      }
+
+      if (direction === 'up') {
+        const nextIndex = Math.max(0, currentIndex - 1);
+        return targets[nextIndex];
+      }
+
+      const nextIndex = Math.min(targets.length - 1, currentIndex + 1);
+      return targets[nextIndex];
+    },
+    [buildPlacementTargets],
+  );
+
   const handleNavigation = useCallback(
     (direction: NavigationDirection) => {
+      if (hasSelectedRunes) {
+        if (direction === 'left' || direction === 'right') {
+          return;
+        }
+
+        if (direction !== 'up' && direction !== 'down') {
+          return;
+        }
+
+        setActiveElement((current) => {
+          const next = resolvePlacementNavigation(direction, current);
+          if (next) {
+            return next;
+          }
+
+          if (current?.type === 'pattern-line' && isPatternLineValidTarget(current.lineIndex)) {
+            return current;
+          }
+
+          if (current?.type === 'overload') {
+            return current;
+          }
+
+          return pickDefaultPlacementTarget() ?? current ?? null;
+        });
+        return;
+      }
+
       setActiveElement((current) => {
         const next = resolveNextElement(direction, current);
         if (!next) {
@@ -702,7 +799,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         return next;
       });
     },
-    [resolveNextElement],
+    [hasSelectedRunes, isPatternLineValidTarget, pickDefaultPlacementTarget, resolveNextElement, resolvePlacementNavigation],
   );
 
   const computeSelectionRunesForTooltip = useCallback(
@@ -774,6 +871,29 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       setActiveElement(null);
     }
   }, [activeElement, allowKeyboardNavigation]);
+
+  useEffect(() => {
+    if (!allowKeyboardNavigation || !hasSelectedRunes) {
+      return;
+    }
+
+    const defaultPlacementTarget = pickDefaultPlacementTarget();
+    if (!defaultPlacementTarget) {
+      return;
+    }
+
+    setActiveElement((current) => {
+      if (current?.type === 'pattern-line' && isPatternLineValidTarget(current.lineIndex)) {
+        return current;
+      }
+
+      if (current?.type === 'overload') {
+        return current;
+      }
+
+      return defaultPlacementTarget;
+    });
+  }, [allowKeyboardNavigation, hasSelectedRunes, isPatternLineValidTarget, pickDefaultPlacementTarget]);
 
   useEffect(() => {
     if (!allowKeyboardNavigation) {
@@ -1088,15 +1208,15 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       )}
       {showSettingsOverlay && (
         <SettingsOverlay
-        onClose={toggleSettingsOverlay}
-        soundVolume={soundVolume}
-        isMusicMuted={isMusicMuted}
-        onVolumeChange={handleVolumeChange}
-        onToggleMusic={handleToggleMusic}
-        onQuitRun={returnToStartScreen}
-        showQuitRun={true}
-        playClickSound={playClickSound}
-      />
+          onClose={toggleSettingsOverlay}
+          soundVolume={soundVolume}
+          isMusicMuted={isMusicMuted}
+          onVolumeChange={handleVolumeChange}
+          onToggleMusic={handleToggleMusic}
+          onQuitRun={returnToStartScreen}
+          showQuitRun={true}
+          playClickSound={playClickSound}
+        />
       )
       }
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
