@@ -20,7 +20,7 @@ import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import { SoloGameView } from './SoloGameBoard';
-import { buildRuneTooltipCards } from '../../../utils/tooltipCards';
+import { buildOverloadPlacementTooltipCards, buildPatternLinePlacementTooltipCards, buildRuneTooltipCards } from '../../../utils/tooltipCards';
 import { getWallColumnForRune } from '../../../utils/scoring';
 import type { ActiveElement, NavigationDirection } from './keyboardNavigation';
 
@@ -931,8 +931,45 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       }
     }
 
+    if (activeElement?.type === 'pattern-line' && hasSelectedRunes) {
+      const line = player.patternLines[activeElement.lineIndex];
+      const isPlacementTarget = isPatternLineValidTarget(activeElement.lineIndex);
+      if (line && isPlacementTarget) {
+        const tooltipCards = buildPatternLinePlacementTooltipCards({
+          selectedRunes,
+          patternLineTier: line.tier,
+          patternLineCount: line.count,
+          strain,
+        });
+        if (tooltipCards.length > 0) {
+          setTooltipCards(tooltipCards, true);
+          return;
+        }
+      }
+    }
+
+    if (activeElement?.type === 'overload' && hasSelectedRunes) {
+      const tooltipCards = buildOverloadPlacementTooltipCards(selectedRunes, strain);
+      if (tooltipCards.length > 0) {
+        setTooltipCards(tooltipCards, true);
+        return;
+      }
+    }
+
     resetTooltipCards();
-  }, [activeElement, allowKeyboardNavigation, computeSelectionRunesForTooltip, resetTooltipCards, runeforgeSlotLayouts, setTooltipCards]);
+  }, [
+    activeElement,
+    allowKeyboardNavigation,
+    computeSelectionRunesForTooltip,
+    hasSelectedRunes,
+    isPatternLineValidTarget,
+    player.patternLines,
+    resetTooltipCards,
+    runeforgeSlotLayouts,
+    selectedRunes,
+    setTooltipCards,
+    strain,
+  ]);
 
   const selectActiveRune = useCallback(() => {
     if (hasSelectedRunes) {
