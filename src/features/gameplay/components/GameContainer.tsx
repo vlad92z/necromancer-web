@@ -21,6 +21,7 @@ import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import { SoloGameView } from './SoloGameBoard';
 import { buildRuneTooltipCards } from '../../../utils/tooltipCards';
+import { getWallColumnForRune } from '../../../utils/scoring';
 import type { ActiveElement, NavigationDirection } from './keyboardNavigation';
 
 const BOARD_BASE_WIDTH = 1500;
@@ -168,18 +169,55 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay);
   const playArcaneDust = useArcaneDustSound();
   const playClickSound = useClickSound();
-
-  const runeforgeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
-  const [activeElement, setActiveElement] = useState<ActiveElement | null>(null);
-
-  const [showRulesOverlay, setShowRulesOverlay] = useState(false);
-  const [showDeckOverlay, setShowDeckOverlay] = useState(false);
-  const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
   const isSelectionPhase = turnPhase === 'select';
   const isDeckDrafting = turnPhase === 'deck-draft';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
-  const selectedRuneType = selectedRunes.length > 0 ? selectedRunes[0].runeType : null;
+  const selectedRuneType = hasSelectedRunes ? selectedRunes[0].runeType : null;
+  const patternLineCount = player.patternLines.length;
+
+  const runeforgeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
+  const [activeElement, setActiveElement] = useState<ActiveElement | null>(null);
+  const runeforgeToPatternLineMap = useMemo(() => [0, 1, 3, 4, 5], []);
+  const patternLineToRuneforgeMap = useMemo(() => {
+    const map = new Map<number, number>();
+    runeforgeToPatternLineMap.forEach((lineIndex, runeforgeIndex) => {
+      if (typeof lineIndex === 'number') {
+        map.set(lineIndex, runeforgeIndex);
+      }
+    });
+    return map;
+  }, [runeforgeToPatternLineMap]);
+  const firstPatternLineElement = useMemo<ActiveElement | null>(
+    () => (patternLineCount > 0 ? { type: 'pattern-line', lineIndex: 0 } : null),
+    [patternLineCount],
+  );
+
+  const resolvePatternLineForRuneforge = useCallback(
+    (runeforgeIndex: number): ActiveElement | null => {
+      const lineIndex = runeforgeToPatternLineMap[runeforgeIndex];
+      if (typeof lineIndex !== 'number') {
+        return null;
+      }
+      if (!player.patternLines[lineIndex]) {
+        return null;
+      }
+      return { type: 'pattern-line', lineIndex };
+    },
+    [player.patternLines, runeforgeToPatternLineMap],
+  );
+
+  const resolveRuneforgeForPatternLine = useCallback(
+    (lineIndex: number): number | null => {
+      const mapped = patternLineToRuneforgeMap.get(lineIndex);
+      return typeof mapped === 'number' ? mapped : null;
+    },
+    [patternLineToRuneforgeMap],
+  );
+
+  const [showRulesOverlay, setShowRulesOverlay] = useState(false);
+  const [showDeckOverlay, setShowDeckOverlay] = useState(false);
+  const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
   const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]);
   const {
     animatingRunes: placementAnimatingRunes,
@@ -254,6 +292,28 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     [hiddenPatternSlots, player.id],
   );
   const playerLockedLines = useMemo(() => lockedPatternLines[player.id], [lockedPatternLines, player.id]);
+
+  const isPatternLineValidTarget = useCallback(
+    (lineIndex: number): boolean => {
+      if (!hasSelectedRunes || selectedRuneType === null) {
+        return false;
+      }
+
+      const line = player.patternLines[lineIndex];
+      if (!line || playerLockedLines.includes(lineIndex)) {
+        return false;
+      }
+
+      const matchesType = line.runeType === null || line.runeType === selectedRuneType;
+      const notFull = line.count < line.tier;
+      const wallSize = player.wall.length;
+      const col = getWallColumnForRune(lineIndex, selectedRuneType, wallSize);
+      const notOnWall = player.wall[lineIndex][col].runeType === null;
+
+      return matchesType && notFull && notOnWall;
+    },
+    [hasSelectedRunes, player.patternLines, playerLockedLines, player.wall, selectedRuneType],
+  );
 
   const handleToggleMusic = useCallback(() => {
     setMusicMuted(!isMusicMuted);
@@ -443,6 +503,18 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     return best;
   };
 
+  const pickFirstRuneInRuneforge = useCallback(
+    (runeforgeIndex: number): ActiveElement | null => {
+      const candidates = availableRunePositions.filter((position) => position.runeforgeIndex === runeforgeIndex);
+      if (candidates.length === 0) {
+        return null;
+      }
+      const best = chooseBestCandidate(candidates, (candidate) => [candidate.runeIndex, 0]);
+      return best ? { type: 'runeforge-rune', runeforgeIndex: best.runeforgeIndex, runeIndex: best.runeIndex } : null;
+    },
+    [availableRunePositions],
+  );
+
   const resolveNextElement = useCallback(
     (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
       if (current?.type === 'settings') {
@@ -467,12 +539,54 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         if (direction === 'left') {
           return { type: 'settings' };
         }
+        if (direction === 'down') {
+          if (firstPatternLineElement) {
+            return firstPatternLineElement;
+          }
+          const fallback = pickFirstAvailableRune();
+          return fallback ?? current;
+        }
         return current;
       }
 
       if (current?.type === 'deck') {
         if (direction === 'left') {
           return { type: 'overload' };
+        }
+        if (direction === 'down') {
+          if (firstPatternLineElement) {
+            return firstPatternLineElement;
+          }
+          const fallback = pickFirstAvailableRune();
+          return fallback ?? current;
+        }
+        return current;
+      }
+
+      if (current?.type === 'pattern-line') {
+        if (direction === 'up') {
+          if (current.lineIndex === 0) {
+            return { type: 'overload' };
+          }
+          return { type: 'pattern-line', lineIndex: Math.max(0, current.lineIndex - 1) };
+        }
+        if (direction === 'down') {
+          const lastIndex = patternLineCount - 1;
+          if (lastIndex < 0) {
+            return current;
+          }
+          return { type: 'pattern-line', lineIndex: Math.min(lastIndex, current.lineIndex + 1) };
+        }
+        if (direction === 'left') {
+          const mappedRuneforgeIndex = resolveRuneforgeForPatternLine(current.lineIndex);
+          if (mappedRuneforgeIndex !== null) {
+            const mappedRune = pickFirstRuneInRuneforge(mappedRuneforgeIndex);
+            if (mappedRune) {
+              return mappedRune;
+            }
+          }
+          const fallback = pickFirstAvailableRune();
+          return fallback ?? current;
         }
         return current;
       }
@@ -524,9 +638,12 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
             anyRight,
             (candidate) => [candidate.runeIndex - currentRune.runeIndex, Math.abs(candidate.runeforgeIndex - currentRune.runeforgeIndex)],
           );
-          return bestAnyRight
-            ? { type: 'runeforge-rune', runeforgeIndex: bestAnyRight.runeforgeIndex, runeIndex: bestAnyRight.runeIndex }
-            : current;
+          if (bestAnyRight) {
+            return { type: 'runeforge-rune', runeforgeIndex: bestAnyRight.runeforgeIndex, runeIndex: bestAnyRight.runeIndex };
+          }
+
+          const mappedPatternLine = resolvePatternLineForRuneforge(currentRune.runeforgeIndex);
+          return mappedPatternLine ?? current;
         }
         case 'up': {
           const above = availableRunePositions.filter((position) => position.runeforgeIndex < currentRune.runeforgeIndex);
@@ -554,7 +671,15 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
           return current;
       }
     },
-    [availableRunePositions, pickFirstAvailableRune],
+    [
+      availableRunePositions,
+      firstPatternLineElement,
+      pickFirstAvailableRune,
+      pickFirstRuneInRuneforge,
+      patternLineCount,
+      resolveRuneforgeForPatternLine,
+      resolvePatternLineForRuneforge,
+    ],
   );
 
   const handleNavigation = useCallback(
@@ -720,8 +845,24 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       return true;
     }
 
+    if (activeElement.type === 'pattern-line') {
+      if (!isPatternLineValidTarget(activeElement.lineIndex)) {
+        return false;
+      }
+      handlePatternLinePlacement(activeElement.lineIndex);
+      return true;
+    }
+
     return false;
-  }, [activeElement, handleOpenDeckOverlay, handleOverloadAction, selectActiveRune, toggleSettingsOverlay]);
+  }, [
+    activeElement,
+    handleOpenDeckOverlay,
+    handleOverloadAction,
+    handlePatternLinePlacement,
+    isPatternLineValidTarget,
+    selectActiveRune,
+    toggleSettingsOverlay,
+  ]);
 
   useImperativeHandle(ref, () => ({
     handleKeyDown: (event: KeyboardEvent) => {

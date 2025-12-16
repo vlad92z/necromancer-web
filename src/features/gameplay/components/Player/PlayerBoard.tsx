@@ -6,6 +6,7 @@ import type { Player, Rune, RuneType } from '../../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { TooltipView } from './TooltipView';
+import type { ActiveElement } from '../keyboardNavigation';
 
 interface PlayerBoardProps {
   player: Player;
@@ -17,6 +18,7 @@ interface PlayerBoardProps {
   hiddenSlotKeys?: Set<string>;
   selectedRunes: Rune[];
   strain: number;
+  activeElement?: ActiveElement | null;
 }
 
 export function PlayerBoard({
@@ -29,12 +31,15 @@ export function PlayerBoard({
   hiddenSlotKeys,
   selectedRunes,
   strain,
+  activeElement,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
     if (canPlace && onCancelSelection) {
       onCancelSelection();
     }
   };
+
+  const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
 
   return (
     <div
@@ -54,6 +59,7 @@ export function PlayerBoard({
             lockedLineIndexes={lockedLineIndexes}
             selectedRunes={selectedRunes}
             strain={strain}
+            activePatternLineIndex={activePatternLineIndex}
           />
           <ScoringWall wall={player.wall} patternLines={player.patternLines} />
         </div>

@@ -112,6 +112,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           hiddenSlotKeys={playerHiddenPatternSlots}
           selectedRunes={selectedRunes}
           strain={strain}
+          activeElement={activeElement}
         />
       </div>
       {/* TODO: Cleanup */}

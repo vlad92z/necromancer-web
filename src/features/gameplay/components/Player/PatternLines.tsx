@@ -23,6 +23,7 @@ interface PatternLinesProps {
   hiddenSlotKeys?: Set<string>;
   selectedRunes: Rune[];
   strain: number;
+  activePatternLineIndex?: number | null;
 }
 
 export function PatternLines({
@@ -36,6 +37,7 @@ export function PatternLines({
   hiddenSlotKeys,
   selectedRunes,
   strain,
+  activePatternLineIndex,
 }: PatternLinesProps) {
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (!canPlace || !selectedRuneType) return false;
@@ -94,6 +96,7 @@ export function PatternLines({
       {patternLines.map((line, index) => {
         const isLocked = lockedLineIndexes.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
+        const isKeyboardActive = activePatternLineIndex === index;
         const placementClickable = Boolean(canPlace && onPlaceRunes);
         const showGlow = isPlacementTarget;
         const glowRange = selectableGlowRange;
@@ -101,6 +104,10 @@ export function PatternLines({
         const cursorStyle = placementClickable
             ? (isPlacementTarget ? 'pointer' : 'not-allowed')
             : 'default';
+        const keyboardBoxShadow = isKeyboardActive
+          ? '0 0 0 2px rgba(125, 211, 252, 0.65), 0 0 18px rgba(125, 211, 252, 0.32)'
+          : 'none';
+        const keyboardBackground = isKeyboardActive ? 'rgba(9, 22, 38, 0.75)' : 'transparent';
 
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
         const ariaLabel = ariaLabelBase;
@@ -126,7 +133,7 @@ export function PatternLines({
               gap: '4px',
               width: '100%',
               cursor: cursorStyle,
-              backgroundColor: 'transparent',
+              backgroundColor: keyboardBackground,
               border: 'none',
               padding: 0,
               borderRadius: '8px',
@@ -134,7 +141,9 @@ export function PatternLines({
               marginBottom: '4px',
               position: 'relative',
               opacity: isLocked ? 0.15 : 1,
+              boxShadow: keyboardBoxShadow,
             }}
+            data-active={isKeyboardActive ? 'true' : undefined}
             aria-label={ariaLabel}
           >
             {Array(line.tier)
