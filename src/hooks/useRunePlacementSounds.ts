@@ -3,11 +3,7 @@
  */
 import { useEffect, useMemo, useRef } from 'react';
 import type { AnimatingRune, Player, RuneType } from '../types/game';
-import fireRuneSound from '../assets/sounds/fire.mp3';
-import frostRuneSound from '../assets/sounds/frost.mp3';
-import lifeRuneSound from '../assets/sounds/life.mp3';
-import voidRuneSound from '../assets/sounds/void.mp3';
-import windRuneSound from '../assets/sounds/wind.mp3';
+import placeSound from '../assets/sounds/place.mp3';
 import damageSoundUrl from '../assets/sounds/damage.mp3';
 import lightningSoundUrl from '../assets/sounds/lightning.mp3';
 
@@ -15,12 +11,12 @@ type RuneSoundMap = Record<RuneType, string>;
 type RuneCountMap = Record<RuneType, number>;
 
 const SOUND_SOURCES: RuneSoundMap = {
-  Fire: fireRuneSound,
-  Frost: frostRuneSound,
-  Life: lifeRuneSound,
-  Void: voidRuneSound,
-  Wind: windRuneSound,
-  Lightning: fireRuneSound
+  Fire: placeSound,
+  Frost: placeSound,
+  Life: placeSound,
+  Void: placeSound,
+  Wind: placeSound,
+  Lightning: placeSound
 };
 //TODO: USE SINGLE PLAYER
 const createEmptyCountMap = (initialValue: number): RuneCountMap => ({
@@ -116,13 +112,14 @@ export function useRunePlacementSounds(
   }, [animatingRunes]);
 
   useEffect(() => {
+    console.log('Initializing rune placement sounds');
     if (typeof Audio === 'undefined') {
       return;
     }
-
+    console.log('Initializing rune placement sounds');
     (Object.keys(SOUND_SOURCES) as RuneType[]).forEach((runeType) => {
       if (!audioRefs.current[runeType]) {
-        audioRefs.current[runeType] = new Audio(SOUND_SOURCES[runeType]);
+        audioRefs.current[runeType] = new Audio(castSound);
       }
       const audio = audioRefs.current[runeType];
       if (audio) {
