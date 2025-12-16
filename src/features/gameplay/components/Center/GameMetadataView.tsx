@@ -39,6 +39,9 @@ interface GameMetadataViewProps {
   onPlaceRunesInFloor: () => void;
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
+  isSettingsActive: boolean;
+  isOverloadActive: boolean;
+  isDeckActive: boolean;
 }
 
 type ForcedArmorIndicator = {
@@ -74,6 +77,9 @@ export function GameMetadataView({
   onPlaceRunesInFloor,
   hasSelectedRunes,
   selectedRunes,
+  isSettingsActive,
+  isOverloadActive,
+  isDeckActive,
 }: GameMetadataViewProps) {
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
@@ -220,11 +226,14 @@ export function GameMetadataView({
 
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
-  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus}`;
+  const settingsActive = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-800/80';
+  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus} ${settingsActive}`;
 
   const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
-  const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20`;
-  const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20`;
+  const deckActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-900/70';
+  const overloadActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(255,211,252,0.95),_0_0_56px_rgba(125,11,52,0.55)] data-[active=true]:bg-slate-900/70';
+  const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20 data-[active=true]:border-red-300 ${overloadActiveClass}`;
+  const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 ${deckActiveClass}`;
   const overloadBadge = (
     <StatBadge
       value={strainValue}
@@ -232,6 +241,7 @@ export function GameMetadataView({
       image={overloadSvg}
       onClick={handleOverloadClick}
       onTooltipToggle={handleOverloadTooltipToggle}
+      isActive={isOverloadActive}
     />
   );
 
@@ -242,6 +252,7 @@ export function GameMetadataView({
         <ClickSoundButton
           title="⚙"
           action={onOpenSettings}
+          isActive={isSettingsActive}
           className={actionButtonBase}
         />
 
@@ -284,6 +295,7 @@ export function GameMetadataView({
           image={deckSvg}
           onClick={handleDeckClick}
           onTooltipToggle={handleDeckTooltipToggle}
+          isActive={isDeckActive}
         />
         <HealthView
           health={clampedHealth}

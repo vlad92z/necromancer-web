@@ -28,6 +28,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     centerPool,
     selectedRunes,
     draftSource,
+    activeElement,
     runeforgeDraftStage,
     animatingRuneIds,
     onRuneClick,
@@ -76,6 +77,9 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           onOpenOverload={onOpenOverloadOverlay}
           onOpenDeck={onOpenDeckOverlay}
           onOpenSettings={onOpenSettings}
+          isSettingsActive={activeElement?.type === 'settings'}
+          isOverloadActive={activeElement?.type === 'overload'}
+          isDeckActive={activeElement?.type === 'deck'}
           onPlaceRunesInFloor={onPlaceRunesInFloor}
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}
@@ -90,6 +94,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}
           draftSource={draftSource}
+          activeElement={activeElement}
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
           animatingRuneIds={animatingRuneIds}
@@ -107,6 +112,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           hiddenSlotKeys={playerHiddenPatternSlots}
           selectedRunes={selectedRunes}
           strain={strain}
+          activeElement={activeElement}
         />
       </div>
       {/* TODO: Cleanup */}

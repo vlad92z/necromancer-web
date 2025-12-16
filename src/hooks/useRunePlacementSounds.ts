@@ -1,63 +1,13 @@
 /**
- * useRunePlacementSounds - plays elemental rune audio when runes begin animating toward their destinations (pattern lines, floor, or center) with placement fallback detection.
+ * useRunePlacementSounds - plays a single rune audio (fire) when runes begin animating toward their destinations (pattern lines, floor, or center).
  */
 import { useEffect, useMemo, useRef } from 'react';
-import type { AnimatingRune, Player, RuneType } from '../types/game';
+import type { AnimatingRune, RuneType } from '../types/game';
 import fireRuneSound from '../assets/sounds/fire.mp3';
-import frostRuneSound from '../assets/sounds/frost.mp3';
-import lifeRuneSound from '../assets/sounds/life.mp3';
-import voidRuneSound from '../assets/sounds/void.mp3';
-import windRuneSound from '../assets/sounds/wind.mp3';
 import damageSoundUrl from '../assets/sounds/damage.mp3';
 import lightningSoundUrl from '../assets/sounds/lightning.mp3';
 
-type RuneSoundMap = Record<RuneType, string>;
-type RuneCountMap = Record<RuneType, number>;
-
-const SOUND_SOURCES: RuneSoundMap = {
-  Fire: fireRuneSound,
-  Frost: frostRuneSound,
-  Life: lifeRuneSound,
-  Void: voidRuneSound,
-  Wind: windRuneSound,
-  Lightning: fireRuneSound
-};
-//TODO: USE SINGLE PLAYER
-const createEmptyCountMap = (initialValue: number): RuneCountMap => ({
-  Fire: initialValue,
-  Frost: initialValue,
-  Life: initialValue,
-  Void: initialValue,
-  Wind: initialValue,
-  Lightning: initialValue
-});
-
-const countRunePlacements = (players: Player[]): RuneCountMap =>
-  players.reduce((totals, player) => {
-    const patternTotals = player.patternLines.reduce((lineTotals, line) => {
-      if (line.runeType) {
-        lineTotals[line.runeType] += line.count;
-      }
-      return lineTotals;
-    }, createEmptyCountMap(0));
-
-    const floorTotals = player.floorLine.runes.reduce((floorCounts, rune) => {
-      floorCounts[rune.runeType] += 1;
-      return floorCounts;
-    }, createEmptyCountMap(0));
-
-    return {
-      Fire: totals.Fire + patternTotals.Fire + floorTotals.Fire,
-      Frost: totals.Frost + patternTotals.Frost + floorTotals.Frost,
-      Life: totals.Life + patternTotals.Life + floorTotals.Life,
-      Void: totals.Void + patternTotals.Void + floorTotals.Void,
-      Wind: totals.Wind + patternTotals.Wind + floorTotals.Wind,
-      Lightning: totals.Lightning + patternTotals.Lightning + floorTotals.Lightning
-    };
-  }, createEmptyCountMap(0));
-
 export function useRunePlacementSounds(
-  players: Player[],
   animatingRunes: AnimatingRune[],
   soundVolume: number,
   overloadSoundPending: boolean,
@@ -65,16 +15,7 @@ export function useRunePlacementSounds(
   channelSoundPending: boolean,
   clearChannelSound: () => void
 ) {
-  const placementsByType = useMemo(() => countRunePlacements(players), [players]);
-  const previousCountsRef = useRef<RuneCountMap>(placementsByType);
-  const audioRefs = useRef<Record<RuneType, HTMLAudioElement | null>>({
-    Fire: null,
-    Frost: null,
-    Life: null,
-    Void: null,
-    Wind: null,
-    Lightning: null
-  });
+  const runeAudioRef = useRef<HTMLAudioElement | null>(null);
   const previousAnimationKeysRef = useRef<Record<RuneType, string>>({
     Fire: '',
     Frost: '',
@@ -120,15 +61,12 @@ export function useRunePlacementSounds(
       return;
     }
 
-    (Object.keys(SOUND_SOURCES) as RuneType[]).forEach((runeType) => {
-      if (!audioRefs.current[runeType]) {
-        audioRefs.current[runeType] = new Audio(SOUND_SOURCES[runeType]);
-      }
-      const audio = audioRefs.current[runeType];
-      if (audio) {
-        audio.volume = soundVolume;
-      }
-    });
+    if (!runeAudioRef.current) {
+      runeAudioRef.current = new Audio(fireRuneSound);
+    }
+    if (runeAudioRef.current) {
+      runeAudioRef.current.volume = soundVolume;
+    }
     if (!damageAudioRef.current) {
       damageAudioRef.current = new Audio(damageSoundUrl);
     }
@@ -143,8 +81,8 @@ export function useRunePlacementSounds(
     }
   }, [soundVolume]);
 
-  const playSound = useRef((runeType: RuneType) => {
-    const audioElement = audioRefs.current[runeType];
+  const playSound = useRef(() => {
+    const audioElement = runeAudioRef.current;
     if (audioElement) {
       audioElement.volume = soundVolumeRef.current;
       audioElement.currentTime = 0;
@@ -160,7 +98,7 @@ export function useRunePlacementSounds(
       const currentKey = animationKeys[runeType];
       const previousKey = previousAnimationKeysRef.current[runeType];
       if (currentKey && currentKey !== previousKey) {
-        playSound.current(runeType);
+        playSound.current();
         previousAnimationKeysRef.current[runeType] = currentKey;
       } else if (!currentKey) {
         previousAnimationKeysRef.current[runeType] = '';
@@ -214,14 +152,4 @@ export function useRunePlacementSounds(
     clearChannelSound();
   }, [channelSoundPending, clearChannelSound]);
 
-  useEffect(() => {
-    (Object.keys(placementsByType) as RuneType[]).forEach((runeType) => {
-      const currentCount = placementsByType[runeType];
-      const previousCount = previousCountsRef.current[runeType];
-      if (currentCount > previousCount) {
-        playSound.current(runeType);
-      }
-      previousCountsRef.current[runeType] = currentCount;
-    });
-  }, [placementsByType]);
 }

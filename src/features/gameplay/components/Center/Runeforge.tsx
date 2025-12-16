@@ -7,8 +7,10 @@ import { useCallback, useMemo, useRef } from 'react';
 import { RuneCell } from '../../../../components/RuneCell';
 import { RUNE_SIZE_CONFIG } from '../../../../styles/tokens';
 import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
+import type { ActiveElement } from '../keyboardNavigation';
 
 interface RuneforgeProps {
+  runeforgeIndex: number;
   runeforge: RuneforgeType;
   runesPerRuneforge: number;
   hoveredRuneType: RuneType | null;
@@ -19,6 +21,7 @@ interface RuneforgeProps {
   globalSelectionOriginals: Map<string, Rune[]> | null;
   selectedRuneIdSet: Set<string>;
   animatingRuneIdSet: Set<string> | null;
+  activeElement: ActiveElement | null;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onRuneMouseEnter: (
     runeforgeId: string,
@@ -31,6 +34,7 @@ interface RuneforgeProps {
 }
 
 export function Runeforge({
+  runeforgeIndex,
   runeforge,
   runesPerRuneforge,
   hoveredRuneType,
@@ -41,6 +45,7 @@ export function Runeforge({
   globalSelectionOriginals,
   selectedRuneIdSet,
   animatingRuneIdSet,
+  activeElement,
   onRuneClick,
   onRuneMouseEnter,
   onRuneMouseLeave
@@ -186,6 +191,9 @@ export function Runeforge({
             const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
             const isAnimatingRune = animatingRuneIdSet?.has(rune.id) ?? false;
             const isHighlighted = hoveredRuneType === rune.runeType && !selectionActive;
+            const isKeyboardActive = activeElement?.type === 'runeforge-rune'
+              && activeElement.runeforgeIndex === runeforgeIndex
+              && activeElement.runeIndex === slotIndex;
             const pointerEvents = isAnimatingRune
               ? 'none'
               : (selectionActive
@@ -196,17 +204,23 @@ export function Runeforge({
               ? 'translateY(-2px) scale(1.08)'
               : isHighlighted
                 ? 'scale(1.05)'
-                : 'scale(1)';
+                : isKeyboardActive
+                  ? 'scale(1.04)'
+                  : 'scale(1)';
             const boxShadow = isSelectedForDisplay
               ? '0 0 20px rgba(255, 255, 255, 0.60), 0 0 48px rgba(235, 170, 255, 0.60), 0 0 96px rgba(235, 170, 255, 0.30)'
               : isHighlighted
                 ? '0 0 14px rgba(255, 255, 255, 0.5), 0 0 34px rgba(235, 170, 255, 0.32)'
-                : 'none';
+                : isKeyboardActive
+                  ? '0 0 28px  rgba(125, 211, 252, 0.95), 0 0 56px rgba(125, 211, 252, 0.55)'
+                  : 'none';
             const filter = isSelectedForDisplay
               ? 'brightness(1.22)'
               : isHighlighted
                 ? 'brightness(1.12)'
-                : 'none';
+                : isKeyboardActive
+                  ? 'brightness(1.08)'
+                  : 'none';
             const selectedAnimation = isSelectedForDisplay
               ? {
                   scale: [1.05, 1.12, 1.05],
@@ -239,6 +253,7 @@ export function Runeforge({
                   transform,
                   transition: 'transform 160ms ease, filter 160ms ease, box-shadow 180ms ease, opacity 160ms ease'
                 }}
+                data-active={isKeyboardActive ? 'true' : undefined}
                 onClick={(event) => {
                   event.stopPropagation();
                   if (!isAnimatingRune && pointerEvents === 'auto') {

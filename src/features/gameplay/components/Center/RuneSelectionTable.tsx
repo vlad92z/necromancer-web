@@ -12,6 +12,7 @@ import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
+import type { ActiveElement } from '../keyboardNavigation';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
@@ -20,6 +21,7 @@ interface RuneSelectionTableProps {
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
   draftSource: GameState['draftSource'];
+  activeElement: ActiveElement | null;
   onCancelSelection: () => void;
   animatingRuneIds?: string[];
   hideOpponentRow?: boolean;
@@ -34,6 +36,7 @@ export function RuneSelectionTable({
   hasSelectedRunes,
   selectedRunes,
   draftSource,
+  activeElement,
   onCancelSelection,
   animatingRuneIds,
   runesPerRuneforge,
@@ -160,9 +163,10 @@ export function RuneSelectionTable({
   return (
     <div className="h-full w-full flex flex-col justify-start gap-4 p-[min(1.2vmin,16px)]" onClick={handleDraftingTableClick}>
       <div className="flex-1 flex flex-col gap-[14px] w-full">
-        {runeforges.map((runeforge) => (
+        {runeforges.map((runeforge, runeforgeIndex) => (
           <Runeforge
             key={runeforge.id}
+            runeforgeIndex={runeforgeIndex}
             runeforge={runeforge}
             runesPerRuneforge={runesPerRuneforge}
             hoveredRuneType={hoveredRuneTypeByRuneforge[runeforge.id] ?? null}
@@ -173,6 +177,7 @@ export function RuneSelectionTable({
             globalSelectionOriginals={globalSelectionOriginals}
             selectedRuneIdSet={selectedRuneIdSet}
             animatingRuneIdSet={animatingRuneIdSet}
+            activeElement={activeElement}
             onRuneClick={onRuneClick}
             onRuneMouseEnter={handleRuneMouseEnter}
             onRuneMouseLeave={handleRuneMouseLeave}
