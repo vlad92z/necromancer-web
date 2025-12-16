@@ -58,6 +58,12 @@ export function MainMenu() {
   }
 
   useEffect(() => {
+    if (showSettingsOverlay) {
+      setActiveElement(null)
+    }
+  }, [showSettingsOverlay])
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return
     }
@@ -105,7 +111,7 @@ export function MainMenu() {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isMobileViewport) {
+      if (isMobileViewport || showSettingsOverlay) {
         return
       }
 
@@ -143,7 +149,7 @@ export function MainMenu() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeElement, handleSettings, handleSolo, isMobileViewport, playClickSound])
+  }, [activeElement, handleSettings, handleSolo, isMobileViewport, playClickSound, showSettingsOverlay])
 
   const soloButtonClasses = `${gradientButtonClasses} data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5`
   const settingsButtonClasses = `${simpleButtonClasses} data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800`

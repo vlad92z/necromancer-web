@@ -2,7 +2,7 @@
  * SettingsOverlay - Game settings overlay
  * Follows the same UI theme as SoloStartScreen
  */
-import type { ChangeEvent, ReactElement } from 'react';
+import { useCallback, useEffect, useState, type ChangeEvent, type ReactElement } from 'react';
 import { ClickSoundButton } from './ClickSoundButton';
 
 interface SettingsOverlayProps {
@@ -26,19 +26,112 @@ export function SettingsOverlay({
   showQuitRun = false,
   playClickSound,
 }: SettingsOverlayProps): ReactElement | null {
-  const handleClose = (shouldPlayClick = true) => {
-    if (playClickSound && shouldPlayClick) {
-      playClickSound();
-    }
-    onClose();
-  };
+  const [activeControl, setActiveControl] = useState<'close' | 'volume' | 'music'>('close');
 
-  const handleToggleMusic = (shouldPlayClick = true) => {
-    if (playClickSound && shouldPlayClick) {
-      playClickSound();
+  const handleClose = useCallback(
+    (shouldPlayClick = true) => {
+      if (playClickSound && shouldPlayClick) {
+        playClickSound();
+      }
+      onClose();
+    },
+    [onClose, playClickSound],
+  );
+
+  const handleToggleMusic = useCallback(
+    (shouldPlayClick = true) => {
+      if (playClickSound && shouldPlayClick) {
+        playClickSound();
+      }
+      onToggleMusic();
+    },
+    [onToggleMusic, playClickSound],
+  );
+
+  const adjustVolumeByStep = useCallback(
+    (step: number) => {
+      const currentValue = Math.round(soundVolume * 100);
+      const nextValue = Math.min(100, Math.max(0, currentValue + step));
+      if (nextValue === currentValue) {
+        return;
+      }
+
+      const syntheticEvent = {
+        currentTarget: { value: String(nextValue) },
+        target: { value: String(nextValue) },
+      } as unknown as ChangeEvent<HTMLInputElement>;
+
+      onVolumeChange(syntheticEvent);
+    },
+    [onVolumeChange, soundVolume],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
     }
-    onToggleMusic();
-  };
+
+    const order: Array<'close' | 'volume' | 'music'> = ['close', 'volume', 'music'];
+
+    const moveSelection = (direction: 'up' | 'down') => {
+      setActiveControl((current) => {
+        const currentIndex = order.indexOf(current);
+        const offset = direction === 'down' ? 1 : -1;
+        const nextIndex = (currentIndex + offset + order.length) % order.length;
+        return order[nextIndex];
+      });
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'ArrowUp': {
+          event.preventDefault();
+          moveSelection('up');
+          break;
+        }
+        case 'ArrowDown': {
+          event.preventDefault();
+          moveSelection('down');
+          break;
+        }
+        case 'ArrowLeft': {
+          if (activeControl === 'volume') {
+            event.preventDefault();
+            adjustVolumeByStep(-5);
+          }
+          break;
+        }
+        case 'ArrowRight': {
+          if (activeControl === 'volume') {
+            event.preventDefault();
+            adjustVolumeByStep(5);
+          }
+          break;
+        }
+        case 'Enter':
+        case ' ': // Space
+        case 'Spacebar': {
+          event.preventDefault();
+          if (activeControl === 'close') {
+            handleClose();
+          } else if (activeControl === 'music') {
+            handleToggleMusic();
+          }
+          break;
+        }
+        case 'Escape': {
+          event.preventDefault();
+          handleClose();
+          break;
+        }
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic]);
 
   return (
     <div
@@ -53,7 +146,8 @@ export function SettingsOverlay({
         <button
           type="button"
           onClick={() => handleClose()}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/80 text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+          data-active={activeControl === 'close' ? 'true' : undefined}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/80 text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:border-sky-400 data-[active=true]:bg-slate-800 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.6)]"
           aria-label="Close settings"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
@@ -70,7 +164,10 @@ export function SettingsOverlay({
           <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Audio</div>
           <div className="space-y-4 rounded-xl border border-slate-600/40 bg-slate-900/50 p-5">
             {/* Volume Slider */}
-            <div className="space-y-2">
+            <div
+              className="space-y-2 rounded-lg border border-transparent p-2 transition data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)]"
+              data-active={activeControl === 'volume' ? 'true' : undefined}
+            >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold uppercase tracking-wide text-slate-300">Volume</span>
                 <span className="text-sm font-bold text-slate-200">{Math.round(soundVolume * 100)}%</span>
@@ -94,7 +191,8 @@ export function SettingsOverlay({
                 type="button"
                 onClick={() => handleToggleMusic()}
                 aria-pressed={isMusicMuted}
-                className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 ${
+                data-active={activeControl === 'music' ? 'true' : undefined}
+                className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)] ${
                   isMusicMuted
                     ? 'bg-gradient-to-r from-rose-400/30 to-rose-900/60'
                     : 'bg-gradient-to-r from-sky-500/30 to-purple-700/50'
