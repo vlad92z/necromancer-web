@@ -453,6 +453,10 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
           const fallback = pickFirstAvailableRune();
           return fallback ?? current;
         }
+        if (direction === 'down') {
+          const fallback = pickFirstAvailableRune();
+          return fallback ?? current;
+        }
         return current;
       }
 
@@ -726,8 +730,13 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       }
 
       if (event.key === 'Escape') {
-        console.log('Toggling settings overlay via Escape key');
         event.preventDefault();
+        if (hasSelectedRunes) {
+          handleCancelSelection();
+          return true;
+        }
+
+        console.log('Toggling settings overlay via Escape key');
         toggleSettingsOverlay();
         return true;
       }
