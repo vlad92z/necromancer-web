@@ -91,10 +91,12 @@ export function PatternLines({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
+    
       {patternLines.map((line, index) => {
         const isKeyboardActive = activePatternLineIndex === index;
-        const selectableGlowRest = isKeyboardActive ? 'none' : '0 0 18px rgba(34, 197, 94, 0.75), 0 0 38px rgba(34, 197, 94, 0.35)';
-        const selectableGlowPeak = isKeyboardActive ? 'none' : '0 0 28px rgba(16, 185, 129, 0.95), 0 0 56px rgba(21, 128, 61, 0.55)';
+        const hasActiveElement = activePatternLineIndex !== null;
+        const selectableGlowRest = hasActiveElement ? 'none' : '0 0 18px rgba(34, 197, 94, 0.75), 0 0 38px rgba(34, 197, 94, 0.35)';
+        const selectableGlowPeak = hasActiveElement ? 'none' : '0 0 28px rgba(16, 185, 129, 0.95), 0 0 56px rgba(21, 128, 61, 0.55)';
         const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
         const isLocked = lockedLineIndexes.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
@@ -106,9 +108,10 @@ export function PatternLines({
         const cursorStyle = placementClickable
           ? (isPlacementTarget ? 'pointer' : 'not-allowed')
           : 'default';
-        const keyboardBoxShadow = isKeyboardActive
-          ? '0 0 0 8px rgba(125, 211, 252, 0.65), 0 0 18px rgba(125, 211, 252, 0.32)'
-          : 'none';
+        const keyboardGlowRest = '0 0 18px rgba(125, 211, 252, 0.75), 0 0 38px rgba(125, 211, 252, 0.35)';
+        const keyboardGlowPeak = '0 0 28px  rgba(125, 211, 252, 0.95), 0 0 56px rgba(125, 211, 252, 0.55)';
+        const keyboardGlowRange: [string, string] = [keyboardGlowRest, keyboardGlowPeak];
+        const keyboardBoxShadow = isKeyboardActive ? keyboardGlowRest : 'none';
         const keyboardBackground = isKeyboardActive ? 'rgba(9, 22, 38, 0.75)' : 'transparent';
 
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
@@ -148,7 +151,7 @@ export function PatternLines({
             data-active={isKeyboardActive ? 'true' : undefined}
             aria-label={ariaLabel}
           >
-            <div
+            <motion.div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -159,6 +162,8 @@ export function PatternLines({
                 boxShadow: keyboardBoxShadow,
                 transition: 'all 0.2s',
               }}
+              animate={isKeyboardActive ? { boxShadow: keyboardGlowRange } : undefined}
+              transition={isKeyboardActive ? cellPulseTransition : undefined}
             >
               {Array(line.tier)
                 .fill(null)
@@ -233,7 +238,7 @@ export function PatternLines({
                     </motion.div>
                   );
                 })}
-            </div>
+            </motion.div>
           </button>
         );
       })}
