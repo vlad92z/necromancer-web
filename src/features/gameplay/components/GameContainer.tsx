@@ -686,6 +686,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const resolveNextElement = useCallback(
     (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
+      console.log('Resolving next element from', current, 'going', direction);
       if (current?.type === 'settings') {
         return navigateFromSettingsbutton(direction, current);
       }
