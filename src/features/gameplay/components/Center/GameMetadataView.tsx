@@ -12,7 +12,6 @@ import { StatBadge } from '../../../../components/StatBadge';
 import { RuneScoreView } from '../RuneScoreView';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
-import { useCastSound } from '../../../../hooks/useCastSound';
 import { buildTextTooltipCard, buildOverloadPlacementTooltipCards } from '../../../../utils/tooltipCards';
 import type { Rune } from '../../../../types/game';
 import type { Transition } from 'framer-motion';
@@ -84,15 +83,7 @@ export function GameMetadataView({
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
   useHealthChangeSound(clampedHealth, forcedHealSignal);
-  const playCastSound = useCastSound();
-  const previousRuneScoreRef = useRef(runeScore.currentScore);
-  useEffect(() => {
-    const previousRuneScore = previousRuneScoreRef.current;
-    if (runeScore.currentScore > previousRuneScore) {
-      playCastSound();
-    }
-    previousRuneScoreRef.current = runeScore.currentScore;
-  }, [playCastSound, runeScore.currentScore]);
+
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
   const lastHealingStepRef = useRef<string | null>(null);
   const [forcedArmorIndicator, setForcedArmorIndicator] = useState<ForcedArmorIndicator | null>(null);

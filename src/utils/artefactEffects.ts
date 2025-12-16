@@ -185,7 +185,6 @@ export function applyIncomingDamageModifiers(
   state: GameState
 ): { damage: number; scoreBonus: number } {
   const damage = baseDamage;
-  console.log('Artefacts:', state.activeArtefacts);
   const scoreBonus = 0;
   
   return { damage, scoreBonus };
