@@ -78,6 +78,8 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           onOpenDeck={onOpenDeckOverlay}
           onOpenSettings={onOpenSettings}
           isSettingsActive={activeElement?.type === 'settings'}
+          isOverloadActive={activeElement?.type === 'overload'}
+          isDeckActive={activeElement?.type === 'deck'}
           onPlaceRunesInFloor={onPlaceRunesInFloor}
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}

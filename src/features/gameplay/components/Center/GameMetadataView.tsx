@@ -40,6 +40,8 @@ interface GameMetadataViewProps {
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
   isSettingsActive: boolean;
+  isOverloadActive: boolean;
+  isDeckActive: boolean;
 }
 
 type ForcedArmorIndicator = {
@@ -76,6 +78,8 @@ export function GameMetadataView({
   hasSelectedRunes,
   selectedRunes,
   isSettingsActive,
+  isOverloadActive,
+  isDeckActive,
 }: GameMetadataViewProps) {
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
@@ -226,8 +230,9 @@ export function GameMetadataView({
   const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus} ${settingsActive}`;
 
   const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
-  const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20`;
-  const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20`;
+  const activeBadgeClass = 'data-[active=true]:shadow-[0_0_0_3px_rgba(56,189,248,0.45)] data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-offset-2 data-[active=true]:outline-sky-300 data-[active=true]:bg-slate-900/70';
+  const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20 data-[active=true]:border-red-300 ${activeBadgeClass}`;
+  const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 ${activeBadgeClass}`;
   const overloadBadge = (
     <StatBadge
       value={strainValue}
@@ -235,6 +240,7 @@ export function GameMetadataView({
       image={overloadSvg}
       onClick={handleOverloadClick}
       onTooltipToggle={handleOverloadTooltipToggle}
+      isActive={isOverloadActive}
     />
   );
 
@@ -288,6 +294,7 @@ export function GameMetadataView({
           image={deckSvg}
           onClick={handleDeckClick}
           onTooltipToggle={handleDeckTooltipToggle}
+          isActive={isDeckActive}
         />
         <HealthView
           health={clampedHealth}

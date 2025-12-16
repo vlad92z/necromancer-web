@@ -299,6 +299,14 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const handleOpenOverloadOverlay = useCallback(() => setShowOverloadOverlay(true), []);
   const handleCloseOverloadOverlay = useCallback(() => setShowOverloadOverlay(false), []);
 
+  const handleOverloadAction = useCallback(() => {
+    if (hasSelectedRunes) {
+      handlePlaceRunesInFloorWrapper();
+      return;
+    }
+    handleOpenOverloadOverlay();
+  }, [handleOpenOverloadOverlay, handlePlaceRunesInFloorWrapper, hasSelectedRunes]);
+
   const handleOpenSettings = useCallback(() => {
     toggleSettingsOverlay();
   }, [toggleSettingsOverlay]);
@@ -437,8 +445,36 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const resolveNextElement = useCallback(
     (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
+      if (current?.type === 'settings') {
+        if (direction === 'right') {
+          return { type: 'overload' };
+        }
+        if (direction === 'left') {
+          const fallback = pickFirstAvailableRune();
+          return fallback ?? current;
+        }
+        return current;
+      }
+
+      if (current?.type === 'overload') {
+        if (direction === 'right') {
+          return { type: 'deck' };
+        }
+        if (direction === 'left') {
+          return { type: 'settings' };
+        }
+        return current;
+      }
+
+      if (current?.type === 'deck') {
+        if (direction === 'left') {
+          return { type: 'overload' };
+        }
+        return current;
+      }
+
       if (availableRunePositions.length === 0) {
-        return null;
+        return current;
       }
 
       if (!current || current.type !== 'runeforge-rune') {
@@ -594,7 +630,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const allowKeyboardNavigation = useMemo(
     () => (
       isSelectionPhase
-      && !hasSelectedRunes
       && !showSettingsOverlay
       && !showDeckOverlay
       && !showOverloadOverlay
@@ -602,7 +637,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       && !isDeckDrafting
       && !isGameOver
     ),
-    [hasSelectedRunes, isDeckDrafting, isGameOver, isSelectionPhase, showDeckOverlay, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
+    [isDeckDrafting, isGameOver, isSelectionPhase, showDeckOverlay, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
   );
 
   useEffect(() => {
@@ -656,6 +691,34 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     handleRuneClick(layout.runeforgeId, runeAtSlot.runeType, runeAtSlot.id);
   }, [activeElement, handleRuneClick, hasSelectedRunes, runeforgeSlotLayouts]);
 
+  const handleActiveElementAction = useCallback((): boolean => {
+    if (!activeElement) {
+      return false;
+    }
+
+    if (activeElement.type === 'settings') {
+      toggleSettingsOverlay();
+      return true;
+    }
+
+    if (activeElement.type === 'overload') {
+      handleOverloadAction();
+      return true;
+    }
+
+    if (activeElement.type === 'deck') {
+      handleOpenDeckOverlay();
+      return true;
+    }
+
+    if (activeElement.type === 'runeforge-rune') {
+      selectActiveRune();
+      return true;
+    }
+
+    return false;
+  }, [activeElement, handleOpenDeckOverlay, handleOverloadAction, selectActiveRune, toggleSettingsOverlay]);
+
   useImperativeHandle(ref, () => ({
     handleKeyDown: (event: KeyboardEvent) => {
       if (showSettingsOverlay) {
@@ -669,38 +732,43 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         return true;
       }
 
-      if (!allowKeyboardNavigation) {
-        return false;
-      }
-
       switch (event.key) {
         case 'ArrowLeft':
+          if (!allowKeyboardNavigation) {
+            return false;
+          }
           event.preventDefault();
           handleNavigation('left');
           return true;
         case 'ArrowRight':
+          if (!allowKeyboardNavigation) {
+            return false;
+          }
           event.preventDefault();
           handleNavigation('right');
           return true;
         case 'ArrowUp':
+          if (!allowKeyboardNavigation) {
+            return false;
+          }
           event.preventDefault();
           handleNavigation('up');
           return true;
         case 'ArrowDown':
+          if (!allowKeyboardNavigation) {
+            return false;
+          }
           event.preventDefault();
           handleNavigation('down');
           return true;
         case 'Enter':
         case ' ': // Space
         case 'Spacebar': {
-          event.preventDefault();
-          if (activeElement?.type === 'settings') {
-            toggleSettingsOverlay();
-            return true;
+          if (!allowKeyboardNavigation) {
+            return false;
           }
-
-          selectActiveRune();
-          return true;
+          event.preventDefault();
+          return handleActiveElementAction();
         }
         default:
           return false;
