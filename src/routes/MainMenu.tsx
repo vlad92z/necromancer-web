@@ -151,7 +151,7 @@ export function MainMenu() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [activeElement, handleSettings, handleSolo, isMobileViewport, playClickSound, showSettingsOverlay])
 
-  const soloButtonClasses = `${gradientButtonClasses} data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5`
+  const soloButtonClasses = `${gradientButtonClasses} data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5 data-[active=true]:border data-[active=true]:border-slate-300`
   const settingsButtonClasses = `${simpleButtonClasses} data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800`
 
   return (
