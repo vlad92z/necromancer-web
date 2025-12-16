@@ -2,20 +2,21 @@
  * Solo route - entry point for Solo mode runs
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
-import { GameContainer } from '../features/gameplay/components/GameContainer';
+import { GameContainer, type GameContainerHandle } from '../features/gameplay/components/GameContainer';
 import type { GameState, RunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { DEFAULT_SOLO_CONFIG } from '../utils/gameInitialization';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
-import { ArtefactsView } from '../components/ArtefactsView';
+import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../components/ClickSoundButton';
+import { useClickSound } from '../hooks/useClickSound';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -39,10 +40,14 @@ export function SoloStartScreen() {
   });
   const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const playClickSound = useClickSound();
 
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
   const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
+  const [activeElement, setActiveElement] = useState<'back' | 'manage' | 'continue' | 'new'>('back');
+  const artefactsRef = useRef<ArtefactsViewHandle | null>(null);
+  const gameContainerRef = useRef<GameContainerHandle | null>(null);
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -92,11 +97,14 @@ export function SoloStartScreen() {
     }
   }, [gameStarted]);
 
-  const handleStartSolo = (config: RunConfig) => {
-    startSoloRun(config);
-  };
+  const handleStartSolo = useCallback(
+    (config: RunConfig) => {
+      startSoloRun(config);
+    },
+    [startSoloRun],
+  );
 
-  const handleContinueSolo = () => {
+  const handleContinueSolo = useCallback(() => {
     const savedState = loadSoloState();
     if (!savedState) {
       clearSoloState();
@@ -104,10 +112,149 @@ export function SoloStartScreen() {
       return;
     }
     hydrateGameState(savedState);
-  };
+  }, [hydrateGameState]);
+
+  const handleBack = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
+  const handleManage = useCallback(() => {
+    setShowArtefactsModal(true);
+  }, []);
+
+  useEffect(() => {
+    setActiveElement((current) => {
+      if (current === 'continue' && !hasSavedSoloRun) {
+        return 'new';
+      }
+      return current ?? 'back';
+    });
+  }, [hasSavedSoloRun]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const order: Array<'back' | 'manage' | 'continue' | 'new'> = hasSavedSoloRun
+      ? ['back', 'manage', 'continue', 'new']
+      : ['back', 'manage', 'new'];
+
+    const moveSelection = (direction: 'up' | 'down') => {
+      setActiveElement((current) => {
+        const currentIndex = order.indexOf(current);
+        const offset = direction === 'down' ? 1 : -1;
+        const nextIndex = (currentIndex + offset + order.length) % order.length;
+        const next = order[nextIndex];
+        if (next !== current) {
+          playClickSound();
+        }
+        return next;
+      });
+    };
+
+    const triggerAction = (target: 'back' | 'manage' | 'continue' | 'new') => {
+      switch (target) {
+        case 'back':
+          handleBack();
+          return;
+        case 'manage':
+          handleManage();
+          return;
+        case 'continue':
+          handleContinueSolo();
+          return;
+        case 'new':
+          handleStartSolo(DEFAULT_SOLO_CONFIG);
+          return;
+        default:
+          return;
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (showArtefactsModal) {
+        artefactsRef.current?.handleKeyDown(event);
+        return;
+      } else if (gameStarted) {
+        gameContainerRef.current?.handleKeyDown(event);
+        return;
+      }
+
+      if (showArtefactsModal || gameStarted) {
+        return;
+      }
+      
+      switch (event.key) {
+        case 'ArrowUp': {
+          event.preventDefault();
+          moveSelection('up');
+          break;
+        }
+        case 'ArrowDown': {
+          event.preventDefault();
+          moveSelection('down');
+          break;
+        }
+        case 'ArrowRight': {
+          if (activeElement === 'continue' && hasSavedSoloRun) {
+            event.preventDefault();
+            setActiveElement((current) => {
+              if (current !== 'new') {
+                playClickSound();
+              }
+              return 'new';
+            });
+          }
+          break;
+        }
+        case 'ArrowLeft': {
+          if (activeElement === 'new' && hasSavedSoloRun) {
+            event.preventDefault();
+            setActiveElement((current) => {
+              if (current !== 'continue') {
+                playClickSound();
+              }
+              return 'continue';
+            });
+          }
+          break;
+        }
+        case 'Enter':
+        case ' ': // Space
+        case 'Spacebar': {
+          event.preventDefault();
+          playClickSound();
+          triggerAction(activeElement);
+          break;
+        }
+        case 'Escape': {
+          console.log('Solo Start Escape pressed');
+          event.preventDefault();
+          playClickSound();
+          handleBack();
+          break;
+        }
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeElement, artefactsRef, gameContainerRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
+
+  const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
+  const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';
+  const backButtonClasses = 'rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:text-sky-100 data-[active=true]:underline';
+  const manageButtonClasses = 'rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-purple-300 data-[active=true]:bg-purple-900/40 data-[active=true]:shadow-[0_0_0_2px_rgba(168,85,247,0.35)]';
+  const continueButtonClasses = `${gradientButtonClasses} ${gradientActive} data-[active=true]:border data-[active=true]:border-slate-300`;
+  const newGameButtonClasses = hasSavedSoloRun
+    ? `${simpleButtonClasses} ${simpleActive}`
+    : `${gradientButtonClasses} ${gradientActive}`;
 
   if (gameStarted) {
-    return <GameContainer gameState={gameState} />;
+    return <GameContainer ref={gameContainerRef} gameState={gameState} />;
   }
 
   return (
@@ -116,8 +263,9 @@ export function SoloStartScreen() {
         <div className="flex items-center justify-between gap-4">
           <ClickSoundButton
             title="← Back"
-            action={() => navigate('/')}
-            className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+            action={handleBack}
+            className={backButtonClasses}
+            isActive={activeElement === 'back'}
           />
         </div>
 
@@ -149,8 +297,9 @@ export function SoloStartScreen() {
             <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Artefacts</div>
             <ClickSoundButton
               title="Manage"
-              action={() => setShowArtefactsModal(true)}
-              className="rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
+              action={handleManage}
+              className={manageButtonClasses}
+              isActive={activeElement === 'manage'}
             />
           </div>
           {selectedArtefactIds.length > 0 && (
@@ -165,19 +314,21 @@ export function SoloStartScreen() {
             <ClickSoundButton
               title="Continue Run"
               action={handleContinueSolo}
-              className={gradientButtonClasses}
+              className={continueButtonClasses}
+              isActive={activeElement === 'continue'}
             />
           )}
           <ClickSoundButton
             title="New Game"
             action={() => handleStartSolo(DEFAULT_SOLO_CONFIG)}
-            className={hasSavedSoloRun ? simpleButtonClasses : gradientButtonClasses}
+            className={newGameButtonClasses}
+            isActive={activeElement === 'new'}
           />
         </div>
       </div>
 
       {/* Artefacts Modal */}
-      <ArtefactsView isOpen={showArtefactsModal} onClose={() => setShowArtefactsModal(false)} />
+      <ArtefactsView ref={artefactsRef} isOpen={showArtefactsModal} onClose={() => setShowArtefactsModal(false)} />
     </div>
   );
 }

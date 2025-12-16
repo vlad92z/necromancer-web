@@ -8,9 +8,10 @@ interface ClickSoundButtonProps {
   title: string;
   className?: string;
   action: () => void;
+  isActive?: boolean;
 }
 
-export function ClickSoundButton({ title, className, action }: ClickSoundButtonProps): ReactElement {
+export function ClickSoundButton({ title, className, action, isActive = false }: ClickSoundButtonProps): ReactElement {
   const playClickSound = useClickSound();
 
   const handleClick = () => {
@@ -19,7 +20,12 @@ export function ClickSoundButton({ title, className, action }: ClickSoundButtonP
   };
 
   return (
-    <button type="button" className={className} onClick={handleClick}>
+    <button
+      type="button"
+      className={className}
+      data-active={isActive ? 'true' : undefined}
+      onClick={handleClick}
+    >
       {title}
     </button>
   );

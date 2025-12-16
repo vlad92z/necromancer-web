@@ -114,9 +114,9 @@ export function modifySegmentResultWithTome(
 
   return {
     ...segment,
-    damage: segment.damage * 5,
-    healing: segment.healing * 5,
-    armor: segment.armor * 5,
+    damage: segment.damage * 2,
+    healing: segment.healing * 2,
+    armor: segment.armor * 2,
   };
 }
 
@@ -133,7 +133,7 @@ export function applyOutgoingDamageModifiers(
   
   // Tome applies first (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    damage = damage * 5;
+    damage = damage * 2;
   }
   
   return damage;
@@ -152,7 +152,7 @@ export function applyOutgoingHealingModifiers(
   
   // Tome applies to healing (only for size 1 segments)
   if (segmentSize === 1 && hasArtefact(state, 'tome')) {
-    healing = healing * 5;
+    healing = healing * 2;
   }
   
   if (hasArtefact(state, 'rod')) {
@@ -165,9 +165,14 @@ export function applyOutgoingHealingModifiers(
  * Get the armor multiplier for resolved segments after artefact modifiers.
  */
 export function getArmorGainMultiplier(segmentSize: number, state: GameState): number {
-  const healingMultiplier = applyOutgoingHealingModifiers(1, segmentSize, state);
-  const potionArmorMultiplier = 1;//hasArtefact(state, 'potion') ? 2 : 1;
-  return healingMultiplier * potionArmorMultiplier;
+  let armorMultiplier = 1;
+  if (segmentSize === 1 && hasArtefact(state, 'tome')) {
+    armorMultiplier = armorMultiplier * 2;
+  }
+  if (hasArtefact(state, 'potion')) {
+    armorMultiplier = armorMultiplier * 2;
+  }
+  return armorMultiplier;
 }
 
 /**
@@ -195,7 +200,7 @@ export function getArtefactEffectDescription(artefactId: ArtefactId): string {
     rod: 'Double all healing',
     potion: 'Double all armor gained',
     robe: 'Increase total picks by 1 during deck drafting',
-    tome: 'Segments of size 1 add 5× more runescore, 5× healing, and 5× armor',
+    tome: 'Segments of size 1 add double rune score, healing, and armor',
   };
   
   return descriptions[artefactId];

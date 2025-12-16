@@ -9,6 +9,7 @@ interface StatBadgeProps {
   image: string;
   onClick?: () => void;
   onTooltipToggle?: (isVisible: boolean) => void;
+  isActive?: boolean;
 }
 
 /**
@@ -20,6 +21,7 @@ export function StatBadge({
   image,
   onClick,
   onTooltipToggle,
+  isActive = false,
 }: StatBadgeProps) {
   const handleHoverChange = (visible: boolean) => {
     if (onTooltipToggle) {
@@ -35,6 +37,7 @@ export function StatBadge({
       onFocus={() => handleHoverChange(true)}
       onBlur={() => handleHoverChange(false)}
       onClick={onClick}
+      data-active={isActive ? 'true' : undefined}
       className={className}
     >
       <img
