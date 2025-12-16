@@ -552,6 +552,66 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     return current;
   }
 
+  function navigateFromOverloadButton(direction: NavigationDirection, current: ActiveElement): ActiveElement | null {
+    if (direction === 'right') {
+      return { type: 'deck' };
+    }
+    if (direction === 'left') {
+      return { type: 'settings' };
+    }
+    if (direction === 'down') {
+      if (firstPatternLineElement) {
+        return firstPatternLineElement;
+      }
+      const fallback = pickFirstAvailableRune();
+      return fallback ?? current;
+    }
+    return current;
+  }
+
+  function navigateFromDeckButton(direction: NavigationDirection, current: ActiveElement): ActiveElement | null {
+    if (direction === 'left') {
+      return { type: 'overload' };
+    }
+    if (direction === 'down') {
+      if (firstPatternLineElement) {
+        return firstPatternLineElement;
+      }
+      const fallback = pickFirstAvailableRune();
+      return fallback ?? current;
+    }
+    return current;
+  }
+
+  function navigateFromPatternLine(direction: NavigationDirection, current: { type: 'pattern-line'; lineIndex: number }): ActiveElement | null {
+    if (direction === 'up') {
+      if (current.lineIndex === 0) {
+        return { type: 'overload' };
+      }
+      return { type: 'pattern-line', lineIndex: Math.max(0, current.lineIndex - 1) };
+    }
+    if (direction === 'down') {
+      const lastIndex = patternLineCount - 1;
+      if (lastIndex < 0) {
+        return current;
+      }
+      return { type: 'pattern-line', lineIndex: Math.min(lastIndex, current.lineIndex + 1) };
+    }
+
+    if (direction === 'left' && selectedRunes.length === 0) {
+      const mappedRuneforgeIndex = resolveRuneforgeForPatternLine(current.lineIndex);
+      if (mappedRuneforgeIndex !== null) {
+        const mappedRune = pickFirstRuneInRuneforge(mappedRuneforgeIndex);
+        if (mappedRune) {
+          return mappedRune;
+        }
+      }
+      const fallback = pickFirstAvailableRune();
+      return fallback ?? current;
+    }
+    return current;
+  }
+
   const resolveNextElement = useCallback(
     (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
       if (current?.type === 'settings') {
@@ -559,62 +619,15 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       }
 
       if (current?.type === 'overload') {
-        if (direction === 'right') {
-          return { type: 'deck' };
-        }
-        if (direction === 'left') {
-          return { type: 'settings' };
-        }
-        if (direction === 'down') {
-          if (firstPatternLineElement) {
-            return firstPatternLineElement;
-          }
-          const fallback = pickFirstAvailableRune();
-          return fallback ?? current;
-        }
-        return current;
+        return navigateFromOverloadButton(direction, current);
       }
 
       if (current?.type === 'deck') {
-        if (direction === 'left') {
-          return { type: 'overload' };
-        }
-        if (direction === 'down') {
-          if (firstPatternLineElement) {
-            return firstPatternLineElement;
-          }
-          const fallback = pickFirstAvailableRune();
-          return fallback ?? current;
-        }
-        return current;
+        return navigateFromDeckButton(direction, current);
       }
 
       if (current?.type === 'pattern-line') {
-        if (direction === 'up') {
-          if (current.lineIndex === 0) {
-            return { type: 'overload' };
-          }
-          return { type: 'pattern-line', lineIndex: Math.max(0, current.lineIndex - 1) };
-        }
-        if (direction === 'down') {
-          const lastIndex = patternLineCount - 1;
-          if (lastIndex < 0) {
-            return current;
-          }
-          return { type: 'pattern-line', lineIndex: Math.min(lastIndex, current.lineIndex + 1) };
-        }
-        if (direction === 'left') {
-          const mappedRuneforgeIndex = resolveRuneforgeForPatternLine(current.lineIndex);
-          if (mappedRuneforgeIndex !== null) {
-            const mappedRune = pickFirstRuneInRuneforge(mappedRuneforgeIndex);
-            if (mappedRune) {
-              return mappedRune;
-            }
-          }
-          const fallback = pickFirstAvailableRune();
-          return fallback ?? current;
-        }
-        return current;
+        return navigateFromPatternLine(direction, current);
       }
 
       if (availableRunePositions.length === 0) {
