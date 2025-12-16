@@ -44,6 +44,9 @@ export function RuneSelectionTable({
   const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const activeElement = useGameplayStore((state) => state.activeElement);
+  const setActiveElement = useGameplayStore((state) => state.setActiveElement);
+  const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
 
   const computeGlobalHoverState = useCallback(
     (runeType: RuneType): Record<string, RuneType | null> => {
@@ -115,13 +118,16 @@ export function RuneSelectionTable({
 
   const handleRuneMouseEnter = (
     runeforgeId: string,
+    runeforgeIndex: number,
     runeType: RuneType,
     runeId: string,
+    runeIndex: number,
     selectionActive: boolean,
     disabled: boolean
   ) => {
     if (selectionActive || hasSelectedRunes || disabled) {
       resetTooltipCards();
+      resetActiveElement();
       return;
     }
 
@@ -131,6 +137,8 @@ export function RuneSelectionTable({
     } else {
       resetTooltipCards();
     }
+
+    setActiveElement({ type: 'runeforge-rune', runeforgeIndex, runeIndex });
 
     if (isGlobalDraftStage) {
       const hoverState = computeGlobalHoverState(runeType);
@@ -142,6 +150,7 @@ export function RuneSelectionTable({
 
   const handleRuneMouseLeave = (runeforgeId: string) => {
     resetTooltipCards();
+    resetActiveElement();
     if (isGlobalDraftStage) {
       setHoveredRuneTypeByRuneforge({});
       return;
@@ -157,12 +166,33 @@ export function RuneSelectionTable({
     }
   };
 
+  useEffect(() => {
+    if (activeElement?.type !== 'runeforge-rune') {
+      setHoveredRuneTypeByRuneforge({});
+      return;
+    }
+
+    const runeforge = runeforges[activeElement.runeforgeIndex];
+    const rune = runeforge?.runes[activeElement.runeIndex];
+    if (!runeforge || !rune) {
+      setHoveredRuneTypeByRuneforge({});
+      return;
+    }
+
+    if (isGlobalDraftStage) {
+      setHoveredRuneTypeByRuneforge(computeGlobalHoverState(rune.runeType));
+      return;
+    }
+    setHoveredRuneTypeByRuneforge({ [runeforge.id]: rune.runeType });
+  }, [activeElement, computeGlobalHoverState, isGlobalDraftStage, runeforges]);
+
   return (
     <div className="h-full w-full flex flex-col justify-start gap-4 p-[min(1.2vmin,16px)]" onClick={handleDraftingTableClick}>
-      <div className="flex-1 flex flex-col gap-[14px] w-full">
-        {runeforges.map((runeforge) => (
+      <div className="flex-1 flex flex-col gap-2 w-full">
+        {runeforges.map((runeforge, runeforgeIndex) => (
           <Runeforge
             key={runeforge.id}
+            runeforgeIndex={runeforgeIndex}
             runeforge={runeforge}
             runesPerRuneforge={runesPerRuneforge}
             hoveredRuneType={hoveredRuneTypeByRuneforge[runeforge.id] ?? null}
@@ -176,6 +206,7 @@ export function RuneSelectionTable({
             onRuneClick={onRuneClick}
             onRuneMouseEnter={handleRuneMouseEnter}
             onRuneMouseLeave={handleRuneMouseLeave}
+            activeElement={activeElement}
           />
         ))}
       </div>

@@ -4,6 +4,7 @@
 
 import type { PatternLine, Rune, ScoringWall } from '../types/game';
 import { getWallColumnForRune } from './scoring';
+import type { RuneType } from '../types/game';
 
 /**
  * Find the best pattern line index to auto-place selected runes.
@@ -110,4 +111,29 @@ export function findBestPatternLineForAutoPlacement(
 
   // Step 3: No suitable line found
   return null;
+}
+
+export function isPatternLinePlacementValid(
+  line: PatternLine,
+  lineIndex: number,
+  selectedRuneType: RuneType | null,
+  wall: ScoringWall,
+  lockedLineIndexes: number[] = []
+): boolean {
+  if (!selectedRuneType) {
+    return false;
+  }
+
+  if (lockedLineIndexes.includes(lineIndex)) {
+    return false;
+  }
+
+  const matchesType = line.runeType === null || line.runeType === selectedRuneType;
+  const notFull = line.count < line.tier;
+
+  const wallSize = wall.length;
+  const col = getWallColumnForRune(lineIndex, selectedRuneType, wallSize);
+  const wallCellEmpty = wall[lineIndex]?.[col]?.runeType === null;
+
+  return matchesType && notFull && wallCellEmpty;
 }

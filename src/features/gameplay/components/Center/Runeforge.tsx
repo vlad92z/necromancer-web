@@ -6,10 +6,11 @@ import { motion } from 'framer-motion';
 import { useCallback, useMemo, useRef } from 'react';
 import { RuneCell } from '../../../../components/RuneCell';
 import { RUNE_SIZE_CONFIG } from '../../../../styles/tokens';
-import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
+import type { ActiveElement, Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
 
 interface RuneforgeProps {
   runeforge: RuneforgeType;
+  runeforgeIndex: number;
   runesPerRuneforge: number;
   hoveredRuneType: RuneType | null;
   hasSelectedRunes: boolean;
@@ -22,16 +23,20 @@ interface RuneforgeProps {
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onRuneMouseEnter: (
     runeforgeId: string,
+    runeforgeIndex: number,
     runeType: RuneType,
     runeId: string,
+    slotIndex: number,
     selectionActive: boolean,
     disabled: boolean
   ) => void;
   onRuneMouseLeave: (runeforgeId: string) => void;
+  activeElement: ActiveElement | null;
 }
 
 export function Runeforge({
   runeforge,
+  runeforgeIndex,
   runesPerRuneforge,
   hoveredRuneType,
   hasSelectedRunes,
@@ -43,7 +48,8 @@ export function Runeforge({
   animatingRuneIdSet,
   onRuneClick,
   onRuneMouseEnter,
-  onRuneMouseLeave
+  onRuneMouseLeave,
+  activeElement,
 }: RuneforgeProps) {
   const runeSlotAssignmentsRef = useRef<Record<string, number>>({});
 
@@ -186,6 +192,10 @@ export function Runeforge({
             const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
             const isAnimatingRune = animatingRuneIdSet?.has(rune.id) ?? false;
             const isHighlighted = hoveredRuneType === rune.runeType && !selectionActive;
+            const isActiveRune =
+              activeElement?.type === 'runeforge-rune' &&
+              activeElement.runeforgeIndex === runeforgeIndex &&
+              activeElement.runeIndex === slotIndex;
             const pointerEvents = isAnimatingRune
               ? 'none'
               : (selectionActive
@@ -194,16 +204,22 @@ export function Runeforge({
             const cursor = pointerEvents === 'auto' ? 'pointer' : 'not-allowed';
             const transform = isSelectedForDisplay
               ? 'translateY(-2px) scale(1.08)'
+              : isActiveRune
+                ? 'scale(1.06)'
               : isHighlighted
                 ? 'scale(1.05)'
                 : 'scale(1)';
             const boxShadow = isSelectedForDisplay
               ? '0 0 20px rgba(255, 255, 255, 0.60), 0 0 48px rgba(235, 170, 255, 0.60), 0 0 96px rgba(235, 170, 255, 0.30)'
+              : isActiveRune
+                ? '0 0 18px rgba(74, 225, 245, 0.9), 0 0 36px rgba(34, 225, 245, 0.55)' //TODO: Here
               : isHighlighted
                 ? '0 0 14px rgba(255, 255, 255, 0.5), 0 0 34px rgba(235, 170, 255, 0.32)'
                 : 'none';
             const filter = isSelectedForDisplay
               ? 'brightness(1.22)'
+              : isActiveRune
+                ? 'brightness(1.12)'
               : isHighlighted
                 ? 'brightness(1.12)'
                 : 'none';
@@ -242,13 +258,20 @@ export function Runeforge({
                 onClick={(event) => {
                   event.stopPropagation();
                   if (!isAnimatingRune && pointerEvents === 'auto') {
-                    onRuneClick(runeforge.id, rune.runeType, rune.id);
+                  onRuneClick(runeforge.id, rune.runeType, rune.id);
+                }
+              }}
+                onPointerEnter={() =>
+                  onRuneMouseEnter(runeforge.id, runeforgeIndex, rune.runeType, rune.id, slotIndex, selectionActive, isRuneforgeDisabled)
+                }
+                onPointerDown={(event) => {
+                  if (event.pointerType === 'touch') {
+                    onRuneMouseEnter(runeforge.id, runeforgeIndex, rune.runeType, rune.id, slotIndex, selectionActive, isRuneforgeDisabled);
                   }
                 }}
-                onMouseEnter={() =>
-                  onRuneMouseEnter(runeforge.id, rune.runeType, rune.id, selectionActive, isRuneforgeDisabled)
+                onPointerLeave={() =>
+                  onRuneMouseLeave(runeforge.id)
                 }
-                onMouseLeave={() => onRuneMouseLeave(runeforge.id)}
                 animate={selectedAnimation}
                 transition={selectedTransition}
               >

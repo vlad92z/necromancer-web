@@ -6,11 +6,11 @@
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
 import type { PatternLine, Rune, RuneType, ScoringWall } from '../../../../types/game';
-import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
+import { isPatternLinePlacementValid } from '../../../../utils/patternLineHelpers';
 
 interface PatternLinesProps {
   patternLines: PatternLine[];
@@ -37,20 +37,6 @@ export function PatternLines({
   selectedRunes,
   strain,
 }: PatternLinesProps) {
-  const isPlacementValid = (line: PatternLine, lineIndex: number) => {
-    if (!canPlace || !selectedRuneType) return false;
-    
-    const matchesType = line.runeType === null || line.runeType === selectedRuneType;
-    const notFull = line.count < line.tier;
-    
-    const row = lineIndex;
-    const wallSize = wall.length;
-    const col = getWallColumnForRune(row, selectedRuneType, wallSize);
-    const notOnWall = wall[row][col].runeType === null;
-    
-    return matchesType && notFull && notOnWall;
-  };
-
   const selectableGlowRest = '0 0 18px rgba(34, 197, 94, 0.75), 0 0 38px rgba(34, 197, 94, 0.35)';
   const selectableGlowPeak = '0 0 28px rgba(16, 185, 129, 0.95), 0 0 56px rgba(21, 128, 61, 0.55)';
   const selectableGlowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
@@ -60,9 +46,14 @@ export function PatternLines({
     repeatType: 'reverse' as const,
     ease: 'easeInOut' as const
   };
+  // Shared spacing value (pixels) used for both vertical and horizontal gaps
+  const LINE_GAP = 5;
   
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const setActiveElement = useGameplayStore((state) => state.setActiveElement);
+  const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
+  const activeElement = useGameplayStore((state) => state.activeElement);
 
   const handleTooltipEnter = (line: PatternLine, isPlacementTarget: boolean) => {
     if (selectedRunes.length > 0) {
@@ -90,10 +81,10 @@ export function PatternLines({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: LINE_GAP, alignItems: 'flex-start', width: '100%' }}>
       {patternLines.map((line, index) => {
         const isLocked = lockedLineIndexes.includes(index);
-        const isPlacementTarget = !isLocked && isPlacementValid(line, index);
+        const isPlacementTarget = !isLocked && canPlace && isPatternLinePlacementValid(line, index, selectedRuneType ?? null, wall, lockedLineIndexes);
         const placementClickable = Boolean(canPlace && onPlaceRunes);
         const showGlow = isPlacementTarget;
         const glowRange = selectableGlowRange;
@@ -101,6 +92,7 @@ export function PatternLines({
         const cursorStyle = placementClickable
             ? (isPlacementTarget ? 'pointer' : 'not-allowed')
             : 'default';
+        const isActiveLine = activeElement?.type === 'pattern-line' && activeElement.lineIndex === index;
 
         const ariaLabelBase = `Pattern line ${index + 1}, tier ${line.tier}, ${line.count} of ${line.tier} filled`;
         const ariaLabel = ariaLabelBase;
@@ -114,26 +106,41 @@ export function PatternLines({
                 onPlaceRunes(index);
               }
             }}
-            onPointerEnter={() => handleTooltipEnter(line, isPlacementTarget)}
-            onPointerLeave={resetTooltipCards}
-            onFocus={() => handleTooltipEnter(line, isPlacementTarget)}
-            onBlur={resetTooltipCards}
+            onPointerEnter={() => {
+              setActiveElement({ type: 'pattern-line', lineIndex: index });
+              handleTooltipEnter(line, isPlacementTarget);
+            }}
+            onPointerLeave={() => {
+              resetTooltipCards();
+              resetActiveElement();
+            }}
+            onFocus={() => {
+              setActiveElement({ type: 'pattern-line', lineIndex: index });
+              handleTooltipEnter(line, isPlacementTarget);
+            }}
+            onBlur={() => {
+              resetTooltipCards();
+              resetActiveElement();
+            }}
             disabled={buttonDisabled}
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              gap: '4px',
-              width: '100%',
+              gap: LINE_GAP,
+              width: 'fit-content',
+              maxWidth: '100%',
               cursor: cursorStyle,
               backgroundColor: 'transparent',
               border: 'none',
               padding: 0,
               borderRadius: '8px',
               transition: 'all 0.2s',
-              marginBottom: '4px',
               position: 'relative',
               opacity: isLocked ? 0.15 : 1,
+              boxShadow: isActiveLine
+                ? '0 0 0 2px rgba(125, 211, 252, 0.8), 0 0 16px rgba(56, 189, 248, 0.35)'
+                : 'none',
             }}
             aria-label={ariaLabel}
           >
@@ -171,7 +178,8 @@ export function PatternLines({
                       position: 'relative',
                       boxShadow: showGlow ? selectableGlowRest : 'none',
                       borderRadius: '8px',
-                      transition: 'box-shadow 0.2s'
+                      transition: 'box-shadow 0.2s',
+                      gap: LINE_GAP
                     }}
                     {...cellMotionProps}
                   >

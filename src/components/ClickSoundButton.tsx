@@ -8,9 +8,21 @@ interface ClickSoundButtonProps {
   title: string;
   className?: string;
   action: () => void;
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-export function ClickSoundButton({ title, className, action }: ClickSoundButtonProps): ReactElement {
+export function ClickSoundButton({
+  title,
+  className,
+  action,
+  onPointerEnter,
+  onPointerLeave,
+  onFocus,
+  onBlur,
+}: ClickSoundButtonProps): ReactElement {
   const playClickSound = useClickSound();
 
   const handleClick = () => {
@@ -19,7 +31,15 @@ export function ClickSoundButton({ title, className, action }: ClickSoundButtonP
   };
 
   return (
-    <button type="button" className={className} onClick={handleClick}>
+    <button
+      type="button"
+      className={className}
+      onClick={handleClick}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
+      onFocus={onFocus}
+      onBlur={onBlur}
+    >
       {title}
     </button>
   );

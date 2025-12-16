@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
-import type { GameState, RuneType, Rune } from '../../../types/game';
+import type { ActiveElement, GameState, RuneType, Rune } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
@@ -20,6 +20,13 @@ import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import { SoloGameView } from './SoloGameBoard';
+import { buildNavigationGrid, findNextElement, findElementPosition, getFirstAvailableElement } from '../../../utils/navigationGrid';
+import { buildTextTooltipCard, buildOverloadPlacementTooltipCards, buildRuneTooltipCards, buildPatternLinePlacementTooltipCards, buildPatternLineExistingTooltipCards, buildArtefactTooltipCards } from '../../../utils/tooltipCards';
+import { isPatternLinePlacementValid } from '../../../utils/patternLineHelpers';
+import { collectSegmentCells } from '../../../utils/scoring';
+import overloadSvg from '../../../assets/stats/overload.svg';
+import deckSvg from '../../../assets/stats/deck.svg';
+import { handleKeyboardNavigation } from '../../../utils/keyboardNavigation';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -149,8 +156,17 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
   const isMusicMuted = useUIStore((state) => state.isMusicMuted);
   const setMusicMuted = useUIStore((state) => state.setMusicMuted);
+  const activeElement = useGameplayStore((state) => state.activeElement);
+  const setActiveElement = useGameplayStore((state) => state.setActiveElement);
+  const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
+  const hasInitializedActiveElementRef = useRef(false);
+  const tooltipOverrideActive = useGameplayStore((state) => state.tooltipOverrideActive);
+  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
+  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
   const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay);
+  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
   const playArcaneDust = useArcaneDustSound();
   const playClickSound = useClickSound();
 
@@ -210,6 +226,162 @@ export function GameContainer({ gameState }: GameContainerProps) {
   );
 
   const prevArcaneDustRef = useRef<number>(displayedArcaneDust);
+  const playerHiddenPatternSlots = useMemo(
+    () => hiddenPatternSlots[player.id],
+    [hiddenPatternSlots, player.id],
+  );
+  const playerLockedLines = useMemo(() => lockedPatternLines[player.id] ?? [], [lockedPatternLines, player.id]);
+
+  const findNearestRuneInRuneforge = useCallback(
+    (runeforgeIndex: number, targetRuneIndex: number): ActiveElement | null => {
+      const runeforge = runeforges[runeforgeIndex];
+      if (!runeforge || runeforge.runes.length === 0) {
+        // Find nearest runeforge with runes
+        let bestForgeIndex = -1;
+        let bestForgeDistance = Number.POSITIVE_INFINITY;
+        runeforges.forEach((forge, idx) => {
+          if (!forge || forge.runes.length === 0) {
+            return;
+          }
+          const distance = Math.abs(idx - runeforgeIndex);
+          if (distance < bestForgeDistance) {
+            bestForgeDistance = distance;
+            bestForgeIndex = idx;
+          }
+        });
+        if (bestForgeIndex === -1) {
+          return null;
+        }
+        const nearestForge = runeforges[bestForgeIndex];
+        let bestIndex = 0;
+        let bestDistance = Number.POSITIVE_INFINITY;
+        nearestForge.runes.forEach((_, idx) => {
+          const distance = Math.abs(idx - targetRuneIndex);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = idx;
+          }
+        });
+        return { type: 'runeforge-rune', runeforgeIndex: bestForgeIndex, runeIndex: bestIndex };
+      }
+      let bestIndex = -1;
+      let bestDistance = Number.POSITIVE_INFINITY;
+      runeforge.runes.forEach((_, idx) => {
+        const distance = Math.abs(idx - targetRuneIndex);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestIndex = idx;
+        }
+      });
+      if (bestIndex === -1) {
+        return null;
+      }
+      return { type: 'runeforge-rune', runeforgeIndex, runeIndex: bestIndex };
+    },
+    [runeforges]
+  );
+
+  const navigationGrid = useMemo(
+    () =>
+      buildNavigationGrid({
+        runeforges,
+        runesPerRuneforge,
+        patternLines: player.patternLines,
+        wall: player.wall,
+        artefactIds: selectedArtefactIds,
+      }),
+    [player.patternLines, player.wall, runeforges, runesPerRuneforge, selectedArtefactIds]
+  );
+
+  const isElementActive = useCallback(
+    (element: ActiveElement) => {
+      switch (element.type) {
+        case 'runeforge-rune': {
+          const runeforge = runeforges[element.runeforgeIndex];
+          return Boolean(runeforge?.runes[element.runeIndex]);
+        }
+        case 'pattern-line':
+          return Boolean(player.patternLines[element.lineIndex]);
+        case 'scoring-wall':
+          return Boolean(player.wall[element.row]?.[element.col]?.runeType);
+        case 'artefact':
+          return element.artefactIndex < selectedArtefactIds.length;
+        default:
+          return true;
+      }
+    },
+    [player.patternLines, player.wall, runeforges, selectedArtefactIds.length]
+  );
+
+  const validPatternLineIndexes = useMemo(() => {
+    if (!hasSelectedRunes || !selectedRuneType) {
+      return [];
+    }
+    return player.patternLines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line, index }) =>
+        isPatternLinePlacementValid(line, index, selectedRuneType, player.wall, playerLockedLines)
+      )
+      .map(({ index }) => index);
+  }, [hasSelectedRunes, player.patternLines, player.wall, playerLockedLines, selectedRuneType]);
+
+  const occupiedPatternLineIndexes = useMemo(
+    () =>
+      player.patternLines
+        .map((line, index) => ({ line, index }))
+        .filter(({ line }) => line.count > 0)
+        .map(({ index }) => index),
+    [player.patternLines]
+  );
+
+  useEffect(() => {
+    const fallbackElement = getFirstAvailableElement(navigationGrid, isElementActive);
+    if (activeElement && !hasInitializedActiveElementRef.current) {
+      hasInitializedActiveElementRef.current = true;
+    }
+    if (!activeElement) {
+      if (!hasInitializedActiveElementRef.current && fallbackElement) {
+        hasInitializedActiveElementRef.current = true;
+        setActiveElement(fallbackElement);
+      }
+      return;
+    }
+
+    const activePosition = findElementPosition(navigationGrid, activeElement);
+    const isActiveValid = activePosition && isElementActive(activeElement);
+
+    if (isActiveValid) {
+      return;
+    }
+
+    if (activeElement.type === 'runeforge-rune') {
+      const nearestRune = findNearestRuneInRuneforge(activeElement.runeforgeIndex, activeElement.runeIndex);
+      if (nearestRune) {
+        setActiveElement(nearestRune);
+        return;
+      }
+      return;
+    }
+
+    if (fallbackElement) {
+      setActiveElement(fallbackElement);
+    } else {
+      resetActiveElement();
+    }
+  }, [activeElement, findNearestRuneInRuneforge, isElementActive, navigationGrid, resetActiveElement, setActiveElement]);
+
+  useEffect(() => {
+    if (!hasSelectedRunes) {
+      return;
+    }
+    if (validPatternLineIndexes.length > 0) {
+      setActiveElement({ type: 'pattern-line', lineIndex: validPatternLineIndexes[0] });
+      return;
+    }
+    setActiveElement({ type: 'overload' });
+  }, [hasSelectedRunes, setActiveElement, validPatternLineIndexes]);
+
+  const prevArcaneDustRef = useRef<number>(arcaneDust);
   useEffect(() => {
     if (displayedArcaneDust > prevArcaneDustRef.current) {
       playArcaneDust();
@@ -231,12 +403,6 @@ export function GameContainer({ gameState }: GameContainerProps) {
     [draftFromCenter],
   );
 
-  const playerHiddenPatternSlots = useMemo(
-    () => hiddenPatternSlots[player.id],
-    [hiddenPatternSlots, player.id],
-  );
-  const playerLockedLines = useMemo(() => lockedPatternLines[player.id], [lockedPatternLines, player.id]);
-
   const handleToggleMusic = useCallback(() => {
     setMusicMuted(!isMusicMuted);
   }, [isMusicMuted, setMusicMuted]);
@@ -257,6 +423,7 @@ export function GameContainer({ gameState }: GameContainerProps) {
       return;
     }
     cancelSelection();
+    resetActiveElement();
   }, [cancelSelection, isAnimatingPlacement]);
 
   const handlePlaceRunesInFloorWrapper = useCallback(() => {
@@ -284,6 +451,307 @@ export function GameContainer({ gameState }: GameContainerProps) {
   const handleOpenSettings = useCallback(() => {
     toggleSettingsOverlay();
   }, [toggleSettingsOverlay]);
+
+  const moveActiveElement = useCallback(
+    (direction: 'up' | 'down' | 'left' | 'right') => {
+      const next = findNextElement(navigationGrid, activeElement, direction, isElementActive);
+      if (next && next !== activeElement) {
+        setActiveElement(next);
+        return;
+      }
+
+      if ((direction === 'left' || direction === 'right') && !hasSelectedRunes) {
+        const rowIndex =
+          activeElement?.type === 'pattern-line'
+            ? activeElement.lineIndex
+            : activeElement?.type === 'scoring-wall'
+              ? activeElement.row
+              : null;
+        if (rowIndex !== null) {
+          const fallbackRune = findNearestRuneInRuneforge(rowIndex, 0);
+          if (fallbackRune) {
+            setActiveElement(fallbackRune);
+          }
+        }
+      }
+    },
+    [activeElement, findNearestRuneInRuneforge, hasSelectedRunes, isElementActive, navigationGrid, setActiveElement]
+  );
+
+  const handleSelectActiveElement = useCallback(
+    (element: ActiveElement | null) => {
+      if (!element) {
+        return;
+      }
+
+      switch (element.type) {
+        case 'settings':
+          handleOpenSettings();
+          break;
+        case 'overload':
+          if (hasSelectedRunes) {
+            handlePlaceRunesInFloorWrapper();
+          } else {
+            handleOpenOverloadOverlay();
+          }
+          break;
+        case 'deck':
+          handleOpenDeckOverlay();
+          break;
+        case 'runeforge-rune': {
+          const runeforge = runeforges[element.runeforgeIndex];
+          const rune = runeforge?.runes[element.runeIndex];
+          if (runeforge && rune) {
+            handleRuneClick(runeforge.id, rune.runeType, rune.id);
+          }
+          break;
+        }
+        case 'pattern-line': {
+          const line = player.patternLines[element.lineIndex];
+          if (
+            line &&
+            isPatternLinePlacementValid(line, element.lineIndex, selectedRuneType ?? null, player.wall, playerLockedLines) &&
+            hasSelectedRunes
+          ) {
+            handlePatternLinePlacement(element.lineIndex);
+          }
+          break;
+        }
+        case 'scoring-wall':
+        case 'artefact':
+        default:
+          break;
+      }
+    },
+    [
+      handleOpenDeckOverlay,
+      handleOpenOverloadOverlay,
+      handleOpenSettings,
+      handlePatternLinePlacement,
+      handlePlaceRunesInFloorWrapper,
+      handleRuneClick,
+      hasSelectedRunes,
+      player.patternLines,
+      player.wall,
+      playerLockedLines,
+      runeforges,
+      selectedRuneType,
+    ]
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      handleKeyboardNavigation(event, {
+        activeElement,
+        hasSelectedRunes,
+        isDeckDrafting,
+        showSettingsOverlay,
+        showDeckOverlay,
+        showOverloadOverlay,
+        showRulesOverlay,
+        validPatternLineIndexes,
+        occupiedPatternLineIndexes,
+        moveActiveElement,
+        setActiveElement,
+        handleSelectActiveElement,
+        handleCancelSelection,
+        handleOpenSettings,
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    activeElement,
+    handleCancelSelection,
+    handleOpenSettings,
+    handleSelectActiveElement,
+    isDeckDrafting,
+    moveActiveElement,
+    hasSelectedRunes,
+    validPatternLineIndexes,
+    occupiedPatternLineIndexes,
+    setActiveElement,
+    showDeckOverlay,
+    showOverloadOverlay,
+    showRulesOverlay,
+    showSettingsOverlay,
+  ]);
+
+  useEffect(() => {
+    if (!activeElement) {
+      if (!tooltipOverrideActive) {
+        resetTooltipCards();
+      }
+      return;
+    }
+
+    const resetIfAllowed = () => {
+      if (!tooltipOverrideActive) {
+        resetTooltipCards();
+      }
+    };
+
+    if (activeElement.type === 'settings') {
+      resetIfAllowed();
+      return;
+    }
+
+    if (activeElement.type === 'overload') {
+      if (hasSelectedRunes) {
+        setTooltipCards(buildOverloadPlacementTooltipCards(selectedRunes, strain), true);
+        return;
+      }
+      const overloadTooltip = `Overload deals ${strain} damage per rune. ${overloadRunes.length} runes are currently overloaded.`;
+      setTooltipCards(buildTextTooltipCard('overload-tooltip', 'Overload', overloadTooltip, overloadSvg));
+      return;
+    }
+
+    if (activeElement.type === 'deck') {
+      const deckValue = Math.max(0, player.deck.length);
+      const deckRemaining = Math.max(0, deckValue - 20);
+      const deckTooltip = `You have ${deckRemaining} runes remaining.`;
+      setTooltipCards(buildTextTooltipCard('deck-tooltip', 'Deck', deckTooltip, deckSvg));
+      return;
+    }
+
+    if (activeElement.type === 'runeforge-rune') {
+      const runeforge = runeforges[activeElement.runeforgeIndex];
+      const rune = runeforge?.runes[activeElement.runeIndex];
+      if (!runeforge || !rune) {
+        resetIfAllowed();
+        return;
+      }
+      const isRuneforgeDisabled = runeforge.disabled ?? false;
+      const isGlobalDraftStage = runeforgeDraftStage === 'global';
+      const isGlobalSelection =
+        draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
+      const isRuneforgeSelected = draftSource?.type === 'runeforge' && draftSource.runeforgeId === runeforge.id;
+      const isAffectedByGlobalSelection = Boolean(
+        draftSource?.affectedRuneforges?.some((forge) => forge.runeforgeId === runeforge.id)
+      );
+      const selectionActive = isGlobalSelection
+        ? hasSelectedRunes && isAffectedByGlobalSelection
+        : hasSelectedRunes && isRuneforgeSelected;
+
+      if (selectionActive || hasSelectedRunes || isRuneforgeDisabled) {
+        resetIfAllowed();
+        return;
+      }
+
+      const selectionRunes = isGlobalDraftStage
+        ? runeforges
+            .filter((forge) => !(forge.disabled ?? false))
+            .flatMap((forge) => forge.runes.filter((candidate) => candidate.runeType === rune.runeType))
+        : runeforge.runes.filter((candidate) => candidate.runeType === rune.runeType);
+      if (selectionRunes.length > 0) {
+        setTooltipCards(buildRuneTooltipCards(selectionRunes, rune.id));
+      } else {
+        resetIfAllowed();
+      }
+      return;
+    }
+
+    if (activeElement.type === 'pattern-line') {
+      const line = player.patternLines[activeElement.lineIndex];
+      if (!line) {
+        resetIfAllowed();
+        return;
+      }
+      const isPlacementTarget = hasSelectedRunes
+        ? isPatternLinePlacementValid(line, activeElement.lineIndex, selectedRuneType ?? null, player.wall, playerLockedLines)
+        : false;
+
+      if (selectedRunes.length > 0) {
+        if (!isPlacementTarget) {
+          resetIfAllowed();
+          return;
+        }
+        const tooltipCards = buildPatternLinePlacementTooltipCards({
+          selectedRunes,
+          patternLineTier: line.tier,
+          patternLineCount: line.count,
+          strain,
+        });
+        if (tooltipCards.length > 0) {
+          setTooltipCards(tooltipCards, true);
+        } else {
+          resetIfAllowed();
+        }
+        return;
+      }
+
+      if (line.runeType && line.count > 0) {
+        const tooltipCards = buildPatternLineExistingTooltipCards(line);
+        if (tooltipCards.length > 0) {
+          setTooltipCards(tooltipCards);
+        } else {
+          resetIfAllowed();
+        }
+        return;
+      }
+
+      resetIfAllowed();
+      return;
+    }
+
+    if (activeElement.type === 'scoring-wall') {
+      const segmentCells = collectSegmentCells(player.wall, activeElement.row, activeElement.col);
+      if (segmentCells.length === 0) {
+        resetIfAllowed();
+        return;
+      }
+      const primaryCell = segmentCells.find(
+        (cell) => cell.row === activeElement.row && cell.col === activeElement.col
+      );
+      const remainingCells = segmentCells
+        .filter((cell) => !(cell.row === activeElement.row && cell.col === activeElement.col))
+        .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row));
+      const orderedCells = primaryCell ? [primaryCell, ...remainingCells] : remainingCells;
+
+      const tooltipRunes = orderedCells
+        .filter((cell) => cell.runeType !== null)
+        .map((cell) => ({
+          id: `wall-${cell.row}-${cell.col}`,
+          runeType: cell.runeType ?? 'Life',
+          effects: cell.effects ?? [],
+        }));
+
+      if (tooltipRunes.length > 0) {
+        setTooltipCards(buildRuneTooltipCards(tooltipRunes, tooltipRunes[0].id));
+      } else {
+        resetIfAllowed();
+      }
+      return;
+    }
+
+    if (activeElement.type === 'artefact') {
+      if (activeElement.artefactIndex < selectedArtefactIds.length) {
+        const artefactId = selectedArtefactIds[activeElement.artefactIndex];
+        setTooltipCards(buildArtefactTooltipCards(selectedArtefactIds, artefactId));
+      } else {
+        resetIfAllowed();
+      }
+    }
+  }, [
+    activeElement,
+    draftSource,
+    hasSelectedRunes,
+    overloadRunes.length,
+    player.deck.length,
+    player.patternLines,
+    player.wall,
+    playerLockedLines,
+    resetTooltipCards,
+    runeforgeDraftStage,
+    runeforges,
+    selectedArtefactIds,
+    selectedRuneType,
+    selectedRunes,
+    setTooltipCards,
+    strain,
+    tooltipOverrideActive,
+  ]);
 
   useEffect(() => {
     if (shouldTriggerEndRound) {

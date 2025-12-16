@@ -55,6 +55,9 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   const overlayRef = useRef<{ points: Map<string, OverlayPoint>; edges: Map<string, OverlayEdge> } | null>(null);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
+  const setActiveElement = useGameplayStore((state) => state.setActiveElement);
+  const resetActiveElement = useGameplayStore((state) => state.resetActiveElement);
+  const activeElement = useGameplayStore((state) => state.activeElement);
 
   const wallSignature = useMemo(
     () => wall.map(row => row.map(cell => cell.runeType ?? '0').join(',')).join('|'),
@@ -356,8 +359,37 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
             {row.map((cell, colIndex) => (
               <div
                 key={colIndex}
-                onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
-                onMouseLeave={handleWallCellLeave}
+                onMouseEnter={() => {
+                  if (!wall[rowIndex][colIndex].runeType) {
+                    return;
+                  }
+                  setActiveElement({ type: 'scoring-wall', row: rowIndex, col: colIndex });
+                  handleWallCellEnter(rowIndex, colIndex);
+                }}
+                onMouseLeave={() => {
+                  handleWallCellLeave();
+                  resetActiveElement();
+                }}
+                onFocus={() => {
+                  if (!wall[rowIndex][colIndex].runeType) {
+                    return;
+                  }
+                  setActiveElement({ type: 'scoring-wall', row: rowIndex, col: colIndex });
+                  handleWallCellEnter(rowIndex, colIndex);
+                }}
+                onBlur={() => {
+                  handleWallCellLeave();
+                  resetActiveElement();
+                }}
+                style={{
+                  boxShadow:
+                    activeElement?.type === 'scoring-wall' &&
+                    activeElement.row === rowIndex &&
+                    activeElement.col === colIndex
+                      ? '0 0 0 2px rgba(125, 211, 252, 0.8), 0 0 16px rgba(56, 189, 248, 0.35)'
+                      : undefined,
+                  borderRadius: '12px',
+                }}
               >
                 <WallCell
                   cell={cell}
