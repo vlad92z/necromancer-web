@@ -26,7 +26,7 @@ export function SettingsOverlay({
   showQuitRun = false,
   playClickSound,
 }: SettingsOverlayProps): ReactElement | null {
-  const [activeControl, setActiveControl] = useState<'close' | 'volume' | 'music'>('close');
+  const [activeControl, setActiveControl] = useState<'close' | 'volume' | 'music' | 'quit'>('close');
 
   const handleClose = useCallback(
     (shouldPlayClick = true) => {
@@ -71,13 +71,15 @@ export function SettingsOverlay({
       return;
     }
 
-    const order: Array<'close' | 'volume' | 'music'> = ['close', 'volume', 'music'];
+    const order: Array<'close' | 'volume' | 'music' | 'quit'> =
+      showQuitRun && onQuitRun ? ['close', 'volume', 'music', 'quit'] : ['close', 'volume', 'music'];
 
     const moveSelection = (direction: 'up' | 'down') => {
       setActiveControl((current) => {
         const currentIndex = order.indexOf(current);
+        const safeIndex = currentIndex === -1 ? 0 : currentIndex;
         const offset = direction === 'down' ? 1 : -1;
-        const nextIndex = (currentIndex + offset + order.length) % order.length;
+        const nextIndex = (safeIndex + offset + order.length) % order.length;
         return order[nextIndex];
       });
     };
@@ -116,6 +118,12 @@ export function SettingsOverlay({
             handleClose();
           } else if (activeControl === 'music') {
             handleToggleMusic();
+          } else if (activeControl === 'quit' && showQuitRun && onQuitRun) {
+            if (playClickSound) {
+              playClickSound();
+            }
+            onQuitRun();
+            handleClose(false);
           }
           break;
         }
@@ -131,7 +139,7 @@ export function SettingsOverlay({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic]);
+  }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic, onQuitRun, playClickSound, showQuitRun]);
 
   return (
     <div
@@ -219,7 +227,8 @@ export function SettingsOverlay({
                 onQuitRun();
                 handleClose(false);
               }}
-              className="w-full rounded-xl border border-rose-500/50 bg-rose-900/30 px-6 py-3 text-center text-base font-bold uppercase tracking-[0.2em] text-rose-100 transition hover:border-rose-400 hover:bg-rose-900/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400"
+              isActive={activeControl === 'quit'}
+              className="w-full rounded-xl border border-rose-500/50 bg-rose-900/30 px-6 py-3 text-center text-base font-bold uppercase tracking-[0.2em] text-rose-100 transition hover:border-rose-400 hover:bg-rose-900/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)]"
             />
           </section>
         )}

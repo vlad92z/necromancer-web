@@ -28,6 +28,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     centerPool,
     selectedRunes,
     draftSource,
+    activeElement,
     runeforgeDraftStage,
     animatingRuneIds,
     onRuneClick,
@@ -90,6 +91,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}
           draftSource={draftSource}
+          activeElement={activeElement}
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
           animatingRuneIds={animatingRuneIds}
