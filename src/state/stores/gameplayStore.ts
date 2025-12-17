@@ -23,19 +23,6 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 
-
-
-function withRuneforgeDefaults(runeforge: Runeforge): Runeforge {
-  return {
-    ...runeforge,
-    disabled: Boolean(runeforge.disabled),
-  };
-}
-
-function withRuneforgeListDefaults(runeforges: Runeforge[]): Runeforge[] {
-  return runeforges.map(withRuneforgeDefaults);
-}
-
 function areRuneforgesDisabled(runeforges: Runeforge[]): boolean {
   return runeforges.every((runeforge) => (runeforge.disabled ?? false) || runeforge.runes.length === 0);
 }
@@ -423,7 +410,7 @@ function prepareRoundReset(state: GameState): GameState {
   return {
     ...state,
     player: updatedPlayer,
-    runeforges: withRuneforgeListDefaults(filledRuneforges).map((runeforge) => ({ ...runeforge, disabled: false })),
+    runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     centerPool: [],
     turnPhase: 'select',
     game: state.game,
@@ -856,8 +843,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase !== 'select') {
         return state;
       }
-      const normalizedRuneforges = withRuneforgeListDefaults(state.runeforges);
-      const runeforge = normalizedRuneforges.find((f) => f.id === runeforgeId);
+      const runeforges = state.runeforges;
+      const runeforge = runeforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
 
       const selectionMode = state.runeforgeDraftStage ?? 'single';
@@ -874,9 +861,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
         const originalRunes = runeforge.runes;
-        const previousDisabledRuneforgeIds = normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id);
+        const disabledRuneforges = runeforges.filter((runeforge) => runeforge.disabled);
+        const previousDisabledRuneforgeIds = disabledRuneforges.map((runeforge) => runeforge.id);
 
-        const updatedRuneforges = normalizedRuneforges.map((f) =>
+        const updatedRuneforges = runeforges.map((f) =>
           f.id === runeforgeId ? { ...f, runes: remainingRunes, disabled: true } : f
         );
 
@@ -908,7 +896,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       // Global selection mode: pick the rune type from every runeforge
       const affectedRuneforges: { runeforgeId: string; originalRunes: Rune[] }[] = [];
-      const nextRuneforges = normalizedRuneforges.map((forge) => {
+      const nextRuneforges = runeforges.map((forge) => {
         const matchingRunes = forge.runes.filter((rune) => rune.runeType === runeType);
         if (matchingRunes.length > 0) {
           affectedRuneforges.push({ runeforgeId: forge.id, originalRunes: forge.runes });
@@ -919,7 +907,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         };
       });
 
-      const selectedFromAllRuneforges = normalizedRuneforges.flatMap((forge) =>
+      const selectedFromAllRuneforges = runeforges.flatMap((forge) =>
         forge.runes.filter((rune) => rune.runeType === runeType)
       );
 
@@ -928,7 +916,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
 
       const orderedRunes = prioritizeRuneById(selectedFromAllRuneforges, primaryRuneId);
-
+      const disabledRuneforges = runeforges.filter((runeforge) => runeforge.disabled);
+      const previousDisabledRuneforgeIds = disabledRuneforges.map((runeforge) => runeforge.id);
       return {
         ...state,
         runeforges: nextRuneforges,
@@ -941,7 +930,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           movedToCenter: [],
           originalRunes: runeforge.runes,
           affectedRuneforges,
-          previousDisabledRuneforgeIds: normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id),
+          previousDisabledRuneforgeIds: previousDisabledRuneforgeIds,
           previousRuneforgeDraftStage: 'global',
           selectionMode: 'global',
         },

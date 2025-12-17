@@ -61,7 +61,7 @@ export interface Runeforge {
   ownerId: Player['id'];
   runes: Rune[];
   deckDraftEffect?: DeckDraftEffect;
-  disabled?: boolean;
+  disabled: boolean;
 }
 
 /**
