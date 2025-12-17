@@ -23,8 +23,8 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 
-function areRuneforgesDisabled(runeforges: Runeforge[]): boolean {
-  return runeforges.every((runeforge) => (runeforge.disabled ?? false) || runeforge.runes.length === 0);
+function areAllRuneforgesDisabled(runeforges: Runeforge[]): boolean {
+  return runeforges.every((runeforge) => runeforge.disabled ?? false);
 }
 
 function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
@@ -868,7 +868,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           f.id === runeforgeId ? { ...f, runes: remainingRunes, disabled: true } : f
         );
 
-        const shouldUnlockRuneforges = areRuneforgesDisabled(updatedRuneforges);
+        const shouldUnlockRuneforges = areAllRuneforgesDisabled(updatedRuneforges);
         const nextRuneforgeDraftStage = shouldUnlockRuneforges ? ('global' as const) : ('single' as const);
         const unlockedRuneforges = shouldUnlockRuneforges
           ? updatedRuneforges.map((f) => ({ ...f, disabled: false }))
