@@ -50,13 +50,6 @@ export function createPatternLines(count: number = SOLO_RUN_CONFIG.wallSize): Pa
   return lines;
 }
 
-/**
- * Get all rune types in the fixed order used by the game.
- */
-export function getRuneTypes(): RuneType[] {
-  return [...RUNE_TYPES];
-}
-
 export interface SoloSizingConfig {
   factoriesPerPlayer: number;
   totalRunesPerPlayer: number;
@@ -69,9 +62,8 @@ export interface SoloSizingConfig {
  */
 export function createStartingDeck(playerId: string = SOLO_RUN_CONFIG.playerId): Rune[] {
   const deck: Rune[] = [];
-  const runeTypes = getRuneTypes();
 
-  runeTypes.forEach((runeType) => {
+  RUNE_TYPES.forEach((runeType) => {
     for (let i = 0; i <= 15; i++) {
       deck.push({
         id: `${playerId}-${runeType}-${i}`,
@@ -111,7 +103,7 @@ export function createEmptyFactories(player: Player, perPlayerCount: number): Ru
  * Create runeforges for a solo run (only the human player gets runeforges)
  */
 export function createRuneforges(playerId: string = SOLO_RUN_CONFIG.playerId): Runeforge[] {
-  return Array(SOLO_RUN_CONFIG.factoryCount)
+  return Array(SOLO_RUN_CONFIG.runeforgeCount)
     .fill(null)
     .map((_, index) => ({
       id: `${playerId}-runeforge-${index + 1}`,
@@ -173,7 +165,7 @@ export function nextGame(
     runeforges: filledRuneforges,
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
-    game: gameIndex,
+    gameIndex: gameIndex,
     round: 0,
     tooltipCards: createDefaultTooltipCards(),
     tooltipOverrideActive: false,

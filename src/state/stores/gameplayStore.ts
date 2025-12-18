@@ -27,6 +27,7 @@ function areAllRuneforgesDisabled(runeforges: Runeforge[]): boolean {
   return runeforges.every((runeforge) => runeforge.disabled ?? false);
 }
 
+//TODO: Extract to helpers
 function sortPrimaryRuneFirst(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
     return runes;
@@ -38,6 +39,7 @@ function sortPrimaryRuneFirst(runes: Rune[], primaryRuneId?: string | null): Run
   return [primaryRune, ...runes.filter((rune) => rune.id !== primaryRuneId)];
 }
 
+//TODO: Extract to helpers
 function buildRuneTypeCountMap(runes: Rune[]): Map<RuneType, number> {
   const counts = new Map<RuneType, number>();
   runes.forEach((rune) => {
@@ -47,13 +49,11 @@ function buildRuneTypeCountMap(runes: Rune[]): Map<RuneType, number> {
 }
 
 function enterDeckDraftMode(state: GameState): GameState {
-  console.log('gameplayStore: enterDeckDraftMode');
-  const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
-  const basePicks = state.victoryDraftPicks;
+  const nextLongestRun = Math.max(state.longestRun, state.gameIndex); //TODO: not sure tracking this is worth it
   const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
   const deckDraftState = createDeckDraftState(
     state.player.id,
-    basePicks,
+    state.victoryDraftPicks,
     nextLongestRun,
     state.activeArtefacts,
     selectionLimit

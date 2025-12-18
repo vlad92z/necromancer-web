@@ -10,7 +10,7 @@ export const SOLO_RUN_CONFIG = {
     /**
      * Target score will be multiplied by game number.
      */
-    baseTargetScore: 25,
+    baseTargetScore: 1,
 
     playerId: 'player-1',
     playerName: 'Arcane Apprentice',
@@ -18,6 +18,6 @@ export const SOLO_RUN_CONFIG = {
     startingArmor: 0,
 
     wallSize: 6,
-    factoryCount: 5,
-    factoryCapacity: 4,
+    runeforgeCount: 5,
+    runeforgeCapacity: 4,
 }

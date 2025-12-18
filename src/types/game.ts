@@ -54,14 +54,22 @@ export interface TooltipCard {
 }
 
 /**
- * A runeforge containing runes to draft from
+ * A runeforge containing runes to select and cast
  */
 export interface Runeforge {
   id: string;
   ownerId: Player['id'];
   runes: Rune[];
-  deckDraftEffect?: DeckDraftEffect;
   disabled: boolean;
+}
+
+/**
+ * A drafting runeforge for the the deck drafting phase
+ */
+export interface DraftRuneforge {
+  id: string;
+  runes: Rune[];
+  deckDraftEffect: DeckDraftEffect;
 }
 
 /**
@@ -215,7 +223,7 @@ export interface GameState {
 }
 
 export interface DeckDraftState {
-  runeforges: Runeforge[];
+  runeforges: DraftRuneforge[];
   picksRemaining: number;
   totalPicks: number;
   selectionLimit: number;

@@ -2,12 +2,14 @@
  * DeckDrafting utilities - helpers for post-victory deck upgrades
  */
 
-import type { DeckDraftEffect, DeckDraftState, Player, Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { DeckDraftEffect, DeckDraftState, DraftRuneforge, Player, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import type { ArtefactId } from '../types/artefacts';
 import { getDraftEffectsForType } from './runeEffects';
-import { getRuneTypes } from './gameInitialization';
+import { RUNE_TYPES } from './gameInitialization';
 import type { Runeforge } from '../types/game';
 import { modifyDraftRarityWithRing } from './artefactEffects';
+import { SOLO_RUN_CONFIG } from './soloRunConfig';
+import { DECK_DRAFTING_CONFIG } from './deckDraftingConfig';
 
 //TODO: What are all these for?
 const DEFAULT_DRAFT_PICK_COUNT = 3;
@@ -72,42 +74,40 @@ const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rar
 };
 
 function createDraftRuneforges(
-  ownerId: string,
-  runeforgeCount: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-  winStreak: number = 0,
+  ownerId: string = SOLO_RUN_CONFIG.playerId,
+  runeforgeCount: number = DECK_DRAFTING_CONFIG.runeforgeCount,
+  gameIndex: number,
   activeArtefacts: ArtefactId[] = []
-): Runeforge[] {
-  const runeTypes = getRuneTypes();
-
+): DraftRuneforge[] {
+  const runeTypes = RUNE_TYPES;
+  const capacity = SOLO_RUN_CONFIG.runeforgeCapacity;
   return Array(runeforgeCount)
     .fill(null)
     .map((_, forgeIndex) => {
       const deckDraftEffect = getDeckDraftEffectForIndex(forgeIndex);
       const runes: Rune[] = [];
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < capacity; i++) {
         const runeType = runeTypes[Math.floor(Math.random() * runeTypes.length)];
-        const baseRarity = getDraftRarity(winStreak - 1, activeArtefacts);
+        const baseRarity = getDraftRarity(gameIndex, activeArtefacts);
         const shouldBoostRarity = deckDraftEffect.type === 'betterRunes' && i === 0;
         const rarity = shouldBoostRarity ? boostRarity(baseRarity, deckDraftEffect.rarityStep) : baseRarity;
-        runes.push(createDraftRune(ownerId, runeType, forgeIndex * 4 + i, rarity));
+        runes.push(createDraftRune(ownerId, runeType, forgeIndex * capacity + i, rarity));
       }
 
       return {
-        id: `${ownerId}-draft-forge-${forgeIndex + 1}`,
-        ownerId,
+        id: `raft-forge-${forgeIndex + 1}`,
         runes,
         deckDraftEffect,
-        disabled: false //tODO: is this right?
       };
     });
 }
 
 export function createDeckDraftState(
   ownerId: string,
-  totalPicks: number = DEFAULT_DRAFT_PICK_COUNT,
-  winStreak: number = 0,
+  totalPicks: number = 33,
+  winStreak: number = 100,
   activeArtefacts: ArtefactId[] = [],
-  selectionLimit: number = DEFAULT_DECK_DRAFT_SELECTION_LIMIT
+  selectionLimit: number = 3,
 ): DeckDraftState {
   return {
     runeforges: createDraftRuneforges(
@@ -119,7 +119,7 @@ export function createDeckDraftState(
     picksRemaining: totalPicks,
     totalPicks,
     selectionLimit,
-    selectionsThisOffer: 0,
+    selectionsThisOffer: 2,
   };
 }
 
