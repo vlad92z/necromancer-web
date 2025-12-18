@@ -4,6 +4,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import { useGameplayStore } from '../../../state/stores';
+import { useCastSound } from '../../../hooks/useCastSound';
+
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
@@ -23,6 +25,17 @@ export function RuneScoreView() {
 
   const deltaGainClassName = 'text-sky-200 text-sm font-bold';
   const deltaLossClassName = "text-rose-300 text-sm font-bold";
+
+  const playCastSound = useCastSound();
+  const previousRuneScoreRef = useRef(score);
+  useEffect(() => {
+    const previousRuneScore = previousRuneScoreRef.current;
+    if (score > previousRuneScore) {
+      playCastSound();
+    }
+    previousRuneScoreRef.current = score;
+  }, [playCastSound, score]);
+
   useEffect(() => {
     const controls = animate(animatedValue, score, {
       duration: 0.45,

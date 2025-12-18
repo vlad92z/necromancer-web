@@ -8,12 +8,12 @@ import { useClickSound } from '../../../hooks/useClickSound';
 interface SoloGameOverModalProps {
   outcome: GameOutcome;
   runePowerTotal: number;
-  game: number;
+  gameIndex: number;
   targetScore?: number;
   onReturnToStart?: () => void;
 }
 
-export function SoloGameOverModal({ outcome, runePowerTotal, game, targetScore, onReturnToStart }: SoloGameOverModalProps) {
+export function SoloGameOverModal({ outcome, runePowerTotal, gameIndex, targetScore, onReturnToStart }: SoloGameOverModalProps) {
   const playClickSound = useClickSound();
   const heading = outcome === 'victory' ? 'Solo Victory' : outcome === 'defeat' ? 'Defeat' : 'Run Complete';
   const missedTarget = typeof targetScore === 'number' ? runePowerTotal < targetScore : false;
@@ -41,7 +41,7 @@ export function SoloGameOverModal({ outcome, runePowerTotal, game, targetScore, 
       <div className="mb-5 text-[15px] text-slate-300">{subline}</div>
 
       <div className="mb-5 grid grid-cols-3 gap-3">
-        <StatCard label="Games Cleared" value={game - 1} accent="#60a5fa" />
+        <StatCard label="Games Cleared" value={gameIndex} accent="#60a5fa" />
         <StatCard label="Rune Score" value={targetScore ? `${runePowerTotal} / ${targetScore}` : runePowerTotal} accent="#facc15" />
       </div>
 

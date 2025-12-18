@@ -9,6 +9,7 @@ import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
 import { PlayerBoard } from './Player/PlayerBoard';
+import { useGameplayStore } from '../../../state/stores';
 
 interface SoloGameViewProps {
   shared: GameContainerSharedProps;
@@ -18,8 +19,6 @@ interface SoloGameViewProps {
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
     player,
-    displayedHealth,
-    displayedArmor,
     selectedRuneType,
     hasSelectedRunes,
     playerHiddenPatternSlots,//TODO this vs playerLocked?
@@ -32,8 +31,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     onRuneClick,
     onCancelSelection,
     onPlaceRunes,
-    onPlaceRunesInFloor,
-    gameIndex,
     strain,
     isGameOver,
     returnToStartScreen,
@@ -41,11 +38,9 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
   const {
     outcome,
     runeScore,
-    playerStats,
     runePowerTotal,
     targetScore,
     arcaneDustReward,
-    arcaneDust,
     deckDraftState,
     isDeckDrafting,
     totalDeckSize,
@@ -56,30 +51,16 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     startNextSoloGame,
   } = gameData;
 
+  const gameIndex = useGameplayStore((state) => state.gameIndex);
   return (
     <div className="flex flex-col h-full relative">
       <div>
         <GameMetadataView
-          playerId={player.id}
-          gameIndex={gameIndex}
-          strainValue={strain}
-          arcaneDust={arcaneDust}
           runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
-          health={displayedHealth}
-          armor={displayedArmor}
-          maxHealth={player.maxHealth ?? player.health}
-          deckCount={playerStats?.deckCount ?? player.deck.length}
-          overloadedRuneCount={playerStats?.overloadedRuneCount ?? 0}
-          canOverload={hasSelectedRunes}
           onOpenOverload={onOpenOverloadOverlay}
           onOpenDeck={onOpenDeckOverlay}
           onOpenSettings={onOpenSettings}
-          isSettingsActive={activeElement?.type === 'settings'}
-          isOverloadActive={activeElement?.type === 'overload'}
-          isDeckActive={activeElement?.type === 'deck'}
-          onPlaceRunesInFloor={onPlaceRunesInFloor}
-          hasSelectedRunes={hasSelectedRunes}
-          selectedRunes={selectedRunes}
+          activeElement={activeElement?.type}
         />
       </div>
 
@@ -126,7 +107,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
         <SoloGameOverModal
           outcome={outcome}
           runePowerTotal={runePowerTotal}
-          game={gameIndex}
+          gameIndex={gameIndex}
           targetScore={targetScore}
           onReturnToStart={returnToStartScreen}
         />

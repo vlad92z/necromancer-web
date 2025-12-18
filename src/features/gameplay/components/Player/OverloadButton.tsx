@@ -15,7 +15,7 @@ export function OverloadButton({ isActive, showOverloadView }: OverloadButtonPro
     const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
     const canOverload = useGameplayStore((state) => state.selectedRunes.length > 0);
     const overloadDamage = useGameplayStore((state) => state.strain);//todo rename strain
-    const openOverloadModal = useGameplayStore((state) => state.);//todo rename strain
+    const openOverloadModal = useGameplayStore((state) => state);//todo rename strain
     const overloadRuneCount = useGameplayStore((state) => state.overloadRunes.length);
     const overloadRunes = useGameplayStore((state) => state.placeRunesInFloor);//todo rename
     const overloadTooltip = `Overload deals ${overloadDamage} damage per rune. ${overloadRuneCount} runes are currently overloaded.`;
@@ -26,12 +26,12 @@ export function OverloadButton({ isActive, showOverloadView }: OverloadButtonPro
     const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
     const overloadActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(255,211,252,0.95),_0_0_56px_rgba(125,11,52,0.55)] data-[active=true]:bg-slate-900/70';
     const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20 data-[active=true]:border-red-300 ${overloadActiveClass}`;
-const PULSE_TRANSITION: Transition = {
-  duration: 1.2,
-  repeat: Infinity,
-  repeatType: 'reverse',
-  ease: 'easeInOut',
-};
+    const PULSE_TRANSITION: Transition = {
+        duration: 1.2,
+        repeat: Infinity,
+        repeatType: 'reverse',
+        ease: 'easeInOut',
+    };
 
     const handleOverloadClick = useCallback(() => {
         if (canOverload) {
@@ -45,14 +45,14 @@ const PULSE_TRANSITION: Transition = {
         canOverload ? { boxShadow: SELECTABLE_GLOW_REST } : undefined
     ), [canOverload]);
 
-      const overloadGlowProps = useMemo(() => (
+    const overloadGlowProps = useMemo(() => (
         canOverload
-          ? {
-            animate: { boxShadow: SELECTABLE_GLOW_RANGE },
-            transition: PULSE_TRANSITION,
-          }
-          : undefined
-      ), [canOverload]);
+            ? {
+                animate: { boxShadow: SELECTABLE_GLOW_RANGE },
+                transition: PULSE_TRANSITION,
+            }
+            : undefined
+    ), [canOverload]);
 
     const overload = <button
         type="button"
@@ -75,20 +75,20 @@ const PULSE_TRANSITION: Transition = {
     </button>
     return (
         <div
-          data-player-id={"playerId"}//TODO
-          data-strain-counter="true"
+            data-player-id={"playerId"}//TODO
+            data-strain-counter="true"
         >
-          {canOverload ? (
-            <motion.div
-              className="inline-flex rounded-[16px]"
-              style={overloadGlowStyle}
-              {...overloadGlowProps}
-            >
-              {overload}
-            </motion.div>
-          ) : (
-            overload
-          )}
+            {canOverload ? (
+                <motion.div
+                    className="inline-flex rounded-[16px]"
+                    style={overloadGlowStyle}
+                    {...overloadGlowProps}
+                >
+                    {overload}
+                </motion.div>
+            ) : (
+                overload
+            )}
         </div>
     );
 }
