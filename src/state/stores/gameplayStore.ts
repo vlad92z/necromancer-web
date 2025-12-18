@@ -49,12 +49,11 @@ function buildRuneTypeCountMap(runes: Rune[]): Map<RuneType, number> {
 }
 
 function enterDeckDraftMode(state: GameState): GameState {
-  const nextLongestRun = Math.max(state.longestRun, state.gameIndex); //TODO: not sure tracking this is worth it
   const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
   const deckDraftState = createDeckDraftState(
     state.player.id,
     state.victoryDraftPicks,
-    nextLongestRun,
+    state.gameIndex,
     state.activeArtefacts,
     selectionLimit
   );
@@ -82,7 +81,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     overloadSoundPending: false,
     channelSoundPending: state.channelSoundPending,
     outcome: 'victory',
-    longestRun: nextLongestRun,
     targetScore: nextTargetScore,
     baseTargetScore: state.baseTargetScore || nextTargetScore,
   };
@@ -212,7 +210,6 @@ function handlePlayerDefeat(
   channelTriggered: boolean
 ): GameState {
   console.log('gameplayStore: handlePlayerDefeat');
-  const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
 
   trackDefeatEvent({
     gameIndex: state.gameIndex,
@@ -235,7 +232,6 @@ function handlePlayerDefeat(
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
     outcome: 'defeat' as GameOutcome,
-    longestRun: nextLongestRun,
     overloadSoundPending: overloadDamage > 0,
     channelSoundPending: channelTriggered || state.channelSoundPending,
   };
@@ -330,8 +326,6 @@ function prepareRoundReset(state: GameState): GameState {
 
   if (!playerHasEnough) {
     // Defeat
-    const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
-
     trackDefeatEvent({
       gameIndex: state.gameIndex,
       deck: player.deck,
@@ -350,7 +344,6 @@ function prepareRoundReset(state: GameState): GameState {
       turnPhase: 'game-over',
       gameIndex: state.gameIndex,
       outcome: 'defeat' as GameOutcome,
-      longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
       selectedRunes: [],
       selectionTimestamp: null,
@@ -1138,7 +1131,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const nextGameIndex = state.gameIndex
       const nextRoundNumber = state.round;
       const calculatedStrain = getOverloadDamageForRound(nextGameIndex, nextRoundNumber);
-      const longestRun = nextState.longestRun;
       return {
         ...state,
         ...nextState,
@@ -1157,7 +1149,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             : state.tooltipOverrideActive ?? false,
         baseTargetScore: soloBaseTargetScore,
         strain: calculatedStrain,
-        longestRun,
         round: nextRoundNumber,
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
@@ -1284,7 +1275,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const nextDraftState = advanceDeckDraftState(
           draftStateAfterSelection,
           state.player.id,
-          state.longestRun,
+          state.gameIndex,
           state.activeArtefacts
         );
 

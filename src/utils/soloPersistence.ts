@@ -57,11 +57,10 @@ export function getLongestSoloRun(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
-export function updateLongestSoloRun(game: number): number {
+export function updateLongestSoloRun(gameIndex: number): number {
   if (!canAccessStorage()) return 0;
-  const sanitizedGame = Math.max(0, Math.floor(game));
   const currentBest = getLongestSoloRun();
-  const nextBest = Math.max(currentBest, sanitizedGame);
+  const nextBest = Math.max(currentBest, gameIndex);
 
   if (nextBest === currentBest) {
     return currentBest;

@@ -126,7 +126,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
         <SoloGameOverModal
           outcome={outcome}
           runePowerTotal={runePowerTotal}
-          game={game}
+          game={gameIndex}
           targetScore={targetScore}
           onReturnToStart={returnToStartScreen}
         />

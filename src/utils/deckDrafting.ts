@@ -12,41 +12,30 @@ import { SOLO_RUN_CONFIG } from './soloRunConfig';
 import { DECK_DRAFTING_CONFIG } from './deckDraftingConfig';
 
 //TODO: What are all these for?
-const DEFAULT_DRAFT_PICK_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
 const DEFAULT_DECK_DRAFT_SELECTION_LIMIT = 1;
 
-const BASE_EPIC_CHANCE = 0;
-const BASE_RARE_CHANCE = 0;
-const EPIC_INCREMENT_PER_WIN = 1;
-const RARE_INCREMENT_PER_WIN = 5;
-
-const DECK_DRAFT_EFFECTS: DeckDraftEffect[] = [
-  { type: 'heal', amount: 50 },
-  { type: 'maxHealth', amount: 25 },
-  { type: 'betterRunes', rarityStep: 1 },
-];
-
-const RARITY_SEQUENCE: RuneEffectRarity[] = ['common', 'uncommon', 'rare', 'epic'];
-
 function getDeckDraftEffectForIndex(index: number): DeckDraftEffect {
-  const effectIndex = index % DECK_DRAFT_EFFECTS.length;
-  return DECK_DRAFT_EFFECTS[effectIndex];
+  const draftEffects = DECK_DRAFTING_CONFIG.draftEffects;
+  const effectIndex = index % draftEffects.length;
+  return draftEffects[effectIndex];
 }
 
 function boostRarity(rarity: RuneEffectRarity, steps: number = 1): RuneEffectRarity {
-  const currentIndex = RARITY_SEQUENCE.indexOf(rarity);
+  const rariryOrder = DECK_DRAFTING_CONFIG.rarityOrder;
+  const currentIndex = rariryOrder.indexOf(rarity);
   if (currentIndex === -1) {
     return rarity;
   }
-  const boostedIndex = Math.min(RARITY_SEQUENCE.length - 1, currentIndex + steps);
-  return RARITY_SEQUENCE[boostedIndex];
+  const boostedIndex = Math.min(rariryOrder.length - 1, currentIndex + steps);
+  return rariryOrder[boostedIndex];
 }
 
-function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): RuneEffectRarity {
-  const baseEpicChance = Math.min(100, BASE_EPIC_CHANCE + winStreak * EPIC_INCREMENT_PER_WIN);
-  const baseRareChance = Math.min(100 - baseEpicChance, BASE_RARE_CHANCE + winStreak * RARE_INCREMENT_PER_WIN);
-  
+function getDraftRarity(gameIndex: number, activeArtefacts: ArtefactId[] = []): RuneEffectRarity {
+  const config = DECK_DRAFTING_CONFIG;
+  const baseEpicChance = Math.min(100, gameIndex * config.epicChanceMultiplier);
+  const baseRareChance = Math.min(100 - baseEpicChance, gameIndex * config.rareChanceMultiplier);
+  console.log('Draft Rarity Roll:', { baseEpicChance, baseRareChance, gameIndex });
   const hasRing = activeArtefacts.includes('ring');
   const { epicChance, rareChance } = modifyDraftRarityWithRing(
     baseEpicChance,
@@ -104,22 +93,22 @@ function createDraftRuneforges(
 
 export function createDeckDraftState(
   ownerId: string,
-  totalPicks: number = 33,
-  winStreak: number = 100,
-  activeArtefacts: ArtefactId[] = [],
-  selectionLimit: number = 3,
+  totalPicks: number,
+  gameIndex: number,
+  activeArtefacts: ArtefactId[],
+  selectionLimit: number,
 ): DeckDraftState {
   return {
     runeforges: createDraftRuneforges(
       ownerId,
       DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-      winStreak,
+      gameIndex,
       activeArtefacts
     ),
     picksRemaining: totalPicks,
     totalPicks,
     selectionLimit,
-    selectionsThisOffer: 2,
+    selectionsThisOffer: 2,//TODO: Why 2?
   };
 }
 
@@ -150,7 +139,7 @@ export function advanceDeckDraftState(
   };
 }
 
-export function mergeDeckWithRuneforge(deck: Rune[], selectedRuneforge: Runeforge): Rune[] {
+export function mergeDeckWithRuneforge(deck: Rune[], selectedRuneforge: DraftRuneforge): Rune[] {
   return [...deck, ...selectedRuneforge.runes];
 }
 

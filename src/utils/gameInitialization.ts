@@ -158,6 +158,7 @@ export function nextGame(
     updatedDeck: updatedDeck
   } = fillRuneforges(runeforges, player.deck);
   player.deck = updatedDeck;
+
   return {
     gameStarted: false,
     strain: getOverloadDamageForGame(gameIndex),
@@ -183,7 +184,6 @@ export function nextGame(
     runePowerTotal: 0,
     targetScore: targetScore,
     outcome: null,
-    longestRun: 122, //TODO WHY
     deckDraftState: null,
     baseTargetScore: 237,
     deckDraftReadyForNextGame: false,

@@ -214,7 +214,7 @@ export interface GameState {
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
   outcome: GameOutcome; // Solo result (victory/defeat)
-  longestRun: number; // Furthest game reached in any run //TODO is this needed?
+  // longestRun: number; // Furthest game reached in any run //TODO is this needed?
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   baseTargetScore: number; // Configured starting target for reset scenarios //TODO remove
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run //TODO Needed?

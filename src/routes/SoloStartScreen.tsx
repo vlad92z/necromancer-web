@@ -58,7 +58,7 @@ export function SoloStartScreen() {
     };
   }, [navigate, prepareSoloMode, loadArtefactState]);
 
-  useEffect(() => {
+  useEffect(() => { //TODO: there must be a better way to do this
     const unsubscribe = useGameplayStore.subscribe((state) => {
       const persistableState = selectPersistableSoloState(state);
 
@@ -74,9 +74,10 @@ export function SoloStartScreen() {
         setHasSavedSoloRun(false);
       }
 
+      //TODO: There should be a better way
       // Always update the local `longestSoloRun` if store's longestRun or game increased.
       setLongestSoloRun((previousBest) => {
-        const nextBest = Math.max(previousBest, persistableState.longestRun ?? 0, persistableState.game ?? 0);
+        const nextBest = Math.max(previousBest, persistableState.gameIndex);
         if (nextBest === previousBest) {
           return previousBest;
         }
