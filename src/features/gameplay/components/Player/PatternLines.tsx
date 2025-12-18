@@ -39,6 +39,8 @@ export function PatternLines({
   strain,
   activePatternLineIndex,
 }: PatternLinesProps) {
+  const patternLiners = useGameplayStore((state) => state.player.patternLines);
+
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (!canPlace || !selectedRuneType) return false;
 
@@ -89,10 +91,10 @@ export function PatternLines({
     }
   };
 
+  console.log('Rendering PatternLines', patternLiners.length);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
-    
-      {patternLines.map((line, index) => {
+      {patternLiners.map((line, index) => {
         const isKeyboardActive = activePatternLineIndex === index;
         const hasActiveElement = activePatternLineIndex !== null;
         const keyboardGlowRest = '0 0 18px rgba(125, 211, 252, 0.75), 0 0 38px rgba(125, 211, 252, 0.35)';

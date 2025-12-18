@@ -5,7 +5,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, createDefaultTooltipCards } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
@@ -27,7 +27,7 @@ function areAllRuneforgesDisabled(runeforges: Runeforge[]): boolean {
   return runeforges.every((runeforge) => runeforge.disabled ?? false);
 }
 
-function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
+function sortPrimaryRuneFirst(runes: Rune[], primaryRuneId?: string | null): Rune[] {
   if (!primaryRuneId) {
     return runes;
   }
@@ -46,13 +46,8 @@ function buildRuneTypeCountMap(runes: Rune[]): Map<RuneType, number> {
   return counts;
 }
 
-function getSoloDeckTemplate(state: GameState): Rune[] {
-  return state.soloDeckTemplate;
-}
-
 function enterDeckDraftMode(state: GameState): GameState {
   console.log('gameplayStore: enterDeckDraftMode');
-  const deckTemplate = getSoloDeckTemplate(state);
   const nextLongestRun = Math.max(state.longestRun, state.game);
   const basePicks = state.victoryDraftPicks;
   const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
@@ -64,7 +59,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     selectionLimit
   );
   const arcaneDustReward = getArcaneDustReward(state.game);
-  const nextTargetScore = state.targetScore + state.runeScoreTargetIncrement;
+  const nextTargetScore = state.targetScore + 999; //TODO: should come from config
 
   if (arcaneDustReward > 0) {
     const newDustTotal = addArcaneDust(arcaneDustReward);
@@ -75,10 +70,8 @@ function enterDeckDraftMode(state: GameState): GameState {
     ...state,
     deckDraftState,
     deckDraftReadyForNextGame: false,
-    soloDeckTemplate: deckTemplate,
     turnPhase: 'deck-draft' as const,
     runeforges: [],
-    centerPool: [],
     runeforgeDraftStage: 'single' as const,
     selectedRunes: [],
     overloadRunes: [],
@@ -172,14 +165,9 @@ function clearFloorLines(player: Player): Player {
   };
 }
 
-function isRoundExhausted(runeforges: GameState['runeforges'], centerPool: GameState['centerPool']): boolean {
+function isRoundExhausted(runeforges: GameState['runeforges']): boolean { //TODO: Not needed
   const allRuneforgesEmpty = runeforges.every((runeforge) => runeforge.runes.length === 0);
-  return allRuneforgesEmpty && centerPool.length === 0;
-}
-
-function getNextCenterPool(state: GameState): Rune[] {
-  // Remaining runes now stay in their runeforge; center pool is unchanged here
-  return state.centerPool;
+  return allRuneforgesEmpty;
 }
 
 function getChannelScoreBonusFromOverloadedRunes(
@@ -233,7 +221,6 @@ function getOverloadResult(
 function handlePlayerDefeat(
   state: GameState,
   updatedPlayer: Player,
-  nextCenterPool: Rune[],
   overloadDamage: number,
   channelTriggered: boolean
 ): GameState {
@@ -258,7 +245,6 @@ function handlePlayerDefeat(
     overloadRunes: [],
     selectionTimestamp: null,
     draftSource: null,
-    centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
     outcome: 'defeat' as GameOutcome,
@@ -351,9 +337,9 @@ function prepareRoundReset(state: GameState): GameState {
   const currentStrain = state.strain;
   const nextRound = state.round + 1;
   const nextStrain = getOverloadDamageForRound(state.game, nextRound);
-  const clearedPlayer = clearFloorLines(state.player);
-  const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
-  const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
+  const playerwithClearFloorLine = clearFloorLines(state.player); //TODO: Should this happen every round?
+  const runesNeededForRound = 20; //TODO: should come from config
+  const playerHasEnough = playerwithClearFloorLine.deck.length >= runesNeededForRound;
 
   if (!playerHasEnough) {
     // Defeat
@@ -361,28 +347,24 @@ function prepareRoundReset(state: GameState): GameState {
 
     trackDefeatEvent({
       gameNumber: state.game,
-      deck: clearedPlayer.deck,
+      deck: playerwithClearFloorLine.deck,
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
       cause: 'deck-empty',
       strain: currentStrain,
-      health: clearedPlayer.health,
+      health: playerwithClearFloorLine.health,
       targetScore: state.targetScore,
     });
 
     return {
       ...state,
-      player: clearedPlayer,
-      strain: nextStrain,
-      startingStrain: nextStrain,
+      player: playerwithClearFloorLine,
       runeforges: [],
-      centerPool: [],
       turnPhase: 'game-over',
       game: state.game,
       outcome: 'defeat' as GameOutcome,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
-      lockedPatternLines: { [clearedPlayer.id]: [] },
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
@@ -395,29 +377,22 @@ function prepareRoundReset(state: GameState): GameState {
     };
   }
 
-  const emptyFactories = createSoloFactories(clearedPlayer, state.factoriesPerPlayer);
-  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
-    emptyFactories,
-    { [clearedPlayer.id]: clearedPlayer.deck },
-    state.runesPerRuneforge
-  );
+  const emptyFactories = createSoloFactories(playerwithClearFloorLine, 5);//TODO: remove
+  const { runeforges: filledRuneforges, updatedDeck } = fillFactories(emptyFactories, playerwithClearFloorLine.deck);
 
   const updatedPlayer: Player = {
-    ...clearedPlayer,
-    deck: decksByPlayer[clearedPlayer.id] ?? [],
+    ...playerwithClearFloorLine,
+    deck: updatedDeck,
   };
 
   return {
     ...state,
     player: updatedPlayer,
     runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
-    centerPool: [],
     turnPhase: 'select',
     game: state.game,
     round: nextRound,
     strain: nextStrain,
-    strainMultiplier: state.strainMultiplier,
-    startingStrain: nextStrain,
     outcome: null,
     lockedPatternLines: { [updatedPlayer.id]: [], },
     shouldTriggerEndRound: false,
@@ -441,7 +416,6 @@ export interface GameplayStore extends GameState {
   returnToStartScreen: () => void;
   startNextSoloGame: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
-  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void;
   placeRunes: (patternLineIndex: number) => void;
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
@@ -460,17 +434,6 @@ export interface GameplayStore extends GameState {
 function cancelSelectionState(state: GameplayStore): GameplayStore {
   if (state.turnPhase === 'deck-draft' || state.selectedRunes.length === 0 || !state.draftSource) {
     return state;
-  }
-
-  if (state.draftSource.type === 'center') {
-    return {
-      ...state,
-      centerPool: [...state.draftSource.originalRunes],
-      selectedRunes: [],
-      selectionTimestamp: null,
-      draftSource: null,
-      turnPhase: 'select' as const,
-    };
   }
 
   const runeforgeId = state.draftSource.runeforgeId;
@@ -584,13 +547,11 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     armor: nextArmor,
   };
 
-  const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
       state,
       updatedPlayer,
-      nextCenterPool,
       overloadDamage,
       channelTriggered
     );
@@ -602,7 +563,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
       player: updatedPlayer,
-      centerPool: nextCenterPool,
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
@@ -621,7 +581,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+  const shouldEndRound = isRoundExhausted(state.runeforges);
 
   const nextTurnPhase =
     completedLines.length > 0
@@ -637,7 +597,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
     selectionTimestamp: null,
     draftSource: null,
-    centerPool: nextCenterPool,
     turnPhase: nextTurnPhase,
     shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
@@ -676,13 +635,11 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     armor: nextArmor,
   };
 
-  const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
       state,
       updatedPlayer,
-      nextCenterPool,
       overloadDamage,
       channelTriggered
     );
@@ -694,7 +651,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
       player: updatedPlayer,
-      centerPool: nextCenterPool,
       selectedRunes: [],
       selectionTimestamp: null,
       draftSource: null,
@@ -713,7 +669,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+  const shouldEndRound = isRoundExhausted(state.runeforges);
 
   return {
     ...state,
@@ -722,7 +678,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     overloadRunes: [...state.overloadRunes, ...selectedRunes],
     selectionTimestamp: null,
     draftSource: null,
-    centerPool: nextCenterPool,
     turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
@@ -859,7 +814,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
         if (selectedRunes.length === 0) return state;
 
-        const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
+        const orderedRunes = sortPrimaryRuneFirst(selectedRunes, primaryRuneId);
         const originalRunes = runeforge.runes;
         const disabledRuneforges = runeforges.filter((runeforge) => runeforge.disabled);
         const previousDisabledRuneforgeIds = disabledRuneforges.map((runeforge) => runeforge.id);
@@ -915,7 +870,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
 
-      const orderedRunes = prioritizeRuneById(selectedFromAllRuneforges, primaryRuneId);
+      const orderedRunes = sortPrimaryRuneFirst(selectedFromAllRuneforges, primaryRuneId);
       const disabledRuneforges = runeforges.filter((runeforge) => runeforge.disabled);
       const previousDisabledRuneforgeIds = disabledRuneforges.map((runeforge) => runeforge.id);
       return {
@@ -959,7 +914,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
       if (completedLines.length === 0) {
-        const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+        const shouldEndRound = isRoundExhausted(state.runeforges);
 
         return {
           ...state,
@@ -1009,22 +964,20 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         scoringSteps.push(...segmentSteps);
 
-        if (state.patternLineLock) {
-          const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
-          updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(index)
-            ? existingLocked
-            : [...existingLocked, index];
-        }
+        const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
+        updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(index)
+          ? existingLocked
+          : [...existingLocked, index];
       });
 
-      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+      const shouldEndRound = isRoundExhausted(state.runeforges);
       const sequenceId = Date.now();
       const baseHealth = currentPlayer.health;
       const baseArmor = currentPlayer.armor;
       const baseRunePowerTotal = state.runePowerTotal;
       const scoringDeltas = accumulateScoringDeltas(scoringSteps);
       arcaneDustGain = scoringDeltas.arcaneDust;
-      const maxHealth = currentPlayer.maxHealth ?? state.startingHealth;
+      const maxHealth = currentPlayer.maxHealth;
       const targetHealth = Math.min(maxHealth, baseHealth + scoringDeltas.healing);
       const targetArmor = Math.max(0, baseArmor + scoringDeltas.armor);
       const targetRunePowerTotal = baseRunePowerTotal + scoringDeltas.damage;
@@ -1063,7 +1016,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           armor: targetArmor,
         },
         turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
-        shouldTriggerEndRound: shouldEndRound,
+        shouldTriggerEndRound: shouldEndRound, //TODO why would both be needed?
         scoringSequence,
         lockedPatternLines: updatedLockedPatternLines,
         outcome: state.outcome,
@@ -1099,42 +1052,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     if (scoringSequenceForAnimation) {
       runScoringSequence(scoringSequenceForAnimation, set);
     }
-  },
-
-  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
-    set((state) => {
-      if (state.turnPhase === 'place') {
-        return attemptAutoPlacement(state);
-      }
-      if (state.turnPhase !== 'select') {
-        return state;
-      }
-      const hasAccessibleRuneforges = state.runeforges.some(
-        (f) => f.runes.length > 0
-      );
-
-      if (hasAccessibleRuneforges) {
-        return state;
-      }
-
-      const originalCenterRunes = [...state.centerPool];
-      // Get all runes of selected type from center
-      const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
-      const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);
-
-      // If no runes of this type, do nothing
-      if (selectedRunes.length === 0) return state;
-      const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
-
-      return {
-        ...state,
-        centerPool: remainingRunes,
-        selectedRunes: [...state.selectedRunes, ...orderedRunes],
-        selectionTimestamp: Date.now(),
-        draftSource: { type: 'center', originalRunes: originalCenterRunes },
-        turnPhase: 'place' as const,
-      };
-    });
   },
 
   placeRunes: (patternLineIndex: number) => {
@@ -1185,10 +1102,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  startSoloRun: (config?: Partial<RunConfig>) => {
+  startSoloRun: () => {
     clearScoringTimeout();
     set(() => {
-      const baseState = initializeSoloGame(config);
+      const baseState = initializeSoloGame();
       const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
       const nextState = {
         ...baseState,
@@ -1202,17 +1119,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         deck: nextState.player.deck,
         targetScore: nextState.targetScore,
         strain: nextState.strain,
-        startingHealth: nextState.startingHealth,
+        startingHealth: 452,
       });
 
       return nextState;
     });
   },
 
-  prepareSoloMode: (config?: Partial<RunConfig>) => {
+  prepareSoloMode: () => {
     clearScoringTimeout();
     set(() => ({
-      ...initializeSoloGame(config),
+      ...initializeSoloGame(),
       gameStarted: false,
     }));
   },
@@ -1240,12 +1157,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   hydrateGameState: (nextState: GameState) => {
     clearScoringTimeout();
     set((state) => {
-      // const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
-      // if (!shouldMerge) {
-      //   return state;
-      // }
-      //TODO WTF is happening?
-      const deckTemplate = nextState.soloDeckTemplate;
       const soloBaseTargetScore =
         typeof nextState.baseTargetScore === 'number'
           ? nextState.baseTargetScore
@@ -1262,12 +1173,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           : typeof state.round === 'number'
             ? state.round
             : 1;
-      const soloStartingStrain = getOverloadDamageForGame(nextGameNumber);
       const calculatedStrain = getOverloadDamageForRound(nextGameNumber, nextRoundNumber);
-      const storedStartingStrain =
-        typeof nextState.startingStrain === 'number'
-          ? nextState.startingStrain
-          : soloStartingStrain;
       const longestRun =
         typeof nextState.longestRun === 'number'
           ? nextState.longestRun
@@ -1280,7 +1186,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...nextState.player,
           armor: nextState.player?.armor ?? state.player.armor ?? 0,
         },
-        runeforges: withRuneforgeListDefaults(nextState.runeforges ?? state.runeforges),
+        runeforges: nextState.runeforges ?? state.runeforges,
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
         tooltipCards: nextState.tooltipCards ?? state.tooltipCards ?? createDefaultTooltipCards(),
@@ -1288,20 +1194,15 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           typeof nextState.tooltipOverrideActive === 'boolean'
             ? nextState.tooltipOverrideActive
             : state.tooltipOverrideActive ?? false,
-        soloDeckTemplate: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
         strain: calculatedStrain,
-        startingStrain: storedStartingStrain,
         longestRun,
         round: nextRoundNumber,
         selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
         scoringSequence: null,
-        runeScoreTargetIncrement:
-          typeof nextState.runeScoreTargetIncrement === 'number'
-            ? nextState.runeScoreTargetIncrement
-            : state.runeScoreTargetIncrement,
+        runeScoreTargetIncrement: 7789,
         victoryDraftPicks:
           typeof nextState.victoryDraftPicks === 'number'
             ? nextState.victoryDraftPicks
@@ -1346,9 +1247,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
 
-      const runeInDeck = state.player.deck.find((rune) => rune.id === runeId);
-      const runeInTemplate = state.soloDeckTemplate.find((rune) => rune.id === runeId);
-      const runeToRemove = runeInDeck ?? runeInTemplate;
+      const runeToRemove = state.player.deck.find((rune) => rune.id === runeId);
 
       if (!runeToRemove) {
         return state;
@@ -1363,10 +1262,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       } as const;
       dustAwarded = rarity ? rarityDustMap[rarity] ?? 0 : 0;
 
-      const updatedDeck = runeInDeck
+      const updatedDeck = runeToRemove
         ? state.player.deck.filter((rune) => rune.id !== runeId)
         : state.player.deck;
-      const updatedDeckTemplate = state.soloDeckTemplate.filter((rune) => rune.id !== runeId);
+      const updatedDeckTemplate = state.player.deck.filter((rune) => rune.id !== runeId);
 
       if (dustAwarded > 0) {
         const nextDustTotal = addArcaneDust(dustAwarded);
@@ -1397,13 +1296,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
 
-      const deckTemplate = getSoloDeckTemplate(state);
       const playerAfterEffect = applyDeckDraftEffectToPlayer(
         state.player,
         selectedRuneforge.deckDraftEffect,
-        state.startingHealth
+        state.player.maxHealth
       );
-      const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
+      const updatedDeckTemplate = mergeDeckWithRuneforge(state.player.deck, selectedRuneforge);
       const updatedPlayer: Player = {
         ...playerAfterEffect,
         deck: mergeDeckWithRuneforge(playerAfterEffect.deck, selectedRuneforge),
@@ -1476,30 +1374,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   startNextSoloGame: () => {
     set((state) => {
-      const deckTemplate = getSoloDeckTemplate(state);
       const nextTarget = state.targetScore;
-      const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
       const nextGame = state.game + 1;
       const nextStrain = getOverloadDamageForGame(nextGame);
       const previousHealth = Math.max(0, state.player.health);
-      const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
+      const nextMaxHealth = state.player.maxHealth;
       const clampedHealth = Math.min(nextMaxHealth, previousHealth);
-      const nextGameState = initializeSoloGame(
-        {
-          startingHealth: state.startingHealth,
-          startingStrain: nextStrain,
-          strainMultiplier: state.strainMultiplier,
-          factoriesPerPlayer: state.factoriesPerPlayer,
-          deckRunesPerType,
-          targetRuneScore: nextTarget,
-          patternLinesLockOnComplete: state.patternLineLock,
-        },
-        {
-          startingDeck: deckTemplate,
-          targetScore: nextTarget,
-          longestRun: state.longestRun,
-        }
-      );
+      const nextGameState = initializeSoloGame();
       const nextState = {
         ...nextGameState,
         player: {
@@ -1511,7 +1392,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         gameStarted: true,
         strain: nextStrain,
         startingStrain: nextStrain,
-        soloDeckTemplate: deckTemplate,
         soloBaseTargetScore: state.baseTargetScore || nextTarget,
         deckDraftState: null,
         deckDraftReadyForNextGame: false,
@@ -1524,7 +1404,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         deck: nextState.player.deck,
         targetScore: nextState.targetScore,
         strain: nextState.strain,
-        startingHealth: nextState.startingHealth,
+        startingHealth: nextState.player.maxHealth,
       });
 
       return nextState;

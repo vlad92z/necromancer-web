@@ -25,12 +25,10 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     playerHiddenPatternSlots,//TODO this vs playerLocked?
     playerLockedLines,
     runeforges,
-    centerPool,
     selectedRunes,
     draftSource,
     activeElement,
     runeforgeDraftStage,
-    animatingRuneIds,
     onRuneClick,
     onCancelSelection,
     onPlaceRunes,
@@ -39,7 +37,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     strain,
     isGameOver,
     returnToStartScreen,
-    runesPerRuneforge,
   } = shared;
   const {
     outcome,
@@ -89,7 +86,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
         <RuneSelectionTable
           runeforges={runeforges}
-          centerPool={centerPool}
           onRuneClick={onRuneClick}
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}
@@ -97,8 +93,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           activeElement={activeElement}
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
-          animatingRuneIds={animatingRuneIds}
-          runesPerRuneforge={runesPerRuneforge}
         />
 
 

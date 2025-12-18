@@ -96,20 +96,15 @@ export interface FloorLine {
   maxCapacity: number;
 }
 
-/**
- * Solo run configuration values entered on the start screen
- */
-export interface RunConfig {
-  startingHealth: number;
-  startingStrain: number;
-  strainMultiplier: number;
-  factoriesPerPlayer: number;
-  deckRunesPerType: number;
-  targetRuneScore: number;
-  runeScoreTargetIncrement: number;
-  victoryDraftPicks: number;
-  patternLinesLockOnComplete: boolean;
-}
+// /**
+//  * Solo run configuration values entered on the start screen
+//  */
+// export interface RunConfig {
+//   startingHealth: number;
+//   targetRuneScore: number;
+//   runeScoreTargetIncrement: number;
+//   victoryDraftPicks: number;
+// }
 
 /**
  * Solo game ending state
@@ -126,7 +121,7 @@ export interface Player {
   wall: ScoringWall;
   floorLine: FloorLine;
   health: number; // Current health (starts at configurable amount)
-  maxHealth?: number; // Maximum health cap (initialized at game start)
+  maxHealth: number; // Maximum health cap (initialized at game start)
   armor: number; // Temporary shield that absorbs damage before health
   deck: Rune[]; // Player's deck of runes for this run
 }
@@ -186,30 +181,15 @@ export interface ScoringSequenceState {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
-  factoriesPerPlayer: number; // Runeforge count for the current solo setup
-  runesPerRuneforge: number; // Number of runes dealt into each runeforge
-  startingHealth: number; // Health pool per player for the current configuration
-  overflowCapacity: number; // Floor line capacity that determines overflow penalties
   player: Player;
-  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
-  centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   runeforgeDraftStage: 'single' | 'global';
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
-  tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected
+  tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected TODO REMOVE
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
-  /**
-   * Damage dealt for every overload rune, derived from the current game number.
-   * Progression caps at the final configured value for later games.
-   */
   strain: number;
-  /**
-   * Reserved for potential future tuning of overload scaling.
-   */
-  strainMultiplier: number;
-  startingStrain: number; // Configured strain at the start of the run
   selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   draftSource:
@@ -223,7 +203,6 @@ export interface GameState {
         previousRuneforgeDraftStage?: 'single' | 'global';
         selectionMode?: 'single' | 'global';
       }
-    | { type: 'center'; originalRunes: Rune[] }
     | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
@@ -232,18 +211,16 @@ export interface GameState {
   channelSoundPending: boolean; // Flag to trigger lightning SFX when channel effects resolve
   selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
   lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
-  shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
+  shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect //TODO NOT NEEDED
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
-  runeScoreTargetIncrement: number; // Score increase applied after each victory
   outcome: GameOutcome; // Solo result (victory/defeat)
-  patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
-  longestRun: number; // Furthest game reached in any run
+  longestRun: number; // Furthest game reached in any run //TODO is this needed?
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
-  baseTargetScore: number; // Configured starting target for reset scenarios
-  deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
+  baseTargetScore: number; // Configured starting target for reset scenarios //TODO remove
+  deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run //TODO Needed?
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
-  victoryDraftPicks: number; // Number of draft picks granted after a victory
+  victoryDraftPicks: number; // Number of draft picks granted after a victory //TODO remove
 }
 
 export interface DeckDraftState {

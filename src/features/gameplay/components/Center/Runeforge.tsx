@@ -12,7 +12,6 @@ import type { ActiveElement } from '../keyboardNavigation';
 interface RuneforgeProps {
   runeforgeIndex: number;
   runeforge: RuneforgeType;
-  runesPerRuneforge: number;
   hoveredRuneType: RuneType | null;
   hasSelectedRunes: boolean;
   isGlobalSelection: boolean;
@@ -36,7 +35,6 @@ interface RuneforgeProps {
 export function Runeforge({
   runeforgeIndex,
   runeforge,
-  runesPerRuneforge,
   hoveredRuneType,
   hasSelectedRunes,
   isGlobalSelection,
@@ -108,8 +106,8 @@ export function Runeforge({
   );
 
   const slotCount = useMemo(
-    () => Math.max(runesPerRuneforge, displayedRunes.length, 1),
-    [displayedRunes.length, runesPerRuneforge]
+    () => Math.max(4, displayedRunes.length, 1),
+    [displayedRunes.length, 4]
   );
 
   const slots = useMemo(

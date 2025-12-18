@@ -7,10 +7,9 @@ import { useNavigate } from 'react-router-dom';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameContainer, type GameContainerHandle } from '../features/gameplay/components/GameContainer';
-import type { GameState, RunConfig } from '../types/game';
+import type { GameState } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
-import { DEFAULT_SOLO_CONFIG } from '../utils/gameInitialization';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
@@ -97,13 +96,6 @@ export function SoloStartScreen() {
     }
   }, [gameStarted]);
 
-  const handleStartSolo = useCallback(
-    (config: RunConfig) => {
-      startSoloRun(config);
-    },
-    [startSoloRun],
-  );
-
   const handleContinueSolo = useCallback(() => {
     const savedState = loadSoloState();
     if (!savedState) {
@@ -165,7 +157,7 @@ export function SoloStartScreen() {
           handleContinueSolo();
           return;
         case 'new':
-          handleStartSolo(DEFAULT_SOLO_CONFIG);
+          startSoloRun();
           return;
         default:
           return;
@@ -242,7 +234,7 @@ export function SoloStartScreen() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeElement, artefactsRef, gameContainerRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
+  }, [activeElement, artefactsRef, gameContainerRef, gameStarted, handleBack, handleContinueSolo, handleManage, hasSavedSoloRun, playClickSound, showArtefactsModal]);
 
   const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
   const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';
@@ -320,7 +312,7 @@ export function SoloStartScreen() {
           )}
           <ClickSoundButton
             title="New Game"
-            action={() => handleStartSolo(DEFAULT_SOLO_CONFIG)}
+            action={() => startSoloRun()}
             className={newGameButtonClasses}
             isActive={activeElement === 'new'}
           />

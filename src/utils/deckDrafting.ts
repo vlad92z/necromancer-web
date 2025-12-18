@@ -12,7 +12,6 @@ import { modifyDraftRarityWithRing } from './artefactEffects';
 //TODO: What are all these for?
 const DEFAULT_DRAFT_PICK_COUNT = 3;
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
-const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
 const DEFAULT_DECK_DRAFT_SELECTION_LIMIT = 1;
 
 const BASE_EPIC_CHANCE = 0;
@@ -75,7 +74,6 @@ const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rar
 function createDraftRuneforges(
   ownerId: string,
   runeforgeCount: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-  runesPerRuneforge: number = DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
   winStreak: number = 0,
   activeArtefacts: ArtefactId[] = []
 ): Runeforge[] {
@@ -86,12 +84,12 @@ function createDraftRuneforges(
     .map((_, forgeIndex) => {
       const deckDraftEffect = getDeckDraftEffectForIndex(forgeIndex);
       const runes: Rune[] = [];
-      for (let i = 0; i < runesPerRuneforge; i++) {
+      for (let i = 0; i < 4; i++) {
         const runeType = runeTypes[Math.floor(Math.random() * runeTypes.length)];
         const baseRarity = getDraftRarity(winStreak - 1, activeArtefacts);
         const shouldBoostRarity = deckDraftEffect.type === 'betterRunes' && i === 0;
         const rarity = shouldBoostRarity ? boostRarity(baseRarity, deckDraftEffect.rarityStep) : baseRarity;
-        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i, rarity));
+        runes.push(createDraftRune(ownerId, runeType, forgeIndex * 4 + i, rarity));
       }
 
       return {
@@ -99,6 +97,7 @@ function createDraftRuneforges(
         ownerId,
         runes,
         deckDraftEffect,
+        disabled: false //tODO: is this right?
       };
     });
 }
@@ -114,7 +113,6 @@ export function createDeckDraftState(
     runeforges: createDraftRuneforges(
       ownerId,
       DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-      DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
       winStreak,
       activeArtefacts
     ),
@@ -142,7 +140,6 @@ export function advanceDeckDraftState(
     runeforges: createDraftRuneforges(
       ownerId,
       DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-      DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
       winStreak,
       activeArtefacts
     ),

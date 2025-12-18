@@ -83,7 +83,6 @@ export interface GameContainerSharedProps {
   strain: number;
   isSelectionPhase: boolean;
   isGameOver: boolean;
-  runesPerRuneforge: number;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
 
   // Selection state
@@ -95,17 +94,13 @@ export interface GameContainerSharedProps {
 
   // Board data
   runeforges: GameState['runeforges'];
-  centerPool: GameState['centerPool'];
 
   // Locks and visibility
   playerLockedLines: number[];
   playerHiddenPatternSlots?: Set<string>;
-  animatingRuneIds: string[];
-  hiddenCenterRuneIds: Set<string>;
 
   // Actions
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onCancelSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
   onPlaceRunesInFloor: () => void;
@@ -120,8 +115,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const {
     player,
     runeforges,
-    centerPool,
-    runesPerRuneforge,
     runeforgeDraftStage,
     selectedRunes,
     turnPhase,
@@ -129,7 +122,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     shouldTriggerEndRound,
     draftSource,
     strain,
-    soloDeckTemplate,
     overloadRunes,
   } = gameState;
   const currentGame = useGameplayStore((state) => state.game);
@@ -144,7 +136,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const displayedArcaneDust = scoringSequence ? scoringSequence.displayArcaneDust : arcaneDustTotal;
   const {
     draftRune,
-    draftFromCenter,
     placeRunes,
     moveRunesToWall,
     placeRunesInFloor,
@@ -219,26 +210,19 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [showDeckOverlay, setShowDeckOverlay] = useState(false);
   const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
-  const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]);
   const {
     animatingRunes: placementAnimatingRunes,
-    runeforgeAnimatingRunes: centerAnimatingRunes,
-    activeAnimatingRunes,
-    animatingRuneIds,
     hiddenPatternSlots,
-    hiddenCenterRuneIds,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,
-    handleRuneforgeAnimationComplete,
   } = useRunePlacementAnimations({
     player,
     selectedRunes,
     draftSource,
-    centerPool,
   });
 
   useRunePlacementSounds(
-    activeAnimatingRunes,
+    placementAnimatingRunes,
     soundVolume,
     overloadSoundPending,
     acknowledgeOverloadSound,
@@ -278,13 +262,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       draftRune(runeforgeId, runeType, runeId);
     },
     [draftRune],
-  );
-
-  const handleCenterRuneClick = useCallback(
-    (runeType: RuneType, runeId: string) => {
-      draftFromCenter(runeType, runeId);
-    },
-    [draftFromCenter],
   );
 
   const playerHiddenPatternSlots = useMemo(
@@ -419,7 +396,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const computeRuneforgeSlots = useCallback(
     (runeforge: RuneforgeType): Array<Rune | null> => {
-      const totalSlots = Math.max(runesPerRuneforge, runeforge.runes.length, 1);
+      const totalSlots = Math.max(4, runeforge.runes.length, 1);//TODO: make dynamic based on runesPerRuneforge prop
       const existingAssignments = runeforgeSlotAssignmentsRef.current[runeforge.id] ?? {};
       const nextAssignments: Record<string, number> = {};
       const usedSlots = new Set<number>();
@@ -457,7 +434,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
       return Array.from({ length: totalSlots }, (_, index) => runeBySlot.get(index) ?? null);
     },
-    [runesPerRuneforge],
+    [4],//todo
   );
 
   useEffect(() => {
@@ -1164,7 +1141,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       strain,
       isSelectionPhase: isSelectionPhase,
       isGameOver,
-      runesPerRuneforge,
       runeforgeDraftStage,
       selectedRuneType,
       selectedRunes,
@@ -1172,37 +1148,28 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       draftSource,
       activeElement,
       runeforges,
-      centerPool,
       playerLockedLines,
       playerHiddenPatternSlots,
-      animatingRuneIds,
-      hiddenCenterRuneIds,
       onRuneClick: handleRuneClick,
-      onCenterRuneClick: handleCenterRuneClick,
       onCancelSelection: handleCancelSelection,
       onPlaceRunes: handlePatternLinePlacement,
       onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
       returnToStartScreen,
     }),
     [
-      animatingRuneIds,
       activeElement,
-      centerPool,
       displayedArmor,
       displayedHealth,
       currentGame,
       draftSource,
       handleCancelSelection,
-      handleCenterRuneClick,
       handlePatternLinePlacement,
       handlePlaceRunesInFloorWrapper,
       handleRuneClick,
       hasSelectedRunes,
-      hiddenCenterRuneIds,
       isSelectionPhase,
       isGameOver,
       player,
-      runesPerRuneforge,
       playerHiddenPatternSlots,
       playerLockedLines,
       strain,
@@ -1223,7 +1190,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       runePowerTotal: displayedRunePowerTotal,
       arcaneDust: displayedArcaneDust,
       arcaneDustReward: getArcaneDustReward(currentGame),
-      totalDeckSize: fullDeck.length,
+      totalDeckSize: 500, //TODO fix
       deckDraftState: gameState.deckDraftState,
       isDeckDrafting,
       onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
@@ -1236,7 +1203,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       displayedArcaneDust,
       currentGame,
       gameState.deckDraftState,
-      fullDeck.length,
       handleOpenDeckOverlay,
       handleOpenOverloadOverlay,
       isDeckDrafting,
@@ -1275,7 +1241,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       {showDeckOverlay && (
         <DeckOverlay
           deck={player.deck}
-          fullDeck={fullDeck}
           playerName={player.name}
           onClose={handleCloseDeckOverlay}
           isDeckDrafting={isDeckDrafting}
@@ -1304,7 +1269,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       )
       }
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
-      <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
     </div>
   );
 });

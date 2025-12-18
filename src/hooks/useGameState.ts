@@ -10,8 +10,7 @@ import { useGameplayStore } from '../state/stores/gameplayStore';
  */
 export function useFactories() {
   return useGameplayStore((state) => ({
-    runeforges: state.runeforges,
-    centerPool: state.centerPool,
+    runeforges: state.runeforges
   }));
 }
 

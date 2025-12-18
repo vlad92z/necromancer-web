@@ -16,7 +16,6 @@ import type { ActiveElement } from '../keyboardNavigation';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
-  centerPool: Rune[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
@@ -25,13 +24,11 @@ interface RuneSelectionTableProps {
   onCancelSelection: () => void;
   animatingRuneIds?: string[];
   hideOpponentRow?: boolean;
-  runesPerRuneforge: number;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
 }
 
 export function RuneSelectionTable({
   runeforges,
-  centerPool,
   onRuneClick,
   hasSelectedRunes,
   selectedRunes,
@@ -39,7 +36,6 @@ export function RuneSelectionTable({
   activeElement,
   onCancelSelection,
   animatingRuneIds,
-  runesPerRuneforge,
   runeforgeDraftStage,
 }: RuneSelectionTableProps) {
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
@@ -89,13 +85,12 @@ export function RuneSelectionTable({
     () => {
       const counts = getRuneTypeCounts({
         runeforges,
-        centerPool,
         selectedRunes,
         draftSource
       });
       return counts;
     },
-    [centerPool, draftSource, runeforges, selectedRunes]
+    [draftSource, runeforges, selectedRunes]
   );
 
   const computeSelectionRunes = useCallback(
@@ -168,7 +163,6 @@ export function RuneSelectionTable({
             key={runeforge.id}
             runeforgeIndex={runeforgeIndex}
             runeforge={runeforge}
-            runesPerRuneforge={runesPerRuneforge}
             hoveredRuneType={hoveredRuneTypeByRuneforge[runeforge.id] ?? null}
             hasSelectedRunes={hasSelectedRunes}
             isGlobalSelection={isGlobalSelection}
