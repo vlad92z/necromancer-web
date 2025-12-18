@@ -298,10 +298,7 @@ export function GameMetadataView({
           isActive={isDeckActive}
         />
         <HealthView/>
-        <RuneScoreView
-          score={runeScore.currentScore}
-          maxScore={runeScore.targetScore}
-        />
+        <RuneScoreView/>
       </div>
     </div>
   );

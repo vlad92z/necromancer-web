@@ -10,7 +10,7 @@ export const SOLO_RUN_CONFIG = {
     /**
      * Target score will be multiplied by game number.
      */
-    baseTargetScore: 1,
+    baseTargetScore: 10,
 
     playerId: 'player-1',
     playerName: 'Arcane Apprentice',

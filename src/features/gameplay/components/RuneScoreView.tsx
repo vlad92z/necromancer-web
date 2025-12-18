@@ -3,20 +3,14 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import { useGameplayStore } from '../../../state/stores';
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
-interface RuneScoreViewProps {
-  score: number;
-  maxScore: number;
-}
-
-
-export function RuneScoreView({
-  score,
-  maxScore
-}: RuneScoreViewProps) {
-  const progress = Math.min(1, score / maxScore);
+export function RuneScoreView() {
+  const score = useGameplayStore((state) => state.runePowerTotal);
+  const targetScore = useGameplayStore((state) => state.targetScore);
+  const progress = Math.min(1, score / targetScore);
   const progressPercent = Math.round(progress * 100);
   const previousValueRef = useRef(score);
   const sequenceRef = useRef(0);
@@ -68,7 +62,7 @@ export function RuneScoreView({
     <div className={`w-full flex flex-col gap-2 py-3 px-3.5`}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">RUNE SCORE</div>
-        
+
         <div className="flex items-center gap-2 min-w-[120px] justify-end">
           <AnimatePresence>
             {indicator && (
@@ -86,7 +80,7 @@ export function RuneScoreView({
             )}
           </AnimatePresence>
           <motion.span className='text-yellow-400 font-extrabold text-base text-right whitespace-nowrap flex-shrink-0'>
-            {`${displayedValue} / ${maxScore}`}
+            {`${displayedValue} / ${targetScore}`}
           </motion.span>
         </div>
       </div>
