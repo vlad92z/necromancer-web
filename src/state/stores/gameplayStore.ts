@@ -155,16 +155,6 @@ function getDisplayTotalsForIndex(sequence: ScoringSequenceState, activeIndex: n
   };
 }
 
-function clearFloorLines(player: Player): Player {
-  return {
-    ...player,
-    floorLine: {
-      ...player.floorLine,
-      runes: [],
-    },
-  };
-}
-
 function isRoundExhausted(runeforges: GameState['runeforges']): boolean { //TODO: Not needed
   const allRuneforgesEmpty = runeforges.every((runeforge) => runeforge.runes.length === 0);
   return allRuneforgesEmpty;
@@ -334,12 +324,12 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
 
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
+  const player = state.player;
   const currentStrain = state.strain;
   const nextRound = state.round + 1;
   const nextStrain = getOverloadDamageForRound(state.game, nextRound);
-  const playerwithClearFloorLine = clearFloorLines(state.player); //TODO: Should this happen every round?
   const runesNeededForRound = 20; //TODO: should come from config
-  const playerHasEnough = playerwithClearFloorLine.deck.length >= runesNeededForRound;
+  const playerHasEnough = player.deck.length >= runesNeededForRound;
 
   if (!playerHasEnough) {
     // Defeat
@@ -347,18 +337,18 @@ function prepareRoundReset(state: GameState): GameState {
 
     trackDefeatEvent({
       gameNumber: state.game,
-      deck: playerwithClearFloorLine.deck,
+      deck: player.deck,
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
       cause: 'deck-empty',
       strain: currentStrain,
-      health: playerwithClearFloorLine.health,
+      health: player.health,
       targetScore: state.targetScore,
     });
 
     return {
       ...state,
-      player: playerwithClearFloorLine,
+      player: player,
       runeforges: [],
       turnPhase: 'game-over',
       game: state.game,
@@ -377,11 +367,11 @@ function prepareRoundReset(state: GameState): GameState {
     };
   }
 
-  const emptyFactories = createSoloFactories(playerwithClearFloorLine, 5);//TODO: remove
-  const { runeforges: filledRuneforges, updatedDeck } = fillFactories(emptyFactories, playerwithClearFloorLine.deck);
+  const emptyFactories = createSoloFactories(player, 5);//TODO: remove
+  const { runeforges: filledRuneforges, updatedDeck } = fillFactories(emptyFactories, player.deck);
 
   const updatedPlayer: Player = {
-    ...playerwithClearFloorLine,
+    ...player,
     deck: updatedDeck,
   };
 
