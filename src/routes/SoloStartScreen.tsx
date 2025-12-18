@@ -34,7 +34,7 @@ export function SoloStartScreen() {
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
     const savedState = loadSoloState();
-    const savedGame = savedState?.game ?? 0;
+    const savedGame = savedState?.gameIndex ?? 0;
     return Math.max(storedBest, savedGame);
   });
   const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
