@@ -68,8 +68,8 @@ export function GameMetadataView({
           isActive={activeElement === 'deck'}
           showDeckView={onOpenDeck}
         />
-        <HealthView />
-        <RuneScoreView />
+        <HealthView/>
+        <RuneScoreView/>
       </div>
     </div>
   );

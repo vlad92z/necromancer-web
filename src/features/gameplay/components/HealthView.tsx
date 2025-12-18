@@ -66,16 +66,10 @@ export function HealthView() {
   const healthLossClassName = "text-rose-300 text-sm font-bold";
   const armorGainClassName = 'text-blue-300 text-sm font-bold';
   const armorLossClassName = "text-slate-200 text-sm font-bold";
+  
   useEffect(() => {
-    const healthControls = animate(animatedHealth, health, {
-      duration: 0.45,
-      ease: [0.25, 0.1, 0.25, 1],
-    });
-
-    const armorControls = animate(animatedArmor, armor, {
-      duration: 0.45,
-      ease: [0.25, 0.1, 0.25, 1],
-    });
+    const healthControls = animate(animatedHealth, health, { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] });
+    const armorControls = animate(animatedArmor, armor, { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] });
 
     return () => {
       healthControls.stop();
