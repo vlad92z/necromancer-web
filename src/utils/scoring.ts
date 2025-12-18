@@ -291,14 +291,6 @@ export function calculatePlacementScore(
 }
 
 /**
- * Calculate floor line penalties
- */
-export function calculateFloorPenalty(floorLineCount: number): number {
-  const penalties = [0, -1, -2, -4, -6, -8, -11, -14];
-  return penalties[Math.min(floorLineCount, 7)];
-}
-
-/**
  * Legacy round-based overload penalty helper.
  * @deprecated Overload damage now derives from game number progression.
  */

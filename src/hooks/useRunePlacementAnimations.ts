@@ -216,32 +216,6 @@ export function useRunePlacementAnimations({
         });
       }
 
-      const previousFloorCount = snapshot.floorRuneCount;
-      const newFloorCount = targetPlayer.floorLine.runes.length;
-      const floorDelta = newFloorCount - previousFloorCount;
-      if (floorDelta > 0 && strainCounterElement) {
-        const overflowRunes = snapshot.runeOrder.slice(patternRunesUsed, patternRunesUsed + floorDelta);
-        const targetRect = strainCounterElement.getBoundingClientRect();
-        overflowRunes.forEach((rune) => {
-          const start = snapshot.runePositions.get(rune.id);
-          if (!start) {
-            return;
-          }
-          const overlaySize = start.size || targetRect.width || OVERLAY_RUNE_SIZE;
-          overlayRunes.push({
-            id: rune.id,
-            runeType: rune.runeType,
-            rune,
-            size: overlaySize,
-            startX: start.centerX - overlaySize / 2,
-            startY: start.centerY - overlaySize / 2,
-            endX: targetRect.left + targetRect.width / 2 - overlaySize / 2,
-            endY: targetRect.top + targetRect.height / 2 - overlaySize / 2,
-            shouldDisappear: true,
-          });
-        });
-      }
-
       if (overlayRunes.length === 0) {
         if (autoMeta?.pattern) {
           revealPatternSlots(autoMeta.pattern.playerId, autoMeta.pattern.slotKeys);
@@ -261,7 +235,6 @@ export function useRunePlacementAnimations({
       if (autoMeta.pattern) {
         revealPatternSlots(autoMeta.pattern.playerId, autoMeta.pattern.slotKeys);
       }
-      // Note: floor slots no longer need to be revealed since FloorLine UI is removed
       autoAnimationMetaRef.current = null;
     }
   }, [revealPatternSlots]);
@@ -277,7 +250,6 @@ export function useRunePlacementAnimations({
         runeOrder: [...selectedRunes],
         patternLineCounts: player.patternLines.map((line) => line.count),
         runePositions: new Map(),
-        floorRuneCount: player.floorLine.runes.length,
       };
       return undefined;
     }
@@ -289,7 +261,6 @@ export function useRunePlacementAnimations({
         runeOrder: [...selectedRunes],
         patternLineCounts: player.patternLines.map((line) => line.count),
         runePositions,
-        floorRuneCount: player.floorLine.runes.length,
       };
     });
     selectionMeasurementRafRef.current = rafId;

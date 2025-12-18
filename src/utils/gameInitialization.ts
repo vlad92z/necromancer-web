@@ -153,7 +153,6 @@ export function initializeSoloGame(): GameState {
     name: 'Arcane Apprentice',
     patternLines: createPatternLines(), // TODO is this complexity necessary?
     wall: createEmptyWall(), // TODO same here maybe?
-    floorLine: { runes: [], maxCapacity: 7 },//FIX
     health: 666,
     maxHealth: 667,
     armor: -1,

@@ -512,11 +512,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     firstRuneEffects: nextFirstRuneEffects,
   };
 
-  const updatedFloorLine = {
-    ...currentPlayer.floorLine,
-    runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
-  };
-
   const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
@@ -532,7 +527,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
   const updatedPlayer = {
     ...currentPlayer,
     patternLines: updatedPatternLines,
-    floorLine: updatedFloorLine,
     health: nextHealth,
     armor: nextArmor,
   };
@@ -605,11 +599,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
 
   const currentPlayer = state.player;
 
-  const updatedFloorLine = {
-    ...currentPlayer.floorLine,
-    runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
-  };
-
   const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
@@ -620,7 +609,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
 
   const updatedPlayer = {
     ...currentPlayer,
-    floorLine: updatedFloorLine,
     health: nextHealth,
     armor: nextArmor,
   };
