@@ -37,7 +37,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
   } = shared;
   const {
     outcome,
-    runeScore,
     runePowerTotal,
     targetScore,
     arcaneDustReward,
@@ -54,15 +53,12 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
   const gameIndex = useGameplayStore((state) => state.gameIndex);
   return (
     <div className="flex flex-col h-full relative">
-      <div>
-        <GameMetadataView
-          runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
-          onOpenOverload={onOpenOverloadOverlay}
-          onOpenDeck={onOpenDeckOverlay}
-          onOpenSettings={onOpenSettings}
-          activeElement={activeElement?.type}
-        />
-      </div>
+      <GameMetadataView
+        onOpenOverload={onOpenOverloadOverlay}
+        onOpenDeck={onOpenDeckOverlay}
+        onOpenSettings={onOpenSettings}
+        activeElement={activeElement?.type}
+      />
 
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
         <RuneSelectionTable

@@ -35,6 +35,7 @@ import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.svg';
 import lightningRuneRare from '../assets/runes/lightning_rune_rare.svg';
 import lightningRuneEpic from '../assets/runes/lightning_rune_epic.svg';
 import { getRuneEffectDescription, getRuneRarity } from '../utils/runeEffects';
+import { RuneView } from './RuneView';
 
 const RUNE_ASSETS = {
   Fire: fireRune,

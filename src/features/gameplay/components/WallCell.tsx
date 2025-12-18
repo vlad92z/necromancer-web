@@ -6,14 +6,14 @@ import type { WallCell as WallCellType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
+import { RuneView } from '../../../components/RuneView';
+import { RUNE_SIZE_CONFIG } from '../../../styles/tokens';
 
 interface WallCellProps {
   cell: WallCellType;
   row: number;
   col: number;
-  // Number of columns/rows of the scoring wall (3, 4 or 5)
   wallSize: number;
-  // Rune types available for this wall size (ordered)
   availableRuneTypes: RuneType[];
   pulseKey?: number;
 }
@@ -40,32 +40,23 @@ function getExpectedRuneType(
 
 export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKey }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col, wallSize, availableRuneTypes);
-  
+
   // Convert WallCell to Rune format if occupied
   const rune = cell.runeType ? {
     id: `wall-${row}-${col}`,
     runeType: cell.runeType,
     effects: copyRuneEffects(cell.effects ?? getRuneEffectsForType(cell.runeType)),
   } : null;
-  
+
+  const imageDimension = RUNE_SIZE_CONFIG['large'].dimension;
+  const borderColor = rune === null ? 'border-slate-600 opacity-50' : 'border-slate-400';
+  const backgroundColor = rune === null ? '' : 'bg-sky-700/50';
   return (
     <div
-      style={{ position: 'relative', display: 'inline-block' }}
-      tabIndex={0}
-      aria-label={`${expectedRuneType} rune cell`}
-    >
-      <RuneCell
-        rune={rune}
-        variant="wall"
-        size="large"
-        placeholder={{
-          type: 'rune',
-          runeType: expectedRuneType,
-        }}
-        showEffect
-        showTooltip={false}
-        runePulseKey={pulseKey}
-      />
+    className={`border rounded-xl ${borderColor} ${backgroundColor} align-center`}
+    style={{ width: imageDimension, height: imageDimension }}>
+      <RuneView type={expectedRuneType} rarity={rune?.effects[0]?.rarity ?? 'common'} runePulseKey={pulseKey} runePulseScale={pulseKey ? 1.2 : 1} />
     </div>
   );
+
 }

@@ -13,7 +13,6 @@ import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
 
 interface PatternLinesProps {
-  patternLines: PatternLine[];
   wall: ScoringWall;
   onPlaceRunes?: (patternLineIndex: number) => void;
   selectedRuneType?: RuneType | null;
@@ -27,7 +26,6 @@ interface PatternLinesProps {
 }
 
 export function PatternLines({
-  patternLines,
   wall,
   onPlaceRunes,
   selectedRuneType,
