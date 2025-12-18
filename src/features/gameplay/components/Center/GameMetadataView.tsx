@@ -2,8 +2,7 @@
  * GameMetadataView - primary header row for counters, actions, and progress.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
@@ -17,6 +16,7 @@ import { buildTextTooltipCard, buildOverloadPlacementTooltipCards } from '../../
 import type { Rune } from '../../../../types/game';
 import type { Transition } from 'framer-motion';
 import { HealthView } from '../HealthView';
+import { OverloadButton } from '../Player/OverloadButton';
 
 interface GameMetadataViewProps {
   playerId: string;
@@ -49,32 +49,19 @@ type ForcedArmorIndicator = {
   key: number;
 };
 
-const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
-const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
-const SELECTABLE_GLOW_RANGE: [string, string] = [SELECTABLE_GLOW_REST, SELECTABLE_GLOW_PEAK];
-const PULSE_TRANSITION: Transition = {
-  duration: 1.2,
-  repeat: Infinity,
-  repeatType: 'reverse',
-  ease: 'easeInOut',
-};
 
 export function GameMetadataView({
-  playerId,
   gameIndex,
   strainValue,
   arcaneDust,
   runeScore,
   health,
-  armor,
   maxHealth,
   deckCount,
   overloadedRuneCount,
-  canOverload,
   onOpenOverload,
   onOpenDeck,
   onOpenSettings,
-  onPlaceRunesInFloor,
   hasSelectedRunes,
   selectedRunes,
   isSettingsActive,
@@ -199,27 +186,6 @@ export function GameMetadataView({
     setTooltipCards(buildTextTooltipCard('overload-tooltip', 'Overload', overloadTooltip, overloadSvg));
   };
 
-  const handleOverloadClick = useCallback(() => {
-    if (hasSelectedRunes) {
-      onPlaceRunesInFloor();
-      return;
-    }
-    onOpenOverload();
-  }, [hasSelectedRunes, onOpenOverload, onPlaceRunesInFloor]);
-
-  const overloadGlowProps = useMemo(() => (
-    canOverload
-      ? {
-        animate: { boxShadow: SELECTABLE_GLOW_RANGE },
-        transition: PULSE_TRANSITION,
-      }
-      : undefined
-  ), [canOverload]);
-
-  const overloadGlowStyle = useMemo(() => (
-    canOverload ? { boxShadow: SELECTABLE_GLOW_REST } : undefined
-  ), [canOverload]);
-
   const handleDeckClick = useCallback(() => {
     onOpenDeck();
   }, [onOpenDeck]);
@@ -231,19 +197,8 @@ export function GameMetadataView({
 
   const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
   const deckActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-900/70';
-  const overloadActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(255,211,252,0.95),_0_0_56px_rgba(125,11,52,0.55)] data-[active=true]:bg-slate-900/70';
-  const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20 data-[active=true]:border-red-300 ${overloadActiveClass}`;
   const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 ${deckActiveClass}`;
-  const overloadBadge = (
-    <StatBadge
-      value={strainValue}
-      className={overloadClassName}
-      image={overloadSvg}
-      onClick={handleOverloadClick}
-      onTooltipToggle={handleOverloadTooltipToggle}
-      isActive={isOverloadActive}
-    />
-  );
+
 
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2 bg-slate-900/80 px-5 pt-3">
@@ -273,22 +228,10 @@ export function GameMetadataView({
 
       {/* Right Side */}
       <div className="flex flex-row flex-[60] items-center gap-3">
-        <div
-          data-player-id={playerId}
-          data-strain-counter="true"
-        >
-          {canOverload ? (
-            <motion.div
-              className="inline-flex rounded-[16px]"
-              style={overloadGlowStyle}
-              {...overloadGlowProps}
-            >
-              {overloadBadge}
-            </motion.div>
-          ) : (
-            overloadBadge
-          )}
-        </div>
+        <OverloadButton
+          isActive={isOverloadActive}
+          showOverloadView={onOpenOverload}
+        />
         <StatBadge
           value={deckRemaining}
           className={deckClassName}
