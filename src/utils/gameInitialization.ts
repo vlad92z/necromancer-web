@@ -14,6 +14,8 @@ import type {
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 import { getOverloadDamageForGame } from './overload';
+import { SOLO_RUN_CONFIG } from './soloRunConfig';
+import { create } from 'zustand';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 const WALL_SIZE = RUNE_TYPES.length;
@@ -21,7 +23,7 @@ const WALL_SIZE = RUNE_TYPES.length;
 /**
  * Create an empty scoring wall (fixed 6x6)
  */
-export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
+export function createEmptyWall(size: number = SOLO_RUN_CONFIG.wallSize): ScoringWall {
   return Array(size)
     .fill(null)
     .map(() =>
@@ -34,7 +36,7 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
 /**
  * Create initial pattern lines (fixed 6 lines, capacities 1-6)
  */
-export function createPatternLines(count: number = WALL_SIZE): PatternLine[] {
+export function createPatternLines(count: number = SOLO_RUN_CONFIG.wallSize): PatternLine[] {
   const lines: PatternLine[] = [];
   for (let i = 1; i <= count; i++) {
     lines.push({
@@ -65,7 +67,7 @@ export interface SoloSizingConfig {
 /**
  * Create a mock player deck (for now, just basic runes)
  */
-export function createStartingDeck(playerId: string): Rune[] {
+export function createStartingDeck(playerId: string = SOLO_RUN_CONFIG.playerId): Rune[] {
   const deck: Rune[] = [];
   const runeTypes = getRuneTypes();
 
@@ -108,12 +110,12 @@ export function createEmptyFactories(player: Player, perPlayerCount: number): Ru
 /**
  * Create runeforges for a solo run (only the human player gets runeforges)
  */
-export function createSoloFactories(player: Player, perPlayerCount: number): Runeforge[] {
-  return Array(perPlayerCount)
+export function createRuneforges(playerId: string = SOLO_RUN_CONFIG.playerId): Runeforge[] {
+  return Array(SOLO_RUN_CONFIG.factoryCount)
     .fill(null)
     .map((_, index) => ({
-      id: `${player.id}-runeforge-${index + 1}`,
-      ownerId: player.id,
+      id: `${playerId}-runeforge-${index + 1}`,
+      ownerId: playerId,
       runes: [],
       disabled: false,
     }));
@@ -122,7 +124,7 @@ export function createSoloFactories(player: Player, perPlayerCount: number): Run
 /**
  * Fill runeforges with runes from the player's deck TODO: Move this outside of game initialization
  */
-export function fillFactories(runeforges: Runeforge[], deck: Rune[]): { runeforges: Runeforge[]; updatedDeck: Rune[] } {
+export function fillRuneforges(runeforges: Runeforge[], deck: Rune[]): { runeforges: Runeforge[]; updatedDeck: Rune[] } {
   let shuffledDeck = deck.sort(() => Math.random() - 0.5);
   const filledRuneforges = runeforges.map((runeforge) => {
     const runesToDeal = Math.min(shuffledDeck.length, 4);
@@ -139,40 +141,40 @@ export function fillFactories(runeforges: Runeforge[], deck: Rune[]): { runeforg
   return { runeforges: filledRuneforges, updatedDeck: shuffledDeck, };
 }
 
-/**
- * Initialize a solo run using the fixed six-rune setup.
- */
-export function initializeSoloGame(): GameState {
-  const initialGameNumber = 1;
-  const startingStrain = getOverloadDamageForGame(initialGameNumber);
-  const targetScore = 12;
-  const longestRun = 0; //TODO: Why does this matter?
-
-  const soloPlayer: Player = {
-    id: 'player-1',
-    name: 'Arcane Apprentice',
-    patternLines: createPatternLines(), // TODO is this complexity necessary?
-    wall: createEmptyWall(), // TODO same here maybe?
-    health: 666,
-    maxHealth: 667,
-    armor: -1,
-    deck: createStartingDeck('player-1'),
+function createPlayer(): Player {
+  const config = SOLO_RUN_CONFIG
+  return {
+    id: config.playerId,
+    name: config.playerName,
+    patternLines: createPatternLines(),
+    wall: createEmptyWall(),
+    health: config.startingHealth,
+    maxHealth: config.startingHealth,
+    armor: config.startingArmor,
+    deck: createStartingDeck(),
   };
+}
 
-  const soloFactories = createSoloFactories(soloPlayer, 5);
-  const { runeforges: filledRuneforges, updatedDeck } = fillFactories(soloFactories, soloPlayer.deck);
-
-  soloPlayer.deck = updatedDeck;
-
+export function nextGame(
+  gameIndex: number = 0,
+  player: Player = createPlayer(),
+): GameState {
+  const targetScore = SOLO_RUN_CONFIG.baseTargetScore * (gameIndex + 1);
+  const runeforges = createRuneforges();
+  const {
+    runeforges: filledRuneforges,
+    updatedDeck: updatedDeck
+  } = fillRuneforges(runeforges, player.deck);
+  player.deck = updatedDeck;
   return {
     gameStarted: false,
-    strain: startingStrain,
-    player: soloPlayer,
-    runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
+    strain: getOverloadDamageForGame(gameIndex),
+    player: player,
+    runeforges: filledRuneforges,
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
-    game: initialGameNumber,
-    round: 1,
+    game: gameIndex,
+    round: 0,
     tooltipCards: createDefaultTooltipCards(),
     tooltipOverrideActive: false,
     selectedRunes: [],
@@ -184,14 +186,12 @@ export function initializeSoloGame(): GameState {
     pendingPlacement: null,
     overloadSoundPending: false,
     channelSoundPending: false,
-    lockedPatternLines: {
-      [soloPlayer.id]: []
-    },
+    lockedPatternLines: [],
     shouldTriggerEndRound: false,
     runePowerTotal: 0,
     targetScore: targetScore,
     outcome: null,
-    longestRun,
+    longestRun: 122, //TODO WHY
     deckDraftState: null,
     baseTargetScore: 237,
     deckDraftReadyForNextGame: false,

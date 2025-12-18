@@ -178,7 +178,7 @@ export interface GameState {
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected TODO REMOVE
   turnPhase: TurnPhase;
-  game: number; // Current game in this run (increments after each deck draft)
+  gameIndex: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
   strain: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
@@ -201,7 +201,7 @@ export interface GameState {
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   channelSoundPending: boolean; // Flag to trigger lightning SFX when channel effects resolve
   selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
-  lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
+  lockedPatternLines: number[]; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect //TODO NOT NEEDED
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory

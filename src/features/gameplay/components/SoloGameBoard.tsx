@@ -33,7 +33,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     onCancelSelection,
     onPlaceRunes,
     onPlaceRunesInFloor,
-    game,
+    gameIndex,
     strain,
     isGameOver,
     returnToStartScreen,
@@ -61,7 +61,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       <div>
         <GameMetadataView
           playerId={player.id}
-          gameNumber={game}
+          gameIndex={gameIndex}
           strainValue={strain}
           arcaneDust={arcaneDust}
           runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}

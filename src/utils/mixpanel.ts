@@ -70,7 +70,7 @@ function summarizeDeck(runes: Rune[]) {
 }
 
 export function trackNewGameEvent(params: {
-  gameNumber: number
+  gameIndex: number
   activeArtefacts: ArtefactId[]
   deck: Rune[]
   targetScore: number
@@ -78,7 +78,7 @@ export function trackNewGameEvent(params: {
   startingHealth: number
 }) {
   trackEvent('New Game', {
-    game: params.gameNumber,
+    gameIndex: params.gameIndex,
     artefacts: params.activeArtefacts,
     targetScore: params.targetScore,
     strain: params.strain,
@@ -88,7 +88,7 @@ export function trackNewGameEvent(params: {
 }
 
 export function trackDefeatEvent(params: {
-  gameNumber: number
+  gameIndex: number
   deck: Rune[]
   runePowerTotal: number
   activeArtefacts: ArtefactId[]
@@ -98,7 +98,7 @@ export function trackDefeatEvent(params: {
   targetScore: number
 }) {
   trackEvent('Defeat', {
-    game: params.gameNumber,
+    gameIndex: params.gameIndex,
     artefacts: params.activeArtefacts,
     runePower: params.runePowerTotal,
     cause: params.cause,

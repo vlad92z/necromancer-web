@@ -268,7 +268,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     () => hiddenPatternSlots[player.id],
     [hiddenPatternSlots, player.id],
   );
-  const playerLockedLines = useMemo(() => lockedPatternLines[player.id], [lockedPatternLines, player.id]);
+  const playerLockedLines = useMemo(() => lockedPatternLines, [lockedPatternLines]);
 
   const isPatternLineValidTarget = useCallback(
     (lineIndex: number): boolean => {

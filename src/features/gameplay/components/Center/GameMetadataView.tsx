@@ -20,7 +20,7 @@ import { HealthView } from '../HealthView';
 
 interface GameMetadataViewProps {
   playerId: string;
-  gameNumber: number;
+  gameIndex: number;
   strainValue: number;
   arcaneDust: number;
   runeScore: {
@@ -61,7 +61,7 @@ const PULSE_TRANSITION: Transition = {
 
 export function GameMetadataView({
   playerId,
-  gameNumber,
+  gameIndex,
   strainValue,
   arcaneDust,
   runeScore,
@@ -258,7 +258,7 @@ export function GameMetadataView({
 
         <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
           <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
-          <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameNumber}</span>
+          <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameIndex + 1}</span>
         </div>
 
         <div className="px-4 py-3 flex items-center gap-3 pr-20">
