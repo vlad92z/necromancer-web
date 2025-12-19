@@ -33,6 +33,8 @@
 
 **Predictability**: Game state transitions must be deterministic and serializable. All game logic should be pure functions or clearly isolated side effects.
 
+**Comments**: Make sure to add comments describing what blocks of code are intended to do. Always document function definitions.
+
 ### When Creating Files
 
 - Place files in the appropriate directory according to the folder structure (see below)

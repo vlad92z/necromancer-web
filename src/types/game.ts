@@ -87,7 +87,7 @@ export interface PatternLine {
  * A position in the scoring wall/grid
  */
 export interface WallCell {
-  runeType: RuneType | null; // null if empty
+  runeType: RuneType; // null if empty
   effects: RuneEffects | null; // Effects inherited from the pattern line's first rune
 }
 

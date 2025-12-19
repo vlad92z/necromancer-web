@@ -3,11 +3,12 @@
  */
 
 import type { WallCell as WallCellType, RuneType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import { motion } from 'framer-motion';
 import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
 import { RuneView } from '../../../components/RuneView';
 import { RUNE_SIZE_CONFIG } from '../../../styles/tokens';
+import { runeAsset } from '../../../components/runeAssets';
 
 interface WallCellProps {
   cell: WallCellType;
@@ -51,11 +52,20 @@ export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKe
   const imageDimension = RUNE_SIZE_CONFIG['large'].dimension;
   const borderColor = rune === null ? 'border-slate-600 opacity-50' : 'border-slate-400';
   const backgroundColor = rune === null ? '' : 'bg-sky-700/50';
+  const image = runeAsset(expectedRuneType, cell.effects?.[0]?.rarity ?? 'common');
   return (
     <div
-    className={`border rounded-xl ${borderColor} ${backgroundColor} align-center`}
-    style={{ width: imageDimension, height: imageDimension }}>
-      <RuneView type={expectedRuneType} rarity={rune?.effects[0]?.rarity ?? 'common'} runePulseKey={pulseKey} runePulseScale={pulseKey ? 1.2 : 1} />
+      className={`border rounded-xl ${borderColor} ${backgroundColor} align-center p-1`}
+      style={{ width: imageDimension, height: imageDimension }}>
+      <motion.img
+        key={pulseKey}
+        initial={{ scale: 1 }}
+        animate={pulseKey ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+        transition={{ duration: 0.5, ease: 'easeInOut' }}
+        src={image}
+        style={{
+          objectFit: 'contain',
+        }} />
     </div>
   );
 

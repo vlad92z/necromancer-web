@@ -20,8 +20,6 @@ export function RuneView({ type, rarity, runePulseKey, runePulseScale = 1 }: Run
       transition={{ duration: 0.5, ease: 'easeInOut' }}
       src={image}
       style={{
-        width: '100%',
-        height: '100%',
         objectFit: 'contain',
       }}
     />
