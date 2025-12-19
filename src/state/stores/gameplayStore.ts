@@ -4,7 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, GameOutcome, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
+import type { GameState, RuneType, Player, Rune, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
 import { fillRuneforges, nextGame, createRuneforges, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment } from '../../utils/scoring';
 import { getRuneRarity } from '../../utils/runeEffects';
@@ -156,41 +156,18 @@ function isRoundExhausted(runeforges: GameState['runeforges']): boolean { //TODO
   return allRuneforgesEmpty;
 }
 
-function getChannelScoreBonusFromOverloadedRunes(
-  newlyOverloadedRunes: Rune[]
-): { scoreBonus: number; triggered: boolean } {
-  if (newlyOverloadedRunes.length === 0) {
-    return { scoreBonus: 0, triggered: false };
-  }
-
-  let bonus = 0;
-  let triggered = false;
-  newlyOverloadedRunes.forEach((rune) => {
-    rune.effects.forEach((effect) => {
-      if (effect.type === 'Channel') {
-        bonus += effect.amount;
-        triggered = true;
-      }
-    });
-  });
-
-  return { scoreBonus: bonus, triggered };
-}
-
 function getOverloadResult(
   currentHealth: number,
   currentArmor: number,
   newlyOverloadedRunes: Rune[],
   state: GameState
-): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number; channelTriggered: boolean } {
+): { overloadDamage: number; nextHealth: number; nextArmor: number; } {
   const strain = state.overloadDamage;
   const overloadRunesPlaced = newlyOverloadedRunes.length;
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
-  const { scoreBonus: channelScoreBonus, triggered: channelTriggered } =
-    getChannelScoreBonusFromOverloadedRunes(newlyOverloadedRunes);
 
   // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
-  const { damage: modifiedDamage, scoreBonus: rodScoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
+  const { damage: modifiedDamage } = applyIncomingDamageModifiers(baseDamage, state);
   const armorAbsorbed = Math.min(currentArmor, modifiedDamage);
   const remainingDamage = modifiedDamage - armorAbsorbed;
   const nextArmor = currentArmor - armorAbsorbed;
@@ -199,8 +176,6 @@ function getOverloadResult(
     overloadDamage: remainingDamage,
     nextHealth,
     nextArmor,
-    scoreBonus: rodScoreBonus + channelScoreBonus,
-    channelTriggered,
   };
 }
 
@@ -231,7 +206,7 @@ function handlePlayerDefeat(
     draftSource: null,
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
-    outcome: 'defeat' as GameOutcome,
+    isDefeat: true,
     overloadSoundPending: overloadDamage > 0,
     channelSoundPending: channelTriggered || state.channelSoundPending,
   };
@@ -330,7 +305,7 @@ function prepareRoundReset(state: GameState): GameState {
       runeforges: [],
       turnPhase: 'game-over',
       gameIndex: state.gameIndex,
-      outcome: 'defeat' as GameOutcome,
+      isDefeat: true,
       shouldTriggerEndRound: false,
       selectedRunes: [],
       selectionTimestamp: null,
@@ -360,7 +335,7 @@ function prepareRoundReset(state: GameState): GameState {
     gameIndex: state.gameIndex,
     round: nextRound,
     overloadDamage: nextOverloadDamage,
-    outcome: null,
+    isDefeat: false,
     lockedPatternLines: [],
     shouldTriggerEndRound: false,
     selectedRunes: [],
@@ -458,7 +433,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     return state;
   }
 
-  if (patternLine.runes.length >= patternLine.tier) {
+  if (patternLine.runes.length >= patternLine.capacity) {
     return state;
   }
 
@@ -468,7 +443,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     return state;
   }
 
-  const availableSpace = patternLine.tier - currentPatternLineCount;
+  const availableSpace = patternLine.capacity - currentPatternLineCount;
   const runesToPlace = Math.min(selectedRunes.length, availableSpace);
   const overflowRunes = selectedRunes.slice(runesToPlace);
   const updatedRunes = [...patternLine.runes, ...selectedRunes]
@@ -529,7 +504,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
 
   const shouldEndRound = isRoundExhausted(state.runeforges);
 
-  const nextTurnPhase = updatedRunes.length === patternLine.tier
+  const nextTurnPhase = updatedRunes.length === patternLine.capacity
       ? ('cast' as const)
       : shouldEndRound
         ? ('end-of-round' as const)
@@ -698,12 +673,12 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
     }
 
     // If the player has been defeated, clear any saved solo run from localStorage
-    if (state.outcome === 'defeat') {
+    if (state.isDefeat) {
       clearSoloState();
       return;
     }
 
-    saveSoloState(state);
+    // saveSoloState(state);
   });
 }
 
@@ -850,7 +825,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const completedLines = updatedPatternLines
         .map((line, index) => ({ line, index }))
-        .filter(({ line }) => line.runes.length === line.tier);
+        .filter(({ line }) => line.runes.length === line.capacity);
 
       if (completedLines.length === 0) {
         const shouldEndRound = isRoundExhausted(state.runeforges);
@@ -873,7 +848,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         updatedWall[index][col].rune = line.runes[0];
         updatedPatternLines[index] = {
-          tier: line.tier,
+          capacity: line.capacity,
           runes: [],
         };
 

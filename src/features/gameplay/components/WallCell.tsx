@@ -2,7 +2,7 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import type { WallCell, RuneType, Rune } from '../../../types/game';
+import type { SpellWallCell, RuneType, Rune } from '../../../types/game';
 import { motion } from 'framer-motion';
 import { RUNE_SIZE_CONFIG } from '../../../styles/tokens';
 import { runeAsset } from '../../../components/runeAssets';

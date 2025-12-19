@@ -7,7 +7,7 @@ import type {
   Player,
   Runeforge,
   PatternLine,
-  ScoringWall,
+  SpellWall,
   Rune,
   TooltipCard,
 } from '../types/game';
@@ -19,7 +19,7 @@ import { getRuneType } from './runeHelpers';
 /**
  * Create an empty scoring wall (fixed 6x6)
  */
-export function createEmptyWall(): ScoringWall {
+export function createEmptyWall(): SpellWall {
   const runeTypes = SOLO_RUN_CONFIG.runeTypes;
   const size = runeTypes.length;
   return Array.from({ length: size }, (_, row) =>
@@ -37,7 +37,7 @@ export function createPatternLines(count: number = SOLO_RUN_CONFIG.wallSize): Pa
   const lines: PatternLine[] = [];
   for (let i = 1; i <= count; i++) {
     lines.push({
-      tier: i,
+      capacity: i,
       runes: [],
     });
   }
@@ -178,7 +178,7 @@ export function nextGame(
     shouldTriggerEndRound: false,
     runePowerTotal: 0,
     targetScore: targetScore,
-    outcome: null,
+    isDefeat: false,
     deckDraftState: null,
     baseTargetScore: 237,
     deckDraftReadyForNextGame: false,

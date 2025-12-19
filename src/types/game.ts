@@ -2,30 +2,22 @@
  * Core game types for Massive Spell: Arcane Arena
  */
 
-import type { ArtefactId } from './artefacts';
+import type { Artefact, ArtefactId } from './artefacts';
 
-/**
- * Rune types (elemental identities)
- */
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
 
-/**
- * Rune effect modifiers
- */
-export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
+export type RuneRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 
 export type RuneEffect =
-  | { type: 'Damage'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'Healing'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'Synergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
-  | { type: 'Fortune'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'Fragile'; amount: number; fragileType: RuneType; rarity: RuneEffectRarity }
-  | { type: 'Channel'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'ChannelSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
-  | { type: 'Armor'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'ArmorSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
-
-export type RuneEffects = RuneEffect[];
+  | { type: 'Damage'; amount: number }
+  | { type: 'Healing'; amount: number }
+  | { type: 'Synergy'; amount: number; synergyType: RuneType }
+  | { type: 'Fortune'; amount: number }
+  | { type: 'Fragile'; amount: number; fragileType: RuneType }
+  | { type: 'Channel'; amount: number }
+  | { type: 'ChannelSynergy'; amount: number; synergyType: RuneType }
+  | { type: 'Armor'; amount: number }
+  | { type: 'ArmorSynergy'; amount: number; synergyType: RuneType }
 
 /**
  * A rune in the game
@@ -33,7 +25,8 @@ export type RuneEffects = RuneEffect[];
 export interface Rune {
   id: string;
   runeType: RuneType;
-  effects: RuneEffects;
+  effect: RuneEffect;
+  rarity: RuneRarity;
 }
 
 export type DeckDraftEffect =
@@ -45,12 +38,11 @@ export type TooltipCardVariant = 'default' | 'nonPrimary' | 'overload';
 
 export interface TooltipCard {
   id: string;
-  runeType: RuneType;
   title: string;
   description: string;
-  runeRarity?: RuneEffectRarity | null;
-  imageSrc?: string;
-  variant?: TooltipCardVariant;
+  runeRarity: RuneRarity;
+  imageSrc: string;
+  variant: TooltipCardVariant;
 }
 
 /**
@@ -76,14 +68,14 @@ export interface DraftRuneforge {
  * Pattern line (1-5 tiers, each requiring matching runes to complete)
  */
 export interface PatternLine {
-  tier: 1 | 2 | 3 | 4 | 5 | 6; // Line capacity (1-6 runes)
+  capacity: number; // Line capacity (1-6 runes)
   runes: Rune[]; // Runes currently placed in this line
 }
 
 /**
  * A position in the scoring wall/grid
  */
-export interface WallCell {
+export interface SpellWallCell {
   runeType: RuneType;
   rune: Rune | null;
 }
@@ -91,22 +83,41 @@ export interface WallCell {
 /**
  * The scoring grid/wall
  */
-export type ScoringWall = WallCell[][];
+export type SpellWall = SpellWallCell[][];
 
-// /**
-//  * Solo run configuration values entered on the start screen
-//  */
-// export interface RunConfig {
-//   startingHealth: number;
-//   targetRuneScore: number;
-//   runeScoreTargetIncrement: number;
-//   victoryDraftPicks: number;
-// }
+export interface PlayerStats {
+  currentHealth: number;
+  maxHealth: number;
+  currentArmor: number;
+}
+
+export interface RuneScore {
+  current: number;
+  target: number;
+}
+
+export interface Deck {
+  remainingRunes: Rune[];
+  allRunes: Rune[];
+  overloadedRunes: Rune[];
+}
 
 /**
- * Solo game ending state
+ * Contains information about the current state of an active game
  */
-export type GameOutcome = 'victory' | 'defeat' | null;
+export interface SoloGameState {
+  status: 'in-progress' | 'defeat' | 'not-started';
+  playerStats: PlayerStats;
+  runeScore: RuneScore;
+  overloadDamage: number;
+  activeArtefacts: Artefact[];
+  deck: Deck;
+  playerHand: Rune[];
+  gameIndex: number;
+  roundIndex: number;
+  spellWall: SpellWall;
+  patternLines: PatternLine[];
+}
 
 /**
  * Player state
@@ -115,7 +126,7 @@ export interface Player {
   id: string;
   name: string;
   patternLines: PatternLine[];
-  wall: ScoringWall;
+  wall: SpellWall;
   health: number; // Current health (starts at configurable amount)
   maxHealth: number; // Maximum health cap (initialized at game start)
   armor: number; // Temporary shield that absorbs damage before health
@@ -210,7 +221,7 @@ export interface GameState {
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect //TODO NOT NEEDED
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
-  outcome: GameOutcome; // Solo result (victory/defeat)
+  isDefeat: boolean; // Solo result (victory/defeat)
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   baseTargetScore: number; // Configured starting target for reset scenarios //TODO remove
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run //TODO Needed?

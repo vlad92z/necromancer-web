@@ -34,7 +34,7 @@ export function PatternLines({
     const lineRunes = line.runes
     const lineRunesCount = lineRunes.length;
     const matchesType = lineRunesCount === 0 || lineRunes[0].runeType === selectedRunes[0].runeType;
-    const notFull = lineRunesCount < line.tier;
+    const notFull = lineRunesCount < line.capacity;
 
     const row = lineIndex;
     const col = getColumn(row, selectedRunes[0].runeType);
@@ -54,7 +54,7 @@ export function PatternLines({
       const lineRunesCount = line.runes.length;
       const tooltipCards = buildPatternLinePlacementTooltipCards({
         selectedRunes,
-        patternLineTier: line.tier,
+        patternLineTier: line.capacity,
         patternLineCount: lineRunesCount,
         overloadDamage,
       });
@@ -123,7 +123,7 @@ export function PatternLines({
             // }}
             data-active={isKeyboardActive ? 'true' : undefined}
           >
-            {Array(line.tier)
+            {Array(line.capacity)
               .fill(null)
               .map((_, slotIndex) => {
                 return (

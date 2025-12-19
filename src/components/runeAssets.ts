@@ -1,4 +1,4 @@
-import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { Rune, RuneRarity, RuneType } from '../types/game';
 import fireRune from '../assets/runes/fire_rune.svg';
 import fireRuneUncommon from '../assets/runes/fire_rune_uncommon.svg';
 import fireRuneRare from '../assets/runes/fire_rune_rare.svg';
@@ -60,7 +60,7 @@ const RUNE_EPIC_ASSETS = {
     Lightning: lightningRuneEpic,
 };
 
-const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> = {
+const RUNE_ASSETS_BY_RARITY: Record<RuneRarity, Record<RuneType, string>> = {
     common: RUNE_ASSETS,
     uncommon: RUNE_UNCOMMON_ASSETS,
     rare: RUNE_RARE_ASSETS,
@@ -71,7 +71,7 @@ export function commonRuneAsset(runeType: RuneType): string {
     return RUNE_ASSETS[runeType];
 }
 
-export function runeAsset(runeType: RuneType, rarity: RuneEffectRarity): string {
+export function runeAsset(runeType: RuneType, rarity: RuneRarity): string {
     return RUNE_ASSETS_BY_RARITY[rarity][runeType];
 }
 

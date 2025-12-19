@@ -2,14 +2,14 @@
  * Solo persistence helpers - manages saving and loading solo runs.
  */
 
-import type { GameState } from '../types/game';
+import type { GameState, SoloGameState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
 
 const canAccessStorage = (): boolean => typeof window !== 'undefined';
 
-export function saveSoloState(state: GameState): void {
+export function saveSoloState(state: SoloGameState): void {
   if (!canAccessStorage()) return;
   try {
     window.localStorage.setItem(SOLO_STATE_KEY, JSON.stringify(state));
@@ -40,6 +40,7 @@ export function hasSavedSoloState(): boolean {
 }
 
 export function clearSoloState(): void {
+  //TODO: Update me
   if (!canAccessStorage()) return;
   try {
     window.localStorage.removeItem(SOLO_STATE_KEY);

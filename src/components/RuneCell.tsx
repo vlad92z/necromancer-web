@@ -7,7 +7,7 @@
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
-import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { Rune, RuneRarity, RuneType } from '../types/game';
 import { COLORS, RADIUS, TRANSITIONS, SHADOWS, RUNE_SIZE_CONFIG } from '../styles/tokens';
 import type { RuneSize } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
@@ -72,7 +72,7 @@ const RUNE_EPIC_ASSETS = {
   Lightning: lightningRuneEpic,
 };
 
-const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> = {
+const RUNE_ASSETS_BY_RARITY: Record<RuneRarity, Record<RuneType, string>> = {
   common: RUNE_ASSETS,
   uncommon: RUNE_UNCOMMON_ASSETS,
   rare: RUNE_RARE_ASSETS,

@@ -2,7 +2,7 @@
  * DeckDrafting utilities - helpers for post-victory deck upgrades
  */
 
-import type { DeckDraftEffect, DeckDraftState, DraftRuneforge, Player, Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { DeckDraftEffect, DeckDraftState, DraftRuneforge, Player, Rune, RuneRarity, RuneType } from '../types/game';
 import type { ArtefactId } from '../types/artefacts';
 import { getDraftEffectsForType } from './runeEffects';
 import { modifyDraftRarityWithRing } from './artefactEffects';
@@ -19,7 +19,7 @@ function getDeckDraftEffectForIndex(index: number): DeckDraftEffect {
   return draftEffects[effectIndex];
 }
 
-function boostRarity(rarity: RuneEffectRarity, steps: number = 1): RuneEffectRarity {
+function boostRarity(rarity: RuneRarity, steps: number = 1): RuneRarity {
   const rariryOrder = DECK_DRAFTING_CONFIG.rarityOrder;
   const currentIndex = rariryOrder.indexOf(rarity);
   if (currentIndex === -1) {
@@ -29,7 +29,7 @@ function boostRarity(rarity: RuneEffectRarity, steps: number = 1): RuneEffectRar
   return rariryOrder[boostedIndex];
 }
 
-function getDraftRarity(gameIndex: number, activeArtefacts: ArtefactId[] = []): RuneEffectRarity {
+function getDraftRarity(gameIndex: number, activeArtefacts: ArtefactId[] = []): RuneRarity {
   const config = DECK_DRAFTING_CONFIG;
   const baseEpicChance = Math.min(100, gameIndex * config.epicChanceMultiplier);
   const baseRareChance = Math.min(100 - baseEpicChance, gameIndex * config.rareChanceMultiplier);
@@ -52,7 +52,7 @@ function getDraftRarity(gameIndex: number, activeArtefacts: ArtefactId[] = []): 
   return 'uncommon';
 }
 
-const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rarity: RuneEffectRarity): Rune => {
+const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rarity: RuneRarity): Rune => {
   return {
     id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
     runeType,

@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion';
-import type { RuneEffectRarity, RuneType } from "../types/game";
+import type { RuneRarity, RuneType } from "../types/game";
 import { runeAsset } from "./runeAssets";
 
 export interface RuneViewProps {
   type: RuneType;
-  rarity: RuneEffectRarity;
+  rarity: RuneRarity;
   runePulseKey?: number;
   runePulseScale?: number;
 }

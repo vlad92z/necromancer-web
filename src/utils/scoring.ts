@@ -3,7 +3,7 @@
  * Implements connected segment scoring
  */
 
-import type { RuneEffects, Rune, RuneType, ScoringWall } from '../types/game';
+import type { RuneEffects, Rune, RuneType, SpellWall } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 
 
@@ -14,7 +14,7 @@ export interface SegmentCell {
 }
 
 export function collectSegmentCells(
-  wall: ScoringWall,
+  wall: SpellWall,
   row: number,
   col: number
 ): SegmentCell[] {
@@ -26,7 +26,7 @@ export function collectSegmentCells(
   if (wall[row][col].rune === null) {
     return [];
   }
-
+ 
   const visited = Array(wallSize)
     .fill(null)
     .map(() => Array(wallSize).fill(false));
@@ -64,7 +64,7 @@ export function collectSegmentCells(
  * Counts all orthogonally-adjacent runes regardless of type; returns 0 if empty.
  */
 export function calculateSegmentSize(
-  wall: ScoringWall,
+  wall: SpellWall,
   row: number,
   col: number
 ): number {
@@ -95,7 +95,7 @@ export interface RuneResolutionStep {
  * reading order (left-to-right within each row, then top-to-bottom across rows).
  */
 export function resolveSegment(
-  wall: ScoringWall,
+  wall: SpellWall,
   row: number,
   col: number,
   overloadRuneCounts?: Map<RuneType, number>
@@ -229,7 +229,7 @@ export function resolveSegmentFromCells(
  * Kept for backwards compatibility if needed
  */
 export function calculatePlacementScore(
-  wall: ScoringWall,
+  wall: SpellWall,
   row: number,
   col: number
 ): number {
@@ -306,21 +306,21 @@ export function applyStressMitigation(strain: number, mitigation: number): numbe
 /**
  * Check if a row is complete (all positions filled)
  */
-export function isRowComplete(wall: ScoringWall, row: number): boolean {
+export function isRowComplete(wall: SpellWall, row: number): boolean {
   return wall[row].every((cell) => cell.rune !== null);
 }
 
 /**
  * Check if a column is complete (all positions filled)
  */
-export function isColumnComplete(wall: ScoringWall, col: number): boolean {
+export function isColumnComplete(wall: SpellWall, col: number): boolean {
   return wall.every((row) => row[col].rune !== null);
 }
 
 /**
  * Check if all cells of a specific rune type are placed (wall-size total)
  */
-export function isRuneTypeComplete(wall: ScoringWall, runeType: RuneType): boolean {
+export function isRuneTypeComplete(wall: SpellWall, runeType: RuneType): boolean {
   let count = 0;
   for (let row = 0; row < wall.length; row++) {
     for (let col = 0; col < wall[row].length; col++) {

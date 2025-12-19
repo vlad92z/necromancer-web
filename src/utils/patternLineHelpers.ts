@@ -2,7 +2,7 @@
  * Helper utilities for pattern line operations
  */
 
-import type { PatternLine, Rune, ScoringWall } from '../types/game';
+import type { PatternLine, Rune, SpellWall } from '../types/game';
 import { getColumn } from './runeHelpers';
 
 /**
@@ -23,7 +23,7 @@ import { getColumn } from './runeHelpers';
 export function findBestPatternLineForAutoPlacement(
   selectedRunes: Rune[],
   patternLines: PatternLine[],
-  wall: ScoringWall,
+  wall: SpellWall,
   lockedLineIndexes: number[]
 ): number | null {
   if (selectedRunes.length === 0) {
@@ -52,7 +52,7 @@ export function findBestPatternLineForAutoPlacement(
     }
 
     // Check if line is not complete
-    const isComplete = line.runes.length === line.tier;
+    const isComplete = line.runes.length === line.capacity;
     if (isComplete) {
       continue;
     }
@@ -90,7 +90,7 @@ export function findBestPatternLineForAutoPlacement(
     }
 
     // Check if capacity exactly matches selection size
-    const exactMatch = line.tier === selectionCount;
+    const exactMatch = line.capacity === selectionCount;
     if (!exactMatch) {
       continue;
     }

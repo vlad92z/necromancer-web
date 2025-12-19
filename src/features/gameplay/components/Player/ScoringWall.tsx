@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collectSegmentCells } from '../../../../utils/scoring';
-import { WallCell } from '../WallCell';
+import { SpellWallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
@@ -77,7 +77,7 @@ export function ScoringWall() {
                 onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
                 onMouseLeave={resetTooltipCards}
               >
-                <WallCell
+                <SpellWallCell
                   type={cell.runeType}
                   rune={null}
                   pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}

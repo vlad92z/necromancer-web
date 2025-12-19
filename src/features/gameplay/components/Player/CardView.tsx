@@ -1,4 +1,4 @@
-import type { RuneEffectRarity, RuneType, TooltipCardVariant } from '../../../../types/game';
+import type { RuneRarity, RuneType, TooltipCardVariant } from '../../../../types/game';
 import fireRune from '../../../../assets/runes/fire_rune.svg';
 import fireRuneUncommon from '../../../../assets/runes/fire_rune_uncommon.svg';
 import fireRuneRare from '../../../../assets/runes/fire_rune_rare.svg';
@@ -33,11 +33,11 @@ interface CardViewProps {
   description: string;
   runeType: RuneType;
   imageSrc?: string;
-  runeRarity?: RuneEffectRarity | null;
+  runeRarity?: RuneRarity | null;
   variant?: TooltipCardVariant;
 }
 
-const RUNE_CARD_IMAGES: Record<RuneType, Record<RuneEffectRarity, string>> = {
+const RUNE_CARD_IMAGES: Record<RuneType, Record<RuneRarity, string>> = {
   Fire: {
     common: fireRune,
     uncommon: fireRuneUncommon,
@@ -76,7 +76,7 @@ const RUNE_CARD_IMAGES: Record<RuneType, Record<RuneEffectRarity, string>> = {
   },
 };
 
-function resolveRuneImage(runeType: RuneType, runeRarity: RuneEffectRarity | null | undefined, override?: string): string {
+function resolveRuneImage(runeType: RuneType, runeRarity: RuneRarity | null | undefined, override?: string): string {
   if (override) {
     return override;
   }

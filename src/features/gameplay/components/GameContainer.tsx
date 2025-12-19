@@ -284,7 +284,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
       const patternLines = line.runes;
       const matchesType = patternLines.length === 0 || patternLines[0].runeType === selectedRuneType;
-      const notFull = patternLines.length < line.tier;
+      const notFull = patternLines.length < line.capacity;
       const col = getColumn(lineIndex, selectedRuneType);
       const notOnWall = player.wall[lineIndex][col].rune === null;
 
@@ -943,7 +943,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       if (line && isPlacementTarget) {
         const tooltipCards = buildPatternLinePlacementTooltipCards({
           selectedRunes,
-          patternLineTier: line.tier,
+          patternLineTier: line.capacity,
           patternLineCount: line.runes.length,
           overloadDamage,
         });

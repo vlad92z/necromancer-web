@@ -4,7 +4,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Rune, RuneEffectRarity, RuneType } from '../../../types/game';
+import type { Rune, RuneRarity, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { getRuneRarity } from '../../../utils/runeEffects';
@@ -12,7 +12,7 @@ import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 
-const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
+const RARITY_DUST_REWARD: Record<RuneRarity, number> = {
   common: 0,
   uncommon: 1,
   rare: 5,

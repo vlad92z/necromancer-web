@@ -1,9 +1,9 @@
-import type { DeckDraftEffect, RuneEffectRarity } from '../types/game';
+import type { DeckDraftEffect, RuneRarity } from '../types/game';
 
 export const DECK_DRAFTING_CONFIG = {
     runeforgeCount: 3,
     basePicks: 1,
-    rarityOrder: ['common', 'uncommon', 'rare', 'epic'] as RuneEffectRarity[],
+    rarityOrder: ['common', 'uncommon', 'rare', 'epic'] as RuneRarity[],
     rareChanceMultiplier: 5,
     epicChanceMultiplier: 1,
     draftEffects: [
