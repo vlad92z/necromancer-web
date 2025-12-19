@@ -76,9 +76,5 @@ export function runeAsset(runeType: RuneType, rarity: RuneRarity): string {
 }
 
 export function getRuneAsset(rune: Rune): string {
-    if (rune.effects.length === 0) {
-        return commonRuneAsset(rune.runeType);
-    }
-    const rarity = rune.effects[0].rarity;
-    return runeAsset(rune.runeType, rarity);
+    return runeAsset(rune.runeType, rune.rarity);
 }

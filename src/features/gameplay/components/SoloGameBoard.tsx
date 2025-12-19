@@ -10,6 +10,7 @@ import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
 import { PlayerBoard } from './Player/PlayerBoard';
 import { useGameplayStore } from '../../../state/stores';
+import { PlayerHandView } from './PlayerHandView';
 
 interface SoloGameViewProps {
   shared: GameContainerSharedProps;
@@ -31,7 +32,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     onRuneClick,
     onCancelSelection,
     onPlaceRunes,
-    strain,
+    overloadDamage,
     isGameOver,
     returnToStartScreen,
   } = shared;
@@ -61,7 +62,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       />
 
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
-        <RuneSelectionTable
+        {/* <RuneSelectionTable
           runeforges={runeforges}
           onRuneClick={onRuneClick}
           hasSelectedRunes={hasSelectedRunes}
@@ -70,7 +71,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           activeElement={activeElement}
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
-        />
+        /> */}
 
 
         <PlayerBoard
@@ -82,10 +83,11 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           lockedLineIndexes={playerLockedLines}
           hiddenSlotKeys={playerHiddenPatternSlots}
           selectedRunes={selectedRunes}
-          strain={strain}
+          overloadDamage={overloadDamage}
           activeElement={activeElement}
         />
       </div>
+      <PlayerHandView/>
       {/* TODO: Cleanup */}
       {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && (
 

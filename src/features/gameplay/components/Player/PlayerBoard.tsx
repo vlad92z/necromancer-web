@@ -17,7 +17,7 @@ interface PlayerBoardProps {
   lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
   selectedRunes: Rune[];
-  strain: number;
+  overloadDamage: number;
   activeElement?: ActiveElement | null;
 }
 
@@ -30,7 +30,7 @@ export function PlayerBoard({
   lockedLineIndexes,
   hiddenSlotKeys,
   selectedRunes,
-  strain,
+  overloadDamage,
   activeElement,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
@@ -57,7 +57,7 @@ export function PlayerBoard({
             hiddenSlotKeys={hiddenSlotKeys}
             lockedLineIndexes={lockedLineIndexes}
             selectedRunes={selectedRunes}
-            strain={strain}
+            overloadDamage={overloadDamage}
             activePatternLineIndex={activePatternLineIndex}
           />
           <ScoringWall/>

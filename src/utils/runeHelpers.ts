@@ -8,16 +8,16 @@ import { SOLO_RUN_CONFIG } from './soloRunConfig';
 /**
  * Get the effect description for a rune type
  */
-export function getRuneEffectDescription(runeType: RuneType): string {  
-  const descriptions: Record<RuneType, string> = {
-    Fire: 'Fire',
-    Frost: 'Frost',
-    Life: 'Life',
-    Void: 'Void',
-    Wind: 'Wind',
-    Lightning: 'Lightning',
+export function getRuneTitle(runeType: RuneType): string {  
+  const titles: Record<RuneType, string> = {
+    Fire: 'Fire Rune',
+    Frost: 'Frost Rune',
+    Life: 'Life Rune',
+    Void: 'Void Rune',
+    Wind: 'Wind Rune',
+    Lightning: 'Lightning Rune',
   };
-  return descriptions[runeType];
+  return titles[runeType];
 }
 
 export function getRuneType(row: number, column: number): RuneType {

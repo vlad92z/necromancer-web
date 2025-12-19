@@ -1,3 +1,4 @@
+import { create } from "zustand";
 import type { Artefact } from "../types/artefacts";
 import type { PatternLine, PlayerStats, Rune, SoloGameState, SpellWall } from "../types/game";
 import { getOverloadDamageForGame } from "./overload";
@@ -50,12 +51,23 @@ export function createStartingDeck(): Rune[] {
   return deck;
 }
 
+export function drawRunesFromDeck(shuffledDeck: Rune[], hand: Rune[]): { newDeck: Rune[]; newHand: Rune[]} {
+    const config = SOLO_RUN_CONFIG;
+    const runesToDeal = Math.min(shuffledDeck.length, config.drawCound);
+    const runesDrawn = shuffledDeck.slice(0, runesToDeal);
+    const updatedDeck = shuffledDeck.slice(runesToDeal);
+    const updatedHand = [...runesDrawn, ...hand];
+    return { newDeck: updatedDeck, newHand: updatedHand };
+}
+
 export function nextGame(
     gameIndex: number = 0,
     player: PlayerStats = startingPlayer(),
     activeArtefacts: Artefact[] = [], //TODO: Get this from global state
-    fullDeck: Rune[] = [],
+    fullDeck: Rune[] = createStartingDeck(),
 ) : SoloGameState {
+    const shuffledDeck = fullDeck.sort(() => Math.random() - 0.5);
+    const { newDeck: deck, newHand: hand } = drawRunesFromDeck(shuffledDeck, []);
     return {
         status: 'not-started',
         playerStats: {...player, currentArmor: 0 },
@@ -66,11 +78,11 @@ export function nextGame(
         overloadDamage: getOverloadDamageForGame(gameIndex),
         activeArtefacts,
         deck: {
-            remainingRunes: fullDeck,
+            remainingRunes: deck,
             allRunes: fullDeck,
             overloadedRunes: [],
         },
-        playerHand: [],
+        playerHand: hand,
         gameIndex,
         roundIndex: 0,
         spellWall: createSpellWall(),

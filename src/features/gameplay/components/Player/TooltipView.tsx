@@ -97,14 +97,14 @@ export function TooltipView() {
             }}
             ref={index === 0 ? cardRef : null}
           >
-            <CardView
+            {/* <CardView
               title={card.title}
               imageSrc={card.imageSrc}
               description={card.description}
               runeType={card.runeType}
               runeRarity={card.runeRarity}
               variant={card.variant}
-            />
+            /> */}
           </div>
         );
       })}

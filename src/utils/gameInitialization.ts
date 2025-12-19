@@ -125,7 +125,6 @@ export function fillRuneforges(runeforges: Runeforge[], deck: Rune[]): { runefor
       disabled: Boolean(runeforge.disabled),
     };
   });
-  console.log('Filled runeforges:', filledRuneforges.map(r => r.runes.map(rn => rn.id)));
   return { runeforges: filledRuneforges, updatedDeck: shuffledDeck, };
 }
 

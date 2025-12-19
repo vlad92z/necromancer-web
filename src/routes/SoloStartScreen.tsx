@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameContainer, type GameContainerHandle } from '../features/gameplay/components/GameContainer';
-import type { GameState } from '../types/game';
+import type { GameState, SoloGameState } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
@@ -16,6 +16,7 @@ import { ArtefactsRow } from '../components/ArtefactsRow';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../components/ClickSoundButton';
 import { useClickSound } from '../hooks/useClickSound';
+import { useSoloGameStore } from '../state/stores/soloGameStore';
 
 const selectPersistableSoloState = (state: GameplayStore): GameState => {
   const {
@@ -26,6 +27,8 @@ const selectPersistableSoloState = (state: GameplayStore): GameState => {
 };
 
 export function SoloStartScreen() {
+  const activeGameState = useSoloGameStore();
+  const { startNewRun } = activeGameState
   const navigate = useNavigate();
   const gameplayState = useGameplayStore();
   const { gameStarted, startSoloRun, prepareSoloMode, hydrateGameState } = gameplayState;
@@ -177,7 +180,7 @@ export function SoloStartScreen() {
       if (showArtefactsModal || gameStarted) {
         return;
       }
-      
+
       switch (event.key) {
         case 'ArrowUp': {
           event.preventDefault();
@@ -313,7 +316,11 @@ export function SoloStartScreen() {
           )}
           <ClickSoundButton
             title="New Game"
-            action={() => startSoloRun()}
+            action={() => {
+              startSoloRun();
+              startNewRun();
+            }
+            }
             className={newGameButtonClasses}
             isActive={activeElement === 'new'}
           />
