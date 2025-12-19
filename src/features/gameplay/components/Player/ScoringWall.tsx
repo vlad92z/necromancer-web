@@ -4,7 +4,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collectSegmentCells } from '../../../../utils/scoring';
-import { SpellWallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
@@ -34,11 +33,11 @@ export function ScoringWall() {
       const orderedCells = primaryCell ? [primaryCell, ...remainingCells] : remainingCells;
 
       const tooltipRunes = orderedCells
-        .filter((cell) => cell.runeType !== null)
+        .filter((cell) => cell.rune !== null)
         .map((cell) => ({
           id: `wall-${cell.row}-${cell.col}`,
-          runeType: (cell.runeType ?? 'Life') as RuneType,
-          effects: cell.effects ?? [],
+          runeType: (cell.rune.runeType) as RuneType,
+          effects: cell.rune.effect,
         }));
 
       if (tooltipRunes.length === 0) {

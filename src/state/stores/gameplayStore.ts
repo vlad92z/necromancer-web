@@ -7,7 +7,6 @@ import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
 import { fillRuneforges, nextGame, createRuneforges, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment } from '../../utils/scoring';
-import { getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
 import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
 import { useArtefactStore } from './artefactStore';
@@ -81,7 +80,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
     channelSoundPending: state.channelSoundPending,
-    outcome: 'victory',
+    isDefeat: false,
     targetScore: nextTargetScore,
     baseTargetScore: state.baseTargetScore || nextTargetScore,
   };
@@ -183,7 +182,6 @@ function handlePlayerDefeat(
   state: GameState,
   updatedPlayer: Player,
   overloadDamage: number,
-  channelTriggered: boolean
 ): GameState {
 
   trackDefeatEvent({
@@ -208,7 +206,6 @@ function handlePlayerDefeat(
     shouldTriggerEndRound: false,
     isDefeat: true,
     overloadSoundPending: overloadDamage > 0,
-    channelSoundPending: channelTriggered || state.channelSoundPending,
   };
 }
 
@@ -453,13 +450,12 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     runes: updatedRunes,
   };
 
-  const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
+  const { overloadDamage, nextHealth, nextArmor } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
     overflowRunes,
     state
   );
-  const nextChannelSoundPending = channelTriggered || state.channelSoundPending;
 
   const updatedPlayer = {
     ...currentPlayer,
@@ -474,12 +470,11 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
       state,
       updatedPlayer,
       overloadDamage,
-      channelTriggered
     );
     return { ...state, ...defeatedState, selectionTimestamp: null };
   }
 
-  const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
+  const nextRunePowerTotal = state.runePowerTotal;
   if (nextRunePowerTotal >= state.targetScore) {
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
@@ -498,7 +493,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
       ...state,
       ...deckDraftReadyState,
       selectionTimestamp: null,
-      channelSoundPending: nextChannelSoundPending,
     };
   }
 
@@ -520,8 +514,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     turnPhase: nextTurnPhase,
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
-    runePowerTotal: state.runePowerTotal + scoreBonus,
-    channelSoundPending: nextChannelSoundPending,
+    runePowerTotal: state.runePowerTotal,
   };
 }
 
@@ -535,13 +528,12 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
 
   const currentPlayer = state.player;
 
-  const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
+  const { overloadDamage, nextHealth, nextArmor } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
     selectedRunes,
     state
   );
-  const nextChannelSoundPending = channelTriggered || state.channelSoundPending;
 
   const updatedPlayer = {
     ...currentPlayer,
@@ -554,13 +546,12 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     const defeatedState = handlePlayerDefeat(
       state,
       updatedPlayer,
-      overloadDamage,
-      channelTriggered
+      overloadDamage
     );
     return { ...state, ...defeatedState, selectionTimestamp: null };
   }
 
-  const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
+  const nextRunePowerTotal = state.runePowerTotal;
   if (nextRunePowerTotal >= state.targetScore) {
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
@@ -579,7 +570,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
       ...state,
       ...deckDraftReadyState,
       selectionTimestamp: null,
-      channelSoundPending: nextChannelSoundPending,
     };
   }
 
@@ -595,8 +585,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
     turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
-    runePowerTotal: state.runePowerTotal + scoreBonus,
-    channelSoundPending: nextChannelSoundPending,
+    runePowerTotal: state.runePowerTotal
   };
 }
 
@@ -928,7 +917,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         shouldTriggerEndRound: shouldEndRound, //TODO why would both be needed?
         scoringSequence,
         lockedPatternLines: lockedPatternLines,
-        outcome: state.outcome,
+        isDefeat: false,
         channelSoundPending: nextChannelSoundPending,
         runePowerTotal: targetRunePowerTotal,
       };
@@ -936,7 +925,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (targetRunePowerTotal >= state.targetScore) {
         const deckDraftState = enterDeckDraftMode({
           ...baseNextState,
-          outcome: 'victory',
+          isDefeat: false,
           selectedRunes: [],
           draftSource: null,
           pendingPlacement: null,
@@ -1109,7 +1098,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     clearScoringTimeout();
     set((state) => {
       // If the last run ended in defeat, ensure persisted state is cleared immediately
-      if (state.outcome === 'defeat') {
+      if (state.isDefeat === true) {
         try {
           clearSoloState();
         } catch (error) {
@@ -1147,7 +1136,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
 
-      const rarity = getRuneRarity(runeToRemove.effects);
+      const rarity = runeToRemove.rarity;
       const rarityDustMap: Record<NonNullable<typeof rarity>, number> = {
         common: 0,
         uncommon: 1,

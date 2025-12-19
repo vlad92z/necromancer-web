@@ -6,7 +6,7 @@ import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import type { PatternLine, Rune, RuneType, TooltipCard } from '../types/game';
 import { getArtefactEffectDescription } from './artefactEffects';
-import { getRuneEffectDescription, getRuneRarity } from './runeEffects';
+import { getRuneEffectDescription } from './runeEffects';
 import overloadSvg from '../assets/stats/overload.svg';
 
 const FALLBACK_RUNE_TYPE: RuneType = 'Life';
@@ -45,10 +45,11 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
   const orderedRunes = orderPrimaryFirst(runes, primaryRuneId);
   return orderedRunes.map((rune, index) => ({
     id: `rune-tooltip-${rune.id}-${index}`,
-    runeType: rune.runeType,
     title: `${rune.runeType} Rune`,
-    description: getRuneEffectDescription(rune.effects),
-    runeRarity: getRuneRarity(rune.effects),
+    description: getRuneEffectDescription(rune.effect),
+    runeRarity: rune.rarity,
+    imageSrc: '', // Could add rune image mapping here if needed
+    variant: 'default',
   }));
 }
 
@@ -71,10 +72,11 @@ export function buildPatternLinePlacementTooltipCards({
     const primaryRune = selectedRunes[cursor];
     orderedCards.push({
       id: `pattern-primary-${primaryRune.id}-${cursor}`,
-      runeType: primaryRune.runeType,
       title: getRuneTooltipTitle(primaryRune),
-      description: getRuneEffectDescription(primaryRune.effects),
-      runeRarity: getRuneRarity(primaryRune.effects),
+      description: getRuneEffectDescription(primaryRune.effect),
+      runeRarity: primaryRune.rarity,
+      imageSrc: '', // Could add rune image mapping here if needed
+      variant: 'default',
     });
     cursor += 1;
   }
@@ -84,11 +86,11 @@ export function buildPatternLinePlacementTooltipCards({
   nonPrimaryRunes.forEach((rune, index) => {
     orderedCards.push({
       id: `pattern-non-primary-${rune.id}-${index}`,
-      runeType: rune.runeType,
       title: getRuneTooltipTitle(rune),
       description: NON_PRIMARY_DESTROYED_TEXT,
       variant: 'nonPrimary',
-      runeRarity: getRuneRarity(rune.effects),
+      imageSrc: '', // Could add rune image mapping here if needed
+      runeRarity: rune.rarity,
     });
   });
   cursor += nonPrimaryRunes.length;
@@ -97,12 +99,11 @@ export function buildPatternLinePlacementTooltipCards({
   overloadRunes.forEach((rune, index) => {
     orderedCards.push({
       id: `pattern-overload-${rune.id}-${index}`,
-      runeType: rune.runeType,
       title: getRuneTooltipTitle(rune),
       description: OVERLOAD_DESCRIPTION_SUFFIX(overloadDamage),
       imageSrc: overloadSvg,
       variant: 'overload',
-      runeRarity: getRuneRarity(rune.effects),
+      runeRarity: rune.rarity,
     });
   });
 
@@ -116,15 +117,16 @@ export function buildPatternLineExistingTooltipCards(patternLine: PatternLine): 
   }
 
   const primaryRune = patternLinesRunes[0]
-  const runeType =  patternLinesRunes[0].runeType;
+  const runeType = patternLinesRunes[0].runeType;
 
   const tooltipCards: TooltipCard[] = [
     {
       id: `pattern-line-primary-${primaryRune.id}`,
-      runeType,
       title: getRuneTooltipTitle(primaryRune),
-      description: getRuneEffectDescription(primaryRune.effects),
-      runeRarity: getRuneRarity(primaryRune.effects),
+      description: getRuneEffectDescription(primaryRune.effect),
+      runeRarity: primaryRune.rarity,
+      imageSrc: '', // Could add rune image mapping here if needed
+      variant: 'default',
     },
   ];
 
@@ -132,11 +134,11 @@ export function buildPatternLineExistingTooltipCards(patternLine: PatternLine): 
   for (let index = 0; index < destroyedCount; index += 1) {
     tooltipCards.push({
       id: `pattern-line-destroyed-${primaryRune.id}-${index}`,
-      runeType,
       title: getRuneTooltipTitle(primaryRune),
       description: NON_PRIMARY_DESTROYED_TEXT,
       variant: 'nonPrimary',
-      runeRarity: getRuneRarity(primaryRune.effects),
+      runeRarity: primaryRune.rarity,
+      imageSrc: '', // Could add rune image mapping here if needed
     });
   }
 
@@ -146,13 +148,13 @@ export function buildPatternLineExistingTooltipCards(patternLine: PatternLine): 
 export function buildOverloadPlacementTooltipCards(selectedRunes: Rune[], strain: number): TooltipCard[] {
   return selectedRunes.map((rune, index) => ({
     id: `overload-preview-${rune.id}-${index}`,
-      runeType: rune.runeType,
-      title: getRuneTooltipTitle(rune),
-      description: OVERLOAD_DESCRIPTION_SUFFIX(strain),
-      imageSrc: overloadSvg,
-      variant: 'overload',
-      runeRarity: getRuneRarity(rune.effects),
-    }));
+    runeType: rune.runeType,
+    title: getRuneTooltipTitle(rune),
+    description: OVERLOAD_DESCRIPTION_SUFFIX(strain),
+    imageSrc: overloadSvg,
+    variant: 'overload',
+    runeRarity: rune.rarity,
+  }));
 }
 
 /**
@@ -160,29 +162,24 @@ export function buildOverloadPlacementTooltipCards(selectedRunes: Rune[], strain
  * preserving other active artefacts afterwards.
  */
 export function buildArtefactTooltipCards(
-  activeArtefactIds: ArtefactId[],
-  primaryArtefactId: ArtefactId
+  activeArtefactIds: ArtefactId[]
 ): TooltipCard[] {
-  const orderedArtefacts = orderPrimaryFirst(
-    activeArtefactIds.map((id) => ({ id })),
-    primaryArtefactId
-  ).map(({ id }) => id);
 
-  return orderedArtefacts
-    .map<TooltipCard | null>((artefactId, index) => {
-      const artefact = ARTEFACTS[artefactId];
-      if (!artefact) {
-        return null;
-      }
-      return {
-        id: `artefact-tooltip-${artefactId}-${index}`,
-        runeType: FALLBACK_RUNE_TYPE,
-        title: artefact.name,
-        description: getArtefactEffectDescription(artefactId),
-        imageSrc: artefact.image,
-      };
-    })
-    .filter((card): card is TooltipCard => card !== null);
+  return [];
+    // .map<TooltipCard>((artefactId, index) => {
+    //   const artefact = ARTEFACTS[artefactId];
+    //   if (!artefact) {
+    //     return null;
+    //   }
+    //   return {
+    //     id: `artefact-tooltip-${artefactId}-${index}`,
+    //     runeType: FALLBACK_RUNE_TYPE,
+    //     title: artefact.name,
+    //     description: getArtefactEffectDescription(artefactId),
+    //     imageSrc: artefact.image,
+    //   };
+    // })
+    // .filter((card): card is TooltipCard => card !== null);
 }
 
 /**
@@ -198,10 +195,12 @@ export function buildTextTooltipCard(
   return [
     {
       id,
-      runeType,
       title,
       description,
-      imageSrc,
+      runeRarity: 'common',
+      imageSrc: '',
+      variant: 'default',
+      
     },
   ];
 }

@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Rune, RuneRarity, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
-import { getRuneRarity } from '../../../utils/runeEffects';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
@@ -53,11 +52,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   const sortedRunes = runeTypes.flatMap((runeType) => {
     const runes = completeDeck.filter((rune) => rune.runeType === runeType);
     const ordered = [...runes].sort((a, b) => {
-      const aHasEffects = a.effects.length > 0;
-      const bHasEffects = b.effects.length > 0;
-      if (aHasEffects !== bHasEffects) {
-        return aHasEffects ? -1 : 1;
-      }
       return a.id.localeCompare(b.id);
     });
     return ordered.map((rune) => ({
@@ -89,7 +83,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   const pendingDustTotal = useMemo(
     () =>
       selectedRunes.reduce((acc, rune) => {
-        const rarity = getRuneRarity(rune.effects);
+        const rarity = rune.rarity
         return acc + (rarity ? RARITY_DUST_REWARD[rarity] ?? 0 : 0);
       }, 0),
     [selectedRunes],
@@ -130,7 +124,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
 
     selectedRunes.forEach((rune) => {
       const awardedDust = onDisenchantRune(rune.id);
-      const rarity = getRuneRarity(rune.effects);
+      const rarity = rune.rarity;
       if (typeof awardedDust === 'number') {
         totalDustAwarded += awardedDust;
       } else if (rarity) {

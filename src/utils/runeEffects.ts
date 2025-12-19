@@ -63,7 +63,7 @@ export function getRuneEffectDescription(effect: RuneEffect): string {
   }
 }
 
-export function getBaseRuneEffectsForType(runeType: RuneType): RuneEffect {
+export function getBaseRuneEffectForType(runeType: RuneType): RuneEffect {
   return BASE_RUNE_EFFECTS[runeType];
 }
 
@@ -74,6 +74,6 @@ const DRAFT_EFFECTS_BY_RARITY: Record<RuneRarity, Record<RuneType, RuneEffect>> 
   epic: EPIC_RUNE_EFFECTS,
 };
 
-export function getEffectsForType(runeType: RuneType, rarity: RuneRarity = 'uncommon'): RuneEffect {
+export function getEffectForType(runeType: RuneType, rarity: RuneRarity = 'uncommon'): RuneEffect {
   return DRAFT_EFFECTS_BY_RARITY[rarity][runeType];
 }

@@ -34,7 +34,7 @@ import lightningRune from '../assets/runes/lightning_rune.svg';
 import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.svg';
 import lightningRuneRare from '../assets/runes/lightning_rune_rare.svg';
 import lightningRuneEpic from '../assets/runes/lightning_rune_epic.svg';
-import { getRuneEffectDescription, getRuneRarity } from '../utils/runeEffects';
+import { getRuneEffectDescription } from '../utils/runeEffects';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
@@ -167,7 +167,7 @@ export function RuneCell({
   const variantStyle = VARIANT_STYLES[usedVariant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
-  const runeRarity = showEffect && rune ? getRuneRarity(rune.effects) : null;
+  const runeRarity = rune ? rune.rarity : null;
   const runeImage = runeType
     ? runeRarity
       ? RUNE_ASSETS_BY_RARITY[runeRarity][runeType]
@@ -180,7 +180,7 @@ export function RuneCell({
     if (!showTooltip || !rune) {
       return null;
     }
-    return getRuneEffectDescription(rune.effects);
+    return getRuneEffectDescription(rune.effect);
   }, [rune, showTooltip]);
   
   // Use occupied background for wall cells that have runes

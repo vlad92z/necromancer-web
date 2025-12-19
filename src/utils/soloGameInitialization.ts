@@ -1,7 +1,7 @@
 import type { Artefact } from "../types/artefacts";
 import type { PatternLine, PlayerStats, Rune, SoloGameState, SpellWall } from "../types/game";
 import { getOverloadDamageForGame } from "./overload";
-import { getRuneEffectsForType } from "./runeEffects";
+import { getBaseRuneEffectForType } from "./runeEffects";
 import { getRuneType } from "./runeHelpers";
 import { SOLO_RUN_CONFIG } from "./soloRunConfig";
 
@@ -42,7 +42,7 @@ export function createStartingDeck(): Rune[] {
       deck.push({
         id: `${runeType}-${i}`,
         runeType,
-        effect: getRuneEffectsForType(runeType),
+        effect: getBaseRuneEffectForType(runeType),
         rarity: 'common',
       });
     }

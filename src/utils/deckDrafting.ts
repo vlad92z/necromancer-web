@@ -4,10 +4,10 @@
 
 import type { DeckDraftEffect, DeckDraftState, DraftRuneforge, Player, Rune, RuneRarity, RuneType } from '../types/game';
 import type { ArtefactId } from '../types/artefacts';
-import { getDraftEffectsForType } from './runeEffects';
 import { modifyDraftRarityWithRing } from './artefactEffects';
 import { SOLO_RUN_CONFIG } from './soloRunConfig';
 import { DECK_DRAFTING_CONFIG } from './deckDraftingConfig';
+import { getEffectForType } from './runeEffects';
 
 //TODO: What are all these for?
 const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
@@ -52,11 +52,12 @@ function getDraftRarity(gameIndex: number, activeArtefacts: ArtefactId[] = []): 
   return 'uncommon';
 }
 
-const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rarity: RuneRarity): Rune => {
+const createDraftRune = (runeType: RuneType, index: number, rarity: RuneRarity): Rune => {
   return {
-    id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+    id: `draft-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
     runeType,
-    effects: getDraftEffectsForType(runeType, rarity),
+    effect: getEffectForType(runeType, rarity),
+    rarity: rarity,
   };
 };
 
@@ -78,7 +79,7 @@ function createDraftRuneforges(
         const baseRarity = getDraftRarity(gameIndex, activeArtefacts);
         const shouldBoostRarity = deckDraftEffect.type === 'betterRunes' && i === 0;
         const rarity = shouldBoostRarity ? boostRarity(baseRarity, deckDraftEffect.rarityStep) : baseRarity;
-        runes.push(createDraftRune(ownerId, runeType, forgeIndex * capacity + i, rarity));
+        runes.push(createDraftRune(runeType, forgeIndex * capacity + i, rarity));
       }
 
       return {

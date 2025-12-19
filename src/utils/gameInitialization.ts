@@ -11,10 +11,10 @@ import type {
   Rune,
   TooltipCard,
 } from '../types/game';
-import { getRuneEffectsForType } from './runeEffects';
 import { getOverloadDamageForGame } from './overload';
 import { SOLO_RUN_CONFIG } from './soloRunConfig';
 import { getRuneType } from './runeHelpers';
+import { getBaseRuneEffectForType } from './runeEffects';
 
 /**
  * Create an empty scoring wall (fixed 6x6)
@@ -61,9 +61,10 @@ export function createStartingDeck(): Rune[] {
   config.runeTypes.forEach((runeType) => {
     for (let i = 0; i <= 15; i++) {
       deck.push({
-        id: `${config.playerId}-${runeType}-${i}`,
+        id: `${runeType}-${i}`,
         runeType,
-        effects: getRuneEffectsForType(runeType),
+        effect: getBaseRuneEffectForType(runeType),
+        rarity: 'common',
       });
     }
   });

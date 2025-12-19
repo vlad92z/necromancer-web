@@ -17,7 +17,7 @@ export function WallCell({ type, rune, pulseKey }: WallCellProps) {
   const imageDimension = RUNE_SIZE_CONFIG['large'].dimension;
   const borderColor = rune === null ? 'border-slate-600 opacity-50' : 'border-slate-400';
   const backgroundColor = rune === null ? '' : 'bg-sky-700/50';
-  const image = runeAsset(type, rune?.effects?.[0]?.rarity ?? 'common');
+  const image = runeAsset(type, rune?.rarity || 'common');
   return (
     <div
       className={`border rounded-xl ${borderColor} ${backgroundColor} align-center p-1`}
