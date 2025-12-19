@@ -7,6 +7,7 @@ import { collectSegmentCells } from '../../../../utils/scoring';
 import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
+import { WallCell } from '../SpellWallCell';
 
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
@@ -37,7 +38,8 @@ export function ScoringWall() {
         .map((cell) => ({
           id: `wall-${cell.row}-${cell.col}`,
           runeType: (cell.rune.runeType) as RuneType,
-          effects: cell.rune.effect,
+          effect: cell.rune.effect,
+          rarity: cell.rune.rarity,
         }));
 
       if (tooltipRunes.length === 0) {
@@ -76,7 +78,7 @@ export function ScoringWall() {
                 onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
                 onMouseLeave={resetTooltipCards}
               >
-                <SpellWallCell
+                <WallCell
                   type={cell.runeType}
                   rune={null}
                   pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}
