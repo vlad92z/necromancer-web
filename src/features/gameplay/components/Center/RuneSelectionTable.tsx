@@ -4,7 +4,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
-import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
 import { Runeforge } from './Runeforge';
@@ -13,6 +12,7 @@ import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
 import type { ActiveElement } from '../keyboardNavigation';
+import { SOLO_RUN_CONFIG } from '../../../../utils/soloRunConfig';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
@@ -80,7 +80,6 @@ export function RuneSelectionTable({
   }, [draftSource]);
   const selectedRuneIdSet = useMemo(() => new Set(selectedRunes.map((rune) => rune.id)), [selectedRunes]);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
-  const runeTypes = useMemo(() => RUNE_TYPES, []);
   const runeCounts = useMemo(
     () => {
       const counts = getRuneTypeCounts({
@@ -179,7 +178,7 @@ export function RuneSelectionTable({
         ))}
       </div>
       <div className="flex flex-col gap-2">
-        <RuneTypeTotals runeTypes={runeTypes} counts={runeCounts} />
+        <RuneTypeTotals runeTypes={SOLO_RUN_CONFIG.runeTypes} counts={runeCounts} />
         <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
       </div>
     </div>

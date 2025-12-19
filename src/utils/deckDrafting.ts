@@ -5,8 +5,6 @@
 import type { DeckDraftEffect, DeckDraftState, DraftRuneforge, Player, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import type { ArtefactId } from '../types/artefacts';
 import { getDraftEffectsForType } from './runeEffects';
-import { RUNE_TYPES } from './gameInitialization';
-import type { Runeforge } from '../types/game';
 import { modifyDraftRarityWithRing } from './artefactEffects';
 import { SOLO_RUN_CONFIG } from './soloRunConfig';
 import { DECK_DRAFTING_CONFIG } from './deckDraftingConfig';
@@ -68,7 +66,7 @@ function createDraftRuneforges(
   gameIndex: number,
   activeArtefacts: ArtefactId[] = []
 ): DraftRuneforge[] {
-  const runeTypes = RUNE_TYPES;
+  const runeTypes = SOLO_RUN_CONFIG.runeTypes;
   const capacity = SOLO_RUN_CONFIG.runeforgeCapacity;
   return Array(runeforgeCount)
     .fill(null)

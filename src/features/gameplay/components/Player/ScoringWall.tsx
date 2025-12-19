@@ -3,24 +3,16 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
-import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
+import { collectSegmentCells } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 
-interface ScoringWallProps {
-  wall: ScoringWallType;
-  patternLines: PatternLine[];
-}
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
-
-// We no longer compute the largest connected component. Instead we connect
-// every occupied or pending cell to its orthogonal neighbors (right + down).
-
-export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
+export function ScoringWall() {
+  const wall = useGameplayStore((state) => state.player.wall);
   const [pulseKey, setPulseKey] = useState(0);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
@@ -75,9 +67,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     setPulseKey((prev) => prev + 1);
   }, [scoringSequence]);
 
-  const gridSize = wall.length;
-  const availableRuneTypes: RuneType[] = getRuneOrderForSize(gridSize);
-
   return (
       <div className='flex flex-col gap-px-1'>
         { wall.map((row, rowIndex) => (
@@ -89,11 +78,8 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
                 onMouseLeave={resetTooltipCards}
               >
                 <WallCell
-                  cell={cell}
-                  row={rowIndex}
-                  col={colIndex}
-                  wallSize={gridSize}
-                  availableRuneTypes={availableRuneTypes}
+                  type={cell.runeType}
+                  rune={null}
                   pulseKey={pulseTargets.has(cellKey(rowIndex, colIndex)) ? pulseKey : undefined}
                 />
               </div>

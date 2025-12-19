@@ -6,8 +6,8 @@
 import { create, type StoreApi } from 'zustand';
 import type { GameState, RuneType, Player, Rune, GameOutcome, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
 import { fillRuneforges, nextGame, createRuneforges, createDefaultTooltipCards } from '../../utils/gameInitialization';
-import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
-import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
+import { resolveSegment } from '../../utils/scoring';
+import { getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
 import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
 import { useArtefactStore } from './artefactStore';
@@ -22,6 +22,7 @@ import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForRound } from '../../utils/overload';
+import { getColumn } from '../../utils/runeHelpers';
 
 function areAllRuneforgesDisabled(runeforges: Runeforge[]): boolean {
   return runeforges.every((runeforge) => runeforge.disabled ?? false);
@@ -182,7 +183,7 @@ function getOverloadResult(
   newlyOverloadedRunes: Rune[],
   state: GameState
 ): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number; channelTriggered: boolean } {
-  const strain = state.strain;
+  const strain = state.overloadDamage;
   const overloadRunesPlaced = newlyOverloadedRunes.length;
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
   const { scoreBonus: channelScoreBonus, triggered: channelTriggered } =
@@ -209,7 +210,6 @@ function handlePlayerDefeat(
   overloadDamage: number,
   channelTriggered: boolean
 ): GameState {
-  console.log('gameplayStore: handlePlayerDefeat');
 
   trackDefeatEvent({
     gameIndex: state.gameIndex,
@@ -217,7 +217,7 @@ function handlePlayerDefeat(
     runePowerTotal: state.runePowerTotal,
     activeArtefacts: state.activeArtefacts,
     cause: 'overload',
-    strain: state.strain,
+    overloadDamage: state.overloadDamage,
     health: updatedPlayer.health,
     targetScore: state.targetScore,
   });
@@ -305,11 +305,9 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
 }
 
 function prepareRoundReset(state: GameState): GameState {
-  console.log('gameplayStore: prepareRoundReset');
   const player = state.player;
-  const currentStrain = state.strain;
   const nextRound = state.round + 1;
-  const nextStrain = getOverloadDamageForRound(state.gameIndex, nextRound);
+  const nextOverloadDamage = getOverloadDamageForRound(state.gameIndex, nextRound);
   const runesNeededForRound = 20; //TODO: should come from config
   const playerHasEnough = player.deck.length >= runesNeededForRound;
 
@@ -321,7 +319,7 @@ function prepareRoundReset(state: GameState): GameState {
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
       cause: 'deck-empty',
-      strain: currentStrain,
+      overloadDamage: state.overloadDamage,
       health: player.health,
       targetScore: state.targetScore,
     });
@@ -361,7 +359,7 @@ function prepareRoundReset(state: GameState): GameState {
     turnPhase: 'select',
     gameIndex: state.gameIndex,
     round: nextRound,
-    strain: nextStrain,
+    overloadDamage: nextOverloadDamage,
     outcome: null,
     lockedPatternLines: [],
     shouldTriggerEndRound: false,
@@ -438,13 +436,10 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
 }
 
 function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: number): GameplayStore {
-  if (state.turnPhase !== 'place') {
-    return state;
-  }
-
-  const { selectedRunes } = state;
+  const selectedRunes = state.selectedRunes;
   if (selectedRunes.length === 0) return state;
 
+  const selectedRuneType = selectedRunes[0].runeType;
   const currentPlayer = state.player;
   const patternLine = currentPlayer.patternLines[patternLineIndex];
   if (!patternLine) {
@@ -457,38 +452,30 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     return state;
   }
 
-  const runeType = selectedRunes[0].runeType;
-
-  if (patternLine.runeType !== null && patternLine.runeType !== runeType) {
+  const currentPatternLineCount = patternLine.runes.length;
+  if (currentPatternLineCount > 0 && selectedRuneType !== patternLine.runes[0].runeType) {
+    console.log('Selected runes do not match pattern line rune type', patternLine.runes[0].runeType, selectedRuneType);
     return state;
   }
 
-  if (patternLine.count >= patternLine.tier) {
+  if (patternLine.runes.length >= patternLine.tier) {
     return state;
   }
 
   const row = patternLineIndex;
-  const wallSize = currentPlayer.wall.length;
-  const col = getWallColumnForRune(row, runeType, wallSize);
+  const col = getColumn(row, selectedRuneType)
   if (currentPlayer.wall[row][col].runeType !== null) {
     return state;
   }
 
-  const availableSpace = patternLine.tier - patternLine.count;
+  const availableSpace = patternLine.tier - currentPatternLineCount;
   const runesToPlace = Math.min(selectedRunes.length, availableSpace);
   const overflowRunes = selectedRunes.slice(runesToPlace);
-
-  const primaryRune = selectedRunes[0];
-  const nextFirstRuneId = patternLine.firstRuneId ?? primaryRune.id;
-  const nextFirstRuneEffects = patternLine.firstRuneEffects ?? copyRuneEffects(primaryRune.effects);
-
+  const updatedRunes = [...patternLine.runes, ...selectedRunes]
   const updatedPatternLines = [...currentPlayer.patternLines];
   updatedPatternLines[patternLineIndex] = {
     ...patternLine,
-    runeType,
-    count: patternLine.count + runesToPlace,
-    firstRuneId: nextFirstRuneId,
-    firstRuneEffects: nextFirstRuneEffects,
+    runes: updatedRunes,
   };
 
   const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
@@ -498,10 +485,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     state
   );
   const nextChannelSoundPending = channelTriggered || state.channelSoundPending;
-
-  const completedLines = updatedPatternLines
-    .map((line, index) => ({ line, index }))
-    .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
   const updatedPlayer = {
     ...currentPlayer,
@@ -546,8 +529,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
 
   const shouldEndRound = isRoundExhausted(state.runeforges);
 
-  const nextTurnPhase =
-    completedLines.length > 0
+  const nextTurnPhase = updatedRunes.length === patternLine.tier
       ? ('cast' as const)
       : shouldEndRound
         ? ('end-of-round' as const)
@@ -561,7 +543,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     selectionTimestamp: null,
     draftSource: null,
     turnPhase: nextTurnPhase,
-    shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
+    shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
     channelSoundPending: nextChannelSoundPending,
@@ -644,33 +626,34 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
 }
 
 function canPlaceSelectionOnAnyLine(state: GameplayStore): boolean {
-  if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
-    return false;
-  }
+  return true;
+  // if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+  //   return false;
+  // }
 
-  const currentPlayer = state.player;
-  const runeType = state.selectedRunes[0].runeType;
-  const lockedLinesForPlayer = state.lockedPatternLines;
+  // const currentPlayer = state.player;
+  // const runeType = state.selectedRunes[0].runeType;
+  // const lockedLinesForPlayer = state.lockedPatternLines;
 
-  return currentPlayer.patternLines.some((line, index) => {
-    if (lockedLinesForPlayer.includes(index)) {
-      return false;
-    }
-    if (line.runeType !== null && line.runeType !== runeType) {
-      return false;
-    }
-    if (line.count >= line.tier) {
-      return false;
-    }
+  // return currentPlayer.patternLines.some((line, index) => {
+  //   if (lockedLinesForPlayer.includes(index)) {
+  //     return false;
+  //   }
+  //   if (line.runeType !== null && line.runeType !== runeType) {
+  //     return false;
+  //   }
+  //   if (line.count >= line.tier) {
+  //     return false;
+  //   }
 
-    const wallSize = currentPlayer.wall.length;
-    const col = getWallColumnForRune(index, runeType, wallSize);
-    if (currentPlayer.wall[index][col].runeType !== null) {
-      return false;
-    }
+  //   const wallSize = currentPlayer.wall.length;
+  //   const col = getWallColumnForRune(index, runeType, wallSize);
+  //   if (currentPlayer.wall[index][col].runeType !== null) {
+  //     return false;
+  //   }
 
-    return true;
-  });
+  //   return true;
+  // });
 }
 
 function attemptAutoPlacement(state: GameplayStore): GameplayStore {
@@ -867,7 +850,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const completedLines = updatedPatternLines
         .map((line, index) => ({ line, index }))
-        .filter(({ line }) => line.count === line.tier && line.runeType !== null);
+        .filter(({ line }) => line.runes.length === line.tier);
 
       if (completedLines.length === 0) {
         const shouldEndRound = isRoundExhausted(state.runeforges);
@@ -885,18 +868,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       let lockedPatternLines = state.lockedPatternLines;
       completedLines.forEach(({ line, index }) => {
-        const runeType = line.runeType as RuneType;
-        const wallSize = updatedWall.length;
-        const col = getWallColumnForRune(index, runeType, wallSize);
-        const effects = line.firstRuneEffects ?? getRuneEffectsForType(runeType);
+        const runeType = line.runes[0].runeType;
+        const col = getColumn(index, runeType);
 
-        updatedWall[index][col] = { runeType, effects: copyRuneEffects(effects) };
+        updatedWall[index][col].rune = line.runes[0];
         updatedPatternLines[index] = {
           tier: line.tier,
-          runeType: null,
-          count: 0,
-          firstRuneId: null,
-          firstRuneEffects: null,
+          runes: [],
         };
 
         const resolvedSegment = resolveSegment(updatedWall, index, col, overloadRuneCounts);
@@ -911,7 +889,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const segmentSteps = resolvedSegment.resolutionSteps.map((step) => ({
           row: step.cell.row,
           col: step.cell.col,
-          runeType: step.cell.runeType ?? runeType,
+          runeType: runeType,
           damageDelta: step.damageDelta * damageMultiplier,
           healingDelta: step.healingDelta * healingMultiplier,
           arcaneDustDelta: step.arcaneDustDelta,
@@ -1074,7 +1052,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
         targetScore: nextState.targetScore,
-        strain: nextState.strain,
+        overloadDamage: nextState.overloadDamage,
         startingHealth: 452,
       });
 
@@ -1331,7 +1309,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
         targetScore: nextState.targetScore,
-        strain: nextState.strain,
+        overloadDamage: nextState.overloadDamage,
         startingHealth: nextState.player.maxHealth,
       });
 

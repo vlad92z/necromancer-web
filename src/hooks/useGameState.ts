@@ -32,5 +32,5 @@ export function useSelectedRunes() {
  * Get current game number
  */
 export function useGame() {
-  return useGameplayStore((state) => state.game);
+  return useGameplayStore((state) => state.gameIndex);
 }

@@ -3,7 +3,7 @@
  */
 
 import type { PatternLine, Rune, ScoringWall } from '../types/game';
-import { getWallColumnForRune } from './scoring';
+import { getColumn } from './runeHelpers';
 
 /**
  * Find the best pattern line index to auto-place selected runes.
@@ -41,8 +41,6 @@ export function findBestPatternLineForAutoPlacement(
   const selectionType = firstRuneType;
   const selectionCount = selectedRunes.length;
 
-  const wallSize = wall.length;
-
   // Step 1: Look for unfinished pattern line that already has the matching rune type
   // Send runes there regardless of capacity (overflow will go to floor line)
   for (let i = 0; i < patternLines.length; i++) {
@@ -54,19 +52,19 @@ export function findBestPatternLineForAutoPlacement(
     }
 
     // Check if line is not complete
-    const isComplete = line.count === line.tier;
+    const isComplete = line.runes.length === line.tier;
     if (isComplete) {
       continue;
     }
 
     // Check if line already has the matching rune type (not empty)
-    const alreadyHasType = line.runeType === selectionType && line.count > 0;
+    const alreadyHasType = line.runes.length > 0 && line.runes[0].runeType === selectionType;
     if (!alreadyHasType) {
       continue;
     }
 
     // Check if this rune type is already on the wall in this row
-    const col = getWallColumnForRune(i, selectionType, wallSize);
+    const col = getColumn(i, selectionType);
     const alreadyOnWall = wall[i][col].runeType !== null;
     if (alreadyOnWall) {
       continue;
@@ -86,7 +84,7 @@ export function findBestPatternLineForAutoPlacement(
     }
 
     // Check if line is empty
-    const isEmpty = line.count === 0;
+    const isEmpty = line.runes.length === 0;
     if (!isEmpty) {
       continue;
     }
@@ -98,7 +96,7 @@ export function findBestPatternLineForAutoPlacement(
     }
 
     // Check if this rune type is already on the wall in this row
-    const col = getWallColumnForRune(i, selectionType, wallSize);
+    const col = getColumn(i, selectionType);
     const alreadyOnWall = wall[i][col].runeType !== null;
     if (alreadyOnWall) {
       continue;

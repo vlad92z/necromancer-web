@@ -9,28 +9,25 @@ import type {
   PatternLine,
   ScoringWall,
   Rune,
-  RuneType,
   TooltipCard,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 import { getOverloadDamageForGame } from './overload';
 import { SOLO_RUN_CONFIG } from './soloRunConfig';
-import { create } from 'zustand';
-
-export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
-const WALL_SIZE = RUNE_TYPES.length;
+import { getRuneType } from './runeHelpers';
 
 /**
  * Create an empty scoring wall (fixed 6x6)
  */
-export function createEmptyWall(size: number = SOLO_RUN_CONFIG.wallSize): ScoringWall {
-  return Array(size)
-    .fill(null)
-    .map(() =>
-      Array(size)
-        .fill(null)
-        .map(() => ({ runeType: null, effects: null }))
-    );
+export function createEmptyWall(): ScoringWall {
+  const runeTypes = SOLO_RUN_CONFIG.runeTypes;
+  const size = runeTypes.length;
+  return Array.from({ length: size }, (_, row) =>
+    Array.from({ length: size }, (_, col) => {
+      const runeType = getRuneType(row, col);
+      return { runeType, rune: null };
+    })
+  );
 }
 
 /**
@@ -40,11 +37,8 @@ export function createPatternLines(count: number = SOLO_RUN_CONFIG.wallSize): Pa
   const lines: PatternLine[] = [];
   for (let i = 1; i <= count; i++) {
     lines.push({
-      tier: i as PatternLine['tier'],
-      runeType: null,
-      count: 0,
-      firstRuneId: null,
-      firstRuneEffects: null,
+      tier: i,
+      runes: [],
     });
   }
   return lines;
@@ -60,13 +54,14 @@ export interface SoloSizingConfig {
 /**
  * Create a mock player deck (for now, just basic runes)
  */
-export function createStartingDeck(playerId: string = SOLO_RUN_CONFIG.playerId): Rune[] {
+export function createStartingDeck(): Rune[] {
+  const config = SOLO_RUN_CONFIG;
   const deck: Rune[] = [];
 
-  RUNE_TYPES.forEach((runeType) => {
+  config.runeTypes.forEach((runeType) => {
     for (let i = 0; i <= 15; i++) {
       deck.push({
-        id: `${playerId}-${runeType}-${i}`,
+        id: `${config.playerId}-${runeType}-${i}`,
         runeType,
         effects: getRuneEffectsForType(runeType),
       });
@@ -161,7 +156,7 @@ export function nextGame(
 
   return {
     gameStarted: false,
-    strain: getOverloadDamageForGame(gameIndex),
+    overloadDamage: getOverloadDamageForGame(gameIndex),
     player: player,
     runeforges: filledRuneforges,
     runeforgeDraftStage: 'single',

@@ -21,8 +21,8 @@ import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import { SoloGameView } from './SoloGameBoard';
 import { buildOverloadPlacementTooltipCards, buildPatternLinePlacementTooltipCards, buildRuneTooltipCards } from '../../../utils/tooltipCards';
-import { getWallColumnForRune } from '../../../utils/scoring';
 import type { ActiveElement, NavigationDirection } from './keyboardNavigation';
+import { getColumn } from '../../../utils/runeHelpers';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -48,13 +48,14 @@ export interface GameContainerProps {
   gameState: GameState;
 }
 
+//TODO Why is this even needed?
 export interface GameData {
   outcome: GameState['outcome'];
   runeScore: { currentScore: number; targetScore: number };
   playerStats: {
     isActive: boolean;
     overloadMultiplier: number;
-    game: number;
+    gameIndex: number;
     deckCount: number;
     overloadedRuneCount: number;
   };
@@ -79,8 +80,8 @@ export interface GameContainerSharedProps {
   displayedArmor: number;
   currentPlayerIndex: number;
   currentPlayerId: string;
-  game: number;
-  strain: number;
+  gameIndex: number;
+  overloadDamage: number;
   isSelectionPhase: boolean;
   isGameOver: boolean;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
@@ -121,10 +122,10 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     lockedPatternLines,
     shouldTriggerEndRound,
     draftSource,
-    strain,
+    overloadDamage,
     overloadRunes,
   } = gameState;
-  const currentGame = useGameplayStore((state) => state.game);
+  const gameIndex = useGameplayStore((state) => state.gameIndex);
   const outcome = gameState.outcome;
   const runePowerTotal = gameState.runePowerTotal;
   const targetScore = gameState.targetScore;
@@ -241,12 +242,12 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const playerStats = useMemo(
     () => ({
       isActive: true,
-      overloadMultiplier: strain,
-      game: currentGame,
+      overloadMultiplier: overloadDamage,
+      gameIndex: gameIndex,
       deckCount: player.deck.length,
       overloadedRuneCount: overloadRunes.length,
     }),
-    [currentGame, overloadRunes.length, player.deck.length, strain],
+    [gameIndex, overloadRunes.length, player.deck.length, overloadDamage],
   );
 
   const prevArcaneDustRef = useRef<number>(displayedArcaneDust);
@@ -281,10 +282,10 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         return false;
       }
 
-      const matchesType = line.runeType === null || line.runeType === selectedRuneType;
-      const notFull = line.count < line.tier;
-      const wallSize = player.wall.length;
-      const col = getWallColumnForRune(lineIndex, selectedRuneType, wallSize);
+      const patternLines = line.runes;
+      const matchesType = patternLines.length === 0 || patternLines[0].runeType === selectedRuneType;
+      const notFull = patternLines.length < line.tier;
+      const col = getColumn(lineIndex, selectedRuneType);
       const notOnWall = player.wall[lineIndex][col].runeType === null;
 
       return matchesType && notFull && notOnWall;
@@ -943,8 +944,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         const tooltipCards = buildPatternLinePlacementTooltipCards({
           selectedRunes,
           patternLineTier: line.tier,
-          patternLineCount: line.count,
-          strain,
+          patternLineCount: line.runes.length,
+          overloadDamage,
         });
         if (tooltipCards.length > 0) {
           setTooltipCards(tooltipCards, true);
@@ -954,7 +955,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }
 
     if (activeElement?.type === 'overload' && hasSelectedRunes) {
-      const tooltipCards = buildOverloadPlacementTooltipCards(selectedRunes, strain);
+      const tooltipCards = buildOverloadPlacementTooltipCards(selectedRunes, overloadDamage);
       if (tooltipCards.length > 0) {
         setTooltipCards(tooltipCards, true);
         return;
@@ -973,7 +974,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     runeforgeSlotLayouts,
     selectedRunes,
     setTooltipCards,
-    strain,
+    overloadDamage,
   ]);
 
   const selectActiveRune = useCallback(() => {
@@ -1137,8 +1138,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       displayedArmor,
       currentPlayerIndex: 0,
       currentPlayerId: player.id,
-      game: currentGame,
-      strain,
+      gameIndex: gameIndex,
+      overloadDamage,
       isSelectionPhase: isSelectionPhase,
       isGameOver,
       runeforgeDraftStage,
@@ -1160,7 +1161,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       activeElement,
       displayedArmor,
       displayedHealth,
-      currentGame,
+      gameIndex,
       draftSource,
       handleCancelSelection,
       handlePatternLinePlacement,
@@ -1172,7 +1173,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       player,
       playerHiddenPatternSlots,
       playerLockedLines,
-      strain,
+      overloadDamage,
       returnToStartScreen,
       runeforges,
       selectedRuneType,
@@ -1189,7 +1190,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       targetScore,
       runePowerTotal: displayedRunePowerTotal,
       arcaneDust: displayedArcaneDust,
-      arcaneDustReward: getArcaneDustReward(currentGame),
+      arcaneDustReward: getArcaneDustReward(gameIndex),
       totalDeckSize: 500, //TODO fix
       deckDraftState: gameState.deckDraftState,
       isDeckDrafting,
@@ -1201,7 +1202,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }),
     [
       displayedArcaneDust,
-      currentGame,
+      gameIndex,
       gameState.deckDraftState,
       handleOpenDeckOverlay,
       handleOpenOverloadOverlay,

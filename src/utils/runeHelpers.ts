@@ -3,36 +3,7 @@
  */
 
 import type { RuneType } from '../types/game';
-
-/**
- * Get the glyph/emoji for a rune type
- */
-export function getRuneGlyph(runeType: RuneType): string {
-  const glyphs: Record<RuneType, string> = {
-    Fire: '🔥',
-    Frost: '❄️',
-    Life: '💚',
-    Void: '🌀',
-    Wind: '💨',
-    Lightning: '⚡',
-  };
-  return glyphs[runeType];
-}
-
-/**
- * Get the Tailwind color class for a rune type
- */
-export function getRuneColorClass(runeType: RuneType): string {
-  const colors: Record<RuneType, string> = {
-    Fire: 'bg-red-500',
-    Frost: 'bg-blue-500',
-    Life: 'bg-green-500',
-    Void: 'bg-purple-700',
-    Wind: 'bg-yellow-400',
-    Lightning: 'bg-cyan-300',
-  };
-  return colors[runeType];
-}
+import { SOLO_RUN_CONFIG } from './soloRunConfig';
 
 /**
  * Get the effect description for a rune type
@@ -47,4 +18,25 @@ export function getRuneEffectDescription(runeType: RuneType): string {
     Lightning: 'Lightning',
   };
   return descriptions[runeType];
+}
+
+export function getRuneType(row: number, column: number): RuneType {
+  const runeTypes = SOLO_RUN_CONFIG.runeTypes;
+  const size = runeTypes.length;
+  return runeTypes[(row - column + size) % size]; // offset by 1 to the right
+}
+
+/**
+ * Given a `row` and a `RuneType`, return the column index that yields that
+ * rune when passed to `getRuneType`. Uses the same 0-based indexing as
+ * `getRuneType` and the `SOLO_RUN_CONFIG.runeTypes` ordering.
+ */
+export function getColumn(row: number, type: RuneType): number {
+  const runeTypes = SOLO_RUN_CONFIG.runeTypes;
+  const size = runeTypes.length;
+  const targetIndex = runeTypes.indexOf(type);
+  if (targetIndex === -1) {
+    return 0;
+  }
+  return (row - targetIndex + size) % size;
 }

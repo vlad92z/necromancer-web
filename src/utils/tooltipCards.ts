@@ -6,7 +6,7 @@ import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import type { PatternLine, Rune, RuneType, TooltipCard } from '../types/game';
 import { getArtefactEffectDescription } from './artefactEffects';
-import { getRuneEffectDescription, getRuneEffectsForType, getRuneRarity } from './runeEffects';
+import { getRuneEffectDescription, getRuneRarity } from './runeEffects';
 import overloadSvg from '../assets/stats/overload.svg';
 
 const FALLBACK_RUNE_TYPE: RuneType = 'Life';
@@ -17,7 +17,7 @@ interface PatternLinePlacementTooltipOptions {
   selectedRunes: Rune[];
   patternLineTier: number;
   patternLineCount: number;
-  strain: number;
+  overloadDamage: number;
 }
 
 function getRuneTooltipTitle(rune: Rune): string {
@@ -56,7 +56,7 @@ export function buildPatternLinePlacementTooltipCards({
   selectedRunes,
   patternLineTier,
   patternLineCount,
-  strain,
+  overloadDamage,
 }: PatternLinePlacementTooltipOptions): TooltipCard[] {
   if (selectedRunes.length === 0) {
     return [];
@@ -99,7 +99,7 @@ export function buildPatternLinePlacementTooltipCards({
       id: `pattern-overload-${rune.id}-${index}`,
       runeType: rune.runeType,
       title: getRuneTooltipTitle(rune),
-      description: OVERLOAD_DESCRIPTION_SUFFIX(strain),
+      description: OVERLOAD_DESCRIPTION_SUFFIX(overloadDamage),
       imageSrc: overloadSvg,
       variant: 'overload',
       runeRarity: getRuneRarity(rune.effects),
@@ -110,17 +110,13 @@ export function buildPatternLinePlacementTooltipCards({
 }
 
 export function buildPatternLineExistingTooltipCards(patternLine: PatternLine): TooltipCard[] {
-  if (!patternLine.runeType || patternLine.count === 0) {
+  const patternLinesRunes = patternLine.runes;
+  if (patternLinesRunes.length === 0) {
     return [];
   }
 
-  const runeType = patternLine.runeType;
-  const runeEffects = patternLine.firstRuneEffects ?? getRuneEffectsForType(runeType);
-  const primaryRune: Rune = {
-    id: patternLine.firstRuneId ?? `pattern-line-${runeType}-${patternLine.tier}`,
-    runeType,
-    effects: runeEffects,
-  };
+  const primaryRune = patternLinesRunes[0]
+  const runeType =  patternLinesRunes[0].runeType;
 
   const tooltipCards: TooltipCard[] = [
     {
@@ -132,7 +128,7 @@ export function buildPatternLineExistingTooltipCards(patternLine: PatternLine): 
     },
   ];
 
-  const destroyedCount = Math.max(patternLine.count - 1, 0);
+  const destroyedCount = Math.max(patternLinesRunes.length - 1, 0);
   for (let index = 0; index < destroyedCount; index += 1) {
     tooltipCards.push({
       id: `pattern-line-destroyed-${primaryRune.id}-${index}`,

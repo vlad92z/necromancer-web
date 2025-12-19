@@ -1,5 +1,8 @@
+import type { RuneType } from '../types/game';
 
 export const SOLO_RUN_CONFIG = {
+
+    runeTypes: ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'] as RuneType[],
     /**
      * Overload helpers - maps game number to overload damage per rune.
      */

@@ -49,7 +49,6 @@ export function PlayerBoard({
       <div className="flex flex-col gap-[min(1.2vmin,12px)] h-full">
         <div className="flex flex-row gap-5">
           <PatternLines
-            patternLines={player.patternLines}
             wall={player.wall}
             onPlaceRunes={onPlaceRunes}
             selectedRuneType={selectedRuneType}
@@ -61,7 +60,7 @@ export function PlayerBoard({
             strain={strain}
             activePatternLineIndex={activePatternLineIndex}
           />
-          <ScoringWall wall={player.wall} patternLines={player.patternLines} />
+          <ScoringWall/>
         </div>
         <TooltipView/>
       </div>

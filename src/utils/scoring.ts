@@ -3,21 +3,14 @@
  * Implements connected segment scoring
  */
 
-import type { RuneEffects, RuneType, ScoringWall } from '../types/game';
+import type { RuneEffects, Rune, RuneType, ScoringWall } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 
-const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
-
-export function getRuneOrderForSize(wallSize: number): RuneType[] {
-  const size = Math.max(1, Math.min(RUNE_ORDER.length, wallSize));
-  return RUNE_ORDER.slice(0, size);
-}
 
 export interface SegmentCell {
   row: number;
   col: number;
-  runeType: RuneType | null;
-  effects: RuneEffects | null;
+  rune: Rune;
 }
 
 export function collectSegmentCells(
@@ -42,19 +35,20 @@ export function collectSegmentCells(
 
   while (stack.length > 0) {
     const [r, c] = stack.pop() as [number, number];
+    const rune = wall[r][c].rune;
     if (
       r < 0 ||
       r >= wallSize ||
       c < 0 ||
       c >= wallSize ||
       visited[r][c] ||
-      wall[r][c].runeType === null
+      rune === null
     ) {
       continue;
     }
 
     visited[r][c] = true;
-    cells.push({ row: r, col: c, runeType: wall[r][c].runeType, effects: wall[r][c].effects });
+    cells.push({ row: r, col: c, rune: rune });
 
     stack.push([r - 1, c]);
     stack.push([r + 1, c]);
@@ -134,15 +128,15 @@ export function resolveSegmentFromCells(
   // Count runes by type for Synergy and Fragile effects
   const runeTypeCounts = new Map<RuneType, number>();
   connectedCells.forEach((cell) => {
-    if (cell.runeType) {
-      runeTypeCounts.set(cell.runeType, (runeTypeCounts.get(cell.runeType) ?? 0) + 1);
+    if (cell.rune.runeType) {
+      runeTypeCounts.set(cell.rune.runeType, (runeTypeCounts.get(cell.rune.runeType) ?? 0) + 1);
     }
   });
 
   let channelSynergyTriggered = false;
   const resolutionSteps: RuneResolutionStep[] = orderedCells.map((cell) => {
-    const baseEffects = cell.runeType ? getRuneEffectsForType(cell.runeType) : [];
-    const providedEffects = cell.effects ?? [];
+    const baseEffects = cell.rune.runeType ? getRuneEffectsForType(cell.rune.runeType) : [];
+    const providedEffects = cell.rune.effects ?? [];
     const resolvedEffects: RuneEffects =
       providedEffects.length > 0 ? [...providedEffects] : baseEffects;
 
@@ -310,20 +304,6 @@ export function applyStressMitigation(strain: number, mitigation: number): numbe
 }
 
 /**
- * Find the correct column for a rune type in a given row
- * The wall has a fixed pattern for rune placement
- * For simplicity, we'll use: each rune type can only go in specific columns per row
- * The modulo is based on the wall size (3-6)
- */
-export function getWallColumnForRune(row: number, runeType: RuneType, wallSize: number = 5): number {
-  const runeOrder = getRuneOrderForSize(wallSize);
-  const baseIndex = runeOrder.indexOf(runeType);
-  const normalizedIndex = baseIndex === -1 ? 0 : baseIndex;
-  // Rotate based on row, use wall size for modulo
-  return (normalizedIndex + row) % wallSize;
-}
-
-/**
  * Check if a row is complete (all positions filled)
  */
 export function isRowComplete(wall: ScoringWall, row: number): boolean {
@@ -350,38 +330,4 @@ export function isRuneTypeComplete(wall: ScoringWall, runeType: RuneType): boole
     }
   }
   return count === wall.length;
-}
-
-/**
- * Calculate bonus points at end of game
- * +2 for each complete row
- * +7 for each complete column
- * +10 for each complete rune type (all 5 placed)
- */
-export function calculateEndGameBonus(wall: ScoringWall): number {
-  let bonus = 0;
-  
-  // Complete rows
-  for (let row = 0; row < wall.length; row++) {
-    if (isRowComplete(wall, row)) {
-      bonus += 2;
-    }
-  }
-  
-  // Complete columns
-  for (let col = 0; col < wall.length; col++) {
-    if (isColumnComplete(wall, col)) {
-      bonus += 7;
-    }
-  }
-  
-  // Complete rune types
-  const runeTypes = getRuneOrderForSize(wall.length);
-  for (const runeType of runeTypes) {
-    if (isRuneTypeComplete(wall, runeType)) {
-      bonus += 10;
-    }
-  }
-  
-  return bonus;
 }

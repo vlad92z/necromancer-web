@@ -77,18 +77,15 @@ export interface DraftRuneforge {
  */
 export interface PatternLine {
   tier: 1 | 2 | 3 | 4 | 5 | 6; // Line capacity (1-6 runes)
-  runeType: RuneType | null; // Type of rune in this line (null if empty)
-  count: number; // Current number of runes in the line
-  firstRuneId: string | null; // ID of the first rune placed on this line TODO Rename to Primary Rune
-  firstRuneEffects: RuneEffects | null; // Effects inherited by wall placement
+  runes: Rune[]; // Runes currently placed in this line
 }
 
 /**
  * A position in the scoring wall/grid
  */
 export interface WallCell {
-  runeType: RuneType; // null if empty
-  effects: RuneEffects | null; // Effects inherited from the pattern line's first rune
+  runeType: RuneType;
+  rune: Rune | null;
 }
 
 /**

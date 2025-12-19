@@ -74,14 +74,14 @@ export function trackNewGameEvent(params: {
   activeArtefacts: ArtefactId[]
   deck: Rune[]
   targetScore: number
-  strain: number
+  overloadDamage: number
   startingHealth: number
 }) {
   trackEvent('New Game', {
     gameIndex: params.gameIndex,
     artefacts: params.activeArtefacts,
     targetScore: params.targetScore,
-    strain: params.strain,
+    overloadDamage: params.overloadDamage,
     startingHealth: params.startingHealth,
     deck: summarizeDeck(params.deck),
   })
@@ -93,7 +93,7 @@ export function trackDefeatEvent(params: {
   runePowerTotal: number
   activeArtefacts: ArtefactId[]
   cause: 'overload' | 'deck-empty'
-  strain: number
+  overloadDamage: number
   health: number
   targetScore: number
 }) {
@@ -102,7 +102,7 @@ export function trackDefeatEvent(params: {
     artefacts: params.activeArtefacts,
     runePower: params.runePowerTotal,
     cause: params.cause,
-    strain: params.strain,
+    overloadDamage: params.overloadDamage,
     health: params.health,
     targetScore: params.targetScore,
     deck: summarizeDeck(params.deck),
