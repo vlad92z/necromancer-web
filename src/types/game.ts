@@ -185,7 +185,7 @@ export interface GameState {
   turnPhase: TurnPhase;
   gameIndex: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
-  strain: number;
+  overloadDamage: number;
   selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   draftSource:
@@ -211,7 +211,6 @@ export interface GameState {
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
   outcome: GameOutcome; // Solo result (victory/defeat)
-  // longestRun: number; // Furthest game reached in any run //TODO is this needed?
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   baseTargetScore: number; // Configured starting target for reset scenarios //TODO remove
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run //TODO Needed?

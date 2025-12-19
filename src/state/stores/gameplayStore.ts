@@ -464,7 +464,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
 
   const row = patternLineIndex;
   const col = getColumn(row, selectedRuneType)
-  if (currentPlayer.wall[row][col].runeType !== null) {
+  if (currentPlayer.wall[row][col].rune !== null) {
     return state;
   }
 

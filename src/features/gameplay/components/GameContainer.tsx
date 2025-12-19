@@ -286,7 +286,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       const matchesType = patternLines.length === 0 || patternLines[0].runeType === selectedRuneType;
       const notFull = patternLines.length < line.tier;
       const col = getColumn(lineIndex, selectedRuneType);
-      const notOnWall = player.wall[lineIndex][col].runeType === null;
+      const notOnWall = player.wall[lineIndex][col].rune === null;
 
       return matchesType && notFull && notOnWall;
     },

@@ -65,7 +65,7 @@ export function findBestPatternLineForAutoPlacement(
 
     // Check if this rune type is already on the wall in this row
     const col = getColumn(i, selectionType);
-    const alreadyOnWall = wall[i][col].runeType !== null;
+    const alreadyOnWall = wall[i][col].rune !== null;
     if (alreadyOnWall) {
       continue;
     }
@@ -97,7 +97,7 @@ export function findBestPatternLineForAutoPlacement(
 
     // Check if this rune type is already on the wall in this row
     const col = getColumn(i, selectionType);
-    const alreadyOnWall = wall[i][col].runeType !== null;
+    const alreadyOnWall = wall[i][col].rune !== null;
     if (alreadyOnWall) {
       continue;
     }

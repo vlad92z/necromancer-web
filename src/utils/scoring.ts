@@ -23,7 +23,7 @@ export function collectSegmentCells(
     return [];
   }
 
-  if (wall[row][col].runeType === null) {
+  if (wall[row][col].rune === null) {
     return [];
   }
 
@@ -240,7 +240,7 @@ export function calculatePlacementScore(
   let horizontalCount = 1;
   
   for (let c = col - 1; c >= 0; c--) {
-    if (wall[row][c].runeType !== null) {
+    if (wall[row][c].rune !== null) {
       horizontalCount++;
     } else {
       break;
@@ -248,7 +248,7 @@ export function calculatePlacementScore(
   }
   
   for (let c = col + 1; c < wallSize; c++) {
-    if (wall[row][c].runeType !== null) {
+    if (wall[row][c].rune !== null) {
       horizontalCount++;
     } else {
       break;
@@ -259,7 +259,7 @@ export function calculatePlacementScore(
   let verticalCount = 1;
   
   for (let r = row - 1; r >= 0; r--) {
-    if (wall[r][col].runeType !== null) {
+    if (wall[r][col].rune !== null) {
       verticalCount++;
     } else {
       break;
@@ -267,7 +267,7 @@ export function calculatePlacementScore(
   }
   
   for (let r = row + 1; r < wallSize; r++) {
-    if (wall[r][col].runeType !== null) {
+    if (wall[r][col].rune !== null) {
       verticalCount++;
     } else {
       break;
@@ -307,14 +307,14 @@ export function applyStressMitigation(strain: number, mitigation: number): numbe
  * Check if a row is complete (all positions filled)
  */
 export function isRowComplete(wall: ScoringWall, row: number): boolean {
-  return wall[row].every((cell) => cell.runeType !== null);
+  return wall[row].every((cell) => cell.rune !== null);
 }
 
 /**
  * Check if a column is complete (all positions filled)
  */
 export function isColumnComplete(wall: ScoringWall, col: number): boolean {
-  return wall.every((row) => row[col].runeType !== null);
+  return wall.every((row) => row[col].rune !== null);
 }
 
 /**

@@ -38,7 +38,7 @@ export function PatternLines({
 
     const row = lineIndex;
     const col = getColumn(row, selectedRunes[0].runeType);
-    const notOnWall = wall[row][col].runeType === null;
+    const notOnWall = wall[row][col].rune === null;
 
     return matchesType && notFull && notOnWall;
   };
