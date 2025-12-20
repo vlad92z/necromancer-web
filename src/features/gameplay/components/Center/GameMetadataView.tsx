@@ -15,7 +15,7 @@ import { useUIStore } from '../../../../state/stores';
 export function GameMetadataView() {
   const gameIndex = useSoloGameStore((state) => state.gameIndex);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
-  const toggleSettngs = useUIStore((state) => state.toggleSettingsOverlay);
+  const toggleSettngs = useUIStore((state) => state.openSettingsOverlay);
 
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';

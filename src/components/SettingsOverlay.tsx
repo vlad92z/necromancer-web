@@ -8,26 +8,9 @@ import { useUIStore } from '../state/stores';
 
 export function SettingsOverlay() {
   const [activeControl, setActiveControl] = useState<'close' | 'volume' | 'music' | 'quit'>('close');
+  const soundVolume = useUIStore((state) => state.soundVolume);
 
-  // const handleClose = useCallback(
-  //   (shouldPlayClick = true) => {
-  //     if (playClickSound && shouldPlayClick) {
-  //       playClickSound();
-  //     }
-  //     onClose();
-  //   },
-  //   [onClose, playClickSound],
-  // );
-
-  // const handleToggleMusic = useCallback(
-  //   (shouldPlayClick = true) => {
-  //     if (playClickSound && shouldPlayClick) {
-  //       playClickSound();
-  //     }
-  //     onToggleMusic();
-  //   },
-  //   [onToggleMusic, playClickSound],
-  // );
+  let showQuitRun = false;
 
   // const adjustVolumeByStep = useCallback(
   //   (step: number) => {
@@ -47,86 +30,10 @@ export function SettingsOverlay() {
   //   [onVolumeChange, soundVolume],
   // );
 
-  // useEffect(() => {
-  //   if (typeof window === 'undefined') {
-  //     return;
-  //   }
-
-  //   const order: Array<'close' | 'volume' | 'music' | 'quit'> =
-  //     showQuitRun && onQuitRun ? ['close', 'volume', 'music', 'quit'] : ['close', 'volume', 'music'];
-
-  //   const moveSelection = (direction: 'up' | 'down') => {
-  //     setActiveControl((current) => {
-  //       const currentIndex = order.indexOf(current);
-  //       const safeIndex = currentIndex === -1 ? 0 : currentIndex;
-  //       const offset = direction === 'down' ? 1 : -1;
-  //       const nextIndex = (safeIndex + offset + order.length) % order.length;
-  //       return order[nextIndex];
-  //     });
-  //   };
-
-  //   const handleKeyDown = (event: KeyboardEvent) => {
-  //     switch (event.key) {
-  //       case 'ArrowUp': {
-  //         event.preventDefault();
-  //         moveSelection('up');
-  //         break;
-  //       }
-  //       case 'ArrowDown': {
-  //         event.preventDefault();
-  //         moveSelection('down');
-  //         break;
-  //       }
-  //       case 'ArrowLeft': {
-  //         if (activeControl === 'volume') {
-  //           event.preventDefault();
-  //           adjustVolumeByStep(-5);
-  //         }
-  //         break;
-  //       }
-  //       case 'ArrowRight': {
-  //         if (activeControl === 'volume') {
-  //           event.preventDefault();
-  //           adjustVolumeByStep(5);
-  //         }
-  //         break;
-  //       }
-  //       case 'Enter':
-  //       case ' ': // Space
-  //       case 'Spacebar': {
-  //         event.preventDefault();
-  //         if (activeControl === 'close') {
-  //           handleClose();
-  //         } else if (activeControl === 'music') {
-  //           handleToggleMusic();
-  //         } else if (activeControl === 'quit' && showQuitRun && onQuitRun) {
-  //           if (playClickSound) {
-  //             playClickSound();
-  //           }
-  //           onQuitRun();
-  //           handleClose(false);
-  //         }
-  //         break;
-  //       }
-  //       case 'Escape': {
-  //         console.log('Settings Escape pressed');
-  //         event.preventDefault();
-  //         handleClose();
-  //         break;
-  //       }
-  //       default:
-  //         break;
-  //     }
-  //   };
-
-  //   window.addEventListener('keydown', handleKeyDown);
-  //   return () => window.removeEventListener('keydown', handleKeyDown);
-  // }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic, onQuitRun, playClickSound, showQuitRun]);
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
-      onClick={() => useUIStore().closeSettingsOverlay()}
+      onClick={useUIStore().closeSettingsOverlay}
     >
       <div
         className="w-[min(600px,_94vw)] space-y-6 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)] relative"
@@ -135,7 +42,7 @@ export function SettingsOverlay() {
         {/* Close Button - Top Right */}
         <button
           type="button"
-          onClick={() => useUIStore().closeSettingsOverlay()}
+          onClick={useUIStore().closeSettingsOverlay}
           data-active={activeControl === 'close' ? 'true' : undefined}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/80 text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:border-sky-400 data-[active=true]:bg-slate-800 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.6)]"
           aria-label="Close settings"
