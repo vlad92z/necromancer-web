@@ -99,7 +99,8 @@ export function placeSelectionOnPatternLine(
   const availableSpace = patternLine.capacity - currentPatternLineCount;
   const runesToPlace = Math.min(selectedRunes.length, availableSpace);
   const overflowRunes = selectedRunes.slice(runesToPlace);
-  const updatedRunes = [...patternLine.runes, ...selectedRunes];
+  const placedRunes = selectedRunes.slice(0, runesToPlace);
+  const updatedRunes = [...patternLine.runes, ...placedRunes];
   const updatedPatternLines = [...state.patternLines];
   updatedPatternLines[patternLineIndex] = {
     ...patternLine,
@@ -125,6 +126,28 @@ export function placeSelectionOnPatternLine(
     : state.deck;
 
   const nextStatus = nextStats.currentHealth === 0 ? 'defeat' : 'in-progress';
+  // If the line is complete, move the primary rune to the spell wall and lock the line.
+  const isPatternLineComplete = updatedRunes.length === patternLine.capacity;
+  const updatedSpellWall = isPatternLineComplete
+    ? state.spellWall.map((row, rowIndex) => {
+        if (rowIndex !== patternLineIndex) {
+          return row;
+        }
+        const primaryRune = updatedRunes[0];
+        const targetColumn = getColumn(patternLineIndex, primaryRune.runeType);
+        return row.map((cell, colIndex) => (
+          colIndex === targetColumn ? { ...cell, rune: primaryRune } : cell
+        ));
+      })
+    : state.spellWall;
+
+  if (isPatternLineComplete) {
+    updatedPatternLines[patternLineIndex] = {
+      ...patternLine,
+      runes: [],
+      isLocked: true,
+    };
+  }
 
   return {
     ...state,
@@ -133,5 +156,6 @@ export function placeSelectionOnPatternLine(
     deck: updatedDeck,
     playerHand: updatedHand,
     patternLines: updatedPatternLines,
+    spellWall: updatedSpellWall,
   };
 }

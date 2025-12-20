@@ -36,7 +36,7 @@ export function SpellWallView() {
             <div key={colIndex}>
               <WallCell
                 type={cell.runeType}
-                rune={null}
+                rune={cell.rune}
                 pulseKey={pulseTarget === cellKey(rowIndex, colIndex) ? 0 : undefined}
               />
             </div>

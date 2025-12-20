@@ -20,7 +20,7 @@ export function createSpellWall(): SpellWall {
 export function createPatternLines(count: number = SOLO_RUN_CONFIG.wallSize): PatternLine[] {
   const lines: PatternLine[] = [];
   for (let capacity = 1; capacity <= count; capacity++) {
-    lines.push({ capacity: capacity, runes: [] });
+    lines.push({ capacity: capacity, runes: [], isLocked: false });
   }
   return lines;
 }
@@ -89,4 +89,3 @@ export function nextGame(
         patternLines: createPatternLines(),
     }
 }
-
