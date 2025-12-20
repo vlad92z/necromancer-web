@@ -1,8 +1,7 @@
 /**
  * ProgressStatOverlay - animated stat block with delta indicator and progress bar
  */
-import { useState } from 'react';
-import { motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import { useSoloGameStore } from '../../../state/stores/soloGameStore';
 
 export function RuneScoreView() {
@@ -10,18 +9,13 @@ export function RuneScoreView() {
   const targetScore = useSoloGameStore((state) => state.runeScore.target);
   const progress = Math.min(1, currentScore / targetScore);
   const progressPercent = Math.round(progress * 100);
-  const animatedValue = useMotionValue(currentScore);
-  const [displayedValue, setDisplayedValue] = useState(currentScore);
-  useMotionValueEvent(animatedValue, 'change', (value) => {
-    setDisplayedValue(Math.round(value));
-  });
 
   return (
     <div className={`w-full flex flex-col gap-2 py-3 px-3.5`}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">RUNE SCORE</div>
         <motion.span className='flex items-center gap-2 min-w-[120px] justify-end text-yellow-400 font-extrabold text-base text-right whitespace-nowrap flex-shrink-0'>
-          {`${displayedValue} / ${targetScore}`}
+          {`${currentScore} / ${targetScore}`}
         </motion.span>
       </div>
       {/* Progress Container */}

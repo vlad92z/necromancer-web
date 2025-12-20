@@ -17,43 +17,37 @@ export function collectSegmentCells(
   col: number
 ): SegmentCell[] {
   const wallSize = wall.length;
-  if (row < 0 || row >= wallSize || col < 0 || col >= wallSize) {
+  if (row < 0 || row >= wallSize || col < 0 || col >= wallSize || wall[row][col].rune === null) {
     return [];
   }
 
-  if (wall[row][col].rune === null) {
-    return [];
-  }
-
-  const visited = Array(wallSize)
-    .fill(null)
-    .map(() => Array(wallSize).fill(false));
-  const stack: Array<[number, number]> = [[row, col]];
+  const visited = new Set<string>();
+  const visitedKey = (r: number, c: number) => `${r},${c}`;
+  const stack: Array<[number, number]> = [[row, col]]; //Add initial rune to stack
   const cells: SegmentCell[] = [];
 
-  while (stack.length > 0) {
-    const [r, c] = stack.pop() as [number, number];
-    const rune = wall[r][c].rune;
+  while (stack.length > 0) { // DFS to collect connected runes
+    const [row, column] = stack.pop() as [number, number];
+    const rune = wall[row]?.[column]?.rune ?? null;
     if (
-      r < 0 ||
-      r >= wallSize ||
-      c < 0 ||
-      c >= wallSize ||
-      visited[r][c] ||
+      row < 0 ||
+      row >= wallSize ||
+      column < 0 ||
+      column >= wallSize ||
+      visited.has(visitedKey(row, column)) ||
       rune === null
     ) {
-      continue;
+      continue; //skip if out of bounds, already visited, or empty cell
     }
 
-    visited[r][c] = true;
-    cells.push({ row: r, col: c, rune: rune });
+    visited.add(visitedKey(row, column));
+    cells.push({ row: row, col: column, rune: rune });
 
-    stack.push([r - 1, c]);
-    stack.push([r + 1, c]);
-    stack.push([r, c - 1]);
-    stack.push([r, c + 1]);
+    stack.push([row - 1, column]);
+    stack.push([row + 1, column]);
+    stack.push([row, column - 1]);
+    stack.push([row, column + 1]);
   }
-
   return cells;
 }
 

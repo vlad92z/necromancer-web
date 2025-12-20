@@ -2,9 +2,11 @@
  * soloGameStoreHelpers - reusable helpers for solo game store actions.
  */
 
-import type { PatternLine, Rune, SoloGameState, SpellWall } from '../../types/game';
+import type { Artefact, ArtefactId } from '../../types/artefacts';
+import type { Deck, PatternLine, PlayerStats, Rune, RuneScore, RuneType, SoloGameState, SpellWall } from '../../types/game';
 import { applySoloOverloadDamage } from '../../utils/overload';
 import { getColumn } from '../../utils/runeHelpers';
+import { resolveSegment } from '../../utils/scoring';
 import { drawRunesFromDeck } from '../../utils/soloGameInitialization';
 
 /**
@@ -47,6 +49,123 @@ export function canPlaceSelectionOnPatternLine(
 }
 
 /**
+ * buildRuneTypeCountMap - builds a count map for rune types used in channel synergy effects.
+ */
+function buildRuneTypeCountMap(runes: Rune[]): Map<RuneType, number> {
+  const counts = new Map<RuneType, number>();
+  runes.forEach((rune) => {
+    counts.set(rune.runeType, (counts.get(rune.runeType) ?? 0) + 1);
+  });
+  return counts;
+}
+
+/**
+ * hasActiveArtefact - checks whether a solo run has an active artefact by id.
+ */
+function hasActiveArtefact(activeArtefacts: Artefact[], artefactId: ArtefactId): boolean {
+  return activeArtefacts.some((artefact) => artefact.id === artefactId);
+}
+
+/**
+ * getSoloDamageMultiplier - applies outgoing damage modifiers for solo artefacts.
+ */
+function getSoloDamageMultiplier(segmentSize: number, activeArtefacts: Artefact[]): number {
+  let damageMultiplier = 1;
+  if (segmentSize === 1 && hasActiveArtefact(activeArtefacts, 'tome')) {
+    damageMultiplier *= 2;
+  }
+  return damageMultiplier;
+}
+
+/**
+ * getSoloHealingMultiplier - applies outgoing healing modifiers for solo artefacts.
+ */
+function getSoloHealingMultiplier(segmentSize: number, activeArtefacts: Artefact[]): number {
+  let healingMultiplier = 1;
+  if (segmentSize === 1 && hasActiveArtefact(activeArtefacts, 'tome')) {
+    healingMultiplier *= 2;
+  }
+  if (hasActiveArtefact(activeArtefacts, 'rod')) {
+    healingMultiplier *= 2;
+  }
+  return healingMultiplier;
+}
+
+/**
+ * getSoloArmorMultiplier - applies armor gain modifiers for solo artefacts.
+ */
+function getSoloArmorMultiplier(segmentSize: number, activeArtefacts: Artefact[]): number {
+  let armorMultiplier = 1;
+  if (segmentSize === 1 && hasActiveArtefact(activeArtefacts, 'tome')) {
+    armorMultiplier *= 2;
+  }
+  if (hasActiveArtefact(activeArtefacts, 'potion')) {
+    armorMultiplier *= 2;
+  }
+  return armorMultiplier;
+}
+
+interface CompletedPatternLineResult {
+  nextPatternLines: PatternLine[];
+  nextSpellWall: SpellWall;
+  nextStats: PlayerStats;
+  nextRuneScore: RuneScore;
+}
+
+/**
+ * resolveCompletedPatternLine - updates the spell wall, stats, and score after a pattern line completes.
+ */
+function resolveCompletedPatternLine(
+  patternLineIndex: number,
+  patternLine: PatternLine,
+  completedRunes: Rune[],
+  spellWall: SpellWall,
+  patternLines: PatternLine[],
+  playerStats: PlayerStats,
+  runeScore: RuneScore,
+  deck: Deck,
+  activeArtefacts: Artefact[]
+): CompletedPatternLineResult {
+  const nextSpellWall = [...spellWall];
+  const nextPatternLines = [...patternLines];
+  const primaryRune = completedRunes[0];
+  const targetColumn = getColumn(patternLineIndex, primaryRune.runeType);
+  nextSpellWall[patternLineIndex][targetColumn].rune = primaryRune;
+  nextPatternLines[patternLineIndex] = { ...patternLine, runes: [], isLocked: true };
+
+  // Resolve the connected segment effects immediately after placing the rune.
+  const overloadRuneCounts = buildRuneTypeCountMap(deck.overloadedRunes);
+  const resolvedSegment = resolveSegment(nextSpellWall, patternLineIndex, targetColumn, overloadRuneCounts);
+  const damageMultiplier = getSoloDamageMultiplier(resolvedSegment.segmentSize, activeArtefacts);
+  const healingMultiplier = getSoloHealingMultiplier(resolvedSegment.segmentSize, activeArtefacts);
+  const armorMultiplier = getSoloArmorMultiplier(resolvedSegment.segmentSize, activeArtefacts);
+
+  const totalDamage = resolvedSegment.damage * damageMultiplier;
+  const totalHealing = resolvedSegment.healing * healingMultiplier;
+  const totalArmor = resolvedSegment.armor * armorMultiplier;
+
+  const nextHealth = Math.min(playerStats.maxHealth, playerStats.currentHealth + totalHealing);
+  const nextArmor = Math.max(0, playerStats.currentArmor + totalArmor);
+
+  const nextStats = {
+    ...playerStats,
+    currentHealth: nextHealth,
+    currentArmor: nextArmor,
+  };
+  const nextRuneScore = {
+    ...runeScore,
+    current: runeScore.current + totalDamage,
+  };
+
+  return {
+    nextPatternLines,
+    nextSpellWall,
+    nextStats,
+    nextRuneScore,
+  };
+}
+
+/**
  * placeSelectionOnPatternLine - place selected runes onto a pattern line.
  */
 export function placeSelectionOnPatternLine(
@@ -54,7 +173,8 @@ export function placeSelectionOnPatternLine(
   patternLineIndex: number,
   selectedRunes: Rune[]
 ): SoloGameState {
-  const isPlacementValid = canPlaceSelectionOnPatternLine(patternLineIndex, selectedRunes, state.patternLines, state.spellWall)
+  console.log('placeSelectionOnPatternLine', { patternLineIndex, selectedRunes });
+  const isPlacementValid = canPlaceSelectionOnPatternLine(patternLineIndex, selectedRunes, state.patternLines, state.spellWall);
   const patternLine = state.patternLines[patternLineIndex];
   if (!patternLine || !isPlacementValid) {
     return state;
@@ -67,7 +187,7 @@ export function placeSelectionOnPatternLine(
   const overflowRunes = selectedRunes.slice(runesToPlace);
   const placedRunes = selectedRunes.slice(0, runesToPlace);
   const updatedRunes = [...patternLine.runes, ...placedRunes];
-  const updatedPatternLines = [...state.patternLines];
+  let updatedPatternLines = [...state.patternLines];
   updatedPatternLines[patternLineIndex] = {
     ...patternLine,
     runes: updatedRunes,
@@ -100,25 +220,39 @@ export function placeSelectionOnPatternLine(
     newDeck.overloadedRunes = [...newDeck.overloadedRunes, ...drawOverflowRunes];
   }
 
-  const nextStatus = nextStats.currentHealth === 0 ? 'defeat' : 'in-progress';
-
   // Lock pattern line and move rune to spell wall if complete.
-  const newSpellWall = [...state.spellWall];
+  let updatedSpellWall = [...state.spellWall];
+  let updatedStats = nextStats;
+  let updatedRuneScore = state.runeScore;
   const isPatternLineComplete = updatedRunes.length === patternLine.capacity;
   if (isPatternLineComplete) {
-    const primaryRune = updatedRunes[0];
-    const targetColumn = getColumn(patternLineIndex, primaryRune.runeType);
-    newSpellWall[patternLineIndex][targetColumn].rune = primaryRune;
-    updatedPatternLines[patternLineIndex] = { ...patternLine, runes: [], isLocked: true };
+    const completionResult = resolveCompletedPatternLine(
+      patternLineIndex,
+      patternLine,
+      updatedRunes,
+      updatedSpellWall,
+      updatedPatternLines,
+      updatedStats,
+      updatedRuneScore,
+      newDeck,
+      state.activeArtefacts
+    );
+    updatedPatternLines = completionResult.nextPatternLines;
+    updatedSpellWall = completionResult.nextSpellWall;
+    updatedStats = completionResult.nextStats;
+    updatedRuneScore = completionResult.nextRuneScore;
   }
+
+  const nextStatus = updatedStats.currentHealth === 0 ? 'defeat' : 'in-progress';
 
   return {
     ...state,
     status: nextStatus,
-    playerStats: nextStats,
+    playerStats: updatedStats,
     deck: newDeck,
     playerHand: newHand,
     patternLines: updatedPatternLines,
-    spellWall: newSpellWall,
+    spellWall: updatedSpellWall,
+    runeScore: updatedRuneScore,
   };
 }
