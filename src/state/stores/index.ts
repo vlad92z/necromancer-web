@@ -4,3 +4,4 @@
 
 export { useGameplayStore } from './gameplayStore';
 export { useUIStore } from './uiStore';
+export { useSelectionStore } from './selectionStore';
