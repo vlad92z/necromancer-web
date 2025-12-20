@@ -10,21 +10,12 @@ import { OverloadButton } from '../Player/OverloadButton';
 import { DeckButton } from '../DeckButton';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
 import { useSoloGameStore } from '../../../../state/stores/soloGameStore';
+import { useUIStore } from '../../../../state/stores';
 
-interface GameMetadataViewProps {
-  onOpenOverload: () => void;
-  onOpenDeck: () => void;
-  onOpenSettings: () => void;
-  activeElement?: string;
-}
-
-export function GameMetadataView({
-  onOpenDeck,
-  onOpenSettings,
-  activeElement
-}: GameMetadataViewProps) {
+export function GameMetadataView() {
   const gameIndex = useSoloGameStore((state) => state.gameIndex);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const toggleSettngs = useUIStore((state) => state.toggleSettingsOverlay);
 
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
@@ -37,14 +28,10 @@ export function GameMetadataView({
       <div className="w-full flex flex-row flex-[29] items-center gap-3">
         <ClickSoundButton
           title="⚙"
-          action={onOpenSettings}
-          isActive={activeElement === 'settings'}
+          action={toggleSettngs}
           className={actionButtonBase}
         />
-        <DeckButton
-          isActive={activeElement === 'deck'}
-          showDeckView={onOpenDeck}
-        />
+        <DeckButton/>
         <OverloadButton/>
 
         <HealthView />

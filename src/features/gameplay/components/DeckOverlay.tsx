@@ -10,6 +10,8 @@ import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
+import { useUIStore } from '../../../state/stores';
+import { useSoloGameStore } from '../../../state/stores/soloGameStore';
 
 const RARITY_DUST_REWARD: Record<RuneRarity, number> = {
   common: 0,
@@ -18,26 +20,21 @@ const RARITY_DUST_REWARD: Record<RuneRarity, number> = {
   epic: 25,
 };
 
-interface DeckOverlayProps {
-  deck: Rune[];
-  fullDeck?: Rune[];
-  playerName: string;
-  onClose: () => void;
-  isDeckDrafting?: boolean;
-  onDisenchantRune?: (runeId: string) => number | void;
-}
-
-export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDrafting = false, onDisenchantRune }: DeckOverlayProps) {
-  const playArcaneDustSound = useArcaneDustSound();
+export function DeckOverlay() {
+  const isDeckDrafting = false;
+  const deck = useSoloGameStore((state) => state.deck);
+  function onDisenchantRune(runeId: string): number | void {
+    // Placeholder implementation
+    return 0;
+  }
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
   const [dustGain, setDustGain] = useState<{ amount: number; key: number } | null>(null);
   const dustGainKeyRef = useRef(0);
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
   const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
-  const completeDeck = fullDeck && fullDeck.length > 0 ? fullDeck : deck;
-  const deckForTotals = isDeckDrafting ? completeDeck : deck;
+  const completeDeck = deck.allRunes.length > 0 ? deck.allRunes : deck.remainingRunes;
   // Group runes by type for ordering and totals
-  const runesByType = deckForTotals.reduce((acc, rune) => {
+  const runesByType = deck.remainingRunes.reduce((acc, rune) => {
     if (!acc[rune.runeType]) {
       acc[rune.runeType] = [];
     }
@@ -48,7 +45,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
   const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
   const runeById = useMemo(() => new Map(completeDeck.map((rune) => [rune.id, rune])), [completeDeck]);
   const selectedRuneIdSet = useMemo(() => new Set(selectedRuneIds), [selectedRuneIds]);
-  const remainingRuneIds = new Set(deck.map((rune) => rune.id));
+  const remainingRuneIds = new Set(deck.remainingRunes.map((rune) => rune.id));
   const sortedRunes = runeTypes.flatMap((runeType) => {
     const runes = completeDeck.filter((rune) => rune.runeType === runeType);
     const ordered = [...runes].sort((a, b) => {
@@ -68,8 +65,6 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
     }),
     {} as Record<RuneType, number>,
   );
-
-  const totalRuneCount = deckForTotals.length;
 
   const canSelectRunes = isDeckDrafting && Boolean(onDisenchantRune);
   const shouldDimDrafted = !isDeckDrafting;
@@ -136,7 +131,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
       const nextKey = dustGainKeyRef.current + 1;
       dustGainKeyRef.current = nextKey;
       setDustGain({ amount: totalDustAwarded, key: nextKey });
-      playArcaneDustSound();
+      useArcaneDustSound();
     }
 
     clearSelection();
@@ -148,7 +143,7 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={useUIStore.getState().closeDeckOverlay}
         className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(4,2,12,0.78)] px-6 py-6 backdrop-blur-md"
       >
         <motion.div
@@ -163,10 +158,10 @@ export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDraftin
               <div>
                 
               <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">Deck Overview</div>
-              <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{playerName}&apos;s Deck ({totalRuneCount})</h2>
+              <h2 className="text-2xl font-extrabold text-[#f5f3ff]">Deck ({deck.remainingRunes.length})</h2>
               </div>
               <button
-                onClick={onClose}
+                onClick={useUIStore.getState().closeDeckOverlay}
                 type="button"
                 className="rounded-xl border border-white/20 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-400 px-4 py-2 text-sm font-extrabold uppercase tracking-[0.12em] text-slate-900 shadow-[0_10px_25px_rgba(99,102,241,0.45)] transition hover:from-purple-400 hover:via-indigo-400 hover:to-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
               >

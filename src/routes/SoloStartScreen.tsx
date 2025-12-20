@@ -67,12 +67,12 @@ export function SoloStartScreen() {
 
       // Persist solo state only while a run is active
       if (persistableState.gameStarted) {
-        saveSoloState(persistableState);
+        // saveSoloState(persistableState);
         setHasSavedSoloRun(true);
       }
 
       // If run ended in defeat, remove saved run from storage and update UI
-      if (persistableState.outcome === 'defeat') {
+      if (persistableState.isDefeat) {
         clearSoloState();
         setHasSavedSoloRun(false);
       }
@@ -250,7 +250,7 @@ export function SoloStartScreen() {
     : `${gradientButtonClasses} ${gradientActive}`;
 
   if (gameStarted) {
-    return <GameContainer ref={gameContainerRef} gameState={gameState} />;
+    return <GameContainer/>;
   }
 
   return (

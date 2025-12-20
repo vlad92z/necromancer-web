@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSelectionStore } from "../../../../state/stores";
+import { useSelectionStore, useUIStore } from "../../../../state/stores";
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
 import overloadSvg from '../../../../assets/stats/overload.svg';
@@ -8,6 +8,7 @@ import { useSoloGameStore } from '../../../../state/stores/soloGameStore';
 export function OverloadButton() {
     const canOverload = useSelectionStore((state) => state.selectedCards.length > 0);
     const overloadDamage = useSoloGameStore((state) => state.overloadDamage);
+    // const showOverloadOverlay = useUIStore((state) => state.toggleOverloadOverlay);
     const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
     const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
     const SELECTABLE_GLOW_RANGE: [string, string] = [SELECTABLE_GLOW_REST, SELECTABLE_GLOW_PEAK];

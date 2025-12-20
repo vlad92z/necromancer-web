@@ -3,31 +3,32 @@
  * Handles: overlay visibility, modal management, UI interactions
  */
 
-import { create } from 'zustand';
+import { create, type StoreApi } from 'zustand';
 
-interface UIStore {
+export interface UIStore {
   // Overlay visibility states
-  showRulesOverlay: boolean;
   showDeckOverlay: boolean;
-  showRuneforgeOverlay: boolean;
   showSettingsOverlay: boolean;
-  selectedRuneforgeId: string | null; // For runeforge overlay
+  showOverloadOverlay: boolean;
   soundVolume: number;
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
   
   // Actions to toggle overlays
-  toggleRulesOverlay: () => void;
-  toggleDeckOverlay: () => void;
-  openRuneforgeOverlay: (runeforgeId: string) => void;
-  closeRuneforgeOverlay: () => void;
-  toggleSettingsOverlay: () => void;
-  closeAllOverlays: () => void;
+  openDeckOverlay: () => void;
+  closeDeckOverlay: () => void;
+  openSettingsOverlay: () => void;
+  closeSettingsOverlay: () => void;
+  openOverloadOverlay: () => void;
+  closeOverloadOverlay: () => void;
   setSoundVolume: (volume: number) => void;
   setMusicMuted: (muted: boolean) => void;
   markMusicSessionStarted: () => void;
 }
 
+/**
+ * getInitialVolume - returns the persisted volume or a default value.
+ */
 const getInitialVolume = (): number => {
   if (typeof window === 'undefined') {
     return 0.65;
@@ -37,6 +38,9 @@ const getInitialVolume = (): number => {
   return normalized;
 };
 
+/**
+ * getInitialMusicMuted - returns whether music is persisted as muted.
+ */
 const getInitialMusicMuted = (): boolean => {
   if (typeof window === 'undefined') {
     return false;
@@ -44,46 +48,42 @@ const getInitialMusicMuted = (): boolean => {
   return window.localStorage.getItem('musicMuted') === 'true';
 };
 
-export const useUIStore = create<UIStore>((set) => ({
-  // Initial state
-  showRulesOverlay: false,
+/**
+ * uiStoreConfig - provides initial state and actions for the UI store.
+ */
+export const uiStoreConfig = (set: StoreApi<UIStore>['setState']): UIStore => ({
+  // Overlay visibility
   showDeckOverlay: false,
-  showRuneforgeOverlay: false,
   showSettingsOverlay: false,
-  selectedRuneforgeId: null,
+  showOverloadOverlay: false,
+  // Audio settings
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
-  
+
   // Actions
-  toggleRulesOverlay: () => {
-    set((state) => ({ showRulesOverlay: !state.showRulesOverlay }));
+  openDeckOverlay: () => {
+    set({ showDeckOverlay: true });
   },
-  
-  toggleDeckOverlay: () => {
-    set((state) => ({ showDeckOverlay: !state.showDeckOverlay }));
+
+  closeDeckOverlay: () => {
+    set({ showDeckOverlay: false });
   },
-  
-  openRuneforgeOverlay: (runeforgeId: string) => {
-    set({ showRuneforgeOverlay: true, selectedRuneforgeId: runeforgeId });
+
+  openSettingsOverlay: () => {
+    set({ showSettingsOverlay: true });
   },
-  
-  closeRuneforgeOverlay: () => {
-    set({ showRuneforgeOverlay: false, selectedRuneforgeId: null });
+
+  closeSettingsOverlay: () => {
+    set({ showSettingsOverlay: false });
   },
-  
-  toggleSettingsOverlay: () => {
-    set((state) => ({ showSettingsOverlay: !state.showSettingsOverlay }));
+
+  openOverloadOverlay: () => {
+    set({ showOverloadOverlay: true });
   },
-  
-  closeAllOverlays: () => {
-    set({
-      showRulesOverlay: false,
-      showDeckOverlay: false,
-      showRuneforgeOverlay: false,
-      showSettingsOverlay: false,
-      selectedRuneforgeId: null,
-    });
+
+  closeOverloadOverlay: () => {
+    set({ showOverloadOverlay: false });
   },
 
   setSoundVolume: (volume: number) => {
@@ -104,4 +104,13 @@ export const useUIStore = create<UIStore>((set) => ({
   markMusicSessionStarted: () => {
     set({ hasMusicSessionStarted: true });
   },
-}));
+});
+
+export const useUIStore = create<UIStore>((set) => uiStoreConfig(set));
+
+/**
+ * createUIStoreInstance - creates a new UI store instance.
+ */
+export function createUIStoreInstance(): StoreApi<UIStore> {
+  return create<UIStore>((set) => uiStoreConfig(set));
+}

@@ -2,52 +2,23 @@
  * SoloGameBoard - solo mode game board layout
  */
 
-import { memo } from 'react';
-import type { GameContainerSharedProps, GameData } from './GameContainer';
-import { SoloGameOverModal } from './SoloGameOverModal';
-import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
 import { PlayerHandView } from './PlayerHandView';
 import { PatternLines } from './Player/PatternLines';
 import { SpellWallView } from './Player/SpellWallView';
 
-interface SoloGameViewProps {
-  shared: GameContainerSharedProps;
-  gameData: GameData;
-}
-
-export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
-  const {
-    activeElement,
-    isGameOver,
-  } = shared;
-  const {
-    arcaneDustReward,
-    deckDraftState,
-    isDeckDrafting,
-    totalDeckSize,
-    onSelectDeckDraftRuneforge,
-    onOpenDeckOverlay,
-    onOpenOverloadOverlay,
-    onOpenSettings,
-    startNextSoloGame,
-  } = gameData;
+export function SoloGameView() {
   return (
     <div className="flex flex-col h-full relative">
-      <GameMetadataView
-        onOpenOverload={onOpenOverloadOverlay}
-        onOpenDeck={onOpenDeckOverlay}
-        onOpenSettings={onOpenSettings}
-        activeElement={activeElement?.type}
-      />
+      <GameMetadataView/>
       <div className="flex h-full items-center justify-center flex-row p-5 gap-5">
         <PatternLines />
         <SpellWallView />
       </div>
       <PlayerHandView />
       {/* TODO: Cleanup */}
-      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && (
-
+      {/* {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && ( */}
+{/* 
         <DeckDraftingModal
           draftState={deckDraftState}
           onSelectRuneforge={onSelectDeckDraftRuneforge}
@@ -58,7 +29,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
         />
       )}
 
-      { isGameOver && (<SoloGameOverModal/>)}
+      { isGameOver && (<SoloGameOverModal/>)} */}
     </div>
   );
-});
+}
