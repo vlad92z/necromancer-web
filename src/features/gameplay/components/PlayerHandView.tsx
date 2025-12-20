@@ -76,7 +76,7 @@ export function PlayerHandView() {
                         ? 100 + baseZIndex
                         : baseZIndex;
                 const animateState = isHoveredGroup
-                    ? { rotate: 0, scale: 1.15, y: [0, -6, 0] }
+                    ? { rotate: 0, scale: 1.05, y: [0, -6, 0] }
                     : { rotate: rotation, scale: 1, y: 0 };
                 const transition = isHoveredGroup
                     ? {

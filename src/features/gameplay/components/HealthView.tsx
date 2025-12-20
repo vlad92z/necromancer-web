@@ -1,15 +1,9 @@
 /**
  * ProgressStatOverlay - animated stat block with delta indicator and progress bar
  */
-import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useArmorChangeSound } from '../../../hooks/useArmorChangeSound';
-import { useGameplayStore } from '../../../state/stores';
-import { useHealthChangeSound } from '../../../hooks/useHealthChangeSound';
 import { useSoloGameStore } from '../../../state/stores/soloGameStore';
-
-type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
-type ForcedArmorIndicator = { amount: number; key: number };
 
 export function HealthView() {
   const currentHealth = useSoloGameStore((state) => state.playerStats.currentHealth);
@@ -24,13 +18,12 @@ export function HealthView() {
       <div className="flex items-center justify-between">
         <div className="text-slate-300 text-xs tracking-[0.08em] uppercase font-extrabold">HEALTH</div>
         <div className="flex flex-row gap-5">
-          <motion.span className='text-blue-400 font-extrabold text-base text-right'>
-              {`🛡${currentArmor}`}
-            </motion.span>
-
           <motion.span className='text-red-500 font-extrabold text-base text-right'>
-              {`${currentHealth} / ${maxHealth}`}
-            </motion.span>
+            {`${currentHealth} / ${maxHealth}`}
+          </motion.span>
+          <motion.span className='text-blue-400 font-extrabold text-base text-right'>
+            {`🛡${currentArmor}`}
+          </motion.span>
         </div>
       </div>
       <div className={'rounded-full overflow-hidden relative h-[10px] bg-red-500/15'}>
