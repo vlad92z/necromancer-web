@@ -40,6 +40,7 @@ export function PatternLines({
         const isLocked = line.isLocked;
         const isPlacementTarget = !isLocked && isPlacementValid(index);
         const imageDimension = RUNE_SIZE_CONFIG['large'].dimension;
+        const opacity = isLocked ? "opacity-25" : "";
         return (
           <button
             key={index}
@@ -48,7 +49,7 @@ export function PatternLines({
               placeRunes(index);
             }}
             disabled={!isPlacementTarget}
-            className={`flex flex-row gap-1 ${isPlacementTarget ? 'ring-2 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.6)]' : ''}`}
+            className={`flex flex-row gap-1 ${opacity} ${isPlacementTarget ? 'ring-2 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.6)]' : ''}`}
             data-active={isKeyboardActive ? 'true' : undefined}
           >
             {Array(line.capacity)
@@ -59,7 +60,7 @@ export function PatternLines({
                 return (
                   <div
                     key={`${index}-${slotIndex}`}
-                    className={`border rounded-xl border-slate-500/50 align-center p-1 ${slotIndex > 0 ? '' : 'bg-sky-900/20'}`}
+                    className={`border rounded-xl border-slate-500/80 align-center p-1 ${slotIndex > 0 ? '' : 'bg-sky-900/50'}`}
                     style={{ width: imageDimension, height: imageDimension }}>
                       {rune && (
                         <img
