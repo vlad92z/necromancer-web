@@ -47,10 +47,7 @@ export function GameMetadataView({
           isActive={activeElement === 'deck'}
           showDeckView={onOpenDeck}
         />
-        <OverloadButton
-          isActive={activeElement === 'overload'}
-          showOverloadView={onOpenOverload}
-        />
+        <OverloadButton/>
 
         <HealthView />
         <RuneScoreView />

@@ -1,24 +1,13 @@
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useGameplayStore } from "../../../../state/stores";
+import { useMemo } from 'react';
+import { useSelectionStore } from "../../../../state/stores";
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import { buildTextTooltipCard, buildOverloadPlacementTooltipCards } from '../../../../utils/tooltipCards';
 import overloadSvg from '../../../../assets/stats/overload.svg';
+import { useSoloGameStore } from '../../../../state/stores/soloGameStore';
 
-interface OverloadButtonProps {
-    isActive: boolean;
-    showOverloadView: () => void;
-}
-
-export function OverloadButton({ isActive, showOverloadView }: OverloadButtonProps) {
-    const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-    const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
-    const canOverload = useGameplayStore((state) => state.selectedRunes.length > 0);
-    const overloadDamage = useGameplayStore((state) => state.strain);//todo rename strain
-    const openOverloadModal = useGameplayStore((state) => state);//todo rename strain
-    const overloadRuneCount = useGameplayStore((state) => state.overloadRunes.length);
-    const overloadRunes = useGameplayStore((state) => state.placeRunesInFloor);//todo rename
-    const overloadTooltip = `Overload deals ${overloadDamage} damage per rune. ${overloadRuneCount} runes are currently overloaded.`;
+export function OverloadButton() {
+    const canOverload = useSelectionStore((state) => state.selectedCards.length > 0);
+    const overloadDamage = useSoloGameStore((state) => state.overloadDamage);
     const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
     const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
     const SELECTABLE_GLOW_RANGE: [string, string] = [SELECTABLE_GLOW_REST, SELECTABLE_GLOW_PEAK];
@@ -33,13 +22,9 @@ export function OverloadButton({ isActive, showOverloadView }: OverloadButtonPro
         ease: 'easeInOut',
     };
 
-    const handleOverloadClick = useCallback(() => {
-        if (canOverload) {
-            overloadRunes();
-            return;
-        }
-        showOverloadView();
-    }, [canOverload, showOverloadView, overloadRunes]);
+    // const handleOverloadClick = useCallback(() => {
+
+    // }, [canOverload, showOverloadView, overloadRunes]);
 
     const overloadGlowStyle = useMemo(() => (
         canOverload ? { boxShadow: SELECTABLE_GLOW_REST } : undefined
@@ -56,12 +41,8 @@ export function OverloadButton({ isActive, showOverloadView }: OverloadButtonPro
 
     const overload = <button
         type="button"
-        onMouseEnter={() => setTooltipCards(buildTextTooltipCard('overload-tooltip', 'Overload', overloadTooltip, overloadSvg))}
-        onMouseLeave={() => resetTooltipCards()}
-        onFocus={() => setTooltipCards(buildTextTooltipCard('overload-tooltip', 'Overload', overloadTooltip, overloadSvg))}
-        onBlur={() => resetTooltipCards()}
-        onClick={handleOverloadClick}
-        data-active={isActive ? 'true' : undefined}
+        // onClick={handleOverloadClick}
+        // data-active={isActive ? 'true' : undefined}
         className={overloadClassName}
     >
         <img
@@ -75,7 +56,7 @@ export function OverloadButton({ isActive, showOverloadView }: OverloadButtonPro
     </button>
     return (
         <div
-            data-player-id={"playerId"}//TODO
+            data-player-id={"playerId"}
             data-strain-counter="true"
         >
             {canOverload ? (
