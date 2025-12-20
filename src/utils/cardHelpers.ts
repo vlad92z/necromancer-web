@@ -1,6 +1,6 @@
 const STATIC_CW_ROTATION = 2;
 const CARD_MAX_ROTATION = 8;
-const DEFAULT_CARD_WIDTH = 230;
+const CARD_OVERLAP_OFFSET = [-3, -3, -3, -3, -3, -3, -40, -70, -90, -110, -120, -130]
 
 export function getCardRotation(total: number, index: number): number {
   if (total <= 1) {
@@ -22,6 +22,5 @@ export function getCardRotation(total: number, index: number): number {
 };
 
 export function getCardOverlap(cardsLength: number): number {
-  const overlap = DEFAULT_CARD_WIDTH * 1.21 * (1 - Math.exp(-0.158 * (cardsLength - 2.594)));
-  return -overlap + 50;
+  return CARD_OVERLAP_OFFSET[cardsLength] ?? CARD_OVERLAP_OFFSET[CARD_OVERLAP_OFFSET.length - 1];
 }

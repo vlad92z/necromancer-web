@@ -11,7 +11,7 @@ export const SOLO_RUN_CONFIG = {
     ],
 
     drawCound: 4,
-    maxHandSize: 15,
+    maxHandSize: 12,
 
     /**
      * Target score will be multiplied by game number.

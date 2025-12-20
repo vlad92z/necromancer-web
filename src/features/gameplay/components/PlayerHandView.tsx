@@ -23,6 +23,7 @@ export function PlayerHandView() {
     const cardOffset = getCardOverlap(playerHand.length);
     const hoverEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
+
     /**
      * handleCardEnter - updates hover state for the hovered rune and its type group.
      */
@@ -50,6 +51,10 @@ export function PlayerHandView() {
      */
     const handleCardClick = (event: MouseEvent<HTMLDivElement>, rune: Rune) => {
         event.stopPropagation();
+        if (hasSelection && selectedCards[0]?.id === rune.id) {
+            clearSelection();
+            return;
+        }
         const matchingRunes = playerHand.filter((card) => card.runeType === rune.runeType);
         const orderedSelection = [
             rune,
