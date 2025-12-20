@@ -23,30 +23,6 @@ export function PlayerHandView() {
     const cardOffset = getCardOverlap(playerHand.length);
     const hoverEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
-    // Clear selection whenever the user clicks outside a card.
-    useEffect(() => {
-        // handleDocumentClick - clears selection when clicking anywhere outside cards.
-        const handleDocumentClick = () => {
-            const { selectedCards: currentSelection } = useSelectionStore.getState();
-            if (currentSelection.length === 0) {
-                return;
-            }
-            clearSelection();
-            console.log('Cleared card selection due to outside click', currentSelection.length);
-        };
-
-        document.addEventListener('pointerdown', handleDocumentClick, true);
-        return () => document.removeEventListener('pointerdown', handleDocumentClick, true);
-    }, [clearSelection]);
-
-    // Clear hover state while a selection is active to avoid stale highlights.
-    useEffect(() => {
-        if (hasSelection) {
-            setHoveredRuneType(null);
-            setHoveredRuneId(null);
-        }
-    }, [hasSelection]);
-
     /**
      * handleCardEnter - updates hover state for the hovered rune and its type group.
      */

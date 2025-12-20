@@ -69,7 +69,7 @@ export function ScoringWall() {
   }, [scoringSequence]);
 
   return (
-      <div className='flex flex-col gap-px-1'>
+      <div className='flex flex-col gap-1'>
         { wall.map((row, rowIndex) => (
           <div key={rowIndex} className='flex gap-1'>
             {row.map((cell, colIndex) => (

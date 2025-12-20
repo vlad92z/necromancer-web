@@ -110,7 +110,6 @@ src/
 │           └── Player/
 │               ├── CardView.tsx
 │               ├── PatternLines.tsx
-│               ├── PlayerBoard.tsx
 │               ├── ScoringWall.tsx
 │               └── StatsView.tsx
 ├── hooks/                  # Custom React hooks
