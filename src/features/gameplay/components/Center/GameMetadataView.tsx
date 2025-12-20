@@ -8,7 +8,6 @@ import { RuneScoreView } from '../RuneScoreView';
 import { HealthView } from '../HealthView';
 import { OverloadButton } from '../Player/OverloadButton';
 import { DeckButton } from '../DeckButton';
-import { useGameplayStore } from '../../../../state/stores';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
 import { useSoloGameStore } from '../../../../state/stores/soloGameStore';
 
@@ -20,7 +19,6 @@ interface GameMetadataViewProps {
 }
 
 export function GameMetadataView({
-  onOpenOverload,
   onOpenDeck,
   onOpenSettings,
   activeElement
