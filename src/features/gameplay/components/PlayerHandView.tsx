@@ -21,6 +21,7 @@ export function PlayerHandView() {
     const activeRuneId = hasSelection ? selectedCards[0].id : hoveredRuneId;
 
     const cardOffset = getCardOverlap(playerHand.length);
+    const hoverEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
     // Clear selection whenever the user clicks outside a card.
     useEffect(() => {
@@ -82,7 +83,7 @@ export function PlayerHandView() {
     };
 
     return (
-        <div className="w-full h-full flex items-center justify-center px-2 overflow-visible bg-purple-950/25">
+        <div className="w-full h-full flex items-center justify-center px-2 overflow-visible">
             {playerHand.map((rune, index) => {
                 const rotation = getCardRotation(playerHand.length, index);
                 const isHoveredGroup = activeRuneType === rune.runeType;
@@ -98,14 +99,14 @@ export function PlayerHandView() {
                     : { rotate: rotation, scale: 1, y: 0 };
                 const transition = isHoveredGroup
                     ? {
-                        rotate: { duration: 0.15, ease: 'easeOut' },
-                        scale: { duration: 0.15, ease: 'easeOut' },
-                        y: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' },
+                        rotate: { duration: 0.15, ease: hoverEase },
+                        scale: { duration: 0.15, ease: hoverEase },
+                        y: { duration: 3.5, repeat: Infinity, ease: hoverEase },
                     }
                     : {
-                        rotate: { duration: 0.15, ease: 'easeOut' },
-                        scale: { duration: 0.15, ease: 'easeOut' },
-                        y: { duration: 0.2, ease: 'easeOut' },
+                        rotate: { duration: 0.15, ease: hoverEase },
+                        scale: { duration: 0.15, ease: hoverEase },
+                        y: { duration: 0.2, ease: hoverEase },
                     };
 
                 return (
