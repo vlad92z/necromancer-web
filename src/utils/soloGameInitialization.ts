@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Artefact } from "../types/artefacts";
 import type { PatternLine, PlayerStats, Rune, SoloGameState, SpellWall } from "../types/game";
-import { getOverloadDamageForGame } from "./overload";
+import { applySoloOverloadDamage, getOverloadDamageForGame } from "./overload";
 import { getBaseRuneEffectForType } from "./runeEffects";
 import { getRuneType } from "./runeHelpers";
 import { SOLO_RUN_CONFIG } from "./soloRunConfig";
@@ -51,15 +51,30 @@ export function createStartingDeck(): Rune[] {
   return deck;
 }
 
-export function drawRunesFromDeck(shuffledDeck: Rune[], hand: Rune[]): { newDeck: Rune[]; newHand: Rune[]} {
-    const config = SOLO_RUN_CONFIG;
-    const runesToDeal = Math.min(shuffledDeck.length, config.drawCound);
-    const runesDrawn = shuffledDeck.slice(0, runesToDeal);
-    const updatedDeck = shuffledDeck.slice(runesToDeal);
-    const updatedHand = [...runesDrawn, ...hand];
-    return { newDeck: updatedDeck, newHand: updatedHand };
+/**
+ * drawRunesFromDeck - draw runes and cap hand size, tracking overflow runes.
+ */
+export function drawRunesFromDeck(
+  shuffledDeck: Rune[],
+  hand: Rune[]
+): { newDeck: Rune[]; newHand: Rune[]; overflowRunes: Rune[] } {
+  const config = SOLO_RUN_CONFIG;
+  const runesToDeal = Math.min(shuffledDeck.length, config.drawCound);
+  const runesDrawn = shuffledDeck.slice(0, runesToDeal);
+  const updatedDeck = shuffledDeck.slice(runesToDeal);
+
+  // Respect max hand size by sending extra drawn runes to overload.
+  const remainingCapacity = Math.max(0, config.maxHandSize - hand.length);
+  const runesForHand = runesDrawn.slice(0, remainingCapacity);
+  const overflowRunes = runesDrawn.slice(remainingCapacity);
+  const updatedHand = [...runesForHand, ...hand];
+
+  return { newDeck: updatedDeck, newHand: updatedHand, overflowRunes };
 }
 
+/**
+ * nextGame - create a fresh solo game state for a new run.
+ */
 export function nextGame(
     gameIndex: number = 0,
     player: PlayerStats = startingPlayer(),
@@ -67,20 +82,23 @@ export function nextGame(
     fullDeck: Rune[] = createStartingDeck(),
 ) : SoloGameState {
     const shuffledDeck = fullDeck.sort(() => Math.random() - 0.5);
-    const { newDeck: deck, newHand: hand } = drawRunesFromDeck(shuffledDeck, []);
+    const { newDeck: deck, newHand: hand, overflowRunes } = drawRunesFromDeck(shuffledDeck, []);
+    const overloadDamage = getOverloadDamageForGame(gameIndex);
+    const basePlayerStats = { ...player, currentArmor: 0 };
+    const { nextStats } = applySoloOverloadDamage(basePlayerStats, overflowRunes, overloadDamage);
     return {
         status: 'not-started',
-        playerStats: {...player, currentArmor: 0 },
+        playerStats: nextStats,
         runeScore: {
             current: 0,
             target: SOLO_RUN_CONFIG.baseTargetScore * (gameIndex + 1),
         },
-        overloadDamage: getOverloadDamageForGame(gameIndex),
+        overloadDamage,
         activeArtefacts,
         deck: {
             remainingRunes: deck,
             allRunes: fullDeck,
-            overloadedRunes: [],
+            overloadedRunes: overflowRunes,
         },
         playerHand: hand,
         gameIndex,

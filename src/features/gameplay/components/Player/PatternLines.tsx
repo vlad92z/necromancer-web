@@ -22,23 +22,12 @@ export function PatternLines({
   const selectedRunes = useSelectionStore((state) => state.selectedCards);
   const placeRunes = useSoloGameStore((state) => state.placeRunes);
 
-  /**
-   * isPlacementValid - check whether the current selection can be placed on a pattern line.
-   */
-  const isPlacementValid = (lineIndex: number): boolean => {
-    return canPlaceSelectionOnPatternLine(
-      { patternLines, spellWall },
-      lineIndex,
-      selectedRunes
-    );
-  };
-
   return (
     <div className='flex flex-col gap-1'>
       {patternLines.map((line, index) => {
         const isKeyboardActive = activePatternLineIndex === index;
         const isLocked = line.isLocked;
-        const isPlacementTarget = !isLocked && isPlacementValid(index);
+        const isPlacementTarget = !isLocked && canPlaceSelectionOnPatternLine(index, selectedRunes, patternLines, spellWall);
         const imageDimension = RUNE_SIZE_CONFIG['large'].dimension;
         const opacity = isLocked ? "opacity-25" : "";
         return (
@@ -49,7 +38,7 @@ export function PatternLines({
               placeRunes(index);
             }}
             disabled={!isPlacementTarget}
-            className={`flex flex-row gap-1 ${opacity} ${isPlacementTarget ? 'ring-2 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.6)]' : ''}`}
+            className={`inline-flex w-fit flex-row gap-1 self-start ${opacity} ${isPlacementTarget ? 'rounded-xl shadow-[0_0_16px_rgba(52,211,153,0.75)]' : ''}`}
             data-active={isKeyboardActive ? 'true' : undefined}
           >
             {Array(line.capacity)

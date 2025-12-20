@@ -2,50 +2,25 @@
  * soloGameStoreHelpers - reusable helpers for solo game store actions.
  */
 
-import type { PlayerStats, Rune, SoloGameState } from '../../types/game';
+import type { PatternLine, Rune, SoloGameState, SpellWall } from '../../types/game';
+import { applySoloOverloadDamage } from '../../utils/overload';
 import { getColumn } from '../../utils/runeHelpers';
-
-/**
- * applySoloOverloadDamage - apply overflow damage to player stats.
- */
-export function applySoloOverloadDamage(
-  playerStats: PlayerStats,
-  overflowRunes: Rune[],
-  overloadDamagePerRune: number
-): { nextStats: PlayerStats; appliedDamage: number } {
-  if (overflowRunes.length === 0) {
-    return { nextStats: playerStats, appliedDamage: 0 };
-  }
-
-  const baseDamage = overflowRunes.length * overloadDamagePerRune;
-  const armorAbsorbed = Math.min(playerStats.currentArmor, baseDamage);
-  const remainingDamage = baseDamage - armorAbsorbed;
-  const nextArmor = playerStats.currentArmor - armorAbsorbed;
-  const nextHealth = Math.max(0, playerStats.currentHealth - remainingDamage);
-
-  return {
-    nextStats: {
-      ...playerStats,
-      currentArmor: nextArmor,
-      currentHealth: nextHealth,
-    },
-    appliedDamage: remainingDamage,
-  };
-}
+import { drawRunesFromDeck } from '../../utils/soloGameInitialization';
 
 /**
  * canPlaceSelectionOnPatternLine - validate selection and target line using a minimal state slice.
  */
 export function canPlaceSelectionOnPatternLine(
-  state: Pick<SoloGameState, 'patternLines' | 'spellWall'>,
   patternLineIndex: number,
-  selectedRunes: Rune[]
+  selectedRunes: Rune[],
+  patternLines: PatternLine[],
+  spellWall: SpellWall
 ): boolean {
   if (selectedRunes.length === 0) {
     return false;
   }
 
-  const patternLine = state.patternLines[patternLineIndex];
+  const patternLine = patternLines[patternLineIndex];
   if (!patternLine || patternLine.isLocked) {
     return false;
   }
@@ -63,7 +38,7 @@ export function canPlaceSelectionOnPatternLine(
 
   const row = patternLineIndex;
   const col = getColumn(row, selectedRuneType);
-  if (state.spellWall[row]?.[col]?.rune !== null) {
+  if (spellWall[row]?.[col]?.rune !== null) {
     console.log('placeSelectionOnPatternLine: rune type already on spellWall', { patternLineIndex, row, col });
     return false;
   }
@@ -79,18 +54,9 @@ export function placeSelectionOnPatternLine(
   patternLineIndex: number,
   selectedRunes: Rune[]
 ): SoloGameState {
-  if (
-    !canPlaceSelectionOnPatternLine(
-      { patternLines: state.patternLines, spellWall: state.spellWall },
-      patternLineIndex,
-      selectedRunes
-    )
-  ) {
-    return state;
-  }
-
+  const isPlacementValid = canPlaceSelectionOnPatternLine(patternLineIndex, selectedRunes, state.patternLines, state.spellWall)
   const patternLine = state.patternLines[patternLineIndex];
-  if (!patternLine) {
+  if (!patternLine || !isPlacementValid) {
     return state;
   }
 
@@ -107,55 +73,52 @@ export function placeSelectionOnPatternLine(
     runes: updatedRunes,
   };
 
-  const { nextStats } = applySoloOverloadDamage(
-    state.playerStats,
-    overflowRunes,
-    state.overloadDamage
-  );
+  // Apply overload damage from placement overflow before dealing new runes.
+  const { nextStats: placementStats } = applySoloOverloadDamage(state.playerStats, overflowRunes, state.overloadDamage);
 
   // Remove all placed runes from the player hand.
   const selectedIds = new Set(selectedRunes.map((rune) => rune.id));
-  const updatedHand = state.playerHand.filter((rune) => !selectedIds.has(rune.id));
+  const handAfterPlacement = state.playerHand.filter((rune) => !selectedIds.has(rune.id));
 
   // Track overflow runes in the deck for later handling.
-  const updatedDeck = overflowRunes.length > 0
-    ? {
-        ...state.deck,
-        overloadedRunes: [...state.deck.overloadedRunes, ...overflowRunes],
-      }
-    : state.deck;
+  let newDeck = state.deck;
+  if (overflowRunes.length > 0) {
+    newDeck.overloadedRunes = [...newDeck.overloadedRunes, ...overflowRunes];
+  }
+
+  // Deal a fresh set of runes after placement using the existing deck order.
+  const {
+    newDeck: remainingRunes,
+    newHand: newHand,
+    overflowRunes: drawOverflowRunes,
+  } = drawRunesFromDeck(newDeck.remainingRunes, handAfterPlacement);
+  newDeck.remainingRunes = remainingRunes;
+
+  // Apply overload damage from overdraw and collect overflowed runes.
+  const { nextStats } = applySoloOverloadDamage(placementStats, drawOverflowRunes, state.overloadDamage);
+  if (drawOverflowRunes.length > 0) {
+    newDeck.overloadedRunes = [...newDeck.overloadedRunes, ...drawOverflowRunes];
+  }
 
   const nextStatus = nextStats.currentHealth === 0 ? 'defeat' : 'in-progress';
-  // If the line is complete, move the primary rune to the spell wall and lock the line.
-  const isPatternLineComplete = updatedRunes.length === patternLine.capacity;
-  const updatedSpellWall = isPatternLineComplete
-    ? state.spellWall.map((row, rowIndex) => {
-        if (rowIndex !== patternLineIndex) {
-          return row;
-        }
-        const primaryRune = updatedRunes[0];
-        const targetColumn = getColumn(patternLineIndex, primaryRune.runeType);
-        return row.map((cell, colIndex) => (
-          colIndex === targetColumn ? { ...cell, rune: primaryRune } : cell
-        ));
-      })
-    : state.spellWall;
 
+  // Lock pattern line and move rune to spell wall if complete.
+  const newSpellWall = [...state.spellWall];
+  const isPatternLineComplete = updatedRunes.length === patternLine.capacity;
   if (isPatternLineComplete) {
-    updatedPatternLines[patternLineIndex] = {
-      ...patternLine,
-      runes: [],
-      isLocked: true,
-    };
+    const primaryRune = updatedRunes[0];
+    const targetColumn = getColumn(patternLineIndex, primaryRune.runeType);
+    newSpellWall[patternLineIndex][targetColumn].rune = primaryRune;
+    updatedPatternLines[patternLineIndex] = { ...patternLine, runes: [], isLocked: true };
   }
 
   return {
     ...state,
     status: nextStatus,
     playerStats: nextStats,
-    deck: updatedDeck,
-    playerHand: updatedHand,
+    deck: newDeck,
+    playerHand: newHand,
     patternLines: updatedPatternLines,
-    spellWall: updatedSpellWall,
+    spellWall: newSpellWall,
   };
 }
