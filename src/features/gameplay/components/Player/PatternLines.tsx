@@ -8,6 +8,7 @@ import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { getColumn } from '../../../../utils/runeHelpers';
 import { RUNE_SIZE_CONFIG } from '../../../../styles/tokens';
 import { useSoloGameStore } from '../../../../state/stores/soloGameStore';
+import { useSelectionStore } from '../../../../state/stores';
 
 interface PatternLinesProps {
   onPlaceRunes: (patternLineIndex: number) => void;
@@ -22,7 +23,7 @@ export function PatternLines({
 }: PatternLinesProps) {
   const wall = useSoloGameStore((state) => state.spellWall);
   const patternLines = useSoloGameStore((state) => state.patternLines);
-  const selectedRunes = useGameplayStore((state) => state.selectedRunes);
+  const selectedRunes = useSelectionStore((state) => state.selectedCards);
   const placeRunes = useGameplayStore((state) => state.placeRunes);
   const overloadDamage = useSoloGameStore((state) => state.overloadDamage);
 
