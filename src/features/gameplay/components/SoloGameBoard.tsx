@@ -9,7 +9,7 @@ import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
 import { PlayerHandView } from './PlayerHandView';
 import { PatternLines } from './Player/PatternLines';
-import { ScoringWall } from './Player/ScoringWall';
+import { SpellWallView } from './Player/ScoringWall';
 
 interface SoloGameViewProps {
   shared: GameContainerSharedProps;
@@ -42,7 +42,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       />
       <div className="flex h-full items-center flex-row p-5 gap-5">
           <PatternLines/>
-          <ScoringWall/>
+          <SpellWallView/>
       </div>
       <PlayerHandView />
       {/* TODO: Cleanup */}
