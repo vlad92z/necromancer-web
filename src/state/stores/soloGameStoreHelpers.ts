@@ -34,10 +34,10 @@ export function applySoloOverloadDamage(
 }
 
 /**
- * canPlaceSelectionOnPatternLine - validate selection and target line.
+ * canPlaceSelectionOnPatternLine - validate selection and target line using a minimal state slice.
  */
 export function canPlaceSelectionOnPatternLine(
-  state: SoloGameState,
+  state: Pick<SoloGameState, 'patternLines' | 'spellWall'>,
   patternLineIndex: number,
   selectedRunes: Rune[]
 ): boolean {
@@ -79,7 +79,13 @@ export function placeSelectionOnPatternLine(
   patternLineIndex: number,
   selectedRunes: Rune[]
 ): SoloGameState {
-  if (!canPlaceSelectionOnPatternLine(state, patternLineIndex, selectedRunes)) {
+  if (
+    !canPlaceSelectionOnPatternLine(
+      { patternLines: state.patternLines, spellWall: state.spellWall },
+      patternLineIndex,
+      selectedRunes
+    )
+  ) {
     return state;
   }
 
