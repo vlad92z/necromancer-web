@@ -56,7 +56,6 @@ export function OverloadOverlay() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex justify-between w-full">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">Overload Overview</div>
                 <h2 className="text-2xl font-extrabold text-[#f5f3ff]">Overloaded Runes ({totalRuneCount})</h2>
               </div>
               <button

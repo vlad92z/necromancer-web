@@ -57,7 +57,7 @@ export function DeckOverlay() {
       isSelected: selectedRuneIdSet.has(rune.id),
     }));
   });
-  const runeSize = sortedRunes.length > 140 ? 'small' : 'medium';
+  const runeSize = 'small';
   const runeTypeCounts = runeTypes.reduce(
     (acc, runeType) => ({
       ...acc,
@@ -155,11 +155,8 @@ export function DeckOverlay() {
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex justify-between w-full">
-              <div>
                 
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">Deck Overview</div>
               <h2 className="text-2xl font-extrabold text-[#f5f3ff]">Deck ({deck.remainingRunes.length})</h2>
-              </div>
               <button
                 onClick={useUIStore.getState().closeDeckOverlay}
                 type="button"

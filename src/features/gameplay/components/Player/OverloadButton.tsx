@@ -42,7 +42,7 @@ export function OverloadButton() {
 
     const overload = <button
         type="button"
-        // onClick={handleOverloadClick}
+        onClick={useUIStore.getState().openOverloadOverlay}
         // data-active={isActive ? 'true' : undefined}
         className={overloadClassName}
     >

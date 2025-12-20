@@ -4,7 +4,6 @@ import { useSoloGameStore } from "../../../state/stores/soloGameStore";
 
 export function DeckButton() {
     const runesInDeck = useSoloGameStore((state) => state.deck.remainingRunes.length);
-    const showDeckView = useUIStore((state) => state.toggleDeckOverlay);
     const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
     const deckActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-900/70';
     const className = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 ${deckActiveClass}`;
@@ -12,7 +11,7 @@ export function DeckButton() {
     return (
         <button
             type="button"
-            onClick={showDeckView}
+            onClick={useUIStore.getState().openDeckOverlay}
             // data-active={isActive ? 'true' : undefined}
             className={className}
         >
