@@ -10,6 +10,7 @@ import { OverloadButton } from '../Player/OverloadButton';
 import { DeckButton } from '../DeckButton';
 import { useGameplayStore } from '../../../../state/stores';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
+import { useSoloGameStore } from '../../../../state/stores/soloGameStore';
 
 interface GameMetadataViewProps {
   onOpenOverload: () => void;
@@ -24,7 +25,7 @@ export function GameMetadataView({
   onOpenSettings,
   activeElement
 }: GameMetadataViewProps) {
-  const gameIndex = useGameplayStore((state) => state.gameIndex);
+  const gameIndex = useSoloGameStore((state) => state.gameIndex);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
 
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
@@ -35,14 +36,24 @@ export function GameMetadataView({
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2 bg-slate-900/80 px-5 pt-3">
       {/* Left side: Game Title, Arcane Dust Counter, Settings Button */}
-      <div className="w-full flex flex-row flex-[29] items-center">
+      <div className="w-full flex flex-row flex-[29] items-center gap-3">
         <ClickSoundButton
           title="⚙"
           action={onOpenSettings}
           isActive={activeElement === 'settings'}
           className={actionButtonBase}
         />
+        <DeckButton
+          isActive={activeElement === 'deck'}
+          showDeckView={onOpenDeck}
+        />
+        <OverloadButton
+          isActive={activeElement === 'overload'}
+          showOverloadView={onOpenOverload}
+        />
 
+        <HealthView />
+        <RuneScoreView />
         <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
           <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
           <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameIndex + 1}</span>
@@ -59,18 +70,7 @@ export function GameMetadataView({
       </div>
 
       {/* Right Side */}
-      <div className="flex flex-row flex-[60] items-center gap-3">
-        <OverloadButton
-          isActive={activeElement === 'overload'}
-          showOverloadView={onOpenOverload}
-        />
-        <DeckButton
-          isActive={activeElement === 'deck'}
-          showDeckView={onOpenDeck}
-        />
-        <HealthView/>
-        <RuneScoreView/>
-      </div>
+
     </div>
   );
 }
