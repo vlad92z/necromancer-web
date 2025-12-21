@@ -4,7 +4,7 @@
 
 import type { Artefact, ArtefactId } from '../../types/artefacts';
 import type { Deck, PatternLine, PlayerStats, Rune, RuneScore, RuneType, SoloGameState, SpellWall } from '../../types/game';
-import { applySoloOverloadDamage } from '../../utils/overload';
+import { applySoloOverloadDamage, getOverloadDamageForRound } from '../../utils/overload';
 import { getColumn } from '../../utils/runeHelpers';
 import { resolveSegment } from '../../utils/scoring';
 import { drawRunesFromDeck } from '../../utils/soloGameInitialization';
@@ -254,5 +254,60 @@ export function placeSelectionOnPatternLine(
     patternLines: updatedPatternLines,
     spellWall: updatedSpellWall,
     runeScore: updatedRuneScore,
+  };
+}
+
+/**
+ * endSoloRound - overload the current hand, advance the round, and draw a new hand.
+ */
+export function endSoloRound(state: SoloGameState): SoloGameState {
+  if (state.status !== 'in-progress') {
+    return state;
+  }
+
+  const unlockedPatternLines = state.patternLines.map((line) => ({
+    ...line,
+    isLocked: false,
+  }));
+  const handToOverload = state.playerHand;
+  const { nextStats: overloadStats } = applySoloOverloadDamage(
+    state.playerStats,
+    handToOverload,
+    state.overloadDamage
+  );
+
+  const nextRoundIndex = state.roundIndex + 1;
+  const nextOverloadDamage = getOverloadDamageForRound(state.gameIndex, nextRoundIndex);
+
+  let nextDeck: Deck = {
+    ...state.deck,
+    overloadedRunes: [...state.deck.overloadedRunes, ...handToOverload],
+  };
+
+  const { newDeck: remainingRunes, newHand, overflowRunes } = drawRunesFromDeck(nextDeck.remainingRunes, []);
+  nextDeck = {
+    ...nextDeck,
+    remainingRunes,
+  };
+
+  const { nextStats } = applySoloOverloadDamage(overloadStats, overflowRunes, nextOverloadDamage);
+  if (overflowRunes.length > 0) {
+    nextDeck = {
+      ...nextDeck,
+      overloadedRunes: [...nextDeck.overloadedRunes, ...overflowRunes],
+    };
+  }
+
+  const nextStatus = nextStats.currentHealth === 0 ? 'defeat' : state.status;
+
+  return {
+    ...state,
+    status: nextStatus,
+    playerStats: nextStats,
+    deck: nextDeck,
+    playerHand: newHand,
+    patternLines: unlockedPatternLines,
+    roundIndex: nextRoundIndex,
+    overloadDamage: nextOverloadDamage,
   };
 }

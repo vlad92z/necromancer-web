@@ -3,13 +3,14 @@ import type { SoloGameState } from '../../types/game';
 import { useSelectionStore } from './selectionStore';
 import { clearSoloState, saveSoloState } from '../../utils/soloPersistence';
 import { nextGame } from '../../utils/soloGameInitialization';
-import { placeSelectionOnPatternLine } from './soloGameStoreHelpers';
+import { endSoloRound, placeSelectionOnPatternLine } from './soloGameStoreHelpers';
 
 export interface SoloGameStore extends SoloGameState {
     hydrate: (state: SoloGameState) => void;
     startNewRun: () => void;
     startNextGame: () => void;
     placeRunes: (patternLineIndex: number) => void;
+    endRound: () => void;
 }
 
 /**
@@ -58,6 +59,13 @@ export const soloGameStoreConfig = (set: StoreApi<SoloGameStore>['setState']): S
       if (didPlaceRunes) {
         useSelectionStore.getState().clearSelection();
       }
+    },
+    /**
+     * endRound - overload current hand and draw a new one.
+     */
+    endRound: () => {
+      set((state) => endSoloRound(state));
+      useSelectionStore.getState().clearSelection();
     },
 });
 

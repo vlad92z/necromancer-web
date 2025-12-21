@@ -36,11 +36,6 @@ export function GameMetadataView() {
 
         <HealthView />
         <RuneScoreView />
-        <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
-          <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
-          <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameIndex + 1}</span>
-        </div>
-
         <div className="px-4 py-3 flex items-center gap-3 pr-20">
           <img
             src={arcaneDustIcon}
@@ -48,6 +43,10 @@ export function GameMetadataView() {
             className="h-10 w-10 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]"
           />
           <span className="text-xl font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</span>
+        </div>
+        <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
+          <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
+          <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameIndex + 1}</span>
         </div>
       </div>
 
