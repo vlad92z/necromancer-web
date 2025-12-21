@@ -4,6 +4,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
+import type { AnimatingRune } from '../../types/game';
 
 export interface UIStore {
   // Overlay visibility states
@@ -13,6 +14,7 @@ export interface UIStore {
   soundVolume: number;
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
+  animatingRunes: AnimatingRune[];
   
   // Actions to toggle overlays
   openDeckOverlay: () => void;
@@ -24,6 +26,8 @@ export interface UIStore {
   setSoundVolume: (volume: number) => void;
   setMusicMuted: (muted: boolean) => void;
   markMusicSessionStarted: () => void;
+  setAnimatingRunes: (runes: AnimatingRune[]) => void;
+  clearAnimatingRunes: () => void;
 }
 
 /**
@@ -60,6 +64,7 @@ export const uiStoreConfig = (set: StoreApi<UIStore>['setState']): UIStore => ({
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
+  animatingRunes: [],
 
   // Actions
   openDeckOverlay: () => {
@@ -103,6 +108,20 @@ export const uiStoreConfig = (set: StoreApi<UIStore>['setState']): UIStore => ({
 
   markMusicSessionStarted: () => {
     set({ hasMusicSessionStarted: true });
+  },
+
+  /**
+   * setAnimatingRunes - stores the active rune placement animation overlays.
+   */
+  setAnimatingRunes: (runes: AnimatingRune[]) => {
+    set({ animatingRunes: runes });
+  },
+
+  /**
+   * clearAnimatingRunes - clears active rune placement animation overlays.
+   */
+  clearAnimatingRunes: () => {
+    set({ animatingRunes: [] });
   },
 });
 

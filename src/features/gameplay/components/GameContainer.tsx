@@ -154,7 +154,6 @@ export function GameContainer() {
         <SettingsOverlay/>
       )
       }
-      {/* <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} /> */}
     </div>
   );
 }

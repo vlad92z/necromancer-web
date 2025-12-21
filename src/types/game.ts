@@ -71,7 +71,6 @@ export interface PatternLine {
   capacity: number; // Line capacity (1-6 runes)
   runes: Rune[]; // Runes currently placed in this line
   isLocked: boolean;
-  hideRunes: boolean;
 }
 
 /**

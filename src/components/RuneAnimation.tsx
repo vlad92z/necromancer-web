@@ -3,6 +3,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { RuneCell } from './RuneCell';
 import type { AnimatingRune } from '../types/game';
 import { RUNE_SIZE_CONFIG } from '../styles/tokens';
@@ -18,7 +19,12 @@ const ANIMATION_EASE = [0.4, 0.0, 0.2, 1] as const;
 export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnimationProps) {
   if (animatingRunes.length === 0) return null;
 
-  return (
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  // Render to body to avoid transformed parent offsets.
+  return createPortal(
     <div style={{
       position: 'fixed',
       top: 0,
@@ -26,7 +32,7 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
       right: 0,
       bottom: 0,
       pointerEvents: 'none',
-      zIndex: 0,
+      zIndex: 999,
     }}>
       {animatingRunes.map((animatingRune, index) => {
         // If shouldDisappear is true, add a fade out and scale down animation
@@ -108,6 +114,7 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
           </motion.div>
         );
       })}
-    </div>
+    </div>,
+    document.body
   );
 }

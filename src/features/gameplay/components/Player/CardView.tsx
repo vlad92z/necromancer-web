@@ -41,7 +41,11 @@ export function CardView({
         {title}
       </div>
 
-      <div className={`flex-[4] ${border} bg-gradient-to-b from-slate-700/80 to-slate-900 overflow-hidden min-h-0 relative`}>
+      <div
+        className={`flex-[4] ${border} bg-gradient-to-b from-slate-700/80 to-slate-900 overflow-hidden min-h-0 relative`}
+        data-rune-card-image="true"
+        data-rune-id={rune.id}
+      >
         <img
           className="h-full w-full object-cover"
           src={getRuneAsset(rune)}

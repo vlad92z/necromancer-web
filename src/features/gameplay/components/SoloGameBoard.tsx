@@ -7,8 +7,20 @@ import { PlayerHandView } from './PlayerHandView';
 import { EndRoundButton } from './Player/EndRoundButton';
 import { PatternLines } from './Player/PatternLines';
 import { SpellWallView } from './Player/SpellWallView';
+import { RuneAnimation } from '../../../components/RuneAnimation';
+import { useUIStore } from '../../../state/stores/uiStore';
 
 export function SoloGameView() {
+  const animatingRunes = useUIStore((state) => state.animatingRunes);
+  const clearAnimatingRunes = useUIStore((state) => state.clearAnimatingRunes);
+
+  /**
+   * handlePlacementAnimationComplete - clears overlay runes after placement animations finish.
+   */
+  const handlePlacementAnimationComplete = () => {
+    clearAnimatingRunes();
+  };
+
   return (
     <div className="flex flex-col h-full relative">
       <GameMetadataView/>
@@ -20,6 +32,10 @@ export function SoloGameView() {
         <SpellWallView />
       </div>
       <PlayerHandView />
+      <RuneAnimation
+        animatingRunes={animatingRunes}
+        onAnimationComplete={handlePlacementAnimationComplete}
+      />
       {/* TODO: Cleanup */}
       {/* {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && ( */}
 {/* 
