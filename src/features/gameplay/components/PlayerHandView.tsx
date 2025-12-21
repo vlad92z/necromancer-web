@@ -72,10 +72,8 @@ export function PlayerHandView() {
                 const baseZIndex = playerHand.length - index;
                 const zIndex = isPrimaryHover
                     ? 1000 + baseZIndex
-                    : isHoveredGroup
-                        ? 100 + baseZIndex
-                        : baseZIndex;
-                const animateState = isHoveredGroup
+                    : baseZIndex;
+                const animateState = isPrimaryHover
                     ? { rotate: 0, scale: 1.05, y: [0, -6, 0] }
                     : { rotate: rotation, scale: 1, y: 0 };
                 const transition = isHoveredGroup
@@ -105,7 +103,7 @@ export function PlayerHandView() {
                             zIndex,
                         }}
                     >
-                        <CardView rune={rune} isPrimaryHover={isPrimaryHover} />
+                        <CardView rune={rune} isPrimaryHover={isHoveredGroup} />
                     </motion.div>
                 );
             })}
