@@ -51,7 +51,7 @@ export function PatternLines({
                     key={`${index}-${slotIndex}`}
                     className={`border rounded-xl border-slate-500/80 align-center p-1 ${slotIndex > 0 ? '' : 'bg-sky-900/50'}`}
                     style={{ width: imageDimension, height: imageDimension }}>
-                      {rune && (
+                      {rune && !line.hideRunes && (
                         <img
                           src={runeAsset(rune.runeType, rune.rarity)}
                           alt={getRuneTitle(rune.runeType)}
