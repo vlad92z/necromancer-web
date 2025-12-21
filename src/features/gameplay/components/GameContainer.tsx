@@ -139,7 +139,7 @@ export function GameContainer() {
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <SoloGameView/>
+          <SoloGameView boardScale={boardScale} />
         </div>
       </div>
 

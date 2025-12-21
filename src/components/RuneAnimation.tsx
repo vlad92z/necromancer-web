@@ -11,17 +11,24 @@ import { RUNE_SIZE_CONFIG } from '../styles/tokens';
 interface RuneAnimationProps {
   animatingRunes: AnimatingRune[];
   onAnimationComplete: () => void;
+  boardScale: number;
 }
 
 // Constants for animation easing
 const ANIMATION_EASE = [0.4, 0.0, 0.2, 1] as const;
 
-export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnimationProps) {
+/**
+ * RuneAnimation - renders animated rune overlays at the scaled board size.
+ */
+export function RuneAnimation({ animatingRunes, onAnimationComplete, boardScale }: RuneAnimationProps) {
   if (animatingRunes.length === 0) return null;
 
   if (typeof document === 'undefined') {
     return null;
   }
+
+  const baseRuneSize = RUNE_SIZE_CONFIG.large.dimension;
+  const scaledRuneSize = baseRuneSize * boardScale;
 
   // Render to body to avoid transformed parent offsets.
   return createPortal(
@@ -41,8 +48,7 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
         const finalY = animatingRune.endY;
         const startX = animatingRune.startX;
         const startY = animatingRune.startY;
-        const runeSize = animatingRune.size ?? RUNE_SIZE_CONFIG.large.dimension;
-        const runeScale = runeSize / RUNE_SIZE_CONFIG.large.dimension;
+        const runeScale = boardScale;
 
         const animateProps = animatingRune.shouldDisappear
           ? {
@@ -91,14 +97,14 @@ export function RuneAnimation({ animatingRunes, onAnimationComplete }: RuneAnima
               position: 'absolute',
               top: 0,
               left: 0,
-              width: runeSize,
-              height: runeSize,
+              width: scaledRuneSize,
+              height: scaledRuneSize,
             }}
           >
             <div
               style={{
-                width: RUNE_SIZE_CONFIG.large.dimension,
-                height: RUNE_SIZE_CONFIG.large.dimension,
+                width: baseRuneSize,
+                height: baseRuneSize,
                 transform: `scale(${runeScale})`,
                 transformOrigin: 'top left',
               }}

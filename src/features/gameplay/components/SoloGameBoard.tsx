@@ -10,7 +10,14 @@ import { SpellWallView } from './Player/SpellWallView';
 import { RuneAnimation } from '../../../components/RuneAnimation';
 import { useUIStore } from '../../../state/stores/uiStore';
 
-export function SoloGameView() {
+interface SoloGameViewProps {
+  boardScale: number;
+}
+
+/**
+ * SoloGameView - renders the solo board layout and shared overlays.
+ */
+export function SoloGameView({ boardScale }: SoloGameViewProps) {
   const animatingRunes = useUIStore((state) => state.animatingRunes);
   const clearAnimatingRunes = useUIStore((state) => state.clearAnimatingRunes);
 
@@ -28,13 +35,14 @@ export function SoloGameView() {
         <div className="flex h-full items-start">
           <EndRoundButton />
         </div>
-        <PatternLines />
+        <PatternLines boardScale={boardScale} />
         <SpellWallView />
       </div>
       <PlayerHandView />
       <RuneAnimation
         animatingRunes={animatingRunes}
         onAnimationComplete={handlePlacementAnimationComplete}
+        boardScale={boardScale}
       />
       {/* TODO: Cleanup */}
       {/* {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && ( */}

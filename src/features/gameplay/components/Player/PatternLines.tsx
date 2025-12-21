@@ -15,10 +15,12 @@ import type { AnimatingRune, Rune } from '../../../../types/game';
 
 interface PatternLinesProps {
   activePatternLineIndex?: number | null;
+  boardScale: number;
 }
 
 export function PatternLines({
   activePatternLineIndex,
+  boardScale,
 }: PatternLinesProps) {
   const patternLines = useSoloGameStore((state) => state.patternLines);
   const spellWall = useSoloGameStore((state) => state.spellWall);
@@ -60,6 +62,7 @@ export function PatternLines({
       return [];
     }
 
+    const overlaySize = RUNE_SIZE_CONFIG.large.dimension * boardScale;
     const availableSpace = Math.max(0, patternLine.capacity - patternLine.runes.length);
     const runesToPlace = Math.min(runes.length, availableSpace);
     const placedRunes = runes.slice(0, runesToPlace);
@@ -75,7 +78,6 @@ export function PatternLines({
       }
       const startRect = startElement.getBoundingClientRect();
       const targetRect = targetElement.getBoundingClientRect();
-      const overlaySize = startRect.width || targetRect.width || RUNE_SIZE_CONFIG.large.dimension;
       const startX = startRect.left + startRect.width / 2 - overlaySize / 2;
       const startY = startRect.top + startRect.height / 2 - overlaySize / 2;
       const endX = targetRect.left + targetRect.width / 2 - overlaySize / 2;
@@ -99,7 +101,6 @@ export function PatternLines({
         return;
       }
       const startRect = startElement.getBoundingClientRect();
-      const overlaySize = startRect.width || RUNE_SIZE_CONFIG.large.dimension;
       const startX = startRect.left + startRect.width / 2 - overlaySize / 2;
       const startY = startRect.top + startRect.height / 2 - overlaySize / 2;
 
