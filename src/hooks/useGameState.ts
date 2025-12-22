@@ -4,6 +4,7 @@
  */
 
 import { useGameplayStore } from '../state/stores/gameplayStore';
+import { useSelectionStore } from '../state/stores/selectionStore';
 
 /**
  * Get runeforges and center pool
@@ -26,7 +27,7 @@ export function useTurnPhase() {
  * Get selected runes
  */
 export function useSelectedRunes() {
-  return useGameplayStore((state) => state.selectedRunes);
+  return useSelectionStore((state) => state.selectedRunes);
 }
 
 /**

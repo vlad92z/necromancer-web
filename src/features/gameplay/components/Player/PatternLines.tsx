@@ -98,7 +98,7 @@ export function PatternLines({
         const selectableGlowRest = hasActiveElement ? 'none' : keyboardGlowRest;
         const selectableGlowPeak = hasActiveElement ? 'none' : keyboardGlowPeak;
         const glowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
-        const isLocked = lockedLineIndexes.includes(index);
+        const isLocked = lockedLines.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         
         const placementClickable = Boolean(canPlace && onPlaceRunes);

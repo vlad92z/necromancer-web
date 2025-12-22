@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
+import type { DraftSource, GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
@@ -20,7 +20,7 @@ interface RuneSelectionTableProps {
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
-  draftSource: GameState['draftSource'];
+  draftSource: DraftSource | null;
   activeElement: ActiveElement | null;
   onCancelSelection: () => void;
   animatingRuneIds?: string[];

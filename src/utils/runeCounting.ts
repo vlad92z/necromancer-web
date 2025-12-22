@@ -2,13 +2,13 @@
  * Rune counting helpers for drafting UI
  */
 
-import type { GameState, Rune, RuneType, Runeforge } from '../types/game';
+import type { DraftSource, Rune, RuneType, Runeforge } from '../types/game';
 
 interface RuneTypeCountInput {
   runeforges: Runeforge[];
   centerPool: Rune[];
   selectedRunes: Rune[];
-  draftSource: GameState['draftSource'];
+  draftSource: DraftSource | null;
 }
 
 export function getRuneTypeCounts({

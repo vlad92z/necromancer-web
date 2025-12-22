@@ -210,28 +210,13 @@ export interface GameState {
    */
   strainMultiplier: number;
   startingStrain: number; // Configured strain at the start of the run
-  selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
-  draftSource:
-    | {
-        type: 'runeforge';
-        runeforgeId: string;
-        movedToCenter: Rune[];
-        originalRunes: Rune[];
-        affectedRuneforges?: { runeforgeId: string; originalRunes: Rune[] }[];
-        previousDisabledRuneforgeIds?: string[];
-        previousRuneforgeDraftStage?: 'single' | 'global';
-        selectionMode?: 'single' | 'global';
-      }
-    | { type: 'center'; originalRunes: Rune[] }
-    | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringSequence: ScoringSequenceState | null; // Active scoring pulses/sequence
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   channelSoundPending: boolean; // Flag to trigger lightning SFX when channel effects resolve
-  selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
-  lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
+  lockedPatternLines: number[]; // Pattern line indices locked until next round (solo toggle)
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
@@ -244,6 +229,25 @@ export interface GameState {
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
   victoryDraftPicks: number; // Number of draft picks granted after a victory
+}
+
+export type DraftSource =
+  | {
+      type: 'runeforge';
+      runeforgeId: string;
+      movedToCenter: Rune[];
+      originalRunes: Rune[];
+      affectedRuneforges?: { runeforgeId: string; originalRunes: Rune[] }[];
+      previousDisabledRuneforgeIds?: string[];
+      previousRuneforgeDraftStage?: 'single' | 'global';
+      selectionMode?: 'single' | 'global';
+    }
+  | { type: 'center'; originalRunes: Rune[] };
+
+export interface SelectionState {
+  selectedRunes: Rune[]; // Runes currently selected by active player
+  draftSource: DraftSource | null; // Where the selected runes came from (and original forge state)
+  selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
 }
 
 export interface DeckDraftState {

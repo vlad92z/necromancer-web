@@ -4,12 +4,13 @@
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
-import type { GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
+import type { DraftSource, GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
 import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
+import { useSelectionStore } from '../../../state/stores/selectionStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
@@ -90,7 +91,7 @@ export interface GameContainerSharedProps {
   selectedRuneType: RuneType | null;
   selectedRunes: Rune[];
   hasSelectedRunes: boolean;
-  draftSource: GameState['draftSource'];
+  draftSource: DraftSource | null;
   activeElement: ActiveElement | null;
 
   // Board data
@@ -123,15 +124,15 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     centerPool,
     runesPerRuneforge,
     runeforgeDraftStage,
-    selectedRunes,
     turnPhase,
     lockedPatternLines,
     shouldTriggerEndRound,
-    draftSource,
     strain,
     soloDeckTemplate,
     overloadRunes,
   } = gameState;
+  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
+  const draftSource = useSelectionStore((state) => state.draftSource);
   const currentGame = useGameplayStore((state) => state.game);
   const outcome = gameState.outcome;
   const runePowerTotal = gameState.runePowerTotal;
@@ -291,7 +292,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     () => hiddenPatternSlots[player.id],
     [hiddenPatternSlots, player.id],
   );
-  const playerLockedLines = useMemo(() => lockedPatternLines[player.id], [lockedPatternLines, player.id]);
 
   const isPatternLineValidTarget = useCallback(
     (lineIndex: number): boolean => {
@@ -300,7 +300,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       }
 
       const line = player.patternLines[lineIndex];
-      if (!line || playerLockedLines.includes(lineIndex)) {
+      if (!line || lockedPatternLines.includes(lineIndex)) {
         return false;
       }
 
@@ -312,7 +312,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
       return matchesType && notFull && notOnWall;
     },
-    [hasSelectedRunes, player.patternLines, playerLockedLines, player.wall, selectedRuneType],
+    [hasSelectedRunes, player.patternLines, lockedPatternLines, player.wall, selectedRuneType],
   );
 
   const buildPlacementTargets = useCallback((): ActiveElement[] => {
@@ -1173,7 +1173,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       activeElement,
       runeforges,
       centerPool,
-      playerLockedLines,
+      lockedPatternLines,
       playerHiddenPatternSlots,
       animatingRuneIds,
       hiddenCenterRuneIds,
@@ -1204,7 +1204,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       player,
       runesPerRuneforge,
       playerHiddenPatternSlots,
-      playerLockedLines,
+      lockedPatternLines,
       strain,
       returnToStartScreen,
       runeforges,

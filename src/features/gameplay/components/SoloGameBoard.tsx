@@ -23,7 +23,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     selectedRuneType,
     hasSelectedRunes,
     playerHiddenPatternSlots,//TODO this vs playerLocked?
-    playerLockedLines,
     runeforges,
     centerPool,
     selectedRunes,
@@ -108,7 +107,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           selectedRuneType={selectedRuneType}
           canPlace={hasSelectedRunes}
           onCancelSelection={onCancelSelection}
-          lockedLineIndexes={playerLockedLines}
           hiddenSlotKeys={playerHiddenPatternSlots}
           selectedRunes={selectedRunes}
           strain={strain}

@@ -2,7 +2,7 @@
  * useRunePlacementAnimations - manages rune placement overlay animations and temporary hides
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { AnimatingRune, GameState, Rune } from '../types/game';
+import type { AnimatingRune, DraftSource, GameState, Rune } from '../types/game';
 import { RUNE_SIZE_CONFIG } from '../styles/tokens';
 
 interface SelectionSnapshot {
@@ -33,7 +33,7 @@ interface MeasuredRunePosition {
 interface UseRunePlacementAnimationsParams {
   player: GameState['player'];
   selectedRunes: Rune[];
-  draftSource: GameState['draftSource'];
+  draftSource: DraftSource | null;
   centerPool: GameState['centerPool'];
 }
 

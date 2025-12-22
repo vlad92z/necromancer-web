@@ -4,13 +4,25 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, RuneType, Player, Rune, GameOutcome, RunConfig, Runeforge, ScoringSequenceState, ScoringStep } from '../../types/game';
+import type {
+  GameState,
+  RuneType,
+  Player,
+  Rune,
+  GameOutcome,
+  RunConfig,
+  Runeforge,
+  ScoringSequenceState,
+  ScoringStep,
+  SelectionState,
+} from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
 import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
 import { useArtefactStore } from './artefactStore';
+import { useSelectionStore } from './selectionStore';
 import {
   applyIncomingDamageModifiers,
   applyOutgoingDamageModifiers,
@@ -65,6 +77,7 @@ function getSoloDeckTemplate(state: GameState): Rune[] {
 
 function enterDeckDraftMode(state: GameState): GameState {
   console.log('gameplayStore: enterDeckDraftMode');
+  useSelectionStore.getState().clearSelection();
   const deckTemplate = getSoloDeckTemplate(state);
   const nextLongestRun = Math.max(state.longestRun, state.game);
   const basePicks = state.victoryDraftPicks;
@@ -93,11 +106,8 @@ function enterDeckDraftMode(state: GameState): GameState {
     runeforges: [],
     centerPool: [],
     runeforgeDraftStage: 'single' as const,
-    selectedRunes: [],
     overloadRunes: [],
     scoringSequence: null,
-    selectionTimestamp: null,
-    draftSource: null,
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
     channelSoundPending: state.channelSoundPending,
@@ -264,13 +274,11 @@ function handlePlayerDefeat(
     targetScore: state.targetScore,
   });
 
+  useSelectionStore.getState().clearSelection();
   return {
     ...state,
     player: updatedPlayer,
-    selectedRunes: [],
     overloadRunes: [],
-    selectionTimestamp: null,
-    draftSource: null,
     centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
@@ -361,6 +369,7 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
 
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
+  useSelectionStore.getState().clearSelection();
   const currentStrain = state.strain;
   const nextRound = state.round + 1;
   const nextStrain = getOverloadDamageForRound(state.game, nextRound);
@@ -395,10 +404,7 @@ function prepareRoundReset(state: GameState): GameState {
       outcome: 'defeat' as GameOutcome,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
-      lockedPatternLines: { [clearedPlayer.id]: [] },
-      selectedRunes: [],
-      selectionTimestamp: null,
-      draftSource: null,
+      lockedPatternLines: [],
       scoringSequence: null,
       pendingPlacement: null,
       animatingRunes: [],
@@ -432,11 +438,8 @@ function prepareRoundReset(state: GameState): GameState {
     strainMultiplier: state.strainMultiplier,
     startingStrain: nextStrain,
     outcome: null,
-    lockedPatternLines: { [updatedPlayer.id]: [], },
+    lockedPatternLines: [],
     shouldTriggerEndRound: false,
-    selectedRunes: [],
-    selectionTimestamp: null,
-    draftSource: null,
     scoringSequence: null,
     pendingPlacement: null,
     animatingRunes: [],
@@ -470,27 +473,25 @@ export interface GameplayStore extends GameState {
   resetTooltipCards: () => void;
 }
 
-function cancelSelectionState(state: GameplayStore): GameplayStore {
-  if (state.turnPhase === 'deck-draft' || state.selectedRunes.length === 0 || !state.draftSource) {
+function cancelSelectionState(state: GameplayStore, selectionState: SelectionState): GameplayStore {
+  if (state.turnPhase === 'deck-draft' || selectionState.selectedRunes.length === 0 || !selectionState.draftSource) {
     return state;
   }
 
-  if (state.draftSource.type === 'center') {
+  if (selectionState.draftSource.type === 'center') {
+    useSelectionStore.getState().clearSelection();
     return {
       ...state,
-      centerPool: [...state.draftSource.originalRunes],
-      selectedRunes: [],
-      selectionTimestamp: null,
-      draftSource: null,
+      centerPool: [...selectionState.draftSource.originalRunes],
       turnPhase: 'select' as const,
     };
   }
 
-  const runeforgeId = state.draftSource.runeforgeId;
-  const originalRunes = state.draftSource.originalRunes;
-  const affectedRuneforges = state.draftSource.affectedRuneforges ?? [{ runeforgeId, originalRunes }];
-  const previousDisabledRuneforgeIds = state.draftSource.previousDisabledRuneforgeIds ?? [];
-  const previousRuneforgeDraftStage = state.draftSource.previousRuneforgeDraftStage ?? state.runeforgeDraftStage;
+  const runeforgeId = selectionState.draftSource.runeforgeId;
+  const originalRunes = selectionState.draftSource.originalRunes;
+  const affectedRuneforges = selectionState.draftSource.affectedRuneforges ?? [{ runeforgeId, originalRunes }];
+  const previousDisabledRuneforgeIds = selectionState.draftSource.previousDisabledRuneforgeIds ?? [];
+  const previousRuneforgeDraftStage = selectionState.draftSource.previousRuneforgeDraftStage ?? state.runeforgeDraftStage;
 
   const updatedRuneforges = state.runeforges.map((f) => {
     const match = affectedRuneforges.find((target) => target.runeforgeId === f.id);
@@ -507,23 +508,25 @@ function cancelSelectionState(state: GameplayStore): GameplayStore {
     };
   });
 
+  useSelectionStore.getState().clearSelection();
   return {
     ...state,
     runeforges: updatedRuneforges,
     runeforgeDraftStage: previousRuneforgeDraftStage,
-    selectedRunes: [],
-    selectionTimestamp: null,
-    draftSource: null,
     turnPhase: 'select' as const,
   };
 }
 
-function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: number): GameplayStore {
+function placeSelectionOnPatternLine(
+  state: GameplayStore,
+  selectionState: SelectionState,
+  patternLineIndex: number
+): GameplayStore {
   if (state.turnPhase !== 'place') {
     return state;
   }
 
-  const { selectedRunes } = state;
+  const { selectedRunes } = selectionState;
   if (selectedRunes.length === 0) return state;
 
   const currentPlayer = state.player;
@@ -532,7 +535,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
     return state;
   }
 
-  const lockedLinesForPlayer = state.lockedPatternLines[currentPlayer.id] ?? [];
+  const lockedLinesForPlayer = state.lockedPatternLines;
   if (lockedLinesForPlayer.includes(patternLineIndex)) {
     console.log(`Pattern line ${patternLineIndex + 1} is unavailable - cannot place runes`);
     return state;
@@ -607,7 +610,7 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
       overloadDamage,
       channelTriggered
     );
-    return { ...state, ...defeatedState, selectionTimestamp: null };
+    return { ...state, ...defeatedState };
   }
 
   const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
@@ -616,9 +619,6 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
       ...state,
       player: updatedPlayer,
       centerPool: nextCenterPool,
-      selectedRunes: [],
-      selectionTimestamp: null,
-      draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
       shouldTriggerEndRound: false,
@@ -626,10 +626,10 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
       runePowerTotal: nextRunePowerTotal,
     });
 
+    useSelectionStore.getState().clearSelection();
     return {
       ...state,
       ...deckDraftReadyState,
-      selectionTimestamp: null,
       channelSoundPending: nextChannelSoundPending,
     };
   }
@@ -643,13 +643,11 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
         ? ('end-of-round' as const)
         : ('select' as const);
 
+  useSelectionStore.getState().clearSelection();
   return {
     ...state,
     player: updatedPlayer,
-    selectedRunes: [],
     overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
-    selectionTimestamp: null,
-    draftSource: null,
     centerPool: nextCenterPool,
     turnPhase: nextTurnPhase,
     shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
@@ -659,12 +657,12 @@ function placeSelectionOnPatternLine(state: GameplayStore, patternLineIndex: num
   };
 }
 
-function placeSelectionInFloor(state: GameplayStore): GameplayStore {
+function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionState): GameplayStore {
   if (state.turnPhase !== 'place') {
     return state;
   }
 
-  const { selectedRunes } = state;
+  const { selectedRunes } = selectionState;
   if (selectedRunes.length === 0) return state;
 
   const currentPlayer = state.player;
@@ -699,7 +697,7 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
       overloadDamage,
       channelTriggered
     );
-    return { ...state, ...defeatedState, selectionTimestamp: null };
+    return { ...state, ...defeatedState };
   }
 
   const nextRunePowerTotal = state.runePowerTotal + scoreBonus;
@@ -708,9 +706,6 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
       ...state,
       player: updatedPlayer,
       centerPool: nextCenterPool,
-      selectedRunes: [],
-      selectionTimestamp: null,
-      draftSource: null,
       pendingPlacement: null,
       animatingRunes: [],
       shouldTriggerEndRound: false,
@@ -718,23 +713,21 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
       runePowerTotal: nextRunePowerTotal,
     });
 
+    useSelectionStore.getState().clearSelection();
     return {
       ...state,
       ...deckDraftReadyState,
-      selectionTimestamp: null,
       channelSoundPending: nextChannelSoundPending,
     };
   }
 
   const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
 
+  useSelectionStore.getState().clearSelection();
   return {
     ...state,
     player: updatedPlayer,
-    selectedRunes: [],
     overloadRunes: [...state.overloadRunes, ...selectedRunes],
-    selectionTimestamp: null,
-    draftSource: null,
     centerPool: nextCenterPool,
     turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
     shouldTriggerEndRound: shouldEndRound,
@@ -744,14 +737,14 @@ function placeSelectionInFloor(state: GameplayStore): GameplayStore {
   };
 }
 
-function canPlaceSelectionOnAnyLine(state: GameplayStore): boolean {
-  if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+function canPlaceSelectionOnAnyLine(state: GameplayStore, selectionState: SelectionState): boolean {
+  if (state.turnPhase !== 'place' || selectionState.selectedRunes.length === 0) {
     return false;
   }
 
   const currentPlayer = state.player;
-  const runeType = state.selectedRunes[0].runeType;
-  const lockedLinesForPlayer = state.lockedPatternLines[currentPlayer.id] ?? [];
+  const runeType = selectionState.selectedRunes[0].runeType;
+  const lockedLinesForPlayer = state.lockedPatternLines;
 
   return currentPlayer.patternLines.some((line, index) => {
     if (lockedLinesForPlayer.includes(index)) {
@@ -774,39 +767,39 @@ function canPlaceSelectionOnAnyLine(state: GameplayStore): boolean {
   });
 }
 
-function attemptAutoPlacement(state: GameplayStore): GameplayStore {
-  if (state.turnPhase !== 'place' || state.selectedRunes.length === 0) {
+function attemptAutoPlacement(state: GameplayStore, selectionState: SelectionState): GameplayStore {
+  if (state.turnPhase !== 'place' || selectionState.selectedRunes.length === 0) {
     return state;
   }
 
   const now = Date.now();
-  const timeSinceSelection = state.selectionTimestamp ? now - state.selectionTimestamp : Infinity;
+  const timeSinceSelection = selectionState.selectionTimestamp ? now - selectionState.selectionTimestamp : Infinity;
   const isWithinDoubleClickWindow = timeSinceSelection <= 250;
 
   if (!isWithinDoubleClickWindow) {
-    return cancelSelectionState(state);
+    return cancelSelectionState(state, selectionState);
   }
 
   const currentPlayer = state.player;
-  const lockedLineIndexes = state.lockedPatternLines[currentPlayer.id] ?? [];
+  const lockedLineIndexes = state.lockedPatternLines;
 
   const bestLineIndex = findBestPatternLineForAutoPlacement(
-    state.selectedRunes,
+    selectionState.selectedRunes,
     currentPlayer.patternLines,
     currentPlayer.wall,
     lockedLineIndexes
   );
 
   if (bestLineIndex !== null) {
-    return placeSelectionOnPatternLine(state, bestLineIndex);
+    return placeSelectionOnPatternLine(state, selectionState, bestLineIndex);
   }
 
-  const canPlaceAnywhere = canPlaceSelectionOnAnyLine(state);
+  const canPlaceAnywhere = canPlaceSelectionOnAnyLine(state, selectionState);
   if (!canPlaceAnywhere) {
-    return placeSelectionInFloor(state);
+    return placeSelectionInFloor(state, selectionState);
   }
 
-  return cancelSelectionState(state);
+  return cancelSelectionState(state, selectionState);
 }
 
 function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
@@ -850,8 +843,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
+      const selectionState = useSelectionStore.getState();
       if (state.turnPhase === 'place') {
-        return attemptAutoPlacement(state);
+        return attemptAutoPlacement(state, selectionState);
       }
       if (state.turnPhase !== 'select') {
         return state;
@@ -886,12 +880,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ? updatedRuneforges.map((f) => ({ ...f, disabled: false }))
           : updatedRuneforges;
 
-        return {
-          ...state,
-          runeforges: unlockedRuneforges,
-          runeforgeDraftStage: nextRuneforgeDraftStage,
-          selectedRunes: [...state.selectedRunes, ...orderedRunes],
-          selectionTimestamp: Date.now(),
+        const selectionTimestamp = Date.now();
+        useSelectionStore.getState().setSelectionState({
+          selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
+          selectionTimestamp,
           draftSource: {
             type: 'runeforge',
             runeforgeId,
@@ -902,6 +894,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             previousRuneforgeDraftStage: 'single',
             selectionMode: 'single',
           },
+        });
+
+        return {
+          ...state,
+          runeforges: unlockedRuneforges,
+          runeforgeDraftStage: nextRuneforgeDraftStage,
           turnPhase: 'place' as const,
         };
       }
@@ -929,12 +927,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const orderedRunes = prioritizeRuneById(selectedFromAllRuneforges, primaryRuneId);
 
-      return {
-        ...state,
-        runeforges: nextRuneforges,
-        runeforgeDraftStage: 'global',
-        selectedRunes: [...state.selectedRunes, ...orderedRunes],
-        selectionTimestamp: Date.now(),
+      const selectionTimestamp = Date.now();
+      useSelectionStore.getState().setSelectionState({
+        selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
+        selectionTimestamp,
         draftSource: {
           type: 'runeforge',
           runeforgeId,
@@ -945,6 +941,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           previousRuneforgeDraftStage: 'global',
           selectionMode: 'global',
         },
+      });
+
+      return {
+        ...state,
+        runeforges: nextRuneforges,
+        runeforgeDraftStage: 'global',
         turnPhase: 'place' as const,
       };
     });
@@ -963,7 +965,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       const updatedPatternLines = [...currentPlayer.patternLines];
       const updatedWall = currentPlayer.wall.map((row) => [...row]);
-      const updatedLockedPatternLines: Record<Player['id'], number[]> = { ...state.lockedPatternLines };
+      let updatedLockedPatternLines = state.lockedPatternLines;
 
       const completedLines = updatedPatternLines
         .map((line, index) => ({ line, index }))
@@ -1021,10 +1023,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         scoringSteps.push(...segmentSteps);
 
         if (state.patternLineLock) {
-          const existingLocked = updatedLockedPatternLines[currentPlayer.id] ?? [];
-          updatedLockedPatternLines[currentPlayer.id] = existingLocked.includes(index)
-            ? existingLocked
-            : [...existingLocked, index];
+          updatedLockedPatternLines = updatedLockedPatternLines.includes(index)
+            ? updatedLockedPatternLines
+            : [...updatedLockedPatternLines, index];
         }
       });
 
@@ -1086,8 +1087,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const deckDraftState = enterDeckDraftMode({
           ...baseNextState,
           outcome: 'victory',
-          selectedRunes: [],
-          draftSource: null,
           pendingPlacement: null,
           animatingRunes: [],
           shouldTriggerEndRound: false,
@@ -1114,8 +1113,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
     set((state) => {
+      const selectionState = useSelectionStore.getState();
       if (state.turnPhase === 'place') {
-        return attemptAutoPlacement(state);
+        return attemptAutoPlacement(state, selectionState);
       }
       if (state.turnPhase !== 'select') {
         return state;
@@ -1137,27 +1137,30 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (selectedRunes.length === 0) return state;
       const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
 
+      useSelectionStore.getState().setSelectionState({
+        selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
+        selectionTimestamp: Date.now(),
+        draftSource: { type: 'center', originalRunes: originalCenterRunes },
+      });
+
       return {
         ...state,
         centerPool: remainingRunes,
-        selectedRunes: [...state.selectedRunes, ...orderedRunes],
-        selectionTimestamp: Date.now(),
-        draftSource: { type: 'center', originalRunes: originalCenterRunes },
         turnPhase: 'place' as const,
       };
     });
   },
 
   placeRunes: (patternLineIndex: number) => {
-    set((state) => placeSelectionOnPatternLine(state, patternLineIndex));
+    set((state) => placeSelectionOnPatternLine(state, useSelectionStore.getState(), patternLineIndex));
   },
 
   placeRunesInFloor: () => {
-    set((state) => placeSelectionInFloor(state));
+    set((state) => placeSelectionInFloor(state, useSelectionStore.getState()));
   },
 
   cancelSelection: () => {
-    set((state) => cancelSelectionState(state));
+    set((state) => cancelSelectionState(state, useSelectionStore.getState()));
   },
 
 
@@ -1174,7 +1177,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
    * Only works when in the 'place' phase with selected runes.
    */
   autoPlaceSelection: () => {
-    set((state) => attemptAutoPlacement(state));
+    set((state) => attemptAutoPlacement(state, useSelectionStore.getState()));
   },
 
   acknowledgeOverloadSound: () => {
@@ -1198,6 +1201,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   startSoloRun: (config?: Partial<RunConfig>) => {
     clearScoringTimeout();
+    useSelectionStore.getState().clearSelection();
     set(() => {
       const baseState = initializeSoloGame(config);
       const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
@@ -1222,6 +1226,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   prepareSoloMode: (config?: Partial<RunConfig>) => {
     clearScoringTimeout();
+    useSelectionStore.getState().clearSelection();
     set(() => ({
       ...initializeSoloGame(config),
       gameStarted: false,
@@ -1238,8 +1243,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return enterDeckDraftMode({
         ...state,
         runePowerTotal: nextRunePowerTotal,
-        selectedRunes: [],
-        draftSource: null,
         pendingPlacement: null,
         animatingRunes: [],
         shouldTriggerEndRound: false,
@@ -1250,6 +1253,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   hydrateGameState: (nextState: GameState) => {
     clearScoringTimeout();
+    useSelectionStore.getState().clearSelection();
     set((state) => {
       // const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
       // if (!shouldMerge) {
@@ -1305,7 +1309,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         startingStrain: storedStartingStrain,
         longestRun,
         round: nextRoundNumber,
-        selectionTimestamp: nextState.selectionTimestamp ?? null,
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
         scoringSequence: null,
@@ -1323,6 +1326,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   returnToStartScreen: () => {
     clearScoringTimeout();
+    useSelectionStore.getState().clearSelection();
     set((state) => {
       // If the last run ended in defeat, ensure persisted state is cleared immediately
       if (state.outcome === 'defeat') {
@@ -1346,6 +1350,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
   resetGame: () => {
     clearScoringTimeout();
+    useSelectionStore.getState().clearSelection();
     set(() => initializeSoloGame());
   },
 
@@ -1486,6 +1491,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   startNextSoloGame: () => {
+    useSelectionStore.getState().clearSelection();
     set((state) => {
       const deckTemplate = getSoloDeckTemplate(state);
       const nextTarget = state.targetScore;

@@ -5,6 +5,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
+import { useSelectionStore } from '../../../../state/stores/selectionStore';
 import { CardView } from './CardView';
 
 const STATIC_CW_ROTATION = 2;
@@ -33,7 +34,7 @@ const DEFAULT_CARD_WIDTH = 230;
 
 export function TooltipView() {
   const tooltipCards = useGameplayStore((state) => state.tooltipCards);
-  const selectedRunes = useGameplayStore((state) => state.selectedRunes);
+  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const tooltipOverrideActive = useGameplayStore((state) => state.tooltipOverrideActive);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   useEffect(() => {
