@@ -14,7 +14,6 @@ interface PlayerBoardProps {
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
   onCancelSelection?: () => void;
-  lockedLineIndexes?: number[];
   hiddenSlotKeys?: Set<string>;
   selectedRunes: Rune[];
   strain: number;
@@ -27,7 +26,6 @@ export function PlayerBoard({
   selectedRuneType,
   canPlace,
   onCancelSelection,
-  lockedLineIndexes,
   hiddenSlotKeys,
   selectedRunes,
   strain,
@@ -49,14 +47,11 @@ export function PlayerBoard({
       <div className="flex flex-col gap-[min(1.2vmin,12px)] h-full">
         <div className="flex flex-row gap-5">
           <PatternLines
-            patternLines={player.patternLines}
-            wall={player.wall}
             onPlaceRunes={onPlaceRunes}
             selectedRuneType={selectedRuneType}
             canPlace={canPlace}
             playerId={player.id}
             hiddenSlotKeys={hiddenSlotKeys}
-            lockedLineIndexes={lockedLineIndexes}
             selectedRunes={selectedRunes}
             strain={strain}
             activePatternLineIndex={activePatternLineIndex}
