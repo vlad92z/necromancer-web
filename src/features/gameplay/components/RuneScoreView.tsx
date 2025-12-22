@@ -3,53 +3,50 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import { useGameplayStore } from '../../../state/stores';
+import { useCastSound } from '../../../hooks/useCastSound';
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
-interface RuneScoreViewProps {
-  score: number;
-  maxScore: number;
-}
-
-
-export function RuneScoreView({
-  score,
-  maxScore
-}: RuneScoreViewProps) {
-  const progress = Math.min(1, score / maxScore);
+export function RuneScoreView() {
+  const currentScore = useGameplayStore((state) => state.runePowerTotal);
+  const targetScore = useGameplayStore((state) => state.targetScore);
+  const progress = Math.min(1, currentScore / targetScore);
   const progressPercent = Math.round(progress * 100);
-  const previousValueRef = useRef(score);
+  const previousValueRef = useRef(currentScore);
   const sequenceRef = useRef(0);
   const [indicator, setIndicator] = useState<DeltaIndicator | null>(null);
-  const animatedValue = useMotionValue(score);
-  const [displayedValue, setDisplayedValue] = useState(score);
+  const animatedValue = useMotionValue(currentScore);
+  const [displayedValue, setDisplayedValue] = useState(currentScore);
   useMotionValueEvent(animatedValue, 'change', (value) => {
     setDisplayedValue(Math.round(value));
   });
 
+  const playCastSound = useCastSound();
+
   const deltaGainClassName = 'text-sky-200 text-sm font-bold';
   const deltaLossClassName = "text-rose-300 text-sm font-bold";
   useEffect(() => {
-    const controls = animate(animatedValue, score, {
+    const controls = animate(animatedValue, currentScore, {
       duration: 0.45,
       ease: [0.25, 0.1, 0.25, 1],
     });
 
     return () => controls.stop();
-  }, [animatedValue, score]);
+  }, [animatedValue, currentScore]);
 
   useEffect(() => {
     const previousValue = previousValueRef.current;
 
-    if (score !== previousValue) {
+    if (currentScore !== previousValue) {
+      playCastSound();
       sequenceRef.current += 1;
-      const isGain = score > previousValue;
-      setIndicator({ amount: Math.abs(score - previousValue), key: sequenceRef.current, type: isGain ? 'gain' : 'loss' });
+      const isGain = currentScore > previousValue;
+      setIndicator({ amount: Math.abs(currentScore - previousValue), key: sequenceRef.current, type: isGain ? 'gain' : 'loss' });
     }
 
-    previousValueRef.current = score;
-  }, [score]);
-
+    previousValueRef.current = currentScore;
+  }, [currentScore]);
   useEffect(() => {
     if (!indicator) {
       return;
@@ -86,7 +83,7 @@ export function RuneScoreView({
             )}
           </AnimatePresence>
           <motion.span className='text-yellow-400 font-extrabold text-base text-right whitespace-nowrap flex-shrink-0'>
-            {`${displayedValue} / ${maxScore}`}
+            {`${displayedValue} / ${targetScore}`}
           </motion.span>
         </div>
       </div>

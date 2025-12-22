@@ -11,7 +11,6 @@ import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { StatBadge } from '../../../../components/StatBadge';
 import { RuneScoreView } from '../RuneScoreView';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
-import { useCastSound } from '../../../../hooks/useCastSound';
 import { buildTextTooltipCard, buildOverloadPlacementTooltipCards } from '../../../../utils/tooltipCards';
 import type { Rune } from '../../../../types/game';
 import type { Transition } from 'framer-motion';
@@ -40,10 +39,7 @@ interface GameMetadataViewProps {
   isDeckActive: boolean;
 }
 
-type ForcedArmorIndicator = {
-  amount: number;
-  key: number;
-};
+
 
 const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
 const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
@@ -60,7 +56,6 @@ export function GameMetadataView({
   gameNumber,
   strainValue,
   arcaneDust,
-  runeScore,
   deckCount,
   overloadedRuneCount,
   canOverload,
@@ -74,57 +69,6 @@ export function GameMetadataView({
   isOverloadActive,
   isDeckActive,
 }: GameMetadataViewProps) {
-  const playCastSound = useCastSound();
-  const previousRuneScoreRef = useRef(runeScore.currentScore);
-  useEffect(() => {
-    const previousRuneScore = previousRuneScoreRef.current;
-    if (runeScore.currentScore > previousRuneScore) {
-      playCastSound();
-    }
-    previousRuneScoreRef.current = runeScore.currentScore;
-  }, [playCastSound, runeScore.currentScore]);
-  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
-  const [forcedArmorIndicator, setForcedArmorIndicator] = useState<ForcedArmorIndicator | null>(null);
-  const lastArmorStepRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!forcedArmorIndicator) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      setForcedArmorIndicator(null);
-    }, 900);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [forcedArmorIndicator]);
-
-  useEffect(() => {
-    if (!scoringSequence) {
-      lastArmorStepRef.current = null;
-    }
-  }, [scoringSequence]);
-
-  useEffect(() => {
-    const sequence = scoringSequence;
-
-    if (!sequence || sequence.activeIndex < 0) {
-      return;
-    }
-
-    const step = sequence.steps[sequence.activeIndex];
-    const stepKey = `${sequence.sequenceId}:${sequence.activeIndex}`;
-
-    if (!step || step.armorDelta <= 0 || lastArmorStepRef.current === stepKey) {
-      return;
-    }
-
-    lastArmorStepRef.current = stepKey;
-    const indicatorKey = Date.now();
-    setForcedArmorIndicator({ amount: step.armorDelta, key: indicatorKey });
-  }, [scoringSequence]);
 
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
@@ -253,10 +197,7 @@ export function GameMetadataView({
           isActive={isDeckActive}
         />
         <HealthView/>
-        <RuneScoreView
-          score={runeScore.currentScore}
-          maxScore={runeScore.targetScore}
-        />
+        <RuneScoreView/>
       </div>
     </div>
   );
