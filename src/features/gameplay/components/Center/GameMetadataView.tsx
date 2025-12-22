@@ -297,11 +297,7 @@ export function GameMetadataView({
           onTooltipToggle={handleDeckTooltipToggle}
           isActive={isDeckActive}
         />
-        <HealthView
-          health={clampedHealth}
-          maxHealth={maxHealth}
-          armor={armor}
-        />
+        <HealthView/>
         <RuneScoreView
           score={runeScore.currentScore}
           maxScore={runeScore.targetScore}

@@ -4,21 +4,33 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import { useArmorChangeSound } from '../../../hooks/useArmorChangeSound';
+import { useGame } from '../../../hooks/useGameState';
+import { useGameplayStore } from '../../../state/stores';
+import { useHealthChangeSound } from '../../../hooks/useHealthChangeSound';
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
 interface HealthViewProps {
-  health: number;
-  maxHealth: number;
-  armor: number;
+  // health: number;
+  // maxHealth: number;
+  // armor: number;
 }
 
 
 export function HealthView({
-  health,
-  maxHealth,
-  armor
+  // health,
+  // maxHealth,
+  // armor
 }: HealthViewProps) {
+  const health = useGameplayStore((state) => state.player.health);
+  const maxHealth = useGameplayStore((state) => state.player.maxHealth);
+  const armor = useGameplayStore((state) => state.player.armor);
+
+  // const clampedHealth = Math.max(0, Math.min(health, maxHealth));
+  // const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
+  // useHealthChangeSound(clampedHealth, forcedHealSignal);
+
+
   useArmorChangeSound(armor);
   const progress = Math.min(1, health / maxHealth);
   const progressPercent = Math.round(progress * 100);

@@ -126,7 +126,7 @@ export interface Player {
   wall: ScoringWall;
   floorLine: FloorLine;
   health: number; // Current health (starts at configurable amount)
-  maxHealth?: number; // Maximum health cap (initialized at game start)
+  maxHealth: number; // Maximum health cap (initialized at game start)
   armor: number; // Temporary shield that absorbs damage before health
   deck: Rune[]; // Player's deck of runes for this run
 }
