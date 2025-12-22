@@ -26,9 +26,9 @@ export function HealthView({
   const maxHealth = useGameplayStore((state) => state.player.maxHealth);
   const armor = useGameplayStore((state) => state.player.armor);
 
-  // const clampedHealth = Math.max(0, Math.min(health, maxHealth));
-  // const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
-  // useHealthChangeSound(clampedHealth, forcedHealSignal);
+  const clampedHealth = Math.max(0, Math.min(health, maxHealth));
+  const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
+  useHealthChangeSound(clampedHealth, forcedHealSignal);
 
 
   useArmorChangeSound(armor);
@@ -96,6 +96,7 @@ export function HealthView({
     previousArmorRef.current = armor;
   }, [armor]);
 
+  
 
 
   useEffect(() => {

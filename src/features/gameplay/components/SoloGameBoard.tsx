@@ -18,8 +18,6 @@ interface SoloGameViewProps {
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
     player,
-    displayedHealth,
-    displayedArmor,
     selectedRuneType,
     hasSelectedRunes,
     playerHiddenPatternSlots,//TODO this vs playerLocked?
@@ -67,9 +65,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           strainValue={strain}
           arcaneDust={arcaneDust}
           runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
-          health={displayedHealth}
-          armor={displayedArmor}
-          maxHealth={player.maxHealth ?? player.health}
           deckCount={playerStats?.deckCount ?? player.deck.length}
           overloadedRuneCount={playerStats?.overloadedRuneCount ?? 0}
           canOverload={hasSelectedRunes}

@@ -11,7 +11,6 @@ import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { StatBadge } from '../../../../components/StatBadge';
 import { RuneScoreView } from '../RuneScoreView';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
-import { useHealthChangeSound } from '../../../../hooks/useHealthChangeSound';
 import { useCastSound } from '../../../../hooks/useCastSound';
 import { buildTextTooltipCard, buildOverloadPlacementTooltipCards } from '../../../../utils/tooltipCards';
 import type { Rune } from '../../../../types/game';
@@ -27,9 +26,6 @@ interface GameMetadataViewProps {
     currentScore: number;
     targetScore: number;
   };
-  health: number;
-  armor: number;
-  maxHealth: number;
   deckCount: number;
   overloadedRuneCount: number;
   canOverload: boolean;
@@ -65,9 +61,6 @@ export function GameMetadataView({
   strainValue,
   arcaneDust,
   runeScore,
-  health,
-  armor,
-  maxHealth,
   deckCount,
   overloadedRuneCount,
   canOverload,
@@ -81,9 +74,6 @@ export function GameMetadataView({
   isOverloadActive,
   isDeckActive,
 }: GameMetadataViewProps) {
-  const clampedHealth = Math.max(0, Math.min(health, maxHealth));
-  const [forcedHealSignal, setForcedHealSignal] = useState<number | null>(null);
-  useHealthChangeSound(clampedHealth, forcedHealSignal);
   const playCastSound = useCastSound();
   const previousRuneScoreRef = useRef(runeScore.currentScore);
   useEffect(() => {
@@ -94,15 +84,8 @@ export function GameMetadataView({
     previousRuneScoreRef.current = runeScore.currentScore;
   }, [playCastSound, runeScore.currentScore]);
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
-  const lastHealingStepRef = useRef<string | null>(null);
   const [forcedArmorIndicator, setForcedArmorIndicator] = useState<ForcedArmorIndicator | null>(null);
   const lastArmorStepRef = useRef<string | null>(null);
-  const previousHealthRef = useRef<number>(clampedHealth);
-  useEffect(() => {
-    if (!scoringSequence) {
-      lastHealingStepRef.current = null;
-    }
-  }, [scoringSequence]);
 
   useEffect(() => {
     if (!forcedArmorIndicator) {
@@ -123,34 +106,6 @@ export function GameMetadataView({
       lastArmorStepRef.current = null;
     }
   }, [scoringSequence]);
-
-  useEffect(() => {
-    const sequence = scoringSequence;
-    const previousHealth = previousHealthRef.current;
-
-    if (!sequence || sequence.activeIndex < 0) {
-      previousHealthRef.current = clampedHealth;
-      return;
-    }
-
-    const step = sequence.steps[sequence.activeIndex];
-    const stepKey = `${sequence.sequenceId}:${sequence.activeIndex}`;
-
-    if (!step || step.healingDelta <= 0 || lastHealingStepRef.current === stepKey) {
-      previousHealthRef.current = clampedHealth;
-      return;
-    }
-
-    lastHealingStepRef.current = stepKey;
-
-    const healingChangedHealth = clampedHealth !== previousHealth;
-    if (!healingChangedHealth) {
-      const indicatorKey = Date.now();
-      setForcedHealSignal(indicatorKey);
-    }
-
-    previousHealthRef.current = clampedHealth;
-  }, [clampedHealth, scoringSequence]);
 
   useEffect(() => {
     const sequence = scoringSequence;
