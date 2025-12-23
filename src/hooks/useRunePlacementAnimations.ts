@@ -6,7 +6,6 @@ import type { AnimatingRune, DraftSource, GameState, Rune } from '../types/game'
 import { RUNE_SIZE_CONFIG } from '../styles/tokens';
 
 interface SelectionSnapshot {
-  playerId: string;
   runeOrder: Rune[];
   patternLineCounts: number[];
   runePositions: Map<string, MeasuredRunePosition>;
@@ -14,8 +13,8 @@ interface SelectionSnapshot {
 }
 
 interface AutoAnimationMeta {
-  pattern?: { playerId: string; slotKeys: string[] };
-  floor?: { playerId: string; slotIndexes: number[] };
+  pattern?: string[];
+  floor?: number[];
 }
 
 interface RuneforgeAnimationSnapshot {
@@ -47,7 +46,7 @@ export function useRunePlacementAnimations({
 }: UseRunePlacementAnimationsParams) {
   const [animatingRunes, setAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
-  const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Record<string, Set<string>>>({});
+  const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Set<string>>(new Set());
   const [hiddenCenterRuneIds, setHiddenCenterRuneIds] = useState<Set<string>>(new Set());
   const manualAnimationRef = useRef(false);
   const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
@@ -69,38 +68,24 @@ export function useRunePlacementAnimations({
     [activeAnimatingRunes],
   );
 
-  const hidePatternSlots = useCallback((playerId: string, slotKeys: string[]) => {
+  const hidePatternSlots = useCallback((slotKeys: string[]) => {
     if (slotKeys.length === 0) {
       return;
     }
     setHiddenPatternSlots((prev) => {
-      const playerSet = prev[playerId] ? new Set(prev[playerId]) : new Set<string>();
-      slotKeys.forEach((key) => playerSet.add(key));
-      return {
-        ...prev,
-        [playerId]: playerSet,
-      };
+      slotKeys.forEach((key) => prev.add(key));
+      return prev;
     });
   }, []);
 
-  const revealPatternSlots = useCallback((playerId: string, slotKeys: string[]) => {
+  const revealPatternSlots = useCallback((slotKeys: string[]) => {
     if (slotKeys.length === 0) {
       return;
     }
     setHiddenPatternSlots((prev) => {
-      const playerSet = prev[playerId];
-      if (!playerSet) {
-        return prev;
-      }
-      const nextSet = new Set(playerSet);
+      const nextSet = new Set(prev);
       slotKeys.forEach((key) => nextSet.delete(key));
-      const nextState = { ...prev };
-      if (nextSet.size === 0) {
-        delete nextState[playerId];
-      } else {
-        nextState[playerId] = nextSet;
-      }
-      return nextState;
+      return nextSet;
     });
   }, []);
 
@@ -215,14 +200,14 @@ export function useRunePlacementAnimations({
 
     let autoMeta: AutoAnimationMeta | null = null;
     if (patternSlotKeys.length > 0) {
-      hidePatternSlots(snapshot.playerId, patternSlotKeys);
-      autoMeta = { pattern: { playerId: snapshot.playerId, slotKeys: patternSlotKeys } };
+      hidePatternSlots(patternSlotKeys);
+      autoMeta = { pattern: patternSlotKeys };
     }
 
     const patternSlotLookup = new Map<string, HTMLElement>();
     if (changedLineIndex !== -1) {
       const candidates = document.querySelectorAll<HTMLElement>(
-        `[data-player-id="${snapshot.playerId}"][data-pattern-line-index="${changedLineIndex}"][data-pattern-slot-index]`,//TODO: Just use a static ID
+        `[data-player-id="player-1"][data-pattern-line-index="${changedLineIndex}"][data-pattern-slot-index]`,//TODO: Just use a static ID
       );
       candidates.forEach((element) => {
         const lineIndex = element.getAttribute('data-pattern-line-index');
@@ -234,7 +219,7 @@ export function useRunePlacementAnimations({
     }
 
     const strainCounterElement = document.querySelector<HTMLElement>(
-      `[data-player-id="${snapshot.playerId}"][data-strain-counter="true"]`,
+      `[data-player-id="player-1"][data-strain-counter="true"]`,
     );
 
     requestAnimationFrame(() => {
@@ -295,7 +280,7 @@ export function useRunePlacementAnimations({
 
       if (overlayRunes.length === 0) {
         if (autoMeta?.pattern) {
-          revealPatternSlots(autoMeta.pattern.playerId, autoMeta.pattern.slotKeys);
+          revealPatternSlots(autoMeta.pattern);
         }
         return;
       }
@@ -354,7 +339,7 @@ export function useRunePlacementAnimations({
     const autoMeta = autoAnimationMetaRef.current;
     if (autoMeta) {
       if (autoMeta.pattern) {
-        revealPatternSlots(autoMeta.pattern.playerId, autoMeta.pattern.slotKeys);
+        revealPatternSlots(autoMeta.pattern);
       }
       // Note: floor slots no longer need to be revealed since FloorLine UI is removed
       autoAnimationMetaRef.current = null;
@@ -377,7 +362,6 @@ export function useRunePlacementAnimations({
     }
     if (typeof document === 'undefined') {
       selectionSnapshotRef.current = {
-        playerId: player.id,
         runeOrder: [...selectedRunes],
         patternLineCounts: player.patternLines.map((line) => line.count),
         runePositions: new Map(),
@@ -389,7 +373,6 @@ export function useRunePlacementAnimations({
     const rafId = requestAnimationFrame(() => {
       const runePositions = captureSelectedRunePositions(selectedRunes);
       selectionSnapshotRef.current = {
-        playerId: player.id,
         runeOrder: [...selectedRunes],
         patternLineCounts: player.patternLines.map((line) => line.count),
         runePositions,
