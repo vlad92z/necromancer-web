@@ -8,23 +8,21 @@ import { RuneScoreView } from '../RuneScoreView';
 import { HealthView } from '../HealthView';
 import { DeckButton } from '../../../../components/DeckButton';
 import { OverloadButton } from '../../../../components/OverloadButton';
+import { useGameplayStore, useUIStore } from '../../../../state/stores';
+import { useArtefactStore } from '../../../../state/stores/artefactStore';
 
 interface GameMetadataViewProps {
-  gameNumber: number;
-  arcaneDust: number;
-  onOpenSettings: () => void;
   isSettingsActive: boolean;
   isOverloadActive: boolean;
 }
 
 export function GameMetadataView({
-  gameNumber,
-  arcaneDust,
-  onOpenSettings,
   isSettingsActive,
   isOverloadActive,
 }: GameMetadataViewProps) {
-
+  const gameNumber = useGameplayStore((state) => state.game);
+  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const openSettings = useUIStore((state) => state.toggleSettingsOverlay);
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
   const settingsActive = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-800/80';
@@ -36,7 +34,7 @@ export function GameMetadataView({
       <div className="w-full flex flex-row flex-[29] items-center">
         <ClickSoundButton
           title="⚙"
-          action={onOpenSettings}
+          action={openSettings}
           isActive={isSettingsActive}
           className={actionButtonBase}
         />

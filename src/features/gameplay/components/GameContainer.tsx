@@ -2,7 +2,7 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, useRef, use } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { DraftSource, GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
@@ -14,7 +14,6 @@ import { useSelectionStore } from '../../../state/stores/selectionStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
-import { useClickSound } from '../../../hooks/useClickSound';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { getArcaneDustReward } from '../../../utils/arcaneDust';
@@ -162,7 +161,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const setMusicMuted = useUIStore((state) => state.setMusicMuted);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
   const playArcaneDust = useArcaneDustSound();
-  const playClickSound = useClickSound();
   const isSelectionPhase = turnPhase === 'select';
   const isDeckDrafting = turnPhase === 'deck-draft';
   const isGameOver = turnPhase === 'game-over';

@@ -42,12 +42,10 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     runePowerTotal,
     targetScore,
     arcaneDustReward,
-    arcaneDust,
     deckDraftState,
     isDeckDrafting,
     totalDeckSize,
     onSelectDeckDraftRuneforge,
-    onOpenSettings,
     startNextSoloGame,
   } = gameData;
 
@@ -55,9 +53,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     <div className="flex flex-col h-full relative">
       <div>
         <GameMetadataView
-          gameNumber={game}
-          arcaneDust={arcaneDust}
-          onOpenSettings={onOpenSettings}
           isSettingsActive={activeElement?.type === 'settings'}
           isOverloadActive={activeElement?.type === 'overload'}
         />
