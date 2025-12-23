@@ -72,7 +72,7 @@ export const useUIStore = create<UIStore>((set) => ({
 
   toggleOverloadOverlay: () => {
     set((state) => ({ showOverloadOverlay: !state.showOverloadOverlay }));
-  }
+  },
   
   openRuneforgeOverlay: (runeforgeId: string) => {
     set({ showRuneforgeOverlay: true, selectedRuneforgeId: runeforgeId });

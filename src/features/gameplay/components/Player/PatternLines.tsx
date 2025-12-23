@@ -9,9 +9,9 @@ import type { PatternLine, Rune, RuneType, ScoringWall } from '../../../../types
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
-import { use } from 'react';
+import { useGameplayStore } from '../../../../state/stores/gameplayStore';
+import { useSelectionStore } from '../../../../state/stores/selectionStore';
 
 interface PatternLinesProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
@@ -20,7 +20,9 @@ interface PatternLinesProps {
   hiddenSlotKeys?: Set<string>;
   selectedRunes: Rune[];
   strain: number;
-  activePatternLineIndex?: number | null;
+  patternLines: PatternLine[];
+  wall: ScoringWall;
+  lockedPatternLines: number[];
 }
 
 export function PatternLines({
@@ -30,11 +32,12 @@ export function PatternLines({
   hiddenSlotKeys,
   selectedRunes,
   strain,
-  activePatternLineIndex,
+  patternLines,
+  wall,
+  lockedPatternLines,
 }: PatternLinesProps) {
-  const patternLines = useGameplayStore((state) => state.player.patternLines);
-  const wall = useGameplayStore((state) => state.player.wall);
-  const lockedLines = useGameplayStore((state) => state.lockedPatternLines);
+  const activeElement = useSelectionStore((state) => state.activeElement);
+  const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
 
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (!canPlace || !selectedRuneType) return false;
@@ -96,7 +99,7 @@ export function PatternLines({
         const selectableGlowRest = hasActiveElement ? 'none' : keyboardGlowRest;
         const selectableGlowPeak = hasActiveElement ? 'none' : keyboardGlowPeak;
         const glowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
-        const isLocked = lockedLines.includes(index);
+        const isLocked = lockedPatternLines.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         
         const placementClickable = Boolean(canPlace && onPlaceRunes);

@@ -86,7 +86,6 @@ export interface GameContainerSharedProps {
   selectedRunes: Rune[];
   hasSelectedRunes: boolean;
   draftSource: DraftSource | null;
-  activeElement: ActiveElement | null;
 
   // Board data
   runeforges: GameState['runeforges'];
@@ -126,6 +125,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   } = gameState;
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const draftSource = useSelectionStore((state) => state.draftSource);
+  const activeElement = useSelectionStore((state) => state.activeElement);
+  const setActiveElement = useSelectionStore((state) => state.setActiveElement);
   const currentGame = useGameplayStore((state) => state.game);
   const outcome = gameState.outcome;
   const runePowerTotal = gameState.runePowerTotal;
@@ -169,7 +170,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const patternLineCount = player.patternLines.length;
 
   const runeforgeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
-  const [activeElement, setActiveElement] = useState<ActiveElement | null>(null);
   const refocusAfterKeyboardPlacementRef = useRef(false);
   const runeforgeToPatternLineMap = useMemo(() => [0, 1, 3, 4, 5], []);
   const patternLineToRuneforgeMap = useMemo(() => {
@@ -1144,7 +1144,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       selectedRunes,
       hasSelectedRunes,
       draftSource,
-      activeElement,
       runeforges,
       centerPool,
       lockedPatternLines,
@@ -1159,7 +1158,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }),
     [
       animatingRuneIds,
-      activeElement,
       centerPool,
       displayedArmor,
       displayedHealth,

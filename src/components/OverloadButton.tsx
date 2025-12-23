@@ -8,10 +8,6 @@ import overloadSvg from '../assets/stats/overload.svg';
 import { useGameplayStore, useSelectionStore, useUIStore } from '../state/stores';
 import { buildOverloadPlacementTooltipCards, buildTextTooltipCard } from '../utils/tooltipCards';
 
-interface OverloadButtonProps {
-  isActive?: boolean;
-}
-
 const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
 const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
 const SELECTABLE_GLOW_RANGE: [string, string] = [SELECTABLE_GLOW_REST, SELECTABLE_GLOW_PEAK];
@@ -22,7 +18,7 @@ const PULSE_TRANSITION: Transition = {
   ease: 'easeInOut',
 };
 
-export function OverloadButton({ isActive = false }: OverloadButtonProps) {
+export function OverloadButton() {
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const strainValue = useGameplayStore((state) => state.strain);
@@ -30,6 +26,8 @@ export function OverloadButton({ isActive = false }: OverloadButtonProps) {
   const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
   const openOverloadOverlay = useUIStore((state) => state.toggleOverloadOverlay);
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
+  const activeElement = useSelectionStore((state) => state.activeElement);
+  const isActive = activeElement?.type === 'overload';
 
   const canOverload = selectedRunes.length > 0;
   const overloadTooltip = `Overload deals ${strainValue} damage per rune. ${overloadedRuneCount} runes are currently overloaded.`;

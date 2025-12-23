@@ -12,7 +12,6 @@ import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
-import type { ActiveElement } from '../keyboardNavigation';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
@@ -21,7 +20,6 @@ interface RuneSelectionTableProps {
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
   draftSource: DraftSource | null;
-  activeElement: ActiveElement | null;
   onCancelSelection: () => void;
   animatingRuneIds?: string[];
   hideOpponentRow?: boolean;
@@ -36,7 +34,6 @@ export function RuneSelectionTable({
   hasSelectedRunes,
   selectedRunes,
   draftSource,
-  activeElement,
   onCancelSelection,
   animatingRuneIds,
   runesPerRuneforge,
@@ -177,7 +174,6 @@ export function RuneSelectionTable({
             globalSelectionOriginals={globalSelectionOriginals}
             selectedRuneIdSet={selectedRuneIdSet}
             animatingRuneIdSet={animatingRuneIdSet}
-            activeElement={activeElement}
             onRuneClick={onRuneClick}
             onRuneMouseEnter={handleRuneMouseEnter}
             onRuneMouseLeave={handleRuneMouseLeave}

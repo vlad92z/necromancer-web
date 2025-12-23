@@ -7,7 +7,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { RuneCell } from '../../../../components/RuneCell';
 import { RUNE_SIZE_CONFIG } from '../../../../styles/tokens';
 import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
-import type { ActiveElement } from '../keyboardNavigation';
+import { useSelectionStore } from '../../../../state/stores/selectionStore';
 
 interface RuneforgeProps {
   runeforgeIndex: number;
@@ -21,7 +21,6 @@ interface RuneforgeProps {
   globalSelectionOriginals: Map<string, Rune[]> | null;
   selectedRuneIdSet: Set<string>;
   animatingRuneIdSet: Set<string> | null;
-  activeElement: ActiveElement | null;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onRuneMouseEnter: (
     runeforgeId: string,
@@ -45,11 +44,11 @@ export function Runeforge({
   globalSelectionOriginals,
   selectedRuneIdSet,
   animatingRuneIdSet,
-  activeElement,
   onRuneClick,
   onRuneMouseEnter,
   onRuneMouseLeave
 }: RuneforgeProps) {
+  const activeElement = useSelectionStore((state) => state.activeElement);
   const runeSlotAssignmentsRef = useRef<Record<string, number>>({});
 
   const computeSlots = useCallback((runes: Rune[], totalSlots: number): (Rune | null)[] => {

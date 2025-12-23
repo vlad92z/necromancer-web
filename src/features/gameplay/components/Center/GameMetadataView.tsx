@@ -8,21 +8,15 @@ import { RuneScoreView } from '../RuneScoreView';
 import { HealthView } from '../HealthView';
 import { DeckButton } from '../../../../components/DeckButton';
 import { OverloadButton } from '../../../../components/OverloadButton';
-import { useGameplayStore, useUIStore } from '../../../../state/stores';
+import { useGameplayStore, useSelectionStore, useUIStore } from '../../../../state/stores';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
 
-interface GameMetadataViewProps {
-  isSettingsActive: boolean;
-  isOverloadActive: boolean;
-}
-
-export function GameMetadataView({
-  isSettingsActive,
-  isOverloadActive,
-}: GameMetadataViewProps) {
+export function GameMetadataView() {
   const gameNumber = useGameplayStore((state) => state.game);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
   const openSettings = useUIStore((state) => state.toggleSettingsOverlay);
+  const activeElement = useSelectionStore((state) => state.activeElement);
+  const isSettingsActive = activeElement?.type === 'settings';
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
   const settingsActive = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-800/80';
@@ -60,7 +54,7 @@ export function GameMetadataView({
           data-player-id="player-1"
           data-strain-counter="true"
         >
-          <OverloadButton isActive={isOverloadActive} />
+          <OverloadButton />
         </div>
         <DeckButton/>
         <HealthView/>

@@ -25,12 +25,12 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     centerPool,
     selectedRunes,
     draftSource,
-    activeElement,
     runeforgeDraftStage,
     animatingRuneIds,
     onRuneClick,
     onCancelSelection,
     onPlaceRunes,
+    lockedPatternLines,
     game,
     strain,
     isGameOver,
@@ -52,10 +52,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
   return (
     <div className="flex flex-col h-full relative">
       <div>
-        <GameMetadataView
-          isSettingsActive={activeElement?.type === 'settings'}
-          isOverloadActive={activeElement?.type === 'overload'}
-        />
+        <GameMetadataView />
       </div>
 
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
@@ -66,7 +63,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}
           draftSource={draftSource}
-          activeElement={activeElement}
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
           animatingRuneIds={animatingRuneIds}
@@ -83,7 +79,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           hiddenSlotKeys={playerHiddenPatternSlots}
           selectedRunes={selectedRunes}
           strain={strain}
-          activeElement={activeElement}
+          lockedPatternLines={lockedPatternLines}
         />
       </div>
       {/* TODO: Cleanup */}
