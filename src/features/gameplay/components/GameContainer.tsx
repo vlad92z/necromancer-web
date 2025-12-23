@@ -2,7 +2,7 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, useRef, use } from 'react';
 import type { ChangeEvent } from 'react';
 import type { DraftSource, GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
@@ -67,7 +67,6 @@ export interface GameData {
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
-  onOpenSettings: () => void;
   startNextSoloGame: () => void;
 }
 
@@ -162,7 +161,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const isMusicMuted = useUIStore((state) => state.isMusicMuted);
   const setMusicMuted = useUIStore((state) => state.setMusicMuted);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
-  const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay);
   const playArcaneDust = useArcaneDustSound();
   const playClickSound = useClickSound();
   const isSelectionPhase = turnPhase === 'select';
@@ -382,10 +380,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       useUIStore.getState().toggleOverloadOverlay();
     }
   }, [handlePlaceRunesInFloorWrapper, hasSelectedRunes]);
-
-  const handleOpenSettings = useCallback(() => {
-    toggleSettingsOverlay();
-  }, [toggleSettingsOverlay]);
 
   useEffect(() => {
     if (shouldTriggerEndRound) {
@@ -1016,7 +1010,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }
 
     if (activeElement.type === 'settings') {
-      toggleSettingsOverlay();
+      useUIStore.getState().toggleSettingsOverlay();
       return true;
     }
 
@@ -1047,9 +1041,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     handlePatternLinePlacement,
     isAnimatingPlacement,
     isPatternLineValidTarget,
-    selectActiveRune,
-    toggleSettingsOverlay,
-  ]);
+    selectActiveRune
+    ]);
 
   useImperativeHandle(ref, () => ({
     handleKeyDown: (event: KeyboardEvent) => {
@@ -1066,7 +1059,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         }
 
         console.log('Toggling settings overlay via Escape key');
-        toggleSettingsOverlay();
+        useUIStore.getState().toggleSettingsOverlay();
         return true;
       }
 
@@ -1208,7 +1201,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       deckDraftState: gameState.deckDraftState,
       isDeckDrafting,
       onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
-      onOpenSettings: handleOpenSettings,
       startNextSoloGame: startNextSoloGame,
     }),
     [
@@ -1224,7 +1216,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       playerStats,
       targetScore,
       startNextSoloGame,
-      handleOpenSettings,
     ],
   );
 
@@ -1264,14 +1255,12 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       )}
       {showSettingsOverlay && (
         <SettingsOverlay
-          onClose={toggleSettingsOverlay}
           soundVolume={soundVolume}
           isMusicMuted={isMusicMuted}
           onVolumeChange={handleVolumeChange}
           onToggleMusic={handleToggleMusic}
           onQuitRun={returnToStartScreen}
           showQuitRun={true}
-          playClickSound={playClickSound}
         />
       )
       }
