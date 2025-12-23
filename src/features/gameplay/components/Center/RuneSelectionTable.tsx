@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { DraftSource, GameState, Rune, RuneType } from '../../../../types/game';
+import type { DraftSource, Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
@@ -17,23 +17,20 @@ import { useUIStore } from '../../../../state/stores/uiStore';
 
 interface RuneSelectionTableProps {
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  draftSource: DraftSource | null;
   onCancelSelection: () => void;
   hideOpponentRow?: boolean;
-  runeforgeDraftStage: GameState['runeforgeDraftStage'];
 }
 
 export function RuneSelectionTable({
   onRuneClick,
-  draftSource,
   onCancelSelection,
-  runeforgeDraftStage,
 }: RuneSelectionTableProps) {
+  const draftStage = useGameplayStore((state) => state.runeforgeDraftStage);
   const runeforges = useGameplayStore((state) => state.runeforges);
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
-  const isGlobalDraftStage = runeforgeDraftStage === 'global';
+  const isGlobalDraftStage = draftStage === 'global';
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const animatingRuneIdSet = useUIStore((state) => state.animatingRuneIds);
@@ -55,7 +52,7 @@ export function RuneSelectionTable({
 
   useEffect(() => {
     setHoveredRuneTypeByRuneforge({});
-  }, [runeforgeDraftStage]);
+  }, [draftStage]);
 
   const runeTypes = useMemo(() => RUNE_TYPES, []);
   const runeCounts = useMemo(
@@ -63,11 +60,10 @@ export function RuneSelectionTable({
       const counts = getRuneTypeCounts({
         runeforges,
         selectedRunes,
-        draftSource
       });
       return counts;
     },
-    [draftSource, runeforges, selectedRunes]
+    [runeforges, selectedRunes]
   );
 
   const computeSelectionRunes = useCallback(

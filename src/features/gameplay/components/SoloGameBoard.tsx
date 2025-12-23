@@ -17,8 +17,6 @@ interface SoloGameViewProps {
 
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
-    draftSource,
-    runeforgeDraftStage,
     onRuneClick,
     onCancelSelection,
     onPlaceRunes,
@@ -49,8 +47,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
         <RuneSelectionTable
           onRuneClick={onRuneClick}
-          draftSource={draftSource}
-          runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
         />
 

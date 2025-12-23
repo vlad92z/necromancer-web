@@ -7,13 +7,11 @@ import type { DraftSource, Rune, RuneType, Runeforge } from '../types/game';
 interface RuneTypeCountInput {
   runeforges: Runeforge[];
   selectedRunes: Rune[];
-  draftSource: DraftSource | null;
 }
 
 export function getRuneTypeCounts({
   runeforges,
   selectedRunes,
-  draftSource,
 }: RuneTypeCountInput): Record<RuneType, number> {
   const counts: Record<RuneType, number> = {
     Fire: 0,
@@ -34,13 +32,7 @@ export function getRuneTypeCounts({
   };
 
   runeforges.forEach((forge) => {
-    const forgeRunes =
-      draftSource?.type === 'runeforge' &&
-      draftSource.runeforgeId === forge.id &&
-      draftSource.originalRunes.length > 0
-        ? draftSource.originalRunes
-        : forge.runes;
-
+    const forgeRunes = forge.runes;
     forgeRunes.forEach(countRune);
   });
 
