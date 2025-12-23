@@ -50,7 +50,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     isDeckDrafting,
     totalDeckSize,
     onSelectDeckDraftRuneforge,
-    onOpenDeckOverlay,
     onOpenOverloadOverlay,
     onOpenSettings,
     startNextSoloGame,
@@ -105,12 +104,11 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
         />
       </div>
       {/* TODO: Cleanup */}
-      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && onOpenDeckOverlay && startNextSoloGame && arcaneDustReward != null && (
+      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && startNextSoloGame && arcaneDustReward != null && (
 
         <DeckDraftingModal
           draftState={deckDraftState}
           onSelectRuneforge={onSelectDeckDraftRuneforge}
-          onOpenDeckOverlay={onOpenDeckOverlay}
           totalDeckSize={totalDeckSize}
           arcaneDustReward={arcaneDustReward}
           startNextSoloGame={startNextSoloGame}
