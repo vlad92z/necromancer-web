@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { DraftSource, GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
+import type { DraftSource, GameState, Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
@@ -16,7 +16,6 @@ import { useSelectionStore } from '../../../../state/stores';
 import { useUIStore } from '../../../../state/stores/uiStore';
 
 interface RuneSelectionTableProps {
-  runeforges: RuneforgeType[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   draftSource: DraftSource | null;
   onCancelSelection: () => void;
@@ -25,12 +24,12 @@ interface RuneSelectionTableProps {
 }
 
 export function RuneSelectionTable({
-  runeforges,
   onRuneClick,
   draftSource,
   onCancelSelection,
   runeforgeDraftStage,
 }: RuneSelectionTableProps) {
+  const runeforges = useGameplayStore((state) => state.runeforges);
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
