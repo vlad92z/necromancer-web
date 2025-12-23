@@ -25,16 +25,17 @@ export function SettingsOverlay({
   showQuitRun = false,
 }: SettingsOverlayProps): ReactElement | null {
   const [activeControl, setActiveControl] = useState<'close' | 'volume' | 'music' | 'quit'>('close');
+  const playClickSound = useClickSound();
 
-  const handleClose = () => {
-    useClickSound();
+  const handleClose = useCallback(() => {
+    playClickSound();
     useUIStore.getState().toggleSettingsOverlay();
-  };
+  }, [playClickSound]);
 
-  const handleToggleMusic = () => {
-    useClickSound();
+  const handleToggleMusic = useCallback(() => {
+    playClickSound();
     onToggleMusic();
-  };
+  }, [onToggleMusic, playClickSound]);
 
   const adjustVolumeByStep = useCallback(
     (step: number) => {
@@ -107,7 +108,6 @@ export function SettingsOverlay({
           } else if (activeControl === 'music') {
             handleToggleMusic();
           } else if (activeControl === 'quit' && showQuitRun && onQuitRun) {
-            useClickSound();
             onQuitRun();
             handleClose();
           }
@@ -126,7 +126,7 @@ export function SettingsOverlay({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic, onQuitRun, useClickSound, showQuitRun]);
+  }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic, onQuitRun, showQuitRun]);
 
   return (
     <div
