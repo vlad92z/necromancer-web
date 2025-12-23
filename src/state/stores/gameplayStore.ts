@@ -334,25 +334,6 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
         return;
       }
 
-      set((state) => {
-        const activeSequence = state.scoringSequence;
-        if (!activeSequence || activeSequence.sequenceId !== sequence.sequenceId) {
-          return state;
-        }
-
-        return {
-          ...state,
-          scoringSequence: {
-            ...activeSequence,
-            activeIndex: index,
-            displayHealth: activeSequence.targetHealth,
-            displayArmor: activeSequence.targetArmor,
-            displayRunePowerTotal: activeSequence.targetRunePowerTotal,
-            displayArcaneDust: activeSequence.targetArcaneDust,
-          },
-        };
-      });
-
       scoringTimeoutRef.current = setTimeout(() => {
         set((state) => {
           if (!state.scoringSequence || state.scoringSequence.sequenceId !== sequence.sequenceId) {
