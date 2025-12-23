@@ -11,6 +11,7 @@ import { getRuneRarity } from '../../../utils/runeEffects';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
+import { useUIStore } from '../../../state/stores';
 
 const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
   common: 0,
@@ -23,12 +24,12 @@ interface DeckOverlayProps {
   deck: Rune[];
   fullDeck?: Rune[];
   playerName: string;
-  onClose: () => void;
   isDeckDrafting?: boolean;
   onDisenchantRune?: (runeId: string) => number | void;
 }
 
-export function DeckOverlay({ deck, fullDeck, playerName, onClose, isDeckDrafting = false, onDisenchantRune }: DeckOverlayProps) {
+export function DeckOverlay({ deck, fullDeck, playerName, isDeckDrafting = false, onDisenchantRune }: DeckOverlayProps) {
+  const onClose = useUIStore((state) => state.toggleDeckOverlay);
   const playArcaneDustSound = useArcaneDustSound();
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
   const [dustGain, setDustGain] = useState<{ amount: number; key: number } | null>(null);

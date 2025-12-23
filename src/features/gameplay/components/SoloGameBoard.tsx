@@ -64,15 +64,12 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           strainValue={strain}
           arcaneDust={arcaneDust}
           runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
-          deckCount={playerStats?.deckCount ?? player.deck.length}
           overloadedRuneCount={playerStats?.overloadedRuneCount ?? 0}
           canOverload={hasSelectedRunes}
           onOpenOverload={onOpenOverloadOverlay}
-          onOpenDeck={onOpenDeckOverlay}
           onOpenSettings={onOpenSettings}
           isSettingsActive={activeElement?.type === 'settings'}
           isOverloadActive={activeElement?.type === 'overload'}
-          isDeckActive={activeElement?.type === 'deck'}
           onPlaceRunesInFloor={onPlaceRunesInFloor}
           hasSelectedRunes={hasSelectedRunes}
           selectedRunes={selectedRunes}

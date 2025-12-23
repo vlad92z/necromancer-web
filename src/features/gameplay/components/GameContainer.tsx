@@ -67,7 +67,6 @@ export interface GameData {
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
-  onOpenDeckOverlay: () => void;
   onOpenOverloadOverlay: () => void;
   onOpenSettings: () => void;
   startNextSoloGame: () => void;
@@ -216,9 +215,9 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   );
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
-  const [showDeckOverlay, setShowDeckOverlay] = useState(false);
+  const showDeckOverlay = useUIStore((state) => state.showDeckOverlay);
   const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
-  const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]);
+  const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]); //TODO: this is bad
   const {
     animatingRunes: placementAnimatingRunes,
     runeforgeAnimatingRunes: centerAnimatingRunes,
@@ -378,8 +377,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     [isAnimatingPlacement, placeRunes],
   );
 
-  const handleOpenDeckOverlay = useCallback(() => setShowDeckOverlay(true), []);
-  const handleCloseDeckOverlay = useCallback(() => setShowDeckOverlay(false), []);
   const handleOpenOverloadOverlay = useCallback(() => setShowOverloadOverlay(true), []);
   const handleCloseOverloadOverlay = useCallback(() => setShowOverloadOverlay(false), []);
 
@@ -899,13 +896,12 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const allowKeyboardNavigation = useMemo(
     () => (
       !showSettingsOverlay
-      && !showDeckOverlay
       && !showOverloadOverlay
       && !showRulesOverlay
       && !isDeckDrafting
       && !isGameOver
     ),
-    [isDeckDrafting, isGameOver, showDeckOverlay, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
+    [isDeckDrafting, isGameOver, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
   );
 
   useEffect(() => {
@@ -1034,11 +1030,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       return true;
     }
 
-    if (activeElement.type === 'deck') {
-      handleOpenDeckOverlay();
-      return true;
-    }
-
     if (activeElement.type === 'runeforge-rune') {
       selectActiveRune();
       return true;
@@ -1056,7 +1047,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     return false;
   }, [
     activeElement,
-    handleOpenDeckOverlay,
+    // handleOpenDeckOverlay,
     handleOverloadAction,
     handlePatternLinePlacement,
     isAnimatingPlacement,
@@ -1224,7 +1215,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       deckDraftState: gameState.deckDraftState,
       isDeckDrafting,
       onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
-      onOpenDeckOverlay: handleOpenDeckOverlay,
       onOpenOverloadOverlay: handleOpenOverloadOverlay,
       onOpenSettings: handleOpenSettings,
       startNextSoloGame: startNextSoloGame,
@@ -1234,7 +1224,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       currentGame,
       gameState.deckDraftState,
       fullDeck.length,
-      handleOpenDeckOverlay,
       handleOpenOverloadOverlay,
       isDeckDrafting,
       displayedRunePowerTotal,
@@ -1274,7 +1263,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
           deck={player.deck}
           fullDeck={fullDeck}
           playerName={player.name}
-          onClose={handleCloseDeckOverlay}
           isDeckDrafting={isDeckDrafting}
           onDisenchantRune={disenchantRuneFromDeck}
         />

@@ -5,7 +5,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
-import deckSvg from '../../../../assets/stats/deck.svg';
 import overloadSvg from '../../../../assets/stats/overload.svg';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { StatBadge } from '../../../../components/StatBadge';
@@ -15,6 +14,7 @@ import { buildTextTooltipCard, buildOverloadPlacementTooltipCards } from '../../
 import type { Rune } from '../../../../types/game';
 import type { Transition } from 'framer-motion';
 import { HealthView } from '../HealthView';
+import { DeckButton } from '../../../../components/DeckButton';
 
 interface GameMetadataViewProps {
   gameNumber: number;
@@ -24,21 +24,16 @@ interface GameMetadataViewProps {
     currentScore: number;
     targetScore: number;
   };
-  deckCount: number;
   overloadedRuneCount: number;
   canOverload: boolean;
   onOpenOverload: () => void;
-  onOpenDeck: () => void;
   onOpenSettings: () => void;
   onPlaceRunesInFloor: () => void;
   hasSelectedRunes: boolean;
   selectedRunes: Rune[];
   isSettingsActive: boolean;
   isOverloadActive: boolean;
-  isDeckActive: boolean;
 }
-
-
 
 const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
 const SELECTABLE_GLOW_PEAK = '0 0 32px rgba(239, 68, 68, 0.95), 0 0 60px rgba(185, 28, 28, 0.55)';
@@ -54,33 +49,20 @@ export function GameMetadataView({
   gameNumber,
   strainValue,
   arcaneDust,
-  deckCount,
   overloadedRuneCount,
   canOverload,
   onOpenOverload,
-  onOpenDeck,
   onOpenSettings,
   onPlaceRunesInFloor,
   hasSelectedRunes,
   selectedRunes,
   isSettingsActive,
   isOverloadActive,
-  isDeckActive,
 }: GameMetadataViewProps) {
 
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
-  const deckValue = Math.max(0, deckCount);
-  const deckRemaining = Math.max(0, deckValue - 20);
-  const deckTooltip = `You have ${deckRemaining} runes remaining.`;
   const overloadTooltip = `Overload deals ${strainValue} damage per rune. ${overloadedRuneCount} runes are currently overloaded.`;
-  const handleDeckTooltipToggle = (visible: boolean) => {
-    if (visible) {
-      setTooltipCards(buildTextTooltipCard('deck-tooltip', 'Deck', deckTooltip, deckSvg));
-    } else {
-      resetTooltipCards();
-    }
-  };
 
   const handleOverloadTooltipToggle = (visible: boolean) => {
     if (!visible) {
@@ -117,20 +99,14 @@ export function GameMetadataView({
     canOverload ? { boxShadow: SELECTABLE_GLOW_REST } : undefined
   ), [canOverload]);
 
-  const handleDeckClick = useCallback(() => {
-    onOpenDeck();
-  }, [onOpenDeck]);
-
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
   const settingsActive = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-800/80';
   const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus} ${settingsActive}`;
 
   const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
-  const deckActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-900/70';
   const overloadActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(255,211,252,0.95),_0_0_56px_rgba(125,11,52,0.55)] data-[active=true]:bg-slate-900/70';
   const overloadClassName = `${statBaseClass} border-red-500/40 bg-red-600/10 hover:bg-red-600/20 data-[active=true]:border-red-300 ${overloadActiveClass}`;
-  const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 ${deckActiveClass}`;
   const overloadBadge = (
     <StatBadge
       value={strainValue}
@@ -186,14 +162,7 @@ export function GameMetadataView({
             overloadBadge
           )}
         </div>
-        <StatBadge
-          value={deckRemaining}
-          className={deckClassName}
-          image={deckSvg}
-          onClick={handleDeckClick}
-          onTooltipToggle={handleDeckTooltipToggle}
-          isActive={isDeckActive}
-        />
+        <DeckButton/>
         <HealthView/>
         <RuneScoreView/>
       </div>
