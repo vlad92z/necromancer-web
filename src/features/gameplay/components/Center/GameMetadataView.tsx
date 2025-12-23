@@ -17,7 +17,6 @@ import type { Transition } from 'framer-motion';
 import { HealthView } from '../HealthView';
 
 interface GameMetadataViewProps {
-  playerId: string;
   gameNumber: number;
   strainValue: number;
   arcaneDust: number;
@@ -52,7 +51,6 @@ const PULSE_TRANSITION: Transition = {
 };
 
 export function GameMetadataView({
-  playerId,
   gameNumber,
   strainValue,
   arcaneDust,
@@ -173,7 +171,7 @@ export function GameMetadataView({
       {/* Right Side */}
       <div className="flex flex-row flex-[60] items-center gap-3">
         <div
-          data-player-id={playerId}
+          data-player-id="player-1"
           data-strain-counter="true"
         >
           {canOverload ? (

@@ -60,7 +60,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     <div className="flex flex-col h-full relative">
       <div>
         <GameMetadataView
-          playerId={player.id}
           gameNumber={game}
           strainValue={strain}
           arcaneDust={arcaneDust}

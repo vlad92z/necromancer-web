@@ -99,7 +99,7 @@ export interface GameContainerSharedProps {
   centerPool: GameState['centerPool'];
 
   // Locks and visibility
-  playerLockedLines: number[];
+  lockedPatternLines: number[];
   playerHiddenPatternSlots?: Set<string>;
   animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
@@ -289,8 +289,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   );
 
   const playerHiddenPatternSlots = useMemo(
-    () => hiddenPatternSlots[player.id],
-    [hiddenPatternSlots, player.id],
+    () => hiddenPatternSlots,
+    [hiddenPatternSlots],
   );
 
   const isPatternLineValidTarget = useCallback(
