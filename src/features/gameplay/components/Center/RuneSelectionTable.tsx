@@ -12,13 +12,12 @@ import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
+import { useSelectionStore } from '../../../../state/stores';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
   centerPool: Rune[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  hasSelectedRunes: boolean;
-  selectedRunes: Rune[];
   draftSource: DraftSource | null;
   onCancelSelection: () => void;
   animatingRuneIds?: string[];
@@ -31,14 +30,14 @@ export function RuneSelectionTable({
   runeforges,
   centerPool,
   onRuneClick,
-  hasSelectedRunes,
-  selectedRunes,
   draftSource,
   onCancelSelection,
   animatingRuneIds,
   runesPerRuneforge,
   runeforgeDraftStage,
 }: RuneSelectionTableProps) {
+  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
+  const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const isGlobalDraftStage = runeforgeDraftStage === 'global';
   const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';

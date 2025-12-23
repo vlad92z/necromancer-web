@@ -3,34 +3,27 @@
  */
 
 import { useGameplayStore } from '../../../../state/stores';
-import type { Rune, RuneType } from '../../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { TooltipView } from './TooltipView';
 
 interface PlayerBoardProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
-  selectedRuneType?: RuneType | null;
-  canPlace?: boolean;
   onCancelSelection?: () => void;
   hiddenSlotKeys?: Set<string>;
-  selectedRunes: Rune[];
   strain: number;
   lockedPatternLines: number[];
 }
 
 export function PlayerBoard({
   onPlaceRunes,
-  selectedRuneType,
-  canPlace,
   onCancelSelection,
   hiddenSlotKeys,
-  selectedRunes,
   strain,
   lockedPatternLines,
 }: PlayerBoardProps) {
   const handleBoardClick = () => {
-    if (canPlace && onCancelSelection) {
+    if (onCancelSelection) {
       onCancelSelection();
     }
   };
@@ -44,10 +37,7 @@ export function PlayerBoard({
         <div className="flex flex-row gap-5">
           <PatternLines
             onPlaceRunes={onPlaceRunes}
-            selectedRuneType={selectedRuneType}
-            canPlace={canPlace}
             hiddenSlotKeys={hiddenSlotKeys}
-            selectedRunes={selectedRunes}
             strain={strain}
             patternLines={player.patternLines}
             wall={player.wall}

@@ -15,10 +15,7 @@ import { useSelectionStore } from '../../../../state/stores/selectionStore';
 
 interface PatternLinesProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
-  selectedRuneType?: RuneType | null;
-  canPlace?: boolean;
   hiddenSlotKeys?: Set<string>;
-  selectedRunes: Rune[];
   strain: number;
   patternLines: PatternLine[];
   wall: ScoringWall;
@@ -27,10 +24,7 @@ interface PatternLinesProps {
 
 export function PatternLines({
   onPlaceRunes,
-  selectedRuneType,
-  canPlace,
   hiddenSlotKeys,
-  selectedRunes,
   strain,
   patternLines,
   wall,
@@ -38,9 +32,10 @@ export function PatternLines({
 }: PatternLinesProps) {
   const activeElement = useSelectionStore((state) => state.activeElement);
   const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
-
+  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
+  const selectedRuneType = selectedRunes[0]?.runeType ?? null;
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
-    if (!canPlace || !selectedRuneType) return false;
+    if (selectedRunes.length === 0) return false;
 
     const matchesType = line.runeType === null || line.runeType === selectedRuneType;
     const notFull = line.count < line.tier;
@@ -102,7 +97,7 @@ export function PatternLines({
         const isLocked = lockedPatternLines.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         
-        const placementClickable = Boolean(canPlace && onPlaceRunes);
+        const placementClickable = Boolean(selectedRunes.length > 0 && onPlaceRunes);
         const showGlow = isPlacementTarget;
         const buttonDisabled = !(isPlacementTarget && placementClickable);
         const cursorStyle = placementClickable

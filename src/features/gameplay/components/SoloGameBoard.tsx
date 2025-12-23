@@ -17,12 +17,9 @@ interface SoloGameViewProps {
 
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
-    selectedRuneType,
-    hasSelectedRunes,
     playerHiddenPatternSlots,//TODO this vs playerLocked?
     runeforges,
     centerPool,
-    selectedRunes,
     draftSource,
     runeforgeDraftStage,
     animatingRuneIds,
@@ -59,8 +56,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           runeforges={runeforges}
           centerPool={centerPool}
           onRuneClick={onRuneClick}
-          hasSelectedRunes={hasSelectedRunes}
-          selectedRunes={selectedRunes}
           draftSource={draftSource}
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
@@ -71,11 +66,8 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
 
         <PlayerBoard
           onPlaceRunes={onPlaceRunes}
-          selectedRuneType={selectedRuneType}
-          canPlace={hasSelectedRunes}
           onCancelSelection={onCancelSelection}
           hiddenSlotKeys={playerHiddenPatternSlots}
-          selectedRunes={selectedRunes}
           strain={strain}
           lockedPatternLines={lockedPatternLines}
         />
