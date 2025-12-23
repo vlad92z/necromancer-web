@@ -17,7 +17,6 @@ interface SoloGameViewProps {
 
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
-    playerHiddenPatternSlots,//TODO this vs playerLocked?
     runeforges,
     centerPool,
     draftSource,
@@ -67,7 +66,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
         <PlayerBoard
           onPlaceRunes={onPlaceRunes}
           onCancelSelection={onCancelSelection}
-          hiddenSlotKeys={playerHiddenPatternSlots}
           strain={strain}
           lockedPatternLines={lockedPatternLines}
         />

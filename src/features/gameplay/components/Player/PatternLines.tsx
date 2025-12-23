@@ -5,17 +5,17 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import type { PatternLine, Rune, RuneType, ScoringWall } from '../../../../types/game';
+import type { PatternLine, Rune, ScoringWall } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useSelectionStore } from '../../../../state/stores/selectionStore';
+import { useUIStore } from '../../../../state/stores/uiStore';
 
 interface PatternLinesProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
-  hiddenSlotKeys?: Set<string>;
   strain: number;
   patternLines: PatternLine[];
   wall: ScoringWall;
@@ -24,7 +24,6 @@ interface PatternLinesProps {
 
 export function PatternLines({
   onPlaceRunes,
-  hiddenSlotKeys,
   strain,
   patternLines,
   wall,
@@ -34,6 +33,7 @@ export function PatternLines({
   const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const selectedRuneType = selectedRunes[0]?.runeType ?? null;
+  const hiddenSlotKeys = useUIStore((state) => state.playerHiddenPatternSlots);
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (selectedRunes.length === 0) return false;
 

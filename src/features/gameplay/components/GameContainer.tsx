@@ -93,7 +93,6 @@ export interface GameContainerSharedProps {
 
   // Locks and visibility
   lockedPatternLines: number[];
-  playerHiddenPatternSlots?: Set<string>;
   animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
 
@@ -161,6 +160,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const isMusicMuted = useUIStore((state) => state.isMusicMuted);
   const setMusicMuted = useUIStore((state) => state.setMusicMuted);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
+  const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
   const playArcaneDust = useArcaneDustSound();
   const isSelectionPhase = turnPhase === 'select';
   const isDeckDrafting = turnPhase === 'deck-draft';
@@ -279,10 +279,9 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     [draftFromCenter],
   );
 
-  const playerHiddenPatternSlots = useMemo(
-    () => hiddenPatternSlots,
-    [hiddenPatternSlots],
-  );
+  useEffect(() => {
+    setPlayerHiddenPatternSlots(hiddenPatternSlots);
+  }, [hiddenPatternSlots, setPlayerHiddenPatternSlots]);
 
   const isPatternLineValidTarget = useCallback(
     (lineIndex: number): boolean => {
@@ -1147,7 +1146,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       runeforges,
       centerPool,
       lockedPatternLines,
-      playerHiddenPatternSlots,
       animatingRuneIds,
       hiddenCenterRuneIds,
       onRuneClick: handleRuneClick,
@@ -1173,7 +1171,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       isGameOver,
       player,
       runesPerRuneforge,
-      playerHiddenPatternSlots,
       lockedPatternLines,
       strain,
       returnToStartScreen,

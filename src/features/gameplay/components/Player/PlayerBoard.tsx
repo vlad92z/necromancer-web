@@ -10,7 +10,6 @@ import { TooltipView } from './TooltipView';
 interface PlayerBoardProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
   onCancelSelection?: () => void;
-  hiddenSlotKeys?: Set<string>;
   strain: number;
   lockedPatternLines: number[];
 }
@@ -18,7 +17,6 @@ interface PlayerBoardProps {
 export function PlayerBoard({
   onPlaceRunes,
   onCancelSelection,
-  hiddenSlotKeys,
   strain,
   lockedPatternLines,
 }: PlayerBoardProps) {
@@ -37,7 +35,6 @@ export function PlayerBoard({
         <div className="flex flex-row gap-5">
           <PatternLines
             onPlaceRunes={onPlaceRunes}
-            hiddenSlotKeys={hiddenSlotKeys}
             strain={strain}
             patternLines={player.patternLines}
             wall={player.wall}

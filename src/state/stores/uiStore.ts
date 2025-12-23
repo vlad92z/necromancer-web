@@ -17,6 +17,7 @@ interface UIStore {
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
   hiddenPatternLines: Set<number>;
+  playerHiddenPatternSlots: Set<string>;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
@@ -30,6 +31,7 @@ interface UIStore {
   setMusicMuted: (muted: boolean) => void;
   markMusicSessionStarted: () => void;
   setHiddenPatternLines: (indices: Set<number>) => void;
+  setPlayerHiddenPatternSlots: (slots: Set<string>) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -60,6 +62,7 @@ export const useUIStore = create<UIStore>((set) => ({
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
   hiddenPatternLines: new Set<number>(),
+  playerHiddenPatternSlots: new Set<string>(),
   
   // Actions
   toggleRulesOverlay: () => {
@@ -117,5 +120,9 @@ export const useUIStore = create<UIStore>((set) => ({
 
   setHiddenPatternLines: (indices: Set<number>) => {
     set({ hiddenPatternLines: indices });
-  }
+  },
+
+  setPlayerHiddenPatternSlots: (slots: Set<string>) => {
+    set({ playerHiddenPatternSlots: slots });
+  },
 }));
