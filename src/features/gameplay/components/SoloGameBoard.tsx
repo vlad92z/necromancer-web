@@ -31,7 +31,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     onRuneClick,
     onCancelSelection,
     onPlaceRunes,
-    onPlaceRunesInFloor,
     game,
     strain,
     isGameOver,
@@ -40,8 +39,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
   } = shared;
   const {
     outcome,
-    runeScore,
-    playerStats,
     runePowerTotal,
     targetScore,
     arcaneDustReward,
@@ -50,7 +47,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     isDeckDrafting,
     totalDeckSize,
     onSelectDeckDraftRuneforge,
-    onOpenOverloadOverlay,
     onOpenSettings,
     startNextSoloGame,
   } = gameData;
@@ -60,18 +56,10 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       <div>
         <GameMetadataView
           gameNumber={game}
-          strainValue={strain}
           arcaneDust={arcaneDust}
-          runeScore={runeScore ?? { currentScore: 0, targetScore: 0 }}
-          overloadedRuneCount={playerStats?.overloadedRuneCount ?? 0}
-          canOverload={hasSelectedRunes}
-          onOpenOverload={onOpenOverloadOverlay}
           onOpenSettings={onOpenSettings}
           isSettingsActive={activeElement?.type === 'settings'}
           isOverloadActive={activeElement?.type === 'overload'}
-          onPlaceRunesInFloor={onPlaceRunesInFloor}
-          hasSelectedRunes={hasSelectedRunes}
-          selectedRunes={selectedRunes}
         />
       </div>
 

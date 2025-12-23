@@ -105,7 +105,6 @@ export interface GameContainerSharedProps {
   onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onCancelSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
-  onPlaceRunesInFloor: () => void;
   returnToStartScreen: () => void;
 }
 
@@ -1165,7 +1164,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       onCenterRuneClick: handleCenterRuneClick,
       onCancelSelection: handleCancelSelection,
       onPlaceRunes: handlePatternLinePlacement,
-      onPlaceRunesInFloor: handlePlaceRunesInFloorWrapper,
       returnToStartScreen,
     }),
     [
@@ -1179,7 +1177,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       handleCancelSelection,
       handleCenterRuneClick,
       handlePatternLinePlacement,
-      handlePlaceRunesInFloorWrapper,
       handleRuneClick,
       hasSelectedRunes,
       hiddenCenterRuneIds,
@@ -1263,10 +1260,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       )}
 
       {showOverloadOverlay && (
-        <OverloadOverlay
-          overloadRunes={overloadRunes}
-          playerName={player.name}
-        />
+        <OverloadOverlay />
       )}
       {showSettingsOverlay && (
         <SettingsOverlay
