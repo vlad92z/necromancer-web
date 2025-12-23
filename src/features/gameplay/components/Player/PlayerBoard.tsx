@@ -2,13 +2,13 @@
  * PlayerBoard component - displays a player's board (pattern lines, wall, floor line)
  */
 
-import type { Player, Rune, RuneType } from '../../../../types/game';
+import { useGameplayStore } from '../../../../state/stores';
+import type { Rune, RuneType } from '../../../../types/game';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { TooltipView } from './TooltipView';
 
 interface PlayerBoardProps {
-  player: Player;
   onPlaceRunes?: (patternLineIndex: number) => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
@@ -20,7 +20,6 @@ interface PlayerBoardProps {
 }
 
 export function PlayerBoard({
-  player,
   onPlaceRunes,
   selectedRuneType,
   canPlace,
@@ -35,7 +34,7 @@ export function PlayerBoard({
       onCancelSelection();
     }
   };
-
+  const player = useGameplayStore((state) => state.player);
   return (
     <div
       onClick={handleBoardClick}

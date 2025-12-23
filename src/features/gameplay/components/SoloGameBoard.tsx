@@ -17,7 +17,6 @@ interface SoloGameViewProps {
 
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
-    player,
     selectedRuneType,
     hasSelectedRunes,
     playerHiddenPatternSlots,//TODO this vs playerLocked?
@@ -71,7 +70,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
 
 
         <PlayerBoard
-          player={player}
           onPlaceRunes={onPlaceRunes}
           selectedRuneType={selectedRuneType}
           canPlace={hasSelectedRunes}
