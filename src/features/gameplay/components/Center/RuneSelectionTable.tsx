@@ -7,7 +7,7 @@ import type { DraftSource, GameState, Runeforge as RuneforgeType, Rune, RuneType
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
-import { Runeforge } from './Runeforge';
+import { RuneforgeView } from './RuneforgeView';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
@@ -137,10 +137,9 @@ export function RuneSelectionTable({
   return (
     <div className="h-full w-full flex flex-col justify-start gap-4 p-[min(1.2vmin,16px)]" onClick={handleDraftingTableClick}>
       <div className="flex-1 flex flex-col gap-[14px] w-full">
-        {runeforges.map((runeforge, runeforgeIndex) => (
-          <Runeforge
+        {runeforges.map((runeforge) => (
+          <RuneforgeView
             key={runeforge.id}
-            runeforgeIndex={runeforgeIndex}
             runeforge={runeforge}
             hoveredRuneType={hoveredRuneTypeByRuneforge[runeforge.id] ?? null}
             animatingRuneIdSet={animatingRuneIdSet}
