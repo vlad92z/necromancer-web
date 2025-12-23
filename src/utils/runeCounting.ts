@@ -2,7 +2,7 @@
  * Rune counting helpers for drafting UI
  */
 
-import type { DraftSource, Rune, RuneType, Runeforge } from '../types/game';
+import type { Rune, RuneType, Runeforge } from '../types/game';
 
 interface RuneTypeCountInput {
   runeforges: Runeforge[];

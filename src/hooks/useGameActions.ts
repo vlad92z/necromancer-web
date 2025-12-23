@@ -7,7 +7,6 @@ import { useGameplayStore } from '../state/stores/gameplayStore';
 
 export function useGameActions() {
   const draftRune = useGameplayStore((state) => state.draftRune);
-  const draftFromCenter = useGameplayStore((state) => state.draftFromCenter);
   const placeRunes = useGameplayStore((state) => state.placeRunes);
   const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
   const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
@@ -25,7 +24,6 @@ export function useGameActions() {
   
   return {
     draftRune,
-    draftFromCenter,
     placeRunes,
     moveRunesToWall,
     placeRunesInFloor,

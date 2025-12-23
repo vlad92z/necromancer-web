@@ -96,7 +96,6 @@ export interface GameContainerSharedProps {
 
   // Actions
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onCenterRuneClick: (runeType: RuneType, runeId: string) => void;
   onCancelSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
   returnToStartScreen: () => void;
@@ -135,7 +134,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const displayedArcaneDust = scoringSequence ? scoringSequence.displayArcaneDust : arcaneDustTotal;
   const {
     draftRune,
-    draftFromCenter,
     placeRunes,
     moveRunesToWall,
     placeRunesInFloor,
@@ -265,13 +263,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       draftRune(runeforgeId, runeType, runeId);
     },
     [draftRune],
-  );
-
-  const handleCenterRuneClick = useCallback(
-    (runeType: RuneType, runeId: string) => {
-      draftFromCenter(runeType, runeId);
-    },
-    [draftFromCenter],
   );
 
   useEffect(() => {
@@ -1142,7 +1133,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       lockedPatternLines,
       hiddenCenterRuneIds,
       onRuneClick: handleRuneClick,
-      onCenterRuneClick: handleCenterRuneClick,
       onCancelSelection: handleCancelSelection,
       onPlaceRunes: handlePatternLinePlacement,
       returnToStartScreen,
@@ -1153,7 +1143,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       currentGame,
       draftSource,
       handleCancelSelection,
-      handleCenterRuneClick,
       handlePatternLinePlacement,
       handleRuneClick,
       hasSelectedRunes,

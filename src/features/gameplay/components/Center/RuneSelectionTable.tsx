@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { DraftSource, Rune, RuneType } from '../../../../types/game';
+import type { Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
