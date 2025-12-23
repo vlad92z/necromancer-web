@@ -8,18 +8,12 @@ import { RuneCell } from '../../../../components/RuneCell';
 import { RUNE_SIZE_CONFIG } from '../../../../styles/tokens';
 import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
 import { useSelectionStore } from '../../../../state/stores/selectionStore';
+import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 
 interface RuneforgeProps {
   runeforgeIndex: number;
   runeforge: RuneforgeType;
-  runesPerRuneforge: number;
   hoveredRuneType: RuneType | null;
-  hasSelectedRunes: boolean;
-  isGlobalSelection: boolean;
-  selectedFromRuneforgeId: string | null;
-  selectedRuneforgeOriginalRunes: Rune[];
-  globalSelectionOriginals: Map<string, Rune[]> | null;
-  selectedRuneIdSet: Set<string>;
   animatingRuneIdSet: Set<string> | null;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onRuneMouseEnter: (
@@ -35,21 +29,35 @@ interface RuneforgeProps {
 export function Runeforge({
   runeforgeIndex,
   runeforge,
-  runesPerRuneforge,
   hoveredRuneType,
-  hasSelectedRunes,
-  isGlobalSelection,
-  selectedFromRuneforgeId,
-  selectedRuneforgeOriginalRunes,
-  globalSelectionOriginals,
-  selectedRuneIdSet,
   animatingRuneIdSet,
   onRuneClick,
   onRuneMouseEnter,
   onRuneMouseLeave
 }: RuneforgeProps) {
   const activeElement = useSelectionStore((state) => state.activeElement);
+  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
+  const draftSource = useSelectionStore((state) => state.draftSource);
+  const runesPerRuneforge = useGameplayStore((state) => state.runesPerRuneforge);
   const runeSlotAssignmentsRef = useRef<Record<string, number>>({});
+  const hasSelectedRunes = selectedRunes.length > 0;
+  const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
+  const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
+  const selectedRuneforgeOriginalRunes = useMemo(
+    () => (draftSource?.type === 'runeforge' ? draftSource.originalRunes : []),
+    [draftSource]
+  );
+  const globalSelectionOriginals = useMemo(() => {
+    if (draftSource?.type !== 'runeforge' || draftSource.selectionMode !== 'global') {
+      return null;
+    }
+    const map = new Map<string, Rune[]>();
+    (draftSource.affectedRuneforges ?? []).forEach(({ runeforgeId, originalRunes }) => {
+      map.set(runeforgeId, originalRunes);
+    });
+    return map;
+  }, [draftSource]);
+  const selectedRuneIdSet = useMemo(() => new Set(selectedRunes.map((rune) => rune.id)), [selectedRunes]);
 
   const computeSlots = useCallback((runes: Rune[], totalSlots: number): (Rune | null)[] => {
     const existingAssignments = runeSlotAssignmentsRef.current;

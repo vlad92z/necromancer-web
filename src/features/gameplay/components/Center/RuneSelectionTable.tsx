@@ -21,7 +21,6 @@ interface RuneSelectionTableProps {
   onCancelSelection: () => void;
   animatingRuneIds?: string[];
   hideOpponentRow?: boolean;
-  runesPerRuneforge: number;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
 }
 
@@ -31,14 +30,12 @@ export function RuneSelectionTable({
   draftSource,
   onCancelSelection,
   animatingRuneIds,
-  runesPerRuneforge,
   runeforgeDraftStage,
 }: RuneSelectionTableProps) {
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const isGlobalDraftStage = runeforgeDraftStage === 'global';
-  const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
 
@@ -61,22 +58,6 @@ export function RuneSelectionTable({
     setHoveredRuneTypeByRuneforge({});
   }, [runeforgeDraftStage]);
 
-  const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
-  const selectedRuneforgeOriginalRunes = useMemo(
-    () => (draftSource?.type === 'runeforge' ? draftSource.originalRunes : []),
-    [draftSource]
-  );
-  const globalSelectionOriginals = useMemo(() => {
-    if (draftSource?.type !== 'runeforge' || draftSource.selectionMode !== 'global') {
-      return null;
-    }
-    const map = new Map<string, Rune[]>();
-    (draftSource.affectedRuneforges ?? []).forEach(({ runeforgeId, originalRunes }) => {
-      map.set(runeforgeId, originalRunes);
-    });
-    return map;
-  }, [draftSource]);
-  const selectedRuneIdSet = useMemo(() => new Set(selectedRunes.map((rune) => rune.id)), [selectedRunes]);
   const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
   const runeTypes = useMemo(() => RUNE_TYPES, []);
   const runeCounts = useMemo(
@@ -161,14 +142,7 @@ export function RuneSelectionTable({
             key={runeforge.id}
             runeforgeIndex={runeforgeIndex}
             runeforge={runeforge}
-            runesPerRuneforge={runesPerRuneforge}
             hoveredRuneType={hoveredRuneTypeByRuneforge[runeforge.id] ?? null}
-            hasSelectedRunes={hasSelectedRunes}
-            isGlobalSelection={isGlobalSelection}
-            selectedFromRuneforgeId={selectedFromRuneforgeId}
-            selectedRuneforgeOriginalRunes={selectedRuneforgeOriginalRunes}
-            globalSelectionOriginals={globalSelectionOriginals}
-            selectedRuneIdSet={selectedRuneIdSet}
             animatingRuneIdSet={animatingRuneIdSet}
             onRuneClick={onRuneClick}
             onRuneMouseEnter={handleRuneMouseEnter}

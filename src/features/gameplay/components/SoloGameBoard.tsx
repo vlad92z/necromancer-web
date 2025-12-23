@@ -29,7 +29,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     strain,
     isGameOver,
     returnToStartScreen,
-    runesPerRuneforge,
   } = shared;
   const {
     outcome,
@@ -57,7 +56,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
           runeforgeDraftStage={runeforgeDraftStage}
           onCancelSelection={onCancelSelection}
           animatingRuneIds={animatingRuneIds}
-          runesPerRuneforge={runesPerRuneforge}
         />
 
 
