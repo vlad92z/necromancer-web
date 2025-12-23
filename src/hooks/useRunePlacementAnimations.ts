@@ -73,8 +73,15 @@ export function useRunePlacementAnimations({
       return;
     }
     setHiddenPatternSlots((prev) => {
-      slotKeys.forEach((key) => prev.add(key));
-      return prev;
+      const nextSet = new Set(prev);
+      let changed = false;
+      slotKeys.forEach((key) => {
+        if (!nextSet.has(key)) {
+          nextSet.add(key);
+          changed = true;
+        }
+      });
+      return changed ? nextSet : prev;
     });
   }, []);
 
