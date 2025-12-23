@@ -9,6 +9,7 @@ interface UIStore {
   // Overlay visibility states
   showRulesOverlay: boolean;
   showDeckOverlay: boolean;
+  showOverloadOverlay: boolean
   showRuneforgeOverlay: boolean;
   showSettingsOverlay: boolean;
   selectedRuneforgeId: string | null; // For runeforge overlay
@@ -20,6 +21,7 @@ interface UIStore {
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
   toggleDeckOverlay: () => void;
+  toggleOverloadOverlay: () => void;
   openRuneforgeOverlay: (runeforgeId: string) => void;
   closeRuneforgeOverlay: () => void;
   toggleSettingsOverlay: () => void;
@@ -50,6 +52,7 @@ export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
   showDeckOverlay: false,
+  showOverloadOverlay: false,
   showRuneforgeOverlay: false,
   showSettingsOverlay: false,
   selectedRuneforgeId: null,
@@ -66,6 +69,10 @@ export const useUIStore = create<UIStore>((set) => ({
   toggleDeckOverlay: () => {
     set((state) => ({ showDeckOverlay: !state.showDeckOverlay }));
   },
+
+  toggleOverloadOverlay: () => {
+    set((state) => ({ showOverloadOverlay: !state.showOverloadOverlay }));
+  }
   
   openRuneforgeOverlay: (runeforgeId: string) => {
     set({ showRuneforgeOverlay: true, selectedRuneforgeId: runeforgeId });

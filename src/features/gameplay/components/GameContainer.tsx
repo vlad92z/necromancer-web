@@ -67,7 +67,6 @@ export interface GameData {
   deckDraftState: GameState['deckDraftState'];
   isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
-  onOpenOverloadOverlay: () => void;
   onOpenSettings: () => void;
   startNextSoloGame: () => void;
 }
@@ -216,7 +215,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const showDeckOverlay = useUIStore((state) => state.showDeckOverlay);
-  const [showOverloadOverlay, setShowOverloadOverlay] = useState(false);
+  const showOverloadOverlay = useUIStore((state) => state.showOverloadOverlay);
   const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]); //TODO: this is bad
   const {
     animatingRunes: placementAnimatingRunes,
@@ -377,16 +376,13 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     [isAnimatingPlacement, placeRunes],
   );
 
-  const handleOpenOverloadOverlay = useCallback(() => setShowOverloadOverlay(true), []);
-  const handleCloseOverloadOverlay = useCallback(() => setShowOverloadOverlay(false), []);
-
   const handleOverloadAction = useCallback(() => {
     if (hasSelectedRunes) {
       handlePlaceRunesInFloorWrapper();
-      return;
+    } else {
+      useUIStore.getState().toggleOverloadOverlay();
     }
-    handleOpenOverloadOverlay();
-  }, [handleOpenOverloadOverlay, handlePlaceRunesInFloorWrapper, hasSelectedRunes]);
+  }, [handlePlaceRunesInFloorWrapper, hasSelectedRunes]);
 
   const handleOpenSettings = useCallback(() => {
     toggleSettingsOverlay();
@@ -1215,7 +1211,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       deckDraftState: gameState.deckDraftState,
       isDeckDrafting,
       onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
-      onOpenOverloadOverlay: handleOpenOverloadOverlay,
       onOpenSettings: handleOpenSettings,
       startNextSoloGame: startNextSoloGame,
     }),
@@ -1224,7 +1219,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       currentGame,
       gameState.deckDraftState,
       fullDeck.length,
-      handleOpenOverloadOverlay,
       isDeckDrafting,
       displayedRunePowerTotal,
       selectDeckDraftRuneforge,
@@ -1272,7 +1266,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         <OverloadOverlay
           overloadRunes={overloadRunes}
           playerName={player.name}
-          onClose={handleCloseOverloadOverlay}
         />
       )}
       {showSettingsOverlay && (

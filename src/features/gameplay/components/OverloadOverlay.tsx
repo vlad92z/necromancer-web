@@ -8,14 +8,15 @@ import { useState } from 'react';
 import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
+import { useUIStore } from '../../../state/stores';
 
 interface OverloadOverlayProps {
   overloadRunes: Rune[];
   playerName: string;
-  onClose: () => void;
 }
 
-export function OverloadOverlay({ overloadRunes, playerName, onClose }: OverloadOverlayProps) {
+export function OverloadOverlay({ overloadRunes, playerName }: OverloadOverlayProps) {
+  const close = useUIStore((state) => state.toggleOverloadOverlay);
   const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
 
   // Group runes by type for ordering and totals
@@ -60,7 +61,7 @@ export function OverloadOverlay({ overloadRunes, playerName, onClose }: Overload
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={close}
         className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(4,2,12,0.78)] px-6 py-6 backdrop-blur-md"
       >
         <motion.div
@@ -77,7 +78,7 @@ export function OverloadOverlay({ overloadRunes, playerName, onClose }: Overload
                 <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{playerName}&apos;s Overloaded Runes ({totalRuneCount})</h2>
               </div>
               <button
-                onClick={onClose}
+                onClick={close}
                 type="button"
                 className="rounded-xl border border-white/20 bg-gradient-to-r from-red-500 via-pink-500 to-orange-400 px-4 py-2 text-sm font-extrabold uppercase tracking-[0.12em] text-slate-900 shadow-[0_10px_25px_rgba(239,68,68,0.45)] transition hover:from-red-400 hover:via-pink-400 hover:to-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
               >
