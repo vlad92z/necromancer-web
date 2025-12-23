@@ -19,6 +19,7 @@ interface UIStore {
   hiddenPatternLines: Set<number>;
   playerHiddenPatternSlots: Set<string>;
   animatingRuneIds: Set<string>;
+  isPlacementAnimating: boolean;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
@@ -34,6 +35,7 @@ interface UIStore {
   setHiddenPatternLines: (indices: Set<number>) => void;
   setPlayerHiddenPatternSlots: (slots: Set<string>) => void;
   setAnimatingRuneIds: (ids: Set<string>) => void;
+  setIsPlacementAnimating: (isAnimating: boolean) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -66,6 +68,7 @@ export const useUIStore = create<UIStore>((set) => ({
   hiddenPatternLines: new Set<number>(),
   playerHiddenPatternSlots: new Set<string>(),
   animatingRuneIds: new Set<string>(),
+  isPlacementAnimating: false,
   
   // Actions
   toggleRulesOverlay: () => {
@@ -131,5 +134,9 @@ export const useUIStore = create<UIStore>((set) => ({
 
   setAnimatingRuneIds: (ids: Set<string>) => {
     set({ animatingRuneIds: ids });
+  },
+
+  setIsPlacementAnimating: (isAnimating: boolean) => {
+    set({ isPlacementAnimating: isAnimating });
   },
 }));

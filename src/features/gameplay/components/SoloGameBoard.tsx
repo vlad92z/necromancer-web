@@ -17,8 +17,6 @@ interface SoloGameViewProps {
 
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
-    onRuneClick,
-    onCancelSelection,
     onPlaceRunes,
     lockedPatternLines,
     game,
@@ -46,14 +44,11 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
 
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
         <RuneSelectionTable
-          onRuneClick={onRuneClick}
-          onCancelSelection={onCancelSelection}
         />
 
 
         <PlayerBoard
           onPlaceRunes={onPlaceRunes}
-          onCancelSelection={onCancelSelection}
           strain={strain}
           lockedPatternLines={lockedPatternLines}
         />

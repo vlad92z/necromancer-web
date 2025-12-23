@@ -16,17 +16,14 @@ import { useSelectionStore } from '../../../../state/stores';
 import { useUIStore } from '../../../../state/stores/uiStore';
 
 interface RuneSelectionTableProps {
-  onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onCancelSelection: () => void;
   hideOpponentRow?: boolean;
 }
 
 export function RuneSelectionTable({
-  onRuneClick,
-  onCancelSelection,
 }: RuneSelectionTableProps) {
   const draftStage = useGameplayStore((state) => state.runeforgeDraftStage);
   const runeforges = useGameplayStore((state) => state.runeforges);
+  const cancelSelection = useGameplayStore((state) => state.cancelSelection);
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
@@ -34,6 +31,7 @@ export function RuneSelectionTable({
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const animatingRuneIdSet = useUIStore((state) => state.animatingRuneIds);
+  const isPlacementAnimating = useUIStore((state) => state.isPlacementAnimating);
 
   const computeGlobalHoverState = useCallback(
     (runeType: RuneType): Record<string, RuneType | null> => {
@@ -123,8 +121,8 @@ export function RuneSelectionTable({
   const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
 
   const handleDraftingTableClick = () => {
-    if (hasSelectedRunes) {
-      onCancelSelection();
+    if (hasSelectedRunes && !isPlacementAnimating) {
+      cancelSelection();
     }
   };
 
@@ -137,7 +135,6 @@ export function RuneSelectionTable({
             runeforge={runeforge}
             hoveredRuneType={hoveredRuneTypeByRuneforge[runeforge.id] ?? null}
             animatingRuneIdSet={animatingRuneIdSet}
-            onRuneClick={onRuneClick}
             onRuneMouseEnter={handleRuneMouseEnter}
             onRuneMouseLeave={handleRuneMouseLeave}
           />

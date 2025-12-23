@@ -95,8 +95,6 @@ export interface GameContainerSharedProps {
   hiddenCenterRuneIds: Set<string>;
 
   // Actions
-  onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  onCancelSelection: () => void;
   onPlaceRunes: (patternLineIndex: number) => void;
   returnToStartScreen: () => void;
 }
@@ -1132,8 +1130,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       runeforges,
       lockedPatternLines,
       hiddenCenterRuneIds,
-      onRuneClick: handleRuneClick,
-      onCancelSelection: handleCancelSelection,
       onPlaceRunes: handlePatternLinePlacement,
       returnToStartScreen,
     }),
@@ -1142,9 +1138,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       displayedHealth,
       currentGame,
       draftSource,
-      handleCancelSelection,
       handlePatternLinePlacement,
-      handleRuneClick,
       hasSelectedRunes,
       hiddenCenterRuneIds,
       isSelectionPhase,

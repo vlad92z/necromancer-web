@@ -14,7 +14,6 @@ interface RuneforgeViewProps {
   runeforge: RuneforgeType;
   hoveredRuneType: RuneType | null;
   animatingRuneIdSet: Set<string>;
-  onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onRuneMouseEnter: (
     runeforgeId: string,
     runeType: RuneType,
@@ -29,13 +28,13 @@ export function RuneforgeView({
   runeforge,
   hoveredRuneType,
   animatingRuneIdSet,
-  onRuneClick,
   onRuneMouseEnter,
   onRuneMouseLeave
 }: RuneforgeViewProps) {
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const draftSource = useSelectionStore((state) => state.draftSource);
   const runesPerRuneforge = useGameplayStore((state) => state.runesPerRuneforge);
+  const draftRune = useGameplayStore((state) => state.draftRune);
   const runeSlotAssignmentsRef = useRef<Record<string, number>>({});
   const hasSelectedRunes = selectedRunes.length > 0;
   const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
@@ -252,7 +251,7 @@ export function RuneforgeView({
                 onClick={(event) => {
                   event.stopPropagation();
                   if (!isAnimatingRune && pointerEvents === 'auto') {
-                    onRuneClick(runeforge.id, rune.runeType, rune.id);
+                    draftRune(runeforge.id, rune.runeType, rune.id);
                   }
                 }}
                 onMouseEnter={() =>

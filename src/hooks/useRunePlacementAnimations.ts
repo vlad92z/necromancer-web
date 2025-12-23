@@ -48,6 +48,7 @@ export function useRunePlacementAnimations({
   const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Set<string>>(new Set());
   const [hiddenCenterRuneIds, setHiddenCenterRuneIds] = useState<Set<string>>(new Set());
   const setAnimatingRuneIds = useUIStore((state) => state.setAnimatingRuneIds);
+  const setIsPlacementAnimating = useUIStore((state) => state.setIsPlacementAnimating);
   const manualAnimationRef = useRef(false);
   const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
   const previousSelectedCountRef = useRef<number>(selectedRunes.length);
@@ -67,6 +68,10 @@ export function useRunePlacementAnimations({
     () => new Set(activeAnimatingRunes.map((rune) => rune.id)),
     [activeAnimatingRunes],
   );
+
+  useEffect(() => {
+    setIsPlacementAnimating(isAnimatingPlacement);
+  }, [isAnimatingPlacement, setIsPlacementAnimating]);
 
   const hidePatternSlots = useCallback((slotKeys: string[]) => {
     if (slotKeys.length === 0) {
