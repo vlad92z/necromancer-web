@@ -129,7 +129,6 @@ export function getSoloSizingConfig(): SoloSizingConfig {
  * Create a mock player deck (for now, just basic runes)
  */
 export function createStartingDeck(
-  playerId: string,
   totalRunesPerPlayer?: number
 ): Rune[] {
   const deck: Rune[] = [];
@@ -145,7 +144,7 @@ export function createStartingDeck(
 
     for (let i = 0; i < typeCount; i++) {
       deck.push({
-        id: `${playerId}-${runeType}-${i}`,
+        id: `player-1-${runeType}-${i}`,
         runeType,
         effects: getRuneEffectsForType(runeType),
       });
@@ -188,7 +187,7 @@ export function createPlayer(
     health: startingHealth,
     maxHealth: maxHealthOverride ?? startingHealth,
     armor: 0,
-    deck: createStartingDeck(id, totalRunesPerPlayer),
+    deck: createStartingDeck(totalRunesPerPlayer),
   };
 }
 
@@ -226,20 +225,14 @@ export function createSoloFactories(player: Player, perPlayerCount: number): Run
  */
 export function fillFactories(
   runeforges: Runeforge[],
-  playerDecks: Record<string, Rune[]>,
+  deck: Rune[],
   runesPerRuneforge: number = 4
-): { runeforges: Runeforge[]; decksByPlayer: Record<string, Rune[]> } {
-  const shuffledDecks: Record<string, Rune[]> = {};
-
-  Object.entries(playerDecks).forEach(([playerId, deck]) => {
-    shuffledDecks[playerId] = [...deck].sort(() => Math.random() - 0.5);
-  });
-
+): { runeforges: Runeforge[]; deck: Rune[] } {
+  let shuffledDeck = deck.sort(() => Math.random() - 0.5);
   const filledRuneforges = runeforges.map((runeforge) => {
-    const ownerDeck = shuffledDecks[runeforge.ownerId] ?? [];
-    const runesToDeal = Math.min(ownerDeck.length, runesPerRuneforge);
-    const runesForForge = ownerDeck.slice(0, runesToDeal);
-    shuffledDecks[runeforge.ownerId] = ownerDeck.slice(runesToDeal);
+    const runesToDeal = Math.min(shuffledDeck.length, runesPerRuneforge);
+    const runesForForge = shuffledDeck.slice(0, runesToDeal);
+    shuffledDeck = shuffledDeck.slice(runesToDeal);
 
     return {
       ...runeforge,
@@ -250,7 +243,7 @@ export function fillFactories(
 
   return {
     runeforges: filledRuneforges,
-    decksByPlayer: shuffledDecks,
+    deck: shuffledDeck,
   };
 }
 
@@ -285,15 +278,13 @@ export function initializeSoloGame(
   const startingDeckTemplate = [...soloPlayer.deck];
 
   const soloFactories = createSoloFactories(soloPlayer, soloRuneforgeCount);
-  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
+  const { runeforges: filledRuneforges, deck } = fillFactories(
     soloFactories,
-    {
-      [soloPlayer.id]: soloPlayer.deck,
-    },
+    soloPlayer.deck,
     soloSizingConfig.runesPerRuneforge
   );
 
-  soloPlayer.deck = decksByPlayer[soloPlayer.id] ?? [];
+  soloPlayer.deck = deck;
 
   return {
     gameStarted: false,

@@ -50,7 +50,6 @@ export function PlayerBoard({
             onPlaceRunes={onPlaceRunes}
             selectedRuneType={selectedRuneType}
             canPlace={canPlace}
-            playerId={player.id}
             hiddenSlotKeys={hiddenSlotKeys}
             selectedRunes={selectedRunes}
             strain={strain}

@@ -17,7 +17,6 @@ interface PatternLinesProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
   selectedRuneType?: RuneType | null;
   canPlace?: boolean;
-  playerId?: string;
   hiddenSlotKeys?: Set<string>;
   selectedRunes: Rune[];
   strain: number;
@@ -28,7 +27,6 @@ export function PatternLines({
   onPlaceRunes,
   selectedRuneType,
   canPlace,
-  playerId,
   hiddenSlotKeys,
   selectedRunes,
   strain,
@@ -172,7 +170,7 @@ export function PatternLines({
                   return (
                     <motion.div
                       key={slotIndex}
-                      data-player-id={playerId}
+                      data-player-id="player-1"
                       data-pattern-line-index={index}
                       data-pattern-slot-index={slotIndex}
                       className="relative rounded-lg transition-[box-shadow] duration-200"

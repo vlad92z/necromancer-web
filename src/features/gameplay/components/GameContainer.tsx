@@ -78,8 +78,6 @@ export interface GameContainerSharedProps {
   player: GameState['player'];
   displayedHealth: number;
   displayedArmor: number;
-  currentPlayerIndex: number;
-  currentPlayerId: string;
   game: number;
   strain: number;
   isSelectionPhase: boolean;
@@ -1159,7 +1157,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       displayedHealth,
       displayedArmor,
       currentPlayerIndex: 0,
-      currentPlayerId: player.id,
       game: currentGame,
       strain,
       isSelectionPhase: isSelectionPhase,

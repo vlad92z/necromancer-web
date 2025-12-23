@@ -415,15 +415,15 @@ function prepareRoundReset(state: GameState): GameState {
   }
 
   const emptyFactories = createSoloFactories(clearedPlayer, state.factoriesPerPlayer);
-  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
+  const { runeforges: filledRuneforges, deck } = fillFactories(
     emptyFactories,
-    { [clearedPlayer.id]: clearedPlayer.deck },
+    state.player.deck,
     state.runesPerRuneforge
   );
 
   const updatedPlayer: Player = {
     ...clearedPlayer,
-    deck: decksByPlayer[clearedPlayer.id] ?? [],
+    deck: deck,
   };
 
   return {
