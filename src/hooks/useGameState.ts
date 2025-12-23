@@ -12,7 +12,6 @@ import { useSelectionStore } from '../state/stores/selectionStore';
 export function useFactories() {
   return useGameplayStore((state) => ({
     runeforges: state.runeforges,
-    centerPool: state.centerPool,
   }));
 }
 

@@ -193,7 +193,6 @@ export interface GameState {
   player: Player;
   soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
-  centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   runeforgeDraftStage: 'single' | 'global';
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected

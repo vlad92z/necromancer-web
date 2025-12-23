@@ -104,7 +104,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     soloDeckTemplate: deckTemplate,
     turnPhase: 'deck-draft' as const,
     runeforges: [],
-    centerPool: [],
     runeforgeDraftStage: 'single' as const,
     overloadRunes: [],
     scoringSequence: null,
@@ -195,14 +194,9 @@ function clearFloorLines(player: Player): Player {
   };
 }
 
-function isRoundExhausted(runeforges: GameState['runeforges'], centerPool: GameState['centerPool']): boolean {
+function isRoundExhausted(runeforges: GameState['runeforges']): boolean {
   const allRuneforgesEmpty = runeforges.every((runeforge) => runeforge.runes.length === 0);
-  return allRuneforgesEmpty && centerPool.length === 0;
-}
-
-function getNextCenterPool(state: GameState): Rune[] {
-  // Remaining runes now stay in their runeforge; center pool is unchanged here
-  return state.centerPool;
+  return allRuneforgesEmpty;
 }
 
 function getChannelScoreBonusFromOverloadedRunes(
@@ -256,7 +250,6 @@ function getOverloadResult(
 function handlePlayerDefeat(
   state: GameState,
   updatedPlayer: Player,
-  nextCenterPool: Rune[],
   overloadDamage: number,
   channelTriggered: boolean
 ): GameState {
@@ -279,7 +272,6 @@ function handlePlayerDefeat(
     ...state,
     player: updatedPlayer,
     overloadRunes: [],
-    centerPool: nextCenterPool,
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
     outcome: 'defeat' as GameOutcome,
@@ -379,7 +371,6 @@ function prepareRoundReset(state: GameState): GameState {
       strain: nextStrain,
       startingStrain: nextStrain,
       runeforges: [],
-      centerPool: [],
       turnPhase: 'game-over',
       game: state.game,
       outcome: 'defeat' as GameOutcome,
@@ -411,7 +402,6 @@ function prepareRoundReset(state: GameState): GameState {
     ...state,
     player: updatedPlayer,
     runeforges: withRuneforgeListDefaults(filledRuneforges).map((runeforge) => ({ ...runeforge, disabled: false })),
-    centerPool: [],
     turnPhase: 'select',
     game: state.game,
     round: nextRound,
@@ -438,7 +428,6 @@ export interface GameplayStore extends GameState {
   returnToStartScreen: () => void;
   startNextSoloGame: () => void;
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
-  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => void;
   placeRunes: (patternLineIndex: number) => void;
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
@@ -463,7 +452,6 @@ function cancelSelectionState(state: GameplayStore, selectionState: SelectionSta
     useSelectionStore.getState().clearSelection();
     return {
       ...state,
-      centerPool: [...selectionState.draftSource.originalRunes],
       turnPhase: 'select' as const,
     };
   }
@@ -581,13 +569,11 @@ function placeSelectionOnPatternLine(
     armor: nextArmor,
   };
 
-  const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
       state,
       updatedPlayer,
-      nextCenterPool,
       overloadDamage,
       channelTriggered
     );
@@ -599,7 +585,6 @@ function placeSelectionOnPatternLine(
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
       player: updatedPlayer,
-      centerPool: nextCenterPool,
       pendingPlacement: null,
       animatingRunes: [],
       shouldTriggerEndRound: false,
@@ -615,7 +600,7 @@ function placeSelectionOnPatternLine(
     };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+  const shouldEndRound = isRoundExhausted(state.runeforges);
 
   const nextTurnPhase =
     completedLines.length > 0
@@ -629,7 +614,6 @@ function placeSelectionOnPatternLine(
     ...state,
     player: updatedPlayer,
     overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
-    centerPool: nextCenterPool,
     turnPhase: nextTurnPhase,
     shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
@@ -668,13 +652,11 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     armor: nextArmor,
   };
 
-  const nextCenterPool = getNextCenterPool(state);
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
       state,
       updatedPlayer,
-      nextCenterPool,
       overloadDamage,
       channelTriggered
     );
@@ -686,7 +668,6 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
       player: updatedPlayer,
-      centerPool: nextCenterPool,
       pendingPlacement: null,
       animatingRunes: [],
       shouldTriggerEndRound: false,
@@ -702,14 +683,13 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+  const shouldEndRound = isRoundExhausted(state.runeforges);
 
   useSelectionStore.getState().clearSelection();
   return {
     ...state,
     player: updatedPlayer,
     overloadRunes: [...state.overloadRunes, ...selectedRunes],
-    centerPool: nextCenterPool,
     turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
@@ -953,7 +933,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
       if (completedLines.length === 0) {
-        const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+        const shouldEndRound = isRoundExhausted(state.runeforges);
 
         return {
           ...state,
@@ -1010,7 +990,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         }
       });
 
-      const shouldEndRound = isRoundExhausted(state.runeforges, state.centerPool);
+      const shouldEndRound = isRoundExhausted(state.runeforges);
       const sequenceId = Date.now();
       const baseHealth = currentPlayer.health;
       const baseArmor = currentPlayer.armor;
@@ -1090,46 +1070,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     if (scoringSequenceForAnimation) {
       runScoringSequence(scoringSequenceForAnimation, set);
     }
-  },
-
-  draftFromCenter: (runeType: RuneType, primaryRuneId?: string) => {
-    set((state) => {
-      const selectionState = useSelectionStore.getState();
-      if (state.turnPhase === 'place') {
-        return attemptAutoPlacement(state, selectionState);
-      }
-      if (state.turnPhase !== 'select') {
-        return state;
-      }
-      const hasAccessibleRuneforges = state.runeforges.some(
-        (f) => f.runes.length > 0
-      );
-
-      if (hasAccessibleRuneforges) {
-        return state;
-      }
-
-      const originalCenterRunes = [...state.centerPool];
-      // Get all runes of selected type from center
-      const selectedRunes = state.centerPool.filter((r: Rune) => r.runeType === runeType);
-      const remainingRunes = state.centerPool.filter((r: Rune) => r.runeType !== runeType);
-
-      // If no runes of this type, do nothing
-      if (selectedRunes.length === 0) return state;
-      const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
-
-      useSelectionStore.getState().setSelectionState({
-        selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
-        selectionTimestamp: Date.now(),
-        draftSource: { type: 'center', originalRunes: originalCenterRunes },
-      });
-
-      return {
-        ...state,
-        centerPool: remainingRunes,
-        turnPhase: 'place' as const,
-      };
-    });
   },
 
   placeRunes: (patternLineIndex: number) => {

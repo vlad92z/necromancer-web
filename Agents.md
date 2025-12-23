@@ -360,7 +360,6 @@ export const useGameStore = create<GameStore>((set) => ({
 export function useFactories() {
   return useGameStore((state) => ({
     runeforges: state.runeforges,
-    centerPool: state.centerPool,
   }));
 }
 ```

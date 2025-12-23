@@ -16,7 +16,6 @@ import { useSelectionStore } from '../../../../state/stores';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
-  centerPool: Rune[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   draftSource: DraftSource | null;
   onCancelSelection: () => void;
@@ -28,7 +27,6 @@ interface RuneSelectionTableProps {
 
 export function RuneSelectionTable({
   runeforges,
-  centerPool,
   onRuneClick,
   draftSource,
   onCancelSelection,
@@ -85,13 +83,12 @@ export function RuneSelectionTable({
     () => {
       const counts = getRuneTypeCounts({
         runeforges,
-        centerPool,
         selectedRunes,
         draftSource
       });
       return counts;
     },
-    [centerPool, draftSource, runeforges, selectedRunes]
+    [draftSource, runeforges, selectedRunes]
   );
 
   const computeSelectionRunes = useCallback(

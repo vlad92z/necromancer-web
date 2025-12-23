@@ -89,7 +89,6 @@ export interface GameContainerSharedProps {
 
   // Board data
   runeforges: GameState['runeforges'];
-  centerPool: GameState['centerPool'];
 
   // Locks and visibility
   lockedPatternLines: number[];
@@ -112,7 +111,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const {
     player,
     runeforges,
-    centerPool,
     runesPerRuneforge,
     runeforgeDraftStage,
     turnPhase,
@@ -226,7 +224,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     player,
     selectedRunes,
     draftSource,
-    centerPool,
   });
 
   useRunePlacementSounds(
@@ -1144,7 +1141,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       hasSelectedRunes,
       draftSource,
       runeforges,
-      centerPool,
       lockedPatternLines,
       animatingRuneIds,
       hiddenCenterRuneIds,
@@ -1156,7 +1152,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }),
     [
       animatingRuneIds,
-      centerPool,
       displayedArmor,
       displayedHealth,
       currentGame,

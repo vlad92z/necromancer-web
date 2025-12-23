@@ -298,7 +298,6 @@ export function initializeSoloGame(
     player: soloPlayer,
     soloDeckTemplate: startingDeckTemplate,
     runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
-    centerPool: [],
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
     game: initialGameNumber,

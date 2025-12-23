@@ -18,7 +18,6 @@ interface SoloGameViewProps {
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
     runeforges,
-    centerPool,
     draftSource,
     runeforgeDraftStage,
     animatingRuneIds,
@@ -53,7 +52,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
         <RuneSelectionTable
           runeforges={runeforges}
-          centerPool={centerPool}
           onRuneClick={onRuneClick}
           draftSource={draftSource}
           runeforgeDraftStage={runeforgeDraftStage}

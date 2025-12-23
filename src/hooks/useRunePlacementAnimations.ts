@@ -33,7 +33,6 @@ interface UseRunePlacementAnimationsParams {
   player: GameState['player'];
   selectedRunes: Rune[];
   draftSource: DraftSource | null;
-  centerPool: GameState['centerPool'];
 }
 
 const OVERLAY_RUNE_SIZE = RUNE_SIZE_CONFIG.large.dimension;
@@ -42,7 +41,6 @@ export function useRunePlacementAnimations({
   player,
   selectedRunes,
   draftSource,
-  centerPool,
 }: UseRunePlacementAnimationsParams) {
   const [animatingRunes, setAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
@@ -439,24 +437,6 @@ export function useRunePlacementAnimations({
       }
     };
   }, [captureRuneforgeRunePositions, draftSource, hideCenterRunes]);
-
-  useLayoutEffect(() => {
-    const snapshot = runeforgeAnimationSnapshotRef.current;
-    if (!snapshot) {
-      return;
-    }
-    if (draftSource && draftSource.type === 'runeforge') {
-      return;
-    }
-    const runeIds = snapshot.runes.map((rune) => rune.id);
-    const centerHasRunes = runeIds.every((runeId) => centerPool.some((rune) => rune.id === runeId));
-    runeforgeAnimationSnapshotRef.current = null;
-    if (!centerHasRunes) {
-      revealCenterRunes(runeIds);
-      return;
-    }
-    animateRuneforgeToCenter(snapshot);
-  }, [draftSource, centerPool, animateRuneforgeToCenter, revealCenterRunes]);
 
   useLayoutEffect(() => {
     if (!draftSource || draftSource.type !== 'runeforge') {
