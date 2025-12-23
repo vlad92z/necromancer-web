@@ -92,7 +92,6 @@ export interface GameContainerSharedProps {
 
   // Locks and visibility
   lockedPatternLines: number[];
-  animatingRuneIds: string[];
   hiddenCenterRuneIds: Set<string>;
 
   // Actions
@@ -214,7 +213,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     animatingRunes: placementAnimatingRunes,
     runeforgeAnimatingRunes: centerAnimatingRunes,
     activeAnimatingRunes,
-    animatingRuneIds,
     hiddenPatternSlots,
     hiddenCenterRuneIds,
     isAnimatingPlacement,
@@ -1142,7 +1140,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       draftSource,
       runeforges,
       lockedPatternLines,
-      animatingRuneIds,
       hiddenCenterRuneIds,
       onRuneClick: handleRuneClick,
       onCenterRuneClick: handleCenterRuneClick,
@@ -1151,7 +1148,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       returnToStartScreen,
     }),
     [
-      animatingRuneIds,
       displayedArmor,
       displayedHealth,
       currentGame,

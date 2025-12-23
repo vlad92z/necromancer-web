@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AnimatingRune, DraftSource, GameState, Rune } from '../types/game';
 import { RUNE_SIZE_CONFIG } from '../styles/tokens';
+import { useUIStore } from '../state/stores/uiStore';
 
 interface SelectionSnapshot {
   runeOrder: Rune[];
@@ -46,6 +47,7 @@ export function useRunePlacementAnimations({
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Set<string>>(new Set());
   const [hiddenCenterRuneIds, setHiddenCenterRuneIds] = useState<Set<string>>(new Set());
+  const setAnimatingRuneIds = useUIStore((state) => state.setAnimatingRuneIds);
   const manualAnimationRef = useRef(false);
   const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
   const previousSelectedCountRef = useRef<number>(selectedRunes.length);
@@ -61,8 +63,8 @@ export function useRunePlacementAnimations({
     () => [...animatingRunes, ...runeforgeAnimatingRunes],
     [animatingRunes, runeforgeAnimatingRunes],
   );
-  const animatingRuneIds = useMemo(
-    () => activeAnimatingRunes.map((rune) => rune.id),
+  const animatingRuneIdSet = useMemo(
+    () => new Set(activeAnimatingRunes.map((rune) => rune.id)),
     [activeAnimatingRunes],
   );
 
@@ -361,6 +363,16 @@ export function useRunePlacementAnimations({
   }, [revealCenterRunes]);
 
   useEffect(() => {
+    setAnimatingRuneIds(animatingRuneIdSet);
+  }, [animatingRuneIdSet, setAnimatingRuneIds]);
+
+  useEffect(() => {
+    return () => {
+      setAnimatingRuneIds(new Set());
+    };
+  }, [setAnimatingRuneIds]);
+
+  useEffect(() => {
     if (selectedRunes.length === 0) {
       selectionSnapshotRef.current = null;
       return undefined;
@@ -448,7 +460,6 @@ export function useRunePlacementAnimations({
     animatingRunes,
     runeforgeAnimatingRunes,
     activeAnimatingRunes,
-    animatingRuneIds,
     hiddenPatternSlots,
     hiddenCenterRuneIds,
     isAnimatingPlacement,

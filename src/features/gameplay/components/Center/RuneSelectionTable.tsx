@@ -13,13 +13,13 @@ import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
 import { useSelectionStore } from '../../../../state/stores';
+import { useUIStore } from '../../../../state/stores/uiStore';
 
 interface RuneSelectionTableProps {
   runeforges: RuneforgeType[];
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   draftSource: DraftSource | null;
   onCancelSelection: () => void;
-  animatingRuneIds?: string[];
   hideOpponentRow?: boolean;
   runeforgeDraftStage: GameState['runeforgeDraftStage'];
 }
@@ -29,7 +29,6 @@ export function RuneSelectionTable({
   onRuneClick,
   draftSource,
   onCancelSelection,
-  animatingRuneIds,
   runeforgeDraftStage,
 }: RuneSelectionTableProps) {
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
@@ -38,6 +37,7 @@ export function RuneSelectionTable({
   const isGlobalDraftStage = runeforgeDraftStage === 'global';
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const animatingRuneIdSet = useUIStore((state) => state.animatingRuneIds);
 
   const computeGlobalHoverState = useCallback(
     (runeType: RuneType): Record<string, RuneType | null> => {
@@ -58,7 +58,6 @@ export function RuneSelectionTable({
     setHoveredRuneTypeByRuneforge({});
   }, [runeforgeDraftStage]);
 
-  const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
   const runeTypes = useMemo(() => RUNE_TYPES, []);
   const runeCounts = useMemo(
     () => {

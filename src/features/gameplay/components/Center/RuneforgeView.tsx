@@ -13,7 +13,7 @@ import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 interface RuneforgeViewProps {
   runeforge: RuneforgeType;
   hoveredRuneType: RuneType | null;
-  animatingRuneIdSet: Set<string> | null;
+  animatingRuneIdSet: Set<string>;
   onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
   onRuneMouseEnter: (
     runeforgeId: string,
@@ -193,7 +193,7 @@ export function RuneforgeView({
 
             const rune = slotRune;
             const isSelectedForDisplay = selectedRuneIdSet.has(rune.id);
-            const isAnimatingRune = animatingRuneIdSet?.has(rune.id) ?? false;
+            const isAnimatingRune = animatingRuneIdSet.has(rune.id);
             const isHighlighted = hoveredRuneType === rune.runeType && !selectionActive;
             const pointerEvents = isAnimatingRune
               ? 'none'
