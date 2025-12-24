@@ -14,20 +14,7 @@ import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { SoloGameView } from './SoloGameBoard';
-
-const BOARD_BASE_WIDTH = 1500;
-const BOARD_BASE_HEIGHT = 1000;
-const BOARD_PADDING = 80;
-const MIN_BOARD_SCALE = 0.3;
-const MIN_AVAILABLE_SIZE = 300;
-
-const computeBoardScale = (width: number, height: number): number => {
-  const availableWidth = Math.max(width - BOARD_PADDING, MIN_AVAILABLE_SIZE);
-  const availableHeight = Math.max(height - BOARD_PADDING, MIN_AVAILABLE_SIZE);
-  const rawScale = Math.min(availableWidth / BOARD_BASE_WIDTH, availableHeight / BOARD_BASE_HEIGHT);
-  const clamped = Math.min(rawScale, 1);
-  return Math.max(clamped, MIN_BOARD_SCALE);
-};
+import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
 export interface GameContainerProps {
   gameState: GameState;
@@ -166,8 +153,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const scaledBoardWidth = BOARD_BASE_WIDTH * boardScale;
-  const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
+  const scaledBoardWidth = SCALING_CONFIG.baseWidth * boardScale;
+  const scaledBoardHeight = SCALING_CONFIG.baseHeight * boardScale;
 
   return (
     <div
@@ -177,8 +164,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         <div
           className="absolute top-0 left-0 origin-top-left bg-[rgba(9,3,24,0.85)] rounded-[36px] border border-white/12 shadow-[0_40px_120px_rgba(0,0,0,0.75)] flex flex-col overflow-hidden backdrop-blur-[14px]"
           style={{
-            width: `${BOARD_BASE_WIDTH}px`,
-            height: `${BOARD_BASE_HEIGHT}px`,
+            width: `${SCALING_CONFIG.baseWidth}px`,
+            height: `${SCALING_CONFIG.baseHeight}px`,
             transform: `scale(${boardScale})`,
             transformOrigin: 'top left',
           }}
