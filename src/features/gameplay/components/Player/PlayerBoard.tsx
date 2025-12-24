@@ -7,13 +7,7 @@ import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { TooltipView } from './TooltipView';
 
-interface PlayerBoardProps {
-  onPlaceRunes?: (patternLineIndex: number) => void;
-}
-
-export function PlayerBoard({
-  onPlaceRunes,
-}: PlayerBoardProps) {
+export function PlayerBoard() {
   const cancelSelection = useGameplayStore((state) => state.cancelSelection);
   const isPlacementAnimating = useUIStore((state) => state.isPlacementAnimating);
   const handleBoardClick = () => {
@@ -28,8 +22,7 @@ export function PlayerBoard({
     >
       <div className="flex flex-col gap-[min(1.2vmin,12px)] h-full">
         <div className="flex flex-row gap-5">
-          <PatternLines
-            onPlaceRunes={onPlaceRunes}/>
+          <PatternLines/>
           <ScoringWall/>
         </div>
         <TooltipView/>

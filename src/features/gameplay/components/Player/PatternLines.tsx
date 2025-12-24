@@ -14,13 +14,8 @@ import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { useSelectionStore } from '../../../../state/stores/selectionStore';
 import { useUIStore } from '../../../../state/stores/uiStore';
 
-interface PatternLinesProps {
-  onPlaceRunes?: (patternLineIndex: number) => void;
-}
-
-export function PatternLines({
-  onPlaceRunes,
-}: PatternLinesProps) {
+export function PatternLines() {
+  const onPlaceRunes = useGameplayStore((state) => state.placeRunes);
   const lockedPatternLines = useGameplayStore((state) => state.lockedPatternLines);
   const wall = useGameplayStore((state) => state.player.wall);
   const patternLines = useGameplayStore((state) => state.player.patternLines);
@@ -93,7 +88,7 @@ export function PatternLines({
         const isLocked = lockedPatternLines.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         
-        const placementClickable = Boolean(selectedRunes.length > 0 && onPlaceRunes);
+        const placementClickable = Boolean(selectedRunes.length > 0);
         const showGlow = isPlacementTarget;
         const buttonDisabled = !(isPlacementTarget && placementClickable);
         const cursorStyle = placementClickable
@@ -111,7 +106,7 @@ export function PatternLines({
           <button
             key={index}
             onClick={() => {
-              if (isPlacementTarget && onPlaceRunes) {
+              if (isPlacementTarget) {
                 onPlaceRunes(index);
               }
             }}
