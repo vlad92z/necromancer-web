@@ -20,7 +20,6 @@ const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
   epic: 25,
 };
 
-interface DeckOverlayProps {
 export function DeckOverlay() {
   const onDisenchantRune = useGameplayStore((state) => state.disenchantRuneFromDeck);
   const isDrafting = useGameplayStore((state) => state.deckDraftState !== null);
