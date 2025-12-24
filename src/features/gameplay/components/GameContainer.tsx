@@ -2,13 +2,12 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { DraftSource, GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
 import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
-import { useGameActions } from '../../../hooks/useGameActions';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
 import { useSelectionStore } from '../../../state/stores/selectionStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -19,9 +18,8 @@ import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnima
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import { SoloGameView } from './SoloGameBoard';
-import { buildOverloadPlacementTooltipCards, buildPatternLinePlacementTooltipCards, buildRuneTooltipCards } from '../../../utils/tooltipCards';
 import { getWallColumnForRune } from '../../../utils/scoring';
-import type { ActiveElement, NavigationDirection } from './keyboardNavigation';
+import type { ActiveElement } from './keyboardNavigation';
 
 const BOARD_BASE_WIDTH = 1500;
 const BOARD_BASE_HEIGHT = 1000;
@@ -101,16 +99,14 @@ export interface GameContainerHandle {
   handleKeyDown: (event: KeyboardEvent) => boolean;
 }
 
-export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>(function GameContainer({ gameState }, ref) {
+export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>(function GameContainer({ gameState }) {
   const {
     player,
     runeforges,
     runesPerRuneforge,
-    runeforgeDraftStage,
     turnPhase,
     lockedPatternLines,
     shouldTriggerEndRound,
-    overloadDamage: strain,
     soloDeckTemplate,
   } = gameState;
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
@@ -120,21 +116,14 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
   const arcaneDustTotal = useArtefactStore((state) => state.arcaneDust);
   const displayedArcaneDust = scoringSequence ? scoringSequence.displayArcaneDust : arcaneDustTotal;
-  const {
-    draftRune,
-    placeRunes,
-    moveRunesToWall,
-    placeRunesInFloor,
-    cancelSelection,
-    disenchantRuneFromDeck,
-  } = useGameActions();
+  const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
+  const disenchantRuneFromDeck = useGameplayStore((state) => state.disenchantRuneFromDeck);
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
   const channelSoundPending = useGameplayStore((state) => state.channelSoundPending);
   const acknowledgeChannelSound = useGameplayStore((state) => state.acknowledgeChannelSound);
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const setSoundVolume = useUIStore((state) => state.setSoundVolume);
@@ -146,46 +135,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = hasSelectedRunes ? selectedRunes[0].runeType : null;
-  const patternLineCount = player.patternLines.length;
 
   const runeforgeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
-  const refocusAfterKeyboardPlacementRef = useRef(false);
-  const runeforgeToPatternLineMap = useMemo(() => [0, 1, 3, 4, 5], []);
-  const patternLineToRuneforgeMap = useMemo(() => {
-    const map = new Map<number, number>();
-    runeforgeToPatternLineMap.forEach((lineIndex, runeforgeIndex) => {
-      if (typeof lineIndex === 'number') {
-        map.set(lineIndex, runeforgeIndex);
-      }
-    });
-    return map;
-  }, [runeforgeToPatternLineMap]);
-  const firstPatternLineElement = useMemo<ActiveElement | null>(
-    () => (patternLineCount > 0 ? { type: 'pattern-line', lineIndex: 0 } : null),
-    [patternLineCount],
-  );
-
-  const resolvePatternLineForRuneforge = useCallback(
-    (runeforgeIndex: number): ActiveElement | null => {
-      const lineIndex = runeforgeToPatternLineMap[runeforgeIndex];
-      if (typeof lineIndex !== 'number') {
-        return null;
-      }
-      if (!player.patternLines[lineIndex]) {
-        return null;
-      }
-      return { type: 'pattern-line', lineIndex };
-    },
-    [player.patternLines, runeforgeToPatternLineMap],
-  );
-
-  const resolveRuneforgeForPatternLine = useCallback(
-    (lineIndex: number): number | null => {
-      const mapped = patternLineToRuneforgeMap.get(lineIndex);
-      return typeof mapped === 'number' ? mapped : null;
-    },
-    [patternLineToRuneforgeMap],
-  );
 
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const showDeckOverlay = useUIStore((state) => state.showDeckOverlay);
@@ -195,7 +146,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     animatingRunes: placementAnimatingRunes,
     activeAnimatingRunes,
     hiddenPatternSlots,
-    isAnimatingPlacement,
     handlePlacementAnimationComplete,
   } = useRunePlacementAnimations({
     player,
@@ -219,13 +169,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }
     prevArcaneDustRef.current = displayedArcaneDust;
   }, [displayedArcaneDust, playArcaneDust]);
-
-  const handleRuneClick = useCallback(
-    (runeforgeId: string, runeType: RuneType, runeId: string) => {
-      draftRune(runeforgeId, runeType, runeId);
-    },
-    [draftRune],
-  );
 
   useEffect(() => {
     setPlayerHiddenPatternSlots(hiddenPatternSlots);
@@ -293,38 +236,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     },
     [setSoundVolume],
   );
-
-  const handleCancelSelection = useCallback(() => {
-    if (isAnimatingPlacement) {
-      return;
-    }
-    cancelSelection();
-  }, [cancelSelection, isAnimatingPlacement]);
-
-  const handlePlaceRunesInFloorWrapper = useCallback(() => {
-    if (isAnimatingPlacement) {
-      return;
-    }
-    placeRunesInFloor();
-  }, [isAnimatingPlacement, placeRunesInFloor]);
-
-  const handlePatternLinePlacement = useCallback(
-    (patternLineIndex: number) => {
-      if (isAnimatingPlacement) {
-        return;
-      }
-      placeRunes(patternLineIndex);
-    },
-    [isAnimatingPlacement, placeRunes],
-  );
-
-  const handleOverloadAction = useCallback(() => {
-    if (hasSelectedRunes) {
-      handlePlaceRunesInFloorWrapper();
-    } else {
-      useUIStore.getState().toggleOverloadOverlay();
-    }
-  }, [handlePlaceRunesInFloorWrapper, hasSelectedRunes]);
 
   useEffect(() => {
     if (shouldTriggerEndRound) {
@@ -408,24 +319,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     [computeRuneforgeSlots, runeforges],
   );
 
-  interface RunePosition {
-    runeforgeIndex: number;
-    runeIndex: number;
-    runeId: string;
-  }
-
-  const availableRunePositions = useMemo<RunePosition[]>(
-    () => runeforgeSlotLayouts.flatMap((layout, runeforgeIndex) => {
-      if (layout.disabled) {
-        return [];
-      }
-      return layout.slots
-        .map((slotRune, runeIndex) => (slotRune ? { runeforgeIndex, runeIndex, runeId: slotRune.id } : null))
-        .filter((position): position is RunePosition => position !== null);
-    }),
-    [runeforgeSlotLayouts],
-  );
-
   const pickFirstAvailableRune = useCallback((): ActiveElement | null => {
     for (let rowIndex = 0; rowIndex < runeforgeSlotLayouts.length; rowIndex += 1) {
       const layout = runeforgeSlotLayouts[rowIndex];
@@ -439,360 +332,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     }
     return null;
   }, [runeforgeSlotLayouts]);
-
-  useEffect(() => {
-    if (!refocusAfterKeyboardPlacementRef.current) {
-      return;
-    }
-    if (hasSelectedRunes) {
-      return;
-    }
-    const nextRune = pickFirstAvailableRune();
-    setActiveElement(nextRune);
-    refocusAfterKeyboardPlacementRef.current = false;
-  }, [hasSelectedRunes, pickFirstAvailableRune]);
-
-  const chooseBestCandidate = useCallback(
-    (
-      candidates: RunePosition[],
-      score: (candidate: RunePosition) => [number, number],
-    ): RunePosition | null => {
-      let best: RunePosition | null = null;
-      let bestScore: [number, number] | null = null;
-
-      candidates.forEach((candidate) => {
-        const candidateScore = score(candidate);
-        if (!bestScore || candidateScore[0] < bestScore[0] || (candidateScore[0] === bestScore[0] && candidateScore[1] < bestScore[1])) {
-          best = candidate;
-          bestScore = candidateScore;
-        }
-      });
-
-      return best;
-    },
-    [],
-  );
-
-  const pickFirstRuneInRuneforge = useCallback(
-    (runeforgeIndex: number): ActiveElement | null => {
-      const candidates = availableRunePositions.filter((position) => position.runeforgeIndex === runeforgeIndex);
-      if (candidates.length === 0) {
-        return null;
-      }
-      const best = chooseBestCandidate(candidates, (candidate) => [candidate.runeIndex, 0]);
-      return best ? { type: 'runeforge-rune', runeforgeIndex: best.runeforgeIndex, runeIndex: best.runeIndex } : null;
-    },
-    [availableRunePositions, chooseBestCandidate],
-  );
-
-  const navigateFromSettingsbutton = useCallback(
-    (direction: NavigationDirection, current: ActiveElement): ActiveElement | null => {
-      if (direction === 'right') {
-        return { type: 'overload' };
-      }
-      if (direction === 'down') {
-        const fallback = pickFirstAvailableRune();
-        return fallback ?? current;
-      }
-      return current;
-    },
-    [pickFirstAvailableRune],
-  );
-
-  const navigateFromOverloadButton = useCallback(
-    (direction: NavigationDirection, current: ActiveElement): ActiveElement | null => {
-      if (direction === 'right') {
-        return { type: 'deck' };
-      }
-      if (direction === 'left') {
-        return { type: 'settings' };
-      }
-      if (direction === 'down') {
-        if (firstPatternLineElement) {
-          return firstPatternLineElement;
-        }
-        const fallback = pickFirstAvailableRune();
-        return fallback ?? current;
-      }
-      return current;
-    },
-    [firstPatternLineElement, pickFirstAvailableRune],
-  );
-
-  const navigateFromDeckButton = useCallback(
-    (direction: NavigationDirection, current: ActiveElement): ActiveElement | null => {
-      if (direction === 'left') {
-        return { type: 'overload' };
-      }
-      if (direction === 'down') {
-        if (firstPatternLineElement) {
-          return firstPatternLineElement;
-        }
-        const fallback = pickFirstAvailableRune();
-        return fallback ?? current;
-      }
-      return current;
-    },
-    [firstPatternLineElement, pickFirstAvailableRune],
-  );
-
-  const navigateFromPatternLine = useCallback(
-    (direction: NavigationDirection, current: { type: 'pattern-line'; lineIndex: number }): ActiveElement | null => {
-      if (direction === 'up') {
-        if (current.lineIndex === 0) {
-          return { type: 'overload' };
-        }
-        return { type: 'pattern-line', lineIndex: Math.max(0, current.lineIndex - 1) };
-      }
-      if (direction === 'down') {
-        const lastIndex = patternLineCount - 1;
-        if (lastIndex < 0) {
-          return current;
-        }
-        return { type: 'pattern-line', lineIndex: Math.min(lastIndex, current.lineIndex + 1) };
-      }
-
-      if (direction === 'left' && selectedRunes.length === 0) {
-        const mappedRuneforgeIndex = resolveRuneforgeForPatternLine(current.lineIndex);
-        if (mappedRuneforgeIndex !== null) {
-          const mappedRune = pickFirstRuneInRuneforge(mappedRuneforgeIndex);
-          if (mappedRune) {
-            return mappedRune;
-          }
-        }
-        const fallback = pickFirstAvailableRune();
-        return fallback ?? current;
-      }
-      return current;
-    },
-    [patternLineCount, pickFirstAvailableRune, pickFirstRuneInRuneforge, resolveRuneforgeForPatternLine, selectedRunes.length],
-  );
-
-  const selectClosestRuneFromRuneforge = useCallback(
-    (direction: NavigationDirection, current: { type: 'runeforge-rune'; runeforgeIndex: number; runeIndex: number }): ActiveElement | null => {
-      const currentRune = availableRunePositions.find(
-        (position) => position.runeforgeIndex === current.runeforgeIndex && position.runeIndex === current.runeIndex,
-      );
-
-      if (!currentRune) {
-        return pickFirstAvailableRune();
-      }
-      const sameRowCandidates = availableRunePositions.filter((position) => position.runeforgeIndex === currentRune.runeforgeIndex);
-      switch (direction) {
-        case 'left': {
-          const leftCandidates = sameRowCandidates.filter((position) => position.runeIndex < currentRune.runeIndex);
-          const bestLeft = chooseBestCandidate(leftCandidates, (candidate) => [currentRune.runeIndex - candidate.runeIndex, 0]);
-          if (bestLeft) {
-            return { type: 'runeforge-rune', runeforgeIndex: bestLeft.runeforgeIndex, runeIndex: bestLeft.runeIndex };
-          }
-
-          const anyLeft = availableRunePositions.filter((position) => position.runeIndex < currentRune.runeIndex);
-          const bestAnyLeft = chooseBestCandidate(
-            anyLeft,
-            (candidate) => [currentRune.runeIndex - candidate.runeIndex, Math.abs(candidate.runeforgeIndex - currentRune.runeforgeIndex)],
-          );
-          return bestAnyLeft
-            ? { type: 'runeforge-rune', runeforgeIndex: bestAnyLeft.runeforgeIndex, runeIndex: bestAnyLeft.runeIndex }
-            : current;
-        }
-        case 'right': {
-          const rightCandidates = sameRowCandidates.filter((position) => position.runeIndex > currentRune.runeIndex);
-          const bestRight = chooseBestCandidate(rightCandidates, (candidate) => [candidate.runeIndex - currentRune.runeIndex, 0]);
-          if (bestRight) {
-            return { type: 'runeforge-rune', runeforgeIndex: bestRight.runeforgeIndex, runeIndex: bestRight.runeIndex };
-          }
-
-          const anyRight = availableRunePositions.filter((position) => position.runeIndex > currentRune.runeIndex);
-          const bestAnyRight = chooseBestCandidate(
-            anyRight,
-            (candidate) => [candidate.runeIndex - currentRune.runeIndex, Math.abs(candidate.runeforgeIndex - currentRune.runeforgeIndex)],
-          );
-          if (bestAnyRight) {
-            return { type: 'runeforge-rune', runeforgeIndex: bestAnyRight.runeforgeIndex, runeIndex: bestAnyRight.runeIndex };
-          }
-
-          const mappedPatternLine = resolvePatternLineForRuneforge(currentRune.runeforgeIndex);
-          return mappedPatternLine ?? current;
-        }
-        case 'up': {
-          const above = availableRunePositions.filter((position) => position.runeforgeIndex < currentRune.runeforgeIndex);
-          const bestAbove = chooseBestCandidate(
-            above,
-            (candidate) => [currentRune.runeforgeIndex - candidate.runeforgeIndex, Math.abs(candidate.runeIndex - currentRune.runeIndex)],
-          );
-          if (bestAbove) {
-            return { type: 'runeforge-rune', runeforgeIndex: bestAbove.runeforgeIndex, runeIndex: bestAbove.runeIndex };
-          }
-
-          return { type: 'settings' };
-        }
-        case 'down': {
-          const below = availableRunePositions.filter((position) => position.runeforgeIndex > currentRune.runeforgeIndex);
-          const bestBelow = chooseBestCandidate(
-            below,
-            (candidate) => [candidate.runeforgeIndex - currentRune.runeforgeIndex, Math.abs(candidate.runeIndex - currentRune.runeIndex)],
-          );
-          return bestBelow
-            ? { type: 'runeforge-rune', runeforgeIndex: bestBelow.runeforgeIndex, runeIndex: bestBelow.runeIndex }
-            : current;
-        }
-        default:
-          return current;
-      }
-    },
-    [availableRunePositions, chooseBestCandidate, pickFirstAvailableRune, resolvePatternLineForRuneforge],
-  );
-
-  const resolveNextElement = useCallback(
-    (direction: NavigationDirection, current: ActiveElement | null): ActiveElement | null => {
-      if (current?.type === 'settings') {
-        return navigateFromSettingsbutton(direction, current);
-      }
-
-      if (current?.type === 'overload') {
-        return navigateFromOverloadButton(direction, current);
-      }
-
-      if (current?.type === 'deck') {
-        return navigateFromDeckButton(direction, current);
-      }
-
-      if (current?.type === 'pattern-line') {
-        return navigateFromPatternLine(direction, current);
-      }
-
-      if (availableRunePositions.length === 0) {
-        return current;
-      }
-
-      if (!current || current.type !== 'runeforge-rune') {
-        return pickFirstAvailableRune();
-      }
-
-      return selectClosestRuneFromRuneforge(direction, current);
-    },
-    [
-      availableRunePositions,
-      navigateFromDeckButton,
-      navigateFromOverloadButton,
-      navigateFromPatternLine,
-      navigateFromSettingsbutton,
-      pickFirstAvailableRune,
-      selectClosestRuneFromRuneforge,
-    ],
-  );
-
-  const resolvePlacementNavigation = useCallback(
-    (direction: Extract<NavigationDirection, 'up' | 'down'>, current: ActiveElement | null): ActiveElement | null => {
-      const targets = buildPlacementTargets();
-      if (targets.length === 0) {
-        return null;
-      }
-
-      const findIndex = (element: ActiveElement | null): number => {
-        if (!element) {
-          return -1;
-        }
-
-        return targets.findIndex((target) => {
-          if (target.type !== element.type) {
-            return false;
-          }
-
-          if (target.type === 'pattern-line' && element.type === 'pattern-line') {
-            return target.lineIndex === element.lineIndex;
-          }
-
-          return true;
-        });
-      };
-
-      const currentIndex = findIndex(current);
-      const firstPlaceableLine = targets.find((target) => target.type === 'pattern-line') ?? targets[0];
-
-      if (currentIndex === -1) {
-        return firstPlaceableLine;
-      }
-
-      if (direction === 'up') {
-        const nextIndex = Math.max(0, currentIndex - 1);
-        return targets[nextIndex];
-      }
-
-      const nextIndex = Math.min(targets.length - 1, currentIndex + 1);
-      return targets[nextIndex];
-    },
-    [buildPlacementTargets],
-  );
-
-  const handleNavigation = useCallback(
-    (direction: NavigationDirection) => {
-      if (hasSelectedRunes) {
-        if (direction === 'left' || direction === 'right') {
-          return;
-        }
-
-        if (direction !== 'up' && direction !== 'down') {
-          return;
-        }
-
-        setActiveElement((current) => {
-          const next = resolvePlacementNavigation(direction, current);
-          if (next) {
-            return next;
-          }
-
-          if (current?.type === 'pattern-line' && isPatternLineValidTarget(current.lineIndex)) {
-            return current;
-          }
-
-          if (current?.type === 'overload') {
-            return current;
-          }
-
-          return pickDefaultPlacementTarget() ?? current ?? null;
-        });
-        return;
-      }
-
-      setActiveElement((current) => {
-        const next = resolveNextElement(direction, current);
-        if (!next) {
-          return current ?? null;
-        }
-
-        if (
-          current?.type === 'runeforge-rune'
-          && next.type === 'runeforge-rune'
-          && current.runeforgeIndex === next.runeforgeIndex
-          && current.runeIndex === next.runeIndex
-        ) {
-          return current;
-        }
-
-        return next;
-      });
-    },
-    [hasSelectedRunes, isPatternLineValidTarget, pickDefaultPlacementTarget, resolveNextElement, resolvePlacementNavigation],
-  );
-
-  const computeSelectionRunesForTooltip = useCallback(
-    (runeforgeId: string, runeType: RuneType): Rune[] => {
-      if (runeforgeDraftStage === 'global') {
-        return runeforges
-          .filter((forge) => !(forge.disabled ?? false))
-          .flatMap((forge) => forge.runes.filter((rune) => rune.runeType === runeType));
-      }
-
-      const runeforge = runeforges.find((forge) => forge.id === runeforgeId);
-      if (!runeforge || runeforge.disabled) {
-        return [];
-      }
-
-      return runeforge.runes.filter((rune) => rune.runeType === runeType);
-    },
-    [runeforgeDraftStage, runeforges],
-  );
 
   useEffect(() => {
     if (!activeElement) {
@@ -865,192 +404,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       return defaultPlacementTarget;
     });
   }, [allowKeyboardNavigation, hasSelectedRunes, isPatternLineValidTarget, pickDefaultPlacementTarget]);
-
-  useEffect(() => {
-    if (!allowKeyboardNavigation) {
-      resetTooltipCards();
-      return;
-    }
-
-    if (activeElement?.type === 'runeforge-rune') {
-      const layout = runeforgeSlotLayouts[activeElement.runeforgeIndex];
-      if (layout && !layout.disabled) {
-        const runeAtSlot = layout.slots[activeElement.runeIndex];
-        if (runeAtSlot) {
-          const selectionRunes = computeSelectionRunesForTooltip(layout.runeforgeId, runeAtSlot.runeType);
-          if (selectionRunes.length > 0) {
-            setTooltipCards(buildRuneTooltipCards(selectionRunes, runeAtSlot.id));
-            return;
-          }
-        }
-      }
-    }
-
-    if (activeElement?.type === 'pattern-line' && hasSelectedRunes) {
-      const line = player.patternLines[activeElement.lineIndex];
-      const isPlacementTarget = isPatternLineValidTarget(activeElement.lineIndex);
-      if (line && isPlacementTarget) {
-        const tooltipCards = buildPatternLinePlacementTooltipCards({
-          selectedRunes,
-          patternLineTier: line.tier,
-          patternLineCount: line.count,
-          strain,
-        });
-        if (tooltipCards.length > 0) {
-          setTooltipCards(tooltipCards, true);
-          return;
-        }
-      }
-    }
-
-    if (activeElement?.type === 'overload' && hasSelectedRunes) {
-      const tooltipCards = buildOverloadPlacementTooltipCards(selectedRunes, strain);
-      if (tooltipCards.length > 0) {
-        setTooltipCards(tooltipCards, true);
-        return;
-      }
-    }
-
-    resetTooltipCards();
-  }, [
-    activeElement,
-    allowKeyboardNavigation,
-    computeSelectionRunesForTooltip,
-    hasSelectedRunes,
-    isPatternLineValidTarget,
-    player.patternLines,
-    resetTooltipCards,
-    runeforgeSlotLayouts,
-    selectedRunes,
-    setTooltipCards,
-    strain,
-  ]);
-
-  const selectActiveRune = useCallback(() => {
-    if (hasSelectedRunes) {
-      return;
-    }
-
-    if (activeElement?.type !== 'runeforge-rune') {
-      return;
-    }
-
-    const layout = runeforgeSlotLayouts[activeElement.runeforgeIndex];
-    if (!layout || layout.disabled) {
-      return;
-    }
-
-    const runeAtSlot = layout.slots[activeElement.runeIndex];
-    if (!runeAtSlot) {
-      return;
-    }
-
-    handleRuneClick(layout.runeforgeId, runeAtSlot.runeType, runeAtSlot.id);
-  }, [activeElement, handleRuneClick, hasSelectedRunes, runeforgeSlotLayouts]);
-
-  const handleActiveElementAction = useCallback((): boolean => {
-    if (!activeElement) {
-      return false;
-    }
-
-    if (activeElement.type === 'settings') {
-      useUIStore.getState().toggleSettingsOverlay();
-      return true;
-    }
-
-    if (activeElement.type === 'overload') {
-      handleOverloadAction();
-      return true;
-    }
-
-    if (activeElement.type === 'runeforge-rune') {
-      selectActiveRune();
-      return true;
-    }
-
-    if (activeElement.type === 'pattern-line') {
-      if (!isPatternLineValidTarget(activeElement.lineIndex) || isAnimatingPlacement) {
-        return false;
-      }
-      refocusAfterKeyboardPlacementRef.current = true;
-      handlePatternLinePlacement(activeElement.lineIndex);
-      return true;
-    }
-
-    return false;
-  }, [
-    activeElement,
-    // handleOpenDeckOverlay,
-    handleOverloadAction,
-    handlePatternLinePlacement,
-    isAnimatingPlacement,
-    isPatternLineValidTarget,
-    selectActiveRune
-    ]);
-
-  useImperativeHandle(ref, () => ({
-    handleKeyDown: (event: KeyboardEvent) => {
-      console.log('GameContainer received keydown:', event.key, allowKeyboardNavigation);
-      if (showSettingsOverlay) {
-        return false;
-      }
-
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        if (hasSelectedRunes) {
-          handleCancelSelection();
-          return true;
-        }
-
-        console.log('Toggling settings overlay via Escape key');
-        useUIStore.getState().toggleSettingsOverlay();
-        return true;
-      }
-
-      switch (event.key) {
-        case 'ArrowLeft':
-          if (!allowKeyboardNavigation) {
-            return false;
-          }
-          event.preventDefault();
-          handleNavigation('left');
-          return true;
-        case 'ArrowRight':
-          if (!allowKeyboardNavigation) {
-            return false;
-          }
-          event.preventDefault();
-          handleNavigation('right');
-          return true;
-        case 'ArrowUp':
-          if (!allowKeyboardNavigation) {
-            return false;
-          }
-          event.preventDefault();
-          handleNavigation('up');
-          return true;
-        case 'ArrowDown':
-          if (!allowKeyboardNavigation) {
-            return false;
-          }
-          event.preventDefault();
-          handleNavigation('down');
-          return true;
-        case 'Enter':
-        case ' ': // Space
-        case 'Spacebar': {
-          if (!allowKeyboardNavigation) {
-            return false;
-          }
-          event.preventDefault();
-          return handleActiveElementAction();
-        }
-        default:
-          return false;
-      }
-    },
-  }));
-
 
   const [boardScale, setBoardScale] = useState(() => {
     if (typeof window === 'undefined') {
