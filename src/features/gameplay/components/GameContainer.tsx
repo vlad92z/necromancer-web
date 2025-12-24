@@ -193,12 +193,10 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]); //TODO: this is bad
   const {
     animatingRunes: placementAnimatingRunes,
-    runeforgeAnimatingRunes: centerAnimatingRunes,
     activeAnimatingRunes,
     hiddenPatternSlots,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,
-    handleRuneforgeAnimationComplete,
   } = useRunePlacementAnimations({
     player,
     selectedRunes,
@@ -1122,7 +1120,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       )
       }
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
-      <RuneAnimation animatingRunes={centerAnimatingRunes} onAnimationComplete={handleRuneforgeAnimationComplete} />
     </div>
   );
 });
