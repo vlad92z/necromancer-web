@@ -39,9 +39,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
         <PlayerBoard/>
       </div>
       { deckDraftState && (
-        <DeckDraftingModal
-          draftState={deckDraftState}
-          />
+        <DeckDraftingModal draftState={deckDraftState}/>
       )}
 
       {isGameOver && outcome != null && runePowerTotal != null && (
