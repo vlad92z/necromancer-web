@@ -3,7 +3,6 @@
  */
 
 import { forwardRef, useEffect, useState } from 'react';
-import type { GameState } from '../../../types/game';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
@@ -16,35 +15,7 @@ import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnima
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
-export interface GameContainerProps {
-  gameState: GameState;
-}
-
-export interface GameData {
-  isDefeat: GameState['isDefeat'];
-  runeScore: { currentScore: number; targetScore: number };
-  playerStats: {
-    isActive: boolean;
-    overloadMultiplier: number;
-    game: number;
-    deckCount: number;
-    overloadedRuneCount: number;
-  };
-  targetScore: number;
-  runePowerTotal: number;
-  arcaneDust: number;
-  arcaneDustReward: number;
-  totalDeckSize: number;
-  deckDraftState: GameState['deckDraftState'];
-  onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
-  startNextSoloGame: () => void;
-}
-
-export interface GameContainerHandle {
-  handleKeyDown: (event: KeyboardEvent) => boolean;
-}
-
-export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>(function GameContainer() {
+export const GameContainer = forwardRef(function GameContainer() {
   const shouldTriggerEndRound = useGameplayStore((state) => state.shouldTriggerEndRound);
   const turnPhase = useGameplayStore((state) => state.turnPhase);
   const player = useGameplayStore((state) => state.player);
