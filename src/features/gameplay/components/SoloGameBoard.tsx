@@ -3,23 +3,16 @@
  */
 
 import { memo } from 'react';
-import type { GameContainerSharedProps, GameData } from './GameContainer';
 import { RuneSelectionTable } from './Center/RuneSelectionTable';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
 import { PlayerBoard } from './Player/PlayerBoard';
+import { useGameplayStore } from '../../../state/stores';
 
-interface SoloGameViewProps {
-  shared: GameContainerSharedProps;
-  gameData: GameData;
-}
-
-export const SoloGameView = memo(function SoloGameView({ gameData }: SoloGameViewProps) {
-  const {
-    isDefeat,
-    deckDraftState,
-  } = gameData;
+export const SoloGameView = memo(function SoloGameView() {
+  const isDefeat = useGameplayStore((state) => state.isDefeat);
+  const deckDraftState = useGameplayStore((state) => state.deckDraftState);
 
   return (
     <div className="flex flex-col h-full relative">

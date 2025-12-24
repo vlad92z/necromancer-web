@@ -16,7 +16,6 @@ import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useUIStore } from '../../../state/stores/uiStore';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
-import { getArcaneDustReward } from '../../../utils/arcaneDust';
 import { useArtefactStore } from '../../../state/stores/artefactStore';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import { SoloGameView } from './SoloGameBoard';
@@ -113,20 +112,12 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     shouldTriggerEndRound,
     overloadDamage: strain,
     soloDeckTemplate,
-    overloadRunes,
   } = gameState;
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const draftSource = useSelectionStore((state) => state.draftSource);
   const activeElement = useSelectionStore((state) => state.activeElement);
   const setActiveElement = useSelectionStore((state) => state.setActiveElement);
-  const currentGame = useGameplayStore((state) => state.game);
-  const isDefeat = gameState.isDefeat;
-  const runePowerTotal = gameState.runePowerTotal;
-  const targetScore = gameState.targetScore;
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
-  const displayedHealth = scoringSequence ? scoringSequence.displayHealth : player.health;
-  const displayedArmor = scoringSequence ? scoringSequence.displayArmor : player.armor;
-  const displayedRunePowerTotal = scoringSequence ? scoringSequence.displayRunePowerTotal : runePowerTotal;
   const arcaneDustTotal = useArtefactStore((state) => state.arcaneDust);
   const displayedArcaneDust = scoringSequence ? scoringSequence.displayArcaneDust : arcaneDustTotal;
   const {
@@ -135,9 +126,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     moveRunesToWall,
     placeRunesInFloor,
     cancelSelection,
-    selectDeckDraftRuneforge,
     disenchantRuneFromDeck,
-    startNextSoloGame,
   } = useGameActions();
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
@@ -154,7 +143,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
   const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
   const playArcaneDust = useArcaneDustSound();
-  const isSelectionPhase = turnPhase === 'select';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = hasSelectedRunes ? selectedRunes[0].runeType : null;
@@ -208,7 +196,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     runeforgeAnimatingRunes: centerAnimatingRunes,
     activeAnimatingRunes,
     hiddenPatternSlots,
-    hiddenCenterRuneIds,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,
     handleRuneforgeAnimationComplete,
@@ -225,25 +212,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     acknowledgeOverloadSound,
     channelSoundPending,
     acknowledgeChannelSound
-  );
-
-  const runeScore = useMemo(
-    () => ({
-      currentScore: displayedRunePowerTotal,
-      targetScore: targetScore,
-    }),
-    [displayedRunePowerTotal, targetScore],
-  );
-
-  const playerStats = useMemo(
-    () => ({
-      isActive: true,
-      overloadMultiplier: strain,
-      game: currentGame,
-      deckCount: player.deck.length,
-      overloadedRuneCount: overloadRunes.length,
-    }),
-    [currentGame, overloadRunes.length, player.deck.length, strain],
   );
 
   const prevArcaneDustRef = useRef<number>(displayedArcaneDust);
@@ -1108,78 +1076,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const scaledBoardWidth = BOARD_BASE_WIDTH * boardScale;
   const scaledBoardHeight = BOARD_BASE_HEIGHT * boardScale;
-  const sharedProps: GameContainerSharedProps = useMemo(
-    () => ({
-      player,
-      displayedHealth,
-      displayedArmor,
-      currentPlayerIndex: 0,
-      game: currentGame,
-      strain,
-      isSelectionPhase: isSelectionPhase,
-      isGameOver,
-      runesPerRuneforge,
-      runeforgeDraftStage,
-      selectedRuneType,
-      selectedRunes,
-      hasSelectedRunes,
-      draftSource,
-      runeforges,
-      lockedPatternLines,
-      hiddenCenterRuneIds,
-      onPlaceRunes: handlePatternLinePlacement,
-      returnToStartScreen,
-    }),
-    [
-      displayedArmor,
-      displayedHealth,
-      currentGame,
-      draftSource,
-      handlePatternLinePlacement,
-      hasSelectedRunes,
-      hiddenCenterRuneIds,
-      isSelectionPhase,
-      isGameOver,
-      player,
-      runesPerRuneforge,
-      lockedPatternLines,
-      strain,
-      returnToStartScreen,
-      runeforges,
-      selectedRuneType,
-      runeforgeDraftStage,
-      selectedRunes,
-    ],
-  );
-
-  const gameData: GameData = useMemo(
-    () => ({
-      isDefeat,
-      runeScore,
-      playerStats,
-      targetScore,
-      runePowerTotal: displayedRunePowerTotal,
-      arcaneDust: displayedArcaneDust,
-      arcaneDustReward: getArcaneDustReward(currentGame),
-      totalDeckSize: fullDeck.length,
-      deckDraftState: gameState.deckDraftState,
-      onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
-      startNextSoloGame: startNextSoloGame,
-    }),
-    [
-      displayedArcaneDust,
-      currentGame,
-      gameState.deckDraftState,
-      fullDeck.length,
-      displayedRunePowerTotal,
-      selectDeckDraftRuneforge,
-      isDefeat,
-      runeScore,
-      playerStats,
-      targetScore,
-      startNextSoloGame,
-    ],
-  );
 
   return (
     <div
@@ -1196,7 +1092,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <SoloGameView shared={sharedProps} gameData={gameData} />
+          <SoloGameView/>
         </div>
       </div>
 
