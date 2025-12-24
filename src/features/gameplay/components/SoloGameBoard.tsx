@@ -15,16 +15,9 @@ interface SoloGameViewProps {
   gameData: GameData;
 }
 
-export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
+export const SoloGameView = memo(function SoloGameView({ gameData }: SoloGameViewProps) {
   const {
-    game,
-    isGameOver,
-    returnToStartScreen,
-  } = shared;
-  const {
-    outcome,
-    runePowerTotal,
-    targetScore,
+    isDefeat,
     deckDraftState,
   } = gameData;
 
@@ -38,19 +31,8 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
         <RuneSelectionTable/>
         <PlayerBoard/>
       </div>
-      { deckDraftState && (
-        <DeckDraftingModal draftState={deckDraftState}/>
-      )}
-
-      {isGameOver && outcome != null && runePowerTotal != null && (
-        <SoloGameOverModal
-          outcome={outcome}
-          runePowerTotal={runePowerTotal}
-          game={game}
-          targetScore={targetScore}
-          onReturnToStart={returnToStartScreen}
-        />
-      )}
+      { deckDraftState && (<DeckDraftingModal draftState={deckDraftState}/>)}
+      { isDefeat && (<SoloGameOverModal/>)}
     </div>
   );
 });

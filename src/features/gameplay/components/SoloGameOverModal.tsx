@@ -2,54 +2,37 @@
  * SoloGameOverModal - displays the end-of-run summary for Solo mode
  */
 
-import type { GameOutcome } from '../../../types/game';
 import { useClickSound } from '../../../hooks/useClickSound';
+import { useGameplayStore } from '../../../state/stores';
 
-interface SoloGameOverModalProps {
-  outcome: GameOutcome;
-  runePowerTotal: number;
-  game: number;
-  targetScore?: number;
-  onReturnToStart?: () => void;
-}
-
-export function SoloGameOverModal({ outcome, runePowerTotal, game, targetScore, onReturnToStart }: SoloGameOverModalProps) {
+export function SoloGameOverModal() {
+  const returnToStart = useGameplayStore((state) => state.returnToStartScreen);
+  const runeScore = useGameplayStore((state) => state.runePowerTotal);
+  const targetScore = useGameplayStore((state) => state.targetScore);
+  const game = useGameplayStore((state) => state.game);
   const playClickSound = useClickSound();
-  const heading = outcome === 'victory' ? 'Solo Victory' : outcome === 'defeat' ? 'Defeat' : 'Run Complete';
-  const missedTarget = typeof targetScore === 'number' ? runePowerTotal < targetScore : false;
-  const subline = outcome === 'victory'
-      ? 'No runes remain to continue the run'
-      : outcome === 'defeat'
-        ? missedTarget
-          ? 'Arcane Overload has claimed another victim'
-          : 'Your channel collapsed under overload'
-        : 'The arena falls silent';
-  const accentClasses =
-    outcome === 'victory'
-      ? 'border-emerald-300/70 from-emerald-500/20'
-      : outcome === 'defeat'
-      ? 'border-rose-300/70 from-rose-500/20'
-      : 'border-amber-300/70 from-amber-300/25';
+  const subline = 'You have succumbed to arcance overload.';
+  const accentClasses = 'border-rose-300/70 from-rose-500/20';
 
   return (
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-automin-w-[360px] rounded-[28px] border bg-[rgba(6,4,18,0.95)] px-7 py-8 text-center text-[#f8fafc] shadow-[0_40px_90px_rgba(0,0,0,0.65)]">
       <div
         className={`mb-4 rounded-xl border ${accentClasses} bg-gradient-to-r to-purple-900/50 px-3.5 py-2 text-[12px] font-extrabold uppercase tracking-[0.12em]`}
       >
-        {heading}
+        Defeat
       </div>
       <div className="mb-5 text-[15px] text-slate-300">{subline}</div>
 
       <div className="mb-5 grid grid-cols-3 gap-3">
         <StatCard label="Games Cleared" value={game - 1} accent="#60a5fa" />
-        <StatCard label="Rune Score" value={targetScore ? `${runePowerTotal} / ${targetScore}` : runePowerTotal} accent="#facc15" />
+        <StatCard label="Rune Score" value={`${runeScore} / ${targetScore}`} accent="#facc15" />
       </div>
 
       <button
         type="button"
         onClick={() => {
           playClickSound();
-          onReturnToStart?.();
+          returnToStart();
         }}
         className="w-full rounded-xl border border-white/20 bg-gradient-to-r from-cyan-200/20 to-sky-300/20 px-4 py-3 text-sm font-bold uppercase tracking-[0.08em] text-slate-100 shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_48px_rgba(0,0,0,0.6)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
       >

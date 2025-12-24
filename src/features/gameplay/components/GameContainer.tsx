@@ -49,7 +49,7 @@ export interface GameContainerProps {
 }
 
 export interface GameData {
-  outcome: GameState['outcome'];
+  isDefeat: GameState['isDefeat'];
   runeScore: { currentScore: number; targetScore: number };
   playerStats: {
     isActive: boolean;
@@ -120,7 +120,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const activeElement = useSelectionStore((state) => state.activeElement);
   const setActiveElement = useSelectionStore((state) => state.setActiveElement);
   const currentGame = useGameplayStore((state) => state.game);
-  const outcome = gameState.outcome;
+  const isDefeat = gameState.isDefeat;
   const runePowerTotal = gameState.runePowerTotal;
   const targetScore = gameState.targetScore;
   const scoringSequence = useGameplayStore((state) => state.scoringSequence);
@@ -1154,7 +1154,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const gameData: GameData = useMemo(
     () => ({
-      outcome,
+      isDefeat,
       runeScore,
       playerStats,
       targetScore,
@@ -1173,7 +1173,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       fullDeck.length,
       displayedRunePowerTotal,
       selectDeckDraftRuneforge,
-      outcome,
+      isDefeat,
       runeScore,
       playerStats,
       targetScore,

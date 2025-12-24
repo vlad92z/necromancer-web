@@ -314,7 +314,7 @@ export function initializeSoloGame(
     runePowerTotal: 0,
     targetScore: targetScore,
     runeScoreTargetIncrement: soloConfig.runeScoreTargetIncrement,
-    outcome: null,
+    isDefeat: false,
     patternLineLock: soloConfig.patternLinesLockOnComplete,
     longestRun,
     deckDraftState: null,

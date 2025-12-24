@@ -9,7 +9,6 @@ import type {
   RuneType,
   Player,
   Rune,
-  GameOutcome,
   RunConfig,
   Runeforge,
   ScoringSequenceState,
@@ -110,7 +109,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     shouldTriggerEndRound: false,
     overloadSoundPending: false,
     channelSoundPending: state.channelSoundPending,
-    outcome: 'victory',
+    isDefeat: false,
     longestRun: nextLongestRun,
     targetScore: nextTargetScore,
     baseTargetScore: state.baseTargetScore || nextTargetScore,
@@ -274,7 +273,7 @@ function handlePlayerDefeat(
     overloadRunes: [],
     turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
-    outcome: 'defeat' as GameOutcome,
+    isDefeat: true,
     longestRun: nextLongestRun,
     overloadSoundPending: overloadDamage > 0,
     channelSoundPending: channelTriggered || state.channelSoundPending,
@@ -373,7 +372,7 @@ function prepareRoundReset(state: GameState): GameState {
       runeforges: [],
       turnPhase: 'game-over',
       game: state.game,
-      outcome: 'defeat' as GameOutcome,
+      isDefeat: true,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
       lockedPatternLines: [],
@@ -407,7 +406,7 @@ function prepareRoundReset(state: GameState): GameState {
     round: nextRound,
     overloadDamage: nextStrain,
     startingStrain: nextStrain,
-    outcome: null,
+    isDefeat: false,
     lockedPatternLines: [],
     shouldTriggerEndRound: false,
     scoringSequence: null,
@@ -769,7 +768,7 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
     }
 
     // If the player has been defeated, clear any saved solo run from localStorage
-    if (state.outcome === 'defeat') {
+    if (state.isDefeat) {
       clearSoloState();
       return;
     }
@@ -1038,7 +1037,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         shouldTriggerEndRound: shouldEndRound,
         scoringSequence,
         lockedPatternLines: updatedLockedPatternLines,
-        outcome: state.outcome,
+        isDefeat: state.isDefeat,
         channelSoundPending: nextChannelSoundPending,
         runePowerTotal: targetRunePowerTotal,
       };
@@ -1046,7 +1045,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (targetRunePowerTotal >= state.targetScore) {
         const deckDraftState = enterDeckDraftMode({
           ...baseNextState,
-          outcome: 'victory',
+          isDefeat: false,
           pendingPlacement: null,
           animatingRunes: [],
           shouldTriggerEndRound: false,
@@ -1249,7 +1248,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     useSelectionStore.getState().clearSelection();
     set((state) => {
       // If the last run ended in defeat, ensure persisted state is cleared immediately
-      if (state.outcome === 'defeat') {
+      if (state.isDefeat) {
         try {
           clearSoloState();
         } catch (error) {

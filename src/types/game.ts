@@ -112,11 +112,6 @@ export interface RunConfig {
 }
 
 /**
- * Solo game ending state
- */
-export type GameOutcome = 'victory' | 'defeat' | null;
-
-/**
  * Player state
  */
 export interface Player {
@@ -200,7 +195,7 @@ export interface GameState {
   game: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
   overloadDamage: number;
-  startingOverloadDamage: number; // Configured strain at the start of the run
+  startingStrain: number; // Configured strain at the start of the run
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
@@ -212,7 +207,7 @@ export interface GameState {
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
   runeScoreTargetIncrement: number; // Score increase applied after each victory
-  outcome: GameOutcome; // Solo result (victory/defeat)
+  isDefeat: boolean; // Solo result
   patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
   longestRun: number; // Furthest game reached in any run
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
