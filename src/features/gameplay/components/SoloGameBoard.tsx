@@ -43,8 +43,7 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
       </div>
 
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
-        <RuneSelectionTable
-        />
+        <RuneSelectionTable/>
 
 
         <PlayerBoard

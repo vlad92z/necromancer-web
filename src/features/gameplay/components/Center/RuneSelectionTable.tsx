@@ -15,12 +15,7 @@ import { useArtefactStore } from '../../../../state/stores/artefactStore';
 import { useSelectionStore } from '../../../../state/stores';
 import { useUIStore } from '../../../../state/stores/uiStore';
 
-interface RuneSelectionTableProps {
-  hideOpponentRow?: boolean;
-}
-
-export function RuneSelectionTable({
-}: RuneSelectionTableProps) {
+export function RuneSelectionTable() {
   const draftStage = useGameplayStore((state) => state.runeforgeDraftStage);
   const runeforges = useGameplayStore((state) => state.runeforges);
   const cancelSelection = useGameplayStore((state) => state.cancelSelection);
