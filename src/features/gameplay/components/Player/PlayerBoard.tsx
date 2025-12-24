@@ -40,7 +40,7 @@ export function PlayerBoard({
             wall={player.wall}
             lockedPatternLines={lockedPatternLines}
           />
-          <ScoringWall wall={player.wall} patternLines={player.patternLines} />
+          <ScoringWall/>
         </div>
         <TooltipView/>
       </div>

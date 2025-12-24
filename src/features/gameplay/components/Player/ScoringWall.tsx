@@ -10,11 +10,6 @@ import type { RuneType } from '../../../../types/game';
 import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 
-interface ScoringWallProps {
-  wall: ScoringWallType;
-  patternLines: PatternLine[];
-}
-
 // Layout constants (kept in sync with RuneCell size config)
 const CELL_SIZE = 65; // matches RuneCell size="large"
 const GAP = 4; // gap used between cells in ScoringWall layout
@@ -46,7 +41,9 @@ interface OverlayEdge {
 // We no longer compute the largest connected component. Instead we connect
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
-export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
+export function ScoringWall() {
+  const wall = useGameplayStore((state) => state.player.wall);
+  const patternLines = useGameplayStore((state) => state.player.patternLines);
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
   const previousWallRef = useRef<ScoringWallType | null>(null);
