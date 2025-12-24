@@ -3,7 +3,7 @@
  */
 
 import { forwardRef, useEffect, useState } from 'react';
-import type { DraftSource, GameState, RuneType, Rune } from '../../../types/game';
+import type { GameState } from '../../../types/game';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
@@ -40,46 +40,14 @@ export interface GameData {
   startNextSoloGame: () => void;
 }
 
-export interface GameContainerSharedProps {
-  // Core context
-  player: GameState['player'];
-  displayedHealth: number;
-  displayedArmor: number;
-  game: number;
-  strain: number;
-  isSelectionPhase: boolean;
-  isGameOver: boolean;
-  runesPerRuneforge: number;
-  runeforgeDraftStage: GameState['runeforgeDraftStage'];
-
-  // Selection state
-  selectedRuneType: RuneType | null;
-  selectedRunes: Rune[];
-  hasSelectedRunes: boolean;
-  draftSource: DraftSource | null;
-
-  // Board data
-  runeforges: GameState['runeforges'];
-
-  // Locks and visibility
-  lockedPatternLines: number[];
-  hiddenCenterRuneIds: Set<string>;
-
-  // Actions
-  onPlaceRunes: (patternLineIndex: number) => void;
-  returnToStartScreen: () => void;
-}
-
 export interface GameContainerHandle {
   handleKeyDown: (event: KeyboardEvent) => boolean;
 }
 
-export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>(function GameContainer({ gameState }) {
-  const {
-    player,
-    turnPhase,
-    shouldTriggerEndRound,
-  } = gameState;
+export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>(function GameContainer() {
+  const shouldTriggerEndRound = useGameplayStore((state) => state.shouldTriggerEndRound);
+  const turnPhase = useGameplayStore((state) => state.turnPhase);
+  const player = useGameplayStore((state) => state.player);
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const draftSource = useSelectionStore((state) => state.draftSource);
   const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
