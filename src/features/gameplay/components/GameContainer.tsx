@@ -3,7 +3,6 @@
  */
 
 import { forwardRef, useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import type { ChangeEvent } from 'react';
 import type { DraftSource, GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
@@ -115,7 +114,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const arcaneDustTotal = useArtefactStore((state) => state.arcaneDust);
   const displayedArcaneDust = scoringSequence ? scoringSequence.displayArcaneDust : arcaneDustTotal;
   const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
-  const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
@@ -123,9 +121,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const acknowledgeChannelSound = useGameplayStore((state) => state.acknowledgeChannelSound);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
   const soundVolume = useUIStore((state) => state.soundVolume);
-  const setSoundVolume = useUIStore((state) => state.setSoundVolume);
-  const isMusicMuted = useUIStore((state) => state.isMusicMuted);
-  const setMusicMuted = useUIStore((state) => state.setMusicMuted);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
   const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
   const playArcaneDust = useArcaneDustSound();
@@ -216,21 +211,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     const firstPlaceableLine = targets.find((target) => target.type === 'pattern-line');
     return firstPlaceableLine ?? targets[0];
   }, [buildPlacementTargets]);
-
-  const handleToggleMusic = useCallback(() => {
-    setMusicMuted(!isMusicMuted);
-  }, [isMusicMuted, setMusicMuted]);
-
-  const handleVolumeChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const nextValue = Number.parseFloat(event.currentTarget.value);
-      if (!Number.isFinite(nextValue)) {
-        return;
-      }
-      setSoundVolume(nextValue / 100);
-    },
-    [setSoundVolume],
-  );
 
   useEffect(() => {
     if (shouldTriggerEndRound) {
@@ -444,14 +424,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       {showDeckOverlay && (<DeckOverlay/>)}
       {showOverloadOverlay && (<OverloadOverlay/>)}
       {showSettingsOverlay && (
-        <SettingsOverlay
-          soundVolume={soundVolume}
-          isMusicMuted={isMusicMuted}
-          onVolumeChange={handleVolumeChange}
-          onToggleMusic={handleToggleMusic}
-          onQuitRun={returnToStartScreen}
-          showQuitRun={true}
-        />
+        <SettingsOverlay onQuitRun={useGameplayStore.getState().returnToStartScreen}/>
       )
       }
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />

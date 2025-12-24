@@ -8,24 +8,28 @@ import { useClickSound } from '../hooks/useClickSound';
 import { useUIStore } from '../state/stores';
 
 interface SettingsOverlayProps {
-  soundVolume: number;
-  isMusicMuted: boolean;
-  onVolumeChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onToggleMusic: () => void;
   onQuitRun?: () => void;
-  showQuitRun?: boolean;
 }
 
 export function SettingsOverlay({
-  soundVolume,
-  isMusicMuted,
-  onVolumeChange,
-  onToggleMusic,
   onQuitRun,
-  showQuitRun = false,
 }: SettingsOverlayProps): ReactElement | null {
+  const soundVolume = useUIStore((state) => state.soundVolume);
+  const isMusicMuted = useUIStore((state) => state.isMusicMuted);
+  const setSoundVolume = useUIStore((state) => state.setSoundVolume);
   const [activeControl, setActiveControl] = useState<'close' | 'volume' | 'music' | 'quit'>('close');
   const playClickSound = useClickSound();
+  const toggleMusicMuted = useUIStore((state) => state.toggleMusicMuted);
+  const onVolumeChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const nextValue = Number.parseFloat(event.currentTarget.value);
+      if (!Number.isFinite(nextValue)) {
+        return;
+      }
+      setSoundVolume(nextValue / 100);
+    },
+    [setSoundVolume],
+  );
 
   const handleClose = useCallback(() => {
     playClickSound();
@@ -34,8 +38,8 @@ export function SettingsOverlay({
 
   const handleToggleMusic = useCallback(() => {
     playClickSound();
-    onToggleMusic();
-  }, [onToggleMusic, playClickSound]);
+    toggleMusicMuted();
+  }, [toggleMusicMuted, playClickSound]);
 
   const adjustVolumeByStep = useCallback(
     (step: number) => {
@@ -61,7 +65,7 @@ export function SettingsOverlay({
     }
 
     const order: Array<'close' | 'volume' | 'music' | 'quit'> =
-      showQuitRun && onQuitRun ? ['close', 'volume', 'music', 'quit'] : ['close', 'volume', 'music'];
+      onQuitRun ? ['close', 'volume', 'music', 'quit'] : ['close', 'volume', 'music'];
 
     const moveSelection = (direction: 'up' | 'down') => {
       setActiveControl((current) => {
@@ -107,7 +111,7 @@ export function SettingsOverlay({
             handleClose();
           } else if (activeControl === 'music') {
             handleToggleMusic();
-          } else if (activeControl === 'quit' && showQuitRun && onQuitRun) {
+          } else if (activeControl === 'quit' && onQuitRun) {
             onQuitRun();
             handleClose();
           }
@@ -126,7 +130,7 @@ export function SettingsOverlay({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic, onQuitRun, showQuitRun]);
+  }, [activeControl, adjustVolumeByStep, handleClose, handleToggleMusic, onQuitRun]);
 
   return (
     <div
@@ -187,16 +191,14 @@ export function SettingsOverlay({
                 onClick={() => handleToggleMusic()}
                 aria-pressed={isMusicMuted}
                 data-active={activeControl === 'music' ? 'true' : undefined}
-                className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)] ${
-                  isMusicMuted
+                className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)] ${isMusicMuted
                     ? 'bg-gradient-to-r from-rose-400/30 to-rose-900/60'
                     : 'bg-gradient-to-r from-sky-500/30 to-purple-700/50'
-                }`}
+                  }`}
               >
                 <span
-                  className={`h-3 w-3 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.35)] ${
-                    isMusicMuted ? 'bg-rose-400' : 'bg-emerald-400'
-                  }`}
+                  className={`h-3 w-3 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.35)] ${isMusicMuted ? 'bg-rose-400' : 'bg-emerald-400'
+                    }`}
                   aria-hidden={true}
                 />
                 {isMusicMuted ? 'Off' : 'On'}
@@ -206,7 +208,7 @@ export function SettingsOverlay({
         </section>
 
         {/* Quit Run Button (only shown when in-game) */}
-        {showQuitRun && onQuitRun && (
+        {onQuitRun && (
           <section className="space-y-3">
             <ClickSoundButton
               title="Quit Run"

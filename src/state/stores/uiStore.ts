@@ -31,6 +31,7 @@ interface UIStore {
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
   setMusicMuted: (muted: boolean) => void;
+  toggleMusicMuted: () => void;
   markMusicSessionStarted: () => void;
   setHiddenPatternLines: (indices: Set<number>) => void;
   setPlayerHiddenPatternSlots: (slots: Set<string>) => void;
@@ -118,6 +119,10 @@ export const useUIStore = create<UIStore>((set) => ({
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('musicMuted', muted ? 'true' : 'false');
     }
+  },
+
+  toggleMusicMuted: () => {
+    set((state) => ({ isMusicMuted: !state.isMusicMuted }));
   },
 
   markMusicSessionStarted: () => {
