@@ -17,7 +17,6 @@ interface SoloGameViewProps {
 
 export const SoloGameView = memo(function SoloGameView({ shared, gameData }: SoloGameViewProps) {
   const {
-    onPlaceRunes,
     game,
     isGameOver,
     returnToStartScreen,
@@ -26,34 +25,23 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
     outcome,
     runePowerTotal,
     targetScore,
-    arcaneDustReward,
     deckDraftState,
-    isDeckDrafting,
-    totalDeckSize,
-    onSelectDeckDraftRuneforge,
-    startNextSoloGame,
   } = gameData;
 
   return (
     <div className="flex flex-col h-full relative">
       <div>
-        <GameMetadataView />
+        <GameMetadataView/>
       </div>
 
       <div className="grid flex-1 gap-[14px] px-[min(1.2vmin,16px)] mt-[min(1.2vmin,16px)]" style={{ gridTemplateColumns: 'minmax(360px, 1fr) 2.2fr' }}>
         <RuneSelectionTable/>
         <PlayerBoard/>
       </div>
-      {/* TODO: Cleanup */}
-      {isDeckDrafting && deckDraftState && onSelectDeckDraftRuneforge && startNextSoloGame && arcaneDustReward != null && (
-
+      { deckDraftState && (
         <DeckDraftingModal
           draftState={deckDraftState}
-          onSelectRuneforge={onSelectDeckDraftRuneforge}
-          totalDeckSize={totalDeckSize}
-          arcaneDustReward={arcaneDustReward}
-          startNextSoloGame={startNextSoloGame}
-        />
+          />
       )}
 
       {isGameOver && outcome != null && runePowerTotal != null && (

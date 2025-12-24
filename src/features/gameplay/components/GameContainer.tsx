@@ -64,7 +64,6 @@ export interface GameData {
   arcaneDustReward: number;
   totalDeckSize: number;
   deckDraftState: GameState['deckDraftState'];
-  isDeckDrafting: boolean;
   onSelectDeckDraftRuneforge: (runeforgeId: string) => void;
   startNextSoloGame: () => void;
 }
@@ -156,7 +155,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
   const playArcaneDust = useArcaneDustSound();
   const isSelectionPhase = turnPhase === 'select';
-  const isDeckDrafting = turnPhase === 'deck-draft';
   const isGameOver = turnPhase === 'game-over';
   const hasSelectedRunes = selectedRunes.length > 0;
   const selectedRuneType = hasSelectedRunes ? selectedRunes[0].runeType : null;
@@ -868,10 +866,9 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       !showSettingsOverlay
       && !showOverloadOverlay
       && !showRulesOverlay
-      && !isDeckDrafting
       && !isGameOver
     ),
-    [isDeckDrafting, isGameOver, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
+    [isGameOver, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
   );
 
   useEffect(() => {
@@ -1166,7 +1163,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       arcaneDustReward: getArcaneDustReward(currentGame),
       totalDeckSize: fullDeck.length,
       deckDraftState: gameState.deckDraftState,
-      isDeckDrafting,
       onSelectDeckDraftRuneforge: selectDeckDraftRuneforge,
       startNextSoloGame: startNextSoloGame,
     }),
@@ -1175,7 +1171,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
       currentGame,
       gameState.deckDraftState,
       fullDeck.length,
-      isDeckDrafting,
       displayedRunePowerTotal,
       selectDeckDraftRuneforge,
       outcome,
@@ -1212,7 +1207,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
           deck={player.deck}
           fullDeck={fullDeck}
           playerName={player.name}
-          isDeckDrafting={isDeckDrafting}
           onDisenchantRune={disenchantRuneFromDeck}
         />
       )}
