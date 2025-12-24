@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
-import { GameContainer, type GameContainerHandle } from '../features/gameplay/components/GameContainer';
+import { GameContainer } from '../features/gameplay/components/GameContainer';
 import type { GameState, RunConfig } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
@@ -30,7 +30,6 @@ export function SoloStartScreen() {
   const navigate = useNavigate();
   const gameplayState = useGameplayStore();
   const { gameStarted, startSoloRun, prepareSoloMode, hydrateGameState } = gameplayState;
-  const gameState: GameState = gameplayState;
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
@@ -47,7 +46,6 @@ export function SoloStartScreen() {
   const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
   const [activeElement, setActiveElement] = useState<'back' | 'manage' | 'continue' | 'new'>('back');
   const artefactsRef = useRef<ArtefactsViewHandle | null>(null);
-  const gameContainerRef = useRef<GameContainerHandle | null>(null);
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -70,7 +68,7 @@ export function SoloStartScreen() {
       }
 
       // If run ended in defeat, remove saved run from storage and update UI
-      if (persistableState.outcome === 'defeat') {
+      if (persistableState.isDefeat) {
         clearSoloState();
         setHasSavedSoloRun(false);
       }
@@ -177,7 +175,6 @@ export function SoloStartScreen() {
         artefactsRef.current?.handleKeyDown(event);
         return;
       } else if (gameStarted) {
-        gameContainerRef.current?.handleKeyDown(event);
         return;
       }
 
@@ -242,7 +239,7 @@ export function SoloStartScreen() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeElement, artefactsRef, gameContainerRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
+  }, [activeElement, artefactsRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
 
   const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
   const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';
@@ -254,7 +251,7 @@ export function SoloStartScreen() {
     : `${gradientButtonClasses} ${gradientActive}`;
 
   if (gameStarted) {
-    return <GameContainer ref={gameContainerRef} gameState={gameState} />;
+    return <GameContainer/>;
   }
 
   return (

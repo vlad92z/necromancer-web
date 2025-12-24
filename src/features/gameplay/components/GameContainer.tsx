@@ -2,7 +2,7 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { forwardRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
@@ -15,7 +15,7 @@ import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnima
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
-export const GameContainer = forwardRef(function GameContainer() {
+export function GameContainer() {
   const shouldTriggerEndRound = useGameplayStore((state) => state.shouldTriggerEndRound);
   const turnPhase = useGameplayStore((state) => state.turnPhase);
   const player = useGameplayStore((state) => state.player);
@@ -122,4 +122,4 @@ export const GameContainer = forwardRef(function GameContainer() {
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
     </div>
   );
-});
+};
