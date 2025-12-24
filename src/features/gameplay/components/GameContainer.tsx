@@ -5,7 +5,6 @@
 import { forwardRef, useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { DraftSource, GameState, RuneType, Rune, Runeforge as RuneforgeType } from '../../../types/game';
-import { RulesOverlay } from './RulesOverlay';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
 import { useGameplayStore } from '../../../state/stores/gameplayStore';
@@ -107,7 +106,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     turnPhase,
     lockedPatternLines,
     shouldTriggerEndRound,
-    soloDeckTemplate,
   } = gameState;
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const draftSource = useSelectionStore((state) => state.draftSource);
@@ -117,7 +115,6 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
   const arcaneDustTotal = useArtefactStore((state) => state.arcaneDust);
   const displayedArcaneDust = scoringSequence ? scoringSequence.displayArcaneDust : arcaneDustTotal;
   const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
-  const disenchantRuneFromDeck = useGameplayStore((state) => state.disenchantRuneFromDeck);
   const returnToStartScreen = useGameplayStore((state) => state.returnToStartScreen);
   const endRound = useGameplayStore((state) => state.endRound);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
@@ -138,10 +135,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
 
   const runeforgeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
 
-  const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const showDeckOverlay = useUIStore((state) => state.showDeckOverlay);
   const showOverloadOverlay = useUIStore((state) => state.showOverloadOverlay);
-  const fullDeck = useMemo(() => soloDeckTemplate, [soloDeckTemplate]); //TODO: this is bad
   const {
     animatingRunes: placementAnimatingRunes,
     activeAnimatingRunes,
@@ -370,10 +365,9 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     () => (
       !showSettingsOverlay
       && !showOverloadOverlay
-      && !showRulesOverlay
       && !isGameOver
     ),
-    [isGameOver, showOverloadOverlay, showRulesOverlay, showSettingsOverlay],
+    [isGameOver, showOverloadOverlay, showSettingsOverlay],
   );
 
   useEffect(() => {
@@ -447,20 +441,8 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
         </div>
       </div>
 
-      {showRulesOverlay && <RulesOverlay onClose={() => setShowRulesOverlay(false)} />}
-
-      {showDeckOverlay && (
-        <DeckOverlay
-          deck={player.deck}
-          fullDeck={fullDeck}
-          playerName={player.name}
-          onDisenchantRune={disenchantRuneFromDeck}
-        />
-      )}
-
-      {showOverloadOverlay && (
-        <OverloadOverlay />
-      )}
+      {showDeckOverlay && (<DeckOverlay/>)}
+      {showOverloadOverlay && (<OverloadOverlay/>)}
       {showSettingsOverlay && (
         <SettingsOverlay
           soundVolume={soundVolume}
