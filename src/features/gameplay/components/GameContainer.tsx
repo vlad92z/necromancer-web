@@ -111,7 +111,7 @@ export const GameContainer = forwardRef<GameContainerHandle, GameContainerProps>
     turnPhase,
     lockedPatternLines,
     shouldTriggerEndRound,
-    strain,
+    overloadDamage: strain,
     soloDeckTemplate,
     overloadRunes,
   } = gameState;

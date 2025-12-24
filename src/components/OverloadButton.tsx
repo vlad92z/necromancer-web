@@ -21,7 +21,7 @@ const PULSE_TRANSITION: Transition = {
 export function OverloadButton() {
   const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
   const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
-  const strainValue = useGameplayStore((state) => state.strain);
+  const strainValue = useGameplayStore((state) => state.overloadDamage);
   const overloadedRuneCount = useGameplayStore((state) => state.overloadRunes.length);
   const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
   const openOverloadOverlay = useUIStore((state) => state.toggleOverloadOverlay);

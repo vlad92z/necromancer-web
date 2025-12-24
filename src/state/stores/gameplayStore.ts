@@ -226,7 +226,7 @@ function getOverloadResult(
   newlyOverloadedRunes: Rune[],
   state: GameState
 ): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number; channelTriggered: boolean } {
-  const strain = state.strain;
+  const strain = state.overloadDamage;
   const overloadRunesPlaced = newlyOverloadedRunes.length;
   const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
   const { scoreBonus: channelScoreBonus, triggered: channelTriggered } =
@@ -262,7 +262,7 @@ function handlePlayerDefeat(
     runePowerTotal: state.runePowerTotal,
     activeArtefacts: state.activeArtefacts,
     cause: 'overload',
-    strain: state.strain,
+    strain: state.overloadDamage,
     health: updatedPlayer.health,
     targetScore: state.targetScore,
   });
@@ -343,7 +343,7 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
   useSelectionStore.getState().clearSelection();
-  const currentStrain = state.strain;
+  const currentStrain = state.overloadDamage;
   const nextRound = state.round + 1;
   const nextStrain = getOverloadDamageForRound(state.game, nextRound);
   const clearedPlayer = clearFloorLines(state.player);
@@ -368,7 +368,7 @@ function prepareRoundReset(state: GameState): GameState {
     return {
       ...state,
       player: clearedPlayer,
-      strain: nextStrain,
+      overloadDamage: nextStrain,
       startingStrain: nextStrain,
       runeforges: [],
       turnPhase: 'game-over',
@@ -405,8 +405,7 @@ function prepareRoundReset(state: GameState): GameState {
     turnPhase: 'select',
     game: state.game,
     round: nextRound,
-    strain: nextStrain,
-    strainMultiplier: state.strainMultiplier,
+    overloadDamage: nextStrain,
     startingStrain: nextStrain,
     outcome: null,
     lockedPatternLines: [],
@@ -1137,7 +1136,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
         targetScore: nextState.targetScore,
-        strain: nextState.strain,
+        strain: nextState.overloadDamage,
         startingHealth: nextState.startingHealth,
       });
 
@@ -1226,7 +1225,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             : state.tooltipOverrideActive ?? false,
         soloDeckTemplate: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
-        strain: calculatedStrain,
+        overloadDamage: calculatedStrain,
         startingStrain: storedStartingStrain,
         longestRun,
         round: nextRoundNumber,
@@ -1426,7 +1425,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         {
           startingHealth: state.startingHealth,
           startingStrain: nextStrain,
-          strainMultiplier: state.strainMultiplier,
           factoriesPerPlayer: state.factoriesPerPlayer,
           deckRunesPerType,
           targetRuneScore: nextTarget,

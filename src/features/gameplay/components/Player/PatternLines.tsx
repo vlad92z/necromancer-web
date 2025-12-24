@@ -19,7 +19,7 @@ export function PatternLines() {
   const lockedPatternLines = useGameplayStore((state) => state.lockedPatternLines);
   const wall = useGameplayStore((state) => state.player.wall);
   const patternLines = useGameplayStore((state) => state.player.patternLines);
-  const overloadDamage = useGameplayStore((state) => state.strain);
+  const overloadDamage = useGameplayStore((state) => state.overloadDamage);
   const activeElement = useSelectionStore((state) => state.activeElement);
   const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);

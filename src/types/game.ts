@@ -199,16 +199,8 @@ export interface GameState {
   turnPhase: TurnPhase;
   game: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
-  /**
-   * Damage dealt for every overload rune, derived from the current game number.
-   * Progression caps at the final configured value for later games.
-   */
-  strain: number;
-  /**
-   * Reserved for potential future tuning of overload scaling.
-   */
-  strainMultiplier: number;
-  startingStrain: number; // Configured strain at the start of the run
+  overloadDamage: number;
+  startingOverloadDamage: number; // Configured strain at the start of the run
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
