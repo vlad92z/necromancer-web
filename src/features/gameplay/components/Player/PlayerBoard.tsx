@@ -9,14 +9,10 @@ import { TooltipView } from './TooltipView';
 
 interface PlayerBoardProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
-  strain: number;
-  lockedPatternLines: number[];
 }
 
 export function PlayerBoard({
   onPlaceRunes,
-  strain,
-  lockedPatternLines,
 }: PlayerBoardProps) {
   const cancelSelection = useGameplayStore((state) => state.cancelSelection);
   const isPlacementAnimating = useUIStore((state) => state.isPlacementAnimating);
@@ -25,7 +21,6 @@ export function PlayerBoard({
       cancelSelection();
     }
   };
-  const player = useGameplayStore((state) => state.player);
   return (
     <div
       onClick={handleBoardClick}
@@ -34,12 +29,7 @@ export function PlayerBoard({
       <div className="flex flex-col gap-[min(1.2vmin,12px)] h-full">
         <div className="flex flex-row gap-5">
           <PatternLines
-            onPlaceRunes={onPlaceRunes}
-            strain={strain}
-            patternLines={player.patternLines}
-            wall={player.wall}
-            lockedPatternLines={lockedPatternLines}
-          />
+            onPlaceRunes={onPlaceRunes}/>
           <ScoringWall/>
         </div>
         <TooltipView/>

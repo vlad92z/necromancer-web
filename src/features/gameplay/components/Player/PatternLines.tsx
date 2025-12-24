@@ -5,7 +5,7 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import type { PatternLine, Rune, ScoringWall } from '../../../../types/game';
+import type { PatternLine } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
@@ -16,19 +16,15 @@ import { useUIStore } from '../../../../state/stores/uiStore';
 
 interface PatternLinesProps {
   onPlaceRunes?: (patternLineIndex: number) => void;
-  strain: number;
-  patternLines: PatternLine[];
-  wall: ScoringWall;
-  lockedPatternLines: number[];
 }
 
 export function PatternLines({
   onPlaceRunes,
-  strain,
-  patternLines,
-  wall,
-  lockedPatternLines,
 }: PatternLinesProps) {
+  const lockedPatternLines = useGameplayStore((state) => state.lockedPatternLines);
+  const wall = useGameplayStore((state) => state.player.wall);
+  const patternLines = useGameplayStore((state) => state.player.patternLines);
+  const overloadDamage = useGameplayStore((state) => state.strain);
   const activeElement = useSelectionStore((state) => state.activeElement);
   const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
   const selectedRunes = useSelectionStore((state) => state.selectedRunes);
@@ -67,7 +63,7 @@ export function PatternLines({
         selectedRunes,
         patternLineTier: line.tier,
         patternLineCount: line.count,
-        strain,
+        strain: overloadDamage,
       });
       if (tooltipCards.length > 0) {
         setTooltipCards(tooltipCards, true);

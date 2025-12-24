@@ -48,8 +48,6 @@ export const SoloGameView = memo(function SoloGameView({ shared, gameData }: Sol
 
         <PlayerBoard
           onPlaceRunes={onPlaceRunes}
-          strain={strain}
-          lockedPatternLines={lockedPatternLines}
         />
       </div>
       {/* TODO: Cleanup */}
