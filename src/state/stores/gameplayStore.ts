@@ -34,19 +34,6 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 
-
-
-function withRuneforgeDefaults(runeforge: Runeforge): Runeforge {
-  return {
-    ...runeforge,
-    disabled: Boolean(runeforge.disabled),
-  };
-}
-
-function withRuneforgeListDefaults(runeforges: Runeforge[]): Runeforge[] {
-  return runeforges.map(withRuneforgeDefaults);
-}
-
 function areRuneforgesDisabled(runeforges: Runeforge[]): boolean {
   return runeforges.every((runeforge) => (runeforge.disabled ?? false) || runeforge.runes.length === 0);
 }
@@ -400,7 +387,7 @@ function prepareRoundReset(state: GameState): GameState {
   return {
     ...state,
     player: updatedPlayer,
-    runeforges: withRuneforgeListDefaults(filledRuneforges).map((runeforge) => ({ ...runeforge, disabled: false })),
+    runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     turnPhase: 'select',
     game: state.game,
     round: nextRound,
@@ -801,7 +788,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (state.turnPhase !== 'select') {
         return state;
       }
-      const normalizedRuneforges = withRuneforgeListDefaults(state.runeforges);
+      const normalizedRuneforges = state.runeforges;
       const runeforge = normalizedRuneforges.find((f) => f.id === runeforgeId);
       if (!runeforge) return state;
 
@@ -1202,7 +1189,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...nextState.player,
           armor: nextState.player?.armor ?? state.player.armor ?? 0,
         },
-        runeforges: withRuneforgeListDefaults(nextState.runeforges ?? state.runeforges),
+        runeforges: nextState.runeforges,
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
         tooltipCards: nextState.tooltipCards ?? state.tooltipCards ?? createDefaultTooltipCards(),
