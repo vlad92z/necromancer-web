@@ -100,13 +100,9 @@ export interface FloorLine {
  * Solo run configuration values entered on the start screen
  */
 export interface RunConfig {
-  startingHealth: number;
-  startingStrain: number;
-  strainMultiplier: number;
   factoriesPerPlayer: number;
   deckRunesPerType: number;
   targetRuneScore: number;
-  runeScoreTargetIncrement: number;
   victoryDraftPicks: number;
   patternLinesLockOnComplete: boolean;
 }
@@ -206,7 +202,6 @@ export interface GameState {
   shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
-  runeScoreTargetIncrement: number; // Score increase applied after each victory
   isDefeat: boolean; // Solo result
   patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
   longestRun: number; // Furthest game reached in any run

@@ -14,7 +14,7 @@ import type {
   ScoringStep,
   SelectionState,
 } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, RUNE_TYPES, createDefaultTooltipCards } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories, createDefaultTooltipCards } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
@@ -55,7 +55,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     selectionLimit
   );
 
-  const nextTargetScore = state.targetScore + state.runeScoreTargetIncrement;
+  const nextTargetScore = state.targetScore + 25;
 
 
 
@@ -945,7 +945,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const baseRunePowerTotal = state.runePowerTotal;
       const scoringDeltas = accumulateScoringDeltas(scoringSteps);
       arcaneDustGain = scoringDeltas.arcaneDust;
-      const maxHealth = currentPlayer.maxHealth ?? state.startingHealth;
+      const maxHealth = currentPlayer.maxHealth;
       const targetHealth = Math.min(maxHealth, baseHealth + scoringDeltas.healing);
       const targetArmor = Math.max(0, baseArmor + scoringDeltas.armor);
       const targetRunePowerTotal = baseRunePowerTotal + scoringDeltas.damage;
@@ -1068,11 +1068,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  startSoloRun: (config?: Partial<RunConfig>) => {
+  startSoloRun: () => {
     clearScoringTimeout();
     useSelectionStore.getState().clearSelection();
     set(() => {
-      const baseState = initializeSoloGame(config);
+      const baseState = initializeSoloGame();
       const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
       const nextState = {
         ...baseState,
@@ -1093,11 +1093,11 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
   },
 
-  prepareSoloMode: (config?: Partial<RunConfig>) => {
+  prepareSoloMode: () => {
     clearScoringTimeout();
     useSelectionStore.getState().clearSelection();
     set(() => ({
-      ...initializeSoloGame(config),
+      ...initializeSoloGame(),
       gameStarted: false,
     }));
   },
@@ -1181,10 +1181,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
         scoringSequence: null,
-        runeScoreTargetIncrement:
-          typeof nextState.runeScoreTargetIncrement === 'number'
-            ? nextState.runeScoreTargetIncrement
-            : state.runeScoreTargetIncrement,
         victoryDraftPicks:
           typeof nextState.victoryDraftPicks === 'number'
             ? nextState.victoryDraftPicks
@@ -1363,27 +1359,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     set((state) => {
       const deckTemplate = state.fullDeck;
       const nextTarget = state.targetScore;
-      const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
       const nextGame = state.gameIndex + 1;
       const nextStrain = getOverloadDamageForGame(nextGame);
       const previousHealth = Math.max(0, state.player.health);
       const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
       const clampedHealth = Math.min(nextMaxHealth, previousHealth);
-      const nextGameState = initializeSoloGame(
-        {
-          startingHealth: state.startingHealth,
-          startingStrain: nextStrain,
-          factoriesPerPlayer: state.factoriesPerPlayer,
-          deckRunesPerType,
-          targetRuneScore: nextTarget,
-          patternLinesLockOnComplete: state.patternLineLock,
-        },
-        {
-          startingDeck: deckTemplate,
-          targetScore: nextTarget,
-          longestRun: state.longestRun,
-        }
-      );
+      const nextGameState = initializeSoloGame(nextTarget, state.fullDeck);
       const nextState = {
         ...nextGameState,
         player: {

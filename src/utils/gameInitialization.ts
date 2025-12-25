@@ -56,11 +56,6 @@ export function getRuneTypes(): RuneType[] {
   return [...RUNE_TYPES];
 }
 
-const DEFAULT_STARTING_STRAIN = getOverloadDamageForGame(1);
-const DEFAULT_STRAIN_MULTIPLIER = 2;
-const SOLO_TARGET_INCREMENT = 25;
-const DEFAULT_RUNES_PER_RUNEFORGE = 4;
-const STARTING_HEALTH = 100;
 const FACTORIES_PER_PLAYER = 5;
 const DEFAULT_RUNES_PER_TYPE = 20;
 const DEFAULT_SOLO_TARGET_SCORE = 25;
@@ -68,13 +63,9 @@ const DEFAULT_VICTORY_DRAFT_PICKS = 1;
 const DEFAULT_PATTERN_LINE_LOCK = true;
 
 export const DEFAULT_SOLO_CONFIG: RunConfig = {
-  startingHealth: STARTING_HEALTH,
-  startingStrain: DEFAULT_STARTING_STRAIN,
-  strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
   factoriesPerPlayer: FACTORIES_PER_PLAYER,
   deckRunesPerType: DEFAULT_RUNES_PER_TYPE,
   targetRuneScore: DEFAULT_SOLO_TARGET_SCORE,
-  runeScoreTargetIncrement: SOLO_TARGET_INCREMENT,
   victoryDraftPicks: DEFAULT_VICTORY_DRAFT_PICKS,
   patternLinesLockOnComplete: DEFAULT_PATTERN_LINE_LOCK,
 };
@@ -83,7 +74,6 @@ export interface SoloSizingConfig {
   factoriesPerPlayer: number;
   totalRunesPerPlayer: number;
   runesPerRuneforge: number;
-  startingHealth: number;
   overflowCapacity: number;
 }
 
@@ -97,13 +87,9 @@ export function normalizeSoloConfig(config?: Partial<RunConfig>): RunConfig {
   const merged = { ...DEFAULT_SOLO_CONFIG, ...config };
 
   return {
-    startingHealth: Math.max(1, merged.startingHealth),
-    startingStrain: Math.max(0, merged.startingStrain),
-    strainMultiplier: Math.max(1, Math.min(2, merged.strainMultiplier)),
     factoriesPerPlayer: Math.min(6, Math.max(1, Math.round(merged.factoriesPerPlayer))),
     deckRunesPerType: Math.max(1, Math.round(merged.deckRunesPerType)),
     targetRuneScore: Math.max(1, Math.round(merged.targetRuneScore)),
-    runeScoreTargetIncrement: Math.max(1, Math.round(merged.runeScoreTargetIncrement)),
     victoryDraftPicks: Math.max(1, Math.round(merged.victoryDraftPicks)),
     patternLinesLockOnComplete: Boolean(merged.patternLinesLockOnComplete),
   };
@@ -116,12 +102,11 @@ export function getSoloSizingConfig(): SoloSizingConfig {
   const baseSizing = {
     factoriesPerPlayer: 4,
     totalRunesPerPlayer: 48,
-    startingHealth: 150,
     overflowCapacity: 12,
   };
   return {
     ...baseSizing,
-    runesPerRuneforge: DEFAULT_RUNES_PER_RUNEFORGE,
+    runesPerRuneforge: 4,
   };
 }
 
@@ -171,7 +156,7 @@ export function createPlayer(
   id: string,
   name: string,
   startingHealth: number = 300,
-  totalRunesPerPlayer?: number,
+  deck: Rune[],
   overflowCapacity?: number,
   maxHealthOverride?: number,
 ): Player {
@@ -187,7 +172,7 @@ export function createPlayer(
     health: startingHealth,
     maxHealth: maxHealthOverride ?? startingHealth,
     armor: 0,
-    deck: createStartingDeck(totalRunesPerPlayer),
+    deck: deck,
   };
 }
 
@@ -250,52 +235,42 @@ export function fillFactories(
 /**
  * Initialize a solo run using the fixed six-rune setup.
  */
-export function initializeSoloGame(
-  config?: Partial<RunConfig>,
-  options?: SoloInitializationOptions
-): GameState {
-  const soloConfig = normalizeSoloConfig(config);
+export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = createStartingDeck(100)): GameState {
+  // const soloConfig = normalizeSoloConfig(config);
   const initialGameNumber = 1;
   const startingStrain = getOverloadDamageForGame(initialGameNumber);
   const soloSizingConfig = getSoloSizingConfig();
-  const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
-  const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
-  const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * RUNE_TYPES.length;
-  const longestRun = options?.longestRun ?? 0;
-  const soloMaxHealth = soloConfig.startingHealth;
+  const soloRuneforgeCount = 5;
+  const longestRun = 0; //TODO: why is this even needed?
+  const soloMaxHealth = 100;
 
-  const soloPlayer = createPlayer(
+  const player = createPlayer(
     'player-1',
     'Arcane Apprentice',
-    soloConfig.startingHealth,
-    soloDeckSize,
+    soloMaxHealth,
+    fullDeck,
     soloSizingConfig.overflowCapacity,
     soloMaxHealth,
   );
-  if (options?.startingDeck) {
-    soloPlayer.deck = [...options.startingDeck];
-  }
-  const startingDeckTemplate = [...soloPlayer.deck];
-
-  const soloFactories = createSoloFactories(soloPlayer, soloRuneforgeCount);
+  const soloFactories = createSoloFactories(player, soloRuneforgeCount);
   const { runeforges: filledRuneforges, deck } = fillFactories(
     soloFactories,
-    soloPlayer.deck,
+    player.deck,
     soloSizingConfig.runesPerRuneforge
   );
 
-  soloPlayer.deck = deck;
+  player.deck = deck;
 
   return {
     gameStarted: false,
     factoriesPerPlayer: soloRuneforgeCount,
     runesPerRuneforge: soloSizingConfig.runesPerRuneforge,
-    startingHealth: soloConfig.startingHealth,
+    startingHealth: player.maxHealth,
     overflowCapacity: soloSizingConfig.overflowCapacity,
     overloadDamage: startingStrain,
     startingStrain,
-    player: soloPlayer,
-    fullDeck: startingDeckTemplate,
+    player: player,
+    fullDeck: fullDeck,
     runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
@@ -313,14 +288,13 @@ export function initializeSoloGame(
     shouldTriggerEndRound: false,
     runePowerTotal: 0,
     targetScore: targetScore,
-    runeScoreTargetIncrement: soloConfig.runeScoreTargetIncrement,
     isDefeat: false,
-    patternLineLock: soloConfig.patternLinesLockOnComplete,
+    patternLineLock: true,
     longestRun,
     deckDraftState: null,
-    baseTargetScore: soloConfig.targetRuneScore,
+    baseTargetScore: 10,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
-    victoryDraftPicks: soloConfig.victoryDraftPicks,
+    victoryDraftPicks: 3,
   };
 }

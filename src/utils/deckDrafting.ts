@@ -9,12 +9,6 @@ import { getRuneTypes } from './gameInitialization';
 import type { Runeforge } from '../types/game';
 import { modifyDraftRarityWithRing } from './artefactEffects';
 
-//TODO: What are all these for?
-const DEFAULT_DRAFT_PICK_COUNT = 3;
-const DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT = 3;
-const DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE = 4;
-const DEFAULT_DECK_DRAFT_SELECTION_LIMIT = 1;
-
 const BASE_EPIC_CHANCE = 0;
 const BASE_RARE_CHANCE = 0;
 const EPIC_INCREMENT_PER_WIN = 1;
@@ -74,8 +68,8 @@ const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rar
 
 function createDraftRuneforges(
   ownerId: string,
-  runeforgeCount: number = DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-  runesPerRuneforge: number = DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
+  runeforgeCount: number,
+  runesPerRuneforge: number,
   winStreak: number = 0,
   activeArtefacts: ArtefactId[] = []
 ): Runeforge[] {
@@ -99,22 +93,23 @@ function createDraftRuneforges(
         ownerId,
         runes,
         deckDraftEffect,
+        disabled: false,
       };
     });
 }
 
 export function createDeckDraftState(
   ownerId: string,
-  totalPicks: number = DEFAULT_DRAFT_PICK_COUNT,
+  totalPicks: number,
   winStreak: number = 0,
   activeArtefacts: ArtefactId[] = [],
-  selectionLimit: number = DEFAULT_DECK_DRAFT_SELECTION_LIMIT
+  selectionLimit: number
 ): DeckDraftState {
   return {
     runeforges: createDraftRuneforges(
       ownerId,
-      DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-      DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
+      3,
+      4,
       winStreak,
       activeArtefacts
     ),
@@ -136,13 +131,13 @@ export function advanceDeckDraftState(
     return null;
   }
 
-  const selectionLimit = current.selectionLimit ?? DEFAULT_DECK_DRAFT_SELECTION_LIMIT;
+  const selectionLimit = current.selectionLimit;
 
   return {
     runeforges: createDraftRuneforges(
       ownerId,
-      DEFAULT_DECK_DRAFT_RUNEFORGE_COUNT,
-      DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE,
+      3,
+      4,
       winStreak,
       activeArtefacts
     ),
