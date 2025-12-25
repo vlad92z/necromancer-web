@@ -29,6 +29,7 @@ export function GameContainer() {
   const acknowledgeChannelSound = useGameplayStore((state) => state.acknowledgeChannelSound);
   const soundVolume = useUIStore((state) => state.soundVolume);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
+  const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
 
 
   const showDeckOverlay = useUIStore((state) => state.showDeckOverlay);
@@ -36,6 +37,7 @@ export function GameContainer() {
   const {
     animatingRunes: placementAnimatingRunes,
     activeAnimatingRunes,
+    hiddenPatternSlots,
     handlePlacementAnimationComplete,
   } = useRunePlacementAnimations({
     player,
@@ -51,6 +53,10 @@ export function GameContainer() {
     channelSoundPending,
     acknowledgeChannelSound
   );
+
+  useEffect(() => {
+    setPlayerHiddenPatternSlots(hiddenPatternSlots);
+  }, [hiddenPatternSlots, setPlayerHiddenPatternSlots]);
 
   useEffect(() => {
     if (shouldTriggerEndRound) {
