@@ -19,21 +19,22 @@ export function GameContainer() {
   const shouldTriggerEndRound = useGameplayStore((state) => state.shouldTriggerEndRound);
   const turnPhase = useGameplayStore((state) => state.turnPhase);
   const player = useGameplayStore((state) => state.player);
-  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
-  const draftSource = useSelectionStore((state) => state.draftSource);
-  const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
-  const endRound = useGameplayStore((state) => state.endRound);
+  const channelSoundPending = useGameplayStore((state) => state.channelSoundPending);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
-  const channelSoundPending = useGameplayStore((state) => state.channelSoundPending);
   const acknowledgeChannelSound = useGameplayStore((state) => state.acknowledgeChannelSound);
+  const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
+  const endRound = useGameplayStore((state) => state.endRound);
+
+  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
+  const draftSource = useSelectionStore((state) => state.draftSource);
+
   const soundVolume = useUIStore((state) => state.soundVolume);
   const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
-  const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
-
-
   const showDeckOverlay = useUIStore((state) => state.showDeckOverlay);
   const showOverloadOverlay = useUIStore((state) => state.showOverloadOverlay);
+  const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
+
   const {
     animatingRunes: placementAnimatingRunes,
     activeAnimatingRunes,
@@ -70,7 +71,6 @@ export function GameContainer() {
 
   useEffect(() => {
     if (turnPhase !== 'cast') return;
-
     const timer = setTimeout(() => {
       moveRunesToWall();
     }, 750);
@@ -116,14 +116,14 @@ export function GameContainer() {
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <SoloGameView/>
+          <SoloGameView />
         </div>
       </div>
 
-      {showDeckOverlay && (<DeckOverlay/>)}
-      {showOverloadOverlay && (<OverloadOverlay/>)}
+      {showDeckOverlay && (<DeckOverlay />)}
+      {showOverloadOverlay && (<OverloadOverlay />)}
       {showSettingsOverlay && (
-        <SettingsOverlay onQuitRun={useGameplayStore.getState().returnToStartScreen}/>
+        <SettingsOverlay onQuitRun={useGameplayStore.getState().returnToStartScreen} />
       )}
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
     </div>
