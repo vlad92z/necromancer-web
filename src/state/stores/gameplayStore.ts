@@ -836,9 +836,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
           selectionTimestamp,
           draftSource: {
-            type: 'runeforge',
             runeforgeId,
-            movedToCenter: [],
             originalRunes,
             affectedRuneforges: [{ runeforgeId, originalRunes }],
             previousDisabledRuneforgeIds,
@@ -883,9 +881,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
         selectionTimestamp,
         draftSource: {
-          type: 'runeforge',
           runeforgeId,
-          movedToCenter: [],
           originalRunes: runeforge.runes,
           affectedRuneforges,
           previousDisabledRuneforgeIds: normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id),

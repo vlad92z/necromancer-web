@@ -135,10 +135,6 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
     border: 'none',
     background: 'transparent',
   },
-  center: {
-    border: 'none',
-    background: 'transparent',
-  },
   selected: {
     border: `2px solid ${COLORS.ui.accent}`,
     background: '#2c1254',

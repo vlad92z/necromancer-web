@@ -378,39 +378,6 @@ export function useRunePlacementAnimations({
     previousSelectedCountRef.current = selectedRunes.length;
   }, [selectedRunes.length, triggerAutoPlacementAnimation]);
 
-  useEffect(() => {
-    if (!draftSource) {
-      return undefined;
-    }
-    const movedRunes = draftSource.movedToCenter;
-    if (movedRunes.length === 0) {
-      lastRuneforgeAnimationKeyRef.current = null;
-      runeforgeAnimationSnapshotRef.current = null;
-      return undefined;
-    }
-    const selectionKey = `${draftSource.runeforgeId}-${movedRunes.map((rune) => rune.id).join(',')}`;
-    if (lastRuneforgeAnimationKeyRef.current === selectionKey) {
-      return undefined;
-    }
-    lastRuneforgeAnimationKeyRef.current = selectionKey;
-
-    const rafId = requestAnimationFrame(() => {
-      const runePositions = captureRuneforgeRunePositions(movedRunes);
-      runeforgeAnimationSnapshotRef.current = {
-        key: selectionKey,
-        runes: movedRunes,
-        runePositions,
-      };
-      hideCenterRunes(movedRunes.map((rune) => rune.id));
-    });
-    runeforgeMeasurementRafRef.current = rafId;
-    return () => {
-      if (runeforgeMeasurementRafRef.current !== undefined) {
-        cancelAnimationFrame(runeforgeMeasurementRafRef.current);
-      }
-    };
-  }, [captureRuneforgeRunePositions, draftSource, hideCenterRunes]);
-
   useLayoutEffect(() => {
     if (!draftSource) {
       lastRuneforgeAnimationKeyRef.current = null;

@@ -218,9 +218,7 @@ export interface GameState {
 }
 
 export type DraftSource = {
-      type: 'runeforge';
       runeforgeId: string;
-      movedToCenter: Rune[];
       originalRunes: Rune[];
       affectedRuneforges?: { runeforgeId: string; originalRunes: Rune[] }[];
       previousDisabledRuneforgeIds?: string[];
