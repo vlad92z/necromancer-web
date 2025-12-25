@@ -97,15 +97,6 @@ export interface FloorLine {
 }
 
 /**
- * Solo run configuration values entered on the start screen
- */
-export interface RunConfig {
-  targetRuneScore: number;
-  victoryDraftPicks: number;
-  patternLinesLockOnComplete: boolean;
-}
-
-/**
  * Player state
  */
 export interface Player {
