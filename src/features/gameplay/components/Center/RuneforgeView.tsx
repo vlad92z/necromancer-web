@@ -37,14 +37,14 @@ export function RuneforgeView({
   const draftRune = useGameplayStore((state) => state.draftRune);
   const runeSlotAssignmentsRef = useRef<Record<string, number>>({});
   const hasSelectedRunes = selectedRunes.length > 0;
-  const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
-  const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
+  const isGlobalSelection = draftSource && draftSource.selectionMode === 'global';
+  const selectedFromRuneforgeId = draftSource?.runeforgeId ?? null;
   const selectedRuneforgeOriginalRunes = useMemo(
-    () => (draftSource?.type === 'runeforge' ? draftSource.originalRunes : []),
+    () => (draftSource?.originalRunes ?? []),
     [draftSource]
   );
   const globalSelectionOriginals = useMemo(() => {
-    if (draftSource?.type !== 'runeforge' || draftSource.selectionMode !== 'global') {
+    if (draftSource?.selectionMode !== 'global') {
       return null;
     }
     const map = new Map<string, Rune[]>();

@@ -217,8 +217,7 @@ export interface GameState {
   victoryDraftPicks: number; // Number of draft picks granted after a victory
 }
 
-export type DraftSource =
-  | {
+export type DraftSource = {
       type: 'runeforge';
       runeforgeId: string;
       movedToCenter: Rune[];
@@ -228,7 +227,6 @@ export type DraftSource =
       previousRuneforgeDraftStage?: 'single' | 'global';
       selectionMode?: 'single' | 'global';
     }
-  | { type: 'center'; originalRunes: Rune[] };
 
 export interface SelectionState {
   selectedRunes: Rune[]; // Runes currently selected by active player

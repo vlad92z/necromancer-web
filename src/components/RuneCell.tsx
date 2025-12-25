@@ -79,7 +79,7 @@ const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> 
   epic: RUNE_EPIC_ASSETS,
 };
 
-export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'center' | 'selected';
+export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'selected';
 
 export interface RuneCellProps {
   rune?: Rune | null;

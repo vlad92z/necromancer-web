@@ -446,14 +446,6 @@ function cancelSelectionState(state: GameplayStore, selectionState: SelectionSta
     return state;
   }
 
-  if (selectionState.draftSource.type === 'center') {
-    useSelectionStore.getState().clearSelection();
-    return {
-      ...state,
-      turnPhase: 'select' as const,
-    };
-  }
-
   const runeforgeId = selectionState.draftSource.runeforgeId;
   const originalRunes = selectionState.draftSource.originalRunes;
   const affectedRuneforges = selectionState.draftSource.affectedRuneforges ?? [{ runeforgeId, originalRunes }];
