@@ -9,7 +9,6 @@ import type {
   RuneType,
   Player,
   Rune,
-  RunConfig,
   ScoringSequenceState,
   ScoringStep,
   SelectionState,
@@ -45,19 +44,15 @@ function enterDeckDraftMode(state: GameState): GameState {
   }
 
   const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
-  const basePicks = state.victoryDraftPicks;
   const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
   const deckDraftState = createDeckDraftState(
     state.player.id,
-    basePicks,
     nextLongestRun,
     state.activeArtefacts,
     selectionLimit
   );
 
   const nextTargetScore = state.targetScore + 25;
-
-
 
   return {
     ...state,
@@ -77,9 +72,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     baseTargetScore: state.baseTargetScore || nextTargetScore,
   };
 }
-
-// NOTE: overload damage per rune is derived from the current game number and round
-// via getOverloadDamageForRound.
 
 // Navigation callback registry for routing integration
 let navigationCallback: (() => void) | null = null;
@@ -381,8 +373,8 @@ function prepareRoundReset(state: GameState): GameState {
 
 export interface GameplayStore extends GameState {
   // Actions
-  startSoloRun: (config?: Partial<RunConfig>) => void;
-  prepareSoloMode: (config?: Partial<RunConfig>) => void;
+  startSoloRun: (targetRuneScore: number, deck: Rune[]) => void;
+  prepareSoloMode: () => void;
   forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
@@ -1181,10 +1173,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         overloadSoundPending: nextState.overloadSoundPending ?? false,
         runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
         scoringSequence: null,
-        victoryDraftPicks:
-          typeof nextState.victoryDraftPicks === 'number'
-            ? nextState.victoryDraftPicks
-            : state.victoryDraftPicks,
       };
     });
   },

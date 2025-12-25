@@ -268,6 +268,5 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
     baseTargetScore: 10,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
-    victoryDraftPicks: 3,
   };
 }

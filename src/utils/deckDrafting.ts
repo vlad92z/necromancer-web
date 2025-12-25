@@ -100,21 +100,14 @@ function createDraftRuneforges(
 
 export function createDeckDraftState(
   ownerId: string,
-  totalPicks: number,
   winStreak: number = 0,
   activeArtefacts: ArtefactId[] = [],
   selectionLimit: number
 ): DeckDraftState {
   return {
-    runeforges: createDraftRuneforges(
-      ownerId,
-      3,
-      4,
-      winStreak,
-      activeArtefacts
-    ),
-    picksRemaining: totalPicks,
-    totalPicks,
+    runeforges: createDraftRuneforges(ownerId, 3, 4, winStreak, activeArtefacts),
+    picksRemaining: 1,
+    totalPicks: 1,
     selectionLimit,
     selectionsThisOffer: 0,
   };

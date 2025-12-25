@@ -198,7 +198,6 @@ export interface GameState {
   baseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
-  victoryDraftPicks: number; // Number of draft picks granted after a victory
 }
 
 export type DraftSource = {
