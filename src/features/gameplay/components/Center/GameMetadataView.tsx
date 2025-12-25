@@ -12,7 +12,7 @@ import { useGameplayStore, useSelectionStore, useUIStore } from '../../../../sta
 import { useArtefactStore } from '../../../../state/stores/artefactStore';
 
 export function GameMetadataView() {
-  const gameNumber = useGameplayStore((state) => state.game);
+  const gameNumber = useGameplayStore((state) => state.gameIndex);
   const arcaneDust = useArtefactStore((state) => state.arcaneDust);
   const openSettings = useUIStore((state) => state.toggleSettingsOverlay);
   const activeElement = useSelectionStore((state) => state.activeElement);

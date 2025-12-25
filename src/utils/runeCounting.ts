@@ -9,6 +9,7 @@ interface RuneTypeCountInput {
   selectedRunes: Rune[];
 }
 
+//TODO: Use runeTypeCounts instead
 export function getRuneTypeCounts({
   runeforges,
   selectedRunes,
@@ -38,5 +39,14 @@ export function getRuneTypeCounts({
 
   selectedRunes.forEach(countRune);
 
+  return counts;
+}
+
+export function runeTypeCounts(runes: Rune[]): Map<RuneType, number> {
+  const counts = new Map<RuneType, number>();
+  runes.forEach((rune) => {
+    const currentCount = counts.get(rune.runeType) ?? 0
+    counts.set(rune.runeType, currentCount + 1);
+  });
   return counts;
 }

@@ -34,7 +34,7 @@ export function SoloStartScreen() {
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
     const savedState = loadSoloState();
-    const savedGame = savedState?.game ?? 0;
+    const savedGame = savedState?.gameIndex ?? 0;
     return Math.max(storedBest, savedGame);
   });
   const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
@@ -75,7 +75,7 @@ export function SoloStartScreen() {
 
       // Always update the local `longestSoloRun` if store's longestRun or game increased.
       setLongestSoloRun((previousBest) => {
-        const nextBest = Math.max(previousBest, persistableState.longestRun ?? 0, persistableState.game ?? 0);
+        const nextBest = Math.max(previousBest, persistableState.longestRun ?? 0, persistableState.gameIndex ?? 0);
         if (nextBest === previousBest) {
           return previousBest;
         }

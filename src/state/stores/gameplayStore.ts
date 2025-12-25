@@ -10,7 +10,6 @@ import type {
   Player,
   Rune,
   RunConfig,
-  Runeforge,
   ScoringSequenceState,
   ScoringStep,
   SelectionState,
@@ -33,39 +32,19 @@ import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
-
-function areRuneforgesDisabled(runeforges: Runeforge[]): boolean {
-  return runeforges.every((runeforge) => (runeforge.disabled ?? false) || runeforge.runes.length === 0);
-}
-
-function prioritizeRuneById(runes: Rune[], primaryRuneId?: string | null): Rune[] {
-  if (!primaryRuneId) {
-    return runes;
-  }
-  const primaryRune = runes.find((rune) => rune.id === primaryRuneId);
-  if (!primaryRune) {
-    return runes;
-  }
-  return [primaryRune, ...runes.filter((rune) => rune.id !== primaryRuneId)];
-}
-
-function buildRuneTypeCountMap(runes: Rune[]): Map<RuneType, number> {
-  const counts = new Map<RuneType, number>();
-  runes.forEach((rune) => {
-    counts.set(rune.runeType, (counts.get(rune.runeType) ?? 0) + 1);
-  });
-  return counts;
-}
-
-function getSoloDeckTemplate(state: GameState): Rune[] {
-  return state.soloDeckTemplate;
-}
+import { runeTypeCounts } from '../../utils/runeCounting';
+import { primaryRuneFirst } from '../../utils/runeHelpers';
 
 function enterDeckDraftMode(state: GameState): GameState {
-  console.log('gameplayStore: enterDeckDraftMode');
+  //TODO: These should not be handled as p0art of entering draft mode
   useSelectionStore.getState().clearSelection();
-  const deckTemplate = getSoloDeckTemplate(state);
-  const nextLongestRun = Math.max(state.longestRun, state.game);
+  const arcaneDustReward = getArcaneDustReward(state.gameIndex);
+  if (arcaneDustReward > 0) {
+    const newDustTotal = addArcaneDust(arcaneDustReward);
+    useArtefactStore.getState().updateArcaneDust(newDustTotal);
+  }
+
+  const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
   const basePicks = state.victoryDraftPicks;
   const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
   const deckDraftState = createDeckDraftState(
@@ -75,19 +54,15 @@ function enterDeckDraftMode(state: GameState): GameState {
     state.activeArtefacts,
     selectionLimit
   );
-  const arcaneDustReward = getArcaneDustReward(state.game);
+
   const nextTargetScore = state.targetScore + state.runeScoreTargetIncrement;
 
-  if (arcaneDustReward > 0) {
-    const newDustTotal = addArcaneDust(arcaneDustReward);
-    useArtefactStore.getState().updateArcaneDust(newDustTotal);
-  }
+
 
   return {
     ...state,
     deckDraftState,
     deckDraftReadyForNextGame: false,
-    soloDeckTemplate: deckTemplate,
     turnPhase: 'deck-draft' as const,
     runeforges: [],
     runeforgeDraftStage: 'single' as const,
@@ -240,10 +215,10 @@ function handlePlayerDefeat(
   channelTriggered: boolean
 ): GameState {
   console.log('gameplayStore: handlePlayerDefeat');
-  const nextLongestRun = Math.max(state.longestRun, state.game);
+  const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
 
   trackDefeatEvent({
-    gameNumber: state.game,
+    gameNumber: state.gameIndex,
     deck: updatedPlayer.deck,
     runePowerTotal: state.runePowerTotal,
     activeArtefacts: state.activeArtefacts,
@@ -331,17 +306,17 @@ function prepareRoundReset(state: GameState): GameState {
   useSelectionStore.getState().clearSelection();
   const currentStrain = state.overloadDamage;
   const nextRound = state.round + 1;
-  const nextStrain = getOverloadDamageForRound(state.game, nextRound);
+  const nextStrain = getOverloadDamageForRound(state.gameIndex, nextRound);
   const clearedPlayer = clearFloorLines(state.player);
   const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
   const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
 
   if (!playerHasEnough) {
     // Defeat
-    const nextLongestRun = Math.max(state.longestRun, state.game);
+    const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
 
     trackDefeatEvent({
-      gameNumber: state.game,
+      gameNumber: state.gameIndex,
       deck: clearedPlayer.deck,
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
@@ -358,7 +333,7 @@ function prepareRoundReset(state: GameState): GameState {
       startingStrain: nextStrain,
       runeforges: [],
       turnPhase: 'game-over',
-      game: state.game,
+      gameIndex: state.gameIndex,
       isDefeat: true,
       longestRun: nextLongestRun,
       shouldTriggerEndRound: false,
@@ -389,7 +364,7 @@ function prepareRoundReset(state: GameState): GameState {
     player: updatedPlayer,
     runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
     turnPhase: 'select',
-    game: state.game,
+    gameIndex: state.gameIndex,
     round: nextRound,
     overloadDamage: nextStrain,
     startingStrain: nextStrain,
@@ -412,7 +387,7 @@ export interface GameplayStore extends GameState {
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   startNextSoloGame: () => void;
-  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => void;
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId: string) => void;
   placeRunes: (patternLineIndex: number) => void;
   moveRunesToWall: () => void;
   placeRunesInFloor: () => void;
@@ -779,7 +754,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   // Actions
-  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId?: string) => {
+  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId: string) => {
     set((state) => {
       const selectionState = useSelectionStore.getState();
       if (state.turnPhase === 'place') {
@@ -804,7 +779,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
         if (selectedRunes.length === 0) return state;
 
-        const orderedRunes = prioritizeRuneById(selectedRunes, primaryRuneId);
+        const orderedRunes = primaryRuneFirst(selectedRunes, primaryRuneId);
         const originalRunes = runeforge.runes;
         const previousDisabledRuneforgeIds = normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id);
 
@@ -812,7 +787,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           f.id === runeforgeId ? { ...f, runes: remainingRunes, disabled: true } : f
         );
 
-        const shouldUnlockRuneforges = areRuneforgesDisabled(updatedRuneforges);
+        const shouldUnlockRuneforges = updatedRuneforges.every((runeforge) => (runeforge.disabled))
         const nextRuneforgeDraftStage = shouldUnlockRuneforges ? ('global' as const) : ('single' as const);
         const unlockedRuneforges = shouldUnlockRuneforges
           ? updatedRuneforges.map((f) => ({ ...f, disabled: false }))
@@ -861,7 +836,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
 
-      const orderedRunes = prioritizeRuneById(selectedFromAllRuneforges, primaryRuneId);
+      const orderedRunes = primaryRuneFirst(selectedFromAllRuneforges, primaryRuneId);
 
       const selectionTimestamp = Date.now();
       useSelectionStore.getState().setSelectionState({
@@ -916,7 +891,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
 
       const scoringSteps: ScoringStep[] = [];
-      const overloadRuneCounts = buildRuneTypeCountMap(state.overloadRunes);
+      const overloadRuneCounts = runeTypeCounts(state.overloadRunes);
       let scoringChannelTriggered = false;
 
       completedLines.forEach(({ line, index }) => {
@@ -1106,7 +1081,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       trackNewGameEvent({
-        gameNumber: nextState.game,
+        gameNumber: nextState.gameIndex,
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
         targetScore: nextState.targetScore,
@@ -1154,16 +1129,16 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       //   return state;
       // }
       //TODO WTF is happening?
-      const deckTemplate = nextState.soloDeckTemplate;
+      const deckTemplate = nextState.fullDeck;
       const soloBaseTargetScore =
         typeof nextState.baseTargetScore === 'number'
           ? nextState.baseTargetScore
           : nextState.targetScore;
       const nextGameNumber =
-        typeof nextState.game === 'number'
-          ? nextState.game
-          : typeof state.game === 'number'
-            ? state.game
+        typeof nextState.gameIndex === 'number'
+          ? nextState.gameIndex
+          : typeof state.gameIndex === 'number'
+            ? state.gameIndex
             : 1;
       const nextRoundNumber =
         typeof nextState.round === 'number'
@@ -1197,7 +1172,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           typeof nextState.tooltipOverrideActive === 'boolean'
             ? nextState.tooltipOverrideActive
             : state.tooltipOverrideActive ?? false,
-        soloDeckTemplate: deckTemplate,
+        fullDeck: deckTemplate,
         baseTargetScore: soloBaseTargetScore,
         overloadDamage: calculatedStrain,
         startingStrain: storedStartingStrain,
@@ -1257,7 +1232,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       }
 
       const runeInDeck = state.player.deck.find((rune) => rune.id === runeId);
-      const runeInTemplate = state.soloDeckTemplate.find((rune) => rune.id === runeId);
+      const runeInTemplate = state.fullDeck.find((rune) => rune.id === runeId);
       const runeToRemove = runeInDeck ?? runeInTemplate;
 
       if (!runeToRemove) {
@@ -1276,7 +1251,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const updatedDeck = runeInDeck
         ? state.player.deck.filter((rune) => rune.id !== runeId)
         : state.player.deck;
-      const updatedDeckTemplate = state.soloDeckTemplate.filter((rune) => rune.id !== runeId);
+      const updatedDeckTemplate = state.fullDeck.filter((rune) => rune.id !== runeId);
 
       if (dustAwarded > 0) {
         const nextDustTotal = addArcaneDust(dustAwarded);
@@ -1289,7 +1264,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...state.player,
           deck: updatedDeck,
         },
-        soloDeckTemplate: updatedDeckTemplate,
+        fullDeck: updatedDeckTemplate,
         totalRunesPerPlayer: updatedDeckTemplate.length,
       };
     });
@@ -1307,13 +1282,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         return state;
       }
 
-      const deckTemplate = getSoloDeckTemplate(state);
       const playerAfterEffect = applyDeckDraftEffectToPlayer(
         state.player,
         selectedRuneforge.deckDraftEffect,
         state.startingHealth
       );
-      const updatedDeckTemplate = mergeDeckWithRuneforge(deckTemplate, selectedRuneforge);
+      const updatedDeckTemplate = mergeDeckWithRuneforge(state.fullDeck, selectedRuneforge);
       const updatedPlayer: Player = {
         ...playerAfterEffect,
         deck: mergeDeckWithRuneforge(playerAfterEffect.deck, selectedRuneforge),
@@ -1343,7 +1317,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           return {
             ...state,
             player: updatedPlayer,
-            soloDeckTemplate: updatedDeckTemplate,
+            fullDeck: updatedDeckTemplate,
             totalRunesPerPlayer: updatedDeckTemplate.length,
             deckDraftState: {
               runeforges: [],
@@ -1361,7 +1335,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           ...state,
           player: updatedPlayer,
           deckDraftState: nextDraftState,
-          soloDeckTemplate: updatedDeckTemplate,
+          fullDeck: updatedDeckTemplate,
           totalRunesPerPlayer: updatedDeckTemplate.length,
           deckDraftReadyForNextGame: false,
         };
@@ -1377,7 +1351,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
         player: updatedPlayer,
         deckDraftState: partialDraftState,
-        soloDeckTemplate: updatedDeckTemplate,
+        fullDeck: updatedDeckTemplate,
         totalRunesPerPlayer: updatedDeckTemplate.length,
         deckDraftReadyForNextGame: false,
       };
@@ -1387,10 +1361,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   startNextSoloGame: () => {
     useSelectionStore.getState().clearSelection();
     set((state) => {
-      const deckTemplate = getSoloDeckTemplate(state);
+      const deckTemplate = state.fullDeck;
       const nextTarget = state.targetScore;
       const deckRunesPerType = Math.max(1, Math.round(deckTemplate.length / RUNE_TYPES.length));
-      const nextGame = state.game + 1;
+      const nextGame = state.gameIndex + 1;
       const nextStrain = getOverloadDamageForGame(nextGame);
       const previousHealth = Math.max(0, state.player.health);
       const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;

@@ -9,7 +9,7 @@ export function SoloGameOverModal() {
   const returnToStart = useGameplayStore((state) => state.returnToStartScreen);
   const runeScore = useGameplayStore((state) => state.runePowerTotal);
   const targetScore = useGameplayStore((state) => state.targetScore);
-  const game = useGameplayStore((state) => state.game);
+  const game = useGameplayStore((state) => state.gameIndex);
   const playClickSound = useClickSound();
   const subline = 'You have succumbed to arcance overload.';
   const accentClasses = 'border-rose-300/70 from-rose-500/20';

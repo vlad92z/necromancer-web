@@ -61,7 +61,7 @@ export interface Runeforge {
   ownerId: Player['id'];
   runes: Rune[];
   deckDraftEffect?: DeckDraftEffect;
-  disabled?: boolean;
+  disabled: boolean;
 }
 
 /**
@@ -186,13 +186,13 @@ export interface GameState {
   startingHealth: number; // Health pool per player for the current configuration
   overflowCapacity: number; // Floor line capacity that determines overflow penalties
   player: Player;
-  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
+  fullDeck: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
   runeforgeDraftStage: 'single' | 'global';
   tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
   tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected
   turnPhase: TurnPhase;
-  game: number; // Current game in this run (increments after each deck draft)
+  gameIndex: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
   overloadDamage: number;
   startingStrain: number; // Configured strain at the start of the run
