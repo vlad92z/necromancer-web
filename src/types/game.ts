@@ -100,8 +100,6 @@ export interface FloorLine {
  * Solo run configuration values entered on the start screen
  */
 export interface RunConfig {
-  factoriesPerPlayer: number;
-  deckRunesPerType: number;
   targetRuneScore: number;
   victoryDraftPicks: number;
   patternLinesLockOnComplete: boolean;

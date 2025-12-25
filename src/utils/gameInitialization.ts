@@ -10,7 +10,6 @@ import type {
   ScoringWall,
   Rune,
   RuneType,
-  RunConfig,
   TooltipCard,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
@@ -56,20 +55,6 @@ export function getRuneTypes(): RuneType[] {
   return [...RUNE_TYPES];
 }
 
-const FACTORIES_PER_PLAYER = 5;
-const DEFAULT_RUNES_PER_TYPE = 20;
-const DEFAULT_SOLO_TARGET_SCORE = 25;
-const DEFAULT_VICTORY_DRAFT_PICKS = 1;
-const DEFAULT_PATTERN_LINE_LOCK = true;
-
-export const DEFAULT_SOLO_CONFIG: RunConfig = {
-  factoriesPerPlayer: FACTORIES_PER_PLAYER,
-  deckRunesPerType: DEFAULT_RUNES_PER_TYPE,
-  targetRuneScore: DEFAULT_SOLO_TARGET_SCORE,
-  victoryDraftPicks: DEFAULT_VICTORY_DRAFT_PICKS,
-  patternLinesLockOnComplete: DEFAULT_PATTERN_LINE_LOCK,
-};
-
 export interface SoloSizingConfig {
   factoriesPerPlayer: number;
   totalRunesPerPlayer: number;
@@ -81,18 +66,6 @@ export interface SoloInitializationOptions {
   startingDeck?: Rune[];
   targetScore?: number;
   longestRun?: number;
-}
-
-export function normalizeSoloConfig(config?: Partial<RunConfig>): RunConfig {
-  const merged = { ...DEFAULT_SOLO_CONFIG, ...config };
-
-  return {
-    factoriesPerPlayer: Math.min(6, Math.max(1, Math.round(merged.factoriesPerPlayer))),
-    deckRunesPerType: Math.max(1, Math.round(merged.deckRunesPerType)),
-    targetRuneScore: Math.max(1, Math.round(merged.targetRuneScore)),
-    victoryDraftPicks: Math.max(1, Math.round(merged.victoryDraftPicks)),
-    patternLinesLockOnComplete: Boolean(merged.patternLinesLockOnComplete),
-  };
 }
 
 /**
