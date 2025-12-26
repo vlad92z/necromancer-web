@@ -503,7 +503,7 @@ type RuneEffect =
 
 **Turn Phases**:
 ```typescript
-type TurnPhase = 'select' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
+type TurnPhase = 'select' | 'place' | 'end-of-round' | 'scoring';
 ```
 - `select`: Player selects runes from runeforge or center
 - `place`: Player places selected runes on pattern line or floor

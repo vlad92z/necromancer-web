@@ -190,7 +190,6 @@ function handlePlayerDefeat(
     ...state,
     player: updatedPlayer,
     overloadRunes: [],
-    turnPhase: 'game-over' as const,
     shouldTriggerEndRound: false,
     isDefeat: true,
     longestRun: nextLongestRun,
@@ -281,7 +280,7 @@ function prepareRoundReset(state: GameState): GameState {
       targetScore: state.targetScore,
     });
 
-    return {...state, turnPhase: 'game-over', isDefeat: true,};
+    return {...state, isDefeat: true,};
   }
 
   const emptyFactories = createSoloFactories(player);
@@ -320,7 +319,6 @@ export interface GameplayStore extends GameState {
   // Actions
   startSoloRun: () => void;
   prepareSoloMode: () => void;
-  forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   startNextSoloGame: () => void;
@@ -1038,24 +1036,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       ...initializeSoloGame(),
       gameStarted: false,
     }));
-  },
-
-  forceSoloVictory: () => {
-    clearScoringTimeout();
-    set((state) => {
-      if (state.turnPhase === 'deck-draft' || state.turnPhase === 'game-over') {
-        return state;
-      }
-      const nextRunePowerTotal = Math.max(state.targetScore, state.runePowerTotal);
-      return enterDeckDraftMode({
-        ...state,
-        runePowerTotal: nextRunePowerTotal,
-        pendingPlacement: null,
-        animatingRunes: [],
-        shouldTriggerEndRound: false,
-        scoringSequence: null,
-      });
-    });
   },
 
   hydrateGameState: (nextState: GameState) => {
