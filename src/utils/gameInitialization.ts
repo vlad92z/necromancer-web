@@ -130,7 +130,6 @@ export function createPlayer(
   name: string,
   startingHealth: number = 300,
   deck: Rune[],
-  overflowCapacity?: number,
   maxHealthOverride?: number,
 ): Player {
   return {
@@ -138,10 +137,6 @@ export function createPlayer(
     name,
     patternLines: createPatternLines(WALL_SIZE),
     wall: createEmptyWall(WALL_SIZE),
-    floorLine: {
-      runes: [],
-      maxCapacity: overflowCapacity ?? 10,
-    },
     health: startingHealth,
     maxHealth: maxHealthOverride ?? startingHealth,
     armor: 0,
@@ -222,7 +217,6 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
     'Arcane Apprentice',
     soloMaxHealth,
     fullDeck,
-    soloSizingConfig.overflowCapacity,
     soloMaxHealth,
   );
   const soloFactories = createSoloFactories(player, soloRuneforgeCount);

@@ -89,14 +89,6 @@ export interface WallCell {
 export type ScoringWall = WallCell[][];
 
 /**
- * Floor line (penalty area for overflow runes)
- */
-export interface FloorLine {
-  runes: Rune[];
-  maxCapacity: number;
-}
-
-/**
  * Player state
  */
 export interface Player {
@@ -104,7 +96,6 @@ export interface Player {
   name: string;
   patternLines: PatternLine[];
   wall: ScoringWall;
-  floorLine: FloorLine;
   health: number; // Current health (starts at configurable amount)
   maxHealth: number; // Maximum health cap (initialized at game start)
   armor: number; // Temporary shield that absorbs damage before health

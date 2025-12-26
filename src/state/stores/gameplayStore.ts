@@ -137,16 +137,6 @@ function getDisplayTotalsForIndex(sequence: ScoringSequenceState, activeIndex: n
   };
 }
 
-function clearFloorLines(player: Player): Player {
-  return {
-    ...player,
-    floorLine: {
-      ...player.floorLine,
-      runes: [],
-    },
-  };
-}
-
 function isRoundExhausted(runeforges: GameState['runeforges']): boolean {
   const allRuneforgesEmpty = runeforges.every((runeforge) => runeforge.runes.length === 0);
   return allRuneforgesEmpty;
@@ -296,12 +286,12 @@ function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<Gamepl
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
   useSelectionStore.getState().clearSelection();
+  const player = state.player;
   const currentStrain = state.overloadDamage;
   const nextRound = state.round + 1;
   const nextStrain = getOverloadDamageForRound(state.gameIndex, nextRound);
-  const clearedPlayer = clearFloorLines(state.player);
   const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
-  const playerHasEnough = clearedPlayer.deck.length >= runesNeededForRound;
+  const playerHasEnough = player.deck.length >= runesNeededForRound;
 
   if (!playerHasEnough) {
     // Defeat
@@ -309,18 +299,18 @@ function prepareRoundReset(state: GameState): GameState {
 
     trackDefeatEvent({
       gameNumber: state.gameIndex,
-      deck: clearedPlayer.deck,
+      deck: player.deck,
       runePowerTotal: state.runePowerTotal,
       activeArtefacts: state.activeArtefacts,
       cause: 'deck-empty',
       strain: currentStrain,
-      health: clearedPlayer.health,
+      health: player.health,
       targetScore: state.targetScore,
     });
 
     return {
       ...state,
-      player: clearedPlayer,
+      player: player,
       overloadDamage: nextStrain,
       startingStrain: nextStrain,
       runeforges: [],
@@ -339,15 +329,15 @@ function prepareRoundReset(state: GameState): GameState {
     };
   }
 
-  const emptyFactories = createSoloFactories(clearedPlayer, state.factoriesPerPlayer);
+  const emptyFactories = createSoloFactories(player, state.factoriesPerPlayer);
   const { runeforges: filledRuneforges, deck } = fillFactories(
     emptyFactories,
-    state.player.deck,
+    player.deck,
     state.runesPerRuneforge
   );
 
   const updatedPlayer: Player = {
-    ...clearedPlayer,
+    ...player,
     deck: deck,
   };
 
@@ -488,11 +478,6 @@ function placeSelectionOnPatternLine(
     firstRuneEffects: nextFirstRuneEffects,
   };
 
-  const updatedFloorLine = {
-    ...currentPlayer.floorLine,
-    runes: [...currentPlayer.floorLine.runes, ...overflowRunes],
-  };
-
   const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
@@ -508,7 +493,6 @@ function placeSelectionOnPatternLine(
   const updatedPlayer = {
     ...currentPlayer,
     patternLines: updatedPatternLines,
-    floorLine: updatedFloorLine,
     health: nextHealth,
     armor: nextArmor,
   };
@@ -576,11 +560,6 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
 
   const currentPlayer = state.player;
 
-  const updatedFloorLine = {
-    ...currentPlayer.floorLine,
-    runes: [...currentPlayer.floorLine.runes, ...selectedRunes],
-  };
-
   const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
     currentPlayer.health,
     currentPlayer.armor,
@@ -591,7 +570,6 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
 
   const updatedPlayer = {
     ...currentPlayer,
-    floorLine: updatedFloorLine,
     health: nextHealth,
     armor: nextArmor,
   };
