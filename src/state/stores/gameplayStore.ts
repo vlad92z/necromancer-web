@@ -517,11 +517,9 @@ function placeSelectionOnPatternLine(
   const shouldEndRound = isRoundExhausted(nextRuneforges);
 
   const nextTurnPhase =
-    completedLines.length > 0
-      ? ('cast' as const)
-      : shouldEndRound
-        ? ('end-of-round' as const)
-        : ('select' as const);
+    shouldEndRound
+      ? ('end-of-round' as const)
+      : ('select' as const);
 
   useSelectionStore.getState().clearSelection();
   return {
@@ -806,7 +804,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     const baseArcaneDust = useArtefactStore.getState().arcaneDust;
 
     set((state) => {
-      if (state.turnPhase !== 'cast') {
+      if (state.scoringSequence) {
         return state;
       }
       const currentPlayer = state.player;

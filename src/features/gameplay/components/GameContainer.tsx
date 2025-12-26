@@ -17,8 +17,8 @@ import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
 export function GameContainer() {
   const shouldTriggerEndRound = useGameplayStore((state) => state.shouldTriggerEndRound);
-  const turnPhase = useGameplayStore((state) => state.turnPhase);
   const player = useGameplayStore((state) => state.player);
+  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
   const channelSoundPending = useGameplayStore((state) => state.channelSoundPending);
   const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
   const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
@@ -70,13 +70,18 @@ export function GameContainer() {
   }, [shouldTriggerEndRound, endRound]);
 
   useEffect(() => {
-    if (turnPhase !== 'cast') return;
+    const hasCompletedLines = player.patternLines.some(
+      (line) => line.count === line.tier && line.runeType !== null
+    );
+    if (!hasCompletedLines || scoringSequence) {
+      return;
+    }
     const timer = setTimeout(() => {
       moveRunesToWall();
     }, 750);
 
     return () => clearTimeout(timer);
-  }, [turnPhase, moveRunesToWall]);
+  }, [player.patternLines, scoringSequence, moveRunesToWall]);
 
   const [boardScale, setBoardScale] = useState(() => {
     if (typeof window === 'undefined') {
