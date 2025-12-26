@@ -406,7 +406,7 @@ function placeSelectionOnPatternLine(
   selectionState: SelectionState,
   patternLineIndex: number
 ): GameplayStore {
-  if (state.turnPhase !== 'place') {
+  if (state.turnPhase !== 'select') {
     return state;
   }
 
@@ -539,7 +539,7 @@ function placeSelectionOnPatternLine(
 }
 
 function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionState): GameplayStore {
-  if (state.turnPhase !== 'place') {
+  if (state.turnPhase !== 'select') {
     return state;
   }
 
@@ -616,7 +616,7 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
 }
 
 function canPlaceSelectionOnAnyLine(state: GameplayStore, selectionState: SelectionState): boolean {
-  if (state.turnPhase !== 'place' || selectionState.selectedRunes.length === 0) {
+  if (state.turnPhase !== 'select' || selectionState.selectedRunes.length === 0) {
     return false;
   }
 
@@ -646,7 +646,7 @@ function canPlaceSelectionOnAnyLine(state: GameplayStore, selectionState: Select
 }
 
 function attemptAutoPlacement(state: GameplayStore, selectionState: SelectionState): GameplayStore {
-  if (state.turnPhase !== 'place' || selectionState.selectedRunes.length === 0) {
+  if (state.turnPhase !== 'select' || selectionState.selectedRunes.length === 0) {
     return state;
   }
 
@@ -722,7 +722,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId: string) => {
     set((state) => {
       const selectionState = useSelectionStore.getState();
-      if (state.turnPhase === 'place') {
+      if (selectionState.selectedRunes.length > 0) {
         return attemptAutoPlacement(state, selectionState);
       }
       if (state.turnPhase !== 'select') {
@@ -760,7 +760,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         return {
           ...state,
-          turnPhase: 'place' as const,
         };
       }
 
@@ -797,7 +796,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
       return {
         ...state,
-        turnPhase: 'place' as const,
       };
     });
   },
@@ -985,7 +983,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
    * 3. If found, place runes there; otherwise cancel selection
    * 4. If more than 1 second has passed, just cancel the selection
    * 
-   * Only works when in the 'place' phase with selected runes.
+   * Only works when in the 'select' phase with selected runes.
    */
   autoPlaceSelection: () => {
     set((state) => attemptAutoPlacement(state, useSelectionStore.getState()));

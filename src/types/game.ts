@@ -105,7 +105,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'select' | 'place' | 'cast' | 'scoring' | 'end-of-round' | 'deck-draft' | 'game-over';
+export type TurnPhase = 'select' | 'cast' | 'scoring' | 'end-of-round' | 'deck-draft' | 'game-over';
 
 /**
  * Animation state for rune movement
