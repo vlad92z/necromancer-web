@@ -345,33 +345,59 @@ function cancelSelectionState(state: GameplayStore, selectionState: SelectionSta
     return state;
   }
 
-  const runeforgeId = selectionState.draftSource.runeforgeId;
-  const originalRunes = selectionState.draftSource.originalRunes;
-  const affectedRuneforges = selectionState.draftSource.affectedRuneforges ?? [{ runeforgeId, originalRunes }];
-  const previousDisabledRuneforgeIds = selectionState.draftSource.previousDisabledRuneforgeIds ?? [];
-  const previousRuneforgeDraftStage = selectionState.draftSource.previousRuneforgeDraftStage ?? state.runeforgeDraftStage;
-
-  const updatedRuneforges = state.runeforges.map((f) => {
-    const match = affectedRuneforges.find((target) => target.runeforgeId === f.id);
-    if (match) {
-      return {
-        ...f,
-        runes: match.originalRunes,
-        disabled: previousDisabledRuneforgeIds.includes(f.id),
-      };
-    }
-    return {
-      ...f,
-      disabled: previousDisabledRuneforgeIds.includes(f.id),
-    };
-  });
-
   useSelectionStore.getState().clearSelection();
   return {
     ...state,
-    runeforges: updatedRuneforges,
-    runeforgeDraftStage: previousRuneforgeDraftStage,
     turnPhase: 'select' as const,
+  };
+}
+
+function applyRuneforgeDraftAfterPlacement(
+  state: GameplayStore,
+  selectionState: SelectionState
+): { runeforges: GameState['runeforges']; runeforgeDraftStage: GameState['runeforgeDraftStage'] } {
+  if (!selectionState.draftSource || selectionState.selectedRunes.length === 0) {
+    return {
+      runeforges: state.runeforges,
+      runeforgeDraftStage: state.runeforgeDraftStage,
+    };
+  }
+
+  const selectedRuneIds = new Set(selectionState.selectedRunes.map((rune) => rune.id));
+  const selectionMode = selectionState.draftSource.selectionMode ?? state.runeforgeDraftStage ?? 'single';
+
+  if (selectionMode === 'single') {
+    const runeforgeId = selectionState.draftSource.runeforgeId;
+    const updatedRuneforges = state.runeforges.map((forge) => {
+      if (forge.id !== runeforgeId) {
+        return forge;
+      }
+      return {
+        ...forge,
+        runes: forge.runes.filter((rune) => !selectedRuneIds.has(rune.id)),
+        disabled: true,
+      };
+    });
+
+    const shouldUnlockRuneforges = updatedRuneforges.length > 0 && updatedRuneforges.every((forge) => forge.disabled);
+    const nextRuneforges = shouldUnlockRuneforges
+      ? updatedRuneforges.map((forge) => ({ ...forge, disabled: false }))
+      : updatedRuneforges;
+
+    return {
+      runeforges: nextRuneforges,
+      runeforgeDraftStage: shouldUnlockRuneforges ? ('global' as const) : ('single' as const),
+    };
+  }
+
+  const updatedRuneforges = state.runeforges.map((forge) => ({
+    ...forge,
+    runes: forge.runes.filter((rune) => !selectedRuneIds.has(rune.id)),
+  }));
+
+  return {
+    runeforges: updatedRuneforges,
+    runeforgeDraftStage: 'global' as const,
   };
 }
 
@@ -452,10 +478,13 @@ function placeSelectionOnPatternLine(
     armor: nextArmor,
   };
 
+  const { runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage } =
+    applyRuneforgeDraftAfterPlacement(state, selectionState);
+
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
-      state,
+      { ...state, runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage },
       updatedPlayer,
       overloadDamage,
       channelTriggered
@@ -468,6 +497,8 @@ function placeSelectionOnPatternLine(
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
       player: updatedPlayer,
+      runeforges: nextRuneforges,
+      runeforgeDraftStage: nextRuneforgeDraftStage,
       pendingPlacement: null,
       animatingRunes: [],
       shouldTriggerEndRound: false,
@@ -483,7 +514,7 @@ function placeSelectionOnPatternLine(
     };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges);
+  const shouldEndRound = isRoundExhausted(nextRuneforges);
 
   const nextTurnPhase =
     completedLines.length > 0
@@ -496,6 +527,8 @@ function placeSelectionOnPatternLine(
   return {
     ...state,
     player: updatedPlayer,
+    runeforges: nextRuneforges,
+    runeforgeDraftStage: nextRuneforgeDraftStage,
     overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
     turnPhase: nextTurnPhase,
     shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
@@ -529,10 +562,13 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     armor: nextArmor,
   };
 
+  const { runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage } =
+    applyRuneforgeDraftAfterPlacement(state, selectionState);
+
   const defeatedByOverload = nextHealth === 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
-      state,
+      { ...state, runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage },
       updatedPlayer,
       overloadDamage,
       channelTriggered
@@ -545,6 +581,8 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     const deckDraftReadyState = enterDeckDraftMode({
       ...state,
       player: updatedPlayer,
+      runeforges: nextRuneforges,
+      runeforgeDraftStage: nextRuneforgeDraftStage,
       pendingPlacement: null,
       animatingRunes: [],
       shouldTriggerEndRound: false,
@@ -560,12 +598,14 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     };
   }
 
-  const shouldEndRound = isRoundExhausted(state.runeforges);
+  const shouldEndRound = isRoundExhausted(nextRuneforges);
 
   useSelectionStore.getState().clearSelection();
   return {
     ...state,
     player: updatedPlayer,
+    runeforges: nextRuneforges,
+    runeforgeDraftStage: nextRuneforgeDraftStage,
     overloadRunes: [...state.overloadRunes, ...selectedRunes],
     turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
     shouldTriggerEndRound: shouldEndRound,
@@ -701,22 +741,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         }
 
         const selectedRunes = runeforge.runes.filter((r: Rune) => r.runeType === runeType);
-        const remainingRunes = runeforge.runes.filter((r: Rune) => r.runeType !== runeType);
         if (selectedRunes.length === 0) return state;
 
         const orderedRunes = primaryRuneFirst(selectedRunes, primaryRuneId);
         const originalRunes = runeforge.runes;
-        const previousDisabledRuneforgeIds = normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id);
-
-        const updatedRuneforges = normalizedRuneforges.map((f) =>
-          f.id === runeforgeId ? { ...f, runes: remainingRunes, disabled: true } : f
-        );
-
-        const shouldUnlockRuneforges = updatedRuneforges.every((runeforge) => (runeforge.disabled))
-        const nextRuneforgeDraftStage = shouldUnlockRuneforges ? ('global' as const) : ('single' as const);
-        const unlockedRuneforges = shouldUnlockRuneforges
-          ? updatedRuneforges.map((f) => ({ ...f, disabled: false }))
-          : updatedRuneforges;
 
         const selectionTimestamp = Date.now();
         useSelectionStore.getState().setSelectionState({
@@ -726,31 +754,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             runeforgeId,
             originalRunes,
             affectedRuneforges: [{ runeforgeId, originalRunes }],
-            previousDisabledRuneforgeIds,
-            previousRuneforgeDraftStage: 'single',
             selectionMode: 'single',
           },
         });
 
         return {
           ...state,
-          runeforges: unlockedRuneforges,
-          runeforgeDraftStage: nextRuneforgeDraftStage,
           turnPhase: 'place' as const,
         };
       }
 
       // Global selection mode: pick the rune type from every runeforge
       const affectedRuneforges: { runeforgeId: string; originalRunes: Rune[] }[] = [];
-      const nextRuneforges = normalizedRuneforges.map((forge) => {
+      normalizedRuneforges.forEach((forge) => {
         const matchingRunes = forge.runes.filter((rune) => rune.runeType === runeType);
         if (matchingRunes.length > 0) {
           affectedRuneforges.push({ runeforgeId: forge.id, originalRunes: forge.runes });
         }
-        return {
-          ...forge,
-          runes: forge.runes.filter((rune) => rune.runeType !== runeType),
-        };
       });
 
       const selectedFromAllRuneforges = normalizedRuneforges.flatMap((forge) =>
@@ -771,16 +791,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           runeforgeId,
           originalRunes: runeforge.runes,
           affectedRuneforges,
-          previousDisabledRuneforgeIds: normalizedRuneforges.filter((f) => f.disabled).map((f) => f.id),
-          previousRuneforgeDraftStage: 'global',
           selectionMode: 'global',
         },
       });
 
       return {
         ...state,
-        runeforges: nextRuneforges,
-        runeforgeDraftStage: 'global',
         turnPhase: 'place' as const,
       };
     });
