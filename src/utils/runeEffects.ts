@@ -10,7 +10,7 @@ const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
   Life: [{ type: 'Healing', amount: 1, rarity: 'common' }],
   Void: [{ type: 'Damage', amount: 1, rarity: 'common' }],
   Wind: [{ type: 'Damage', amount: 1, rarity: 'common' }],
-  Lightning: [{ type: 'Damage', amount: 1, rarity: 'common' }],
+  Lightning: [ { type: 'ChannelSynergy', amount: 1, synergyType: 'Lightning', rarity: 'uncommon' }],//Lightning: [{ type: 'Damage', amount: 1, rarity: 'common' }],
 };
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {

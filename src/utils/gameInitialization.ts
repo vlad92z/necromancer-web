@@ -161,7 +161,7 @@ export function createEmptyFactories(player: Player, perPlayerCount: number): Ru
 /**
  * Create runeforges for a solo run (only the human player gets runeforges)
  */
-export function createSoloFactories(player: Player, perPlayerCount: number): Runeforge[] {
+export function createSoloFactories(player: Player, perPlayerCount: number = 5): Runeforge[] {
   return Array(perPlayerCount)
     .fill(null)
     .map((_, index) => ({
@@ -208,7 +208,6 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
   const initialGameNumber = 1;
   const startingStrain = getOverloadDamageForGame(initialGameNumber);
   const soloSizingConfig = getSoloSizingConfig();
-  const soloRuneforgeCount = 5;
   const longestRun = 0; //TODO: why is this even needed?
   const soloMaxHealth = 100;
 
@@ -219,7 +218,7 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
     fullDeck,
     soloMaxHealth,
   );
-  const soloFactories = createSoloFactories(player, soloRuneforgeCount);
+  const soloFactories = createSoloFactories(player);
   const { runeforges: filledRuneforges, deck } = fillFactories(
     soloFactories,
     player.deck,
@@ -230,7 +229,6 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
 
   return {
     gameStarted: false,
-    factoriesPerPlayer: soloRuneforgeCount,
     runesPerRuneforge: soloSizingConfig.runesPerRuneforge,
     startingHealth: player.maxHealth,
     overflowCapacity: soloSizingConfig.overflowCapacity,

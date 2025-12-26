@@ -7,10 +7,9 @@ import { useNavigate } from 'react-router-dom';
 import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameContainer } from '../features/gameplay/components/GameContainer';
-import type { GameState, RunConfig } from '../types/game';
+import type { GameState } from '../types/game';
 import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
-import { DEFAULT_SOLO_CONFIG } from '../utils/gameInitialization';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
@@ -96,8 +95,8 @@ export function SoloStartScreen() {
   }, [gameStarted]);
 
   const handleStartSolo = useCallback(
-    (config: RunConfig) => {
-      startSoloRun(config);
+    () => {
+      startSoloRun();
     },
     [startSoloRun],
   );
@@ -163,7 +162,7 @@ export function SoloStartScreen() {
           handleContinueSolo();
           return;
         case 'new':
-          handleStartSolo(DEFAULT_SOLO_CONFIG);
+          handleStartSolo();
           return;
         default:
           return;
@@ -317,7 +316,7 @@ export function SoloStartScreen() {
           )}
           <ClickSoundButton
             title="New Game"
-            action={() => handleStartSolo(DEFAULT_SOLO_CONFIG)}
+            action={() => handleStartSolo()}
             className={newGameButtonClasses}
             isActive={activeElement === 'new'}
           />

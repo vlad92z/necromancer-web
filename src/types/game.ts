@@ -157,7 +157,6 @@ export interface ScoringSequenceState {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
-  factoriesPerPlayer: number; // Runeforge count for the current solo setup
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
   startingHealth: number; // Health pool per player for the current configuration
   overflowCapacity: number; // Floor line capacity that determines overflow penalties

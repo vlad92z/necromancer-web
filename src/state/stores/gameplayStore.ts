@@ -80,6 +80,7 @@ export function setNavigationCallback(callback: (() => void) | null) {
   navigationCallback = callback;
 }
 
+//TODO: Separate game state from animation state for scoring
 const SCORING_DELAY_BASE_MS = 420;
 const SCORING_DELAY_MIN_MS = 140;
 const SCORING_DELAY_DECAY_MS = 22;
@@ -142,51 +143,26 @@ function isRoundExhausted(runeforges: GameState['runeforges']): boolean {
   return allRuneforgesEmpty;
 }
 
-function getChannelScoreBonusFromOverloadedRunes(
-  newlyOverloadedRunes: Rune[]
-): { scoreBonus: number; triggered: boolean } {
-  if (newlyOverloadedRunes.length === 0) {
-    return { scoreBonus: 0, triggered: false };
-  }
-
-  let bonus = 0;
-  let triggered = false;
-  newlyOverloadedRunes.forEach((rune) => {
-    rune.effects.forEach((effect) => {
-      if (effect.type === 'Channel') {
-        bonus += effect.amount;
-        triggered = true;
-      }
-    });
-  });
-
-  return { scoreBonus: bonus, triggered };
-}
-
 function getOverloadResult(
   currentHealth: number,
   currentArmor: number,
   newlyOverloadedRunes: Rune[],
   state: GameState
 ): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number; channelTriggered: boolean } {
-  const strain = state.overloadDamage;
-  const overloadRunesPlaced = newlyOverloadedRunes.length;
-  const baseDamage = overloadRunesPlaced > 0 ? overloadRunesPlaced * strain : 0;
-  const { scoreBonus: channelScoreBonus, triggered: channelTriggered } =
-    getChannelScoreBonusFromOverloadedRunes(newlyOverloadedRunes);
+  const baseDamage = newlyOverloadedRunes.length * state.overloadDamage;
 
   // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
   const { damage: modifiedDamage, scoreBonus: rodScoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
   const armorAbsorbed = Math.min(currentArmor, modifiedDamage);
-  const remainingDamage = modifiedDamage - armorAbsorbed;
+  const unabsorbedDamage = modifiedDamage - armorAbsorbed;
   const nextArmor = currentArmor - armorAbsorbed;
-  const nextHealth = remainingDamage > 0 ? Math.max(0, currentHealth - remainingDamage) : currentHealth;
+  const nextHealth = currentHealth - unabsorbedDamage;
   return {
-    overloadDamage: remainingDamage,
+    overloadDamage: unabsorbedDamage,
     nextHealth,
     nextArmor,
-    scoreBonus: rodScoreBonus + channelScoreBonus,
-    channelTriggered,
+    scoreBonus: rodScoreBonus,
+    channelTriggered: false,
   };
 }
 
@@ -210,7 +186,6 @@ function handlePlayerDefeat(
     targetScore: state.targetScore,
   });
 
-  useSelectionStore.getState().clearSelection();
   return {
     ...state,
     player: updatedPlayer,
@@ -290,13 +265,11 @@ function prepareRoundReset(state: GameState): GameState {
   const currentStrain = state.overloadDamage;
   const nextRound = state.round + 1;
   const nextStrain = getOverloadDamageForRound(state.gameIndex, nextRound);
-  const runesNeededForRound = state.factoriesPerPlayer * state.runesPerRuneforge;
-  const playerHasEnough = player.deck.length >= runesNeededForRound;
+  const runesNeededForRound = 5 * state.runesPerRuneforge;
+  const playerHasEnough = player.deck.length >= runesNeededForRound; //TODO: Find a better way to check this
 
   if (!playerHasEnough) {
     // Defeat
-    const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
-
     trackDefeatEvent({
       gameNumber: state.gameIndex,
       deck: player.deck,
@@ -308,28 +281,10 @@ function prepareRoundReset(state: GameState): GameState {
       targetScore: state.targetScore,
     });
 
-    return {
-      ...state,
-      player: player,
-      overloadDamage: nextStrain,
-      startingStrain: nextStrain,
-      runeforges: [],
-      turnPhase: 'game-over',
-      gameIndex: state.gameIndex,
-      isDefeat: true,
-      longestRun: nextLongestRun,
-      shouldTriggerEndRound: false,
-      lockedPatternLines: [],
-      scoringSequence: null,
-      pendingPlacement: null,
-      animatingRunes: [],
-      overloadSoundPending: false,
-      channelSoundPending: state.channelSoundPending,
-      runeforgeDraftStage: 'single',
-    };
+    return {...state, turnPhase: 'game-over', isDefeat: true,};
   }
 
-  const emptyFactories = createSoloFactories(player, state.factoriesPerPlayer);
+  const emptyFactories = createSoloFactories(player);
   const { runeforges: filledRuneforges, deck } = fillFactories(
     emptyFactories,
     player.deck,
@@ -363,7 +318,7 @@ function prepareRoundReset(state: GameState): GameState {
 
 export interface GameplayStore extends GameState {
   // Actions
-  startSoloRun: (targetRuneScore: number, deck: Rune[]) => void;
+  startSoloRun: () => void;
   prepareSoloMode: () => void;
   forceSoloVictory: () => void;
   hydrateGameState: (nextState: GameState) => void;
@@ -850,6 +805,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         .map((line, index) => ({ line, index }))
         .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
+        //TODO: Unnecesary code duplication due to turn phases
       if (completedLines.length === 0) {
         const shouldEndRound = isRoundExhausted(state.runeforges);
 
