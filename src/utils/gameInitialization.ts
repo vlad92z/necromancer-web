@@ -42,8 +42,8 @@ export function createPatternLines(count: number = WALL_SIZE): PatternLine[] {
       runeType: null,
       count: 0,
       runes: [],
-      firstRuneId: null,
-      firstRuneEffects: null,
+      primaryRuneId: null,
+      primaryRuneEffects: null,
     });
   }
   return lines;
@@ -208,7 +208,7 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
   const initialGameNumber = 1;
   const startingStrain = getOverloadDamageForGame(initialGameNumber);
   const soloSizingConfig = getSoloSizingConfig();
-  const longestRun = 0; //TODO: why is this even needed?
+  const longestRun = 0; // Best game reached in this solo run before persistence updates it.
   const soloMaxHealth = 100;
 
   const activeDeck = [...fullDeck].sort(() => Math.random() - 0.5);

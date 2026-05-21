@@ -169,6 +169,42 @@ describe('gameplayStore persistence', () => {
     expect(nextState).not.toHaveProperty('totalRunesPerPlayer');
   });
 
+  it('migrates legacy first rune pattern-line fields during hydration', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const legacyRune = createTestRune('legacy-primary', 'Fire');
+
+    store.getState().startSoloRun();
+    const legacyState = {
+      ...store.getState(),
+      player: {
+        ...store.getState().player,
+        patternLines: store.getState().player.patternLines.map((line, index) => (
+          index === 1
+            ? {
+              ...line,
+              primaryRuneId: null,
+              primaryRuneEffects: null,
+              firstRuneId: legacyRune.id,
+              firstRuneEffects: legacyRune.effects,
+              runeType: legacyRune.runeType,
+              count: 1,
+              runes: [legacyRune],
+            }
+            : line
+        )),
+      },
+    };
+
+    store.getState().hydrateGameState(legacyState);
+
+    const migratedLine = store.getState().player.patternLines[1];
+    expect(migratedLine.primaryRuneId).toBe('legacy-primary');
+    expect(migratedLine.primaryRuneEffects).toEqual(legacyRune.effects);
+    expect(migratedLine).not.toHaveProperty('firstRuneId');
+    expect(migratedLine).not.toHaveProperty('firstRuneEffects');
+  });
+
   it('invokes the registered solo navigation callback when returning to the start screen', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const { setNavigationCallback } = await import('../../systems/gameplayOrchestrator');
@@ -530,6 +566,47 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().turnPhase).toBe('deck-draft');
   });
 
+  it('awards deck-draft Arcane Dust once and clears selection on deck-draft entry', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune('deck-draft-reward', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 1,
+      runeforges: [createTestRuneforge(rune)],
+    }));
+    useSelectionStore.getState().setSelection([rune], createTestDraftSource(rune), Date.now());
+
+    store.getState().placeRunes(0);
+
+    expect(store.getState().turnPhase).toBe('deck-draft');
+    expect(storage.get('necromancer-arcane-dust')).toBe('50');
+    expect(useSelectionStore.getState().selectedRunes).toEqual([]);
+    expect(useSelectionStore.getState().draftSource).toBeNull();
+  });
+
+  it('moves to resolving end round when no completed lines remain and runeforges are exhausted', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      runeforges: [],
+      turnPhase: 'select',
+      shouldTriggerEndRound: false,
+    }));
+
+    store.getState().moveRunesToWall();
+
+    expect(store.getState().turnPhase).toBe('resolving-end-round');
+    expect(store.getState().shouldTriggerEndRound).toBe(true);
+  });
+
   it('deals the initial active deck into runeforges and removes dealt runes from the deck queue', async () => {
     const { initializeSoloGame } = await import('../../utils/gameInitialization');
 
@@ -629,6 +706,35 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().player.wall[1].some((cell) => cell.runeType === 'Fire')).toBe(true);
     expect(store.getState().player.deck.map((rune) => rune.id)).toEqual(['deck-tail', 'cast-recycled']);
     expect(store.getState().player.deck.some((rune) => rune.id === 'cast-primary')).toBe(false);
+  });
+
+  it('preserves primary rune metadata while a pattern line waits to complete', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const primaryRune = createTestRune('waiting-primary', 'Fire');
+    const secondaryRune = createTestRune('waiting-secondary', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 999,
+      patternLineLock: false,
+      runeforges: [createTestRuneforgeWithRunes([primaryRune, secondaryRune])],
+    }));
+    useSelectionStore.getState().setSelection(
+      [primaryRune, secondaryRune],
+      createTestDraftSourceWithRunes([primaryRune, secondaryRune]),
+      Date.now()
+    );
+
+    store.getState().placeRunes(2);
+
+    const waitingLine = store.getState().player.patternLines[2];
+    expect(waitingLine.count).toBe(2);
+    expect(waitingLine.primaryRuneId).toBe('waiting-primary');
+    expect(waitingLine.primaryRuneEffects).toEqual(primaryRune.effects);
   });
 
   it('does not recycle overflow runes when a pattern line cast resolves', async () => {

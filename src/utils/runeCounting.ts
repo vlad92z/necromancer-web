@@ -3,25 +3,31 @@
  */
 
 import type { Rune, RuneType, Runeforge } from '../types/game';
+import { RUNE_TYPES } from './gameInitialization';
 
 interface RuneTypeCountInput {
   runeforges: Runeforge[];
   selectedRunes: Rune[];
 }
 
-//TODO: Use runeTypeCounts instead
 export function getRuneTypeCounts({
   runeforges,
   selectedRunes,
 }: RuneTypeCountInput): Record<RuneType, number> {
-  const counts: Record<RuneType, number> = {
-    Fire: 0,
-    Frost: 0,
-    Life: 0,
-    Void: 0,
-    Wind: 0,
-    Lightning: 0,
-  };
+  return countUniqueRunesByType([
+    ...runeforges.flatMap((forge) => forge.runes),
+    ...selectedRunes,
+  ]);
+}
+
+export function countUniqueRunesByType(runes: Rune[]): Record<RuneType, number> {
+  const counts = RUNE_TYPES.reduce(
+    (result, runeType) => ({
+      ...result,
+      [runeType]: 0,
+    }),
+    {} as Record<RuneType, number>
+  );
   const countedIds = new Set<string>();
 
   const countRune = (rune: Rune) => {
@@ -32,12 +38,7 @@ export function getRuneTypeCounts({
     countedIds.add(rune.id);
   };
 
-  runeforges.forEach((forge) => {
-    const forgeRunes = forge.runes;
-    forgeRunes.forEach(countRune);
-  });
-
-  selectedRunes.forEach(countRune);
+  runes.forEach(countRune);
 
   return counts;
 }

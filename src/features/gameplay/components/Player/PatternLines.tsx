@@ -135,7 +135,7 @@ export function PatternLines({ hiddenPatternSlots }: PatternLinesProps) {
                   // Primary rune (moves to the wall) should live in the leading cell
                   const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
                   const runeEffects = isPrimaryRuneSlot && line.runeType
-                    ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
+                    ? copyRuneEffects(line.primaryRuneEffects ?? getRuneEffectsForType(line.runeType))
                     : [];
                   const rune = hasRuneInSlot && line.runeType ? {
                     id: `pattern-${index}-${slotIndex}`,
@@ -153,7 +153,6 @@ export function PatternLines({ hiddenPatternSlots }: PatternLinesProps) {
                   return (
                     <motion.div
                       key={slotIndex}
-                      data-player-id="player-1"
                       data-pattern-line-index={index}
                       data-pattern-slot-index={slotIndex}
                       className="relative rounded-lg transition-[box-shadow] duration-200"

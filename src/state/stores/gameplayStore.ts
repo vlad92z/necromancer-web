@@ -61,20 +61,21 @@ function shuffleRunes(runes: Rune[]): Rune[] {
 }
 
 function normalizePatternLines(patternLines: PatternLine[]): PatternLine[] {
-  return patternLines.map((line) => ({
-    ...line,
-    runes: line.runes ?? [],
-  }));
+  return patternLines.map((line) => {
+    const currentLine = { ...line };
+    delete currentLine.firstRuneId;
+    delete currentLine.firstRuneEffects;
+
+    return {
+      ...currentLine,
+      runes: line.runes ?? [],
+      primaryRuneId: line.primaryRuneId ?? line.firstRuneId ?? null,
+      primaryRuneEffects: line.primaryRuneEffects ?? line.firstRuneEffects ?? null,
+    };
+  });
 }
 
 function enterDeckDraftMode(state: GameState): GameState {
-  //TODO: These should not be handled as p0art of entering draft mode
-  clearGameplaySelection();
-  const arcaneDustReward = getArcaneDustReward(state.gameIndex);
-  if (arcaneDustReward > 0) {
-    addGameplayArcaneDust(arcaneDustReward);
-  }
-
   const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
   const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
   const deckDraftState = createDeckDraftState(
@@ -102,6 +103,74 @@ function enterDeckDraftMode(state: GameState): GameState {
     longestRun: nextLongestRun,
     targetScore: nextTargetScore,
     baseTargetScore: state.baseTargetScore || nextTargetScore,
+  };
+}
+
+function awardDeckDraftEntryArcaneDust(gameIndex: number): void {
+  const arcaneDustReward = getArcaneDustReward(gameIndex);
+  if (arcaneDustReward > 0) {
+    addGameplayArcaneDust(arcaneDustReward);
+  }
+}
+
+function getPostDraftPhase(runeforges: GameState['runeforges']): Pick<GameState, 'turnPhase' | 'shouldTriggerEndRound'> {
+  const shouldEndRound = isRoundExhausted(runeforges);
+  return {
+    turnPhase: shouldEndRound ? 'resolving-end-round' : 'select',
+    shouldTriggerEndRound: shouldEndRound,
+  };
+}
+
+function normalizeHydratedGameState(currentState: GameState, nextState: GameState): GameState {
+  const nextFullDeck = nextState.fullDeck;
+  const nextBaseTargetScore =
+    typeof nextState.baseTargetScore === 'number'
+      ? nextState.baseTargetScore
+      : nextState.targetScore;
+  const nextGameNumber =
+    typeof nextState.gameIndex === 'number'
+      ? nextState.gameIndex
+      : typeof currentState.gameIndex === 'number'
+        ? currentState.gameIndex
+        : 1;
+  const nextRoundNumber =
+    typeof nextState.round === 'number'
+      ? nextState.round
+      : typeof currentState.round === 'number'
+        ? currentState.round
+        : 1;
+  const soloStartingStrain = getOverloadDamageForGame(nextGameNumber);
+  const calculatedStrain = getOverloadDamageForRound(nextGameNumber, nextRoundNumber);
+  const storedStartingStrain =
+    typeof nextState.startingStrain === 'number'
+      ? nextState.startingStrain
+      : soloStartingStrain;
+  const longestRun =
+    typeof nextState.longestRun === 'number'
+      ? nextState.longestRun
+      : 0;
+
+  return {
+    ...currentState,
+    ...nextState,
+    player: {
+      ...currentState.player,
+      ...nextState.player,
+      patternLines: normalizePatternLines(nextState.player?.patternLines ?? currentState.player.patternLines),
+      armor: nextState.player?.armor ?? currentState.player.armor ?? 0,
+    },
+    runeforges: nextState.runeforges,
+    deckDraftState: nextState.deckDraftState ?? null,
+    deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
+    fullDeck: nextFullDeck,
+    baseTargetScore: nextBaseTargetScore,
+    overloadDamage: calculatedStrain,
+    startingStrain: storedStartingStrain,
+    longestRun,
+    round: nextRoundNumber,
+    overloadSoundPending: nextState.overloadSoundPending ?? false,
+    runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
+    scoringSequence: null,
   };
 }
 
@@ -350,8 +419,8 @@ function placeSelectionOnPatternLine(
   const overflowRunes = selectedRunes.slice(runesToPlace);
 
   const primaryRune = selectedRunes[0];
-  const nextFirstRuneId = patternLine.firstRuneId ?? primaryRune.id;
-  const nextFirstRuneEffects = patternLine.firstRuneEffects ?? copyRuneEffects(primaryRune.effects);
+  const nextPrimaryRuneId = patternLine.primaryRuneId ?? primaryRune.id;
+  const nextPrimaryRuneEffects = patternLine.primaryRuneEffects ?? copyRuneEffects(primaryRune.effects);
 
   const updatedPatternLines = [...currentPlayer.patternLines];
   updatedPatternLines[patternLineIndex] = {
@@ -359,8 +428,8 @@ function placeSelectionOnPatternLine(
     runeType,
     count: patternLine.count + runesToPlace,
     runes: [...(patternLine.runes ?? []), ...placedRunes],
-    firstRuneId: nextFirstRuneId,
-    firstRuneEffects: nextFirstRuneEffects,
+    primaryRuneId: nextPrimaryRuneId,
+    primaryRuneEffects: nextPrimaryRuneEffects,
   };
 
   const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
@@ -414,8 +483,6 @@ function placeSelectionOnPatternLine(
     };
   }
 
-  const shouldEndRound = isRoundExhausted(nextRuneforges);
-
   clearGameplaySelection();
   return {
     ...state,
@@ -423,8 +490,7 @@ function placeSelectionOnPatternLine(
     runeforges: nextRuneforges,
     runeforgeDraftStage: nextRuneforgeDraftStage,
     overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
-    turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
-    shouldTriggerEndRound: shouldEndRound,
+    ...getPostDraftPhase(nextRuneforges),
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
     channelSoundPending: nextChannelSoundPending,
@@ -491,8 +557,6 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     };
   }
 
-  const shouldEndRound = isRoundExhausted(nextRuneforges);
-
   clearGameplaySelection();
   return {
     ...state,
@@ -500,8 +564,7 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     runeforges: nextRuneforges,
     runeforgeDraftStage: nextRuneforgeDraftStage,
     overloadRunes: [...state.overloadRunes, ...selectedRunes],
-    turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
-    shouldTriggerEndRound: shouldEndRound,
+    ...getPostDraftPhase(nextRuneforges),
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
     channelSoundPending: nextChannelSoundPending,
@@ -686,6 +749,7 @@ export const gameplayStoreConfig = (
     let arcaneDustGain = 0;
     let scoringSequenceToEnqueue: ScoringSequenceState | null = null;
     let shouldClearResolutionQueue = false;
+    let deckDraftRewardGameIndex: number | null = null;
     const baseArcaneDust = getArcaneDustTotal();
 
     set((state) => {
@@ -699,14 +763,10 @@ export const gameplayStoreConfig = (
         .map((line, index) => ({ line, index }))
         .filter(({ line }) => line.count === line.tier && line.runeType !== null);
 
-        //TODO: Unnecesary code duplication due to turn phases
       if (completedLines.length === 0) {
-        const shouldEndRound = isRoundExhausted(state.runeforges);
-
         return {
           ...state,
-          turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
-          shouldTriggerEndRound: shouldEndRound,
+          ...getPostDraftPhase(state.runeforges),
         };
       }
 
@@ -719,9 +779,9 @@ export const gameplayStoreConfig = (
         const runeType = line.runeType as RuneType;
         const wallSize = updatedWall.length;
         const col = getWallColumnForRune(index, runeType, wallSize);
-        const effects = line.firstRuneEffects ?? getRuneEffectsForType(runeType);
+        const effects = line.primaryRuneEffects ?? getRuneEffectsForType(runeType);
         const lineRunes = line.runes ?? [];
-        const castRuneId = line.firstRuneId ?? lineRunes[0]?.id ?? null;
+        const castRuneId = line.primaryRuneId ?? lineRunes[0]?.id ?? null;
         const reusableRunes = lineRunes.filter((rune) => rune.id !== castRuneId);
         recycledRunes.push(...reusableRunes);
 
@@ -731,8 +791,8 @@ export const gameplayStoreConfig = (
           runeType: null,
           count: 0,
           runes: [],
-          firstRuneId: null,
-          firstRuneEffects: null,
+          primaryRuneId: null,
+          primaryRuneEffects: null,
         };
 
         const resolvedSegment = resolveSegment(updatedWall, index, col, overloadRuneCounts);
@@ -764,7 +824,6 @@ export const gameplayStoreConfig = (
         }
       });
 
-      const shouldEndRound = isRoundExhausted(state.runeforges);
       const sequenceId = createScoringSequenceId();
       const baseHealth = currentPlayer.health;
       const baseArmor = currentPlayer.armor;
@@ -811,8 +870,7 @@ export const gameplayStoreConfig = (
             ? [...currentPlayer.deck, ...shuffleRunes(recycledRunes)]
             : currentPlayer.deck,
         },
-        turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
-        shouldTriggerEndRound: shouldEndRound,
+        ...getPostDraftPhase(state.runeforges),
         lockedPatternLines: updatedLockedPatternLines,
         isDefeat: state.isDefeat,
         channelSoundPending: nextChannelSoundPending,
@@ -821,6 +879,7 @@ export const gameplayStoreConfig = (
 
       if (targetRunePowerTotal >= state.targetScore) {
         shouldClearResolutionQueue = true;
+        deckDraftRewardGameIndex = state.gameIndex;
         const deckDraftState = enterDeckDraftMode({
           ...baseNextState,
           isDefeat: false,
@@ -840,6 +899,9 @@ export const gameplayStoreConfig = (
     if (arcaneDustGain > 0) {
       addGameplayArcaneDust(arcaneDustGain);
     }
+    if (deckDraftRewardGameIndex !== null) {
+      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
+    }
 
     if (shouldClearResolutionQueue) {
       clearRoundResolutionTimers();
@@ -853,13 +915,33 @@ export const gameplayStoreConfig = (
   },
 
   placeRunes: (patternLineIndex: number) => {
-    set((state) => placeSelectionOnPatternLine(state, getGameplaySelection(), patternLineIndex));
+    let deckDraftRewardGameIndex: number | null = null;
+    set((state) => {
+      const nextState = placeSelectionOnPatternLine(state, getGameplaySelection(), patternLineIndex);
+      if (state.turnPhase !== 'deck-draft' && nextState.turnPhase === 'deck-draft') {
+        deckDraftRewardGameIndex = state.gameIndex;
+      }
+      return nextState;
+    });
+    if (deckDraftRewardGameIndex !== null) {
+      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
+    }
     flushCompletedLines();
     scheduleRoundEndIfNeeded();
   },
 
   placeRunesInFloor: () => {
-    set((state) => placeSelectionInFloor(state, getGameplaySelection()));
+    let deckDraftRewardGameIndex: number | null = null;
+    set((state) => {
+      const nextState = placeSelectionInFloor(state, getGameplaySelection());
+      if (state.turnPhase !== 'deck-draft' && nextState.turnPhase === 'deck-draft') {
+        deckDraftRewardGameIndex = state.gameIndex;
+      }
+      return nextState;
+    });
+    if (deckDraftRewardGameIndex !== null) {
+      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
+    }
     flushCompletedLines();
     scheduleRoundEndIfNeeded();
   },
@@ -882,7 +964,17 @@ export const gameplayStoreConfig = (
    * Only works when in the 'select' phase with selected runes.
    */
   autoPlaceSelection: () => {
-    set((state) => attemptAutoPlacement(state, getGameplaySelection()));
+    let deckDraftRewardGameIndex: number | null = null;
+    set((state) => {
+      const nextState = attemptAutoPlacement(state, getGameplaySelection());
+      if (state.turnPhase !== 'deck-draft' && nextState.turnPhase === 'deck-draft') {
+        deckDraftRewardGameIndex = state.gameIndex;
+      }
+      return nextState;
+    });
+    if (deckDraftRewardGameIndex !== null) {
+      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
+    }
     flushCompletedLines();
     scheduleRoundEndIfNeeded();
   },
@@ -943,62 +1035,7 @@ export const gameplayStoreConfig = (
   hydrateGameState: (nextState: GameState) => {
     clearRoundResolutionTimers();
     clearGameplaySelection();
-    set((state) => {
-      // const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
-      // if (!shouldMerge) {
-      //   return state;
-      // }
-      //TODO WTF is happening?
-      const nextFullDeck = nextState.fullDeck;
-      const nextBaseTargetScore =
-        typeof nextState.baseTargetScore === 'number'
-          ? nextState.baseTargetScore
-          : nextState.targetScore;
-      const nextGameNumber =
-        typeof nextState.gameIndex === 'number'
-          ? nextState.gameIndex
-          : typeof state.gameIndex === 'number'
-            ? state.gameIndex
-            : 1;
-      const nextRoundNumber =
-        typeof nextState.round === 'number'
-          ? nextState.round
-          : typeof state.round === 'number'
-            ? state.round
-            : 1;
-      const soloStartingStrain = getOverloadDamageForGame(nextGameNumber);
-      const calculatedStrain = getOverloadDamageForRound(nextGameNumber, nextRoundNumber);
-      const storedStartingStrain =
-        typeof nextState.startingStrain === 'number'
-          ? nextState.startingStrain
-          : soloStartingStrain;
-      const longestRun =
-        typeof nextState.longestRun === 'number'
-          ? nextState.longestRun
-          : 0;
-      return {
-        ...state,
-        ...nextState,
-        player: {
-          ...state.player,
-          ...nextState.player,
-          patternLines: normalizePatternLines(nextState.player?.patternLines ?? state.player.patternLines),
-          armor: nextState.player?.armor ?? state.player.armor ?? 0,
-        },
-        runeforges: nextState.runeforges,
-        deckDraftState: nextState.deckDraftState ?? null,
-        deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
-        fullDeck: nextFullDeck,
-        baseTargetScore: nextBaseTargetScore,
-        overloadDamage: calculatedStrain,
-        startingStrain: storedStartingStrain,
-        longestRun,
-        round: nextRoundNumber,
-        overloadSoundPending: nextState.overloadSoundPending ?? false,
-        runeforgeDraftStage: nextState.runeforgeDraftStage ?? 'single',
-        scoringSequence: null,
-      };
-    });
+    set((state) => normalizeHydratedGameState(state, nextState));
   },
 
   returnToStartScreen: () => {

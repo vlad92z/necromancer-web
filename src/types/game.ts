@@ -72,8 +72,10 @@ export interface PatternLine {
   runeType: RuneType | null; // Type of rune in this line (null if empty)
   count: number; // Current number of runes in the line
   runes: Rune[]; // Exact runes placed on this line, in placement order
-  firstRuneId: string | null; // ID of the first rune placed on this line TODO Rename to Primary Rune
-  firstRuneEffects: RuneEffects | null; // Effects inherited by wall placement
+  primaryRuneId: string | null; // ID of the rune that will cast from this line
+  primaryRuneEffects: RuneEffects | null; // Effects inherited by wall placement
+  firstRuneId?: string | null; // Legacy persisted field migrated during hydration
+  firstRuneEffects?: RuneEffects | null; // Legacy persisted field migrated during hydration
 }
 
 /**
