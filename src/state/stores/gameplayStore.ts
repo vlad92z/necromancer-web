@@ -1,6 +1,6 @@
 /**
- * Gameplay Store - Core game state and logic
- * Handles: runeforges, turns, runes, drafting, placement, scoring
+ * Gameplay Store - compatibility action engine for split gameplay stores.
+ * Read ownership now lives in runStore, boardStore, and resolutionStore.
  */
 
 import { create, type StoreApi } from 'zustand';
@@ -27,12 +27,14 @@ import {
   getArmorGainMultiplier,
   getDeckDraftSelectionLimit,
 } from '../../utils/artefactEffects';
-import { saveSoloState, clearSoloState } from '../../utils/soloPersistence';
+import { clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
+import { attachGameplayPersistence } from './gameplayPersistence';
+import { replaceGameplayState } from './gameplayState';
 
 function enterDeckDraftMode(state: GameState): GameState {
   //TODO: These should not be handled as p0art of entering draft mode
@@ -674,21 +676,6 @@ function attemptAutoPlacement(state: GameplayStore, selectionState: SelectionSta
   return cancelSelectionState(state, selectionState);
 }
 
-function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
-  return store.subscribe((state) => {
-    if (state.isDefeat) {
-      clearSoloState();
-      return;
-    }
-
-    if (!state.gameStarted) {
-      return;
-    }
-
-    saveSoloState(state);
-  });
-}
-
 export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
   // Initial state
   ...initializeSoloGame(),
@@ -1281,10 +1268,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 });
 
 export const useGameplayStore = create<GameplayStore>((set) => gameplayStoreConfig(set));
-attachSoloPersistence(useGameplayStore);
+replaceGameplayState(useGameplayStore.getState());
+useGameplayStore.subscribe((state) => {
+  replaceGameplayState(state);
+});
+attachGameplayPersistence();
 
 export function createGameplayStoreInstance() {
   const store = create<GameplayStore>((set) => gameplayStoreConfig(set));
-  attachSoloPersistence(store);
+  replaceGameplayState(store.getState());
+  store.subscribe((state) => {
+    replaceGameplayState(state);
+  });
   return store;
 }

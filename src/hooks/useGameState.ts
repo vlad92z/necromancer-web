@@ -4,12 +4,14 @@
 
 import { useShallow } from 'zustand/react/shallow';
 import { useArtefactStore } from '../state/stores/artefactStore';
-import { useGameplayStore } from '../state/stores/gameplayStore';
+import { useBoardStore } from '../state/stores/boardStore';
+import { useResolutionStore } from '../state/stores/resolutionStore';
+import { useRunStore } from '../state/stores/runStore';
 import { useSelectionStore } from '../state/stores/selectionStore';
 import { useUIStore } from '../state/stores/uiStore';
 
 export function useFactories() {
-  return useGameplayStore(
+  return useBoardStore(
     useShallow((state) => ({
       runeforges: state.runeforges,
     })),
@@ -17,7 +19,7 @@ export function useFactories() {
 }
 
 export function useTurnPhase() {
-  return useGameplayStore((state) => state.turnPhase);
+  return useResolutionStore((state) => state.turnPhase);
 }
 
 export function useSelectedRunes() {
@@ -25,15 +27,15 @@ export function useSelectedRunes() {
 }
 
 export function useGame() {
-  return useGameplayStore((state) => state.gameIndex);
+  return useRunStore((state) => state.gameIndex);
 }
 
 export function useGameStarted() {
-  return useGameplayStore((state) => state.gameStarted);
+  return useRunStore((state) => state.gameStarted);
 }
 
 export function useGameIndex() {
-  return useGameplayStore((state) => state.gameIndex);
+  return useRunStore((state) => state.gameIndex);
 }
 
 export function useArcaneDust() {
@@ -148,19 +150,17 @@ export function useTooltipState() {
 }
 
 export function useGameplayContainerState() {
-  return useGameplayStore(
-    useShallow((state) => ({
-      shouldTriggerEndRound: state.shouldTriggerEndRound,
-      player: state.player,
-      scoringSequence: state.scoringSequence,
-      channelSoundPending: state.channelSoundPending,
-      overloadSoundPending: state.overloadSoundPending,
-    })),
-  );
+  const shouldTriggerEndRound = useResolutionStore((state) => state.shouldTriggerEndRound);
+  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
+  const channelSoundPending = useResolutionStore((state) => state.channelSoundPending);
+  const overloadSoundPending = useResolutionStore((state) => state.overloadSoundPending);
+  const player = useBoardStore((state) => state.player);
+
+  return { shouldTriggerEndRound, player, scoringSequence, channelSoundPending, overloadSoundPending };
 }
 
 export function useGameplayPatternLineState() {
-  return useGameplayStore(
+  return useBoardStore(
     useShallow((state) => ({
       lockedPatternLines: state.lockedPatternLines,
       wall: state.player.wall,
@@ -171,36 +171,38 @@ export function useGameplayPatternLineState() {
 }
 
 export function useGameplayWallState() {
-  return useGameplayStore(
+  const board = useBoardStore(
     useShallow((state) => ({
       wall: state.player.wall,
       patternLines: state.player.patternLines,
-      scoringSequence: state.scoringSequence,
     })),
   );
+  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
+
+  return { ...board, scoringSequence };
 }
 
 export function useGameplayRuneforgeState() {
-  return useGameplayStore(
+  const board = useBoardStore(
     useShallow((state) => ({
       draftStage: state.runeforgeDraftStage,
       runeforges: state.runeforges,
-      runesPerRuneforge: state.runesPerRuneforge,
     })),
   );
+  const runesPerRuneforge = useRunStore((state) => state.runesPerRuneforge);
+
+  return { ...board, runesPerRuneforge };
 }
 
 export function useGameplayDeckState() {
-  return useGameplayStore(
-    useShallow((state) => ({
-      deck: state.player.deck,
-      isDrafting: state.deckDraftState !== null,
-    })),
-  );
+  const deck = useBoardStore((state) => state.player.deck);
+  const isDrafting = useRunStore((state) => state.deckDraftState !== null);
+
+  return { deck, isDrafting };
 }
 
 export function useGameplayOverloadState() {
-  return useGameplayStore(
+  return useBoardStore(
     useShallow((state) => ({
       overloadDamage: state.overloadDamage,
       overloadRunes: state.overloadRunes,
@@ -211,18 +213,20 @@ export function useGameplayOverloadState() {
 }
 
 export function useGameplayHealthState() {
-  return useGameplayStore(
+  const board = useBoardStore(
     useShallow((state) => ({
       health: state.player.health,
       maxHealth: state.player.maxHealth,
       armor: state.player.armor,
-      scoringSequence: state.scoringSequence,
     })),
   );
+  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
+
+  return { ...board, scoringSequence };
 }
 
 export function useGameplayScoreState() {
-  return useGameplayStore(
+  return useRunStore(
     useShallow((state) => ({
       currentScore: state.runePowerTotal,
       targetScore: state.targetScore,
@@ -231,7 +235,7 @@ export function useGameplayScoreState() {
 }
 
 export function useGameplayStatusState() {
-  return useGameplayStore(
+  return useRunStore(
     useShallow((state) => ({
       isDefeat: state.isDefeat,
       deckDraftState: state.deckDraftState,
@@ -240,7 +244,7 @@ export function useGameplayStatusState() {
 }
 
 export function useGameplaySummaryState() {
-  return useGameplayStore(
+  return useRunStore(
     useShallow((state) => ({
       runeScore: state.runePowerTotal,
       targetScore: state.targetScore,

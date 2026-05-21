@@ -4,7 +4,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
+import { setNavigationCallback } from '../state/stores/gameplayStore';
+import { subscribeGameplayState } from '../state/stores/gameplayState';
 import { GameContainer } from '../features/gameplay/components/GameContainer';
 import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions';
 import { useGameStarted, useSoloStartArtefactState } from '../hooks/useGameState';
@@ -47,7 +48,7 @@ export function SoloStartScreen() {
   }, [navigate, prepareSoloMode, loadArtefactState]);
 
   useEffect(() => {
-    const unsubscribe = useGameplayStore.subscribe((state) => {
+    const unsubscribe = subscribeGameplayState((state) => {
       // Keep the start-screen best-run badge in sync with gameplay progression.
       setLongestSoloRun((previousBest) => {
         const nextBest = Math.max(previousBest, state.longestRun ?? 0, state.gameIndex ?? 0);

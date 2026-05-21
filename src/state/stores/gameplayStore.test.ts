@@ -74,6 +74,20 @@ describe('gameplayStore persistence', () => {
     expect(JSON.parse(payload as string)).toMatchObject({ runePowerTotal: 7, gameStarted: true });
   });
 
+  it('syncs gameplay actions into split concern stores', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { getGameplayState } = await import('./gameplayState');
+    const store = createGameplayStoreInstance();
+
+    store.getState().startSoloRun();
+
+    const composedState = getGameplayState();
+    expect(composedState.gameStarted).toBe(true);
+    expect(composedState.player).toEqual(store.getState().player);
+    expect(composedState.runeforges).toEqual(store.getState().runeforges);
+    expect(composedState.turnPhase).toBe(store.getState().turnPhase);
+  });
+
   it('clears persisted solo state when the run ends in defeat', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();

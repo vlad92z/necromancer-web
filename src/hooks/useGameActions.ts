@@ -4,30 +4,12 @@
 
 import { useShallow } from 'zustand/react/shallow';
 import { useArtefactStore } from '../state/stores/artefactStore';
-import { useGameplayStore } from '../state/stores/gameplayStore';
+import { gameplayActions } from '../state/stores/gameplayActions';
 import { useSelectionStore } from '../state/stores/selectionStore';
 import { useUIStore } from '../state/stores/uiStore';
 
 export function useGameplayActions() {
-  return useGameplayStore(
-    useShallow((state) => ({
-      acknowledgeChannelSound: state.acknowledgeChannelSound,
-      acknowledgeOverloadSound: state.acknowledgeOverloadSound,
-      cancelSelection: state.cancelSelection,
-      disenchantRuneFromDeck: state.disenchantRuneFromDeck,
-      draftRune: state.draftRune,
-      endRound: state.endRound,
-      hydrateGameState: state.hydrateGameState,
-      moveRunesToWall: state.moveRunesToWall,
-      placeRunes: state.placeRunes,
-      placeRunesInFloor: state.placeRunesInFloor,
-      prepareSoloMode: state.prepareSoloMode,
-      returnToStartScreen: state.returnToStartScreen,
-      selectDeckDraftRuneforge: state.selectDeckDraftRuneforge,
-      startNextSoloGame: state.startNextSoloGame,
-      startSoloRun: state.startSoloRun,
-    })),
-  );
+  return gameplayActions;
 }
 
 export function useArtefactActions() {
