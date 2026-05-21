@@ -9,6 +9,7 @@ import type {
   RuneType,
   Player,
   Rune,
+  PatternLine,
   ScoringSequenceState,
   ScoringStep,
   SelectionState,
@@ -53,6 +54,17 @@ let scoringSequenceCounter = 0;
 function createScoringSequenceId(): number {
   scoringSequenceCounter += 1;
   return Date.now() + scoringSequenceCounter;
+}
+
+function shuffleRunes(runes: Rune[]): Rune[] {
+  return [...runes].sort(() => Math.random() - 0.5);
+}
+
+function normalizePatternLines(patternLines: PatternLine[]): PatternLine[] {
+  return patternLines.map((line) => ({
+    ...line,
+    runes: line.runes ?? [],
+  }));
 }
 
 function enterDeckDraftMode(state: GameState): GameState {
@@ -160,11 +172,8 @@ function prepareRoundReset(state: GameState): GameState {
   const currentStrain = state.overloadDamage;
   const nextRound = state.round + 1;
   const nextStrain = getOverloadDamageForRound(state.gameIndex, nextRound);
-  const runesNeededForRound = 5 * state.runesPerRuneforge;
-  const playerHasEnough = player.deck.length >= runesNeededForRound; //TODO: Find a better way to check this
 
-  if (!playerHasEnough) {
-    // Defeat
+  if (player.deck.length === 0) {
     trackGameplayDefeat({
       gameNumber: state.gameIndex,
       deck: player.deck,
@@ -176,7 +185,7 @@ function prepareRoundReset(state: GameState): GameState {
       targetScore: state.targetScore,
     });
 
-    return {...state, isDefeat: true,};
+    return { ...state, isDefeat: true };
   }
 
   const emptyFactories = createSoloFactories(player);
@@ -271,7 +280,8 @@ function applyRuneforgeDraftAfterPlacement(
       };
     });
 
-    const shouldUnlockRuneforges = updatedRuneforges.length > 0 && updatedRuneforges.every((forge) => forge.disabled);
+    const shouldUnlockRuneforges = updatedRuneforges.length > 0
+      && updatedRuneforges.every((forge) => forge.disabled || forge.runes.length === 0);
     const nextRuneforges = shouldUnlockRuneforges
       ? updatedRuneforges.map((forge) => ({ ...forge, disabled: false }))
       : updatedRuneforges;
@@ -336,6 +346,7 @@ function placeSelectionOnPatternLine(
 
   const availableSpace = patternLine.tier - patternLine.count;
   const runesToPlace = Math.min(selectedRunes.length, availableSpace);
+  const placedRunes = selectedRunes.slice(0, runesToPlace);
   const overflowRunes = selectedRunes.slice(runesToPlace);
 
   const primaryRune = selectedRunes[0];
@@ -347,6 +358,7 @@ function placeSelectionOnPatternLine(
     ...patternLine,
     runeType,
     count: patternLine.count + runesToPlace,
+    runes: [...(patternLine.runes ?? []), ...placedRunes],
     firstRuneId: nextFirstRuneId,
     firstRuneEffects: nextFirstRuneEffects,
   };
@@ -701,18 +713,24 @@ export const gameplayStoreConfig = (
       const scoringSteps: ScoringStep[] = [];
       const overloadRuneCounts = runeTypeCounts(state.overloadRunes);
       let scoringChannelTriggered = false;
+      const recycledRunes: Rune[] = [];
 
       completedLines.forEach(({ line, index }) => {
         const runeType = line.runeType as RuneType;
         const wallSize = updatedWall.length;
         const col = getWallColumnForRune(index, runeType, wallSize);
         const effects = line.firstRuneEffects ?? getRuneEffectsForType(runeType);
+        const lineRunes = line.runes ?? [];
+        const castRuneId = line.firstRuneId ?? lineRunes[0]?.id ?? null;
+        const reusableRunes = lineRunes.filter((rune) => rune.id !== castRuneId);
+        recycledRunes.push(...reusableRunes);
 
         updatedWall[index][col] = { runeType, effects: copyRuneEffects(effects) };
         updatedPatternLines[index] = {
           tier: line.tier,
           runeType: null,
           count: 0,
+          runes: [],
           firstRuneId: null,
           firstRuneEffects: null,
         };
@@ -789,6 +807,9 @@ export const gameplayStoreConfig = (
           wall: updatedWall,
           health: targetHealth,
           armor: targetArmor,
+          deck: recycledRunes.length > 0
+            ? [...currentPlayer.deck, ...shuffleRunes(recycledRunes)]
+            : currentPlayer.deck,
         },
         turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
         shouldTriggerEndRound: shouldEndRound,
@@ -961,6 +982,7 @@ export const gameplayStoreConfig = (
         player: {
           ...state.player,
           ...nextState.player,
+          patternLines: normalizePatternLines(nextState.player?.patternLines ?? state.player.patternLines),
           armor: nextState.player?.armor ?? state.player.armor ?? 0,
         },
         runeforges: nextState.runeforges,

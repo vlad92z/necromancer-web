@@ -41,6 +41,7 @@ export function createPatternLines(count: number = WALL_SIZE): PatternLine[] {
       tier: i as PatternLine['tier'],
       runeType: null,
       count: 0,
+      runes: [],
       firstRuneId: null,
       firstRuneEffects: null,
     });
@@ -87,13 +88,12 @@ export function getSoloSizingConfig(): SoloSizingConfig {
  * Create a mock player deck (for now, just basic runes)
  */
 export function createStartingDeck(
-  totalRunesPerPlayer?: number
+  totalRunesPerPlayer: number
 ): Rune[] {
   const deck: Rune[] = [];
   const runeTypes = getRuneTypes();
-  const runesToGenerate = totalRunesPerPlayer ?? runeTypes.length * 8;
-  const baseRunesPerType = Math.floor(runesToGenerate / runeTypes.length);
-  let remainder = runesToGenerate - baseRunesPerType * runeTypes.length;
+  const baseRunesPerType = Math.floor(totalRunesPerPlayer / runeTypes.length);
+  let remainder = totalRunesPerPlayer - baseRunesPerType * runeTypes.length;
 
   runeTypes.forEach((runeType) => {
     const extra = remainder > 0 ? 1 : 0;
@@ -181,11 +181,11 @@ export function fillFactories(
   deck: Rune[],
   runesPerRuneforge: number = 4
 ): { runeforges: Runeforge[]; deck: Rune[] } {
-  let shuffledDeck = deck.sort(() => Math.random() - 0.5);
+  let remainingDeck = [...deck];
   const filledRuneforges = runeforges.map((runeforge) => {
-    const runesToDeal = Math.min(shuffledDeck.length, runesPerRuneforge);
-    const runesForForge = shuffledDeck.slice(0, runesToDeal);
-    shuffledDeck = shuffledDeck.slice(runesToDeal);
+    const runesToDeal = Math.min(remainingDeck.length, runesPerRuneforge);
+    const runesForForge = remainingDeck.slice(0, runesToDeal);
+    remainingDeck = remainingDeck.slice(runesToDeal);
 
     return {
       ...runeforge,
@@ -196,14 +196,14 @@ export function fillFactories(
 
   return {
     runeforges: filledRuneforges,
-    deck: shuffledDeck,
+    deck: remainingDeck,
   };
 }
 
 /**
  * Initialize a solo run using the fixed six-rune setup.
  */
-export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = createStartingDeck(100)): GameState {
+export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = createStartingDeck(25)): GameState {
   // const soloConfig = normalizeSoloConfig(config);
   const initialGameNumber = 1;
   const startingStrain = getOverloadDamageForGame(initialGameNumber);
@@ -211,11 +211,12 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
   const longestRun = 0; //TODO: why is this even needed?
   const soloMaxHealth = 100;
 
+  const activeDeck = [...fullDeck].sort(() => Math.random() - 0.5);
   const player = createPlayer(
     'player-1',
     'Arcane Apprentice',
     soloMaxHealth,
-    fullDeck,
+    activeDeck,
     soloMaxHealth,
   );
   const soloFactories = createSoloFactories(player);

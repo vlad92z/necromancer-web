@@ -475,6 +475,139 @@ describe('gameplayStore persistence', () => {
 
     expect(store.getState().turnPhase).toBe('deck-draft');
   });
+
+  it('deals the initial active deck into runeforges and removes dealt runes from the deck queue', async () => {
+    const { initializeSoloGame } = await import('../../utils/gameInitialization');
+
+    const state = initializeSoloGame(999, Array.from({ length: 24 }, (_, index) =>
+      createTestRune(`initial-${index}`, 'Fire')
+    ));
+
+    expect(state.runeforges).toHaveLength(5);
+    expect(state.runeforges.flatMap((runeforge) => runeforge.runes)).toHaveLength(20);
+    expect(state.player.deck).toHaveLength(4);
+  });
+
+  it('partially refills runeforges from the remaining deck without defeating the player', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const remainingRunes = [
+      createTestRune('partial-1', 'Fire'),
+      createTestRune('partial-2', 'Life'),
+      createTestRune('partial-3', 'Void'),
+    ];
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      turnPhase: 'resolving-end-round',
+      shouldTriggerEndRound: true,
+      player: {
+        ...state.player,
+        deck: remainingRunes,
+      },
+      runeforges: [],
+    }));
+
+    store.getState().endRound();
+
+    const nextState = store.getState();
+    expect(nextState.isDefeat).toBe(false);
+    expect(nextState.turnPhase).toBe('select');
+    expect(nextState.player.deck).toEqual([]);
+    expect(nextState.runeforges.flatMap((runeforge) => runeforge.runes.map((rune) => rune.id))).toEqual([
+      'partial-1',
+      'partial-2',
+      'partial-3',
+    ]);
+    expect(nextState.runeforges.some((runeforge) => runeforge.runes.length === 0)).toBe(true);
+  });
+
+  it('defeats the player when an exhausted round refills from an empty deck', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      turnPhase: 'resolving-end-round',
+      shouldTriggerEndRound: true,
+      player: {
+        ...state.player,
+        deck: [],
+      },
+      runeforges: [],
+    }));
+
+    store.getState().endRound();
+
+    expect(store.getState().isDefeat).toBe(true);
+  });
+
+  it('recycles non-primary cast runes to the back of the deck while removing the cast rune', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const primaryRune = createTestRune('cast-primary', 'Fire');
+    const recycledRune = createTestRune('cast-recycled', 'Fire');
+    const tailRune = createTestRune('deck-tail', 'Life');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 999,
+      patternLineLock: false,
+      runeforges: [createTestRuneforgeWithRunes([primaryRune, recycledRune])],
+      player: {
+        ...state.player,
+        deck: [tailRune],
+      },
+    }));
+    useSelectionStore.getState().setSelection(
+      [primaryRune, recycledRune],
+      createTestDraftSourceWithRunes([primaryRune, recycledRune]),
+      Date.now()
+    );
+
+    store.getState().placeRunes(1);
+
+    expect(store.getState().player.wall[1].some((cell) => cell.runeType === 'Fire')).toBe(true);
+    expect(store.getState().player.deck.map((rune) => rune.id)).toEqual(['deck-tail', 'cast-recycled']);
+    expect(store.getState().player.deck.some((rune) => rune.id === 'cast-primary')).toBe(false);
+  });
+
+  it('does not recycle overflow runes when a pattern line cast resolves', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const primaryRune = createTestRune('overflow-primary', 'Fire');
+    const overflowRune = createTestRune('overflow-rune', 'Fire');
+    const tailRune = createTestRune('overflow-tail', 'Life');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 999,
+      patternLineLock: false,
+      runeforges: [createTestRuneforgeWithRunes([primaryRune, overflowRune])],
+      player: {
+        ...state.player,
+        deck: [tailRune],
+      },
+    }));
+    useSelectionStore.getState().setSelection(
+      [primaryRune, overflowRune],
+      createTestDraftSourceWithRunes([primaryRune, overflowRune]),
+      Date.now()
+    );
+
+    store.getState().placeRunes(0);
+
+    expect(store.getState().player.deck.map((rune) => rune.id)).toEqual(['overflow-tail']);
+    expect(store.getState().overloadRunes.map((rune) => rune.id)).toContain('overflow-rune');
+  });
 });
 
 function createTestRune(id: string, runeType: Rune['runeType']): Rune {
@@ -486,19 +619,27 @@ function createTestRune(id: string, runeType: Rune['runeType']): Rune {
 }
 
 function createTestRuneforge(rune: Rune, id: string = 'resolver-forge'): Runeforge {
+  return createTestRuneforgeWithRunes([rune], id);
+}
+
+function createTestRuneforgeWithRunes(runes: Rune[], id: string = 'resolver-forge'): Runeforge {
   return {
     id,
     ownerId: 'player-1',
-    runes: [rune],
+    runes,
     disabled: false,
   };
 }
 
 function createTestDraftSource(rune: Rune, runeforgeId: string = 'resolver-forge'): DraftSource {
+  return createTestDraftSourceWithRunes([rune], runeforgeId);
+}
+
+function createTestDraftSourceWithRunes(runes: Rune[], runeforgeId: string = 'resolver-forge'): DraftSource {
   return {
     runeforgeId,
-    originalRunes: [rune],
-    affectedRuneforges: [{ runeforgeId, originalRunes: [rune] }],
+    originalRunes: runes,
+    affectedRuneforges: [{ runeforgeId, originalRunes: runes }],
     selectionMode: 'single',
   };
 }

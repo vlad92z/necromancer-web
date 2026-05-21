@@ -71,6 +71,7 @@ export interface PatternLine {
   tier: 1 | 2 | 3 | 4 | 5 | 6; // Line capacity (1-6 runes)
   runeType: RuneType | null; // Type of rune in this line (null if empty)
   count: number; // Current number of runes in the line
+  runes: Rune[]; // Exact runes placed on this line, in placement order
   firstRuneId: string | null; // ID of the first rune placed on this line TODO Rename to Primary Rune
   firstRuneEffects: RuneEffects | null; // Effects inherited by wall placement
 }
