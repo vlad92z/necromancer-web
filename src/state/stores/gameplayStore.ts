@@ -17,9 +17,7 @@ import { fillFactories, initializeSoloGame, createSoloFactories } from '../../ut
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
-import { addArcaneDust, getArcaneDustReward } from '../../utils/arcaneDust';
-import { useArtefactStore } from './artefactStore';
-import { useSelectionStore } from './selectionStore';
+import { getArcaneDustReward } from '../../utils/arcaneDust';
 import {
   applyIncomingDamageModifiers,
   applyOutgoingDamageModifiers,
@@ -27,22 +25,36 @@ import {
   getArmorGainMultiplier,
   getDeckDraftSelectionLimit,
 } from '../../utils/artefactEffects';
-import { clearSoloState } from '../../utils/soloPersistence';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
-import { trackDefeatEvent, trackNewGameEvent } from '../../utils/mixpanel';
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
+import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
+import {
+  addGameplayArcaneDust,
+  clearGameplaySelection,
+  clearPersistedSoloRun,
+  getArcaneDustTotal,
+  getGameplaySelection,
+  getSelectedArtefactIds,
+  navigateToSoloRun,
+  setGameplaySelection,
+} from '../../systems/gameplayOrchestrator';
+import {
+  accumulateScoringDeltas,
+  clearScoringSequenceTimer,
+  getRuneResolutionDelayMs,
+  runScoringSequence,
+} from '../../systems/scoringSequenceRunner';
 import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
 
 function enterDeckDraftMode(state: GameState): GameState {
   //TODO: These should not be handled as p0art of entering draft mode
-  useSelectionStore.getState().clearSelection();
+  clearGameplaySelection();
   const arcaneDustReward = getArcaneDustReward(state.gameIndex);
   if (arcaneDustReward > 0) {
-    const newDustTotal = addArcaneDust(arcaneDustReward);
-    useArtefactStore.getState().updateArcaneDust(newDustTotal);
+    addGameplayArcaneDust(arcaneDustReward);
   }
 
   const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
@@ -72,71 +84,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     longestRun: nextLongestRun,
     targetScore: nextTargetScore,
     baseTargetScore: state.baseTargetScore || nextTargetScore,
-  };
-}
-
-// Navigation callback registry for routing integration
-let navigationCallback: (() => void) | null = null;
-
-export function setNavigationCallback(callback: (() => void) | null) {
-  navigationCallback = callback;
-}
-
-//TODO: Separate game state from animation state for scoring
-const SCORING_DELAY_BASE_MS = 420;
-const SCORING_DELAY_MIN_MS = 140;
-const SCORING_DELAY_DECAY_MS = 22;
-
-const scoringTimeoutRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
-
-function getRuneResolutionDelayMs(segmentSize: number): number {
-  const normalizedSize = Math.max(1, segmentSize);
-  const scaledDelay = SCORING_DELAY_BASE_MS - (normalizedSize - 1) * SCORING_DELAY_DECAY_MS;
-  return Math.max(SCORING_DELAY_MIN_MS, Math.round(scaledDelay));
-}
-
-function clearScoringTimeout(): void {
-  if (scoringTimeoutRef.current !== null) {
-    clearTimeout(scoringTimeoutRef.current);
-    scoringTimeoutRef.current = null;
-  }
-}
-
-function accumulateScoringDeltas(steps: ScoringStep[]): {
-  damage: number;
-  healing: number;
-  armor: number;
-  arcaneDust: number;
-} {
-  return steps.reduce(
-    (totals, step) => ({
-      damage: totals.damage + step.damageDelta,
-      healing: totals.healing + step.healingDelta,
-      armor: totals.armor + step.armorDelta,
-      arcaneDust: totals.arcaneDust + step.arcaneDustDelta,
-    }),
-    { damage: 0, healing: 0, armor: 0, arcaneDust: 0 }
-  );
-}
-
-function getDisplayTotalsForIndex(sequence: ScoringSequenceState, activeIndex: number): {
-  health: number;
-  armor: number;
-  runePowerTotal: number;
-  arcaneDust: number;
-} {
-  const clampedIndex = Math.max(0, Math.min(activeIndex, sequence.steps.length - 1));
-  const partialDeltas = accumulateScoringDeltas(sequence.steps.slice(0, clampedIndex + 1));
-  const nextHealth = Math.min(sequence.maxHealth, sequence.startHealth + partialDeltas.healing);
-  const nextArmor = Math.max(0, sequence.startArmor + partialDeltas.armor);
-  const nextRunePowerTotal = sequence.startRunePowerTotal + partialDeltas.damage;
-  const nextArcaneDust = Math.max(0, sequence.startArcaneDust + partialDeltas.arcaneDust);
-
-  return {
-    health: nextHealth,
-    armor: nextArmor,
-    runePowerTotal: nextRunePowerTotal,
-    arcaneDust: nextArcaneDust,
   };
 }
 
@@ -177,7 +124,7 @@ function handlePlayerDefeat(
   console.log('gameplayStore: handlePlayerDefeat');
   const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
 
-  trackDefeatEvent({
+  trackGameplayDefeat({
     gameNumber: state.gameIndex,
     deck: updatedPlayer.deck,
     runePowerTotal: state.runePowerTotal,
@@ -200,68 +147,9 @@ function handlePlayerDefeat(
   };
 }
 
-function runScoringSequence(sequence: ScoringSequenceState, set: StoreApi<GameplayStore>['setState']): void {
-  clearScoringTimeout();
-
-  if (sequence.steps.length === 0) {
-    set((state) => {
-      if (!state.scoringSequence || state.scoringSequence.sequenceId !== sequence.sequenceId) {
-        return state;
-      }
-      return { ...state, scoringSequence: null };
-    });
-    return;
-  }
-
-  const executeStep = (index: number) => {
-    const step = sequence.steps[index];
-    const nextDisplays = getDisplayTotalsForIndex(sequence, index);
-
-    set((state) => {
-      const activeSequence = state.scoringSequence;
-      if (!activeSequence || activeSequence.sequenceId !== sequence.sequenceId) {
-        return state;
-      }
-
-      return {
-        ...state,
-        scoringSequence: {
-          ...activeSequence,
-          activeIndex: index,
-          displayHealth: nextDisplays.health,
-          displayArmor: nextDisplays.armor,
-          displayRunePowerTotal: nextDisplays.runePowerTotal,
-          displayArcaneDust: nextDisplays.arcaneDust,
-        },
-      };
-    });
-
-    const hasNextStep = index + 1 < sequence.steps.length;
-    const delay = step.delayMs;
-
-    scoringTimeoutRef.current = setTimeout(() => {
-      if (hasNextStep) {
-        executeStep(index + 1);
-        return;
-      }
-
-      scoringTimeoutRef.current = setTimeout(() => {
-        set((state) => {
-          if (!state.scoringSequence || state.scoringSequence.sequenceId !== sequence.sequenceId) {
-            return state;
-          }
-          return { ...state, scoringSequence: null };
-        });
-      }, delay);
-    }, delay);
-  };
-
-  executeStep(0);
-}
-
 function prepareRoundReset(state: GameState): GameState {
   console.log('gameplayStore: prepareRoundReset');
-  useSelectionStore.getState().clearSelection();
+  clearGameplaySelection();
   const player = state.player;
   const currentStrain = state.overloadDamage;
   const nextRound = state.round + 1;
@@ -271,7 +159,7 @@ function prepareRoundReset(state: GameState): GameState {
 
   if (!playerHasEnough) {
     // Defeat
-    trackDefeatEvent({
+    trackGameplayDefeat({
       gameNumber: state.gameIndex,
       deck: player.deck,
       runePowerTotal: state.runePowerTotal,
@@ -343,7 +231,7 @@ function cancelSelectionState(state: GameplayStore, selectionState: SelectionSta
     return state;
   }
 
-  useSelectionStore.getState().clearSelection();
+  clearGameplaySelection();
   return {
     ...state,
     turnPhase: 'select' as const,
@@ -504,7 +392,7 @@ function placeSelectionOnPatternLine(
       runePowerTotal: nextRunePowerTotal,
     });
 
-    useSelectionStore.getState().clearSelection();
+    clearGameplaySelection();
     return {
       ...state,
       ...deckDraftReadyState,
@@ -519,7 +407,7 @@ function placeSelectionOnPatternLine(
       ? ('end-of-round' as const)
       : ('select' as const);
 
-  useSelectionStore.getState().clearSelection();
+  clearGameplaySelection();
   return {
     ...state,
     player: updatedPlayer,
@@ -586,7 +474,7 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
       runePowerTotal: nextRunePowerTotal,
     });
 
-    useSelectionStore.getState().clearSelection();
+    clearGameplaySelection();
     return {
       ...state,
       ...deckDraftReadyState,
@@ -596,7 +484,7 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
 
   const shouldEndRound = isRoundExhausted(nextRuneforges);
 
-  useSelectionStore.getState().clearSelection();
+  clearGameplaySelection();
   return {
     ...state,
     player: updatedPlayer,
@@ -683,7 +571,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId: string) => {
     set((state) => {
-      const selectionState = useSelectionStore.getState();
+      const selectionState = getGameplaySelection();
       if (selectionState.selectedRunes.length > 0) {
         return attemptAutoPlacement(state, selectionState);
       }
@@ -709,7 +597,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         const originalRunes = runeforge.runes;
 
         const selectionTimestamp = Date.now();
-        useSelectionStore.getState().setSelectionState({
+        setGameplaySelection({
           selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
           selectionTimestamp,
           draftSource: {
@@ -745,7 +633,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const orderedRunes = primaryRuneFirst(selectedFromAllRuneforges, primaryRuneId);
 
       const selectionTimestamp = Date.now();
-      useSelectionStore.getState().setSelectionState({
+      setGameplaySelection({
         selectedRunes: [...selectionState.selectedRunes, ...orderedRunes],
         selectionTimestamp,
         draftSource: {
@@ -765,7 +653,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   moveRunesToWall: () => {
     let scoringSequenceForAnimation: ScoringSequenceState | null = null;
     let arcaneDustGain = 0;
-    const baseArcaneDust = useArtefactStore.getState().arcaneDust;
+    const baseArcaneDust = getArcaneDustTotal();
 
     set((state) => {
       if (state.scoringSequence) {
@@ -913,8 +801,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
     });
 
     if (arcaneDustGain > 0) {
-      const newDustTotal = addArcaneDust(arcaneDustGain);
-      useArtefactStore.getState().updateArcaneDust(newDustTotal);
+      addGameplayArcaneDust(arcaneDustGain);
     }
 
     if (scoringSequenceForAnimation) {
@@ -923,15 +810,15 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   placeRunes: (patternLineIndex: number) => {
-    set((state) => placeSelectionOnPatternLine(state, useSelectionStore.getState(), patternLineIndex));
+    set((state) => placeSelectionOnPatternLine(state, getGameplaySelection(), patternLineIndex));
   },
 
   placeRunesInFloor: () => {
-    set((state) => placeSelectionInFloor(state, useSelectionStore.getState()));
+    set((state) => placeSelectionInFloor(state, getGameplaySelection()));
   },
 
   cancelSelection: () => {
-    set((state) => cancelSelectionState(state, useSelectionStore.getState()));
+    set((state) => cancelSelectionState(state, getGameplaySelection()));
   },
 
 
@@ -948,7 +835,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
    * Only works when in the 'select' phase with selected runes.
    */
   autoPlaceSelection: () => {
-    set((state) => attemptAutoPlacement(state, useSelectionStore.getState()));
+    set((state) => attemptAutoPlacement(state, getGameplaySelection()));
   },
 
   acknowledgeOverloadSound: () => {
@@ -971,18 +858,18 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   startSoloRun: () => {
-    clearScoringTimeout();
-    useSelectionStore.getState().clearSelection();
+    clearScoringSequenceTimer();
+    clearGameplaySelection();
     set(() => {
       const baseState = initializeSoloGame();
-      const selectedArtefacts = useArtefactStore.getState().selectedArtefactIds;
+      const selectedArtefacts = getSelectedArtefactIds();
       const nextState = {
         ...baseState,
         gameStarted: true,
         activeArtefacts: selectedArtefacts,
       };
 
-      trackNewGameEvent({
+      trackGameplayNewGame({
         gameNumber: nextState.gameIndex,
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
@@ -996,8 +883,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   prepareSoloMode: () => {
-    clearScoringTimeout();
-    useSelectionStore.getState().clearSelection();
+    clearScoringSequenceTimer();
+    clearGameplaySelection();
     set(() => ({
       ...initializeSoloGame(),
       gameStarted: false,
@@ -1005,8 +892,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   hydrateGameState: (nextState: GameState) => {
-    clearScoringTimeout();
-    useSelectionStore.getState().clearSelection();
+    clearScoringSequenceTimer();
+    clearGameplaySelection();
     set((state) => {
       // const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
       // if (!shouldMerge) {
@@ -1065,13 +952,13 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   returnToStartScreen: () => {
-    clearScoringTimeout();
-    useSelectionStore.getState().clearSelection();
+    clearScoringSequenceTimer();
+    clearGameplaySelection();
     set((state) => {
       // If the last run ended in defeat, ensure persisted state is cleared immediately
       if (state.isDefeat) {
         try {
-          clearSoloState();
+          clearPersistedSoloRun();
         } catch (error) {
           console.log(error)
         }
@@ -1083,14 +970,12 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
     });
     // Call navigation callback if registered (for router integration)
-    if (navigationCallback) {
-      navigationCallback();
-    }
+    navigateToSoloRun();
   },
 
   resetGame: () => {
-    clearScoringTimeout();
-    useSelectionStore.getState().clearSelection();
+    clearScoringSequenceTimer();
+    clearGameplaySelection();
     set(() => initializeSoloGame());
   },
 
@@ -1125,8 +1010,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       const updatedDeckTemplate = state.fullDeck.filter((rune) => rune.id !== runeId);
 
       if (dustAwarded > 0) {
-        const nextDustTotal = addArcaneDust(dustAwarded);
-        useArtefactStore.getState().updateArcaneDust(nextDustTotal);
+        addGameplayArcaneDust(dustAwarded);
       }
 
       return {
@@ -1226,7 +1110,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   startNextSoloGame: () => {
-    useSelectionStore.getState().clearSelection();
+    clearGameplaySelection();
     set((state) => {
       const nextTarget = state.targetScore;
       const nextGameIndex = state.gameIndex + 1;
@@ -1253,7 +1137,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         activeArtefacts: state.activeArtefacts,
       };
 
-      trackNewGameEvent({
+      trackGameplayNewGame({
         gameNumber: nextState.gameIndex,
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,

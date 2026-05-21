@@ -3,6 +3,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ScoringSequenceState } from '../../types/game';
 
 const storage = new Map<string, string>();
 const localStorageMock = {
@@ -162,5 +163,92 @@ describe('gameplayStore persistence', () => {
 
     const nextState = store.getState() as unknown as Record<string, unknown>;
     expect(nextState).not.toHaveProperty('totalRunesPerPlayer');
+  });
+
+  it('invokes the registered solo navigation callback when returning to the start screen', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { setNavigationCallback } = await import('../../systems/gameplayOrchestrator');
+    const store = createGameplayStoreInstance();
+    const navigate = vi.fn();
+
+    setNavigationCallback(navigate);
+    store.getState().returnToStartScreen();
+    setNavigationCallback(null);
+
+    expect(navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('advances and clears scoring sequence display totals with timers', async () => {
+    vi.useFakeTimers();
+    const { create } = await import('zustand');
+    const { clearScoringSequenceTimer, runScoringSequence } = await import('../../systems/scoringSequenceRunner');
+    const sequence: ScoringSequenceState = {
+      steps: [
+        {
+          row: 0,
+          col: 0,
+          runeType: 'Fire',
+          damageDelta: 2,
+          healingDelta: 1,
+          armorDelta: 3,
+          arcaneDustDelta: 4,
+          delayMs: 10,
+        },
+        {
+          row: 0,
+          col: 1,
+          runeType: 'Frost',
+          damageDelta: 5,
+          healingDelta: 2,
+          armorDelta: 1,
+          arcaneDustDelta: 6,
+          delayMs: 10,
+        },
+      ],
+      activeIndex: -1,
+      sequenceId: 123,
+      startHealth: 10,
+      startArmor: 0,
+      startRunePowerTotal: 20,
+      startArcaneDust: 30,
+      maxHealth: 12,
+      displayHealth: 10,
+      displayArmor: 0,
+      displayRunePowerTotal: 20,
+      displayArcaneDust: 30,
+      targetHealth: 12,
+      targetArmor: 4,
+      targetRunePowerTotal: 27,
+      targetArcaneDust: 40,
+    };
+    const store = create<{ scoringSequence: ScoringSequenceState | null }>(() => ({
+      scoringSequence: sequence,
+    }));
+
+    runScoringSequence(sequence, store.setState);
+
+    expect(store.getState().scoringSequence).toMatchObject({
+      activeIndex: 0,
+      displayHealth: 11,
+      displayArmor: 3,
+      displayRunePowerTotal: 22,
+      displayArcaneDust: 34,
+    });
+
+    await vi.advanceTimersByTimeAsync(20);
+
+    expect(store.getState().scoringSequence).toMatchObject({
+      activeIndex: 1,
+      displayHealth: 12,
+      displayArmor: 4,
+      displayRunePowerTotal: 27,
+      displayArcaneDust: 40,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+
+    expect(store.getState().scoringSequence).toBeNull();
+    clearScoringSequenceTimer();
+    vi.useRealTimers();
   });
 });

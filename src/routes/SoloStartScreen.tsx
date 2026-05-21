@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setNavigationCallback } from '../state/stores/gameplayStore';
+import { setNavigationCallback } from '../systems/gameplayOrchestrator';
 import { subscribeGameplayState } from '../state/stores/gameplayState';
 import { GameContainer } from '../features/gameplay/components/GameContainer';
 import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions';
