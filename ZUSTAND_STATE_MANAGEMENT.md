@@ -191,7 +191,12 @@ This helps keep some game rules outside React and outside the store body.
 
 ### Most components use selector-based access
 
-Many components subscribe to narrow slices, which is better than reading the full store everywhere.
+Components now read Zustand state through dedicated selector/action hooks in:
+
+- `src/hooks/useGameState.ts`
+- `src/hooks/useGameActions.ts`
+
+Most component-level store access has been normalized behind narrow selectors, which is better than reading full stores or scattering many direct subscriptions through UI files.
 
 ## Current Inefficiencies And Separation Problems
 
@@ -249,21 +254,26 @@ These are fine for local UI usage, but they conflict with the project’s stated
 
 This is not a bug in current behavior, but it is architectural drift.
 
-## 5. Broad subscriptions still exist
+## 5. Selector discipline is improved, but still policy-sensitive
 
-There are components subscribing to entire stores:
+The previous broad component subscriptions have been removed:
 
-- `SoloStartScreen.tsx` calls `useGameplayStore()` with no selector
-- `ArtefactsView.tsx` calls `useArtefactStore()` with no selector
+- `ArtefactsView.tsx` no longer subscribes to the full artefact store
+- `SoloStartScreen.tsx` uses narrow selector hooks for render state and actions
 
-That means any change in those stores can re-render those components, even if they only need a few fields.
+Selector access is now centralized behind hook helpers, and grouped selectors use shallow-stable output.
 
-Related issue:
+Current state:
 
-- `useGameState.ts` exists, but it is minimal and inconsistent
-- `useFactories()` returns a new object literal, so without `shallow` it does not provide stable selector output
+- `useGameState.ts` is no longer minimal; it provides dedicated gameplay, artefact, selection, and UI selectors
+- `useGameActions.ts` now exists and centralizes grouped action access
+- `useFactories()` now uses a shallow-stable selector instead of returning an unstable object literal
 
-The codebase uses selector hooks partially, not systematically.
+Remaining caveat:
+
+- `SoloStartScreen.tsx` still uses `useGameplayStore.subscribe(...)` for longest-run UI sync; this is intentional and is not a render-subscription problem
+
+So the codebase is no longer inconsistent about selector usage in components, but the selector surface now needs maintenance discipline to avoid drifting back toward ad hoc store access.
 
 ## 6. Workflow is split between store flags and component timers
 
@@ -313,11 +323,17 @@ Gameplay and artefact actions perform:
 
 This reduces separation of concern. The actions are no longer pure state transitions plus a thin effect layer; they are the effect layer too.
 
-## 9. Duplicate or stale implementation intent exists
+## 9. State access intent now matches implementation better
 
-Project guidance mentions a `useGameActions.ts` pattern, but the file does not exist in the current codebase. The implementation has drifted away from the documented state access pattern.
+Project guidance mentioned a `useGameActions.ts` pattern, and that file now exists in the current codebase alongside `useGameState.ts`.
 
-That hurts readability because the documented architecture and actual architecture differ.
+That is an improvement because:
+
+- documented state-access guidance now matches the code more closely
+- component dependencies are easier to scan
+- selector grouping is explicit instead of implicit at each call site
+
+The remaining risk is not missing infrastructure anymore; it is keeping these hooks as the canonical access layer rather than allowing direct store usage to reappear in components.
 
 ## Readability Impact
 
@@ -335,22 +351,26 @@ The result is not that Zustand is the problem. The problem is that the main stor
 
 ### 1. Tighten selectors everywhere
 
-Replace full-store subscriptions with narrow selectors.
+Status: completed.
 
-Priority targets:
+Changes made:
 
-- `SoloStartScreen.tsx`
-- `ArtefactsView.tsx`
+- replaced the remaining full-store component subscription in `ArtefactsView.tsx`
+- normalized component access behind `useGameState.ts` and `useGameActions.ts`
+- added dedicated selector/action hooks for gameplay, artefact, selection, and UI
+- used shallow-stable grouped selectors for object-returning hooks
 
-Also normalize selector hooks:
+Current benefit:
 
-- add dedicated selector/action hooks for gameplay, artefact, selection, and UI
-- use `shallow` when returning objects or tuples
-
-Expected benefit:
-
-- fewer unnecessary renders
+- fewer unnecessary renders from broad subscriptions or unstable grouped selectors
 - more readable component dependencies
+- a single access-layer convention for Zustand usage in UI code
+
+Follow-up guidance:
+
+- keep direct `use*Store(...)` usage inside hook modules or intentional imperative subscription sites
+- prefer scalar selectors when a component needs one field
+- prefer grouped shallow selectors when a component needs a coherent bundle of fields
 
 ### 2. Remove duplicate solo persistence
 
@@ -550,12 +570,12 @@ The biggest issues are not "too many stores." The bigger issues are:
 - duplicated persistence logic
 - cross-store coupling through direct `getState()` access
 - non-domain UI state mixed into domain state
-- inconsistent selector discipline
+- selector discipline now improved, but still dependent on keeping hooks as the only component access layer
 - state shape drift
 
 The best improvement path is incremental:
 
-- tighten selectors
+- keep selector access centralized in hooks
 - centralize persistence
 - normalize the state contract
 - move UI/presentation concerns out of gameplay
