@@ -6,21 +6,24 @@
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
 import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
-import { useGameplayPatternLineState, useSelectionState, useUIAnimationState } from '../../../../hooks/useGameState';
+import { useGameplayPatternLineState, useSelectionState } from '../../../../hooks/useGameState';
 import type { PatternLine } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
 
-export function PatternLines() {
+interface PatternLinesProps {
+  hiddenPatternSlots: Set<string>;
+}
+
+export function PatternLines({ hiddenPatternSlots }: PatternLinesProps) {
   const { placeRunes: onPlaceRunes } = useGameplayActions();
   const { setTooltipCards, resetTooltipCards } = useUIActions();
   const { lockedPatternLines, wall, patternLines, overloadDamage } = useGameplayPatternLineState();
   const { activeElement, selectedRunes } = useSelectionState();
   const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
   const selectedRuneType = selectedRunes[0]?.runeType ?? null;
-  const { playerHiddenPatternSlots: hiddenSlotKeys } = useUIAnimationState();
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (selectedRunes.length === 0) return false;
 
@@ -127,7 +130,7 @@ export function PatternLines() {
                 .fill(null)
                 .map((_, slotIndex) => {
                   const slotKey = `${index}-${slotIndex}`;
-                  const shouldHideRune = hiddenSlotKeys?.has(slotKey);
+                  const shouldHideRune = hiddenPatternSlots.has(slotKey);
                   const hasRuneInSlot = slotIndex < line.count && line.runeType !== null;
                   // Primary rune (moves to the wall) should live in the leading cell
                   const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;

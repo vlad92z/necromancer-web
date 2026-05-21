@@ -58,10 +58,6 @@ export function useShowSettingsOverlay() {
   return useUIStore((state) => state.showSettingsOverlay);
 }
 
-export function useIsPlacementAnimating() {
-  return useUIStore((state) => state.isPlacementAnimating);
-}
-
 export function useSelectionState() {
   return useSelectionStore(
     useShallow((state) => ({
@@ -126,16 +122,6 @@ export function useUIOverlayState() {
       showSettingsOverlay: state.showSettingsOverlay,
       showDeckOverlay: state.showDeckOverlay,
       showOverloadOverlay: state.showOverloadOverlay,
-    })),
-  );
-}
-
-export function useUIAnimationState() {
-  return useUIStore(
-    useShallow((state) => ({
-      animatingRuneIds: state.animatingRuneIds,
-      isPlacementAnimating: state.isPlacementAnimating,
-      playerHiddenPatternSlots: state.playerHiddenPatternSlots,
     })),
   );
 }

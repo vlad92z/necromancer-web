@@ -2,12 +2,12 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
 import { RuneAnimation } from '../../../components/RuneAnimation';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
-import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
+import { useGameplayActions } from '../../../hooks/useGameActions';
 import { useGameplayContainerState, useSelectionState, useSoundVolume, useUIOverlayState } from '../../../hooks/useGameState';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
@@ -22,18 +22,21 @@ export function GameContainer() {
   const { selectedRunes, draftSource } = useSelectionState();
   const soundVolume = useSoundVolume();
   const { showSettingsOverlay, showDeckOverlay, showOverloadOverlay } = useUIOverlayState();
-  const { setPlayerHiddenPatternSlots } = useUIActions();
-
   const {
     animatingRunes: placementAnimatingRunes,
     activeAnimatingRunes,
     hiddenPatternSlots,
+    isAnimatingPlacement,
     handlePlacementAnimationComplete,
   } = useRunePlacementAnimations({
     player,
     selectedRunes,
     draftSource,
   });
+  const animatingRuneIdSet = useMemo(
+    () => new Set(activeAnimatingRunes.map((rune) => rune.id)),
+    [activeAnimatingRunes],
+  );
 
   useRunePlacementSounds(
     activeAnimatingRunes,
@@ -43,10 +46,6 @@ export function GameContainer() {
     channelSoundPending,
     acknowledgeChannelSound
   );
-
-  useEffect(() => {
-    setPlayerHiddenPatternSlots(hiddenPatternSlots);
-  }, [hiddenPatternSlots, setPlayerHiddenPatternSlots]);
 
   const [boardScale, setBoardScale] = useState(() => {
     if (typeof window === 'undefined') {
@@ -86,7 +85,11 @@ export function GameContainer() {
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <SoloGameView />
+          <SoloGameView
+            animatingRuneIdSet={animatingRuneIdSet}
+            hiddenPatternSlots={hiddenPatternSlots}
+            isPlacementAnimating={isAnimatingPlacement}
+          />
         </div>
       </div>
 

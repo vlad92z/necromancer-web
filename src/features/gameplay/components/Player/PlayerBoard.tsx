@@ -3,14 +3,20 @@
  */
 
 import { useGameplayActions } from '../../../../hooks/useGameActions';
-import { useIsPlacementAnimating } from '../../../../hooks/useGameState';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { TooltipView } from './TooltipView';
 
-export function PlayerBoard() {
+interface PlayerBoardProps {
+  hiddenPatternSlots: Set<string>;
+  isPlacementAnimating: boolean;
+}
+
+export function PlayerBoard({
+  hiddenPatternSlots,
+  isPlacementAnimating,
+}: PlayerBoardProps) {
   const { cancelSelection } = useGameplayActions();
-  const isPlacementAnimating = useIsPlacementAnimating();
   const handleBoardClick = () => {
     if (!isPlacementAnimating) {
       cancelSelection();
@@ -23,7 +29,7 @@ export function PlayerBoard() {
     >
       <div className="flex flex-col gap-[min(1.2vmin,12px)] h-full">
         <div className="flex flex-row gap-5">
-          <PatternLines/>
+          <PatternLines hiddenPatternSlots={hiddenPatternSlots} />
           <ScoringWall/>
         </div>
         <TooltipView/>

@@ -1,5 +1,5 @@
 /**
- * UI Store - Overlay states and transient UI state
+ * UI Store - Overlay states and persistent UI preferences
  * Handles: overlay visibility, modal management, UI interactions
  */
 
@@ -20,10 +20,6 @@ interface UIStore {
   hasMusicSessionStarted: boolean;
   tooltipCards: TooltipCard[];
   tooltipOverrideActive: boolean;
-  hiddenPatternLines: Set<number>;
-  playerHiddenPatternSlots: Set<string>;
-  animatingRuneIds: Set<string>;
-  isPlacementAnimating: boolean;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
@@ -39,10 +35,6 @@ interface UIStore {
   markMusicSessionStarted: () => void;
   setTooltipCards: (cards: TooltipCard[], overrideSelection?: boolean) => void;
   resetTooltipCards: () => void;
-  setHiddenPatternLines: (indices: Set<number>) => void;
-  setPlayerHiddenPatternSlots: (slots: Set<string>) => void;
-  setAnimatingRuneIds: (ids: Set<string>) => void;
-  setIsPlacementAnimating: (isAnimating: boolean) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -74,10 +66,6 @@ export const useUIStore = create<UIStore>((set) => ({
   hasMusicSessionStarted: false,
   tooltipCards: createDefaultTooltipCards(),
   tooltipOverrideActive: false,
-  hiddenPatternLines: new Set<number>(),
-  playerHiddenPatternSlots: new Set<string>(),
-  animatingRuneIds: new Set<string>(),
-  isPlacementAnimating: false,
   
   // Actions
   toggleRulesOverlay: () => {
@@ -149,21 +137,5 @@ export const useUIStore = create<UIStore>((set) => ({
       tooltipCards: createDefaultTooltipCards(),
       tooltipOverrideActive: false,
     });
-  },
-
-  setHiddenPatternLines: (indices: Set<number>) => {
-    set({ hiddenPatternLines: indices });
-  },
-
-  setPlayerHiddenPatternSlots: (slots: Set<string>) => {
-    set({ playerHiddenPatternSlots: slots });
-  },
-
-  setAnimatingRuneIds: (ids: Set<string>) => {
-    set({ animatingRuneIds: ids });
-  },
-
-  setIsPlacementAnimating: (isAnimating: boolean) => {
-    set({ isPlacementAnimating: isAnimating });
   },
 }));

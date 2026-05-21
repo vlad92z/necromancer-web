@@ -27,10 +27,7 @@ export function useUIActions() {
   return useUIStore(
     useShallow((state) => ({
       markMusicSessionStarted: state.markMusicSessionStarted,
-      setAnimatingRuneIds: state.setAnimatingRuneIds,
-      setIsPlacementAnimating: state.setIsPlacementAnimating,
       setMusicMuted: state.setMusicMuted,
-      setPlayerHiddenPatternSlots: state.setPlayerHiddenPatternSlots,
       setTooltipCards: state.setTooltipCards,
       resetTooltipCards: state.resetTooltipCards,
       setSoundVolume: state.setSoundVolume,
