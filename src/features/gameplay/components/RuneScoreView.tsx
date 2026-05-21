@@ -3,14 +3,13 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
-import { useGameplayStore } from '../../../state/stores';
 import { useCastSound } from '../../../hooks/useCastSound';
+import { useGameplayScoreState } from '../../../hooks/useGameState';
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
 export function RuneScoreView() {
-  const currentScore = useGameplayStore((state) => state.runePowerTotal);
-  const targetScore = useGameplayStore((state) => state.targetScore);
+  const { currentScore, targetScore } = useGameplayScoreState();
   const progress = Math.min(1, currentScore / targetScore);
   const progressPercent = Math.round(progress * 100);
   const previousValueRef = useRef(currentScore);

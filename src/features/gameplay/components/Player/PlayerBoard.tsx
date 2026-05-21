@@ -2,14 +2,15 @@
  * PlayerBoard component - displays a player's board (pattern lines, wall, floor line)
  */
 
-import { useGameplayStore, useUIStore } from '../../../../state/stores';
+import { useGameplayActions } from '../../../../hooks/useGameActions';
+import { useIsPlacementAnimating } from '../../../../hooks/useGameState';
 import { PatternLines } from './PatternLines';
 import { ScoringWall } from './ScoringWall';
 import { TooltipView } from './TooltipView';
 
 export function PlayerBoard() {
-  const cancelSelection = useGameplayStore((state) => state.cancelSelection);
-  const isPlacementAnimating = useUIStore((state) => state.isPlacementAnimating);
+  const { cancelSelection } = useGameplayActions();
+  const isPlacementAnimating = useIsPlacementAnimating();
   const handleBoardClick = () => {
     if (!isPlacementAnimating) {
       cancelSelection();

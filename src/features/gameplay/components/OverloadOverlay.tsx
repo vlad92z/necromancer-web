@@ -7,13 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
+import { useUIActions } from '../../../hooks/useGameActions';
+import { useGameplayOverloadState } from '../../../hooks/useGameState';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
-import { useGameplayStore, useUIStore } from '../../../state/stores';
 
 export function OverloadOverlay() {
-  const close = useUIStore((state) => state.toggleOverloadOverlay);
-  const overloadRunes = useGameplayStore((state) => state.overloadRunes);
-  const playerName = useGameplayStore((state) => state.player.name);
+  const { toggleOverloadOverlay: close } = useUIActions();
+  const { overloadRunes, playerName } = useGameplayOverloadState();
   const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
 
   // Group runes by type for ordering and totals

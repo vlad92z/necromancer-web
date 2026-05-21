@@ -5,10 +5,10 @@
 import { motion } from 'framer-motion';
 import { useCallback, useMemo, useRef } from 'react';
 import { RuneCell } from '../../../../components/RuneCell';
+import { useGameplayActions } from '../../../../hooks/useGameActions';
+import { useGameplayRuneforgeState, useSelectionState } from '../../../../hooks/useGameState';
 import { RUNE_SIZE_CONFIG } from '../../../../styles/tokens';
 import type { Rune, RuneType, Runeforge as RuneforgeType } from '../../../../types/game';
-import { useSelectionStore } from '../../../../state/stores/selectionStore';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 
 interface RuneforgeViewProps {
   runeforge: RuneforgeType;
@@ -31,10 +31,9 @@ export function RuneforgeView({
   onRuneMouseEnter,
   onRuneMouseLeave
 }: RuneforgeViewProps) {
-  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
-  const draftSource = useSelectionStore((state) => state.draftSource);
-  const runesPerRuneforge = useGameplayStore((state) => state.runesPerRuneforge);
-  const draftRune = useGameplayStore((state) => state.draftRune);
+  const { selectedRunes, draftSource } = useSelectionState();
+  const { runesPerRuneforge } = useGameplayRuneforgeState();
+  const { draftRune } = useGameplayActions();
   const runeSlotAssignmentsRef = useRef<Record<string, number>>({});
   const hasSelectedRunes = selectedRunes.length > 0;
   const isGlobalSelection = draftSource && draftSource.selectionMode === 'global';

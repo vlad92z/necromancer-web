@@ -3,11 +3,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useGameplayActions } from '../../../../hooks/useGameActions';
+import { useGameplayWallState } from '../../../../hooks/useGameState';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
 import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 
 // Layout constants (kept in sync with RuneCell size config)
@@ -42,8 +43,7 @@ interface OverlayEdge {
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
 export function ScoringWall() {
-  const wall = useGameplayStore((state) => state.player.wall);
-  const patternLines = useGameplayStore((state) => state.player.patternLines);
+  const { wall, patternLines, scoringSequence } = useGameplayWallState();
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
   const previousWallRef = useRef<ScoringWallType | null>(null);
@@ -51,7 +51,6 @@ export function ScoringWall() {
   const pendingCellsRef = useRef<Set<string>>(new Set());
   const overlayRef = useRef<{ points: Map<string, OverlayPoint>; edges: Map<string, OverlayEdge> } | null>(null);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
-  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
 
   const wallSignature = useMemo(
     () => wall.map(row => row.map(cell => cell.runeType ?? '0').join(',')).join('|'),
@@ -116,8 +115,7 @@ export function ScoringWall() {
     return { pointsMap, edgesMap };
   }, []);
 
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const { setTooltipCards, resetTooltipCards } = useGameplayActions();
 
   const handleWallCellEnter = useCallback(
     (rowIndex: number, colIndex: number) => {

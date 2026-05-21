@@ -8,11 +8,10 @@ import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
 import { PlayerBoard } from './Player/PlayerBoard';
-import { useGameplayStore } from '../../../state/stores';
+import { useGameplayStatusState } from '../../../hooks/useGameState';
 
 export const SoloGameView = memo(function SoloGameView() {
-  const isDefeat = useGameplayStore((state) => state.isDefeat);
-  const deckDraftState = useGameplayStore((state) => state.deckDraftState);
+  const { isDefeat, deckDraftState } = useGameplayStatusState();
 
   return (
     <div className="flex flex-col h-full relative">

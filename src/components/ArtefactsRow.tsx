@@ -3,11 +3,11 @@
  */
 
 import type { PointerEvent } from 'react';
+import { useGameplayActions } from '../hooks/useGameActions';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
 import { buildArtefactTooltipCards } from '../utils/tooltipCards';
-import { useGameplayStore } from '../state/stores/gameplayStore';
 
 interface ArtefactsRowProps {
   selectedArtefactIds: ArtefactId[];
@@ -15,8 +15,7 @@ interface ArtefactsRowProps {
 }
 
 export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const { setTooltipCards, resetTooltipCards } = useGameplayActions();
   const isEmpty = selectedArtefactIds.length === 0;
 
   // Match rune cell sizes: medium = 35px, large = 60px

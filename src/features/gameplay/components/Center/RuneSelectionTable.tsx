@@ -3,6 +3,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useGameplayActions } from '../../../../hooks/useGameActions';
+import {
+  useGameplayRuneforgeState,
+  useSelectedArtefactIds,
+  useSelectedRunes,
+  useUIAnimationState,
+} from '../../../../hooks/useGameState';
 import type { Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
@@ -10,23 +17,15 @@ import { RuneTypeTotals } from './RuneTypeTotals';
 import { RuneforgeView } from './RuneforgeView';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
-import { useArtefactStore } from '../../../../state/stores/artefactStore';
-import { useSelectionStore } from '../../../../state/stores';
-import { useUIStore } from '../../../../state/stores/uiStore';
 
 export function RuneSelectionTable() {
-  const draftStage = useGameplayStore((state) => state.runeforgeDraftStage);
-  const runeforges = useGameplayStore((state) => state.runeforges);
-  const cancelSelection = useGameplayStore((state) => state.cancelSelection);
-  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
+  const { draftStage, runeforges } = useGameplayRuneforgeState();
+  const { cancelSelection, setTooltipCards, resetTooltipCards } = useGameplayActions();
+  const selectedRunes = useSelectedRunes();
   const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
   const isGlobalDraftStage = draftStage === 'global';
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
-  const animatingRuneIdSet = useUIStore((state) => state.animatingRuneIds);
-  const isPlacementAnimating = useUIStore((state) => state.isPlacementAnimating);
+  const { animatingRuneIds: animatingRuneIdSet, isPlacementAnimating } = useUIAnimationState();
 
   const computeGlobalHoverState = useCallback(
     (runeType: RuneType): Record<string, RuneType | null> => {
@@ -113,7 +112,7 @@ export function RuneSelectionTable() {
     setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: null }));
   };
   
-  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
+  const selectedArtefactIds = useSelectedArtefactIds();
 
   const handleDraftingTableClick = () => {
     if (hasSelectedRunes && !isPlacementAnimating) {

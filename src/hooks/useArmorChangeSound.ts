@@ -4,10 +4,10 @@
 import { useEffect, useRef } from 'react';
 import armorSoundUrl from '../assets/sounds/armor.mp3';
 import armorDamageSoundUrl from '../assets/sounds/armor_damage.mp3';
-import { useUIStore } from '../state/stores/uiStore';
+import { useSoundVolume } from './useGameState';
 
 export function useArmorChangeSound(armor: number): void {
-  const soundVolume = useUIStore((state) => state.soundVolume);
+  const soundVolume = useSoundVolume();
   const previousArmorRef = useRef(armor);
   const armorAudioRef = useRef<HTMLAudioElement | null>(null);
   const armorDamageAudioRef = useRef<HTMLAudioElement | null>(null);

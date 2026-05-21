@@ -5,7 +5,8 @@
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
 import overloadSvg from '../assets/stats/overload.svg';
-import { useGameplayStore, useSelectionStore, useUIStore } from '../state/stores';
+import { useGameplayActions, useUIActions } from '../hooks/useGameActions';
+import { useGameplayOverloadState, useTooltipSelectionState } from '../hooks/useGameState';
 import { buildOverloadPlacementTooltipCards, buildTextTooltipCard } from '../utils/tooltipCards';
 
 const SELECTABLE_GLOW_REST = '0 0 20px rgba(248, 113, 113, 0.75), 0 0 40px rgba(239, 68, 68, 0.45)';
@@ -19,14 +20,10 @@ const PULSE_TRANSITION: Transition = {
 };
 
 export function OverloadButton() {
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
-  const strainValue = useGameplayStore((state) => state.overloadDamage);
-  const overloadedRuneCount = useGameplayStore((state) => state.overloadRunes.length);
-  const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
-  const openOverloadOverlay = useUIStore((state) => state.toggleOverloadOverlay);
-  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
-  const activeElement = useSelectionStore((state) => state.activeElement);
+  const { setTooltipCards, resetTooltipCards, placeRunesInFloor } = useGameplayActions();
+  const { toggleOverloadOverlay: openOverloadOverlay } = useUIActions();
+  const { overloadDamage: strainValue, overloadedRuneCount } = useGameplayOverloadState();
+  const { selectedRunes, activeElement } = useTooltipSelectionState();
   const isActive = activeElement?.type === 'overload';
 
   const canOverload = selectedRunes.length > 0;

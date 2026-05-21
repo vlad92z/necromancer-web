@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AnimatingRune, DraftSource, GameState, Rune } from '../types/game';
 import { RUNE_SIZE_CONFIG } from '../styles/tokens';
-import { useUIStore } from '../state/stores/uiStore';
+import { useUIActions } from './useGameActions';
 
 interface SelectionSnapshot {
   runeOrder: Rune[];
@@ -39,8 +39,7 @@ export function useRunePlacementAnimations({
   const [runeforgeAnimatingRunes, setRuneforgeAnimatingRunes] = useState<AnimatingRune[]>([]);
   const [hiddenPatternSlots, setHiddenPatternSlots] = useState<Set<string>>(new Set());
   const [hiddenCenterRuneIds, setHiddenCenterRuneIds] = useState<Set<string>>(new Set());
-  const setAnimatingRuneIds = useUIStore((state) => state.setAnimatingRuneIds);
-  const setIsPlacementAnimating = useUIStore((state) => state.setIsPlacementAnimating);
+  const { setAnimatingRuneIds, setIsPlacementAnimating } = useUIActions();
   const manualAnimationRef = useRef(false);
   const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
   const previousSelectedCountRef = useRef<number>(selectedRunes.length);

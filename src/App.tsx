@@ -6,16 +6,14 @@ import { DeckBuilder } from './routes/DeckBuilder'
 import { PostMatchRewards } from './routes/PostMatchRewards'
 import { Matchmaking } from './routes/Matchmaking'
 import { SoloStartScreen } from './routes/SoloStartScreen'
+import { useUIActions } from './hooks/useGameActions'
+import { useAppAudioState, useGameStarted } from './hooks/useGameState'
 import { useBackgroundMusic } from './hooks/useBackgroundMusic'
-import { useUIStore } from './state/stores/uiStore'
-import { useGameplayStore } from './state/stores/gameplayStore'
 
 function App() {
-  const isMusicMuted = useUIStore((state) => state.isMusicMuted)
-  const soundVolume = useUIStore((state) => state.soundVolume)
-  const hasMusicSessionStarted = useUIStore((state) => state.hasMusicSessionStarted)
-  const markMusicSessionStarted = useUIStore((state) => state.markMusicSessionStarted)
-  const gameStarted = useGameplayStore((state) => state.gameStarted)
+  const { isMusicMuted, soundVolume, hasMusicSessionStarted } = useAppAudioState()
+  const { markMusicSessionStarted } = useUIActions()
+  const gameStarted = useGameStarted()
 
   useEffect(() => {
     if (gameStarted) {

@@ -4,18 +4,18 @@
 
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
+import { useUIActions } from '../../../../hooks/useGameActions';
+import { useActiveElement, useArcaneDust, useGameIndex } from '../../../../hooks/useGameState';
 import { RuneScoreView } from '../RuneScoreView';
 import { HealthView } from '../HealthView';
 import { DeckButton } from '../../../../components/DeckButton';
 import { OverloadButton } from '../../../../components/OverloadButton';
-import { useGameplayStore, useSelectionStore, useUIStore } from '../../../../state/stores';
-import { useArtefactStore } from '../../../../state/stores/artefactStore';
 
 export function GameMetadataView() {
-  const gameNumber = useGameplayStore((state) => state.gameIndex);
-  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
-  const openSettings = useUIStore((state) => state.toggleSettingsOverlay);
-  const activeElement = useSelectionStore((state) => state.activeElement);
+  const gameNumber = useGameIndex();
+  const arcaneDust = useArcaneDust();
+  const { toggleSettingsOverlay: openSettings } = useUIActions();
+  const activeElement = useActiveElement();
   const isSettingsActive = activeElement?.type === 'settings';
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
   const settingsFocus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';

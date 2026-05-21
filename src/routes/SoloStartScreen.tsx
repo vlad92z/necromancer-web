@@ -6,8 +6,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameContainer } from '../features/gameplay/components/GameContainer';
+import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions';
+import { useGameStarted, useSoloStartArtefactState } from '../hooks/useGameState';
 import { hasSavedSoloState, loadSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
-import { useArtefactStore } from '../state/stores/artefactStore';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
@@ -17,10 +18,8 @@ import { useClickSound } from '../hooks/useClickSound';
 
 export function SoloStartScreen() {
   const navigate = useNavigate();
-  const gameStarted = useGameplayStore((state) => state.gameStarted);
-  const startSoloRun = useGameplayStore((state) => state.startSoloRun);
-  const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
-  const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
+  const gameStarted = useGameStarted();
+  const { startSoloRun, prepareSoloMode, hydrateGameState } = useGameplayActions();
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
@@ -28,13 +27,12 @@ export function SoloStartScreen() {
     const savedGame = savedState?.gameIndex ?? 0;
     return Math.max(storedBest, savedGame);
   });
-  const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
-  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const { loadArtefactState } = useArtefactActions();
+  const { arcaneDust, selectedArtefactIds } = useSoloStartArtefactState();
   const playClickSound = useClickSound();
 
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
-  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
   const [activeElement, setActiveElement] = useState<'back' | 'manage' | 'continue' | 'new'>('back');
   const artefactsRef = useRef<ArtefactsViewHandle | null>(null);
 

@@ -1,13 +1,14 @@
-import { useGameplayStore, useSelectionStore, useUIStore } from "../state/stores";
-import { buildTextTooltipCard } from "../utils/tooltipCards";
-import deckSvg from "../assets/stats/deck.svg";
+import { useGameplayActions, useUIActions } from '../hooks/useGameActions';
+import { useActiveElement, useGameplayDeckState } from '../hooks/useGameState';
+import deckSvg from '../assets/stats/deck.svg';
+import { buildTextTooltipCard } from '../utils/tooltipCards';
 
 export function DeckButton() {
-    const resetTooltips = useGameplayStore((state) => state.resetTooltipCards);
-    const setTooltip = useGameplayStore((state) => state.setTooltipCards);
-    const deckRemaining = useGameplayStore((state) => state.player.deck.length);
-    const openDeck = useUIStore((state) => state.toggleDeckOverlay);
-    const activeElement = useSelectionStore((state) => state.activeElement);
+    const { resetTooltipCards: resetTooltips, setTooltipCards: setTooltip } = useGameplayActions();
+    const { deck } = useGameplayDeckState();
+    const { toggleDeckOverlay: openDeck } = useUIActions();
+    const activeElement = useActiveElement();
+    const deckRemaining = deck.length;
     const isActive = activeElement?.type === 'deck';
     const deckTooltip = `You have ${deckRemaining} runes remaining.`;
     const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';

@@ -5,26 +5,21 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
+import { useGameplayActions } from '../../../../hooks/useGameActions';
+import { useGameplayPatternLineState, useSelectionState, useUIAnimationState } from '../../../../hooks/useGameState';
 import type { PatternLine } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
-import { useSelectionStore } from '../../../../state/stores/selectionStore';
-import { useUIStore } from '../../../../state/stores/uiStore';
 
 export function PatternLines() {
-  const onPlaceRunes = useGameplayStore((state) => state.placeRunes);
-  const lockedPatternLines = useGameplayStore((state) => state.lockedPatternLines);
-  const wall = useGameplayStore((state) => state.player.wall);
-  const patternLines = useGameplayStore((state) => state.player.patternLines);
-  const overloadDamage = useGameplayStore((state) => state.overloadDamage);
-  const activeElement = useSelectionStore((state) => state.activeElement);
+  const { placeRunes: onPlaceRunes, setTooltipCards, resetTooltipCards } = useGameplayActions();
+  const { lockedPatternLines, wall, patternLines, overloadDamage } = useGameplayPatternLineState();
+  const { activeElement, selectedRunes } = useSelectionState();
   const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
-  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
   const selectedRuneType = selectedRunes[0]?.runeType ?? null;
-  const hiddenSlotKeys = useUIStore((state) => state.playerHiddenPatternSlots);
+  const { playerHiddenPatternSlots: hiddenSlotKeys } = useUIAnimationState();
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
     if (selectedRunes.length === 0) return false;
 
@@ -37,17 +32,12 @@ export function PatternLines() {
 
     return matchesType && notFull && notOnWall;
   };
-
-
   const cellPulseTransition: Transition = {
     duration: 1.2,
     repeat: Infinity,
     repeatType: 'reverse' as const,
     ease: 'easeInOut' as const
   };
-
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
 
   const handleTooltipEnter = (line: PatternLine, isPlacementTarget: boolean) => {
     if (selectedRunes.length > 0) {

@@ -4,16 +4,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import { useArmorChangeSound } from '../../../hooks/useArmorChangeSound';
-import { useGameplayStore } from '../../../state/stores';
+import { useGameplayHealthState } from '../../../hooks/useGameState';
 import { useHealthChangeSound } from '../../../hooks/useHealthChangeSound';
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
 
 export function HealthView() {
-  const health = useGameplayStore((state) => state.player.health);
-  const maxHealth = useGameplayStore((state) => state.player.maxHealth);
-  const armor = useGameplayStore((state) => state.player.armor);
+  const { health, maxHealth, armor, scoringSequence } = useGameplayHealthState();
 
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   useHealthChangeSound(clampedHealth);
@@ -31,7 +29,6 @@ export function HealthView() {
   const animatedArmor = useMotionValue(armor);
   const [displayedHealth, setDisplayedHealth] = useState(health);
   const [displayedArmor, setDisplayedArmor] = useState(armor);
-  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
   type ForcedArmorIndicator = {
     amount: number;
     key: number;

@@ -4,8 +4,9 @@
  */
 import { useCallback, useEffect, useState, type ChangeEvent, type ReactElement } from 'react';
 import { ClickSoundButton } from './ClickSoundButton';
+import { useUIActions } from '../hooks/useGameActions';
 import { useClickSound } from '../hooks/useClickSound';
-import { useUIStore } from '../state/stores';
+import { useMenuSettingsState } from '../hooks/useGameState';
 
 interface SettingsOverlayProps {
   onQuitRun?: () => void;
@@ -14,12 +15,10 @@ interface SettingsOverlayProps {
 export function SettingsOverlay({
   onQuitRun,
 }: SettingsOverlayProps): ReactElement | null {
-  const soundVolume = useUIStore((state) => state.soundVolume);
-  const isMusicMuted = useUIStore((state) => state.isMusicMuted);
-  const setSoundVolume = useUIStore((state) => state.setSoundVolume);
+  const { soundVolume, isMusicMuted } = useMenuSettingsState();
+  const { setSoundVolume, toggleMusicMuted, toggleSettingsOverlay } = useUIActions();
   const [activeControl, setActiveControl] = useState<'close' | 'volume' | 'music' | 'quit'>('close');
   const playClickSound = useClickSound();
-  const toggleMusicMuted = useUIStore((state) => state.toggleMusicMuted);
   const onVolumeChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const nextValue = Number.parseFloat(event.currentTarget.value);
@@ -33,8 +32,8 @@ export function SettingsOverlay({
 
   const handleClose = useCallback(() => {
     playClickSound();
-    useUIStore.getState().toggleSettingsOverlay();
-  }, [playClickSound]);
+    toggleSettingsOverlay();
+  }, [playClickSound, toggleSettingsOverlay]);
 
   const handleToggleMusic = useCallback(() => {
     playClickSound();

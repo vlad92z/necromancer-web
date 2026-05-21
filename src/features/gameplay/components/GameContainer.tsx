@@ -5,35 +5,24 @@
 import { useEffect, useState } from 'react';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
-import { useGameplayStore } from '../../../state/stores/gameplayStore';
-import { useSelectionStore } from '../../../state/stores/selectionStore';
 import { RuneAnimation } from '../../../components/RuneAnimation';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
+import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
+import { useGameplayContainerState, useSelectionState, useSoundVolume, useUIOverlayState } from '../../../hooks/useGameState';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
-import { useUIStore } from '../../../state/stores/uiStore';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
 export function GameContainer() {
-  const shouldTriggerEndRound = useGameplayStore((state) => state.shouldTriggerEndRound);
-  const player = useGameplayStore((state) => state.player);
-  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
-  const channelSoundPending = useGameplayStore((state) => state.channelSoundPending);
-  const overloadSoundPending = useGameplayStore((state) => state.overloadSoundPending);
-  const acknowledgeOverloadSound = useGameplayStore((state) => state.acknowledgeOverloadSound);
-  const acknowledgeChannelSound = useGameplayStore((state) => state.acknowledgeChannelSound);
-  const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
-  const endRound = useGameplayStore((state) => state.endRound);
-
-  const selectedRunes = useSelectionStore((state) => state.selectedRunes);
-  const draftSource = useSelectionStore((state) => state.draftSource);
-
-  const soundVolume = useUIStore((state) => state.soundVolume);
-  const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay);
-  const showDeckOverlay = useUIStore((state) => state.showDeckOverlay);
-  const showOverloadOverlay = useUIStore((state) => state.showOverloadOverlay);
-  const setPlayerHiddenPatternSlots = useUIStore((state) => state.setPlayerHiddenPatternSlots);
+  const { shouldTriggerEndRound, player, scoringSequence, channelSoundPending, overloadSoundPending } =
+    useGameplayContainerState();
+  const { acknowledgeOverloadSound, acknowledgeChannelSound, moveRunesToWall, endRound, returnToStartScreen } =
+    useGameplayActions();
+  const { selectedRunes, draftSource } = useSelectionState();
+  const soundVolume = useSoundVolume();
+  const { showSettingsOverlay, showDeckOverlay, showOverloadOverlay } = useUIOverlayState();
+  const { setPlayerHiddenPatternSlots } = useUIActions();
 
   const {
     animatingRunes: placementAnimatingRunes,
@@ -128,7 +117,7 @@ export function GameContainer() {
       {showDeckOverlay && (<DeckOverlay />)}
       {showOverloadOverlay && (<OverloadOverlay />)}
       {showSettingsOverlay && (
-        <SettingsOverlay onQuitRun={useGameplayStore.getState().returnToStartScreen} />
+        <SettingsOverlay onQuitRun={returnToStartScreen} />
       )}
       <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
     </div>

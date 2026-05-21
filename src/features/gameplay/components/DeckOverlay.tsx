@@ -7,11 +7,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Rune, RuneEffectRarity, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
+import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
 import { getRuneRarity } from '../../../utils/runeEffects';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
+import { useArcaneDust, useGameplayDeckState } from '../../../hooks/useGameState';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
-import { useArtefactStore } from '../../../state/stores/artefactStore';
-import { useGameplayStore, useUIStore } from '../../../state/stores';
 
 const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
   common: 0,
@@ -21,12 +21,11 @@ const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
 };
 
 export function DeckOverlay() {
-  const onDisenchantRune = useGameplayStore((state) => state.disenchantRuneFromDeck);
-  const isDrafting = useGameplayStore((state) => state.deckDraftState !== null);
-  const deck = useGameplayStore((state) => state.player.deck);
-  const onClose = useUIStore((state) => state.toggleDeckOverlay);
+  const { disenchantRuneFromDeck: onDisenchantRune } = useGameplayActions();
+  const { deck, isDrafting } = useGameplayDeckState();
+  const { toggleDeckOverlay: onClose } = useUIActions();
   const playArcaneDustSound = useArcaneDustSound();
-  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const arcaneDust = useArcaneDust();
   const [dustGain, setDustGain] = useState<{ amount: number; key: number } | null>(null);
   const dustGainKeyRef = useRef(0);
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
