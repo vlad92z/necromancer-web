@@ -1,29 +1,32 @@
 # Massive Spell: Arcane Arena
 
-A Roguelite deck-building game where players draft magical runes to cast spells while trying to survive arcane overload damage
+A single-player roguelite rune-drafting game where players build spell segments from elemental runes, chase the target RuneScore, and survive escalating arcane overload damage.
 
 ## Tech Stack
 
-- **React 19** + **TypeScript** (strict mode)
-- **Vite 7** for dev/build
-- **Zustand 5** for state
+- **React 19.2** + **TypeScript 5.9** (strict mode)
+- **Vite 7.2** for dev/build
+- **Zustand 5** for split global state stores
 - **Framer Motion 12** for animation
-- **React Router** for screens (main menu, solo, dev sandbox)
-- **Tailwind** for styling
+- **React Router 7** for app screens
+- **Tailwind CSS 3** for styling
+- **Vitest 4** for tests
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 22+ (or Node.js 20.17.0+)
+- Node.js 20 (see `.node-version`)
 - npm
 
 ### Installation & Development
 
 ```bash
 npm install
-npm run dev  # Opens at http://localhost:5173
+npm run dev      # http://localhost:5173
 npm run build
 npm run lint
+npx vitest run
+npm run preview
 ```
 
 ## Gameplay Rules (current build)
@@ -31,52 +34,57 @@ npm run lint
 ### Board & Setup
 - Board size 6x6 with 6 unique rune types.
 - 6 pattern lines of length 1-6.
-- 5 Runeforges.
-- Once each Runeforge has been selected from once, they become one shared pool.
+- 5 runeforges, each dealt 4 runes from the player's deck.
+- Rune types: Fire, Life, Wind, Frost, Void, Lightning.
 
 ### Select & Place (Actions)
-- On your turn, take all runes of one type from a runeforge (leftovers stay in te runeforge).
-- Once all your Runeforges have been selected from - select from the remaining shared pool.
+- In the single-forge stage, choose one rune type from an enabled runeforge, then place the selected runes.
+- After placement, the chosen runeforge is disabled and selected runes are removed from it.
+- Once every runeforge has been selected once, all runeforges unlock into the global draft stage.
+- In the global draft stage, choosing a rune type collects that type from all runeforges.
 - Place all selected runes on a single pattern line that is empty or already holds that type. You cannot place a rune type in a row where it already sits on your wall.
-- Overflow goes to the Overload Pile, damaging the player. This damage scales every Game throughout a run (strain).
+- Overflow goes to the Overload pile, damaging the player immediately. This damage scales by game and round.
 
 ### Segment Damage (instant scoring)
-- When a pattern line fills, the first rune jumps to your wall immediately and clears that line.
-- The effects of every rune in the connected segment are resolved one by one. Build dense clusters so every later placement hits harder.
+- When a pattern line fills, its primary rune moves to the wall immediately and clears that line.
+- The effects of every rune in the connected wall segment resolve one by one.
+- Effects currently include damage, healing, armor, fortune, synergy, fragile, channel, channel synergy, and armor synergy.
 
 ### Round End & Run Progression
 - A **Round** ends when all runeforges are empty, then runeforges are repopulated from the player's deck.
-- Resolve any end-of-round effects.
-- Unlock empty pattern lines.
+- Locked pattern lines unlock when the next round starts.
+- If there are not enough runes to refill runeforges, the run ends in defeat.
 
 ### Game End
-- A **Game** completes when the player reaches the target Rune Score and drafts new runes for their deck.
-- At this stage they can disenchant unwanted runes from their deck. Uncommon, Rare and Epic runes award Arcane Dust when disenchanting.
-- The next game will have higher overload damage and a higher target rune score.
-- Health is not restored to max between games.
+- A **Game** completes when the player reaches the target RuneScore.
+- The player enters deck draft, chooses a runeforge of upgraded runes, and can disenchant unwanted runes for Arcane Dust.
+- Deck draft offers can also heal, raise max health, or improve rune rarity depending on the selected runeforge.
+- The next game has a higher target RuneScore and higher overload pressure.
+- Health is not automatically restored to max between games unless a deck draft effect does so.
 
 ### Run End
 - A **Run** ends when the player dies (0 HP).
-- Game over triggers at 0 HP or when there are not enough runes to refill runeforges;
+- Game over also triggers when there are not enough runes to refill runeforges.
 
 ## Project Structure
 
 ```
 src/
-├── assets/                 # SVGs and rune art
+├── assets/                 # Rune art, artefacts, stats, sounds
 ├── components/             # Reusable UI (layout primitives, runes, stats)
 ├── features/gameplay/      # Gameboard, overlays, Solo UI
 ├── hooks/                  # Zustand selector/action hooks
-├── routes/                 # MainMenu, Solo, Developer, etc.
-├── state/stores/           # Zustand stores (gameplay, UI)
+├── routes/                 # MainMenu, Solo, and future feature screens
+├── state/stores/           # Zustand stores (run, board, resolution, selection, gameplay, UI)
 ├── styles/                 # Design tokens and global styles
+├── systems/                # Gameplay orchestration, analytics, scoring sequences
 ├── types/                  # Domain types (game, rune, controllers)
 ├── utils/                  # Pure logic (scoring, init, rune effects)
 ├── App.tsx
 └── main.tsx
 ```
 
-See `ROUTING_IMPLEMENTATION.md` for full technical details.
+`App.tsx` currently wires `/`, `/solo`, `/campaign`, `/deck-builder`, `/rewards`, and `/matchmaking`, with unknown paths redirected to `/`.
 
 ## Deployment (Cloudflare Pages)
 
@@ -124,14 +132,12 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 ---
 
-## Prioritized TODOs
+## Architecture Notes
 
-#### State Management
-- [ ] Split `gameplayStore.ts` into modular stores (gameplay, deck, campaign, player stats, matchmaking)
-
-## Architecture Decision Records
-
-See `Agents.md` for detailed AI agent workflows and coding standards.
+- `gameplayStore.ts` remains the compatibility action engine.
+- Read ownership is split across `runStore`, `boardStore`, `resolutionStore`, `selectionStore`, `uiStore`, and `artefactStore`.
+- Pure game rules live in `src/utils/`; side-effect orchestration lives in `src/systems/`.
+- See `Agents.md` for detailed AI agent workflows and coding standards.
 
 ---
 
@@ -140,9 +146,9 @@ See `Agents.md` for detailed AI agent workflows and coding standards.
 Centralized design tokens in `src/styles/tokens.ts` provide consistent colors, spacing, typography, shadows, and radii.
 
 **Usage Example:**
-```typescript
+```tsx
 import { COLORS, SPACING, RADIUS } from '../styles/tokens';
-import { Stack, Button, Card } from '../components/layout';
+import { Button, Grid } from '../components/layout';
 
 const style = {
   padding: `${SPACING.lg}px`,
@@ -150,11 +156,10 @@ const style = {
   backgroundColor: COLORS.ui.surface,
 };
 
-<Stack direction="vertical" spacing="md">
-  <Card variant="elevated">
-    <Button variant="primary">Click me</Button>
-  </Card>
-</Stack>
+<Grid columns={2} gap="md" style={style}>
+  <Button variant="primary">Start</Button>
+  <Button variant="secondary">Settings</Button>
+</Grid>
 ```
 
 ---
