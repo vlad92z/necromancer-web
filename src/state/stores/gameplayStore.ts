@@ -1046,8 +1046,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       //   return state;
       // }
       //TODO WTF is happening?
-      const deckTemplate = nextState.fullDeck;
-      const soloBaseTargetScore =
+      const nextFullDeck = nextState.fullDeck;
+      const nextBaseTargetScore =
         typeof nextState.baseTargetScore === 'number'
           ? nextState.baseTargetScore
           : nextState.targetScore;
@@ -1089,8 +1089,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           typeof nextState.tooltipOverrideActive === 'boolean'
             ? nextState.tooltipOverrideActive
             : state.tooltipOverrideActive ?? false,
-        fullDeck: deckTemplate,
-        baseTargetScore: soloBaseTargetScore,
+        fullDeck: nextFullDeck,
+        baseTargetScore: nextBaseTargetScore,
         overloadDamage: calculatedStrain,
         startingStrain: storedStartingStrain,
         longestRun,
@@ -1174,7 +1174,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           deck: updatedDeck,
         },
         fullDeck: updatedDeckTemplate,
-        totalRunesPerPlayer: updatedDeckTemplate.length,
       };
     });
 
@@ -1227,7 +1226,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
             ...state,
             player: updatedPlayer,
             fullDeck: updatedDeckTemplate,
-            totalRunesPerPlayer: updatedDeckTemplate.length,
             deckDraftState: {
               runeforges: [],
               picksRemaining: 0,
@@ -1245,7 +1243,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           player: updatedPlayer,
           deckDraftState: nextDraftState,
           fullDeck: updatedDeckTemplate,
-          totalRunesPerPlayer: updatedDeckTemplate.length,
           deckDraftReadyForNextGame: false,
         };
       }
@@ -1261,7 +1258,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         player: updatedPlayer,
         deckDraftState: partialDraftState,
         fullDeck: updatedDeckTemplate,
-        totalRunesPerPlayer: updatedDeckTemplate.length,
         deckDraftReadyForNextGame: false,
       };
     });
@@ -1270,10 +1266,9 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   startNextSoloGame: () => {
     useSelectionStore.getState().clearSelection();
     set((state) => {
-      const deckTemplate = state.fullDeck;
       const nextTarget = state.targetScore;
-      const nextGame = state.gameIndex + 1;
-      const nextStrain = getOverloadDamageForGame(nextGame);
+      const nextGameIndex = state.gameIndex + 1;
+      const nextOverloadDamage = getOverloadDamageForGame(nextGameIndex);
       const previousHealth = Math.max(0, state.player.health);
       const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
       const clampedHealth = Math.min(nextMaxHealth, previousHealth);
@@ -1285,23 +1280,23 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           health: clampedHealth,
           maxHealth: nextMaxHealth,
         },
-        game: nextGame,
+        gameIndex: nextGameIndex,
         gameStarted: true,
-        strain: nextStrain,
-        startingStrain: nextStrain,
-        soloDeckTemplate: deckTemplate,
-        soloBaseTargetScore: state.baseTargetScore || nextTarget,
+        overloadDamage: nextOverloadDamage,
+        startingStrain: nextOverloadDamage,
+        fullDeck: state.fullDeck,
+        baseTargetScore: state.baseTargetScore || nextTarget,
         deckDraftState: null,
         deckDraftReadyForNextGame: false,
         activeArtefacts: state.activeArtefacts,
       };
 
       trackNewGameEvent({
-        gameNumber: nextState.game,
+        gameNumber: nextState.gameIndex,
         activeArtefacts: nextState.activeArtefacts,
         deck: nextState.player.deck,
         targetScore: nextState.targetScore,
-        strain: nextState.strain,
+        strain: nextState.overloadDamage,
         startingHealth: nextState.startingHealth,
       });
 

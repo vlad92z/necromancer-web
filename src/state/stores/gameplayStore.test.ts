@@ -45,6 +45,13 @@ describe('gameplayStore persistence', () => {
       'necromancer-solo-state',
       expect.any(String)
     );
+
+    const [, payload] = localStorageMock.setItem.mock.calls[0] ?? [];
+    expect(JSON.parse(payload as string)).not.toHaveProperty('game');
+    expect(JSON.parse(payload as string)).not.toHaveProperty('strain');
+    expect(JSON.parse(payload as string)).not.toHaveProperty('soloDeckTemplate');
+    expect(JSON.parse(payload as string)).not.toHaveProperty('soloBaseTargetScore');
+    expect(JSON.parse(payload as string)).not.toHaveProperty('totalRunesPerPlayer');
   });
 
   it('continues persisting gameplay updates during an active run', async () => {
@@ -79,5 +86,65 @@ describe('gameplayStore persistence', () => {
 
     expect(localStorageMock.removeItem).toHaveBeenCalledTimes(1);
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
+  });
+
+  it('does not add legacy alias keys when starting the next solo game', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      gameStarted: true,
+      gameIndex: 2,
+      targetScore: 35,
+      fullDeck: state.player.deck,
+      baseTargetScore: 10,
+      deckDraftReadyForNextGame: true,
+      turnPhase: 'deck-draft',
+      player: {
+        ...state.player,
+        health: 42,
+        maxHealth: 77,
+      },
+    }));
+
+    store.getState().startNextSoloGame();
+
+    const nextState = store.getState() as unknown as Record<string, unknown>;
+    expect(nextState.gameIndex).toBe(3);
+    expect(nextState.overloadDamage).toEqual(expect.any(Number));
+    expect(nextState.fullDeck).toEqual(expect.any(Array));
+    expect(nextState.baseTargetScore).toBe(10);
+    expect(nextState).not.toHaveProperty('game');
+    expect(nextState).not.toHaveProperty('strain');
+    expect(nextState).not.toHaveProperty('soloDeckTemplate');
+    expect(nextState).not.toHaveProperty('soloBaseTargetScore');
+    expect(nextState).not.toHaveProperty('totalRunesPerPlayer');
+  });
+
+  it('does not add totalRunesPerPlayer during deck-draft mutations', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      turnPhase: 'deck-draft',
+      deckDraftState: {
+        runeforges: [],
+        picksRemaining: 1,
+        totalPicks: 1,
+        selectionLimit: 1,
+        selectionsThisOffer: 0,
+      },
+    }));
+
+    const runeId = store.getState().fullDeck[0]?.id;
+    expect(runeId).toBeDefined();
+    store.getState().disenchantRuneFromDeck(runeId as string);
+
+    const nextState = store.getState() as unknown as Record<string, unknown>;
+    expect(nextState).not.toHaveProperty('totalRunesPerPlayer');
   });
 });
