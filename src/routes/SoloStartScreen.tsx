@@ -4,11 +4,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { GameplayStore } from '../state/stores/gameplayStore';
 import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
 import { GameContainer } from '../features/gameplay/components/GameContainer';
-import type { GameState } from '../types/game';
-import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
+import { hasSavedSoloState, loadSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
@@ -17,18 +15,12 @@ import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../components/ClickSoundButton';
 import { useClickSound } from '../hooks/useClickSound';
 
-const selectPersistableSoloState = (state: GameplayStore): GameState => {
-  const {
-    ...gameState
-  } = state;
-
-  return gameState as GameState;
-};
-
 export function SoloStartScreen() {
   const navigate = useNavigate();
-  const gameplayState = useGameplayStore();
-  const { gameStarted, startSoloRun, prepareSoloMode, hydrateGameState } = gameplayState;
+  const gameStarted = useGameplayStore((state) => state.gameStarted);
+  const startSoloRun = useGameplayStore((state) => state.startSoloRun);
+  const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
+  const hydrateGameState = useGameplayStore((state) => state.hydrateGameState);
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
@@ -58,23 +50,9 @@ export function SoloStartScreen() {
 
   useEffect(() => {
     const unsubscribe = useGameplayStore.subscribe((state) => {
-      const persistableState = selectPersistableSoloState(state);
-
-      // Persist solo state only while a run is active
-      if (persistableState.gameStarted) {
-        saveSoloState(persistableState);
-        setHasSavedSoloRun(true);
-      }
-
-      // If run ended in defeat, remove saved run from storage and update UI
-      if (persistableState.isDefeat) {
-        clearSoloState();
-        setHasSavedSoloRun(false);
-      }
-
-      // Always update the local `longestSoloRun` if store's longestRun or game increased.
+      // Keep the start-screen best-run badge in sync with gameplay progression.
       setLongestSoloRun((previousBest) => {
-        const nextBest = Math.max(previousBest, persistableState.longestRun ?? 0, persistableState.gameIndex ?? 0);
+        const nextBest = Math.max(previousBest, state.longestRun ?? 0, state.gameIndex ?? 0);
         if (nextBest === previousBest) {
           return previousBest;
         }

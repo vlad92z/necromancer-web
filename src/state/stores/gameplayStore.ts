@@ -678,13 +678,12 @@ function attemptAutoPlacement(state: GameplayStore, selectionState: SelectionSta
 
 function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
   return store.subscribe((state) => {
-    if (!state.gameStarted) {
+    if (state.isDefeat) {
+      clearSoloState();
       return;
     }
 
-    // If the player has been defeated, clear any saved solo run from localStorage
-    if (state.isDefeat) {
-      clearSoloState();
+    if (!state.gameStarted) {
       return;
     }
 
