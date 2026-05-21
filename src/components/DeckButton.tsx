@@ -1,12 +1,11 @@
-import { useGameplayActions, useUIActions } from '../hooks/useGameActions';
+import { useUIActions } from '../hooks/useGameActions';
 import { useActiveElement, useGameplayDeckState } from '../hooks/useGameState';
 import deckSvg from '../assets/stats/deck.svg';
 import { buildTextTooltipCard } from '../utils/tooltipCards';
 
 export function DeckButton() {
-    const { resetTooltipCards: resetTooltips, setTooltipCards: setTooltip } = useGameplayActions();
     const { deck } = useGameplayDeckState();
-    const { toggleDeckOverlay: openDeck } = useUIActions();
+    const { resetTooltipCards: resetTooltips, setTooltipCards: setTooltip, toggleDeckOverlay: openDeck } = useUIActions();
     const activeElement = useActiveElement();
     const deckRemaining = deck.length;
     const isActive = activeElement?.type === 'deck';

@@ -241,8 +241,6 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
     turnPhase: 'select',
     gameIndex: initialGameNumber,
     round: 1,
-    tooltipCards: createDefaultTooltipCards(),
-    tooltipOverrideActive: false,
     overloadRunes: [],
     animatingRunes: [],
     scoringSequence: null,

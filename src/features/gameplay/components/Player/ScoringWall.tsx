@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useGameplayActions } from '../../../../hooks/useGameActions';
+import { useUIActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
 import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
@@ -115,7 +115,7 @@ export function ScoringWall() {
     return { pointsMap, edgesMap };
   }, []);
 
-  const { setTooltipCards, resetTooltipCards } = useGameplayActions();
+  const { setTooltipCards, resetTooltipCards } = useUIActions();
 
   const handleWallCellEnter = useCallback(
     (rowIndex: number, colIndex: number) => {

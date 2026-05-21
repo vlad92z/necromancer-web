@@ -5,7 +5,7 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import { useGameplayActions } from '../../../../hooks/useGameActions';
+import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
 import { useGameplayPatternLineState, useSelectionState, useUIAnimationState } from '../../../../hooks/useGameState';
 import type { PatternLine } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
@@ -14,7 +14,8 @@ import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEf
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
 
 export function PatternLines() {
-  const { placeRunes: onPlaceRunes, setTooltipCards, resetTooltipCards } = useGameplayActions();
+  const { placeRunes: onPlaceRunes } = useGameplayActions();
+  const { setTooltipCards, resetTooltipCards } = useUIActions();
   const { lockedPatternLines, wall, patternLines, overloadDamage } = useGameplayPatternLineState();
   const { activeElement, selectedRunes } = useSelectionState();
   const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;

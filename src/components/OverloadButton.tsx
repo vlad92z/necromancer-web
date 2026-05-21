@@ -20,8 +20,8 @@ const PULSE_TRANSITION: Transition = {
 };
 
 export function OverloadButton() {
-  const { setTooltipCards, resetTooltipCards, placeRunesInFloor } = useGameplayActions();
-  const { toggleOverloadOverlay: openOverloadOverlay } = useUIActions();
+  const { placeRunesInFloor } = useGameplayActions();
+  const { setTooltipCards, resetTooltipCards, toggleOverloadOverlay: openOverloadOverlay } = useUIActions();
   const { overloadDamage: strainValue, overloadedRuneCount } = useGameplayOverloadState();
   const { selectedRunes, activeElement } = useTooltipSelectionState();
   const isActive = activeElement?.type === 'overload';

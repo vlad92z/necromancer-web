@@ -52,6 +52,8 @@ describe('gameplayStore persistence', () => {
     expect(JSON.parse(payload as string)).not.toHaveProperty('soloDeckTemplate');
     expect(JSON.parse(payload as string)).not.toHaveProperty('soloBaseTargetScore');
     expect(JSON.parse(payload as string)).not.toHaveProperty('totalRunesPerPlayer');
+    expect(JSON.parse(payload as string)).not.toHaveProperty('tooltipCards');
+    expect(JSON.parse(payload as string)).not.toHaveProperty('tooltipOverrideActive');
   });
 
   it('continues persisting gameplay updates during an active run', async () => {

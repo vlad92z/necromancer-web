@@ -138,6 +138,15 @@ export function useUIAnimationState() {
   );
 }
 
+export function useTooltipState() {
+  return useUIStore(
+    useShallow((state) => ({
+      tooltipCards: state.tooltipCards,
+      tooltipOverrideActive: state.tooltipOverrideActive,
+    })),
+  );
+}
+
 export function useGameplayContainerState() {
   return useGameplayStore(
     useShallow((state) => ({
@@ -146,15 +155,6 @@ export function useGameplayContainerState() {
       scoringSequence: state.scoringSequence,
       channelSoundPending: state.channelSoundPending,
       overloadSoundPending: state.overloadSoundPending,
-    })),
-  );
-}
-
-export function useGameplayTooltipState() {
-  return useGameplayStore(
-    useShallow((state) => ({
-      tooltipCards: state.tooltipCards,
-      tooltipOverrideActive: state.tooltipOverrideActive,
     })),
   );
 }

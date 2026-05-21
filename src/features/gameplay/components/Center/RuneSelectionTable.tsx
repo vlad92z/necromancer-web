@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useGameplayActions } from '../../../../hooks/useGameActions';
+import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
 import {
   useGameplayRuneforgeState,
   useSelectedArtefactIds,
@@ -20,7 +20,8 @@ import { ArtefactsRow } from '../../../../components/ArtefactsRow';
 
 export function RuneSelectionTable() {
   const { draftStage, runeforges } = useGameplayRuneforgeState();
-  const { cancelSelection, setTooltipCards, resetTooltipCards } = useGameplayActions();
+  const { cancelSelection } = useGameplayActions();
+  const { setTooltipCards, resetTooltipCards } = useUIActions();
   const selectedRunes = useSelectedRunes();
   const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});

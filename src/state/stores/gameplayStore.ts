@@ -13,7 +13,7 @@ import type {
   ScoringStep,
   SelectionState,
 } from '../../types/game';
-import { fillFactories, initializeSoloGame, createSoloFactories, createDefaultTooltipCards } from '../../utils/gameInitialization';
+import { fillFactories, initializeSoloGame, createSoloFactories } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
@@ -334,8 +334,6 @@ export interface GameplayStore extends GameState {
   resetGame: () => void;
   selectDeckDraftRuneforge: (runeforgeId: string) => void;
   disenchantRuneFromDeck: (runeId: string) => number;
-  setTooltipCards: (cards: GameState['tooltipCards'], overrideSelection?: boolean) => void;
-  resetTooltipCards: () => void;
 }
 
 function cancelSelectionState(state: GameplayStore, selectionState: SelectionState): GameplayStore {
@@ -694,24 +692,6 @@ function attachSoloPersistence(store: StoreApi<GameplayStore>): () => void {
 export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
   // Initial state
   ...initializeSoloGame(),
-
-
-
-  setTooltipCards: (cards, overrideSelection = false) => {
-    set((state) => ({
-      ...state,
-      tooltipCards: cards,
-      tooltipOverrideActive: overrideSelection,
-    }));
-  },
-
-  resetTooltipCards: () => {
-    set((state) => ({
-      ...state,
-      tooltipCards: createDefaultTooltipCards(),
-      tooltipOverrideActive: false,
-    }));
-  },
 
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId: string) => {
@@ -1084,11 +1064,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         runeforges: nextState.runeforges,
         deckDraftState: nextState.deckDraftState ?? null,
         deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
-        tooltipCards: nextState.tooltipCards ?? state.tooltipCards ?? createDefaultTooltipCards(),
-        tooltipOverrideActive:
-          typeof nextState.tooltipOverrideActive === 'boolean'
-            ? nextState.tooltipOverrideActive
-            : state.tooltipOverrideActive ?? false,
         fullDeck: nextFullDeck,
         baseTargetScore: nextBaseTargetScore,
         overloadDamage: calculatedStrain,

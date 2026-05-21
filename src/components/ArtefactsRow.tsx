@@ -3,7 +3,7 @@
  */
 
 import type { PointerEvent } from 'react';
-import { useGameplayActions } from '../hooks/useGameActions';
+import { useUIActions } from '../hooks/useGameActions';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
@@ -15,7 +15,7 @@ interface ArtefactsRowProps {
 }
 
 export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
-  const { setTooltipCards, resetTooltipCards } = useGameplayActions();
+  const { setTooltipCards, resetTooltipCards } = useUIActions();
   const isEmpty = selectedArtefactIds.length === 0;
 
   // Match rune cell sizes: medium = 35px, large = 60px

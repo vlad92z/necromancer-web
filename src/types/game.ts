@@ -164,8 +164,6 @@ export interface GameState {
   fullDeck: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
   runeforgeDraftStage: 'single' | 'global';
-  tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
-  tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected
   turnPhase: TurnPhase;
   gameIndex: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
