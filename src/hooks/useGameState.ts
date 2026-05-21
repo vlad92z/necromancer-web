@@ -150,13 +150,11 @@ export function useTooltipState() {
 }
 
 export function useGameplayContainerState() {
-  const shouldTriggerEndRound = useResolutionStore((state) => state.shouldTriggerEndRound);
-  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
   const channelSoundPending = useResolutionStore((state) => state.channelSoundPending);
   const overloadSoundPending = useResolutionStore((state) => state.overloadSoundPending);
   const player = useBoardStore((state) => state.player);
 
-  return { shouldTriggerEndRound, player, scoringSequence, channelSoundPending, overloadSoundPending };
+  return { player, channelSoundPending, overloadSoundPending };
 }
 
 export function useGameplayPatternLineState() {

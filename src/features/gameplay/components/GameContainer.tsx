@@ -15,9 +15,9 @@ import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
 export function GameContainer() {
-  const { shouldTriggerEndRound, player, scoringSequence, channelSoundPending, overloadSoundPending } =
+  const { player, channelSoundPending, overloadSoundPending } =
     useGameplayContainerState();
-  const { acknowledgeOverloadSound, acknowledgeChannelSound, moveRunesToWall, endRound, returnToStartScreen } =
+  const { acknowledgeOverloadSound, acknowledgeChannelSound, returnToStartScreen } =
     useGameplayActions();
   const { selectedRunes, draftSource } = useSelectionState();
   const soundVolume = useSoundVolume();
@@ -47,30 +47,6 @@ export function GameContainer() {
   useEffect(() => {
     setPlayerHiddenPatternSlots(hiddenPatternSlots);
   }, [hiddenPatternSlots, setPlayerHiddenPatternSlots]);
-
-  useEffect(() => {
-    if (shouldTriggerEndRound) {
-      const timer = setTimeout(() => {
-        endRound();
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [shouldTriggerEndRound, endRound]);
-
-  useEffect(() => {
-    const hasCompletedLines = player.patternLines.some(
-      (line) => line.count === line.tier && line.runeType !== null
-    );
-    if (!hasCompletedLines || scoringSequence) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      moveRunesToWall();
-    }, 750);
-
-    return () => clearTimeout(timer);
-  }, [player.patternLines, scoringSequence, moveRunesToWall]);
 
   const [boardScale, setBoardScale] = useState(() => {
     if (typeof window === 'undefined') {

@@ -105,7 +105,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'select' | 'end-of-round' | 'deck-draft';
+export type TurnPhase = 'select' | 'resolving-end-round' | 'deck-draft';
 
 /**
  * Animation state for rune movement
@@ -176,7 +176,7 @@ export interface GameState {
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   channelSoundPending: boolean; // Flag to trigger lightning SFX when channel effects resolve
   lockedPatternLines: number[]; // Pattern line indices locked until next round (solo toggle)
-  shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
+  shouldTriggerEndRound: boolean; // Compatibility flag used by the round resolver after scoring
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
   isDefeat: boolean; // Solo result

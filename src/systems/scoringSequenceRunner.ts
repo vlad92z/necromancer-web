@@ -68,7 +68,8 @@ function getDisplayTotalsForIndex(sequence: ScoringSequenceState, activeIndex: n
 
 export function runScoringSequence<TState extends ScoringSequenceStoreState>(
   sequence: ScoringSequenceState,
-  set: StoreApi<TState>['setState']
+  set: StoreApi<TState>['setState'],
+  onComplete?: () => void
 ): void {
   clearScoringSequenceTimer();
 
@@ -79,6 +80,7 @@ export function runScoringSequence<TState extends ScoringSequenceStoreState>(
       }
       return { ...state, scoringSequence: null };
     });
+    onComplete?.();
     return;
   }
 
@@ -121,6 +123,7 @@ export function runScoringSequence<TState extends ScoringSequenceStoreState>(
           }
           return { ...state, scoringSequence: null };
         });
+        onComplete?.();
       }, delay);
     }, delay);
   };

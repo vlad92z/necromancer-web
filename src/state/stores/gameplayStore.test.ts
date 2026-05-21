@@ -2,8 +2,8 @@
  * Integration tests for gameplay store persistence ownership.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ScoringSequenceState } from '../../types/game';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DraftSource, Rune, Runeforge, ScoringSequenceState } from '../../types/game';
 
 const storage = new Map<string, string>();
 const localStorageMock = {
@@ -33,6 +33,10 @@ describe('gameplayStore persistence', () => {
     localStorageMock.clear.mockClear();
     vi.resetModules();
     vi.stubGlobal('window', { localStorage: localStorageMock });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('persists solo state from the gameplay store when a run starts', async () => {
@@ -249,6 +253,252 @@ describe('gameplayStore persistence', () => {
 
     expect(store.getState().scoringSequence).toBeNull();
     clearScoringSequenceTimer();
-    vi.useRealTimers();
+  });
+
+  it('resolves completed pattern lines immediately and returns input to select', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune('resolver-fire', 'Fire');
+    const remainingRune = createTestRune('resolver-life', 'Life');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 999,
+      patternLineLock: false,
+      runeforges: [
+        createTestRuneforge(rune),
+        createTestRuneforge(remainingRune, 'resolver-forge-remaining'),
+      ],
+    }));
+    useSelectionStore.getState().setSelection([rune], createTestDraftSource(rune), Date.now());
+
+    store.getState().placeRunes(0);
+
+    expect(store.getState().player.wall[0][0].runeType).toBe('Fire');
+    expect(store.getState().turnPhase).toBe('select');
+    expect(store.getState().scoringSequence).not.toBeNull();
+  });
+
+  it('keeps durable scoring final while scoring sequence display advances one rune at a time', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune('resolver-fire', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => {
+      const wall = state.player.wall.map((row) => row.map((cell) => ({ ...cell })));
+      wall[0][1] = {
+        runeType: 'Life',
+        effects: [{ type: 'Healing', amount: 1, rarity: 'common' }],
+      };
+
+      return {
+        ...state,
+        targetScore: 999,
+        runeforges: [createTestRuneforge(rune)],
+        player: {
+          ...state.player,
+          health: 99,
+          wall,
+        },
+      };
+    });
+    useSelectionStore.getState().setSelection([rune], createTestDraftSource(rune), Date.now());
+
+    store.getState().placeRunes(0);
+
+    expect(store.getState().runePowerTotal).toBe(1);
+    expect(store.getState().player.health).toBe(100);
+    expect(store.getState().scoringSequence).toMatchObject({
+      activeIndex: 0,
+      displayRunePowerTotal: 1,
+      displayHealth: 99,
+      targetRunePowerTotal: 1,
+      targetHealth: 100,
+    });
+
+    await vi.advanceTimersByTimeAsync(398);
+
+    expect(store.getState().scoringSequence).toMatchObject({
+      activeIndex: 1,
+      displayRunePowerTotal: 1,
+      displayHealth: 100,
+    });
+  });
+
+  it('accepts another cast during active scoring and queues the next scoring display', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const firstRune = createTestRune('resolver-fire-1', 'Fire');
+    const secondRune = createTestRune('resolver-life-1', 'Life');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 999,
+      patternLineLock: false,
+      runeforges: [
+        createTestRuneforge(firstRune, 'resolver-forge-1'),
+        createTestRuneforge(secondRune, 'resolver-forge-2'),
+      ],
+    }));
+    useSelectionStore.getState().setSelection(
+      [firstRune],
+      createTestDraftSource(firstRune, 'resolver-forge-1'),
+      Date.now()
+    );
+
+    store.getState().placeRunes(0);
+
+    const firstSequenceId = store.getState().scoringSequence?.sequenceId;
+    expect(firstSequenceId).toBeDefined();
+    expect(store.getState().turnPhase).toBe('select');
+    expect(store.getState().runePowerTotal).toBe(1);
+
+    useSelectionStore.getState().setSelection(
+      [secondRune],
+      createTestDraftSource(secondRune, 'resolver-forge-2'),
+      Date.now()
+    );
+
+    store.getState().placeRunes(0);
+
+    expect(store.getState().turnPhase).toBe('resolving-end-round');
+    expect(store.getState().runePowerTotal).toBe(3);
+    expect(store.getState().player.wall[0][1].runeType).toBe('Life');
+    expect(store.getState().scoringSequence?.sequenceId).toBe(firstSequenceId);
+
+    await vi.advanceTimersByTimeAsync(840);
+
+    expect(store.getState().scoringSequence?.sequenceId).not.toBe(firstSequenceId);
+    expect(store.getState().scoringSequence).toMatchObject({
+      activeIndex: 0,
+      displayRunePowerTotal: 2,
+    });
+
+    await vi.advanceTimersByTimeAsync(1194);
+
+    expect(store.getState().round).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(999);
+
+    expect(store.getState().round).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(store.getState().round).toBe(2);
+    expect(store.getState().turnPhase).toBe('select');
+  });
+
+  it('schedules end round through the round resolver when forges are exhausted without completed lines', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune('resolver-fire', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      runeforges: [createTestRuneforge(rune)],
+    }));
+    useSelectionStore.getState().setSelection([rune], createTestDraftSource(rune), Date.now());
+
+    store.getState().placeRunesInFloor();
+
+    expect(store.getState().turnPhase).toBe('resolving-end-round');
+    expect(store.getState().round).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(999);
+
+    expect(store.getState().round).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(store.getState().round).toBe(2);
+    expect(store.getState().turnPhase).toBe('select');
+  });
+
+  it('clears pending round resolver timers when resetting the game', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune('resolver-fire', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 999,
+      runeforges: [createTestRuneforge(rune)],
+    }));
+    useSelectionStore.getState().setSelection([rune], createTestDraftSource(rune), Date.now());
+
+    store.getState().placeRunes(0);
+    expect(store.getState().scoringSequence).not.toBeNull();
+
+    store.getState().resetGame();
+    await vi.advanceTimersByTimeAsync(750);
+
+    expect(store.getState().turnPhase).toBe('select');
+    expect(store.getState().player.wall[0][0].runeType).toBeNull();
+  });
+
+  it('enters deck draft from scoring resolution without leaving resolver timers active', async () => {
+    vi.useFakeTimers();
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune('resolver-fire', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      targetScore: 1,
+      runeforges: [createTestRuneforge(rune)],
+    }));
+    useSelectionStore.getState().setSelection([rune], createTestDraftSource(rune), Date.now());
+
+    store.getState().placeRunes(0);
+
+    expect(store.getState().turnPhase).toBe('deck-draft');
+    expect(store.getState().scoringSequence).toBeNull();
+
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(store.getState().turnPhase).toBe('deck-draft');
   });
 });
+
+function createTestRune(id: string, runeType: Rune['runeType']): Rune {
+  return {
+    id,
+    runeType,
+    effects: [{ type: 'Damage', amount: 1, rarity: 'common' }],
+  };
+}
+
+function createTestRuneforge(rune: Rune, id: string = 'resolver-forge'): Runeforge {
+  return {
+    id,
+    ownerId: 'player-1',
+    runes: [rune],
+    disabled: false,
+  };
+}
+
+function createTestDraftSource(rune: Rune, runeforgeId: string = 'resolver-forge'): DraftSource {
+  return {
+    runeforgeId,
+    originalRunes: [rune],
+    affectedRuneforges: [{ runeforgeId, originalRunes: [rune] }],
+    selectionMode: 'single',
+  };
+}

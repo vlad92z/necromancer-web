@@ -42,12 +42,18 @@ import {
 } from '../../systems/gameplayOrchestrator';
 import {
   accumulateScoringDeltas,
-  clearScoringSequenceTimer,
   getRuneResolutionDelayMs,
-  runScoringSequence,
 } from '../../systems/scoringSequenceRunner';
+import { clearRoundResolutionTimers, enqueueScoringSequence, scheduleEndRound } from '../../systems/roundResolutionMachine';
 import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
+
+let scoringSequenceCounter = 0;
+
+function createScoringSequenceId(): number {
+  scoringSequenceCounter += 1;
+  return Date.now() + scoringSequenceCounter;
+}
 
 function enterDeckDraftMode(state: GameState): GameState {
   //TODO: These should not be handled as p0art of entering draft mode
@@ -292,7 +298,7 @@ function placeSelectionOnPatternLine(
   selectionState: SelectionState,
   patternLineIndex: number
 ): GameplayStore {
-  if (state.turnPhase !== 'select') {
+  if (state.turnPhase === 'deck-draft' || state.isDefeat) {
     return state;
   }
 
@@ -353,10 +359,6 @@ function placeSelectionOnPatternLine(
   );
   const nextChannelSoundPending = channelTriggered || state.channelSoundPending;
 
-  const completedLines = updatedPatternLines
-    .map((line, index) => ({ line, index }))
-    .filter(({ line }) => line.count === line.tier && line.runeType !== null);
-
   const updatedPlayer = {
     ...currentPlayer,
     patternLines: updatedPatternLines,
@@ -402,11 +404,6 @@ function placeSelectionOnPatternLine(
 
   const shouldEndRound = isRoundExhausted(nextRuneforges);
 
-  const nextTurnPhase =
-    shouldEndRound
-      ? ('end-of-round' as const)
-      : ('select' as const);
-
   clearGameplaySelection();
   return {
     ...state,
@@ -414,8 +411,8 @@ function placeSelectionOnPatternLine(
     runeforges: nextRuneforges,
     runeforgeDraftStage: nextRuneforgeDraftStage,
     overloadRunes: overflowRunes.length > 0 ? [...state.overloadRunes, ...overflowRunes] : state.overloadRunes,
-    turnPhase: nextTurnPhase,
-    shouldTriggerEndRound: completedLines.length > 0 ? false : shouldEndRound,
+    turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
+    shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
     channelSoundPending: nextChannelSoundPending,
@@ -423,7 +420,7 @@ function placeSelectionOnPatternLine(
 }
 
 function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionState): GameplayStore {
-  if (state.turnPhase !== 'select') {
+  if (state.turnPhase === 'deck-draft' || state.isDefeat) {
     return state;
   }
 
@@ -491,7 +488,7 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
     runeforges: nextRuneforges,
     runeforgeDraftStage: nextRuneforgeDraftStage,
     overloadRunes: [...state.overloadRunes, ...selectedRunes],
-    turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
+    turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
     shouldTriggerEndRound: shouldEndRound,
     overloadSoundPending: overloadDamage > 0,
     runePowerTotal: state.runePowerTotal + scoreBonus,
@@ -500,7 +497,7 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
 }
 
 function canPlaceSelectionOnAnyLine(state: GameplayStore, selectionState: SelectionState): boolean {
-  if (state.turnPhase !== 'select' || selectionState.selectedRunes.length === 0) {
+  if (state.turnPhase === 'deck-draft' || state.isDefeat || selectionState.selectedRunes.length === 0) {
     return false;
   }
 
@@ -530,7 +527,7 @@ function canPlaceSelectionOnAnyLine(state: GameplayStore, selectionState: Select
 }
 
 function attemptAutoPlacement(state: GameplayStore, selectionState: SelectionState): GameplayStore {
-  if (state.turnPhase !== 'select' || selectionState.selectedRunes.length === 0) {
+  if (state.turnPhase === 'deck-draft' || state.isDefeat || selectionState.selectedRunes.length === 0) {
     return state;
   }
 
@@ -564,9 +561,30 @@ function attemptAutoPlacement(state: GameplayStore, selectionState: SelectionSta
   return cancelSelectionState(state, selectionState);
 }
 
-export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): GameplayStore => ({
-  // Initial state
-  ...initializeSoloGame(),
+export const gameplayStoreConfig = (
+  set: StoreApi<GameplayStore>['setState'],
+  get: StoreApi<GameplayStore>['getState']
+): GameplayStore => {
+  const getRoundResolutionActions = () => ({
+    getState: get,
+    setState: set,
+    endRound: () => get().endRound(),
+  });
+
+  const flushCompletedLines = (): void => {
+    get().moveRunesToWall();
+  };
+
+  const scheduleRoundEndIfNeeded = (): void => {
+    if (!get().shouldTriggerEndRound) {
+      return;
+    }
+    scheduleEndRound(getRoundResolutionActions());
+  };
+
+  return {
+    // Initial state
+    ...initializeSoloGame(),
 
   // Actions
   draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId: string) => {
@@ -575,7 +593,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       if (selectionState.selectedRunes.length > 0) {
         return attemptAutoPlacement(state, selectionState);
       }
-      if (state.turnPhase !== 'select') {
+      if (state.turnPhase === 'deck-draft' || state.isDefeat) {
         return state;
       }
       const normalizedRuneforges = state.runeforges;
@@ -648,17 +666,17 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
         ...state,
       };
     });
+    flushCompletedLines();
+    scheduleRoundEndIfNeeded();
   },
 
   moveRunesToWall: () => {
-    let scoringSequenceForAnimation: ScoringSequenceState | null = null;
     let arcaneDustGain = 0;
+    let scoringSequenceToEnqueue: ScoringSequenceState | null = null;
+    let shouldClearResolutionQueue = false;
     const baseArcaneDust = getArcaneDustTotal();
 
     set((state) => {
-      if (state.scoringSequence) {
-        return state;
-      }
       const currentPlayer = state.player;
 
       const updatedPatternLines = [...currentPlayer.patternLines];
@@ -675,7 +693,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
 
         return {
           ...state,
-          turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
+          turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
           shouldTriggerEndRound: shouldEndRound,
         };
       }
@@ -729,7 +747,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       });
 
       const shouldEndRound = isRoundExhausted(state.runeforges);
-      const sequenceId = Date.now();
+      const sequenceId = createScoringSequenceId();
       const baseHealth = currentPlayer.health;
       const baseArmor = currentPlayer.armor;
       const baseRunePowerTotal = state.runePowerTotal;
@@ -760,8 +778,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           targetArcaneDust,
         } satisfies ScoringSequenceState)
         : null;
-
-      scoringSequenceForAnimation = scoringSequence;
+      scoringSequenceToEnqueue = scoringSequence;
 
       const nextChannelSoundPending = scoringChannelTriggered || state.channelSoundPending;
       const baseNextState = {
@@ -773,9 +790,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           health: targetHealth,
           armor: targetArmor,
         },
-        turnPhase: shouldEndRound ? ('end-of-round' as const) : ('select' as const),
+        turnPhase: shouldEndRound ? ('resolving-end-round' as const) : ('select' as const),
         shouldTriggerEndRound: shouldEndRound,
-        scoringSequence,
         lockedPatternLines: updatedLockedPatternLines,
         isDefeat: state.isDefeat,
         channelSoundPending: nextChannelSoundPending,
@@ -783,6 +799,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       };
 
       if (targetRunePowerTotal >= state.targetScore) {
+        shouldClearResolutionQueue = true;
         const deckDraftState = enterDeckDraftMode({
           ...baseNextState,
           isDefeat: false,
@@ -791,7 +808,6 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
           shouldTriggerEndRound: false,
           scoringSequence: null,
         });
-        scoringSequenceForAnimation = null;
         return deckDraftState;
       }
 
@@ -804,17 +820,27 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       addGameplayArcaneDust(arcaneDustGain);
     }
 
-    if (scoringSequenceForAnimation) {
-      runScoringSequence(scoringSequenceForAnimation, set);
+    if (shouldClearResolutionQueue) {
+      clearRoundResolutionTimers();
+      return;
     }
+
+    if (scoringSequenceToEnqueue) {
+      enqueueScoringSequence(scoringSequenceToEnqueue, getRoundResolutionActions());
+    }
+    scheduleRoundEndIfNeeded();
   },
 
   placeRunes: (patternLineIndex: number) => {
     set((state) => placeSelectionOnPatternLine(state, getGameplaySelection(), patternLineIndex));
+    flushCompletedLines();
+    scheduleRoundEndIfNeeded();
   },
 
   placeRunesInFloor: () => {
     set((state) => placeSelectionInFloor(state, getGameplaySelection()));
+    flushCompletedLines();
+    scheduleRoundEndIfNeeded();
   },
 
   cancelSelection: () => {
@@ -836,6 +862,8 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
    */
   autoPlaceSelection: () => {
     set((state) => attemptAutoPlacement(state, getGameplaySelection()));
+    flushCompletedLines();
+    scheduleRoundEndIfNeeded();
   },
 
   acknowledgeOverloadSound: () => {
@@ -849,7 +877,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   endRound: () => {
     console.log('gameplayStoreConfig: endRound triggered');
     set((state) => {
-      if (!state.shouldTriggerEndRound && state.turnPhase !== 'end-of-round') {
+      if (!state.shouldTriggerEndRound && state.turnPhase !== 'resolving-end-round') {
         return state;
       }
       console.log('gameplayStoreConfig: prepareRoundReset');
@@ -858,7 +886,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   startSoloRun: () => {
-    clearScoringSequenceTimer();
+    clearRoundResolutionTimers();
     clearGameplaySelection();
     set(() => {
       const baseState = initializeSoloGame();
@@ -883,7 +911,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   prepareSoloMode: () => {
-    clearScoringSequenceTimer();
+    clearRoundResolutionTimers();
     clearGameplaySelection();
     set(() => ({
       ...initializeSoloGame(),
@@ -892,7 +920,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   hydrateGameState: (nextState: GameState) => {
-    clearScoringSequenceTimer();
+    clearRoundResolutionTimers();
     clearGameplaySelection();
     set((state) => {
       // const shouldMerge = nextState.matchType === 'solo' || state.matchType === nextState.matchType;
@@ -952,7 +980,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   returnToStartScreen: () => {
-    clearScoringSequenceTimer();
+    clearRoundResolutionTimers();
     clearGameplaySelection();
     set((state) => {
       // If the last run ended in defeat, ensure persisted state is cleared immediately
@@ -974,7 +1002,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   resetGame: () => {
-    clearScoringSequenceTimer();
+    clearRoundResolutionTimers();
     clearGameplaySelection();
     set(() => initializeSoloGame());
   },
@@ -1110,6 +1138,7 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
   },
 
   startNextSoloGame: () => {
+    clearRoundResolutionTimers();
     clearGameplaySelection();
     set((state) => {
       const nextTarget = state.targetScore;
@@ -1149,9 +1178,10 @@ export const gameplayStoreConfig = (set: StoreApi<GameplayStore>['setState']): G
       return nextState;
     });
   },
-});
+  };
+};
 
-export const useGameplayStore = create<GameplayStore>((set) => gameplayStoreConfig(set));
+export const useGameplayStore = create<GameplayStore>((set, get) => gameplayStoreConfig(set, get));
 replaceGameplayState(useGameplayStore.getState());
 useGameplayStore.subscribe((state) => {
   replaceGameplayState(state);
@@ -1159,7 +1189,7 @@ useGameplayStore.subscribe((state) => {
 attachGameplayPersistence();
 
 export function createGameplayStoreInstance() {
-  const store = create<GameplayStore>((set) => gameplayStoreConfig(set));
+  const store = create<GameplayStore>((set, get) => gameplayStoreConfig(set, get));
   replaceGameplayState(store.getState());
   store.subscribe((state) => {
     replaceGameplayState(state);
