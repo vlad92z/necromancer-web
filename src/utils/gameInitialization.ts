@@ -128,9 +128,9 @@ export function createDefaultTooltipCards(): TooltipCard[] {
 export function createPlayer(
   id: string,
   name: string,
-  startingHealth: number = 300,
+  startingHealth: number,
   deck: Rune[],
-  maxHealthOverride?: number,
+  maxHealth: number,
 ): Player {
   return {
     id,
@@ -138,7 +138,7 @@ export function createPlayer(
     patternLines: createPatternLines(WALL_SIZE),
     wall: createEmptyWall(WALL_SIZE),
     health: startingHealth,
-    maxHealth: maxHealthOverride ?? startingHealth,
+    maxHealth: maxHealth,
     armor: 0,
     deck: deck,
   };

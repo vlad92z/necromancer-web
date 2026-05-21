@@ -426,6 +426,60 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().turnPhase).toBe('select');
   });
 
+  it('defeats the player when floor overload drops health below zero', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune('lethal-floor-rune', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      overloadDamage: 2,
+      runeforges: [createTestRuneforge(rune)],
+      player: {
+        ...state.player,
+        health: 1,
+      },
+    }));
+    useSelectionStore.getState().setSelection([rune], createTestDraftSource(rune), Date.now());
+
+    store.getState().placeRunesInFloor();
+
+    expect(store.getState().isDefeat).toBe(true);
+    expect(store.getState().player.health).toBe(0);
+  });
+
+  it('defeats the player when pattern overflow drops health below zero', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const { useSelectionStore } = await import('./selectionStore');
+    const store = createGameplayStoreInstance();
+    const placedRune = createTestRune('lethal-placed-rune', 'Fire');
+    const overflowRune = createTestRune('lethal-overflow-rune', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      overloadDamage: 2,
+      targetScore: 999,
+      runeforges: [createTestRuneforgeWithRunes([placedRune, overflowRune])],
+      player: {
+        ...state.player,
+        health: 1,
+      },
+    }));
+    useSelectionStore.getState().setSelection(
+      [placedRune, overflowRune],
+      createTestDraftSourceWithRunes([placedRune, overflowRune]),
+      Date.now()
+    );
+
+    store.getState().placeRunes(0);
+
+    expect(store.getState().isDefeat).toBe(true);
+    expect(store.getState().player.health).toBe(0);
+  });
+
   it('clears pending round resolver timers when resetting the game', async () => {
     vi.useFakeTimers();
     const { createGameplayStoreInstance } = await import('./gameplayStore');

@@ -123,7 +123,7 @@ function getOverloadResult(
   const armorAbsorbed = Math.min(currentArmor, modifiedDamage);
   const unabsorbedDamage = modifiedDamage - armorAbsorbed;
   const nextArmor = currentArmor - armorAbsorbed;
-  const nextHealth = currentHealth - unabsorbedDamage;
+  const nextHealth = Math.max(0, currentHealth - unabsorbedDamage);
   return {
     overloadDamage: unabsorbedDamage,
     nextHealth,
@@ -381,7 +381,7 @@ function placeSelectionOnPatternLine(
   const { runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage } =
     applyRuneforgeDraftAfterPlacement(state, selectionState);
 
-  const defeatedByOverload = nextHealth === 0;
+  const defeatedByOverload = nextHealth <= 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
       { ...state, runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage },
@@ -458,7 +458,7 @@ function placeSelectionInFloor(state: GameplayStore, selectionState: SelectionSt
   const { runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage } =
     applyRuneforgeDraftAfterPlacement(state, selectionState);
 
-  const defeatedByOverload = nextHealth === 0;
+  const defeatedByOverload = nextHealth <= 0;
   if (defeatedByOverload) {
     const defeatedState = handlePlayerDefeat(
       { ...state, runeforges: nextRuneforges, runeforgeDraftStage: nextRuneforgeDraftStage },
