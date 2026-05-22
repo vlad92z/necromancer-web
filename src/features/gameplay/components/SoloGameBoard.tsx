@@ -10,6 +10,7 @@ import { useGameplayStatusState } from '../../../hooks/useGameState';
 import { EnemyPanel } from './EnemyPanel';
 import { ScoringWall } from './Player/ScoringWall';
 import { EndTurnButton } from './EndTurnButton';
+import { TooltipView } from './Player/TooltipView';
 
 interface SoloGameViewProps {
   hiddenWallSlots: Set<string>;
@@ -34,11 +35,8 @@ export const SoloGameView = memo(function SoloGameView({
             <ScoringWall hiddenWallSlots={hiddenWallSlots} />
           </div>
 
-          <div className="flex min-h-[128px] items-center justify-center rounded-lg border border-dashed border-sky-300/25 bg-sky-950/20 px-5 py-4 text-center">
-            <div>
-              <div className="text-xs font-extrabold uppercase tracking-[0.22em] text-sky-200/70">Hand</div>
-              <div className="mt-2 text-lg font-bold text-sky-100">Hand coming in Stage 3</div>
-            </div>
+          <div className="min-h-[220px] rounded-lg border border-sky-300/20 bg-sky-950/10 px-5 py-4">
+            <TooltipView />
           </div>
         </section>
       </div>

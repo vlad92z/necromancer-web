@@ -617,16 +617,16 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().shouldTriggerEndRound).toBe(true);
   });
 
-  it('deals the initial active deck into runeforges and removes dealt runes from the deck queue', async () => {
+  it('deals the initial active deck into a combat hand and leaves no hidden runeforges', async () => {
     const { initializeSoloGame } = await import('../../utils/gameInitialization');
 
     const state = initializeSoloGame(999, Array.from({ length: 24 }, (_, index) =>
       createTestRune(`initial-${index}`, 'Fire')
     ));
 
-    expect(state.runeforges).toHaveLength(5);
-    expect(state.runeforges.flatMap((runeforge) => runeforge.runes)).toHaveLength(20);
-    expect(state.player.deck).toHaveLength(4);
+    expect(state.runeforges).toEqual([]);
+    expect(state.hand).toHaveLength(6);
+    expect(state.player.deck).toHaveLength(18);
   });
 
   it('partially refills runeforges from the remaining deck without defeating the player', async () => {

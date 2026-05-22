@@ -245,21 +245,15 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
   const soloMaxHealth = 100;
 
   const activeDeck = [...fullDeck].sort(() => Math.random() - 0.5);
+  const initialHand = activeDeck.slice(0, 6);
+  const remainingDeck = activeDeck.slice(6);
   const player = createPlayer(
     'player-1',
     'Arcane Apprentice',
     soloMaxHealth,
-    activeDeck,
+    remainingDeck,
     soloMaxHealth,
   );
-  const soloFactories = createSoloFactories(player);
-  const { runeforges: filledRuneforges, deck } = fillFactories(
-    soloFactories,
-    player.deck,
-    soloSizingConfig.runesPerRuneforge
-  );
-
-  player.deck = deck;
 
   return {
     gameStarted: false,
@@ -270,7 +264,7 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
     startingStrain,
     player: player,
     fullDeck: fullDeck,
-    runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
+    runeforges: [],
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
     gameIndex: initialGameNumber,
@@ -294,7 +288,7 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
     activeArtefacts: [],
     enemy: createGoblinEnemy(targetScore),
     combatPhase: 'player-turn',
-    hand: [],
+    hand: initialHand,
     discardPile: [],
     wallCharges: createEmptyWallCharges(WALL_SIZE),
     selectedHandRuneId: null,

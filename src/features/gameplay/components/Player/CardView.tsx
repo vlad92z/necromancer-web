@@ -35,6 +35,8 @@ interface CardViewProps {
   imageSrc?: string;
   runeRarity?: RuneEffectRarity | null;
   variant?: TooltipCardVariant;
+  isSelected?: boolean;
+  onClick?: () => void;
 }
 
 const RUNE_CARD_IMAGES: Record<RuneType, Record<RuneEffectRarity, string>> = {
@@ -93,14 +95,23 @@ export function CardView({
   runeType,
   runeRarity,
   variant = 'default',
+  isSelected = false,
+  onClick,
 }: CardViewProps) {
   const border = 'border rounded-xl border-slate-400/40';
   const showDestroyedOverlay = variant === 'nonPrimary';
   const showOverloadOverlay = variant === 'overload';
   const resolvedImageSrc = resolveRuneImage(runeType, runeRarity, imageSrc);
+  const selectedClassName = isSelected
+    ? 'ring-4 ring-sky-300 shadow-[0_0_38px_rgba(125,211,252,0.75)] translate-y-[-10px]'
+    : 'shadow-[0_10px_28px_rgba(0,0,0,0.28)]';
+  const interactiveClassName = onClick
+    ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 hover:translate-y-[-6px]'
+    : '';
+  const className = `flex flex-col p-2 gap-2 w-[clamp(14em,22vmin,24em)] aspect-[2/3] ${border} bg-gray-900 transition duration-150 ease-out ${selectedClassName} ${interactiveClassName}`;
 
-  return (
-    <div className={`flex flex-col p-2 gap-2 w-[clamp(14em,22vmin,24em)] aspect-[2/3] ${border} bg-gray-900`}>
+  const content = (
+    <>
       <div className="flex-[1] text-center text-sm font-semibold uppercase tracking-[0.22em] text-slate-100 pb-0">
         {title}
       </div>
@@ -136,6 +147,20 @@ export function CardView({
       <div className={`flex-[4] ${border} bg-slate-950/70 px-3 py-3 tracking-[0.1em] leading-relaxed text-slate-100/90`}>
         {description}
       </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} aria-pressed={isSelected} className={className}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }

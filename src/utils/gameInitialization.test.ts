@@ -13,7 +13,9 @@ describe('gameInitialization combat state', () => {
       intent: { type: 'Attack', amount: 5 },
     });
     expect(state.combatPhase).toBe('player-turn');
-    expect(state.hand).toEqual([]);
+    expect(state.hand).toHaveLength(6);
+    expect(state.player.deck).toHaveLength(state.fullDeck.length - 6);
+    expect(state.runeforges).toEqual([]);
     expect(state.discardPile).toEqual([]);
     expect(state.selectedHandRuneId).toBeNull();
   });

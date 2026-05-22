@@ -74,7 +74,7 @@ Manual play check:
 - No runeforges, pattern lines, overload, or RuneScore combat UI visible.
 - Settings/deck/start flow still works.
 
-## Stage 3: Hand UI From TooltipView
+## Stage 3: Hand UI From TooltipView (Done)
 
 File-level changes:
 - `src/features/gameplay/components/Player/TooltipView.tsx`: repurpose into playable hand view.

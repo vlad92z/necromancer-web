@@ -1,10 +1,9 @@
 /**
- * TooltipView - displays a list of tooltip cards from gameplay state
+ * TooltipView - displays the current combat hand as playable rune cards.
  */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useUIActions } from '../../../../hooks/useGameActions';
-import { useSelectedRunes, useTooltipState } from '../../../../hooks/useGameState';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCombatZoneState } from '../../../../hooks/useGameState';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { CardView } from './CardView';
 
@@ -33,28 +32,22 @@ const getTooltipCardRotation = (total: number, index: number): number => {
 const DEFAULT_CARD_WIDTH = 230;
 
 export function TooltipView() {
-  const { tooltipCards, tooltipOverrideActive } = useTooltipState();
-  const selectedRunes = useSelectedRunes();
-  const { resetTooltipCards } = useUIActions();
-  useEffect(() => {
-    if (selectedRunes.length === 0 && tooltipOverrideActive) {
-      resetTooltipCards();
-    }
-  }, [resetTooltipCards, selectedRunes.length, tooltipOverrideActive]);
+  const { hand } = useCombatZoneState();
+  const [selectedRuneId, setSelectedRuneId] = useState<string | null>(null);
 
-  const activeTooltipCards = useMemo(() => {
-    if (selectedRunes.length > 0 && !tooltipOverrideActive) {
-      const primaryRuneId = selectedRunes[0].id;
-      return buildRuneTooltipCards(selectedRunes, primaryRuneId);
-    }
-    return tooltipCards;
-  }, [selectedRunes, tooltipCards, tooltipOverrideActive]);
+  const handCards = useMemo(() => {
+    const cards = buildRuneTooltipCards(hand);
+    return hand.flatMap((rune, index) => {
+      const card = cards[index];
+      return card ? [{ rune, card }] : [];
+    });
+  }, [hand]);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [measuredCardWidth, setMeasuredCardWidth] = useState<number>(DEFAULT_CARD_WIDTH);
 
-  const firstCardId = activeTooltipCards[0]?.id ?? null;
+  const firstCardId = handCards[0]?.card.id ?? null;
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -74,25 +67,37 @@ export function TooltipView() {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [activeTooltipCards.length, firstCardId]);
+  }, [handCards.length, firstCardId]);
 
   
   function padding(n: number) {
     const p = measuredCardWidth * 1.21 * (1 - Math.exp(-0.158 * (n - 2.594)));
     return Math.round(p);
   }
-  const overlapOffset = -padding(activeTooltipCards.length) - 10;;
+  const overlapOffset = -padding(handCards.length) - 10;
+
+  if (handCards.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-sky-300/25 bg-sky-950/20 px-5 py-4 text-center">
+        <div>
+          <div className="text-xs font-extrabold uppercase tracking-[0.22em] text-sky-200/70">Hand</div>
+          <div className="mt-2 text-lg font-bold text-sky-100">No runes in hand</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center px-2 overflow-visible">
-      {activeTooltipCards.map((card, index) => {
-        const rotation = getTooltipCardRotation(activeTooltipCards.length, index);
+      {handCards.map(({ rune, card }, index) => {
+        const rotation = getTooltipCardRotation(handCards.length, index);
+        const isSelected = selectedRuneId === rune.id;
         return (
           <div
             key={card.id}
             style={{ //This makes sure the cards overlap and are rotated
               marginLeft: index === 0 ? 0 : overlapOffset,
-              zIndex: tooltipCards.length - index,
+              zIndex: handCards.length - index,
               transform: `rotate(${rotation}deg)`,
             }}
             ref={index === 0 ? cardRef : null}
@@ -104,6 +109,8 @@ export function TooltipView() {
               runeType={card.runeType}
               runeRarity={card.runeRarity}
               variant={card.variant}
+              isSelected={isSelected}
+              onClick={() => setSelectedRuneId((current) => current === rune.id ? null : rune.id)}
             />
           </div>
         );
