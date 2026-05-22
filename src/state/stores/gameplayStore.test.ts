@@ -727,6 +727,100 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().wallCharges[0][0].completedRuneId).toBeNull();
   });
 
+  it('ends combat turn by discarding remaining hand and dealing a new hand', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const handRunes = [createTestRune('turn-hand-1', 'Fire'), createTestRune('turn-hand-2', 'Life')];
+    const deckRunes = Array.from({ length: 6 }, (_, index) => createTestRune(`turn-deck-${index}`, 'Wind'));
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: handRunes,
+      selectedHandRuneId: handRunes[0].id,
+      discardPile: [],
+      player: {
+        ...state.player,
+        deck: deckRunes,
+      },
+    }));
+
+    store.getState().endCombatTurn();
+
+    const nextState = store.getState();
+    expect(nextState.hand.map((rune) => rune.id)).toEqual([
+      'turn-deck-0',
+      'turn-deck-1',
+      'turn-deck-2',
+      'turn-deck-3',
+      'turn-deck-4',
+      'turn-deck-5',
+    ]);
+    expect(nextState.discardPile.map((rune) => rune.id)).toEqual(['turn-hand-1', 'turn-hand-2']);
+    expect(nextState.player.deck).toEqual([]);
+    expect(nextState.selectedHandRuneId).toBeNull();
+    expect(nextState.combatPhase).toBe('player-turn');
+  });
+
+  it('keeps empty hands valid until End Turn is pressed', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [],
+      discardPile: [],
+      player: {
+        ...state.player,
+        deck: [],
+      },
+    }));
+
+    expect(store.getState().combatPhase).toBe('player-turn');
+
+    store.getState().endCombatTurn();
+
+    expect(store.getState().hand).toEqual([]);
+    expect(store.getState().discardPile).toEqual([]);
+    expect(store.getState().player.deck).toEqual([]);
+    expect(store.getState().combatPhase).toBe('player-turn');
+    expect(store.getState().isDefeat).toBe(false);
+  });
+
+  it('reshuffles discard to replenish the next hand when draw deck is insufficient', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const handRunes = [createTestRune('reshuffle-hand', 'Fire')];
+    const deckRunes = [createTestRune('reshuffle-deck', 'Life')];
+    const discardRunes = Array.from({ length: 5 }, (_, index) => createTestRune(`reshuffle-discard-${index}`, 'Void'));
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: handRunes,
+      discardPile: discardRunes,
+      player: {
+        ...state.player,
+        deck: deckRunes,
+      },
+    }));
+
+    store.getState().endCombatTurn();
+
+    const nextState = store.getState();
+    expect(nextState.hand).toHaveLength(6);
+    expect(nextState.hand[0].id).toBe('reshuffle-deck');
+    expect([
+      ...nextState.hand.map((rune) => rune.id),
+      ...nextState.player.deck.map((rune) => rune.id),
+    ]).toEqual(
+      expect.arrayContaining(['reshuffle-hand'])
+    );
+    expect(nextState.discardPile).toEqual([]);
+    expect(nextState.player.deck).toHaveLength(1);
+  });
+
   it('partially refills runeforges from the remaining deck without defeating the player', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();

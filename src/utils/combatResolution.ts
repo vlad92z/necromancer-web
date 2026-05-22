@@ -5,6 +5,8 @@
 import type { Player, Rune, SpellWallCharge } from '../types/game';
 import { copyRuneEffects } from './runeEffects';
 
+const DEFAULT_HAND_SIZE = 6;
+
 export type WallCastStatus = 'invalid' | 'charged' | 'completed';
 
 export interface WallCastInput {
@@ -22,6 +24,24 @@ export interface WallCastResult {
   hand: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
+}
+
+export interface EndPlayerTurnInput {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+  handSize?: number;
+  shuffleRunes?: (runes: Rune[]) => Rune[];
+}
+
+export interface EndPlayerTurnResult {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+}
+
+function shuffleRunes(runes: Rune[]): Rune[] {
+  return [...runes].sort(() => Math.random() - 0.5);
 }
 
 function cloneWallCharges(wallCharges: SpellWallCharge[][]): SpellWallCharge[][] {
@@ -102,5 +122,44 @@ export function castRuneToWallSlot({
     hand: nextHand,
     wallCharges: nextWallCharges,
     selectedHandRuneId: null,
+  };
+}
+
+export function endPlayerTurn({
+  player,
+  hand,
+  discardPile,
+  handSize = DEFAULT_HAND_SIZE,
+  shuffleRunes: shuffle = shuffleRunes,
+}: EndPlayerTurnInput): EndPlayerTurnResult {
+  let drawDeck = [...player.deck];
+  let nextDiscardPile = [...discardPile, ...hand];
+  let nextHand: Rune[] = [];
+
+  const drawFromDeck = () => {
+    const drawCount = Math.min(handSize - nextHand.length, drawDeck.length);
+    if (drawCount <= 0) {
+      return;
+    }
+
+    nextHand = [...nextHand, ...drawDeck.slice(0, drawCount)];
+    drawDeck = drawDeck.slice(drawCount);
+  };
+
+  drawFromDeck();
+
+  if (nextHand.length < handSize && nextDiscardPile.length > 0) {
+    drawDeck = shuffle(nextDiscardPile);
+    nextDiscardPile = [];
+    drawFromDeck();
+  }
+
+  return {
+    player: {
+      ...player,
+      deck: drawDeck,
+    },
+    hand: nextHand,
+    discardPile: nextDiscardPile,
   };
 }

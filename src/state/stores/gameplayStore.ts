@@ -30,7 +30,7 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
-import { castRuneToWallSlot } from '../../utils/combatResolution';
+import { castRuneToWallSlot, endPlayerTurn } from '../../utils/combatResolution';
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
 import {
   addGameplayArcaneDust,
@@ -305,6 +305,7 @@ export interface GameplayStore extends GameState {
   autoPlaceSelection: () => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
+  endCombatTurn: () => void;
   acknowledgeOverloadSound: () => void;
   acknowledgeChannelSound: () => void;
   endRound: () => void;
@@ -1025,6 +1026,29 @@ export const gameplayStoreConfig = (
         hand: result.hand,
         wallCharges: result.wallCharges,
         selectedHandRuneId: result.selectedHandRuneId,
+      };
+    });
+  },
+
+  endCombatTurn: () => {
+    set((state) => {
+      if (state.combatPhase !== 'player-turn' || state.isDefeat || state.turnPhase === 'deck-draft') {
+        return state;
+      }
+
+      const result = endPlayerTurn({
+        player: state.player,
+        hand: state.hand,
+        discardPile: state.discardPile,
+      });
+
+      return {
+        ...state,
+        player: result.player,
+        hand: result.hand,
+        discardPile: result.discardPile,
+        selectedHandRuneId: null,
+        combatPhase: 'player-turn' as const,
       };
     });
   },

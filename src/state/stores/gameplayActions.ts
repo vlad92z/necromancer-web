@@ -22,6 +22,7 @@ export interface GameplayActions {
   autoPlaceSelection: () => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
+  endCombatTurn: () => void;
   acknowledgeOverloadSound: () => void;
   acknowledgeChannelSound: () => void;
   endRound: () => void;
@@ -45,6 +46,7 @@ export const gameplayActions: GameplayActions = {
   autoPlaceSelection: () => useGameplayStore.getState().autoPlaceSelection(),
   selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),
   castRuneToWall: (row, col) => useGameplayStore.getState().castRuneToWall(row, col),
+  endCombatTurn: () => useGameplayStore.getState().endCombatTurn(),
   acknowledgeOverloadSound: () => useGameplayStore.getState().acknowledgeOverloadSound(),
   acknowledgeChannelSound: () => useGameplayStore.getState().acknowledgeChannelSound(),
   endRound: () => useGameplayStore.getState().endRound(),

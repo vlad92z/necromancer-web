@@ -126,7 +126,7 @@ Manual play check:
 - Select rune, click row 3 matching slot; charge increments.
 - Wrong type and filled slots reject without crashing.
 
-## Stage 5: Turn End + Deck/Discard Cycle
+## Stage 5: Turn End + Deck/Discard Cycle (Done)
 
 File-level changes:
 - Combat store/actions/selectors: add draw, discard, and end-turn behavior.
