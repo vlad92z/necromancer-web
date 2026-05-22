@@ -62,6 +62,19 @@ export interface EnemyTurnResult {
   player: Player;
 }
 
+export interface VictoryDeckInput {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+  wallCharges: SpellWallCharge[][];
+}
+
+export interface VictoryDeckResult {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+}
+
 function shuffleRunes(runes: Rune[]): Rune[] {
   return [...runes].sort(() => Math.random() - 0.5);
 }
@@ -257,5 +270,52 @@ export function endPlayerTurn({
     },
     hand: nextHand,
     discardPile: nextDiscardPile,
+  };
+}
+
+export function collectVictoryDeck({
+  player,
+  hand,
+  discardPile,
+  wallCharges,
+}: VictoryDeckInput): VictoryDeckResult {
+  const returnedRunesById = new Map<string, Rune>();
+
+  const addRune = (rune: Rune) => {
+    returnedRunesById.set(rune.id, rune);
+  };
+
+  player.deck.forEach(addRune);
+  hand.forEach(addRune);
+  discardPile.forEach(addRune);
+
+  wallCharges.forEach((chargeRow) => {
+    chargeRow.forEach((charge) => {
+      charge.spentRunes.forEach(addRune);
+
+      if (!charge.completedRuneId) {
+        return;
+      }
+
+      const wallCell = player.wall[charge.row]?.[charge.col] ?? null;
+      if (!wallCell?.runeType) {
+        return;
+      }
+
+      addRune({
+        id: charge.completedRuneId,
+        runeType: wallCell.runeType,
+        effects: copyRuneEffects(wallCell.effects),
+      });
+    });
+  });
+
+  return {
+    player: {
+      ...player,
+      deck: Array.from(returnedRunesById.values()),
+    },
+    hand: [],
+    discardPile: [],
   };
 }

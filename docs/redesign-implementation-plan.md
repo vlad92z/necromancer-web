@@ -182,7 +182,7 @@ Manual play check:
 - Kill goblin and confirm enemy does not attack.
 - Reduce player to 0 and confirm defeat modal.
 
-## Stage 7: Victory + Existing Deck Draft
+## Stage 7: Victory + Existing Deck Draft (Done)
 
 File-level changes:
 - Combat store/actions: bridge victory into existing deck draft state.

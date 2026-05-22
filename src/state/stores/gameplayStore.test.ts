@@ -892,7 +892,7 @@ describe('gameplayStore persistence', () => {
     expect(storage.get('necromancer-arcane-dust')).toBe('4');
   });
 
-  it('sets victory phase when enemy HP reaches zero and prevents End Turn attack', async () => {
+  it('opens deck draft when enemy HP reaches zero and prevents End Turn attack', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();
     const lethalRune = createTestRuneWithEffects('combat-lethal', 'Fire', [
@@ -918,8 +918,155 @@ describe('gameplayStore persistence', () => {
 
     expect(store.getState().enemy?.health).toBe(0);
     expect(store.getState().combatPhase).toBe('victory');
+    expect(store.getState().turnPhase).toBe('deck-draft');
+    expect(store.getState().deckDraftState).not.toBeNull();
     expect(store.getState().player.health).toBe(10);
     expect(store.getState().hand).toEqual([]);
+  });
+
+  it('returns draw, hand, discard, completed wall, and charge-spent runes before deck draft', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const drawRune = createTestRune('victory-draw', 'Fire');
+    const remainingHandRune = createTestRune('victory-hand', 'Life');
+    const discardRune = createTestRune('victory-discard', 'Void');
+    const spentRune = createTestRune('victory-spent', 'Fire');
+    const lethalRune = createTestRuneWithEffects('victory-lethal', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [lethalRune, remainingHandRune],
+      discardPile: [discardRune],
+      selectedHandRuneId: lethalRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 2, maxHealth: 10 } : state.enemy,
+      player: {
+        ...state.player,
+        deck: [drawRune],
+      },
+      wallCharges: state.wallCharges.map((row, rowIndex) =>
+        row.map((charge, colIndex) =>
+          rowIndex === 1 && colIndex === 1
+            ? {
+              ...charge,
+              currentCount: 1,
+              spentRunes: [spentRune],
+            }
+            : charge
+        )
+      ),
+    }));
+
+    store.getState().castRuneToWall(1, 1);
+
+    expect(store.getState().player.deck.map((rune) => rune.id)).toEqual(
+      expect.arrayContaining([
+        'victory-draw',
+        'victory-hand',
+        'victory-discard',
+        'victory-spent',
+        'victory-lethal',
+      ])
+    );
+    expect(store.getState().player.deck).toHaveLength(5);
+    expect(store.getState().hand).toEqual([]);
+    expect(store.getState().discardPile).toEqual([]);
+    expect(store.getState().deckDraftState).not.toBeNull();
+  });
+
+  it('nonlethal final casts do not open deck draft', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const damageRune = createTestRuneWithEffects('nonlethal-damage', 'Fire', [
+      { type: 'Damage', amount: 1, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [damageRune],
+      selectedHandRuneId: damageRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 5, maxHealth: 10 } : state.enemy,
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().enemy?.health).toBe(4);
+    expect(store.getState().turnPhase).toBe('select');
+    expect(store.getState().deckDraftState).toBeNull();
+    expect(store.getState().combatPhase).toBe('player-turn');
+  });
+
+  it('selecting a post-victory reward still updates deck and fullDeck', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const lethalRune = createTestRuneWithEffects('reward-lethal', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [lethalRune],
+      selectedHandRuneId: lethalRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 1, maxHealth: 10 } : state.enemy,
+      player: {
+        ...state.player,
+        deck: [],
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    const rewardRuneforgeId = store.getState().deckDraftState?.runeforges[0]?.id;
+    expect(rewardRuneforgeId).toBeDefined();
+    const fullDeckBeforeReward = store.getState().fullDeck.length;
+    const activeDeckBeforeReward = store.getState().player.deck.length;
+
+    store.getState().selectDeckDraftRuneforge(rewardRuneforgeId as string);
+
+    expect(store.getState().player.deck.length).toBeGreaterThan(activeDeckBeforeReward);
+    expect(store.getState().fullDeck.length).toBeGreaterThan(fullDeckBeforeReward);
+  });
+
+  it('starting next solo game after victory creates a fresh encounter', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const lethalRune = createTestRuneWithEffects('next-game-lethal', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [lethalRune],
+      selectedHandRuneId: lethalRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 1, maxHealth: 10 } : state.enemy,
+      player: {
+        ...state.player,
+        deck: [],
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+    const nextTargetScore = store.getState().targetScore;
+
+    store.getState().startNextSoloGame();
+
+    const nextState = store.getState();
+    expect(nextState.combatPhase).toBe('player-turn');
+    expect(nextState.turnPhase).toBe('select');
+    expect(nextState.deckDraftState).toBeNull();
+    expect(nextState.enemy).toMatchObject({
+      health: nextTargetScore,
+      maxHealth: nextTargetScore,
+    });
+    expect(nextState.hand).toHaveLength(6);
+    expect(nextState.discardPile).toEqual([]);
+    expect(nextState.wallCharges.flat().every((charge) => charge.currentCount === 0)).toBe(true);
+    expect(nextState.player.wall.flat().every((cell) => cell.runeType === null)).toBe(true);
   });
 
   it('resolves enemy attack on End Turn before dealing the next hand', async () => {

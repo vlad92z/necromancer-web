@@ -3,6 +3,7 @@ import type { Enemy, Rune, RuneEffects } from '../types/game';
 import { createEmptyWallCharges, createPlayer } from './gameInitialization';
 import {
   castRuneToWallSlot,
+  collectVictoryDeck,
   endPlayerTurn,
   resolveCompletedRuneEffects,
   resolveEnemyTurn,
@@ -258,6 +259,62 @@ describe('combatResolution basic combat effects', () => {
     const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
 
     expect(result.player.health).toBe(0);
+  });
+});
+
+describe('combatResolution victory deck collection', () => {
+  it('returns draw deck, hand, discard, completed wall, and spent charge runes', () => {
+    const drawRune = createTestRune('victory-draw', 'Fire');
+    const handRune = createTestRune('victory-hand', 'Life');
+    const discardRune = createTestRune('victory-discard', 'Void');
+    const spentRune = createTestRune('victory-spent', 'Fire');
+    const completedRune = createTestRuneWithEffects('victory-completed', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+    const player = createPlayer('player-1', 'Tester', 10, [drawRune], 10);
+    const wallCharges = createEmptyWallCharges(6);
+    const wall = player.wall.map((row) => [...row]);
+    wall[1][1] = { runeType: completedRune.runeType, effects: completedRune.effects };
+    wallCharges[1][1] = {
+      ...wallCharges[1][1],
+      currentCount: 2,
+      spentRunes: [spentRune],
+      completedRuneId: completedRune.id,
+    };
+
+    const result = collectVictoryDeck({
+      player: {
+        ...player,
+        wall,
+      },
+      hand: [handRune],
+      discardPile: [discardRune],
+      wallCharges,
+    });
+
+    expect(result.player.deck.map((rune) => rune.id)).toEqual([
+      'victory-draw',
+      'victory-hand',
+      'victory-discard',
+      'victory-spent',
+      'victory-completed',
+    ]);
+    expect(result.hand).toEqual([]);
+    expect(result.discardPile).toEqual([]);
+  });
+
+  it('does not duplicate cards returned from multiple combat zones', () => {
+    const duplicateRune = createTestRune('duplicate-rune', 'Fire');
+    const player = createPlayer('player-1', 'Tester', 10, [duplicateRune], 10);
+
+    const result = collectVictoryDeck({
+      player,
+      hand: [duplicateRune],
+      discardPile: [duplicateRune],
+      wallCharges: createEmptyWallCharges(6),
+    });
+
+    expect(result.player.deck.map((rune) => rune.id)).toEqual(['duplicate-rune']);
   });
 });
 

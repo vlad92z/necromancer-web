@@ -32,6 +32,7 @@ import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
 import {
   castRuneToWallSlot,
+  collectVictoryDeck,
   endPlayerTurn,
   resolveCompletedRuneEffects,
   resolveEnemyTurn,
@@ -1008,6 +1009,7 @@ export const gameplayStoreConfig = (
 
   castRuneToWall: (row: number, col: number) => {
     let arcaneDustGain = 0;
+    let deckDraftRewardGameIndex: number | null = null;
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.turnPhase === 'deck-draft') {
         return state;
@@ -1035,6 +1037,31 @@ export const gameplayStoreConfig = (
         arcaneDustGain += resolvedEffects.arcaneDustDelta;
         const isVictory = (resolvedEffects.enemy?.health ?? 1) <= 0;
 
+        if (isVictory) {
+          deckDraftRewardGameIndex = state.gameIndex;
+          const victoryDeck = collectVictoryDeck({
+            player: resolvedEffects.player,
+            hand: result.hand,
+            discardPile: state.discardPile,
+            wallCharges: result.wallCharges,
+          });
+          const deckDraftState = enterDeckDraftMode({
+            ...state,
+            player: victoryDeck.player,
+            enemy: resolvedEffects.enemy,
+            hand: victoryDeck.hand,
+            discardPile: victoryDeck.discardPile,
+            wallCharges: result.wallCharges,
+            selectedHandRuneId: result.selectedHandRuneId,
+            combatPhase: 'victory' as const,
+          });
+
+          return {
+            ...deckDraftState,
+            combatPhase: 'victory' as const,
+          };
+        }
+
         return {
           ...state,
           player: resolvedEffects.player,
@@ -1056,6 +1083,9 @@ export const gameplayStoreConfig = (
     });
     if (arcaneDustGain > 0) {
       addGameplayArcaneDust(arcaneDustGain);
+    }
+    if (deckDraftRewardGameIndex !== null) {
+      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
     }
   },
 
