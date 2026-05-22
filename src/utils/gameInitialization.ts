@@ -11,9 +11,12 @@ import type {
   Rune,
   RuneType,
   TooltipCard,
+  Enemy,
+  SpellWallCharge,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
 import { getOverloadDamageForGame } from './overload';
+import goblinImageSrc from '../assets/enemies/goblin.png';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 const WALL_SIZE = RUNE_TYPES.length;
@@ -28,6 +31,36 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
       Array(size)
         .fill(null)
         .map(() => ({ runeType: null, effects: null }))
+    );
+}
+
+export function createGoblinEnemy(maxHealth: number): Enemy {
+  return {
+    id: 'goblin',
+    name: 'Goblin',
+    imageSrc: goblinImageSrc,
+    health: maxHealth,
+    maxHealth,
+    intent: { type: 'Attack', amount: 5 },
+  };
+}
+
+export function createEmptyWallCharges(size: number = WALL_SIZE): SpellWallCharge[][] {
+  const runeTypes = RUNE_TYPES.slice(0, size);
+  return Array(size)
+    .fill(null)
+    .map((_, row) =>
+      Array(size)
+        .fill(null)
+        .map((_, col) => ({
+          row,
+          col,
+          runeType: runeTypes[(col - row + size) % size],
+          requiredCount: row + 1,
+          currentCount: 0,
+          spentRunes: [],
+          completedRuneId: null,
+        }))
     );
 }
 
@@ -259,5 +292,11 @@ export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = 
     baseTargetScore: 10,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
+    enemy: createGoblinEnemy(targetScore),
+    combatPhase: 'player-turn',
+    hand: [],
+    discardPile: [],
+    wallCharges: createEmptyWallCharges(WALL_SIZE),
+    selectedHandRuneId: null,
   };
 }

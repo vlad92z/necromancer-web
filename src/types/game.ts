@@ -36,6 +36,38 @@ export interface Rune {
   effects: RuneEffects;
 }
 
+export type EnemyIntent = { type: 'Attack'; amount: number };
+
+export interface Enemy {
+  id: string;
+  name: string;
+  imageSrc: string;
+  health: number;
+  maxHealth: number;
+  intent: EnemyIntent;
+}
+
+export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
+
+export interface SpellWallCharge {
+  row: number;
+  col: number;
+  runeType: RuneType;
+  requiredCount: number;
+  currentCount: number;
+  spentRunes: Rune[];
+  completedRuneId: string | null;
+}
+
+export interface CombatZoneState {
+  enemy: Enemy | null;
+  combatPhase: CombatPhase;
+  hand: Rune[];
+  discardPile: Rune[];
+  wallCharges: SpellWallCharge[][];
+  selectedHandRuneId: string | null;
+}
+
 export type DeckDraftEffect =
   | { type: 'heal'; amount: number }
   | { type: 'maxHealth'; amount: number }
@@ -189,6 +221,12 @@ export interface GameState {
   baseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
+  enemy: Enemy | null;
+  combatPhase: CombatPhase;
+  hand: Rune[];
+  discardPile: Rune[];
+  wallCharges: SpellWallCharge[][];
+  selectedHandRuneId: string | null;
 }
 
 export type DraftSource = {

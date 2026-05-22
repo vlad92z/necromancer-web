@@ -19,7 +19,7 @@ Automated checks for code stages:
 - `npm run build`
 - `npm run lint`
 
-## Stage 1: Combat Foundation + Save Invalidation
+## Stage 1: Combat Foundation + Save Invalidation (Done)
 
 File-level changes:
 - `src/types/game.ts`: add combat types.

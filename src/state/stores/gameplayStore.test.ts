@@ -52,13 +52,21 @@ describe('gameplayStore persistence', () => {
     );
 
     const [, payload] = localStorageMock.setItem.mock.calls[0] ?? [];
-    expect(JSON.parse(payload as string)).not.toHaveProperty('game');
-    expect(JSON.parse(payload as string)).not.toHaveProperty('strain');
-    expect(JSON.parse(payload as string)).not.toHaveProperty('soloDeckTemplate');
-    expect(JSON.parse(payload as string)).not.toHaveProperty('soloBaseTargetScore');
-    expect(JSON.parse(payload as string)).not.toHaveProperty('totalRunesPerPlayer');
-    expect(JSON.parse(payload as string)).not.toHaveProperty('tooltipCards');
-    expect(JSON.parse(payload as string)).not.toHaveProperty('tooltipOverrideActive');
+    const parsedPayload = JSON.parse(payload as string);
+    expect(parsedPayload.version).toBe(2);
+    expect(parsedPayload.state).not.toHaveProperty('game');
+    expect(parsedPayload.state).not.toHaveProperty('strain');
+    expect(parsedPayload.state).not.toHaveProperty('soloDeckTemplate');
+    expect(parsedPayload.state).not.toHaveProperty('soloBaseTargetScore');
+    expect(parsedPayload.state).not.toHaveProperty('totalRunesPerPlayer');
+    expect(parsedPayload.state).not.toHaveProperty('tooltipCards');
+    expect(parsedPayload.state).not.toHaveProperty('tooltipOverrideActive');
+    expect(parsedPayload.state.enemy).toMatchObject({
+      id: 'goblin',
+      health: parsedPayload.state.targetScore,
+      intent: { type: 'Attack', amount: 5 },
+    });
+    expect(parsedPayload.state.combatPhase).toBe('player-turn');
   });
 
   it('continues persisting gameplay updates during an active run', async () => {
@@ -76,7 +84,7 @@ describe('gameplayStore persistence', () => {
     expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
     const [key, payload] = localStorageMock.setItem.mock.calls[0] ?? [];
     expect(key).toBe('necromancer-solo-state');
-    expect(JSON.parse(payload as string)).toMatchObject({ runePowerTotal: 7, gameStarted: true });
+    expect(JSON.parse(payload as string).state).toMatchObject({ runePowerTotal: 7, gameStarted: true });
   });
 
   it('syncs gameplay actions into split concern stores', async () => {
@@ -91,6 +99,8 @@ describe('gameplayStore persistence', () => {
     expect(composedState.player).toEqual(store.getState().player);
     expect(composedState.runeforges).toEqual(store.getState().runeforges);
     expect(composedState.turnPhase).toBe(store.getState().turnPhase);
+    expect(composedState.enemy).toEqual(store.getState().enemy);
+    expect(composedState.combatPhase).toBe(store.getState().combatPhase);
   });
 
   it('clears persisted solo state when the run ends in defeat', async () => {

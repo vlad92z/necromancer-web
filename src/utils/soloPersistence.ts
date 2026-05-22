@@ -6,13 +6,32 @@ import type { GameState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
+export const SOLO_STATE_VERSION = 2;
+
+interface SoloStatePayload {
+  version: typeof SOLO_STATE_VERSION;
+  state: GameState;
+}
 
 const canAccessStorage = (): boolean => typeof window !== 'undefined';
+
+function isSoloStatePayload(value: unknown): value is SoloStatePayload {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<SoloStatePayload>;
+  return candidate.version === SOLO_STATE_VERSION && Boolean(candidate.state);
+}
 
 export function saveSoloState(state: GameState): void {
   if (!canAccessStorage()) return;
   try {
-    window.localStorage.setItem(SOLO_STATE_KEY, JSON.stringify(state));
+    const payload: SoloStatePayload = {
+      version: SOLO_STATE_VERSION,
+      state,
+    };
+    window.localStorage.setItem(SOLO_STATE_KEY, JSON.stringify(payload));
   } catch (error) {
     console.error('Failed to save solo state', error);
   }
@@ -26,17 +45,22 @@ export function loadSoloState(): GameState | null {
   }
 
   try {
-    const parsedState = JSON.parse(rawState) as GameState;
-    return parsedState;
+    const parsedState = JSON.parse(rawState) as unknown;
+    if (!isSoloStatePayload(parsedState)) {
+      clearSoloState();
+      return null;
+    }
+    return parsedState.state;
   } catch (error) {
     console.error('Failed to parse saved solo state', error);
+    clearSoloState();
     return null;
   }
 }
 
 export function hasSavedSoloState(): boolean {
   if (!canAccessStorage()) return false;
-  return Boolean(window.localStorage.getItem(SOLO_STATE_KEY));
+  return loadSoloState() !== null;
 }
 
 export function clearSoloState(): void {

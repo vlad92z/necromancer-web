@@ -4,6 +4,7 @@
 
 import type { GameState } from '../../types/game';
 import { pickBoardState, useBoardStore } from './boardStore';
+import { pickCombatState, useCombatStore } from './combatStore';
 import { pickResolutionState, useResolutionStore } from './resolutionStore';
 import { pickRunState, useRunStore } from './runStore';
 
@@ -21,6 +22,7 @@ function notifyGameplayListeners(): void {
 export function getGameplayState(): GameState {
   const run = useRunStore.getState();
   const board = useBoardStore.getState();
+  const combat = useCombatStore.getState();
   const resolution = useResolutionStore.getState();
 
   return {
@@ -54,6 +56,12 @@ export function getGameplayState(): GameState {
     baseTargetScore: run.baseTargetScore,
     deckDraftReadyForNextGame: run.deckDraftReadyForNextGame,
     activeArtefacts: run.activeArtefacts,
+    enemy: combat.enemy,
+    combatPhase: combat.combatPhase,
+    hand: combat.hand,
+    discardPile: combat.discardPile,
+    wallCharges: combat.wallCharges,
+    selectedHandRuneId: combat.selectedHandRuneId,
   };
 }
 
@@ -62,6 +70,7 @@ export function replaceGameplayState(next: GameState): void {
   try {
     useRunStore.getState().replaceRunState(pickRunState(next));
     useBoardStore.getState().replaceBoardState(pickBoardState(next));
+    useCombatStore.getState().replaceCombatState(pickCombatState(next));
     useResolutionStore.getState().replaceResolutionState(pickResolutionState(next));
   } finally {
     isReplacingGameplayState = false;
@@ -82,6 +91,7 @@ function attachStoreSubscriptions(): void {
 
   useRunStore.subscribe(notifyIfDirectStoreChange);
   useBoardStore.subscribe(notifyIfDirectStoreChange);
+  useCombatStore.subscribe(notifyIfDirectStoreChange);
   useResolutionStore.subscribe(notifyIfDirectStoreChange);
   areStoreSubscriptionsAttached = true;
 }
