@@ -2,7 +2,7 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DeckOverlay } from './DeckOverlay';
 import { OverloadOverlay } from './OverloadOverlay';
 import { RuneAnimation } from '../../../components/RuneAnimation';
@@ -26,9 +26,7 @@ export function GameContainer() {
   const {
     animatingRunes: placementAnimatingRunes,
     activeAnimatingRunes,
-    hiddenPatternSlots,
     hiddenWallSlots,
-    isAnimatingPlacement,
     handlePlacementAnimationComplete,
   } = useRunePlacementAnimations({
     player,
@@ -36,11 +34,6 @@ export function GameContainer() {
     draftSource,
     overloadRuneCount: overloadedRuneCount,
   });
-  const animatingRuneIdSet = useMemo(
-    () => new Set(activeAnimatingRunes.map((rune) => rune.id)),
-    [activeAnimatingRunes],
-  );
-
   useRunePlacementSounds(
     activeAnimatingRunes,
     soundVolume,
@@ -89,10 +82,7 @@ export function GameContainer() {
           onClick={(event) => event.stopPropagation()}
         >
           <SoloGameView
-            animatingRuneIdSet={animatingRuneIdSet}
-            hiddenPatternSlots={hiddenPatternSlots}
             hiddenWallSlots={hiddenWallSlots}
-            isPlacementAnimating={isAnimatingPlacement}
           />
         </div>
       </div>

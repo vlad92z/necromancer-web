@@ -5,6 +5,7 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { useBoardStore } from '../state/stores/boardStore';
+import { useCombatStore } from '../state/stores/combatStore';
 import { useResolutionStore } from '../state/stores/resolutionStore';
 import { useRunStore } from '../state/stores/runStore';
 import { useSelectionStore } from '../state/stores/selectionStore';
@@ -141,6 +142,25 @@ export function useGameplayContainerState() {
   const player = useBoardStore((state) => state.player);
 
   return { player, channelSoundPending, overloadSoundPending };
+}
+
+export function useCombatEnemyState() {
+  return useCombatStore(
+    useShallow((state) => ({
+      enemy: state.enemy,
+      combatPhase: state.combatPhase,
+    })),
+  );
+}
+
+export function useCombatZoneState() {
+  return useCombatStore(
+    useShallow((state) => ({
+      hand: state.hand,
+      discardPile: state.discardPile,
+      selectedHandRuneId: state.selectedHandRuneId,
+    })),
+  );
 }
 
 export function useGameplayPatternLineState() {

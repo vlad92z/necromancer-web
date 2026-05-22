@@ -6,10 +6,8 @@ import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { useUIActions } from '../../../../hooks/useGameActions';
 import { useActiveElement, useArcaneDust, useGameIndex } from '../../../../hooks/useGameState';
-import { RuneScoreView } from '../RuneScoreView';
 import { HealthView } from '../HealthView';
 import { DeckButton } from '../../../../components/DeckButton';
-import { OverloadButton } from '../../../../components/OverloadButton';
 
 export function GameMetadataView() {
   const gameNumber = useGameIndex();
@@ -50,15 +48,8 @@ export function GameMetadataView() {
 
       {/* Right Side */}
       <div className="flex flex-row flex-[60] items-center gap-3">
-        <div
-          data-player-id="player-1"
-          data-strain-counter="true"
-        >
-          <OverloadButton />
-        </div>
         <DeckButton/>
         <HealthView/>
-        <RuneScoreView/>
       </div>
     </div>
   );

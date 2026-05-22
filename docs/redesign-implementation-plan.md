@@ -46,7 +46,7 @@ Manual play check:
 - App does not crash.
 - Old saves clear or are ignored safely.
 
-## Stage 2: Replace Main Combat Layout Shell
+## Stage 2: Replace Main Combat Layout Shell (Done)
 
 File-level changes:
 - `src/features/gameplay/components/SoloGameBoard.tsx`: replace visible combat shell.
