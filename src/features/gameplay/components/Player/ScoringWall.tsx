@@ -42,7 +42,11 @@ interface OverlayEdge {
 // We no longer compute the largest connected component. Instead we connect
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
-export function ScoringWall() {
+interface ScoringWallProps {
+  hiddenWallSlots: Set<string>;
+}
+
+export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
   const { wall, patternLines, scoringSequence } = useGameplayWallState();
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
@@ -351,11 +355,13 @@ export function ScoringWall() {
             {row.map((cell, colIndex) => (
               <div
                 key={colIndex}
+                data-wall-row={rowIndex}
+                data-wall-col={colIndex}
                 onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
                 onMouseLeave={handleWallCellLeave}
               >
                 <WallCell
-                  cell={cell}
+                  cell={hiddenWallSlots.has(cellKey(rowIndex, colIndex)) ? { runeType: null, effects: null } : cell}
                   row={rowIndex}
                   col={colIndex}
                   wallSize={gridSize}

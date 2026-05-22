@@ -9,11 +9,13 @@ import { TooltipView } from './TooltipView';
 
 interface PlayerBoardProps {
   hiddenPatternSlots: Set<string>;
+  hiddenWallSlots: Set<string>;
   isPlacementAnimating: boolean;
 }
 
 export function PlayerBoard({
   hiddenPatternSlots,
+  hiddenWallSlots,
   isPlacementAnimating,
 }: PlayerBoardProps) {
   const { cancelSelection } = useGameplayActions();
@@ -30,7 +32,7 @@ export function PlayerBoard({
       <div className="flex flex-col gap-[min(1.2vmin,12px)] h-full">
         <div className="flex flex-row gap-5">
           <PatternLines hiddenPatternSlots={hiddenPatternSlots} />
-          <ScoringWall/>
+          <ScoringWall hiddenWallSlots={hiddenWallSlots} />
         </div>
         <TooltipView/>
       </div>

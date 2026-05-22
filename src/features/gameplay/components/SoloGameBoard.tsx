@@ -13,12 +13,14 @@ import { useGameplayStatusState } from '../../../hooks/useGameState';
 interface SoloGameViewProps {
   animatingRuneIdSet: Set<string>;
   hiddenPatternSlots: Set<string>;
+  hiddenWallSlots: Set<string>;
   isPlacementAnimating: boolean;
 }
 
 export const SoloGameView = memo(function SoloGameView({
   animatingRuneIdSet,
   hiddenPatternSlots,
+  hiddenWallSlots,
   isPlacementAnimating,
 }: SoloGameViewProps) {
   const { isDefeat, deckDraftState } = useGameplayStatusState();
@@ -36,6 +38,7 @@ export const SoloGameView = memo(function SoloGameView({
         />
         <PlayerBoard
           hiddenPatternSlots={hiddenPatternSlots}
+          hiddenWallSlots={hiddenWallSlots}
           isPlacementAnimating={isPlacementAnimating}
         />
       </div>

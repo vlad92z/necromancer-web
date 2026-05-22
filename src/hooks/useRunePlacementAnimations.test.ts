@@ -64,6 +64,7 @@ describe('buildPlacementAnimationPlan', () => {
       player: afterPlayer,
       overloadRuneCount: 1,
       patternSlotRects: new Map(),
+      wallCellRects: new Map(),
       overloadTargetRect: { left: 100, top: 200, width: 40, height: 40 },
       deckTargetRect: null,
     });
@@ -95,6 +96,7 @@ describe('buildPlacementAnimationPlan', () => {
       player: afterPlayer,
       overloadRuneCount: 1,
       patternSlotRects: new Map([['0-0', { left: 50, top: 60, width: 10, height: 10 }]]),
+      wallCellRects: new Map(),
       overloadTargetRect: { left: 100, top: 200, width: 40, height: 40 },
       deckTargetRect: null,
     });
@@ -119,6 +121,7 @@ describe('buildPlacementAnimationPlan', () => {
       player,
       overloadRuneCount: 0,
       patternSlotRects: new Map(),
+      wallCellRects: new Map(),
       overloadTargetRect: { left: 100, top: 200, width: 40, height: 40 },
       deckTargetRect: null,
     });
@@ -127,7 +130,7 @@ describe('buildPlacementAnimationPlan', () => {
     expect(plan.patternSlotKeys).toEqual([]);
   });
 
-  it('animates reusable runes from a completed pattern line to the deck', () => {
+  it('animates existing completed line runes directly to wall and deck', () => {
     const primaryRune = createRune('cast-primary');
     const reusableRune = createRune('cast-reusable');
     const beforePlayer = createPlayer({
@@ -162,13 +165,20 @@ describe('buildPlacementAnimationPlan', () => {
         ['1-0', { left: 10, top: 20, width: 10, height: 10 }],
         ['1-1', { left: 30, top: 20, width: 10, height: 10 }],
       ]),
+      wallCellRects: new Map([['1-1', { left: 200, top: 50, width: 10, height: 10 }]]),
       overloadTargetRect: null,
       deckTargetRect: { left: 100, top: 200, width: 40, height: 40 },
     });
 
-    expect(plan.overlayRunes).toEqual([]);
-    expect(plan.followUpRunes).toHaveLength(1);
-    expect(plan.followUpRunes[0]).toMatchObject({
+    expect(plan.overlayRunes.map((rune) => rune.id)).toEqual(['cast-primary', 'cast-reusable']);
+    expect(plan.overlayRunes[0]).toMatchObject({
+      id: 'cast-primary',
+      startX: 10,
+      startY: 20,
+      endX: 200,
+      endY: 50,
+    });
+    expect(plan.overlayRunes[1]).toMatchObject({
       id: 'cast-reusable',
       startX: 30,
       startY: 20,
@@ -176,9 +186,10 @@ describe('buildPlacementAnimationPlan', () => {
       endY: 215,
       shouldDisappear: true,
     });
+    expect(plan.wallSlotKeys).toEqual(['1-1']);
   });
 
-  it('queues selected non-primary runes to return to deck after placement completes a line', () => {
+  it('routes selected runes directly to final destinations when placement completes a line', () => {
     const primaryRune = createRune('waiting-primary');
     const reusableRune = createRune('selected-reusable');
     const beforePlayer = createPlayer({
@@ -213,17 +224,116 @@ describe('buildPlacementAnimationPlan', () => {
         ['1-0', { left: 10, top: 20, width: 10, height: 10 }],
         ['1-1', { left: 30, top: 20, width: 10, height: 10 }],
       ]),
+      wallCellRects: new Map([['1-1', { left: 200, top: 50, width: 10, height: 10 }]]),
       overloadTargetRect: null,
       deckTargetRect: { left: 100, top: 200, width: 40, height: 40 },
     });
 
-    expect(plan.overlayRunes.map((rune) => rune.id)).toEqual(['selected-reusable']);
-    expect(plan.followUpRunes).toHaveLength(1);
-    expect(plan.followUpRunes[0]).toMatchObject({
-      id: 'selected-reusable',
-      startX: 30,
+    expect(plan.patternSlotKeys).toEqual([]);
+    expect(plan.overlayRunes.map((rune) => rune.id)).toEqual(['waiting-primary', 'selected-reusable']);
+    expect(plan.overlayRunes[0]).toMatchObject({
+      id: 'waiting-primary',
+      startX: 10,
       startY: 20,
+      endX: 200,
+      endY: 50,
+    });
+    expect(plan.overlayRunes[1]).toMatchObject({
+      id: 'selected-reusable',
+      startX: 15,
+      startY: 25,
       endX: 115,
+      endY: 215,
+      shouldDisappear: true,
+    });
+  });
+
+  it('routes a selected primary rune directly to the wall when placement completes a line', () => {
+    const selectedPrimaryRune = createRune('selected-primary');
+    const beforePlayer = createPlayer();
+    const wall = beforePlayer.wall.map((row) => [...row]);
+    wall[0][getWallColumnForRune(0, 'Fire', wall.length)] = { runeType: 'Fire', effects: [] };
+    const afterPlayer = createPlayer({
+      wall,
+      patternLines: beforePlayer.patternLines.map((line, index) =>
+        index === 0
+          ? { ...line, runeType: null, count: 0, runes: [], primaryRuneId: null, primaryRuneEffects: null }
+          : line,
+      ),
+    });
+
+    const plan = buildPlacementAnimationPlan({
+      snapshot: createSnapshot([selectedPrimaryRune], beforePlayer, 0),
+      player: afterPlayer,
+      overloadRuneCount: 0,
+      patternSlotRects: new Map([['0-0', { left: 50, top: 60, width: 10, height: 10 }]]),
+      wallCellRects: new Map([['0-0', { left: 200, top: 50, width: 10, height: 10 }]]),
+      overloadTargetRect: null,
+      deckTargetRect: { left: 100, top: 200, width: 40, height: 40 },
+    });
+
+    expect(plan.patternSlotKeys).toEqual([]);
+    expect(plan.wallSlotKeys).toEqual(['0-0']);
+    expect(plan.overlayRunes).toHaveLength(1);
+    expect(plan.overlayRunes[0]).toMatchObject({
+      id: 'selected-primary',
+      startX: 15,
+      startY: 25,
+      endX: 200,
+      endY: 50,
+    });
+  });
+
+  it('routes overflow directly to overload during a cast', () => {
+    const primaryRune = createRune('cast-primary');
+    const reusableRune = createRune('selected-reusable');
+    const overflowRune = createRune('selected-overflow');
+    const beforePlayer = createPlayer({
+      patternLines: createPlayer().patternLines.map((line, index) =>
+        index === 1
+          ? {
+              ...line,
+              runeType: 'Fire',
+              count: 1,
+              runes: [primaryRune],
+              primaryRuneId: primaryRune.id,
+            }
+          : line,
+      ),
+    });
+    const wall = beforePlayer.wall.map((row) => [...row]);
+    wall[1][getWallColumnForRune(1, 'Fire', wall.length)] = { runeType: 'Fire', effects: [] };
+    const afterPlayer = createPlayer({
+      wall,
+      patternLines: beforePlayer.patternLines.map((line, index) =>
+        index === 1
+          ? { ...line, runeType: null, count: 0, runes: [], primaryRuneId: null, primaryRuneEffects: null }
+          : line,
+      ),
+    });
+
+    const plan = buildPlacementAnimationPlan({
+      snapshot: createSnapshot([reusableRune, overflowRune], beforePlayer, 0),
+      player: afterPlayer,
+      overloadRuneCount: 1,
+      patternSlotRects: new Map([
+        ['1-0', { left: 10, top: 20, width: 10, height: 10 }],
+        ['1-1', { left: 30, top: 20, width: 10, height: 10 }],
+      ]),
+      wallCellRects: new Map([['1-1', { left: 200, top: 50, width: 10, height: 10 }]]),
+      overloadTargetRect: { left: 300, top: 200, width: 40, height: 40 },
+      deckTargetRect: { left: 100, top: 200, width: 40, height: 40 },
+    });
+
+    expect(plan.overlayRunes.map((rune) => rune.id)).toEqual([
+      'cast-primary',
+      'selected-reusable',
+      'selected-overflow',
+    ]);
+    expect(plan.overlayRunes[1]).toMatchObject({ id: 'selected-reusable', endX: 115, endY: 215 });
+    expect(plan.overlayRunes[2]).toMatchObject({
+      id: 'selected-overflow',
+      endX: 315,
       endY: 215,
       shouldDisappear: true,
     });
@@ -245,12 +355,13 @@ describe('buildPlacementAnimationPlan', () => {
       player: afterPlayer,
       overloadRuneCount: 0,
       patternSlotRects: new Map([['2-0', { left: 10, top: 20, width: 10, height: 10 }]]),
+      wallCellRects: new Map(),
       overloadTargetRect: null,
       deckTargetRect: { left: 100, top: 200, width: 40, height: 40 },
     });
 
     expect(plan.overlayRunes.map((animatingRune) => animatingRune.id)).toEqual(['incomplete-placement']);
-    expect(plan.followUpRunes).toEqual([]);
+    expect(plan.overlayRunes[0].shouldDisappear).toBeUndefined();
   });
 
   it('animates reusable runes from multiple completed lines to the deck', () => {
@@ -305,15 +416,26 @@ describe('buildPlacementAnimationPlan', () => {
         ['2-1', { left: 30, top: 40, width: 10, height: 10 }],
         ['2-2', { left: 50, top: 40, width: 10, height: 10 }],
       ]),
+      wallCellRects: new Map([
+        ['1-1', { left: 200, top: 50, width: 10, height: 10 }],
+        ['2-3', { left: 220, top: 70, width: 10, height: 10 }],
+      ]),
       overloadTargetRect: null,
       deckTargetRect: { left: 100, top: 200, width: 40, height: 40 },
     });
 
-    expect(plan.followUpRunes.map((rune) => rune.id)).toEqual([
+    expect(plan.overlayRunes.map((rune) => rune.id)).toEqual([
+      'first-primary',
+      'first-reusable',
+      'second-primary',
+      'second-reusable',
+      'second-extra',
+    ]);
+    expect(plan.overlayRunes.filter((rune) => rune.shouldDisappear).map((rune) => rune.id)).toEqual([
       'first-reusable',
       'second-reusable',
       'second-extra',
     ]);
-    expect(plan.followUpRunes.every((rune) => rune.shouldDisappear)).toBe(true);
+    expect(plan.wallSlotKeys).toEqual(['1-1', '2-3']);
   });
 });

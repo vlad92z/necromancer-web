@@ -27,6 +27,7 @@ export function GameContainer() {
     animatingRunes: placementAnimatingRunes,
     activeAnimatingRunes,
     hiddenPatternSlots,
+    hiddenWallSlots,
     isAnimatingPlacement,
     handlePlacementAnimationComplete,
   } = useRunePlacementAnimations({
@@ -90,6 +91,7 @@ export function GameContainer() {
           <SoloGameView
             animatingRuneIdSet={animatingRuneIdSet}
             hiddenPatternSlots={hiddenPatternSlots}
+            hiddenWallSlots={hiddenWallSlots}
             isPlacementAnimating={isAnimatingPlacement}
           />
         </div>
