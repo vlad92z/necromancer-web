@@ -19,7 +19,7 @@ interface WallCellProps {
   pulseKey?: number;
 }
 
-// Calculate which rune type belongs in this cell based on Azul pattern
+// Calculate which rune type belongs in this wall cell.
 function getExpectedRuneType(
   row: number,
   col: number,

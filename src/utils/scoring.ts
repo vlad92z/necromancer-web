@@ -65,6 +65,8 @@ export function collectSegmentCells(
   return cells;
 }
 
+export const collectConnectedWallCells = collectSegmentCells;
+
 /**
  * Calculate the size of the connected segment that includes a specific cell.
  * Counts all orthogonally-adjacent runes regardless of type; returns 0 if empty.

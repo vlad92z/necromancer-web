@@ -245,7 +245,7 @@ export function SoloStartScreen() {
         <div className="space-y-1">
           <h1 className="text-4xl font-bold uppercase tracking-tight text-slate-50">Solo Run</h1>
           <p className="text-base text-slate-300">
-            Draft runes to cast increeasingly powerful spells while surviving overload damage
+            Charge your spell wall, survive enemy attacks, and draft rewards between encounters
           </p>
           <div className="flex flex-wrap gap-3">
             {longestSoloRun > 2 && (

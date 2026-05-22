@@ -5,8 +5,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
-import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
-import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
+import type { ScoringWall as ScoringWallType } from '../../../../types/game';
+import { collectConnectedWallCells, getRuneOrderForSize } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
@@ -47,7 +47,7 @@ interface ScoringWallProps {
 }
 
 export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
-  const { wall, patternLines, wallCharges, scoringSequence } = useGameplayWallState();
+  const { wall, wallCharges, scoringSequence } = useGameplayWallState();
   const { castRuneToWall } = useGameplayActions();
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
@@ -61,20 +61,6 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
     () => wall.map(row => row.map(cell => cell.runeType ?? '0').join(',')).join('|'),
     [wall]
   );
-
-  const computePendingCells = useCallback((currentWall: ScoringWallType, currentPatternLines: PatternLine[]) => {
-    const pendingCells = new Set<string>();
-    const wallSize = currentWall.length;
-    currentPatternLines.forEach((line, rowIndex) => {
-      if (line.count === line.tier && line.runeType) {
-        const col = getWallColumnForRune(rowIndex, line.runeType, wallSize);
-        if (!currentWall[rowIndex][col].runeType) {
-          pendingCells.add(cellKey(rowIndex, col));
-        }
-      }
-    });
-    return pendingCells;
-  }, []);
 
   const buildFullOverlay = useCallback((currentWall: ScoringWallType, pendingCells: Set<string>) => {
     const pointsMap = new Map<string, OverlayPoint>();
@@ -124,14 +110,14 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
 
   const handleWallCellEnter = useCallback(
     (rowIndex: number, colIndex: number) => {
-      const segmentCells = collectSegmentCells(wall, rowIndex, colIndex);
-      if (segmentCells.length === 0) {
+      const connectedCells = collectConnectedWallCells(wall, rowIndex, colIndex);
+      if (connectedCells.length === 0) {
         resetTooltipCards();
         return;
       }
 
-      const primaryCell = segmentCells.find((cell) => cell.row === rowIndex && cell.col === colIndex);
-      const remainingCells = segmentCells
+      const primaryCell = connectedCells.find((cell) => cell.row === rowIndex && cell.col === colIndex);
+      const remainingCells = connectedCells
         .filter((cell) => !(cell.row === rowIndex && cell.col === colIndex))
         .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row));
       const orderedCells = primaryCell ? [primaryCell, ...remainingCells] : remainingCells;
@@ -167,7 +153,7 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
 
   useEffect(() => {
     const wallSize = wall.length;
-    const pendingCells = computePendingCells(wall, patternLines);
+    const pendingCells = new Set<string>();
 
     const rebuildFromScratch = () => {
       const built = buildFullOverlay(wall, pendingCells);
@@ -287,7 +273,7 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
     overlayRef.current = { points, edges };
     pendingCellsRef.current = pendingCells;
     overlayWallRef.current = wall;
-  }, [buildFullOverlay, computePendingCells, wall, patternLines]);
+  }, [buildFullOverlay, wall]);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
@@ -326,8 +312,8 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
 
     const newTargets = new Set<string>();
     anchors.forEach(({ row, col }) => {
-      const segmentCells = collectSegmentCells(wall, row, col);
-      segmentCells.forEach(cell => newTargets.add(cellKey(cell.row, cell.col)));
+      const connectedCells = collectConnectedWallCells(wall, row, col);
+      connectedCells.forEach(cell => newTargets.add(cellKey(cell.row, cell.col)));
     });
 
     if (newTargets.size > 0) {

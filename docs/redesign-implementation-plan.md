@@ -233,7 +233,7 @@ Manual play check:
 - Confirm no segment scoring is visible or used.
 - Tooltips describe enemy damage and whole-wall behavior.
 
-## Stage 9: Cleanup + PRD Acceptance
+## Stage 9: Cleanup + PRD Acceptance (Done)
 
 File-level changes:
 - Remove visible combat references to runeforges, pattern lines, overload, and RuneScore.

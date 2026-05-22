@@ -11,10 +11,7 @@ interface UIStore {
   // Overlay visibility states
   showRulesOverlay: boolean;
   showDeckOverlay: boolean;
-  showOverloadOverlay: boolean
-  showRuneforgeOverlay: boolean;
   showSettingsOverlay: boolean;
-  selectedRuneforgeId: string | null; // For runeforge overlay
   soundVolume: number;
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
@@ -24,9 +21,6 @@ interface UIStore {
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
   toggleDeckOverlay: () => void;
-  toggleOverloadOverlay: () => void;
-  openRuneforgeOverlay: (runeforgeId: string) => void;
-  closeRuneforgeOverlay: () => void;
   toggleSettingsOverlay: () => void;
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
@@ -57,10 +51,7 @@ export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
   showDeckOverlay: false,
-  showOverloadOverlay: false,
-  showRuneforgeOverlay: false,
   showSettingsOverlay: false,
-  selectedRuneforgeId: null,
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
@@ -75,18 +66,6 @@ export const useUIStore = create<UIStore>((set) => ({
   toggleDeckOverlay: () => {
     set((state) => ({ showDeckOverlay: !state.showDeckOverlay }));
   },
-
-  toggleOverloadOverlay: () => {
-    set((state) => ({ showOverloadOverlay: !state.showOverloadOverlay }));
-  },
-  
-  openRuneforgeOverlay: (runeforgeId: string) => {
-    set({ showRuneforgeOverlay: true, selectedRuneforgeId: runeforgeId });
-  },
-  
-  closeRuneforgeOverlay: () => {
-    set({ showRuneforgeOverlay: false, selectedRuneforgeId: null });
-  },
   
   toggleSettingsOverlay: () => {
     set((state) => ({ showSettingsOverlay: !state.showSettingsOverlay }));
@@ -96,9 +75,7 @@ export const useUIStore = create<UIStore>((set) => ({
     set({
       showRulesOverlay: false,
       showDeckOverlay: false,
-      showRuneforgeOverlay: false,
       showSettingsOverlay: false,
-      selectedRuneforgeId: null,
     });
   },
 

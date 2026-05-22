@@ -73,7 +73,7 @@ export type DeckDraftEffect =
   | { type: 'maxHealth'; amount: number }
   | { type: 'betterRunes'; rarityStep: number };
 
-export type TooltipCardVariant = 'default' | 'nonPrimary' | 'overload';
+export type TooltipCardVariant = 'default' | 'nonPrimary';
 
 export interface TooltipCard {
   id: string;

@@ -79,27 +79,18 @@ const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> 
   epic: RUNE_EPIC_ASSETS,
 };
 
-export type RuneCellVariant = 'wall' | 'pattern' | 'floor' | 'runeforge' | 'selected';
+export type RuneCellVariant = 'wall' | 'runeforge';
 
 export interface RuneCellProps {
   rune?: Rune | null;
   variant: RuneCellVariant;
-  /**
-   * Optionally force the visual variant used for styling. Useful when a floor
-   * cell should visually look like a pattern cell without changing its semantic
-   * variant (so Wind-in-floor logic still treats it as a floor rune).
-   */
-  forceVariant?: RuneCellVariant;
-  /**
-   * Optional icon to display when the cell is empty (no rune and no text placeholder).
-   * Useful for showing contextual markers like the overload indicator in floor cells.
-   */
+  /** Optional icon to display when the cell is empty. */
   emptyIcon?: string;
   size?: RuneSize;
   placeholder?: {
     type: 'rune' | 'text';
     runeType?: RuneType; // For wall cells
-    text?: string; // For pattern/floor cells
+    text?: string;
   };
   clickable?: boolean;
   onClick?: () => void;
@@ -123,28 +114,15 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
     backgroundOccupied: '#46350dff',
     emptyOpacity: 0.35,
   },
-  pattern: {
-    border: `1px solid ${COLORS.ui.borderLight}`,
-    background: '#160a29',
-  },
-  floor: {
-    border: '1px solid rgba(248, 113, 113, 0.6)',
-    background: '#2b0b1f',
-  },
   runeforge: {
     border: 'none',
     background: 'transparent',
-  },
-  selected: {
-    border: `2px solid ${COLORS.ui.accent}`,
-    background: '#2c1254',
   },
 };
 
 export function RuneCell({
   rune,
   variant,
-  forceVariant,
   emptyIcon,
   size = 'medium',
   placeholder,
@@ -159,8 +137,7 @@ export function RuneCell({
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = RUNE_SIZE_CONFIG[size];
-  const usedVariant = forceVariant ?? variant;
-  const variantStyle = VARIANT_STYLES[usedVariant];
+  const variantStyle = VARIANT_STYLES[variant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
   const runeRarity = showEffect && rune ? getRuneRarity(rune.effects) : null;
@@ -179,10 +156,7 @@ export function RuneCell({
     return getRuneEffectDescription(rune.effects);
   }, [rune, showTooltip]);
   
-  // Use occupied background for wall cells that have runes
-  // Use `usedVariant` for styling decisions so callers can force visuals
-  // without changing semantic behavior.
-  const backgroundColor = (usedVariant === 'wall' && (rune) && variantStyle.backgroundOccupied)
+  const backgroundColor = (variant === 'wall' && rune && variantStyle.backgroundOccupied)
     ? variantStyle.backgroundOccupied
     : variantStyle.background;
   
@@ -254,8 +228,8 @@ export function RuneCell({
       {hasTextPlaceholder && (
         <div style={{ 
           fontSize: `${config.fontSize}px`, 
-          color: usedVariant === 'floor' ? COLORS.status.error : COLORS.ui.textMuted,
-          fontWeight: usedVariant === 'floor' ? 'bold' : 'normal',
+          color: COLORS.ui.textMuted,
+          fontWeight: 'normal',
         }}>
           {placeholder.text}
         </div>

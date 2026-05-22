@@ -100,7 +100,6 @@ export function CardView({
 }: CardViewProps) {
   const border = 'border rounded-xl border-slate-400/40';
   const showDestroyedOverlay = variant === 'nonPrimary';
-  const showOverloadOverlay = variant === 'overload';
   const resolvedImageSrc = resolveRuneImage(runeType, runeRarity, imageSrc);
   const selectedClassName = isSelected
     ? 'ring-4 ring-sky-300 shadow-[0_0_38px_rgba(125,211,252,0.75)] translate-y-[-10px]'
@@ -129,16 +128,6 @@ export function CardView({
               inset: 0,
               pointerEvents: 'none',
               backgroundImage: 'linear-gradient(45deg, transparent 46%, rgba(70, 40, 100, 0.8) 46%, rgba(70, 40, 100, 0.8) 54%, transparent 54%)',
-            }}
-          />
-        )}
-        {showOverloadOverlay && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              backgroundColor: 'rgba(239, 68, 68, 0.35)',
             }}
           />
         )}

@@ -33,7 +33,6 @@ export function useUIActions() {
       setSoundVolume: state.setSoundVolume,
       toggleDeckOverlay: state.toggleDeckOverlay,
       toggleMusicMuted: state.toggleMusicMuted,
-      toggleOverloadOverlay: state.toggleOverloadOverlay,
       toggleSettingsOverlay: state.toggleSettingsOverlay,
     })),
   );

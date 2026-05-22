@@ -1,186 +1,128 @@
 /**
- * Integration tests for deck drafting with artefact effects
+ * Unit tests for post-victory deck drafting helpers.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createDeckDraftState } from './deckDrafting';
-import type { Rune } from '../types/game';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Player, Rune } from '../types/game';
+import {
+  advanceDeckDraftState,
+  applyDeckDraftEffectToPlayer,
+  createDeckDraftState,
+  getDeckDraftEffectDescription,
+  mergeDeckWithRuneforge,
+} from './deckDrafting';
 
-describe('deckDrafting with artefact effects', () => {
+describe('deckDrafting', () => {
   beforeEach(() => {
-    // Reset Math.random mock before each test
-    vi.spyOn(Math, 'random').mockRestore();
+    vi.restoreAllMocks();
   });
 
-  describe('createDeckDraftState', () => {
-    it('should create draft state with default picks when no Robe', () => {
-      const state = createDeckDraftState('player-1', 3, 0, []);
-      expect(state.totalPicks).toBe(3);
-      expect(state.picksRemaining).toBe(3);
-      expect(state.runeforges).toHaveLength(3);
-    });
+  it('creates a one-pick draft offer with three reward rows', () => {
+    const state = createDeckDraftState('player-1', 3, [], 1);
 
-    it('should use provided totalPicks value (Robe effect applied by caller)', () => {
-      // The Robe effect is applied by the caller (gameplayStore), not by createDeckDraftState
-      // So we pass in the already-modified pick count
-      const state = createDeckDraftState('player-1', 4, 0, ['robe']); // 4 = 3 base + 1 from Robe
-      expect(state.totalPicks).toBe(4);
-      expect(state.picksRemaining).toBe(4);
-    });
-
-    it('should create runeforges with runes', () => {
-      const state = createDeckDraftState('player-1', 3, 0, []);
-      expect(state.runeforges).toHaveLength(3);
-      state.runeforges.forEach(forge => {
-        expect(forge.runes).toHaveLength(4); // DEFAULT_DECK_DRAFT_RUNES_PER_RUNEFORGE
-        expect(forge.ownerId).toBe('player-1');
-      });
-    });
-
-    it('should expose selection limit and start count at zero', () => {
-      const state = createDeckDraftState('player-1', 3, 0, []);
-      expect(state.selectionLimit).toBe(1);
-      expect(state.selectionsThisOffer).toBe(0);
-    });
-
-    it('should respect an explicit selection limit override', () => {
-      const state = createDeckDraftState('player-1', 3, 0, [], 2);
-      expect(state.selectionLimit).toBe(2);
-      expect(state.selectionsThisOffer).toBe(0);
-    });
-
-    it('should generate runes with effects based on rarity', () => {
-      const state = createDeckDraftState('player-1', 3, 0, []);
-      const allRunes = state.runeforges.flatMap(f => f.runes);
-      
-      // All runes should have effects array
-      allRunes.forEach(rune => {
-        expect(rune.effects).toBeDefined();
-        expect(Array.isArray(rune.effects)).toBe(true);
-      });
+    expect(state.totalPicks).toBe(1);
+    expect(state.picksRemaining).toBe(1);
+    expect(state.selectionLimit).toBe(1);
+    expect(state.selectionsThisOffer).toBe(0);
+    expect(state.runeforges).toHaveLength(3);
+    state.runeforges.forEach((forge) => {
+      expect(forge.ownerId).toBe('player-1');
+      expect(forge.runes).toHaveLength(4);
+      expect(forge.disabled).toBe(false);
+      expect(forge.deckDraftEffect).toBeDefined();
     });
   });
 
-  describe('Ring effect on rune rarity distribution', () => {
-    it('should increase epic rune probability with Ring active', () => {
-      // Mock random to test rarity distribution
-      const randomValues = [
-        0.005, // Should be epic with Ring (< 2% when doubled from 1%)
-        0.02,  // Should be rare
-        0.1,   // Should be uncommon
-        0.005, // Should be epic
-      ];
-      let callIndex = 0;
-      vi.spyOn(Math, 'random').mockImplementation(() => {
-        const value = randomValues[callIndex % randomValues.length];
-        callIndex++;
-        return value;
-      });
+  it('stores the caller-provided selection limit for multi-select rewards', () => {
+    const state = createDeckDraftState('player-1', 3, ['robe'], 2);
 
-      const stateWithRing = createDeckDraftState('player-1', 1, 0, ['ring']);
-      const stateWithoutRing = createDeckDraftState('player-2', 1, 0, []);
+    expect(state.totalPicks).toBe(1);
+    expect(state.picksRemaining).toBe(1);
+    expect(state.selectionLimit).toBe(2);
+  });
 
-      // Count epic runes
-      const countEpicRunes = (runes: Rune[]) => 
-        runes.filter(r => r.effects.some(e => e.rarity === 'epic')).length;
+  it('generates runes with unique ids and draft effects', () => {
+    const state = createDeckDraftState('player-1', 0, [], 1);
+    const runes = state.runeforges.flatMap((forge) => forge.runes);
+    const ids = new Set(runes.map((rune) => rune.id));
 
-      const epicsWithRing = countEpicRunes(stateWithRing.runeforges.flatMap(f => f.runes));
-      const epicsWithoutRing = countEpicRunes(stateWithoutRing.runeforges.flatMap(f => f.runes));
-
-      // With our mock values, Ring should produce more epics
-      // This is a probabilistic test, so we just check the mechanism works
-      expect(typeof epicsWithRing).toBe('number');
-      expect(typeof epicsWithoutRing).toBe('number');
-    });
-
-    it('should handle win streak bonus correctly', () => {
-      const state = createDeckDraftState('player-1', 3, 5, []);
-      const allRunes = state.runeforges.flatMap(f => f.runes);
-      
-      // With winStreak=5, epic chance should be 1 + 5*1 = 6%
-      // We can't test probability directly without many samples,
-      // but we can verify runes are generated with effects
-      allRunes.forEach(rune => {
-        expect(rune.effects.length).toBeGreaterThan(0);
-        expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.effects[0].rarity);
-      });
-    });
-
-    it('should combine Ring and win streak effects', () => {
-      // Win streak increases base epic chance
-      // Ring doubles it
-      const state = createDeckDraftState('player-1', 3, 10, ['ring']);
-      
-      // Base epic at winStreak=10: 1 + 10*1 = 11%
-      // With Ring: 22%
-      // This significantly increases epic odds
-      const allRunes = state.runeforges.flatMap(f => f.runes);
-      expect(allRunes.length).toBeGreaterThan(0);
-      
-      // All runes should have valid rarities
-      allRunes.forEach(rune => {
-        expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.effects[0].rarity);
-      });
+    expect(ids.size).toBe(runes.length);
+    runes.forEach((rune) => {
+      expect(rune.effects.length).toBeGreaterThan(0);
+      expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.effects[0]?.rarity);
     });
   });
 
-  describe('Multiple artefacts combination', () => {
-    it('should handle both Ring and Robe active together', () => {
-      // Robe effect applied by caller, so we pass 4 picks
-      const state = createDeckDraftState('player-1', 4, 0, ['ring', 'robe']);
-      
-      // Should use the provided totalPicks
-      expect(state.totalPicks).toBe(4);
-      expect(state.picksRemaining).toBe(4);
-      
-      // Ring should affect rune rarity (verified by having runes with effects)
-      const allRunes = state.runeforges.flatMap(f => f.runes);
-      allRunes.forEach(rune => {
-        expect(rune.effects).toBeDefined();
-        expect(rune.effects.length).toBeGreaterThan(0);
-      });
+  it('applies Ring rarity modifier while keeping valid draft runes', () => {
+    const randomValues = [0.001, 0.02, 0.4, 0.8];
+    let callIndex = 0;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      const value = randomValues[callIndex % randomValues.length];
+      callIndex += 1;
+      return value;
     });
 
-    it('should handle all artefacts active together', () => {
-      // Robe effect applied by caller
-      const state = createDeckDraftState('player-1', 4, 5, ['ring', 'robe', 'potion', 'rod', 'tome']);
-      
-      // Should use the provided totalPicks
-      expect(state.totalPicks).toBe(4);
-      
-      // Ring: affects rarity
-      const allRunes = state.runeforges.flatMap(f => f.runes);
-      expect(allRunes.length).toBeGreaterThan(0);
-    });
+    const state = createDeckDraftState('player-1', 10, ['ring'], 1);
+    const runes = state.runeforges.flatMap((forge) => forge.runes);
+
+    expect(runes.length).toBe(12);
+    expect(runes.some((rune) => rune.effects.some((effect) => effect.rarity === 'epic'))).toBe(true);
   });
 
-  describe('Edge cases', () => {
-    it('should handle zero win streak', () => {
-      const state = createDeckDraftState('player-1', 3, 0, []);
-      expect(state.runeforges).toHaveLength(3);
-      expect(state.totalPicks).toBe(3);
+  it('advances to null after the single draft pick is consumed', () => {
+    const state = createDeckDraftState('player-1', 3, [], 1);
+
+    expect(advanceDeckDraftState(state, 'player-1', 3, [])).toBeNull();
+  });
+
+  it('merges selected reward runes onto the deck', () => {
+    const deckRune = createRune('deck-rune');
+    const rewardRune = createRune('reward-rune');
+    const merged = mergeDeckWithRuneforge([deckRune], {
+      id: 'reward-row',
+      ownerId: 'player-1',
+      runes: [rewardRune],
+      disabled: false,
     });
 
-    it('should handle high win streak', () => {
-      const state = createDeckDraftState('player-1', 3, 50, []);
-      // Epic chance would be capped at 100% at some point
-      const allRunes = state.runeforges.flatMap(f => f.runes);
-      expect(allRunes.length).toBeGreaterThan(0);
-    });
+    expect(merged.map((rune) => rune.id)).toEqual(['deck-rune', 'reward-rune']);
+  });
 
-    it('should handle single pick with Robe (effect applied by caller)', () => {
-      // Robe adds +1, so caller passes 2
-      const state = createDeckDraftState('player-1', 2, 0, ['robe']);
-      expect(state.totalPicks).toBe(2);
-      expect(state.picksRemaining).toBe(2);
-    });
+  it('applies deck draft effects to the player', () => {
+    const player = createPlayer();
 
-    it('should generate unique rune IDs', () => {
-      const state = createDeckDraftState('player-1', 3, 0, []);
-      const allRunes = state.runeforges.flatMap(f => f.runes);
-      const runeIds = allRunes.map(r => r.id);
-      const uniqueIds = new Set(runeIds);
-      expect(uniqueIds.size).toBe(runeIds.length);
+    expect(applyDeckDraftEffectToPlayer({ ...player, health: 20 }, { type: 'heal', amount: 50 }, 100).health).toBe(100);
+    expect(applyDeckDraftEffectToPlayer(player, { type: 'maxHealth', amount: 25 }, 100)).toMatchObject({
+      maxHealth: 125,
+      health: 80,
     });
+    expect(applyDeckDraftEffectToPlayer(player, { type: 'betterRunes', rarityStep: 1 }, 100)).toBe(player);
+  });
+
+  it('returns current deck draft effect descriptions', () => {
+    expect(getDeckDraftEffectDescription({ type: 'heal', amount: 50 })).toBe('Restore Health');
+    expect(getDeckDraftEffectDescription({ type: 'maxHealth', amount: 25 })).toBe('+25 Max health');
+    expect(getDeckDraftEffectDescription({ type: 'betterRunes', rarityStep: 1 })).toBe('Better Runes');
   });
 });
+
+function createRune(id: string): Rune {
+  return {
+    id,
+    runeType: 'Fire',
+    effects: [{ type: 'Damage', amount: 3, rarity: 'common' }],
+  };
+}
+
+function createPlayer(): Player {
+  return {
+    id: 'player-1',
+    name: 'Tester',
+    patternLines: [],
+    wall: [],
+    health: 80,
+    maxHealth: 100,
+    armor: 0,
+    deck: [],
+  };
+}

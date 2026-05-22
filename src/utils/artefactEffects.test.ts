@@ -152,7 +152,7 @@ describe('artefactEffects', () => {
       expect(result.armor).toBe(3);
     });
 
-    it('should multiply damage and healing by 10 for size-1 segments when Tome is active', () => {
+    it('should double damage, healing, and armor for size-1 segments when Tome is active', () => {
       const segment = {
         segmentSize: 1,
         damage: 10,
@@ -164,9 +164,9 @@ describe('artefactEffects', () => {
         channelSynergyTriggered: false,
       };
       const result = modifySegmentResultWithTome(segment, true);
-      expect(result.damage).toBe(100);
-      expect(result.healing).toBe(50);
-      expect(result.armor).toBe(40);
+      expect(result.damage).toBe(20);
+      expect(result.healing).toBe(10);
+      expect(result.armor).toBe(8);
     });
 
     it('should not modify segments larger than 1 even when Tome is active', () => {
@@ -210,9 +210,9 @@ describe('artefactEffects', () => {
       expect(applyOutgoingDamageModifiers(10, 2, state)).toBe(10);
     });
 
-    it('should apply Tome (10x) for size-1 segments', () => {
+    it('should apply Tome double for size-1 segments', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['tome'] as ArtefactId[] };
-      expect(applyOutgoingDamageModifiers(10, 1, state)).toBe(100);
+      expect(applyOutgoingDamageModifiers(10, 1, state)).toBe(20);
     });
 
     it('should not apply Tome for size-2 segments', () => {
@@ -220,19 +220,19 @@ describe('artefactEffects', () => {
       expect(applyOutgoingDamageModifiers(10, 2, state)).toBe(10);
     });
 
-    it('should apply Potion (2x) for any segment size', () => {
+    it('should not apply Potion to outgoing combat damage in the current rules', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['potion'] as ArtefactId[] };
-      expect(applyOutgoingDamageModifiers(10, 2, state)).toBe(20);
+      expect(applyOutgoingDamageModifiers(10, 2, state)).toBe(10);
     });
 
-    it('should apply both Tome and Potion for size-1 segments (10x then 2x = 20x)', () => {
+    it('should apply only Tome for size-1 segments when Tome and Potion are active', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['tome', 'potion'] as ArtefactId[] };
-      expect(applyOutgoingDamageModifiers(10, 1, state)).toBe(200);
+      expect(applyOutgoingDamageModifiers(10, 1, state)).toBe(20);
     });
 
-    it('should apply only Potion for size-2 segments when both active', () => {
+    it('should not apply outgoing modifiers for size-2 segments when Tome and Potion are active', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['tome', 'potion'] as ArtefactId[] };
-      expect(applyOutgoingDamageModifiers(10, 2, state)).toBe(20);
+      expect(applyOutgoingDamageModifiers(10, 2, state)).toBe(10);
     });
   });
 
@@ -242,9 +242,9 @@ describe('artefactEffects', () => {
       expect(applyOutgoingHealingModifiers(5, 2, state)).toBe(5);
     });
 
-    it('should apply Tome (10x) for size-1 segments', () => {
+    it('should apply Tome double for size-1 segments', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['tome'] as ArtefactId[] };
-      expect(applyOutgoingHealingModifiers(5, 1, state)).toBe(50);
+      expect(applyOutgoingHealingModifiers(5, 1, state)).toBe(10);
     });
 
     it('should not apply Tome for size-2 segments', () => {
@@ -274,19 +274,19 @@ describe('artefactEffects', () => {
       expect(getArmorGainMultiplier(2, state)).toBe(2);
     });
 
-    it('should apply Tome (10x) for size-1 segments', () => {
+    it('should apply Tome double for size-1 segments', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['tome'] as ArtefactId[] };
-      expect(getArmorGainMultiplier(1, state)).toBe(10);
+      expect(getArmorGainMultiplier(1, state)).toBe(2);
     });
 
     it('should stack Tome and Potion multipliers', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['tome', 'potion'] as ArtefactId[] };
-      expect(getArmorGainMultiplier(1, state)).toBe(20);
+      expect(getArmorGainMultiplier(1, state)).toBe(4);
     });
 
-    it('should include Rod healing bonus', () => {
+    it('should not apply Rod to armor gain', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['rod'] as ArtefactId[] };
-      expect(getArmorGainMultiplier(2, state)).toBe(2);
+      expect(getArmorGainMultiplier(2, state)).toBe(1);
     });
   });
 
@@ -298,25 +298,25 @@ describe('artefactEffects', () => {
       expect(result.scoreBonus).toBe(0);
     });
 
-    it('should apply Potion (3x) to incoming damage', () => {
+    it('should not apply Potion to incoming combat damage in the current rules', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['potion'] as ArtefactId[] };
       const result = applyIncomingDamageModifiers(10, state);
-      expect(result.damage).toBe(30);
+      expect(result.damage).toBe(10);
       expect(result.scoreBonus).toBe(0);
     });
 
-    it('should apply Rod to convert damage to score', () => {
+    it('should not convert incoming damage into score in the current rules', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['rod'] as ArtefactId[] };
       const result = applyIncomingDamageModifiers(10, state);
       expect(result.damage).toBe(10);
-      expect(result.scoreBonus).toBe(10);
+      expect(result.scoreBonus).toBe(0);
     });
 
-    it('should apply both Potion and Rod (Rod uses post-Potion damage)', () => {
+    it('should keep Potion and Rod inactive for incoming combat damage', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['potion', 'rod'] as ArtefactId[] };
       const result = applyIncomingDamageModifiers(10, state);
-      expect(result.damage).toBe(30); // 10 * 3 from Potion
-      expect(result.scoreBonus).toBe(30); // Rod uses the 30 damage
+      expect(result.damage).toBe(10);
+      expect(result.scoreBonus).toBe(0);
     });
   });
 
@@ -329,15 +329,12 @@ describe('artefactEffects', () => {
 
     it('should return description for Rod', () => {
       const desc = getArtefactEffectDescription('rod');
-      expect(desc).toContain('damage taken');
-      expect(desc).toContain('Rune Score');
       expect(desc).toContain('healing');
     });
 
     it('should return description for Potion', () => {
       const desc = getArtefactEffectDescription('potion');
       expect(desc).toContain('Double');
-      expect(desc).toContain('triple');
       expect(desc).toContain('armor');
     });
 
@@ -350,7 +347,7 @@ describe('artefactEffects', () => {
     it('should return description for Tome', () => {
       const desc = getArtefactEffectDescription('tome');
       expect(desc).toContain('size 1');
-      expect(desc).toContain('10×');
+      expect(desc).toContain('double');
       expect(desc).toContain('armor');
     });
   });
