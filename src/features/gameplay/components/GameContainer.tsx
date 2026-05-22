@@ -8,7 +8,7 @@ import { OverloadOverlay } from './OverloadOverlay';
 import { RuneAnimation } from '../../../components/RuneAnimation';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useGameplayContainerState, useSelectionState, useSoundVolume, useUIOverlayState } from '../../../hooks/useGameState';
+import { useGameplayContainerState, useGameplayOverloadState, useSelectionState, useSoundVolume, useUIOverlayState } from '../../../hooks/useGameState';
 import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
 import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
 import { SoloGameView } from './SoloGameBoard';
@@ -20,6 +20,7 @@ export function GameContainer() {
   const { acknowledgeOverloadSound, acknowledgeChannelSound, returnToStartScreen } =
     useGameplayActions();
   const { selectedRunes, draftSource } = useSelectionState();
+  const { overloadedRuneCount } = useGameplayOverloadState();
   const soundVolume = useSoundVolume();
   const { showSettingsOverlay, showDeckOverlay, showOverloadOverlay } = useUIOverlayState();
   const {
@@ -32,6 +33,7 @@ export function GameContainer() {
     player,
     selectedRunes,
     draftSource,
+    overloadRuneCount: overloadedRuneCount,
   });
   const animatingRuneIdSet = useMemo(
     () => new Set(activeAnimatingRunes.map((rune) => rune.id)),
