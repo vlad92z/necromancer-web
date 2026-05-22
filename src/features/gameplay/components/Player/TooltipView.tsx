@@ -3,6 +3,7 @@
  */
 
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useGameplayActions } from '../../../../hooks/useGameActions';
 import { useCombatZoneState } from '../../../../hooks/useGameState';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { CardView } from './CardView';
@@ -32,8 +33,8 @@ const getTooltipCardRotation = (total: number, index: number): number => {
 const DEFAULT_CARD_WIDTH = 230;
 
 export function TooltipView() {
-  const { hand } = useCombatZoneState();
-  const [selectedRuneId, setSelectedRuneId] = useState<string | null>(null);
+  const { hand, selectedHandRuneId } = useCombatZoneState();
+  const { selectHandRune } = useGameplayActions();
 
   const handCards = useMemo(() => {
     const cards = buildRuneTooltipCards(hand);
@@ -91,7 +92,7 @@ export function TooltipView() {
     <div ref={containerRef} className="w-full h-full flex items-center justify-center px-2 overflow-visible">
       {handCards.map(({ rune, card }, index) => {
         const rotation = getTooltipCardRotation(handCards.length, index);
-        const isSelected = selectedRuneId === rune.id;
+        const isSelected = selectedHandRuneId === rune.id;
         return (
           <div
             key={card.id}
@@ -110,7 +111,7 @@ export function TooltipView() {
               runeRarity={card.runeRarity}
               variant={card.variant}
               isSelected={isSelected}
-              onClick={() => setSelectedRuneId((current) => current === rune.id ? null : rune.id)}
+              onClick={() => selectHandRune(rune.id)}
             />
           </div>
         );

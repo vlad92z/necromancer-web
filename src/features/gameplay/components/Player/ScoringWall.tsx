@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useUIActions } from '../../../../hooks/useGameActions';
+import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
 import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
@@ -47,7 +47,8 @@ interface ScoringWallProps {
 }
 
 export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
-  const { wall, patternLines, scoringSequence } = useGameplayWallState();
+  const { wall, patternLines, wallCharges, scoringSequence } = useGameplayWallState();
+  const { castRuneToWall } = useGameplayActions();
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
   const previousWallRef = useRef<ScoringWallType | null>(null);
@@ -156,6 +157,13 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
   const handleWallCellLeave = useCallback(() => {
     resetTooltipCards();
   }, [resetTooltipCards]);
+
+  const handleWallCellClick = useCallback(
+    (rowIndex: number, colIndex: number) => {
+      castRuneToWall(rowIndex, colIndex);
+    },
+    [castRuneToWall]
+  );
 
   useEffect(() => {
     const wallSize = wall.length;
@@ -359,9 +367,20 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                 data-wall-col={colIndex}
                 onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
                 onMouseLeave={handleWallCellLeave}
+                onClick={() => handleWallCellClick(rowIndex, colIndex)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleWallCellClick(rowIndex, colIndex);
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
               >
                 <WallCell
                   cell={hiddenWallSlots.has(cellKey(rowIndex, colIndex)) ? { runeType: null, effects: null } : cell}
+                  charge={wallCharges[rowIndex]?.[colIndex] ?? null}
                   row={rowIndex}
                   col={colIndex}
                   wallSize={gridSize}

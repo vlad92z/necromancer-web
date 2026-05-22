@@ -20,6 +20,8 @@ export interface GameplayActions {
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
   autoPlaceSelection: () => void;
+  selectHandRune: (runeId: string) => void;
+  castRuneToWall: (row: number, col: number) => void;
   acknowledgeOverloadSound: () => void;
   acknowledgeChannelSound: () => void;
   endRound: () => void;
@@ -41,6 +43,8 @@ export const gameplayActions: GameplayActions = {
   placeRunesInFloor: () => useGameplayStore.getState().placeRunesInFloor(),
   cancelSelection: () => useGameplayStore.getState().cancelSelection(),
   autoPlaceSelection: () => useGameplayStore.getState().autoPlaceSelection(),
+  selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),
+  castRuneToWall: (row, col) => useGameplayStore.getState().castRuneToWall(row, col),
   acknowledgeOverloadSound: () => useGameplayStore.getState().acknowledgeOverloadSound(),
   acknowledgeChannelSound: () => useGameplayStore.getState().acknowledgeChannelSound(),
   endRound: () => useGameplayStore.getState().endRound(),

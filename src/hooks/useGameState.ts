@@ -181,9 +181,10 @@ export function useGameplayWallState() {
       patternLines: state.player.patternLines,
     })),
   );
+  const wallCharges = useCombatStore((state) => state.wallCharges);
   const scoringSequence = useResolutionStore((state) => state.scoringSequence);
 
-  return { ...board, scoringSequence };
+  return { ...board, wallCharges, scoringSequence };
 }
 
 export function useGameplayRuneforgeState() {

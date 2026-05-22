@@ -99,7 +99,7 @@ Manual play check:
 - Click cards and see selection state.
 - Refresh/new run remains playable.
 
-## Stage 4: Wall Slot Charge + Placement
+## Stage 4: Wall Slot Charge + Placement (Done)
 
 File-level changes:
 - `src/features/gameplay/components/Player/ScoringWall.tsx`: make cells placement targets.

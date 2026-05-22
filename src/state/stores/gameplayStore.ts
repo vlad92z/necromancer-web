@@ -30,6 +30,7 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
+import { castRuneToWallSlot } from '../../utils/combatResolution';
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
 import {
   addGameplayArcaneDust,
@@ -302,6 +303,8 @@ export interface GameplayStore extends GameState {
   placeRunesInFloor: () => void;
   cancelSelection: () => void;
   autoPlaceSelection: () => void;
+  selectHandRune: (runeId: string) => void;
+  castRuneToWall: (row: number, col: number) => void;
   acknowledgeOverloadSound: () => void;
   acknowledgeChannelSound: () => void;
   endRound: () => void;
@@ -977,6 +980,53 @@ export const gameplayStoreConfig = (
     }
     flushCompletedLines();
     scheduleRoundEndIfNeeded();
+  },
+
+  selectHandRune: (runeId: string) => {
+    set((state) => {
+      if (state.combatPhase !== 'player-turn' || state.isDefeat || state.turnPhase === 'deck-draft') {
+        return state;
+      }
+
+      const selectedRune = state.hand.find((rune) => rune.id === runeId);
+      if (!selectedRune) {
+        return state;
+      }
+
+      return {
+        ...state,
+        selectedHandRuneId: state.selectedHandRuneId === runeId ? null : runeId,
+      };
+    });
+  },
+
+  castRuneToWall: (row: number, col: number) => {
+    set((state) => {
+      if (state.combatPhase !== 'player-turn' || state.isDefeat || state.turnPhase === 'deck-draft') {
+        return state;
+      }
+
+      const result = castRuneToWallSlot({
+        player: state.player,
+        hand: state.hand,
+        wallCharges: state.wallCharges,
+        selectedHandRuneId: state.selectedHandRuneId,
+        row,
+        col,
+      });
+
+      if (result.status === 'invalid') {
+        return state;
+      }
+
+      return {
+        ...state,
+        player: result.player,
+        hand: result.hand,
+        wallCharges: result.wallCharges,
+        selectedHandRuneId: result.selectedHandRuneId,
+      };
+    });
   },
 
   acknowledgeOverloadSound: () => {

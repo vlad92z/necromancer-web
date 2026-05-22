@@ -2,13 +2,14 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import type { WallCell as WallCellType, RuneType } from '../../../types/game';
+import type { SpellWallCharge, WallCell as WallCellType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../utils/runeEffects';
 
 interface WallCellProps {
   cell: WallCellType;
+  charge: SpellWallCharge | null;
   row: number;
   col: number;
   // Number of columns/rows of the scoring wall (3, 4 or 5)
@@ -38,8 +39,9 @@ function getExpectedRuneType(
   return fallback[baseIndex];
 }
 
-export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKey }: WallCellProps) {
+export function WallCell({ cell, charge, row, col, wallSize, availableRuneTypes, pulseKey }: WallCellProps) {
   const expectedRuneType = getExpectedRuneType(row, col, wallSize, availableRuneTypes);
+  const showChargeText = !cell.runeType && charge !== null && charge.currentCount > 0;
   
   // Convert WallCell to Rune format if occupied
   const rune = cell.runeType ? {
@@ -51,7 +53,6 @@ export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKe
   return (
     <div
       style={{ position: 'relative', display: 'inline-block' }}
-      tabIndex={0}
       aria-label={`${expectedRuneType} rune cell`}
     >
       <RuneCell
@@ -66,6 +67,25 @@ export function WallCell({ cell, row, col, wallSize, availableRuneTypes, pulseKe
         showTooltip={false}
         runePulseKey={pulseKey}
       />
+      {showChargeText && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            color: '#f8fafc',
+            fontSize: 16,
+            fontWeight: 900,
+            textShadow: '0 2px 8px rgba(2, 6, 23, 0.95)',
+          }}
+          aria-hidden="true"
+        >
+          {charge.currentCount}/{charge.requiredCount}
+        </div>
+      )}
     </div>
   );
 }

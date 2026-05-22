@@ -629,6 +629,104 @@ describe('gameplayStore persistence', () => {
     expect(state.player.deck).toHaveLength(18);
   });
 
+  it('selects a hand rune and completes a row one wall slot', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const fireRune = createTestRune('hand-fire', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [fireRune],
+      selectedHandRuneId: null,
+    }));
+
+    store.getState().selectHandRune(fireRune.id);
+    expect(store.getState().selectedHandRuneId).toBe(fireRune.id);
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().hand).toEqual([]);
+    expect(store.getState().selectedHandRuneId).toBeNull();
+    expect(store.getState().player.wall[0][0]).toEqual({
+      runeType: 'Fire',
+      effects: fireRune.effects,
+    });
+    expect(store.getState().wallCharges[0][0]).toMatchObject({
+      currentCount: 1,
+      completedRuneId: fireRune.id,
+    });
+  });
+
+  it('charges a higher-row wall slot before final completion', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const fireRune = createTestRune('hand-fire-charge', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [fireRune],
+      selectedHandRuneId: fireRune.id,
+    }));
+
+    store.getState().castRuneToWall(1, 1);
+
+    expect(store.getState().hand).toEqual([]);
+    expect(store.getState().selectedHandRuneId).toBeNull();
+    expect(store.getState().player.wall[1][1].runeType).toBeNull();
+    expect(store.getState().wallCharges[1][1]).toMatchObject({
+      currentCount: 1,
+      requiredCount: 2,
+      completedRuneId: null,
+    });
+    expect(store.getState().wallCharges[1][1].spentRunes.map((rune) => rune.id)).toEqual([
+      fireRune.id,
+    ]);
+  });
+
+  it('rejects wrong-type and filled wall slots without clearing hand selection', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const lifeRune = createTestRune('hand-life', 'Life');
+    const fireRune = createTestRune('hand-fire-selected', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [lifeRune],
+      selectedHandRuneId: lifeRune.id,
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().hand).toEqual([lifeRune]);
+    expect(store.getState().selectedHandRuneId).toBe(lifeRune.id);
+    expect(store.getState().player.wall[0][0].runeType).toBeNull();
+
+    store.setState((state) => ({
+      ...state,
+      hand: [fireRune],
+      selectedHandRuneId: fireRune.id,
+      player: {
+        ...state.player,
+        wall: state.player.wall.map((row, rowIndex) =>
+          row.map((cell, colIndex) =>
+            rowIndex === 0 && colIndex === 0
+              ? { runeType: 'Fire', effects: fireRune.effects }
+              : cell
+          )
+        ),
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().hand).toEqual([fireRune]);
+    expect(store.getState().selectedHandRuneId).toBe(fireRune.id);
+    expect(store.getState().wallCharges[0][0].completedRuneId).toBeNull();
+  });
+
   it('partially refills runeforges from the remaining deck without defeating the player', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();
