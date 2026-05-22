@@ -4,11 +4,18 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AnimatingRune, DraftSource, GameState, Rune } from '../types/game';
 import { RUNE_SIZE_CONFIG } from '../styles/tokens';
+import { getWallColumnForRune } from '../utils/scoring';
 
 interface SelectionSnapshot {
   runeOrder: Rune[];
-  patternLineCounts: number[];
+  patternLines: PatternLineSnapshot[];
   runePositions: Map<string, MeasuredRunePosition>;
+}
+
+interface PatternLineSnapshot {
+  tier: number;
+  runeType: Rune['runeType'] | null;
+  count: number;
 }
 
 interface AutoAnimationMeta {
@@ -28,6 +35,14 @@ interface UseRunePlacementAnimationsParams {
 }
 
 const OVERLAY_RUNE_SIZE = RUNE_SIZE_CONFIG.large.dimension;
+
+function capturePatternLineSnapshots(player: GameState['player']): PatternLineSnapshot[] {
+  return player.patternLines.map((line) => ({
+    tier: line.tier,
+    runeType: line.runeType,
+    count: line.count,
+  }));
+}
 
 export function useRunePlacementAnimations({
   player,
@@ -130,20 +145,59 @@ export function useRunePlacementAnimations({
     }
 
     const targetPlayer = player;
-    const updatedCounts = targetPlayer.patternLines.map((line) => line.count);
-    const previousCounts = snapshot.patternLineCounts;
-    const changedLineIndex = updatedCounts.findIndex((count, index) => count > (previousCounts[index] ?? 0));
-    const patternSlotKeys: string[] = [];
+    const updatedPatternLines = targetPlayer.patternLines;
+    const previousPatternLines = snapshot.patternLines;
+    const selectedRuneType = snapshot.runeOrder[0]?.runeType ?? null;
+    const countIncreaseLineIndex = updatedPatternLines.findIndex((line, index) => {
+      const previousLine = previousPatternLines[index];
+      return previousLine ? line.count > previousLine.count : false;
+    });
+    let changedLineIndex = countIncreaseLineIndex;
+    let previousCount = changedLineIndex !== -1 ? previousPatternLines[changedLineIndex]?.count ?? 0 : 0;
     let patternRunesUsed = 0;
 
     if (changedLineIndex !== -1) {
-      const placedCount = updatedCounts[changedLineIndex] - (previousCounts[changedLineIndex] ?? 0);
-      if (placedCount > 0) {
-        for (let offset = 0; offset < placedCount; offset += 1) {
-          const slotIndex = (previousCounts[changedLineIndex] ?? 0) + offset;
-          patternSlotKeys.push(`${changedLineIndex}-${slotIndex}`);
+      patternRunesUsed = updatedPatternLines[changedLineIndex].count - previousCount;
+    }
+
+    if (changedLineIndex === -1 && selectedRuneType) {
+      const completedLineIndex = previousPatternLines.findIndex((previousLine, index) => {
+        const updatedLine = updatedPatternLines[index];
+        const acceptedRuneType = previousLine.runeType ?? selectedRuneType;
+        const availableSpace = previousLine.tier - previousLine.count;
+        const placedCount = Math.min(snapshot.runeOrder.length, availableSpace);
+        if (
+          !updatedLine ||
+          previousLine.runeType !== null && previousLine.runeType !== selectedRuneType ||
+          previousLine.count >= previousLine.tier ||
+          placedCount <= 0 ||
+          previousLine.count + placedCount !== previousLine.tier ||
+          updatedLine.count !== 0 ||
+          updatedLine.runeType !== null ||
+          acceptedRuneType !== selectedRuneType
+        ) {
+          return false;
         }
-        patternRunesUsed = placedCount;
+
+        const wallSize = targetPlayer.wall.length;
+        const wallCol = getWallColumnForRune(index, selectedRuneType, wallSize);
+        return targetPlayer.wall[index]?.[wallCol]?.runeType === selectedRuneType;
+      });
+
+      if (completedLineIndex !== -1) {
+        changedLineIndex = completedLineIndex;
+        previousCount = previousPatternLines[completedLineIndex].count;
+        const availableSpace = previousPatternLines[completedLineIndex].tier - previousCount;
+        patternRunesUsed = Math.min(snapshot.runeOrder.length, availableSpace);
+      }
+    }
+
+    const patternSlotKeys: string[] = [];
+
+    if (changedLineIndex !== -1 && patternRunesUsed > 0) {
+      for (let offset = 0; offset < patternRunesUsed; offset += 1) {
+        const slotIndex = previousCount + offset;
+        patternSlotKeys.push(`${changedLineIndex}-${slotIndex}`);
       }
     }
 
@@ -177,7 +231,7 @@ export function useRunePlacementAnimations({
           if (!start) {
             return;
           }
-          const slotIndex = (previousCounts[changedLineIndex] ?? 0) + offset;
+          const slotIndex = previousCount + offset;
           const targetElement = patternSlotLookup.get(`${changedLineIndex}-${slotIndex}`);
           if (!targetElement) {
             return;
@@ -237,7 +291,7 @@ export function useRunePlacementAnimations({
     if (typeof document === 'undefined') {
       selectionSnapshotRef.current = {
         runeOrder: [...selectedRunes],
-        patternLineCounts: player.patternLines.map((line) => line.count),
+        patternLines: capturePatternLineSnapshots(player),
         runePositions: new Map(),
       };
       return undefined;
@@ -247,7 +301,7 @@ export function useRunePlacementAnimations({
       const runePositions = captureSelectedRunePositions(selectedRunes);
       selectionSnapshotRef.current = {
         runeOrder: [...selectedRunes],
-        patternLineCounts: player.patternLines.map((line) => line.count),
+        patternLines: capturePatternLineSnapshots(player),
         runePositions,
       };
     });
