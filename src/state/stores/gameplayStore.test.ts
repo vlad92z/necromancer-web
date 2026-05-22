@@ -892,6 +892,113 @@ describe('gameplayStore persistence', () => {
     expect(storage.get('necromancer-arcane-dust')).toBe('4');
   });
 
+  it('resolves final Synergy casts with whole-wall counts', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const synergyRune = createTestRuneWithEffects('combat-void-synergy', 'Void', [
+      { type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => {
+      const wall = state.player.wall.map((row) => row.map((cell) => ({ ...cell })));
+      wall[0][4] = { runeType: 'Void', effects: [] };
+
+      return {
+        ...state,
+        hand: [synergyRune],
+        selectedHandRuneId: synergyRune.id,
+        enemy: state.enemy ? { ...state.enemy, health: 10, maxHealth: 10 } : state.enemy,
+        player: {
+          ...state.player,
+          wall,
+        },
+        wallCharges: state.wallCharges.map((row, rowIndex) =>
+          row.map((charge, colIndex) =>
+            rowIndex === 1 && colIndex === 5
+              ? {
+                ...charge,
+                currentCount: 1,
+                spentRunes: [createTestRune('combat-void-synergy-spent', 'Void')],
+              }
+              : charge
+          )
+        ),
+      };
+    });
+
+    store.getState().castRuneToWall(1, 5);
+
+    expect(store.getState().enemy?.health).toBe(6);
+    expect(store.getState().combatPhase).toBe('player-turn');
+  });
+
+  it('resolves final ArmorSynergy casts with whole-wall counts', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const armorSynergyRune = createTestRuneWithEffects('combat-frost-armor-synergy', 'Frost', [
+      { type: 'ArmorSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => {
+      const wall = state.player.wall.map((row) => row.map((cell) => ({ ...cell })));
+      wall[0][3] = { runeType: 'Frost', effects: [] };
+
+      return {
+        ...state,
+        hand: [armorSynergyRune],
+        selectedHandRuneId: armorSynergyRune.id,
+        player: {
+          ...state.player,
+          armor: 1,
+          wall,
+        },
+        wallCharges: state.wallCharges.map((row, rowIndex) =>
+          row.map((charge, colIndex) =>
+            rowIndex === 1 && colIndex === 4
+              ? {
+                ...charge,
+                currentCount: 1,
+                spentRunes: [createTestRune('combat-frost-armor-synergy-spent', 'Frost')],
+              }
+              : charge
+          )
+        ),
+      };
+    });
+
+    store.getState().castRuneToWall(1, 4);
+
+    expect(store.getState().player.armor).toBe(7);
+  });
+
+  it('resolves Fragile casts against the whole wall and can trigger victory', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const fragileRune = createTestRuneWithEffects('combat-fragile', 'Frost', [
+      { type: 'Fragile', amount: 5, fragileType: 'Fire', rarity: 'uncommon' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [fragileRune],
+      selectedHandRuneId: fragileRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 5, maxHealth: 10 } : state.enemy,
+      player: {
+        ...state.player,
+        deck: [],
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 3);
+
+    expect(store.getState().enemy?.health).toBe(0);
+    expect(store.getState().combatPhase).toBe('victory');
+    expect(store.getState().turnPhase).toBe('deck-draft');
+  });
+
   it('opens deck draft when enemy HP reaches zero and prevents End Turn attack', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();

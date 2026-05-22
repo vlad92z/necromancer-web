@@ -4,9 +4,11 @@ import { createEmptyWallCharges, createPlayer } from './gameInitialization';
 import {
   castRuneToWallSlot,
   collectVictoryDeck,
+  countFilledWallRunesByType,
   endPlayerTurn,
   resolveCompletedRuneEffects,
   resolveEnemyTurn,
+  wallHasRuneType,
 } from './combatResolution';
 
 describe('combatResolution wall casting', () => {
@@ -217,14 +219,11 @@ describe('combatResolution basic combat effects', () => {
     expect(result.player.armor).toBe(3);
   });
 
-  it('returns fortune as arcane dust delta and ignores advanced effects', () => {
+  it('returns fortune as arcane dust delta and keeps Channel effects disabled', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const enemy = createTestEnemy(10);
     const rune = createTestRuneWithEffects('mixed-rune', 'Wind', [
       { type: 'Fortune', amount: 4, rarity: 'common' },
-      { type: 'Synergy', amount: 9, synergyType: 'Fire', rarity: 'common' },
-      { type: 'ArmorSynergy', amount: 9, synergyType: 'Frost', rarity: 'common' },
-      { type: 'Fragile', amount: 9, fragileType: 'Void', rarity: 'common' },
       { type: 'Channel', amount: 9, rarity: 'common' },
       { type: 'ChannelSynergy', amount: 9, synergyType: 'Lightning', rarity: 'common' },
     ]);
@@ -234,6 +233,106 @@ describe('combatResolution basic combat effects', () => {
     expect(result.arcaneDustDelta).toBe(4);
     expect(result.player).toBe(player);
     expect(result.enemy).toBe(enemy);
+  });
+
+  it('counts filled wall runes by type across the whole wall', () => {
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    const wall = player.wall.map((row) => [...row]);
+    wall[0][0] = { runeType: 'Void', effects: [] };
+    wall[0][1] = { runeType: 'Fire', effects: [] };
+    wall[3][4] = { runeType: 'Void', effects: [] };
+
+    const counts = countFilledWallRunesByType(wall);
+
+    expect(counts.get('Void')).toBe(2);
+    expect(counts.get('Fire')).toBe(1);
+    expect(counts.get('Life')).toBeUndefined();
+    expect(wallHasRuneType(wall, 'Void')).toBe(true);
+    expect(wallHasRuneType(wall, 'Life')).toBe(false);
+  });
+
+  it('applies Synergy damage using whole completed wall counts', () => {
+    const player = createPlayerWithWall([
+      [0, 4, 'Void'],
+      [1, 4, 'Void'],
+      [2, 0, 'Fire'],
+    ]);
+    const enemy = createTestEnemy(20);
+    const rune = createTestRuneWithEffects('void-synergy', 'Void', [
+      { type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+
+    expect(result.enemy?.health).toBe(16);
+    expect(result.player).toBe(player);
+  });
+
+  it('applies ArmorSynergy using whole completed wall counts', () => {
+    const player = {
+      ...createPlayerWithWall([
+        [0, 3, 'Frost'],
+        [1, 3, 'Frost'],
+        [2, 4, 'Void'],
+      ]),
+      armor: 1,
+    };
+    const rune = createTestRuneWithEffects('frost-armor-synergy', 'Frost', [
+      { type: 'ArmorSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
+
+    expect(result.player.armor).toBe(7);
+  });
+
+  it('applies Fragile only when the blocked type is absent from the whole wall', () => {
+    const absentPlayer = createPlayerWithWall([
+      [0, 3, 'Frost'],
+      [1, 2, 'Wind'],
+    ]);
+    const presentPlayer = createPlayerWithWall([
+      [0, 3, 'Frost'],
+      [1, 0, 'Fire'],
+    ]);
+    const rune = createTestRuneWithEffects('fragile-frost', 'Frost', [
+      { type: 'Fragile', amount: 5, fragileType: 'Fire', rarity: 'uncommon' },
+    ]);
+
+    expect(resolveCompletedRuneEffects({
+      player: absentPlayer,
+      enemy: createTestEnemy(20),
+      rune,
+    }).enemy?.health).toBe(15);
+    expect(resolveCompletedRuneEffects({
+      player: presentPlayer,
+      enemy: createTestEnemy(20),
+      rune,
+    }).enemy?.health).toBe(20);
+  });
+
+  it('combines advanced effects with basic effects', () => {
+    const player = {
+      ...createPlayerWithWall([
+        [0, 4, 'Void'],
+        [1, 4, 'Void'],
+        [2, 3, 'Frost'],
+      ]),
+      armor: 0,
+    };
+    const rune = createTestRuneWithEffects('advanced-mixed', 'Void', [
+      { type: 'Damage', amount: 1, rarity: 'common' },
+      { type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' },
+      { type: 'ArmorSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
+      { type: 'Fragile', amount: 4, fragileType: 'Life', rarity: 'uncommon' },
+      { type: 'Fortune', amount: 5, rarity: 'common' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
+
+    expect(result.enemy?.health).toBe(11);
+    expect(result.player.armor).toBe(3);
+    expect(result.arcaneDustDelta).toBe(5);
   });
 
   it('enemy attack consumes armor before health', () => {
@@ -342,5 +441,20 @@ function createTestEnemy(health: number, attack: number = 5): Enemy {
     health,
     maxHealth: 10,
     intent: { type: 'Attack', amount: attack },
+  };
+}
+
+function createPlayerWithWall(cells: Array<[number, number, Rune['runeType']]>): ReturnType<typeof createPlayer> {
+  const player = createPlayer('player-1', 'Tester', 10, [], 10);
+  const wall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
+  cells.forEach(([row, col, runeType]) => {
+    wall[row][col] = {
+      runeType,
+      effects: [],
+    };
+  });
+  return {
+    ...player,
+    wall,
   };
 }

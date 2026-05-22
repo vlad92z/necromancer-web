@@ -47,23 +47,23 @@ function cloneEffects(effects: RuneEffects): RuneEffects {
 function formatRuneEffect(effect: RuneEffect): string {
   switch (effect.type) {
     case 'Damage':
-      return `Add ${effect.amount} rune score on cast`;
+      return `Deal ${effect.amount} damage on cast`;
     case 'Healing':
       return `Heal ${effect.amount} on cast`;
     case 'Synergy':
-      return `Gain ${effect.amount} rune score for every ${effect.synergyType} rune in segment`;
+      return `Deal ${effect.amount} damage for every ${effect.synergyType} rune in your completed wall`;
     case 'Fortune':
       return `Gain ${effect.amount} arcane dust on cast`;
     case 'Fragile':
-      return `+${effect.amount} rune score if the segment contains no ${effect.fragileType} runes.`;
+      return `Deal ${effect.amount} damage if your completed wall has no ${effect.fragileType} runes`;
     case 'Channel':
-      return `+${effect.amount} rune score when overloaded`;
+      return `No combat effect yet`;
     case 'ChannelSynergy':
-      return `Gain ${effect.amount} rune score per overloaded ${effect.synergyType} rune on cast`;
+      return `No combat effect yet`;
     case 'Armor':
       return `Gain ${effect.amount} armor on cast`;
     case 'ArmorSynergy':
-      return `Gain ${effect.amount} armor for every ${effect.synergyType} rune in segment on cast`;
+      return `Gain ${effect.amount} armor for every ${effect.synergyType} rune in your completed wall`;
   }
 }
 

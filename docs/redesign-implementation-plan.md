@@ -209,7 +209,7 @@ Manual play check:
 - Start next game.
 - See fresh wall, new hand, and enemy HP from next `targetScore`.
 
-## Stage 8: Advanced Effect Mapping
+## Stage 8: Advanced Effect Mapping (Done)
 
 File-level changes:
 - `src/utils/combatResolution.ts`: add whole-wall effect mapping.

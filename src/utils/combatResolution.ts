@@ -2,7 +2,7 @@
  * Combat resolution helpers for hand-driven spell-wall casting.
  */
 
-import type { Enemy, Player, Rune, SpellWallCharge } from '../types/game';
+import type { Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
 import { copyRuneEffects } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
@@ -88,6 +88,21 @@ function cloneWallCharges(wallCharges: SpellWallCharge[][]): SpellWallCharge[][]
   );
 }
 
+export function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
+  return wall.reduce<Map<RuneType, number>>((counts, row) => {
+    row.forEach((cell) => {
+      if (cell.runeType) {
+        counts.set(cell.runeType, (counts.get(cell.runeType) ?? 0) + 1);
+      }
+    });
+    return counts;
+  }, new Map<RuneType, number>());
+}
+
+export function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
+  return wall.some((row) => row.some((cell) => cell.runeType === runeType));
+}
+
 export function castRuneToWallSlot({
   player,
   hand,
@@ -171,6 +186,7 @@ export function resolveCompletedRuneEffects({
   let nextPlayer = player;
   let nextEnemy = enemy;
   let arcaneDustDelta = 0;
+  const wallRuneCounts = countFilledWallRunesByType(player.wall);
 
   rune.effects.forEach((effect) => {
     switch (effect.type) {
@@ -201,11 +217,35 @@ export function resolveCompletedRuneEffects({
         arcaneDustDelta += effect.amount;
         break;
       }
-      case 'ArmorSynergy':
+      case 'Synergy': {
+        const synergyCount = wallRuneCounts.get(effect.synergyType) ?? 0;
+        if (nextEnemy) {
+          nextEnemy = {
+            ...nextEnemy,
+            health: Math.max(0, nextEnemy.health - effect.amount * synergyCount),
+          };
+        }
+        break;
+      }
+      case 'ArmorSynergy': {
+        const synergyCount = wallRuneCounts.get(effect.synergyType) ?? 0;
+        nextPlayer = {
+          ...nextPlayer,
+          armor: nextPlayer.armor + effect.amount * synergyCount,
+        };
+        break;
+      }
+      case 'Fragile': {
+        if (!wallHasRuneType(player.wall, effect.fragileType) && nextEnemy) {
+          nextEnemy = {
+            ...nextEnemy,
+            health: Math.max(0, nextEnemy.health - effect.amount),
+          };
+        }
+        break;
+      }
       case 'Channel':
       case 'ChannelSynergy':
-      case 'Fragile':
-      case 'Synergy':
         break;
     }
   });
