@@ -19,6 +19,8 @@ interface PatternLineSnapshot {
   tier: number;
   runeType: Rune['runeType'] | null;
   count: number;
+  runes: Rune[];
+  primaryRuneId: string | null;
 }
 
 interface AutoAnimationMeta {
@@ -51,10 +53,12 @@ interface PlacementAnimationPlanParams {
   overloadRuneCount: number;
   patternSlotRects: Map<string, RectLike>;
   overloadTargetRect: RectLike | null;
+  deckTargetRect: RectLike | null;
 }
 
 interface PlacementAnimationPlan {
   overlayRunes: AnimatingRune[];
+  followUpRunes: AnimatingRune[];
   patternSlotKeys: string[];
 }
 
@@ -65,7 +69,28 @@ function capturePatternLineSnapshots(player: GameState['player']): PatternLineSn
     tier: line.tier,
     runeType: line.runeType,
     count: line.count,
+    runes: [...(line.runes ?? [])],
+    primaryRuneId: line.primaryRuneId,
   }));
+}
+
+function createDisappearingRuneAnimation(
+  rune: Rune,
+  start: MeasuredRunePosition,
+  targetRect: RectLike,
+): AnimatingRune {
+  const overlaySize = start.size || targetRect.width || OVERLAY_RUNE_SIZE;
+  return {
+    id: rune.id,
+    runeType: rune.runeType,
+    rune,
+    size: overlaySize,
+    startX: start.centerX - overlaySize / 2,
+    startY: start.centerY - overlaySize / 2,
+    endX: targetRect.left + targetRect.width / 2 - overlaySize / 2,
+    endY: targetRect.top + targetRect.height / 2 - overlaySize / 2,
+    shouldDisappear: true,
+  };
 }
 
 export function buildPlacementAnimationPlan({
@@ -74,6 +99,7 @@ export function buildPlacementAnimationPlan({
   overloadRuneCount,
   patternSlotRects,
   overloadTargetRect,
+  deckTargetRect,
 }: PlacementAnimationPlanParams): PlacementAnimationPlan {
   const updatedPatternLines = player.patternLines;
   const previousPatternLines = snapshot.patternLines;
@@ -124,6 +150,8 @@ export function buildPlacementAnimationPlan({
 
   const patternSlotKeys: string[] = [];
   const overlayRunes: AnimatingRune[] = [];
+  const followUpRunes: AnimatingRune[] = [];
+  const placedRuneSlotStarts = new Map<string, MeasuredRunePosition>();
 
   if (changedLineIndex !== -1 && patternRunesUsed > 0) {
     for (let offset = 0; offset < patternRunesUsed; offset += 1) {
@@ -138,6 +166,11 @@ export function buildPlacementAnimationPlan({
         continue;
       }
       const overlaySize = start.size || targetRect.width || OVERLAY_RUNE_SIZE;
+      placedRuneSlotStarts.set(rune.id, {
+        centerX: targetRect.left + targetRect.width / 2,
+        centerY: targetRect.top + targetRect.height / 2,
+        size: overlaySize,
+      });
       overlayRunes.push({
         id: rune.id,
         runeType: rune.runeType,
@@ -168,22 +201,57 @@ export function buildPlacementAnimationPlan({
       if (!start) {
         return;
       }
-      const overlaySize = start.size || overloadTargetRect.width || OVERLAY_RUNE_SIZE;
-      overlayRunes.push({
-        id: rune.id,
-        runeType: rune.runeType,
-        rune,
-        size: overlaySize,
-        startX: start.centerX - overlaySize / 2,
-        startY: start.centerY - overlaySize / 2,
-        endX: overloadTargetRect.left + overloadTargetRect.width / 2 - overlaySize / 2,
-        endY: overloadTargetRect.top + overloadTargetRect.height / 2 - overlaySize / 2,
-        shouldDisappear: true,
+      overlayRunes.push(createDisappearingRuneAnimation(rune, start, overloadTargetRect));
+    });
+  }
+
+  if (deckTargetRect) {
+    previousPatternLines.forEach((previousLine, lineIndex) => {
+      const updatedLine = updatedPatternLines[lineIndex];
+      const runeType = previousLine.runeType ?? selectedRuneType;
+      if (!updatedLine || !runeType || updatedLine.count !== 0 || updatedLine.runeType !== null) {
+        return;
+      }
+
+      const wallCol = getWallColumnForRune(lineIndex, runeType, player.wall.length);
+      if (player.wall[lineIndex]?.[wallCol]?.runeType !== runeType) {
+        return;
+      }
+
+      const selectedRunesOnLine = lineIndex === changedLineIndex
+        ? snapshot.runeOrder.slice(0, patternRunesUsed)
+        : [];
+      const fullLineRunes = [...previousLine.runes, ...selectedRunesOnLine];
+      if (fullLineRunes.length === 0) {
+        return;
+      }
+
+      const castRuneId = previousLine.primaryRuneId ?? fullLineRunes[0]?.id ?? null;
+      fullLineRunes.forEach((rune, fullLineSlotIndex) => {
+        if (rune.id === castRuneId) {
+          return;
+        }
+
+        const slotKey = `${lineIndex}-${fullLineSlotIndex}`;
+        const startFromSlot = placedRuneSlotStarts.get(rune.id);
+        const slotRect = patternSlotRects.get(slotKey);
+        const start = startFromSlot ?? (slotRect
+          ? {
+              centerX: slotRect.left + slotRect.width / 2,
+              centerY: slotRect.top + slotRect.height / 2,
+              size: slotRect.width || OVERLAY_RUNE_SIZE,
+            }
+          : null);
+        if (!start) {
+          return;
+        }
+
+        followUpRunes.push(createDisappearingRuneAnimation(rune, start, deckTargetRect));
       });
     });
   }
 
-  return { overlayRunes, patternSlotKeys };
+  return { overlayRunes, followUpRunes, patternSlotKeys };
 }
 
 export function useRunePlacementAnimations({
@@ -200,6 +268,7 @@ export function useRunePlacementAnimations({
   const selectionSnapshotRef = useRef<SelectionSnapshot | null>(null);
   const previousSelectedCountRef = useRef<number>(selectedRunes.length);
   const autoAnimationMetaRef = useRef<AutoAnimationMeta | null>(null);
+  const followUpAnimationRef = useRef<AnimatingRune[]>([]);
   const runeforgeAnimationMetaRef = useRef<{ runeIds: string[] } | null>(null);
   const lastRuneforgeAnimationKeyRef = useRef<string | null>(null);
   const selectionMeasurementRafRef = useRef<number | undefined>(undefined);
@@ -305,12 +374,16 @@ export function useRunePlacementAnimations({
       const overloadTargetRect = document
         .querySelector<HTMLElement>('[data-strain-counter="true"]')
         ?.getBoundingClientRect() ?? null;
-      const { overlayRunes, patternSlotKeys } = buildPlacementAnimationPlan({
+      const deckTargetRect = document
+        .querySelector<HTMLElement>('[data-deck-counter="true"]')
+        ?.getBoundingClientRect() ?? null;
+      const { overlayRunes, followUpRunes, patternSlotKeys } = buildPlacementAnimationPlan({
         snapshot,
         player,
         overloadRuneCount,
         patternSlotRects,
         overloadTargetRect,
+        deckTargetRect,
       });
 
       let autoMeta: AutoAnimationMeta | null = null;
@@ -328,16 +401,22 @@ export function useRunePlacementAnimations({
         if (autoMeta?.pattern) {
           revealPatternSlots(autoMeta.pattern);
         }
+        if (followUpRunes.length > 0) {
+          followUpAnimationRef.current = [];
+          setAnimatingRunes(followUpRunes);
+        }
         return;
       }
 
       autoAnimationMetaRef.current = autoMeta;
+      followUpAnimationRef.current = followUpRunes;
       setAnimatingRunes(overlayRunes);
     });
   }, [player, overloadRuneCount, hidePatternSlots, revealPatternSlots]);
 
   const handlePlacementAnimationComplete = useCallback(() => {
-    setAnimatingRunes([]);
+    const followUpRunes = followUpAnimationRef.current;
+    followUpAnimationRef.current = [];
     const autoMeta = autoAnimationMetaRef.current;
     if (autoMeta) {
       if (autoMeta.pattern) {
@@ -345,6 +424,7 @@ export function useRunePlacementAnimations({
       }
       autoAnimationMetaRef.current = null;
     }
+    setAnimatingRunes(followUpRunes.length > 0 ? followUpRunes : []);
   }, [revealPatternSlots]);
 
   const handleRuneforgeAnimationComplete = useCallback(() => {

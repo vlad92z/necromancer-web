@@ -22,6 +22,7 @@ export function DeckButton() {
             onBlur={resetTooltips}
             onClick={openDeck}
             data-active={isActive ? 'true' : undefined}
+            data-deck-counter="true"
             className={deckClassName}
         >
             <img
