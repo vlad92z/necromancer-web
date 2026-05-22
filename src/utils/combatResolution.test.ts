@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { Rune } from '../types/game';
+import type { Enemy, Rune, RuneEffects } from '../types/game';
 import { createEmptyWallCharges, createPlayer } from './gameInitialization';
-import { castRuneToWallSlot, endPlayerTurn } from './combatResolution';
+import {
+  castRuneToWallSlot,
+  endPlayerTurn,
+  resolveCompletedRuneEffects,
+  resolveEnemyTurn,
+} from './combatResolution';
 
 describe('combatResolution wall casting', () => {
   it('charges an incomplete matching wall slot without filling the wall', () => {
@@ -179,14 +184,106 @@ describe('combatResolution turn cycling', () => {
   });
 });
 
+describe('combatResolution basic combat effects', () => {
+  it('applies damage to enemy health', () => {
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    const enemy = createTestEnemy(10);
+    const rune = createTestRuneWithEffects('damage-rune', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+
+    expect(result.enemy?.health).toBe(7);
+    expect(result.player).toBe(player);
+    expect(result.arcaneDustDelta).toBe(0);
+  });
+
+  it('clamps healing at max health and adds armor', () => {
+    const player = {
+      ...createPlayer('player-1', 'Tester', 10, [], 10),
+      health: 8,
+      armor: 1,
+    };
+    const rune = createTestRuneWithEffects('support-rune', 'Life', [
+      { type: 'Healing', amount: 5, rarity: 'common' },
+      { type: 'Armor', amount: 2, rarity: 'common' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(10), rune });
+
+    expect(result.player.health).toBe(10);
+    expect(result.player.armor).toBe(3);
+  });
+
+  it('returns fortune as arcane dust delta and ignores advanced effects', () => {
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    const enemy = createTestEnemy(10);
+    const rune = createTestRuneWithEffects('mixed-rune', 'Wind', [
+      { type: 'Fortune', amount: 4, rarity: 'common' },
+      { type: 'Synergy', amount: 9, synergyType: 'Fire', rarity: 'common' },
+      { type: 'ArmorSynergy', amount: 9, synergyType: 'Frost', rarity: 'common' },
+      { type: 'Fragile', amount: 9, fragileType: 'Void', rarity: 'common' },
+      { type: 'Channel', amount: 9, rarity: 'common' },
+      { type: 'ChannelSynergy', amount: 9, synergyType: 'Lightning', rarity: 'common' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+
+    expect(result.arcaneDustDelta).toBe(4);
+    expect(result.player).toBe(player);
+    expect(result.enemy).toBe(enemy);
+  });
+
+  it('enemy attack consumes armor before health', () => {
+    const player = {
+      ...createPlayer('player-1', 'Tester', 10, [], 10),
+      health: 10,
+      armor: 3,
+    };
+
+    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
+
+    expect(result.player.armor).toBe(0);
+    expect(result.player.health).toBe(8);
+  });
+
+  it('lethal enemy attack reaches zero health', () => {
+    const player = {
+      ...createPlayer('player-1', 'Tester', 10, [], 10),
+      health: 4,
+      armor: 0,
+    };
+
+    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
+
+    expect(result.player.health).toBe(0);
+  });
+});
+
 function createTestRune(id: string, runeType: Rune['runeType']): Rune {
+  return createTestRuneWithEffects(id, runeType, [{ type: 'Damage', amount: 1, rarity: 'common' }]);
+}
+
+function createTestRuneWithEffects(id: string, runeType: Rune['runeType'], effects: RuneEffects): Rune {
   return {
     id,
     runeType,
-    effects: [{ type: 'Damage', amount: 1, rarity: 'common' }],
+    effects,
   };
 }
 
 function createRunes(prefix: string, count: number): Rune[] {
   return Array.from({ length: count }, (_, index) => createTestRune(`${prefix}-${index}`, 'Fire'));
+}
+
+function createTestEnemy(health: number, attack: number = 5): Enemy {
+  return {
+    id: 'test-enemy',
+    name: 'Test Enemy',
+    imageSrc: '',
+    health,
+    maxHealth: 10,
+    intent: { type: 'Attack', amount: attack },
+  };
 }

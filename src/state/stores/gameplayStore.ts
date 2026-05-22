@@ -30,7 +30,12 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
-import { castRuneToWallSlot, endPlayerTurn } from '../../utils/combatResolution';
+import {
+  castRuneToWallSlot,
+  endPlayerTurn,
+  resolveCompletedRuneEffects,
+  resolveEnemyTurn,
+} from '../../utils/combatResolution';
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
 import {
   addGameplayArcaneDust,
@@ -1002,6 +1007,7 @@ export const gameplayStoreConfig = (
   },
 
   castRuneToWall: (row: number, col: number) => {
+    let arcaneDustGain = 0;
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.turnPhase === 'deck-draft') {
         return state;
@@ -1020,6 +1026,26 @@ export const gameplayStoreConfig = (
         return state;
       }
 
+      if (result.status === 'completed' && result.completedRune) {
+        const resolvedEffects = resolveCompletedRuneEffects({
+          player: result.player,
+          enemy: state.enemy,
+          rune: result.completedRune,
+        });
+        arcaneDustGain += resolvedEffects.arcaneDustDelta;
+        const isVictory = (resolvedEffects.enemy?.health ?? 1) <= 0;
+
+        return {
+          ...state,
+          player: resolvedEffects.player,
+          enemy: resolvedEffects.enemy,
+          hand: result.hand,
+          wallCharges: result.wallCharges,
+          selectedHandRuneId: result.selectedHandRuneId,
+          combatPhase: isVictory ? ('victory' as const) : state.combatPhase,
+        };
+      }
+
       return {
         ...state,
         player: result.player,
@@ -1028,6 +1054,9 @@ export const gameplayStoreConfig = (
         selectedHandRuneId: result.selectedHandRuneId,
       };
     });
+    if (arcaneDustGain > 0) {
+      addGameplayArcaneDust(arcaneDustGain);
+    }
   },
 
   endCombatTurn: () => {
@@ -1036,8 +1065,25 @@ export const gameplayStoreConfig = (
         return state;
       }
 
-      const result = endPlayerTurn({
+      const enemyTurnResult = resolveEnemyTurn({
         player: state.player,
+        enemy: state.enemy,
+      });
+
+      if (enemyTurnResult.player.health <= 0) {
+        return {
+          ...state,
+          player: enemyTurnResult.player,
+          hand: [],
+          discardPile: [...state.discardPile, ...state.hand],
+          selectedHandRuneId: null,
+          isDefeat: true,
+          combatPhase: 'defeat' as const,
+        };
+      }
+
+      const result = endPlayerTurn({
+        player: enemyTurnResult.player,
         hand: state.hand,
         discardPile: state.discardPile,
       });

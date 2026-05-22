@@ -3,7 +3,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DraftSource, Rune, Runeforge, ScoringSequenceState } from '../../types/game';
+import type { DraftSource, Rune, RuneEffects, Runeforge, ScoringSequenceState } from '../../types/game';
 
 const storage = new Map<string, string>();
 const localStorageMock = {
@@ -821,6 +821,162 @@ describe('gameplayStore persistence', () => {
     expect(nextState.player.deck).toHaveLength(1);
   });
 
+  it('resolves final Damage casts against enemy HP', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const damageRune = createTestRuneWithEffects('combat-damage', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [damageRune],
+      selectedHandRuneId: damageRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 10, maxHealth: 10 } : state.enemy,
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().enemy?.health).toBe(7);
+    expect(store.getState().combatPhase).toBe('player-turn');
+  });
+
+  it('does not resolve effects for non-final wall charges', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const damageRune = createTestRuneWithEffects('combat-charge-damage', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [damageRune],
+      selectedHandRuneId: damageRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 10, maxHealth: 10 } : state.enemy,
+    }));
+
+    store.getState().castRuneToWall(1, 1);
+
+    expect(store.getState().enemy?.health).toBe(10);
+    expect(store.getState().wallCharges[1][1].currentCount).toBe(1);
+  });
+
+  it('resolves final Healing, Armor, and Fortune casts', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const supportRune = createTestRuneWithEffects('combat-support', 'Life', [
+      { type: 'Healing', amount: 3, rarity: 'common' },
+      { type: 'Armor', amount: 2, rarity: 'common' },
+      { type: 'Fortune', amount: 4, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    storage.set('necromancer-arcane-dust', '0');
+    store.setState((state) => ({
+      ...state,
+      hand: [supportRune],
+      selectedHandRuneId: supportRune.id,
+      player: {
+        ...state.player,
+        health: 98,
+        armor: 1,
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 1);
+
+    expect(store.getState().player.health).toBe(100);
+    expect(store.getState().player.armor).toBe(3);
+    expect(storage.get('necromancer-arcane-dust')).toBe('4');
+  });
+
+  it('sets victory phase when enemy HP reaches zero and prevents End Turn attack', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const lethalRune = createTestRuneWithEffects('combat-lethal', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [lethalRune],
+      selectedHandRuneId: lethalRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 2, maxHealth: 10 } : state.enemy,
+      player: {
+        ...state.player,
+        health: 10,
+        armor: 0,
+        deck: [createTestRune('post-victory-deck', 'Fire')],
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+    store.getState().endCombatTurn();
+
+    expect(store.getState().enemy?.health).toBe(0);
+    expect(store.getState().combatPhase).toBe('victory');
+    expect(store.getState().player.health).toBe(10);
+    expect(store.getState().hand).toEqual([]);
+  });
+
+  it('resolves enemy attack on End Turn before dealing the next hand', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const handRune = createTestRune('enemy-turn-hand', 'Fire');
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      hand: [handRune],
+      discardPile: [],
+      player: {
+        ...state.player,
+        health: 10,
+        armor: 3,
+        deck: Array.from({ length: 6 }, (_, index) => createTestRune(`enemy-turn-deck-${index}`, 'Fire')),
+      },
+    }));
+
+    store.getState().endCombatTurn();
+
+    expect(store.getState().player.armor).toBe(0);
+    expect(store.getState().player.health).toBe(8);
+    expect(store.getState().hand).toHaveLength(6);
+    expect(store.getState().discardPile.map((rune) => rune.id)).toEqual([handRune.id]);
+  });
+
+  it('sets defeat when enemy attack reduces health to zero', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const handRune = createTestRune('lethal-enemy-hand', 'Fire');
+
+    store.getState().startSoloRun();
+    localStorageMock.removeItem.mockClear();
+    store.setState((state) => ({
+      ...state,
+      hand: [handRune],
+      discardPile: [],
+      player: {
+        ...state.player,
+        health: 4,
+        armor: 0,
+        deck: [createTestRune('lethal-enemy-deck', 'Fire')],
+      },
+    }));
+
+    store.getState().endCombatTurn();
+
+    expect(store.getState().player.health).toBe(0);
+    expect(store.getState().isDefeat).toBe(true);
+    expect(store.getState().combatPhase).toBe('defeat');
+    expect(store.getState().hand).toEqual([]);
+    expect(store.getState().discardPile.map((rune) => rune.id)).toEqual([handRune.id]);
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
+  });
+
   it('partially refills runeforges from the remaining deck without defeating the player', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();
@@ -973,10 +1129,14 @@ describe('gameplayStore persistence', () => {
 });
 
 function createTestRune(id: string, runeType: Rune['runeType']): Rune {
+  return createTestRuneWithEffects(id, runeType, [{ type: 'Damage', amount: 1, rarity: 'common' }]);
+}
+
+function createTestRuneWithEffects(id: string, runeType: Rune['runeType'], effects: RuneEffects): Rune {
   return {
     id,
     runeType,
-    effects: [{ type: 'Damage', amount: 1, rarity: 'common' }],
+    effects,
   };
 }
 

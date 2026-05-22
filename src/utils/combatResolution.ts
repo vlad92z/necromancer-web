@@ -2,7 +2,7 @@
  * Combat resolution helpers for hand-driven spell-wall casting.
  */
 
-import type { Player, Rune, SpellWallCharge } from '../types/game';
+import type { Enemy, Player, Rune, SpellWallCharge } from '../types/game';
 import { copyRuneEffects } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
@@ -24,6 +24,7 @@ export interface WallCastResult {
   hand: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
+  completedRune: Rune | null;
 }
 
 export interface EndPlayerTurnInput {
@@ -38,6 +39,27 @@ export interface EndPlayerTurnResult {
   player: Player;
   hand: Rune[];
   discardPile: Rune[];
+}
+
+export interface CompletedRuneEffectsInput {
+  player: Player;
+  enemy: Enemy | null;
+  rune: Rune;
+}
+
+export interface CompletedRuneEffectsResult {
+  player: Player;
+  enemy: Enemy | null;
+  arcaneDustDelta: number;
+}
+
+export interface EnemyTurnInput {
+  player: Player;
+  enemy: Enemy | null;
+}
+
+export interface EnemyTurnResult {
+  player: Player;
 }
 
 function shuffleRunes(runes: Rune[]): Rune[] {
@@ -81,6 +103,7 @@ export function castRuneToWallSlot({
       hand,
       wallCharges,
       selectedHandRuneId,
+      completedRune: null,
     };
   }
 
@@ -104,6 +127,7 @@ export function castRuneToWallSlot({
       hand: nextHand,
       wallCharges: nextWallCharges,
       selectedHandRuneId: null,
+      completedRune: null,
     };
   }
 
@@ -122,6 +146,78 @@ export function castRuneToWallSlot({
     hand: nextHand,
     wallCharges: nextWallCharges,
     selectedHandRuneId: null,
+    completedRune: selectedRune,
+  };
+}
+
+export function resolveCompletedRuneEffects({
+  player,
+  enemy,
+  rune,
+}: CompletedRuneEffectsInput): CompletedRuneEffectsResult {
+  let nextPlayer = player;
+  let nextEnemy = enemy;
+  let arcaneDustDelta = 0;
+
+  rune.effects.forEach((effect) => {
+    switch (effect.type) {
+      case 'Damage': {
+        if (nextEnemy) {
+          nextEnemy = {
+            ...nextEnemy,
+            health: Math.max(0, nextEnemy.health - effect.amount),
+          };
+        }
+        break;
+      }
+      case 'Healing': {
+        nextPlayer = {
+          ...nextPlayer,
+          health: Math.min(nextPlayer.maxHealth, nextPlayer.health + effect.amount),
+        };
+        break;
+      }
+      case 'Armor': {
+        nextPlayer = {
+          ...nextPlayer,
+          armor: nextPlayer.armor + effect.amount,
+        };
+        break;
+      }
+      case 'Fortune': {
+        arcaneDustDelta += effect.amount;
+        break;
+      }
+      case 'ArmorSynergy':
+      case 'Channel':
+      case 'ChannelSynergy':
+      case 'Fragile':
+      case 'Synergy':
+        break;
+    }
+  });
+
+  return {
+    player: nextPlayer,
+    enemy: nextEnemy,
+    arcaneDustDelta,
+  };
+}
+
+export function resolveEnemyTurn({ player, enemy }: EnemyTurnInput): EnemyTurnResult {
+  if (!enemy || enemy.intent.type !== 'Attack') {
+    return { player };
+  }
+
+  const armorAbsorbed = Math.min(player.armor, enemy.intent.amount);
+  const healthDamage = enemy.intent.amount - armorAbsorbed;
+
+  return {
+    player: {
+      ...player,
+      armor: player.armor - armorAbsorbed,
+      health: Math.max(0, player.health - healthDamage),
+    },
   };
 }
 

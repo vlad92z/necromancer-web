@@ -154,7 +154,7 @@ Manual play check:
 - New hand is dealt.
 - Exhaust deck enough to verify discard reshuffle.
 
-## Stage 6: Basic Combat Resolution
+## Stage 6: Basic Combat Resolution (Done)
 
 File-level changes:
 - `src/utils/combatResolution.ts`: add basic effect and enemy-turn resolution.

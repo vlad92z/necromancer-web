@@ -5,12 +5,12 @@
 import type { RuneEffect, RuneEffectRarity, RuneEffects, RuneType } from '../types/game';
 
 const BASE_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
-  Fire: [{ type: 'Damage', amount: 1, rarity: 'common' }],
-  Frost:[{ type: 'Armor', amount: 1, rarity: 'common' }],
-  Life: [{ type: 'Healing', amount: 1, rarity: 'common' }],
-  Void: [{ type: 'Damage', amount: 1, rarity: 'common' }],
-  Wind: [{ type: 'Damage', amount: 1, rarity: 'common' }],
-  Lightning: [{ type: 'Damage', amount: 1, rarity: 'common' }],
+  Fire: [{ type: 'Damage', amount: 3, rarity: 'common' }],
+  Frost:[{ type: 'Armor', amount: 3, rarity: 'common' }],
+  Life: [{ type: 'Healing', amount: 5, rarity: 'common' }],
+  Void: [{ type: 'Damage', amount: 3, rarity: 'common' }],
+  Wind: [{ type: 'Damage', amount: 3, rarity: 'common' }],
+  Lightning: [{ type: 'Damage', amount: 3, rarity: 'common' }],
 };
 
 const UNCOMMON_RUNE_EFFECTS: Record<RuneType, RuneEffects> = {
