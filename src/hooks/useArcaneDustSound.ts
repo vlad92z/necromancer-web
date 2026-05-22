@@ -3,10 +3,10 @@
  */
 import { useCallback, useEffect, useRef } from 'react';
 import arcaneDustSoundUrl from '../assets/sounds/arcane_dust.mp3';
-import { useUIStore } from '../state/stores/uiStore';
+import { useSoundVolume } from './useGameState';
 
 export function useArcaneDustSound(): () => void {
-  const soundVolume = useUIStore((state) => state.soundVolume);
+  const soundVolume = useSoundVolume();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {

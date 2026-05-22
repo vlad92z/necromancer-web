@@ -1,31 +1,40 @@
 /**
- * UI Store - Overlay states and transient UI state
+ * UI Store - Overlay states and persistent UI preferences
  * Handles: overlay visibility, modal management, UI interactions
  */
 
 import { create } from 'zustand';
+import type { TooltipCard } from '../../types/game';
+import { createDefaultTooltipCards } from '../../utils/gameInitialization';
 
 interface UIStore {
   // Overlay visibility states
   showRulesOverlay: boolean;
   showDeckOverlay: boolean;
+  showOverloadOverlay: boolean
   showRuneforgeOverlay: boolean;
   showSettingsOverlay: boolean;
   selectedRuneforgeId: string | null; // For runeforge overlay
   soundVolume: number;
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
+  tooltipCards: TooltipCard[];
+  tooltipOverrideActive: boolean;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
   toggleDeckOverlay: () => void;
+  toggleOverloadOverlay: () => void;
   openRuneforgeOverlay: (runeforgeId: string) => void;
   closeRuneforgeOverlay: () => void;
   toggleSettingsOverlay: () => void;
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
   setMusicMuted: (muted: boolean) => void;
+  toggleMusicMuted: () => void;
   markMusicSessionStarted: () => void;
+  setTooltipCards: (cards: TooltipCard[], overrideSelection?: boolean) => void;
+  resetTooltipCards: () => void;
 }
 
 const getInitialVolume = (): number => {
@@ -48,12 +57,15 @@ export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
   showDeckOverlay: false,
+  showOverloadOverlay: false,
   showRuneforgeOverlay: false,
   showSettingsOverlay: false,
   selectedRuneforgeId: null,
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
+  tooltipCards: createDefaultTooltipCards(),
+  tooltipOverrideActive: false,
   
   // Actions
   toggleRulesOverlay: () => {
@@ -62,6 +74,10 @@ export const useUIStore = create<UIStore>((set) => ({
   
   toggleDeckOverlay: () => {
     set((state) => ({ showDeckOverlay: !state.showDeckOverlay }));
+  },
+
+  toggleOverloadOverlay: () => {
+    set((state) => ({ showOverloadOverlay: !state.showOverloadOverlay }));
   },
   
   openRuneforgeOverlay: (runeforgeId: string) => {
@@ -101,7 +117,25 @@ export const useUIStore = create<UIStore>((set) => ({
     }
   },
 
+  toggleMusicMuted: () => {
+    set((state) => ({ isMusicMuted: !state.isMusicMuted }));
+  },
+
   markMusicSessionStarted: () => {
     set({ hasMusicSessionStarted: true });
+  },
+
+  setTooltipCards: (cards: TooltipCard[], overrideSelection = false) => {
+    set({
+      tooltipCards: cards,
+      tooltipOverrideActive: overrideSelection,
+    });
+  },
+
+  resetTooltipCards: () => {
+    set({
+      tooltipCards: createDefaultTooltipCards(),
+      tooltipOverrideActive: false,
+    });
   },
 }));

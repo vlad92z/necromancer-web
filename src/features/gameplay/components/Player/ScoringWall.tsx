@@ -3,17 +3,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useUIActions } from '../../../../hooks/useGameActions';
+import { useGameplayWallState } from '../../../../hooks/useGameState';
 import type { ScoringWall as ScoringWallType, PatternLine } from '../../../../types/game';
 import { collectSegmentCells, getRuneOrderForSize, getWallColumnForRune } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
 import type { RuneType } from '../../../../types/game';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
-
-interface ScoringWallProps {
-  wall: ScoringWallType;
-  patternLines: PatternLine[];
-}
 
 // Layout constants (kept in sync with RuneCell size config)
 const CELL_SIZE = 65; // matches RuneCell size="large"
@@ -46,7 +42,12 @@ interface OverlayEdge {
 // We no longer compute the largest connected component. Instead we connect
 // every occupied or pending cell to its orthogonal neighbors (right + down).
 
-export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
+interface ScoringWallProps {
+  hiddenWallSlots: Set<string>;
+}
+
+export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
+  const { wall, patternLines, scoringSequence } = useGameplayWallState();
   const [pulseKey, setPulseKey] = useState(0);
   const hasMountedRef = useRef(false);
   const previousWallRef = useRef<ScoringWallType | null>(null);
@@ -54,7 +55,6 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
   const pendingCellsRef = useRef<Set<string>>(new Set());
   const overlayRef = useRef<{ points: Map<string, OverlayPoint>; edges: Map<string, OverlayEdge> } | null>(null);
   const [pulseTargets, setPulseTargets] = useState<Set<string>>(new Set());
-  const scoringSequence = useGameplayStore((state) => state.scoringSequence);
 
   const wallSignature = useMemo(
     () => wall.map(row => row.map(cell => cell.runeType ?? '0').join(',')).join('|'),
@@ -119,8 +119,7 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
     return { pointsMap, edgesMap };
   }, []);
 
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const { setTooltipCards, resetTooltipCards } = useUIActions();
 
   const handleWallCellEnter = useCallback(
     (rowIndex: number, colIndex: number) => {
@@ -356,11 +355,13 @@ export function ScoringWall({ wall, patternLines }: ScoringWallProps) {
             {row.map((cell, colIndex) => (
               <div
                 key={colIndex}
+                data-wall-row={rowIndex}
+                data-wall-col={colIndex}
                 onMouseEnter={() => handleWallCellEnter(rowIndex, colIndex)}
                 onMouseLeave={handleWallCellLeave}
               >
                 <WallCell
-                  cell={cell}
+                  cell={hiddenWallSlots.has(cellKey(rowIndex, colIndex)) ? { runeType: null, effects: null } : cell}
                   row={rowIndex}
                   col={colIndex}
                   wallSize={gridSize}

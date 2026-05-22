@@ -61,7 +61,7 @@ export interface Runeforge {
   ownerId: Player['id'];
   runes: Rune[];
   deckDraftEffect?: DeckDraftEffect;
-  disabled?: boolean;
+  disabled: boolean;
 }
 
 /**
@@ -71,8 +71,11 @@ export interface PatternLine {
   tier: 1 | 2 | 3 | 4 | 5 | 6; // Line capacity (1-6 runes)
   runeType: RuneType | null; // Type of rune in this line (null if empty)
   count: number; // Current number of runes in the line
-  firstRuneId: string | null; // ID of the first rune placed on this line TODO Rename to Primary Rune
-  firstRuneEffects: RuneEffects | null; // Effects inherited by wall placement
+  runes: Rune[]; // Exact runes placed on this line, in placement order
+  primaryRuneId: string | null; // ID of the rune that will cast from this line
+  primaryRuneEffects: RuneEffects | null; // Effects inherited by wall placement
+  firstRuneId?: string | null; // Legacy persisted field migrated during hydration
+  firstRuneEffects?: RuneEffects | null; // Legacy persisted field migrated during hydration
 }
 
 /**
@@ -89,34 +92,6 @@ export interface WallCell {
 export type ScoringWall = WallCell[][];
 
 /**
- * Floor line (penalty area for overflow runes)
- */
-export interface FloorLine {
-  runes: Rune[];
-  maxCapacity: number;
-}
-
-/**
- * Solo run configuration values entered on the start screen
- */
-export interface RunConfig {
-  startingHealth: number;
-  startingStrain: number;
-  strainMultiplier: number;
-  factoriesPerPlayer: number;
-  deckRunesPerType: number;
-  targetRuneScore: number;
-  runeScoreTargetIncrement: number;
-  victoryDraftPicks: number;
-  patternLinesLockOnComplete: boolean;
-}
-
-/**
- * Solo game ending state
- */
-export type GameOutcome = 'victory' | 'defeat' | null;
-
-/**
  * Player state
  */
 export interface Player {
@@ -124,9 +99,8 @@ export interface Player {
   name: string;
   patternLines: PatternLine[];
   wall: ScoringWall;
-  floorLine: FloorLine;
   health: number; // Current health (starts at configurable amount)
-  maxHealth?: number; // Maximum health cap (initialized at game start)
+  maxHealth: number; // Maximum health cap (initialized at game start)
   armor: number; // Temporary shield that absorbs damage before health
   deck: Rune[]; // Player's deck of runes for this run
 }
@@ -134,7 +108,7 @@ export interface Player {
 /**
  * Turn phase
  */
-export type TurnPhase = 'select' | 'place' | 'cast' | 'scoring' | 'end-of-round' | 'deck-draft' | 'game-over';
+export type TurnPhase = 'select' | 'resolving-end-round' | 'deck-draft';
 
 /**
  * Animation state for rune movement
@@ -186,64 +160,50 @@ export interface ScoringSequenceState {
  */
 export interface GameState {
   gameStarted: boolean; // Whether the game has been started (false shows start screen)
-  factoriesPerPlayer: number; // Runeforge count for the current solo setup
   runesPerRuneforge: number; // Number of runes dealt into each runeforge
   startingHealth: number; // Health pool per player for the current configuration
   overflowCapacity: number; // Floor line capacity that determines overflow penalties
   player: Player;
-  soloDeckTemplate: Rune[]; // Blueprint deck for starting future solo games
+  fullDeck: Rune[]; // Blueprint deck for starting future solo games
   runeforges: Runeforge[];
-  centerPool: Rune[]; // Center runeforge (accumulates leftover runes)
   runeforgeDraftStage: 'single' | 'global';
-  tooltipCards: TooltipCard[]; // Cards displayed in the tooltip view
-  tooltipOverrideActive: boolean; // Force tooltipCards to show even when runes are selected
   turnPhase: TurnPhase;
-  game: number; // Current game in this run (increments after each deck draft)
+  gameIndex: number; // Current game in this run (increments after each deck draft)
   round: number; // Current round number within the active game run
-  /**
-   * Damage dealt for every overload rune, derived from the current game number.
-   * Progression caps at the final configured value for later games.
-   */
-  strain: number;
-  /**
-   * Reserved for potential future tuning of overload scaling.
-   */
-  strainMultiplier: number;
+  overloadDamage: number;
   startingStrain: number; // Configured strain at the start of the run
-  selectedRunes: Rune[]; // Runes currently selected by active player
   overloadRunes: Rune[]; // Runes that have been overloaded (placed on floor) during this game
-  draftSource:
-    | {
-        type: 'runeforge';
-        runeforgeId: string;
-        movedToCenter: Rune[];
-        originalRunes: Rune[];
-        affectedRuneforges?: { runeforgeId: string; originalRunes: Rune[] }[];
-        previousDisabledRuneforgeIds?: string[];
-        previousRuneforgeDraftStage?: 'single' | 'global';
-        selectionMode?: 'single' | 'global';
-      }
-    | { type: 'center'; originalRunes: Rune[] }
-    | null; // Where the selected runes came from (and original forge state)
   animatingRunes: AnimatingRune[]; // Runes currently being animated
   pendingPlacement: { patternLineIndex: number } | { floor: true } | null; // Placement action pending animation completion
   scoringSequence: ScoringSequenceState | null; // Active scoring pulses/sequence
   overloadSoundPending: boolean; // Flag to trigger overload damage SFX during placement
   channelSoundPending: boolean; // Flag to trigger lightning SFX when channel effects resolve
-  selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
-  lockedPatternLines: Record<Player['id'], number[]>; // Pattern line indices locked until next round (solo toggle)
-  shouldTriggerEndRound: boolean; // Flag to trigger endround in component useEffect
+  lockedPatternLines: number[]; // Pattern line indices locked until next round (solo toggle)
+  shouldTriggerEndRound: boolean; // Compatibility flag used by the round resolver after scoring
   runePowerTotal: number; // Solo score accumulator
   targetScore: number; // Solo target score required for victory
-  runeScoreTargetIncrement: number; // Score increase applied after each victory
-  outcome: GameOutcome; // Solo result (victory/defeat)
+  isDefeat: boolean; // Solo result
   patternLineLock: boolean; // Solo config toggle for locking completed pattern lines until next round
   longestRun: number; // Furthest game reached in any run
   deckDraftState: DeckDraftState | null; // Deck drafting flow after victory
   baseTargetScore: number; // Configured starting target for reset scenarios
   deckDraftReadyForNextGame: boolean; // Indicates deck draft is done and waiting for player to start next run
   activeArtefacts: ArtefactId[]; // Artefacts active for this game run
-  victoryDraftPicks: number; // Number of draft picks granted after a victory
+}
+
+export type DraftSource = {
+      runeforgeId: string;
+      originalRunes: Rune[];
+      affectedRuneforges?: { runeforgeId: string; originalRunes: Rune[] }[];
+      previousDisabledRuneforgeIds?: string[];
+      previousRuneforgeDraftStage?: 'single' | 'global';
+      selectionMode?: 'single' | 'global';
+    }
+
+export interface SelectionState {
+  selectedRunes: Rune[]; // Runes currently selected by active player
+  draftSource: DraftSource | null; // Where the selected runes came from (and original forge state)
+  selectionTimestamp: number | null; // When the current selection was made (ms since epoch)
 }
 
 export interface DeckDraftState {

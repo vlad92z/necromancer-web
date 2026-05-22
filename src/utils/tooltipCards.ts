@@ -115,9 +115,9 @@ export function buildPatternLineExistingTooltipCards(patternLine: PatternLine): 
   }
 
   const runeType = patternLine.runeType;
-  const runeEffects = patternLine.firstRuneEffects ?? getRuneEffectsForType(runeType);
+  const runeEffects = patternLine.primaryRuneEffects ?? getRuneEffectsForType(runeType);
   const primaryRune: Rune = {
-    id: patternLine.firstRuneId ?? `pattern-line-${runeType}-${patternLine.tier}`,
+    id: patternLine.primaryRuneId ?? `pattern-line-${runeType}-${patternLine.tier}`,
     runeType,
     effects: runeEffects,
   };

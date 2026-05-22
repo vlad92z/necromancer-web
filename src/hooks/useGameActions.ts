@@ -1,44 +1,52 @@
 /**
- * Custom hook for game actions
- * Provides convenient access to game state mutations
+ * Zustand action hooks for gameplay, artefact, selection, and UI stores.
  */
 
-import { useGameplayStore } from '../state/stores/gameplayStore';
+import { useShallow } from 'zustand/react/shallow';
+import { useArtefactStore } from '../state/stores/artefactStore';
+import { gameplayActions } from '../state/stores/gameplayActions';
+import { useSelectionStore } from '../state/stores/selectionStore';
+import { useUIStore } from '../state/stores/uiStore';
 
-export function useGameActions() {
-  const draftRune = useGameplayStore((state) => state.draftRune);
-  const draftFromCenter = useGameplayStore((state) => state.draftFromCenter);
-  const placeRunes = useGameplayStore((state) => state.placeRunes);
-  const moveRunesToWall = useGameplayStore((state) => state.moveRunesToWall);
-  const placeRunesInFloor = useGameplayStore((state) => state.placeRunesInFloor);
-  const cancelSelection = useGameplayStore((state) => state.cancelSelection);
-  const endRound = useGameplayStore((state) => state.endRound);
-  const resetGame = useGameplayStore((state) => state.resetGame);
-  const startSoloRun = useGameplayStore((state) => state.startSoloRun);
-  const prepareSoloMode = useGameplayStore((state) => state.prepareSoloMode);
-  const selectDeckDraftRuneforge = useGameplayStore((state) => state.selectDeckDraftRuneforge);
-  const disenchantRuneFromDeck = useGameplayStore((state) => state.disenchantRuneFromDeck);
-  const forceSoloVictory = useGameplayStore((state) => state.forceSoloVictory);
-  const startNextSoloGame = useGameplayStore((state) => state.startNextSoloGame);
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
-  
-  return {
-    draftRune,
-    draftFromCenter,
-    placeRunes,
-    moveRunesToWall,
-    placeRunesInFloor,
-    cancelSelection,
-    endRound,
-    resetGame,
-    startSoloRun,
-    prepareSoloMode,
-    selectDeckDraftRuneforge,
-    disenchantRuneFromDeck,
-    forceSoloVictory,
-    startNextSoloGame,
-    setTooltipCards,
-    resetTooltipCards,
-  };
+export function useGameplayActions() {
+  return gameplayActions;
+}
+
+export function useArtefactActions() {
+  return useArtefactStore(
+    useShallow((state) => ({
+      buyArtefact: state.buyArtefact,
+      loadArtefactState: state.loadArtefactState,
+      selectArtefact: state.selectArtefact,
+      unselectArtefact: state.unselectArtefact,
+    })),
+  );
+}
+
+export function useUIActions() {
+  return useUIStore(
+    useShallow((state) => ({
+      markMusicSessionStarted: state.markMusicSessionStarted,
+      setMusicMuted: state.setMusicMuted,
+      setTooltipCards: state.setTooltipCards,
+      resetTooltipCards: state.resetTooltipCards,
+      setSoundVolume: state.setSoundVolume,
+      toggleDeckOverlay: state.toggleDeckOverlay,
+      toggleMusicMuted: state.toggleMusicMuted,
+      toggleOverloadOverlay: state.toggleOverloadOverlay,
+      toggleSettingsOverlay: state.toggleSettingsOverlay,
+    })),
+  );
+}
+
+export function useSelectionActions() {
+  return useSelectionStore(
+    useShallow((state) => ({
+      clearSelection: state.clearSelection,
+      replaceSelection: state.replaceSelection,
+      setActiveElement: state.setActiveElement,
+      setSelection: state.setSelection,
+      setSelectionState: state.setSelectionState,
+    })),
+  );
 }

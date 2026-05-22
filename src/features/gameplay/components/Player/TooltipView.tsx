@@ -3,8 +3,9 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useUIActions } from '../../../../hooks/useGameActions';
+import { useSelectedRunes, useTooltipState } from '../../../../hooks/useGameState';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { CardView } from './CardView';
 
 const STATIC_CW_ROTATION = 2;
@@ -32,10 +33,9 @@ const getTooltipCardRotation = (total: number, index: number): number => {
 const DEFAULT_CARD_WIDTH = 230;
 
 export function TooltipView() {
-  const tooltipCards = useGameplayStore((state) => state.tooltipCards);
-  const selectedRunes = useGameplayStore((state) => state.selectedRunes);
-  const tooltipOverrideActive = useGameplayStore((state) => state.tooltipOverrideActive);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const { tooltipCards, tooltipOverrideActive } = useTooltipState();
+  const selectedRunes = useSelectedRunes();
+  const { resetTooltipCards } = useUIActions();
   useEffect(() => {
     if (selectedRunes.length === 0 && tooltipOverrideActive) {
       resetTooltipCards();

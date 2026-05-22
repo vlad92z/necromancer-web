@@ -1,21 +1,18 @@
-import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClickSoundButton } from '../components/ClickSoundButton'
+import { useUIActions } from '../hooks/useGameActions'
 import { useClickSound } from '../hooks/useClickSound'
+import { useShowSettingsOverlay } from '../hooks/useGameState'
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses'
 import { SettingsOverlay } from '../components/SettingsOverlay'
-import { useUIStore } from '../state/stores/uiStore'
 import { BREAKPOINTS } from '../styles/tokens'
 
 export function MainMenu() {
   const navigate = useNavigate()
   const playClickSound = useClickSound()
-  const showSettingsOverlay = useUIStore((state) => state.showSettingsOverlay)
-  const toggleSettingsOverlay = useUIStore((state) => state.toggleSettingsOverlay)
-  const soundVolume = useUIStore((state) => state.soundVolume)
-  const setSoundVolume = useUIStore((state) => state.setSoundVolume)
-  const isMusicMuted = useUIStore((state) => state.isMusicMuted)
-  const setMusicMuted = useUIStore((state) => state.setMusicMuted)
+  const showSettingsOverlay = useShowSettingsOverlay()
+  const { toggleSettingsOverlay } = useUIActions()
   const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false
@@ -44,18 +41,6 @@ export function MainMenu() {
   const handleSettings = useCallback(() => {
     toggleSettingsOverlay()
   }, [toggleSettingsOverlay])
-
-  const handleToggleMusic = () => {
-    setMusicMuted(!isMusicMuted)
-  }
-
-  const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = Number.parseFloat(event.currentTarget.value)
-    if (!Number.isFinite(nextValue)) {
-      return
-    }
-    setSoundVolume(nextValue / 100)
-  }
 
   useEffect(() => {
     if (showSettingsOverlay) {
@@ -197,15 +182,7 @@ export function MainMenu() {
           </div>
 
           {showSettingsOverlay && (
-            <SettingsOverlay
-              onClose={toggleSettingsOverlay}
-              soundVolume={soundVolume}
-              isMusicMuted={isMusicMuted}
-              onVolumeChange={handleVolumeChange}
-              onToggleMusic={handleToggleMusic}
-              showQuitRun={false}
-              playClickSound={playClickSound}
-            />
+            <SettingsOverlay />
           )}
         </>
       )}

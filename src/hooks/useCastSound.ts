@@ -3,10 +3,10 @@
  */
 import { useCallback, useEffect, useRef } from 'react';
 import castSoundUrl from '../assets/sounds/cast.mp3';
-import { useUIStore } from '../state/stores/uiStore';
+import { useSoundVolume } from './useGameState';
 
 export function useCastSound(): () => void {
-  const soundVolume = useUIStore((state) => state.soundVolume);
+  const soundVolume = useSoundVolume();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {

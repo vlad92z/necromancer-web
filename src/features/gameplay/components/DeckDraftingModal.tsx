@@ -6,27 +6,24 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, animate, useMotionValue } from 'framer-motion';
 import type { DeckDraftState, Runeforge as RuneforgeType, Rune } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
+import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
 import { useClickSound } from '../../../hooks/useClickSound';
+import { useGameplayDeckState } from '../../../hooks/useGameState';
 import { getDeckDraftEffectDescription } from '../../../utils/deckDrafting';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
 interface DeckDraftingModalProps {
   draftState: DeckDraftState;
-  onSelectRuneforge: (runeforgeId: string) => void;
-  onOpenDeckOverlay: () => void;
-  totalDeckSize: number;
-  arcaneDustReward: number;
-  startNextSoloGame: () => void;
 }
 
 export function DeckDraftingModal({
   draftState,
-  onSelectRuneforge,
-  onOpenDeckOverlay,
-  totalDeckSize,
-  arcaneDustReward,
-  startNextSoloGame,
 }: DeckDraftingModalProps) {
+  const arcaneDustReward = 50;//placeholder
+  const { deck } = useGameplayDeckState();
+  const totalDeckSize = deck.length;
+  const { selectDeckDraftRuneforge: onSelectRuneforge, startNextSoloGame } = useGameplayActions();
+  const { toggleDeckOverlay: onOpenDeckOverlay } = useUIActions();
   const playClickSound = useClickSound();
   const [displayedRuneforges, setDisplayedRuneforges] = useState<RuneforgeType[]>(draftState.runeforges);
   const [pendingRuneforges, setPendingRuneforges] = useState<RuneforgeType[] | null>(null);

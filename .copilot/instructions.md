@@ -360,7 +360,6 @@ export const useGameStore = create<GameStore>((set) => ({
 export function useFactories() {
   return useGameStore((state) => ({
     runeforges: state.runeforges,
-    centerPool: state.centerPool,
   }));
 }
 ```
@@ -504,7 +503,7 @@ type RuneEffect =
 
 **Turn Phases**:
 ```typescript
-type TurnPhase = 'select' | 'place' | 'end-of-round' | 'scoring' | 'game-over';
+type TurnPhase = 'select' | 'place' | 'end-of-round' | 'scoring';
 ```
 - `select`: Player selects runes from runeforge or center
 - `place`: Player places selected runes on pattern line or floor

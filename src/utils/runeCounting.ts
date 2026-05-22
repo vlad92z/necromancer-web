@@ -2,33 +2,33 @@
  * Rune counting helpers for drafting UI
  */
 
-import type { GameState, Rune, RuneType, Runeforge } from '../types/game';
+import type { Rune, RuneType, Runeforge } from '../types/game';
+import { RUNE_TYPES } from './gameInitialization';
 
 interface RuneTypeCountInput {
   runeforges: Runeforge[];
-  centerPool: Rune[];
   selectedRunes: Rune[];
-  draftSource: GameState['draftSource'];
 }
 
 export function getRuneTypeCounts({
   runeforges,
-  centerPool,
   selectedRunes,
-  draftSource,
 }: RuneTypeCountInput): Record<RuneType, number> {
-  const counts: Record<RuneType, number> = {
-    Fire: 0,
-    Frost: 0,
-    Life: 0,
-    Void: 0,
-    Wind: 0,
-    Lightning: 0,
-  };
+  return countUniqueRunesByType([
+    ...runeforges.flatMap((forge) => forge.runes),
+    ...selectedRunes,
+  ]);
+}
+
+export function countUniqueRunesByType(runes: Rune[]): Record<RuneType, number> {
+  const counts = RUNE_TYPES.reduce(
+    (result, runeType) => ({
+      ...result,
+      [runeType]: 0,
+    }),
+    {} as Record<RuneType, number>
+  );
   const countedIds = new Set<string>();
-  const selectionFromCenter = draftSource?.type === 'center';
-  const centerRunesForCount =
-    selectionFromCenter && draftSource?.originalRunes ? draftSource.originalRunes : centerPool;
 
   const countRune = (rune: Rune) => {
     if (countedIds.has(rune.id)) {
@@ -38,19 +38,16 @@ export function getRuneTypeCounts({
     countedIds.add(rune.id);
   };
 
-  runeforges.forEach((forge) => {
-    const forgeRunes =
-      draftSource?.type === 'runeforge' &&
-      draftSource.runeforgeId === forge.id &&
-      draftSource.originalRunes.length > 0
-        ? draftSource.originalRunes
-        : forge.runes;
+  runes.forEach(countRune);
 
-    forgeRunes.forEach(countRune);
+  return counts;
+}
+
+export function runeTypeCounts(runes: Rune[]): Map<RuneType, number> {
+  const counts = new Map<RuneType, number>();
+  runes.forEach((rune) => {
+    const currentCount = counts.get(rune.runeType) ?? 0
+    counts.set(rune.runeType, currentCount + 1);
   });
-
-  centerRunesForCount.forEach(countRune);
-  selectedRunes.forEach(countRune);
-
   return counts;
 }

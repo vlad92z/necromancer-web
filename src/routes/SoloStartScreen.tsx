@@ -4,13 +4,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { GameplayStore } from '../state/stores/gameplayStore';
-import { setNavigationCallback, useGameplayStore } from '../state/stores/gameplayStore';
-import { GameContainer, type GameContainerHandle } from '../features/gameplay/components/GameContainer';
-import type { GameState, RunConfig } from '../types/game';
-import { hasSavedSoloState, loadSoloState, saveSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
-import { useArtefactStore } from '../state/stores/artefactStore';
-import { DEFAULT_SOLO_CONFIG } from '../utils/gameInitialization';
+import { setNavigationCallback } from '../systems/gameplayOrchestrator';
+import { subscribeGameplayState } from '../state/stores/gameplayState';
+import { GameContainer } from '../features/gameplay/components/GameContainer';
+import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions';
+import { useGameStarted, useSoloStartArtefactState } from '../hooks/useGameState';
+import { hasSavedSoloState, loadSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
@@ -18,36 +17,25 @@ import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../components/ClickSoundButton';
 import { useClickSound } from '../hooks/useClickSound';
 
-const selectPersistableSoloState = (state: GameplayStore): GameState => {
-  const {
-    ...gameState
-  } = state;
-
-  return gameState as GameState;
-};
-
 export function SoloStartScreen() {
   const navigate = useNavigate();
-  const gameplayState = useGameplayStore();
-  const { gameStarted, startSoloRun, prepareSoloMode, hydrateGameState } = gameplayState;
-  const gameState: GameState = gameplayState;
+  const gameStarted = useGameStarted();
+  const { startSoloRun, prepareSoloMode, hydrateGameState } = useGameplayActions();
   const [hasSavedSoloRun, setHasSavedSoloRun] = useState<boolean>(() => hasSavedSoloState());
   const [longestSoloRun, setLongestSoloRun] = useState<number>(() => {
     const storedBest = getLongestSoloRun();
     const savedState = loadSoloState();
-    const savedGame = savedState?.game ?? 0;
+    const savedGame = savedState?.gameIndex ?? 0;
     return Math.max(storedBest, savedGame);
   });
-  const loadArtefactState = useArtefactStore((state) => state.loadArtefactState);
-  const arcaneDust = useArtefactStore((state) => state.arcaneDust);
+  const { loadArtefactState } = useArtefactActions();
+  const { arcaneDust, selectedArtefactIds } = useSoloStartArtefactState();
   const playClickSound = useClickSound();
 
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
   const formattedDust = arcaneDust.toLocaleString();
-  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
   const [activeElement, setActiveElement] = useState<'back' | 'manage' | 'continue' | 'new'>('back');
   const artefactsRef = useRef<ArtefactsViewHandle | null>(null);
-  const gameContainerRef = useRef<GameContainerHandle | null>(null);
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -60,24 +48,10 @@ export function SoloStartScreen() {
   }, [navigate, prepareSoloMode, loadArtefactState]);
 
   useEffect(() => {
-    const unsubscribe = useGameplayStore.subscribe((state) => {
-      const persistableState = selectPersistableSoloState(state);
-
-      // Persist solo state only while a run is active
-      if (persistableState.gameStarted) {
-        saveSoloState(persistableState);
-        setHasSavedSoloRun(true);
-      }
-
-      // If run ended in defeat, remove saved run from storage and update UI
-      if (persistableState.outcome === 'defeat') {
-        clearSoloState();
-        setHasSavedSoloRun(false);
-      }
-
-      // Always update the local `longestSoloRun` if store's longestRun or game increased.
+    const unsubscribe = subscribeGameplayState((state) => {
+      // Keep the start-screen best-run badge in sync with gameplay progression.
       setLongestSoloRun((previousBest) => {
-        const nextBest = Math.max(previousBest, persistableState.longestRun ?? 0, persistableState.game ?? 0);
+        const nextBest = Math.max(previousBest, state.longestRun ?? 0, state.gameIndex ?? 0);
         if (nextBest === previousBest) {
           return previousBest;
         }
@@ -98,8 +72,8 @@ export function SoloStartScreen() {
   }, [gameStarted]);
 
   const handleStartSolo = useCallback(
-    (config: RunConfig) => {
-      startSoloRun(config);
+    () => {
+      startSoloRun();
     },
     [startSoloRun],
   );
@@ -165,7 +139,7 @@ export function SoloStartScreen() {
           handleContinueSolo();
           return;
         case 'new':
-          handleStartSolo(DEFAULT_SOLO_CONFIG);
+          handleStartSolo();
           return;
         default:
           return;
@@ -177,7 +151,6 @@ export function SoloStartScreen() {
         artefactsRef.current?.handleKeyDown(event);
         return;
       } else if (gameStarted) {
-        gameContainerRef.current?.handleKeyDown(event);
         return;
       }
 
@@ -242,7 +215,7 @@ export function SoloStartScreen() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeElement, artefactsRef, gameContainerRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
+  }, [activeElement, artefactsRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
 
   const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
   const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';
@@ -254,7 +227,7 @@ export function SoloStartScreen() {
     : `${gradientButtonClasses} ${gradientActive}`;
 
   if (gameStarted) {
-    return <GameContainer ref={gameContainerRef} gameState={gameState} />;
+    return <GameContainer/>;
   }
 
   return (
@@ -320,7 +293,7 @@ export function SoloStartScreen() {
           )}
           <ClickSoundButton
             title="New Game"
-            action={() => handleStartSolo(DEFAULT_SOLO_CONFIG)}
+            action={() => handleStartSolo()}
             className={newGameButtonClasses}
             isActive={activeElement === 'new'}
           />

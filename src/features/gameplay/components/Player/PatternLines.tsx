@@ -5,64 +5,43 @@
 
 import { motion } from 'framer-motion';
 import type { Transition } from 'framer-motion';
-import type { PatternLine, Rune, RuneType, ScoringWall } from '../../../../types/game';
+import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
+import { useGameplayPatternLineState, useSelectionState } from '../../../../hooks/useGameState';
+import type { PatternLine } from '../../../../types/game';
 import { getWallColumnForRune } from '../../../../utils/scoring';
 import { RuneCell } from '../../../../components/RuneCell';
 import { copyRuneEffects, getRuneEffectsForType } from '../../../../utils/runeEffects';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
 import { buildPatternLineExistingTooltipCards, buildPatternLinePlacementTooltipCards } from '../../../../utils/tooltipCards';
 
 interface PatternLinesProps {
-  patternLines: PatternLine[];
-  wall: ScoringWall;
-  onPlaceRunes?: (patternLineIndex: number) => void;
-  selectedRuneType?: RuneType | null;
-  canPlace?: boolean;
-  lockedLineIndexes?: number[];
-  playerId?: string;
-  hiddenSlotKeys?: Set<string>;
-  selectedRunes: Rune[];
-  strain: number;
-  activePatternLineIndex?: number | null;
+  hiddenPatternSlots: Set<string>;
 }
 
-export function PatternLines({
-  patternLines,
-  wall,
-  onPlaceRunes,
-  selectedRuneType,
-  canPlace,
-  lockedLineIndexes = [],
-  playerId,
-  hiddenSlotKeys,
-  selectedRunes,
-  strain,
-  activePatternLineIndex,
-}: PatternLinesProps) {
+export function PatternLines({ hiddenPatternSlots }: PatternLinesProps) {
+  const { placeRunes: onPlaceRunes } = useGameplayActions();
+  const { setTooltipCards, resetTooltipCards } = useUIActions();
+  const { lockedPatternLines, wall, patternLines, overloadDamage } = useGameplayPatternLineState();
+  const { activeElement, selectedRunes } = useSelectionState();
+  const activePatternLineIndex = activeElement?.type === 'pattern-line' ? activeElement.lineIndex : null;
+  const selectedRuneType = selectedRunes[0]?.runeType ?? null;
   const isPlacementValid = (line: PatternLine, lineIndex: number) => {
-    if (!canPlace || !selectedRuneType) return false;
+    if (selectedRunes.length === 0) return false;
 
     const matchesType = line.runeType === null || line.runeType === selectedRuneType;
     const notFull = line.count < line.tier;
 
     const row = lineIndex;
-    const wallSize = wall.length;
-    const col = getWallColumnForRune(row, selectedRuneType, wallSize);
+    const col = getWallColumnForRune(row, selectedRuneType, wall.length);
     const notOnWall = wall[row][col].runeType === null;
 
     return matchesType && notFull && notOnWall;
   };
-
-
   const cellPulseTransition: Transition = {
     duration: 1.2,
     repeat: Infinity,
     repeatType: 'reverse' as const,
     ease: 'easeInOut' as const
   };
-
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
 
   const handleTooltipEnter = (line: PatternLine, isPlacementTarget: boolean) => {
     if (selectedRunes.length > 0) {
@@ -73,7 +52,7 @@ export function PatternLines({
         selectedRunes,
         patternLineTier: line.tier,
         patternLineCount: line.count,
-        strain,
+        strain: overloadDamage,
       });
       if (tooltipCards.length > 0) {
         setTooltipCards(tooltipCards, true);
@@ -90,7 +69,7 @@ export function PatternLines({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, alignItems: 'flex-start', width: '100%' }}>
+    <div className="flex w-full flex-col items-start gap-0">
     
       {patternLines.map((line, index) => {
         const isKeyboardActive = activePatternLineIndex === index;
@@ -100,10 +79,10 @@ export function PatternLines({
         const selectableGlowRest = hasActiveElement ? 'none' : keyboardGlowRest;
         const selectableGlowPeak = hasActiveElement ? 'none' : keyboardGlowPeak;
         const glowRange: [string, string] = [selectableGlowRest, selectableGlowPeak];
-        const isLocked = lockedLineIndexes.includes(index);
+        const isLocked = lockedPatternLines.includes(index);
         const isPlacementTarget = !isLocked && isPlacementValid(line, index);
         
-        const placementClickable = Boolean(canPlace && onPlaceRunes);
+        const placementClickable = Boolean(selectedRunes.length > 0);
         const showGlow = isPlacementTarget;
         const buttonDisabled = !(isPlacementTarget && placementClickable);
         const cursorStyle = placementClickable
@@ -121,7 +100,7 @@ export function PatternLines({
           <button
             key={index}
             onClick={() => {
-              if (isPlacementTarget && onPlaceRunes) {
+              if (isPlacementTarget) {
                 onPlaceRunes(index);
               }
             }}
@@ -130,36 +109,19 @@ export function PatternLines({
             onFocus={() => handleTooltipEnter(line, isPlacementTarget)}
             onBlur={resetTooltipCards}
             disabled={buttonDisabled}
+            className="relative mb-1 flex w-full items-start justify-start gap-0 rounded-lg border-0 bg-transparent p-0 shadow-none transition-all duration-200"
             style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'flex-start',
-              gap: 0,
-              width: '100%',
               cursor: cursorStyle,
-              border: 'none',
-              padding: 0,
-              borderRadius: '8px',
-              transition: 'all 0.2s',
-              marginBottom: '4px',
-              position: 'relative',
               opacity: isLocked ? 0.15 : 1,
-              backgroundColor: 'transparent',
-              boxShadow: 'none',
             }}
             data-active={isKeyboardActive ? 'true' : undefined}
             aria-label={ariaLabel}
           >
             <motion.div
+              className="inline-flex items-center gap-1 rounded-lg p-0 transition-all duration-200"
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: 0,
-                borderRadius: '8px',
                 backgroundColor: keyboardBackground,
                 boxShadow: keyboardBoxShadow,
-                transition: 'all 0.2s',
               }}
               animate={isKeyboardActive ? { boxShadow: keyboardGlowRange } : undefined}
               transition={isKeyboardActive ? cellPulseTransition : undefined}
@@ -168,12 +130,12 @@ export function PatternLines({
                 .fill(null)
                 .map((_, slotIndex) => {
                   const slotKey = `${index}-${slotIndex}`;
-                  const shouldHideRune = hiddenSlotKeys?.has(slotKey);
+                  const shouldHideRune = hiddenPatternSlots.has(slotKey);
                   const hasRuneInSlot = slotIndex < line.count && line.runeType !== null;
                   // Primary rune (moves to the wall) should live in the leading cell
                   const isPrimaryRuneSlot = slotIndex === 0 && !shouldHideRune;
                   const runeEffects = isPrimaryRuneSlot && line.runeType
-                    ? copyRuneEffects(line.firstRuneEffects ?? getRuneEffectsForType(line.runeType))
+                    ? copyRuneEffects(line.primaryRuneEffects ?? getRuneEffectsForType(line.runeType))
                     : [];
                   const rune = hasRuneInSlot && line.runeType ? {
                     id: `pattern-${index}-${slotIndex}`,
@@ -191,14 +153,11 @@ export function PatternLines({
                   return (
                     <motion.div
                       key={slotIndex}
-                      data-player-id={playerId}
                       data-pattern-line-index={index}
                       data-pattern-slot-index={slotIndex}
+                      className="relative rounded-lg transition-[box-shadow] duration-200"
                       style={{
-                        position: 'relative',
                         boxShadow: showGlow ? selectableGlowRest : 'none',
-                        borderRadius: '8px',
-                        transition: 'box-shadow 0.2s'
                       }}
                       {...cellMotionProps}
                     >
@@ -211,26 +170,18 @@ export function PatternLines({
                       />
                       {isPrimaryRuneSlot && !isLocked && (
                         <div
+                          className="pointer-events-none absolute -inset-px rounded-xl"
                           style={{
-                            position: 'absolute',
-                            inset: '-1px',
-                            borderRadius: '12px',
                             border: '1px solid rgba(192, 132, 252, 0.8)',
                             boxShadow: '0 0 18px rgba(192, 132, 252, 0.55)',
-                            pointerEvents: 'none'
                           }}
                         />
                       )}
                       {slotIndex > 0 && (
                         <div
+                          className="pointer-events-none absolute inset-3 z-[2] rounded-[25px] opacity-70"
                           style={{
-                            position: 'absolute',
-                            inset: '12px',
-                            pointerEvents: 'none',
-                            zIndex: 2,
-                            borderRadius: '25px',
                             backgroundImage: `linear-gradient(45deg, transparent 46%, ${craftingCellLineColor} 46%, ${craftingCellLineColor} 54%, transparent 54%)`,
-                            opacity: 0.7,
                           }}
                         />
                       )}

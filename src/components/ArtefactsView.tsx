@@ -6,9 +6,10 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useSt
 import type { FocusEvent, MouseEvent, PointerEvent } from 'react';
 import { Modal } from './layout/Modal';
 import { TooltipBubble, type TooltipAnchorRect } from './TooltipBubble';
+import { useArtefactActions } from '../hooks/useGameActions';
+import { useArtefactInventoryState } from '../hooks/useGameState';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS, getAllArtefacts, MAX_SELECTED_ARTEFACTS } from '../types/artefacts';
-import { useArtefactStore } from '../state/stores/artefactStore';
 import { getArtefactEffectDescription } from '../utils/artefactEffects';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { useClickSound } from '../hooks/useClickSound';
@@ -28,7 +29,8 @@ const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
 };
 
 export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>(function ArtefactsView({ isOpen, onClose }, ref) {
-  const { selectedArtefactIds, ownedArtefactIds, arcaneDust, selectArtefact, unselectArtefact, buyArtefact } = useArtefactStore();
+  const { selectedArtefactIds, ownedArtefactIds, arcaneDust } = useArtefactInventoryState();
+  const { selectArtefact, unselectArtefact, buyArtefact } = useArtefactActions();
   const playClick = useClickSound();
 
   const [activeTooltip, setActiveTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);

@@ -10,7 +10,6 @@ import type {
   ScoringWall,
   Rune,
   RuneType,
-  RunConfig,
   TooltipCard,
 } from '../types/game';
 import { getRuneEffectsForType } from './runeEffects';
@@ -42,8 +41,9 @@ export function createPatternLines(count: number = WALL_SIZE): PatternLine[] {
       tier: i as PatternLine['tier'],
       runeType: null,
       count: 0,
-      firstRuneId: null,
-      firstRuneEffects: null,
+      runes: [],
+      primaryRuneId: null,
+      primaryRuneEffects: null,
     });
   }
   return lines;
@@ -56,34 +56,10 @@ export function getRuneTypes(): RuneType[] {
   return [...RUNE_TYPES];
 }
 
-const DEFAULT_STARTING_STRAIN = getOverloadDamageForGame(1);
-const DEFAULT_STRAIN_MULTIPLIER = 2;
-const SOLO_TARGET_INCREMENT = 25;
-const DEFAULT_RUNES_PER_RUNEFORGE = 4;
-const STARTING_HEALTH = 100;
-const FACTORIES_PER_PLAYER = 5;
-const DEFAULT_RUNES_PER_TYPE = 20;
-const DEFAULT_SOLO_TARGET_SCORE = 25;
-const DEFAULT_VICTORY_DRAFT_PICKS = 1;
-const DEFAULT_PATTERN_LINE_LOCK = true;
-
-export const DEFAULT_SOLO_CONFIG: RunConfig = {
-  startingHealth: STARTING_HEALTH,
-  startingStrain: DEFAULT_STARTING_STRAIN,
-  strainMultiplier: DEFAULT_STRAIN_MULTIPLIER,
-  factoriesPerPlayer: FACTORIES_PER_PLAYER,
-  deckRunesPerType: DEFAULT_RUNES_PER_TYPE,
-  targetRuneScore: DEFAULT_SOLO_TARGET_SCORE,
-  runeScoreTargetIncrement: SOLO_TARGET_INCREMENT,
-  victoryDraftPicks: DEFAULT_VICTORY_DRAFT_PICKS,
-  patternLinesLockOnComplete: DEFAULT_PATTERN_LINE_LOCK,
-};
-
 export interface SoloSizingConfig {
   factoriesPerPlayer: number;
   totalRunesPerPlayer: number;
   runesPerRuneforge: number;
-  startingHealth: number;
   overflowCapacity: number;
 }
 
@@ -93,22 +69,6 @@ export interface SoloInitializationOptions {
   longestRun?: number;
 }
 
-export function normalizeSoloConfig(config?: Partial<RunConfig>): RunConfig {
-  const merged = { ...DEFAULT_SOLO_CONFIG, ...config };
-
-  return {
-    startingHealth: Math.max(1, merged.startingHealth),
-    startingStrain: Math.max(0, merged.startingStrain),
-    strainMultiplier: Math.max(1, Math.min(2, merged.strainMultiplier)),
-    factoriesPerPlayer: Math.min(6, Math.max(1, Math.round(merged.factoriesPerPlayer))),
-    deckRunesPerType: Math.max(1, Math.round(merged.deckRunesPerType)),
-    targetRuneScore: Math.max(1, Math.round(merged.targetRuneScore)),
-    runeScoreTargetIncrement: Math.max(1, Math.round(merged.runeScoreTargetIncrement)),
-    victoryDraftPicks: Math.max(1, Math.round(merged.victoryDraftPicks)),
-    patternLinesLockOnComplete: Boolean(merged.patternLinesLockOnComplete),
-  };
-}
-
 /**
  * Derive solo sizing for factories and rune pool (fixed wall size).
  */
@@ -116,12 +76,11 @@ export function getSoloSizingConfig(): SoloSizingConfig {
   const baseSizing = {
     factoriesPerPlayer: 4,
     totalRunesPerPlayer: 48,
-    startingHealth: 150,
     overflowCapacity: 12,
   };
   return {
     ...baseSizing,
-    runesPerRuneforge: DEFAULT_RUNES_PER_RUNEFORGE,
+    runesPerRuneforge: 4,
   };
 }
 
@@ -129,14 +88,12 @@ export function getSoloSizingConfig(): SoloSizingConfig {
  * Create a mock player deck (for now, just basic runes)
  */
 export function createStartingDeck(
-  playerId: string,
-  totalRunesPerPlayer?: number
+  totalRunesPerPlayer: number
 ): Rune[] {
   const deck: Rune[] = [];
   const runeTypes = getRuneTypes();
-  const runesToGenerate = totalRunesPerPlayer ?? runeTypes.length * 8;
-  const baseRunesPerType = Math.floor(runesToGenerate / runeTypes.length);
-  let remainder = runesToGenerate - baseRunesPerType * runeTypes.length;
+  const baseRunesPerType = Math.floor(totalRunesPerPlayer / runeTypes.length);
+  let remainder = totalRunesPerPlayer - baseRunesPerType * runeTypes.length;
 
   runeTypes.forEach((runeType) => {
     const extra = remainder > 0 ? 1 : 0;
@@ -145,7 +102,7 @@ export function createStartingDeck(
 
     for (let i = 0; i < typeCount; i++) {
       deck.push({
-        id: `${playerId}-${runeType}-${i}`,
+        id: `player-1-${runeType}-${i}`,
         runeType,
         effects: getRuneEffectsForType(runeType),
       });
@@ -171,24 +128,19 @@ export function createDefaultTooltipCards(): TooltipCard[] {
 export function createPlayer(
   id: string,
   name: string,
-  startingHealth: number = 300,
-  totalRunesPerPlayer?: number,
-  overflowCapacity?: number,
-  maxHealthOverride?: number,
+  startingHealth: number,
+  deck: Rune[],
+  maxHealth: number,
 ): Player {
   return {
     id,
     name,
     patternLines: createPatternLines(WALL_SIZE),
     wall: createEmptyWall(WALL_SIZE),
-    floorLine: {
-      runes: [],
-      maxCapacity: overflowCapacity ?? 10,
-    },
     health: startingHealth,
-    maxHealth: maxHealthOverride ?? startingHealth,
+    maxHealth: maxHealth,
     armor: 0,
-    deck: createStartingDeck(id, totalRunesPerPlayer),
+    deck: deck,
   };
 }
 
@@ -209,7 +161,7 @@ export function createEmptyFactories(player: Player, perPlayerCount: number): Ru
 /**
  * Create runeforges for a solo run (only the human player gets runeforges)
  */
-export function createSoloFactories(player: Player, perPlayerCount: number): Runeforge[] {
+export function createSoloFactories(player: Player, perPlayerCount: number = 5): Runeforge[] {
   return Array(perPlayerCount)
     .fill(null)
     .map((_, index) => ({
@@ -226,20 +178,14 @@ export function createSoloFactories(player: Player, perPlayerCount: number): Run
  */
 export function fillFactories(
   runeforges: Runeforge[],
-  playerDecks: Record<string, Rune[]>,
+  deck: Rune[],
   runesPerRuneforge: number = 4
-): { runeforges: Runeforge[]; decksByPlayer: Record<string, Rune[]> } {
-  const shuffledDecks: Record<string, Rune[]> = {};
-
-  Object.entries(playerDecks).forEach(([playerId, deck]) => {
-    shuffledDecks[playerId] = [...deck].sort(() => Math.random() - 0.5);
-  });
-
+): { runeforges: Runeforge[]; deck: Rune[] } {
+  let remainingDeck = [...deck];
   const filledRuneforges = runeforges.map((runeforge) => {
-    const ownerDeck = shuffledDecks[runeforge.ownerId] ?? [];
-    const runesToDeal = Math.min(ownerDeck.length, runesPerRuneforge);
-    const runesForForge = ownerDeck.slice(0, runesToDeal);
-    shuffledDecks[runeforge.ownerId] = ownerDeck.slice(runesToDeal);
+    const runesToDeal = Math.min(remainingDeck.length, runesPerRuneforge);
+    const runesForForge = remainingDeck.slice(0, runesToDeal);
+    remainingDeck = remainingDeck.slice(runesToDeal);
 
     return {
       ...runeforge,
@@ -250,93 +196,68 @@ export function fillFactories(
 
   return {
     runeforges: filledRuneforges,
-    decksByPlayer: shuffledDecks,
+    deck: remainingDeck,
   };
 }
 
 /**
  * Initialize a solo run using the fixed six-rune setup.
  */
-export function initializeSoloGame(
-  config?: Partial<RunConfig>,
-  options?: SoloInitializationOptions
-): GameState {
-  const soloConfig = normalizeSoloConfig(config);
+export function initializeSoloGame(targetScore: number = 10, fullDeck: Rune[] = createStartingDeck(25)): GameState {
+  // const soloConfig = normalizeSoloConfig(config);
   const initialGameNumber = 1;
   const startingStrain = getOverloadDamageForGame(initialGameNumber);
   const soloSizingConfig = getSoloSizingConfig();
-  const soloRuneforgeCount = soloConfig.factoriesPerPlayer;
-  const targetScore = options?.targetScore ?? soloConfig.targetRuneScore;
-  const soloDeckSize = options?.startingDeck?.length ?? soloConfig.deckRunesPerType * RUNE_TYPES.length;
-  const longestRun = options?.longestRun ?? 0;
-  const soloMaxHealth = soloConfig.startingHealth;
+  const longestRun = 0; // Best game reached in this solo run before persistence updates it.
+  const soloMaxHealth = 100;
 
-  const soloPlayer = createPlayer(
+  const activeDeck = [...fullDeck].sort(() => Math.random() - 0.5);
+  const player = createPlayer(
     'player-1',
     'Arcane Apprentice',
-    soloConfig.startingHealth,
-    soloDeckSize,
-    soloSizingConfig.overflowCapacity,
+    soloMaxHealth,
+    activeDeck,
     soloMaxHealth,
   );
-  if (options?.startingDeck) {
-    soloPlayer.deck = [...options.startingDeck];
-  }
-  const startingDeckTemplate = [...soloPlayer.deck];
-
-  const soloFactories = createSoloFactories(soloPlayer, soloRuneforgeCount);
-  const { runeforges: filledRuneforges, decksByPlayer } = fillFactories(
+  const soloFactories = createSoloFactories(player);
+  const { runeforges: filledRuneforges, deck } = fillFactories(
     soloFactories,
-    {
-      [soloPlayer.id]: soloPlayer.deck,
-    },
+    player.deck,
     soloSizingConfig.runesPerRuneforge
   );
 
-  soloPlayer.deck = decksByPlayer[soloPlayer.id] ?? [];
+  player.deck = deck;
 
   return {
     gameStarted: false,
-    factoriesPerPlayer: soloRuneforgeCount,
     runesPerRuneforge: soloSizingConfig.runesPerRuneforge,
-    startingHealth: soloConfig.startingHealth,
+    startingHealth: player.maxHealth,
     overflowCapacity: soloSizingConfig.overflowCapacity,
-    strain: startingStrain,
-    strainMultiplier: soloConfig.strainMultiplier,
+    overloadDamage: startingStrain,
     startingStrain,
-    player: soloPlayer,
-    soloDeckTemplate: startingDeckTemplate,
+    player: player,
+    fullDeck: fullDeck,
     runeforges: filledRuneforges.map((runeforge) => ({ ...runeforge, disabled: false })),
-    centerPool: [],
     runeforgeDraftStage: 'single',
     turnPhase: 'select',
-    game: initialGameNumber,
+    gameIndex: initialGameNumber,
     round: 1,
-    tooltipCards: createDefaultTooltipCards(),
-    tooltipOverrideActive: false,
-    selectedRunes: [],
     overloadRunes: [],
-    selectionTimestamp: null,
-    draftSource: null,
     animatingRunes: [],
     scoringSequence: null,
     pendingPlacement: null,
     overloadSoundPending: false,
     channelSoundPending: false,
-    lockedPatternLines: {
-      [soloPlayer.id]: []
-    },
+    lockedPatternLines: [],
     shouldTriggerEndRound: false,
     runePowerTotal: 0,
     targetScore: targetScore,
-    runeScoreTargetIncrement: soloConfig.runeScoreTargetIncrement,
-    outcome: null,
-    patternLineLock: soloConfig.patternLinesLockOnComplete,
+    isDefeat: false,
+    patternLineLock: true,
     longestRun,
     deckDraftState: null,
-    baseTargetScore: soloConfig.targetRuneScore,
+    baseTargetScore: 10,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
-    victoryDraftPicks: soloConfig.victoryDraftPicks,
   };
 }

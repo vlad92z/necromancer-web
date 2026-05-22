@@ -4,21 +4,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import { useArmorChangeSound } from '../../../hooks/useArmorChangeSound';
+import { useGameplayHealthState } from '../../../hooks/useGameState';
+import { useHealthChangeSound } from '../../../hooks/useHealthChangeSound';
 
 type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
-interface HealthViewProps {
-  health: number;
-  maxHealth: number;
-  armor: number;
-}
+
+export function HealthView() {
+  const { health, maxHealth, armor, scoringSequence } = useGameplayHealthState();
+
+  const clampedHealth = Math.max(0, Math.min(health, maxHealth));
+  useHealthChangeSound(clampedHealth);
 
 
-export function HealthView({
-  health,
-  maxHealth,
-  armor
-}: HealthViewProps) {
   useArmorChangeSound(armor);
   const progress = Math.min(1, health / maxHealth);
   const progressPercent = Math.round(progress * 100);
@@ -31,6 +29,51 @@ export function HealthView({
   const animatedArmor = useMotionValue(armor);
   const [displayedHealth, setDisplayedHealth] = useState(health);
   const [displayedArmor, setDisplayedArmor] = useState(armor);
+  type ForcedArmorIndicator = {
+    amount: number;
+    key: number;
+  };
+  const [forcedArmorIndicator, setForcedArmorIndicator] = useState<ForcedArmorIndicator | null>(null);
+  const lastArmorStepRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!forcedArmorIndicator) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setForcedArmorIndicator(null);
+    }, 900);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [forcedArmorIndicator]);
+
+  useEffect(() => {
+    if (!scoringSequence) {
+      lastArmorStepRef.current = null;
+    }
+  }, [scoringSequence]);
+
+  useEffect(() => {
+    const sequence = scoringSequence;
+
+    if (!sequence || sequence.activeIndex < 0) {
+      return;
+    }
+
+    const step = sequence.steps[sequence.activeIndex];
+    const stepKey = `${sequence.sequenceId}:${sequence.activeIndex}`;
+
+    if (!step || step.armorDelta <= 0 || lastArmorStepRef.current === stepKey) {
+      return;
+    }
+
+    lastArmorStepRef.current = stepKey;
+    const indicatorKey = Date.now();
+    setForcedArmorIndicator({ amount: step.armorDelta, key: indicatorKey });
+  }, [scoringSequence]);
+
   useMotionValueEvent(animatedHealth, 'change', (value) => {
     setDisplayedHealth(Math.round(value));
   });
@@ -40,7 +83,7 @@ export function HealthView({
 
   const healthGainClassName = 'text-emerald-300 text-sm font-bold';
   const healthLossClassName = "text-rose-300 text-sm font-bold";
-    const armorGainClassName = 'text-blue-300 text-sm font-bold';
+  const armorGainClassName = 'text-blue-300 text-sm font-bold';
   const armorLossClassName = "text-slate-200 text-sm font-bold";
   useEffect(() => {
     const controls = animate(animatedHealth, health, {
@@ -86,6 +129,7 @@ export function HealthView({
 
 
 
+
   useEffect(() => {
     if (!healthIndicator) {
       return;
@@ -128,7 +172,7 @@ export function HealthView({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={armorIndicator.type === 'gain' ? armorGainClassName : armorLossClassName }
+                className={armorIndicator.type === 'gain' ? armorGainClassName : armorLossClassName}
               >
                 {armorIndicator.type === 'loss' ? '-' : '+'}
                 {armorIndicator.amount}
@@ -149,7 +193,7 @@ export function HealthView({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={healthIndicator.type === 'gain' ? healthGainClassName : healthLossClassName }
+                className={healthIndicator.type === 'gain' ? healthGainClassName : healthLossClassName}
               >
                 {healthIndicator.type === 'loss' ? '-' : '+'}
                 {healthIndicator.amount}

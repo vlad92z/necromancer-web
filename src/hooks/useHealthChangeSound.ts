@@ -4,10 +4,10 @@
 import { useEffect, useRef } from 'react';
 import damageSoundUrl from '../assets/sounds/damage.mp3';
 import healSoundUrl from '../assets/sounds/heal.mp3';
-import { useUIStore } from '../state/stores/uiStore';
+import { useSoundVolume } from './useGameState';
 
 export function useHealthChangeSound(health: number, forcedHealSignal?: number | null): void {
-  const soundVolume = useUIStore((state) => state.soundVolume);
+  const soundVolume = useSoundVolume();
   const previousHealthRef = useRef(health);
   const healAudioRef = useRef<HTMLAudioElement | null>(null);
   const damageAudioRef = useRef<HTMLAudioElement | null>(null);

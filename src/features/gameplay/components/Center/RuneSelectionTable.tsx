@@ -3,50 +3,36 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { GameState, Runeforge as RuneforgeType, Rune, RuneType } from '../../../../types/game';
+import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
+import {
+  useGameplayRuneforgeState,
+  useSelectedArtefactIds,
+  useSelectedRunes,
+} from '../../../../hooks/useGameState';
+import type { Rune, RuneType } from '../../../../types/game';
 import { RUNE_TYPES } from '../../../../utils/gameInitialization';
 import { getRuneTypeCounts } from '../../../../utils/runeCounting';
 import { RuneTypeTotals } from './RuneTypeTotals';
-import { Runeforge } from './Runeforge';
+import { RuneforgeView } from './RuneforgeView';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { ArtefactsRow } from '../../../../components/ArtefactsRow';
-import { useGameplayStore } from '../../../../state/stores/gameplayStore';
-import { useArtefactStore } from '../../../../state/stores/artefactStore';
-import type { ActiveElement } from '../keyboardNavigation';
 
 interface RuneSelectionTableProps {
-  runeforges: RuneforgeType[];
-  centerPool: Rune[];
-  onRuneClick: (runeforgeId: string, runeType: RuneType, runeId: string) => void;
-  hasSelectedRunes: boolean;
-  selectedRunes: Rune[];
-  draftSource: GameState['draftSource'];
-  activeElement: ActiveElement | null;
-  onCancelSelection: () => void;
-  animatingRuneIds?: string[];
-  hideOpponentRow?: boolean;
-  runesPerRuneforge: number;
-  runeforgeDraftStage: GameState['runeforgeDraftStage'];
+  animatingRuneIdSet: Set<string>;
+  isPlacementAnimating: boolean;
 }
 
 export function RuneSelectionTable({
-  runeforges,
-  centerPool,
-  onRuneClick,
-  hasSelectedRunes,
-  selectedRunes,
-  draftSource,
-  activeElement,
-  onCancelSelection,
-  animatingRuneIds,
-  runesPerRuneforge,
-  runeforgeDraftStage,
+  animatingRuneIdSet,
+  isPlacementAnimating,
 }: RuneSelectionTableProps) {
+  const { draftStage, runeforges } = useGameplayRuneforgeState();
+  const { cancelSelection } = useGameplayActions();
+  const { setTooltipCards, resetTooltipCards } = useUIActions();
+  const selectedRunes = useSelectedRunes();
+  const hasSelectedRunes = selectedRunes.length > 0;  
   const [hoveredRuneTypeByRuneforge, setHoveredRuneTypeByRuneforge] = useState<Record<string, RuneType | null>>({});
-  const isGlobalDraftStage = runeforgeDraftStage === 'global';
-  const isGlobalSelection = draftSource?.type === 'runeforge' && draftSource.selectionMode === 'global';
-  const setTooltipCards = useGameplayStore((state) => state.setTooltipCards);
-  const resetTooltipCards = useGameplayStore((state) => state.resetTooltipCards);
+  const isGlobalDraftStage = draftStage === 'global';
 
   const computeGlobalHoverState = useCallback(
     (runeType: RuneType): Record<string, RuneType | null> => {
@@ -65,37 +51,18 @@ export function RuneSelectionTable({
 
   useEffect(() => {
     setHoveredRuneTypeByRuneforge({});
-  }, [runeforgeDraftStage]);
+  }, [draftStage]);
 
-  const selectedFromRuneforgeId = draftSource?.type === 'runeforge' ? draftSource.runeforgeId : null;
-  const selectedRuneforgeOriginalRunes = useMemo(
-    () => (draftSource?.type === 'runeforge' ? draftSource.originalRunes : []),
-    [draftSource]
-  );
-  const globalSelectionOriginals = useMemo(() => {
-    if (draftSource?.type !== 'runeforge' || draftSource.selectionMode !== 'global') {
-      return null;
-    }
-    const map = new Map<string, Rune[]>();
-    (draftSource.affectedRuneforges ?? []).forEach(({ runeforgeId, originalRunes }) => {
-      map.set(runeforgeId, originalRunes);
-    });
-    return map;
-  }, [draftSource]);
-  const selectedRuneIdSet = useMemo(() => new Set(selectedRunes.map((rune) => rune.id)), [selectedRunes]);
-  const animatingRuneIdSet = animatingRuneIds ? new Set(animatingRuneIds) : null;
   const runeTypes = useMemo(() => RUNE_TYPES, []);
   const runeCounts = useMemo(
     () => {
       const counts = getRuneTypeCounts({
         runeforges,
-        centerPool,
         selectedRunes,
-        draftSource
       });
       return counts;
     },
-    [centerPool, draftSource, runeforges, selectedRunes]
+    [runeforges, selectedRunes]
   );
 
   const computeSelectionRunes = useCallback(
@@ -152,33 +119,23 @@ export function RuneSelectionTable({
     setHoveredRuneTypeByRuneforge((prev) => ({ ...prev, [runeforgeId]: null }));
   };
   
-  const selectedArtefactIds = useArtefactStore((state) => state.selectedArtefactIds);
+  const selectedArtefactIds = useSelectedArtefactIds();
 
   const handleDraftingTableClick = () => {
-    if (hasSelectedRunes) {
-      onCancelSelection();
+    if (hasSelectedRunes && !isPlacementAnimating) {
+      cancelSelection();
     }
   };
 
   return (
     <div className="h-full w-full flex flex-col justify-start gap-4 p-[min(1.2vmin,16px)]" onClick={handleDraftingTableClick}>
       <div className="flex-1 flex flex-col gap-[14px] w-full">
-        {runeforges.map((runeforge, runeforgeIndex) => (
-          <Runeforge
+        {runeforges.map((runeforge) => (
+          <RuneforgeView
             key={runeforge.id}
-            runeforgeIndex={runeforgeIndex}
             runeforge={runeforge}
-            runesPerRuneforge={runesPerRuneforge}
             hoveredRuneType={hoveredRuneTypeByRuneforge[runeforge.id] ?? null}
-            hasSelectedRunes={hasSelectedRunes}
-            isGlobalSelection={isGlobalSelection}
-            selectedFromRuneforgeId={selectedFromRuneforgeId}
-            selectedRuneforgeOriginalRunes={selectedRuneforgeOriginalRunes}
-            globalSelectionOriginals={globalSelectionOriginals}
-            selectedRuneIdSet={selectedRuneIdSet}
             animatingRuneIdSet={animatingRuneIdSet}
-            activeElement={activeElement}
-            onRuneClick={onRuneClick}
             onRuneMouseEnter={handleRuneMouseEnter}
             onRuneMouseLeave={handleRuneMouseLeave}
           />

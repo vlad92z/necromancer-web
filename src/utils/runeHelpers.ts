@@ -2,49 +2,12 @@
  * Rune utility functions
  */
 
-import type { RuneType } from '../types/game';
+import type { Rune } from "../types/game";
 
-/**
- * Get the glyph/emoji for a rune type
- */
-export function getRuneGlyph(runeType: RuneType): string {
-  const glyphs: Record<RuneType, string> = {
-    Fire: '🔥',
-    Frost: '❄️',
-    Life: '💚',
-    Void: '🌀',
-    Wind: '💨',
-    Lightning: '⚡',
-  };
-  return glyphs[runeType];
-}
-
-/**
- * Get the Tailwind color class for a rune type
- */
-export function getRuneColorClass(runeType: RuneType): string {
-  const colors: Record<RuneType, string> = {
-    Fire: 'bg-red-500',
-    Frost: 'bg-blue-500',
-    Life: 'bg-green-500',
-    Void: 'bg-purple-700',
-    Wind: 'bg-yellow-400',
-    Lightning: 'bg-cyan-300',
-  };
-  return colors[runeType];
-}
-
-/**
- * Get the effect description for a rune type
- */
-export function getRuneEffectDescription(runeType: RuneType): string {  
-  const descriptions: Record<RuneType, string> = {
-    Fire: 'Fire',
-    Frost: 'Frost',
-    Life: 'Life',
-    Void: 'Void',
-    Wind: 'Wind',
-    Lightning: 'Lightning',
-  };
-  return descriptions[runeType];
+export function primaryRuneFirst(runes: Rune[], primaryRuneId: string): Rune[] {
+  const primaryRune = runes.find((rune) => rune.id === primaryRuneId);
+  if (!primaryRune) {
+    return runes;
+  }
+  return [primaryRune, ...runes.filter((rune) => rune.id !== primaryRuneId)];
 }
