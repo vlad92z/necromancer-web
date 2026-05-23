@@ -45,7 +45,7 @@ Manual play check:
 - Open deck.
 - Select and cast rune without crash.
 
-## Stage 2: Effect Catalog + Display Metadata
+## Stage 2: Effect Catalog + Display Metadata ✅ Done
 
 File-level changes:
 - `src/utils/effectCatalog.ts`: add central registry.

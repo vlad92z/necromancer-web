@@ -346,9 +346,7 @@ describe('artefactEffects', () => {
 
     it('should return description for Tome', () => {
       const desc = getArtefactEffectDescription('tome');
-      expect(desc).toContain('size 1');
-      expect(desc).toContain('double');
-      expect(desc).toContain('armor');
+      expect(desc).toBe('+1 damage on all casts');
     });
   });
 });

@@ -4,7 +4,9 @@
  */
 
 import type { ArtefactId } from '../types/artefacts';
+import { ARTEFACTS } from '../types/artefacts';
 import type { GameState } from '../types/game';
+import { getEffectRefDescriptions } from './effectCatalog';
 import type { ResolvedSegment } from './scoring';
 
 /**
@@ -195,13 +197,5 @@ export function applyIncomingDamageModifiers(
  * Get artefact effect description for tooltips
  */
 export function getArtefactEffectDescription(artefactId: ArtefactId): string {
-  const descriptions: Record<ArtefactId, string> = {
-    ring: 'Double the odds of drafting epic runes',
-    rod: 'Double all healing',
-    potion: 'Double all armor gained',
-    robe: 'Increase total picks by 1 during deck drafting',
-    tome: 'Segments of size 1 add double rune score, healing, and armor',
-  };
-  
-  return descriptions[artefactId];
+  return getEffectRefDescriptions(ARTEFACTS[artefactId]?.passiveEffectRefs).join('\n');
 }

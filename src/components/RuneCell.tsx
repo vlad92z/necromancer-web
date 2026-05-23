@@ -34,7 +34,7 @@ import lightningRune from '../assets/runes/lightning_rune.svg';
 import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.svg';
 import lightningRuneRare from '../assets/runes/lightning_rune_rare.svg';
 import lightningRuneEpic from '../assets/runes/lightning_rune_epic.svg';
-import { getRuneEffectDescription, getRuneRarity } from '../utils/runeEffects';
+import { getRuneEffectDescription } from '../utils/runeEffects';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
@@ -140,7 +140,7 @@ export function RuneCell({
   const variantStyle = VARIANT_STYLES[variant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
-  const runeRarity = showEffect && rune ? getRuneRarity(rune) : null;
+  const runeRarity = showEffect && rune ? rune.rarity : null;
   const runeImage = runeType
     ? runeRarity
       ? RUNE_ASSETS_BY_RARITY[runeRarity][runeType]

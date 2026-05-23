@@ -6,7 +6,7 @@ import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import type { Rune, RuneType, TooltipCard } from '../types/game';
 import { getArtefactEffectDescription } from './artefactEffects';
-import { getRuneEffectDescription, getRuneRarity } from './runeEffects';
+import { getRuneEffectDescription } from './runeEffects';
 
 const FALLBACK_RUNE_TYPE: RuneType = 'Life';
 
@@ -34,7 +34,7 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
     runeType: rune.runeType,
     title: `${rune.runeType} Rune`,
     description: getRuneEffectDescription(rune),
-    runeRarity: getRuneRarity(rune),
+    runeRarity: rune.rarity,
   }));
 }
 

@@ -49,8 +49,11 @@ describe('deckDrafting', () => {
     expect(ids.size).toBe(runes.length);
     runes.forEach((rune) => {
       expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.rarity);
-      expect(rune.castEffectRefs).toEqual([]);
+      expect(rune.castEffectRefs.length).toBeGreaterThan(0);
       expect(rune.passiveEffectRefs).toEqual([]);
+      rune.castEffectRefs.forEach((effectRef) => {
+        expect(effectRef.params).not.toHaveProperty('rarity');
+      });
     });
   });
 
@@ -112,7 +115,7 @@ function createRune(id: string): Rune {
     id,
     runeType: 'Fire',
     rarity: 'common',
-    castEffectRefs: [],
+    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 3 } }],
     passiveEffectRefs: [],
   };
 }
