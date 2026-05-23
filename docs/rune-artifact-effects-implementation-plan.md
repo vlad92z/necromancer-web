@@ -68,7 +68,7 @@ Manual play check:
 - Rune art rarity renders.
 - Rune and artefact tooltips render.
 
-## Stage 3: Cast Effect Resolver
+## Stage 3: Cast Effect Resolver ✅ Done
 
 File-level changes:
 - `src/utils/effectResolver.ts`: add pure cast resolver.

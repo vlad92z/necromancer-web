@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Enemy, Rune, RuneType, WallCell } from '../types/game';
+import { createEffectRef } from './effectCatalog';
 import { createEmptyWallCharges, createPlayer } from './gameInitialization';
 import {
   castRuneToWallSlot,
@@ -190,7 +191,7 @@ describe('combatResolution turn cycling', () => {
 });
 
 describe('combatResolution basic combat effects', () => {
-  it('leaves damage refs unresolved during Stage 1 cutover', () => {
+  it('applies damage to enemy health and returns a cast log', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const enemy = createTestEnemy(10);
     const rune = createTestRuneWithEffects('damage-rune', 'Fire', [
@@ -199,12 +200,22 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy, rune });
 
-    expect(result.enemy?.health).toBe(10);
+    expect(result.enemy?.health).toBe(7);
     expect(result.player).toBe(player);
     expect(result.arcaneDustDelta).toBe(0);
+    expect(result.logs).toMatchObject([
+      {
+        sourceType: 'rune',
+        sourceId: 'damage-rune',
+        effectId: 'cast.damage',
+        trigger: 'onCast',
+        displayHint: 'damage',
+        output: { damage: 3, enemyHealth: 7 },
+      },
+    ]);
   });
 
-  it('leaves healing and armor refs unresolved during Stage 1 cutover', () => {
+  it('clamps healing at max health and adds armor', () => {
     const player = {
       ...createPlayer('player-1', 'Tester', 10, [], 10),
       health: 8,
@@ -217,11 +228,12 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(10), rune });
 
-    expect(result.player.health).toBe(8);
-    expect(result.player.armor).toBe(1);
+    expect(result.player.health).toBe(10);
+    expect(result.player.armor).toBe(3);
+    expect(result.logs.map((log) => log.effectId)).toEqual(['cast.healing', 'cast.armor']);
   });
 
-  it('keeps fortune and channel refs unresolved during Stage 1 cutover', () => {
+  it('returns fortune as arcane dust delta and keeps Channel effects as no-op logs', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const enemy = createTestEnemy(10);
     const rune = createTestRuneWithEffects('mixed-rune', 'Wind', [
@@ -232,9 +244,14 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy, rune });
 
-    expect(result.arcaneDustDelta).toBe(0);
+    expect(result.arcaneDustDelta).toBe(4);
     expect(result.player).toBe(player);
     expect(result.enemy).toBe(enemy);
+    expect(result.logs).toMatchObject([
+      { effectId: 'cast.fortune', output: { arcaneDust: 4, arcaneDustDelta: 4 } },
+      { effectId: 'cast.channel', output: { noOp: true } },
+      { effectId: 'cast.channelSynergy', output: { noOp: true } },
+    ]);
   });
 
   it('counts filled wall runes by type across the whole wall', () => {
@@ -253,7 +270,7 @@ describe('combatResolution basic combat effects', () => {
     expect(wallHasRuneType(wall, 'Life')).toBe(false);
   });
 
-  it('leaves Synergy refs unresolved during Stage 1 cutover', () => {
+  it('applies Synergy damage using whole completed wall counts', () => {
     const player = createPlayerWithWall([
       [0, 4, 'Void'],
       [1, 4, 'Void'],
@@ -266,11 +283,15 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy, rune });
 
-    expect(result.enemy?.health).toBe(20);
+    expect(result.enemy?.health).toBe(16);
     expect(result.player).toBe(player);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.synergy',
+      output: { damage: 4, synergyType: 'Void', synergyCount: 2, enemyHealth: 16 },
+    });
   });
 
-  it('leaves ArmorSynergy refs unresolved during Stage 1 cutover', () => {
+  it('applies ArmorSynergy using whole completed wall counts', () => {
     const player = {
       ...createPlayerWithWall([
         [0, 3, 'Frost'],
@@ -285,10 +306,14 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
 
-    expect(result.player.armor).toBe(1);
+    expect(result.player.armor).toBe(7);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.armorSynergy',
+      output: { armor: 6, synergyType: 'Frost', synergyCount: 2, playerArmor: 7 },
+    });
   });
 
-  it('leaves Fragile refs unresolved during Stage 1 cutover', () => {
+  it('applies Fragile only when the blocked type is absent from the whole wall', () => {
     const absentPlayer = createPlayerWithWall([
       [0, 3, 'Frost'],
       [1, 2, 'Wind'],
@@ -305,7 +330,7 @@ describe('combatResolution basic combat effects', () => {
       player: absentPlayer,
       enemy: createTestEnemy(20),
       rune,
-    }).enemy?.health).toBe(20);
+    }).enemy?.health).toBe(15);
     expect(resolveCompletedRuneEffects({
       player: presentPlayer,
       enemy: createTestEnemy(20),
@@ -313,7 +338,7 @@ describe('combatResolution basic combat effects', () => {
     }).enemy?.health).toBe(20);
   });
 
-  it('leaves mixed refs unresolved during Stage 1 cutover', () => {
+  it('combines advanced effects with basic effects in ref order', () => {
     const player = {
       ...createPlayerWithWall([
         [0, 4, 'Void'],
@@ -332,9 +357,38 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
 
-    expect(result.enemy?.health).toBe(20);
-    expect(result.player.armor).toBe(0);
+    expect(result.enemy?.health).toBe(11);
+    expect(result.player.armor).toBe(3);
+    expect(result.arcaneDustDelta).toBe(5);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'cast.damage',
+      'cast.synergy',
+      'cast.armorSynergy',
+      'cast.fragile',
+      'cast.fortune',
+    ]);
+  });
+
+  it('logs unknown refs without changing state', () => {
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    const enemy = createTestEnemy(10);
+    const rune = {
+      ...createTestRune('unknown-rune', 'Fire'),
+      castEffectRefs: [{ effectId: 'legacy.unknown', params: { amount: 999 } }],
+    };
+
+    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+
+    expect(result.player).toBe(player);
+    expect(result.enemy).toBe(enemy);
     expect(result.arcaneDustDelta).toBe(0);
+    expect(result.logs).toMatchObject([
+      {
+        effectId: 'legacy.unknown',
+        displayHint: 'unknown',
+        output: { noOp: true },
+      },
+    ]);
   });
 
   it('enemy attack consumes armor before health', () => {
@@ -433,12 +487,45 @@ function createTestRuneWithEffects(id: string, runeType: Rune['runeType'], effec
     id,
     runeType,
     rarity: 'common',
-    castEffectRefs: effects.map((effect, index) => ({
-      effectId: `legacy-test-effect-${index}`,
-      params: { effect },
-    })),
+    castEffectRefs: effects.map(toCatalogEffectRef),
     passiveEffectRefs: [],
   };
+}
+
+function toCatalogEffectRef(effect: unknown): Rune['castEffectRefs'][number] {
+  if (!effect || typeof effect !== 'object') {
+    return { effectId: 'legacy.invalid' };
+  }
+
+  const candidate = effect as {
+    type?: string;
+    amount?: number;
+    synergyType?: RuneType;
+    fragileType?: RuneType;
+  };
+
+  switch (candidate.type) {
+    case 'Damage':
+      return createEffectRef('cast.damage', { amount: candidate.amount ?? 0 });
+    case 'Healing':
+      return createEffectRef('cast.healing', { amount: candidate.amount ?? 0 });
+    case 'Armor':
+      return createEffectRef('cast.armor', { amount: candidate.amount ?? 0 });
+    case 'Fortune':
+      return createEffectRef('cast.fortune', { amount: candidate.amount ?? 0 });
+    case 'Synergy':
+      return createEffectRef('cast.synergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
+    case 'ArmorSynergy':
+      return createEffectRef('cast.armorSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
+    case 'Fragile':
+      return createEffectRef('cast.fragile', { amount: candidate.amount ?? 0, fragileType: candidate.fragileType });
+    case 'Channel':
+      return createEffectRef('cast.channel', { amount: candidate.amount ?? 0 });
+    case 'ChannelSynergy':
+      return createEffectRef('cast.channelSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
+    default:
+      return { effectId: 'legacy.unknown' };
+  }
 }
 
 function createRunes(prefix: string, count: number): Rune[] {

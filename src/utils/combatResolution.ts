@@ -3,6 +3,8 @@
  */
 
 import type { Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
+import type { EffectResolutionLog } from './effectResolver';
+import { resolveCastEffects } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
@@ -51,6 +53,7 @@ export interface CompletedRuneEffectsResult {
   player: Player;
   enemy: Enemy | null;
   arcaneDustDelta: number;
+  logs: EffectResolutionLog[];
 }
 
 export interface EnemyTurnInput {
@@ -185,13 +188,14 @@ export function resolveCompletedRuneEffects({
   enemy,
   rune,
 }: CompletedRuneEffectsInput): CompletedRuneEffectsResult {
-  void rune;
-
-  return {
+  const result = resolveCastEffects({
     player,
     enemy,
-    arcaneDustDelta: 0,
-  };
+    castRune: rune,
+    wall: player.wall,
+  });
+
+  return result;
 }
 
 export function resolveEnemyTurn({ player, enemy }: EnemyTurnInput): EnemyTurnResult {

@@ -4,6 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DraftSource, Rune, RuneType, Runeforge, ScoringSequenceState, WallCell } from '../../types/game';
+import { createEffectRef } from '../../utils/effectCatalog';
 
 const storage = new Map<string, string>();
 const localStorageMock = {
@@ -820,7 +821,7 @@ describe('gameplayStore persistence', () => {
     expect(nextState.player.deck).toHaveLength(1);
   });
 
-  it('leaves final Damage refs unresolved during Stage 1 cutover', async () => {
+  it('resolves final Damage casts against enemy HP', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();
     const damageRune = createTestRuneWithEffects('combat-damage', 'Fire', [
@@ -837,7 +838,7 @@ describe('gameplayStore persistence', () => {
 
     store.getState().castRuneToWall(0, 0);
 
-    expect(store.getState().enemy?.health).toBe(10);
+    expect(store.getState().enemy?.health).toBe(7);
     expect(store.getState().combatPhase).toBe('player-turn');
   });
 
@@ -862,7 +863,7 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().wallCharges[1][1].currentCount).toBe(1);
   });
 
-  it('leaves final Healing, Armor, and Fortune refs unresolved during Stage 1 cutover', async () => {
+  it('resolves final Healing, Armor, and Fortune casts', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();
     const supportRune = createTestRuneWithEffects('combat-support', 'Life', [
@@ -886,9 +887,9 @@ describe('gameplayStore persistence', () => {
 
     store.getState().castRuneToWall(0, 1);
 
-    expect(store.getState().player.health).toBe(98);
-    expect(store.getState().player.armor).toBe(1);
-    expect(storage.get('necromancer-arcane-dust')).toBe('0');
+    expect(store.getState().player.health).toBe(100);
+    expect(store.getState().player.armor).toBe(3);
+    expect(storage.get('necromancer-arcane-dust')).toBe('4');
   });
 
   it('resolves final Synergy casts with whole-wall counts', async () => {
@@ -928,7 +929,7 @@ describe('gameplayStore persistence', () => {
 
     store.getState().castRuneToWall(1, 5);
 
-    expect(store.getState().enemy?.health).toBe(10);
+    expect(store.getState().enemy?.health).toBe(6);
     expect(store.getState().combatPhase).toBe('player-turn');
   });
 
@@ -969,7 +970,7 @@ describe('gameplayStore persistence', () => {
 
     store.getState().castRuneToWall(1, 4);
 
-    expect(store.getState().player.armor).toBe(1);
+    expect(store.getState().player.armor).toBe(7);
   });
 
   it('resolves Fragile casts against the whole wall and can trigger victory', async () => {
@@ -993,12 +994,12 @@ describe('gameplayStore persistence', () => {
 
     store.getState().castRuneToWall(0, 3);
 
-    expect(store.getState().enemy?.health).toBe(5);
-    expect(store.getState().combatPhase).toBe('player-turn');
-    expect(store.getState().turnPhase).toBe('select');
+    expect(store.getState().enemy?.health).toBe(0);
+    expect(store.getState().combatPhase).toBe('victory');
+    expect(store.getState().turnPhase).toBe('deck-draft');
   });
 
-  it('does not open deck draft from unresolved lethal refs during Stage 1 cutover', async () => {
+  it('opens deck draft when enemy HP reaches zero and prevents End Turn attack', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();
     const lethalRune = createTestRuneWithEffects('combat-lethal', 'Fire', [
@@ -1022,12 +1023,12 @@ describe('gameplayStore persistence', () => {
     store.getState().castRuneToWall(0, 0);
     store.getState().endCombatTurn();
 
-    expect(store.getState().enemy?.health).toBe(2);
-    expect(store.getState().combatPhase).toBe('player-turn');
-    expect(store.getState().turnPhase).toBe('select');
-    expect(store.getState().deckDraftState).toBeNull();
-    expect(store.getState().player.health).toBe(5);
-    expect(store.getState().hand).not.toEqual([]);
+    expect(store.getState().enemy?.health).toBe(0);
+    expect(store.getState().combatPhase).toBe('victory');
+    expect(store.getState().turnPhase).toBe('deck-draft');
+    expect(store.getState().deckDraftState).not.toBeNull();
+    expect(store.getState().player.health).toBe(10);
+    expect(store.getState().hand).toEqual([]);
   });
 
   it('returns draw, hand, discard, completed wall, and charge-spent runes before deck draft', async () => {
@@ -1047,7 +1048,7 @@ describe('gameplayStore persistence', () => {
       hand: [lethalRune, remainingHandRune],
       discardPile: [discardRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: state.enemy ? { ...state.enemy, health: 0, maxHealth: 10 } : state.enemy,
+      enemy: state.enemy ? { ...state.enemy, health: 2, maxHealth: 10 } : state.enemy,
       player: {
         ...state.player,
         deck: [drawRune],
@@ -1099,7 +1100,7 @@ describe('gameplayStore persistence', () => {
 
     store.getState().castRuneToWall(0, 0);
 
-    expect(store.getState().enemy?.health).toBe(5);
+    expect(store.getState().enemy?.health).toBe(4);
     expect(store.getState().turnPhase).toBe('select');
     expect(store.getState().deckDraftState).toBeNull();
     expect(store.getState().combatPhase).toBe('player-turn');
@@ -1117,7 +1118,7 @@ describe('gameplayStore persistence', () => {
       ...state,
       hand: [lethalRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: state.enemy ? { ...state.enemy, health: 0, maxHealth: 10 } : state.enemy,
+      enemy: state.enemy ? { ...state.enemy, health: 1, maxHealth: 10 } : state.enemy,
       player: {
         ...state.player,
         deck: [],
@@ -1392,12 +1393,45 @@ function createTestRuneWithEffects(id: string, runeType: Rune['runeType'], effec
     id,
     runeType,
     rarity: 'common',
-    castEffectRefs: effects.map((effect, index) => ({
-      effectId: `legacy-test-effect-${index}`,
-      params: { effect },
-    })),
+    castEffectRefs: effects.map(toCatalogEffectRef),
     passiveEffectRefs: [],
   };
+}
+
+function toCatalogEffectRef(effect: unknown): Rune['castEffectRefs'][number] {
+  if (!effect || typeof effect !== 'object') {
+    return { effectId: 'legacy.invalid' };
+  }
+
+  const candidate = effect as {
+    type?: string;
+    amount?: number;
+    synergyType?: RuneType;
+    fragileType?: RuneType;
+  };
+
+  switch (candidate.type) {
+    case 'Damage':
+      return createEffectRef('cast.damage', { amount: candidate.amount ?? 0 });
+    case 'Healing':
+      return createEffectRef('cast.healing', { amount: candidate.amount ?? 0 });
+    case 'Armor':
+      return createEffectRef('cast.armor', { amount: candidate.amount ?? 0 });
+    case 'Fortune':
+      return createEffectRef('cast.fortune', { amount: candidate.amount ?? 0 });
+    case 'Synergy':
+      return createEffectRef('cast.synergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
+    case 'ArmorSynergy':
+      return createEffectRef('cast.armorSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
+    case 'Fragile':
+      return createEffectRef('cast.fragile', { amount: candidate.amount ?? 0, fragileType: candidate.fragileType });
+    case 'Channel':
+      return createEffectRef('cast.channel', { amount: candidate.amount ?? 0 });
+    case 'ChannelSynergy':
+      return createEffectRef('cast.channelSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
+    default:
+      return { effectId: 'legacy.unknown' };
+  }
 }
 
 function createWallCell(runeType: RuneType): WallCell {
