@@ -14,10 +14,10 @@ import {
 describe('scoring wall helpers', () => {
   it('collects orthogonally connected wall cells only', () => {
     const wall = createWall(4);
-    wall[0][0] = { runeType: 'Fire', effects: [] };
-    wall[0][1] = { runeType: 'Life', effects: [] };
-    wall[1][1] = { runeType: 'Void', effects: [] };
-    wall[3][3] = { runeType: 'Frost', effects: [] };
+    wall[0][0] = createWallCell('Fire');
+    wall[0][1] = createWallCell('Life');
+    wall[1][1] = createWallCell('Void');
+    wall[3][3] = createWallCell('Frost');
 
     const cells = collectSegmentCells(wall, 0, 0);
 
@@ -43,7 +43,18 @@ function createWall(size: number): ScoringWall {
   return Array.from({ length: size }, () =>
     Array.from({ length: size }, () => ({
       runeType: null,
-      effects: null,
+      rarity: null,
+      castEffectRefs: null,
+      passiveEffectRefs: null,
     }))
   );
+}
+
+function createWallCell(runeType: NonNullable<ScoringWall[number][number]['runeType']>): ScoringWall[number][number] {
+  return {
+    runeType,
+    rarity: 'common',
+    castEffectRefs: [],
+    passiveEffectRefs: [],
+  };
 }

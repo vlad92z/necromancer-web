@@ -16,7 +16,7 @@ import type {
 } from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories } from '../../utils/gameInitialization';
 import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
-import { copyRuneEffects, getRuneEffectsForType, getRuneRarity } from '../../utils/runeEffects';
+import { copyEffectRefs } from '../../utils/runeEffects';
 import { createDeckDraftState, advanceDeckDraftState, mergeDeckWithRuneforge, applyDeckDraftEffectToPlayer } from '../../utils/deckDrafting';
 import { getArcaneDustReward } from '../../utils/arcaneDust';
 import {
@@ -69,15 +69,13 @@ function shuffleRunes(runes: Rune[]): Rune[] {
 
 function normalizePatternLines(patternLines: PatternLine[]): PatternLine[] {
   return patternLines.map((line) => {
-    const currentLine = { ...line };
-    delete currentLine.firstRuneId;
-    delete currentLine.firstRuneEffects;
-
     return {
-      ...currentLine,
+      ...line,
       runes: line.runes ?? [],
-      primaryRuneId: line.primaryRuneId ?? line.firstRuneId ?? null,
-      primaryRuneEffects: line.primaryRuneEffects ?? line.firstRuneEffects ?? null,
+      primaryRuneId: line.primaryRuneId ?? null,
+      primaryRuneRarity: line.primaryRuneRarity ?? null,
+      primaryCastEffectRefs: line.primaryCastEffectRefs ?? null,
+      primaryPassiveEffectRefs: line.primaryPassiveEffectRefs ?? null,
     };
   });
 }
@@ -430,7 +428,9 @@ function placeSelectionOnPatternLine(
 
   const primaryRune = selectedRunes[0];
   const nextPrimaryRuneId = patternLine.primaryRuneId ?? primaryRune.id;
-  const nextPrimaryRuneEffects = patternLine.primaryRuneEffects ?? copyRuneEffects(primaryRune.effects);
+  const nextPrimaryRuneRarity = patternLine.primaryRuneRarity ?? primaryRune.rarity;
+  const nextPrimaryCastEffectRefs = patternLine.primaryCastEffectRefs ?? copyEffectRefs(primaryRune.castEffectRefs);
+  const nextPrimaryPassiveEffectRefs = patternLine.primaryPassiveEffectRefs ?? copyEffectRefs(primaryRune.passiveEffectRefs);
 
   const updatedPatternLines = [...currentPlayer.patternLines];
   updatedPatternLines[patternLineIndex] = {
@@ -439,7 +439,9 @@ function placeSelectionOnPatternLine(
     count: patternLine.count + runesToPlace,
     runes: [...(patternLine.runes ?? []), ...placedRunes],
     primaryRuneId: nextPrimaryRuneId,
-    primaryRuneEffects: nextPrimaryRuneEffects,
+    primaryRuneRarity: nextPrimaryRuneRarity,
+    primaryCastEffectRefs: nextPrimaryCastEffectRefs,
+    primaryPassiveEffectRefs: nextPrimaryPassiveEffectRefs,
   };
 
   const { overloadDamage, nextHealth, nextArmor, scoreBonus, channelTriggered } = getOverloadResult(
@@ -789,20 +791,27 @@ export const gameplayStoreConfig = (
         const runeType = line.runeType as RuneType;
         const wallSize = updatedWall.length;
         const col = getWallColumnForRune(index, runeType, wallSize);
-        const effects = line.primaryRuneEffects ?? getRuneEffectsForType(runeType);
         const lineRunes = line.runes ?? [];
         const castRuneId = line.primaryRuneId ?? lineRunes[0]?.id ?? null;
+        const castRune = castRuneId ? lineRunes.find((rune) => rune.id === castRuneId) ?? null : null;
         const reusableRunes = lineRunes.filter((rune) => rune.id !== castRuneId);
         recycledRunes.push(...reusableRunes);
 
-        updatedWall[index][col] = { runeType, effects: copyRuneEffects(effects) };
+        updatedWall[index][col] = {
+          runeType,
+          rarity: line.primaryRuneRarity ?? castRune?.rarity ?? 'common',
+          castEffectRefs: copyEffectRefs(line.primaryCastEffectRefs ?? castRune?.castEffectRefs),
+          passiveEffectRefs: copyEffectRefs(line.primaryPassiveEffectRefs ?? castRune?.passiveEffectRefs),
+        };
         updatedPatternLines[index] = {
           tier: line.tier,
           runeType: null,
           count: 0,
           runes: [],
           primaryRuneId: null,
-          primaryRuneEffects: null,
+          primaryRuneRarity: null,
+          primaryCastEffectRefs: null,
+          primaryPassiveEffectRefs: null,
         };
 
         const resolvedSegment = resolveSegment(updatedWall, index, col, overloadRuneCounts);
@@ -1232,14 +1241,14 @@ export const gameplayStoreConfig = (
         return state;
       }
 
-      const rarity = getRuneRarity(runeToRemove.effects);
-      const rarityDustMap: Record<NonNullable<typeof rarity>, number> = {
+      const rarity = runeToRemove.rarity;
+      const rarityDustMap: Record<typeof rarity, number> = {
         common: 0,
         uncommon: 1,
         rare: 5,
         epic: 25,
       } as const;
-      dustAwarded = rarity ? rarityDustMap[rarity] ?? 0 : 0;
+      dustAwarded = rarityDustMap[rarity] ?? 0;
 
       const updatedDeck = runeInDeck
         ? state.player.deck.filter((rune) => rune.id !== runeId)

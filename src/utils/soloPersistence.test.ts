@@ -30,7 +30,7 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 2,
+      version: 3,
       state: {
         gameStarted: true,
         targetScore: 17,

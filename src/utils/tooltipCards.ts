@@ -33,8 +33,8 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
     id: `rune-tooltip-${rune.id}-${index}`,
     runeType: rune.runeType,
     title: `${rune.runeType} Rune`,
-    description: getRuneEffectDescription(rune.effects),
-    runeRarity: getRuneRarity(rune.effects),
+    description: getRuneEffectDescription(rune),
+    runeRarity: getRuneRarity(rune),
   }));
 }
 

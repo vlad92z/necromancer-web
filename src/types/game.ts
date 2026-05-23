@@ -10,22 +10,17 @@ import type { ArtefactId } from './artefacts';
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
 
 /**
- * Rune effect modifiers
+ * Rune effect reference data.
  */
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 
-export type RuneEffect =
-  | { type: 'Damage'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'Healing'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'Synergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
-  | { type: 'Fortune'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'Fragile'; amount: number; fragileType: RuneType; rarity: RuneEffectRarity }
-  | { type: 'Channel'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'ChannelSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
-  | { type: 'Armor'; amount: number; rarity: RuneEffectRarity }
-  | { type: 'ArmorSynergy'; amount: number; synergyType: RuneType; rarity: RuneEffectRarity }
+export type EffectId = string;
+export type EffectParams = Record<string, unknown>;
 
-export type RuneEffects = RuneEffect[];
+export interface EffectRef {
+  effectId: EffectId;
+  params?: EffectParams;
+}
 
 /**
  * A rune in the game
@@ -33,7 +28,9 @@ export type RuneEffects = RuneEffect[];
 export interface Rune {
   id: string;
   runeType: RuneType;
-  effects: RuneEffects;
+  rarity: RuneEffectRarity;
+  castEffectRefs: EffectRef[];
+  passiveEffectRefs: EffectRef[];
 }
 
 export type EnemyIntent = { type: 'Attack'; amount: number };
@@ -105,9 +102,9 @@ export interface PatternLine {
   count: number; // Current number of runes in the line
   runes: Rune[]; // Exact runes placed on this line, in placement order
   primaryRuneId: string | null; // ID of the rune that will cast from this line
-  primaryRuneEffects: RuneEffects | null; // Effects inherited by wall placement
-  firstRuneId?: string | null; // Legacy persisted field migrated during hydration
-  firstRuneEffects?: RuneEffects | null; // Legacy persisted field migrated during hydration
+  primaryRuneRarity: RuneEffectRarity | null; // Rarity inherited by wall placement
+  primaryCastEffectRefs: EffectRef[] | null; // Cast effect refs inherited by wall placement
+  primaryPassiveEffectRefs: EffectRef[] | null; // Passive effect refs inherited by wall placement
 }
 
 /**
@@ -115,7 +112,9 @@ export interface PatternLine {
  */
 export interface WallCell {
   runeType: RuneType | null; // null if empty
-  effects: RuneEffects | null; // Effects inherited from the pattern line's first rune
+  rarity: RuneEffectRarity | null; // Rarity inherited from the completed rune
+  castEffectRefs: EffectRef[] | null; // Cast effect refs inherited from the completed rune
+  passiveEffectRefs: EffectRef[] | null; // Passive effect refs inherited from the completed rune
 }
 
 /**

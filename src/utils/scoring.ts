@@ -3,8 +3,7 @@
  * Implements connected segment scoring
  */
 
-import type { RuneEffects, RuneType, ScoringWall } from '../types/game';
-import { getRuneEffectsForType } from './runeEffects';
+import type { EffectRef, RuneEffectRarity, RuneType, ScoringWall } from '../types/game';
 
 const RUNE_ORDER: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 
@@ -17,7 +16,9 @@ export interface SegmentCell {
   row: number;
   col: number;
   runeType: RuneType | null;
-  effects: RuneEffects | null;
+  rarity: RuneEffectRarity | null;
+  castEffectRefs: EffectRef[] | null;
+  passiveEffectRefs: EffectRef[] | null;
 }
 
 export function collectSegmentCells(
@@ -54,7 +55,14 @@ export function collectSegmentCells(
     }
 
     visited[r][c] = true;
-    cells.push({ row: r, col: c, runeType: wall[r][c].runeType, effects: wall[r][c].effects });
+    cells.push({
+      row: r,
+      col: c,
+      runeType: wall[r][c].runeType,
+      rarity: wall[r][c].rarity,
+      castEffectRefs: wall[r][c].castEffectRefs,
+      passiveEffectRefs: wall[r][c].passiveEffectRefs,
+    });
 
     stack.push([r - 1, c]);
     stack.push([r + 1, c]);
@@ -133,80 +141,16 @@ export function resolveSegmentFromCells(
     a.row === b.row ? a.col - b.col : a.row - b.row
   );
 
-  // Count runes by type for Synergy and Fragile effects
-  const runeTypeCounts = new Map<RuneType, number>();
-  connectedCells.forEach((cell) => {
-    if (cell.runeType) {
-      runeTypeCounts.set(cell.runeType, (runeTypeCounts.get(cell.runeType) ?? 0) + 1);
-    }
-  });
-
-  let channelSynergyTriggered = false;
+  const channelSynergyTriggered = false;
   const resolutionSteps: RuneResolutionStep[] = orderedCells.map((cell) => {
-    const baseEffects = cell.runeType ? getRuneEffectsForType(cell.runeType) : [];
-    const providedEffects = cell.effects ?? [];
-    const resolvedEffects: RuneEffects =
-      providedEffects.length > 0 ? [...providedEffects] : baseEffects;
-
-    let damage = 0;
-    let healing = 0;
-    let arcaneDust = 0;
-    let armor = 0;
-    resolvedEffects.forEach((effect) => {
-      switch (effect.type) {
-        case 'Damage':
-          damage += effect.amount;
-          break;
-        case 'Healing':
-          healing += effect.amount;
-          break;
-        case 'Armor':
-          console.log('ADDING ARMOR FROM EFFECT', effect.amount);
-          armor += effect.amount;
-          break;
-        case 'Synergy': {
-          // Add amount to damage for each synergyType rune in the segment
-          const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
-          damage += effect.amount * synergyCount;
-          break;
-        }
-        case 'ArmorSynergy': {
-          const synergyCount = runeTypeCounts.get(effect.synergyType) ?? 0;
-          armor += effect.amount * synergyCount;
-          break;
-        }
-        case 'Fortune':
-          // Add amount to arcane dust
-          arcaneDust += effect.amount;
-          break;
-        case 'Fragile': {
-          // Add amount to damage if the segment has no fragileType runes
-          const fragileTypeCount = runeTypeCounts.get(effect.fragileType) ?? 0;
-          if (fragileTypeCount === 0) {
-            damage += effect.amount;
-          }
-          break;
-        }
-        case 'Channel':
-          break;
-        case 'ChannelSynergy': {
-          const overloadedCount = overloadRuneCounts.get(effect.synergyType) ?? 0;
-          const bonus = effect.amount * overloadedCount;
-          if (bonus > 0) {
-            channelSynergyTriggered = true;
-          }
-          damage += bonus;
-          break;
-        }
-      }
-    });
+    void overloadRuneCounts;
 
     return {
       cell,
-      damageDelta: damage,
-      healingDelta: healing,
-      arcaneDustDelta: arcaneDust,
-      armorDelta: armor,
+      damageDelta: 0,
+      healingDelta: 0,
+      arcaneDustDelta: 0,
+      armorDelta: 0,
     };
   });
 

@@ -3,7 +3,7 @@
  */
 
 import type { Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
-import { copyRuneEffects } from './runeEffects';
+import { copyEffectRefs } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
 
@@ -162,7 +162,9 @@ export function castRuneToWallSlot({
   const nextWall = player.wall.map((wallRow) => [...wallRow]);
   nextWall[row][col] = {
     runeType: selectedRune.runeType,
-    effects: copyRuneEffects(selectedRune.effects),
+    rarity: selectedRune.rarity,
+    castEffectRefs: copyEffectRefs(selectedRune.castEffectRefs),
+    passiveEffectRefs: copyEffectRefs(selectedRune.passiveEffectRefs),
   };
 
   return {
@@ -183,77 +185,12 @@ export function resolveCompletedRuneEffects({
   enemy,
   rune,
 }: CompletedRuneEffectsInput): CompletedRuneEffectsResult {
-  let nextPlayer = player;
-  let nextEnemy = enemy;
-  let arcaneDustDelta = 0;
-  const wallRuneCounts = countFilledWallRunesByType(player.wall);
-
-  rune.effects.forEach((effect) => {
-    switch (effect.type) {
-      case 'Damage': {
-        if (nextEnemy) {
-          nextEnemy = {
-            ...nextEnemy,
-            health: Math.max(0, nextEnemy.health - effect.amount),
-          };
-        }
-        break;
-      }
-      case 'Healing': {
-        nextPlayer = {
-          ...nextPlayer,
-          health: Math.min(nextPlayer.maxHealth, nextPlayer.health + effect.amount),
-        };
-        break;
-      }
-      case 'Armor': {
-        nextPlayer = {
-          ...nextPlayer,
-          armor: nextPlayer.armor + effect.amount,
-        };
-        break;
-      }
-      case 'Fortune': {
-        arcaneDustDelta += effect.amount;
-        break;
-      }
-      case 'Synergy': {
-        const synergyCount = wallRuneCounts.get(effect.synergyType) ?? 0;
-        if (nextEnemy) {
-          nextEnemy = {
-            ...nextEnemy,
-            health: Math.max(0, nextEnemy.health - effect.amount * synergyCount),
-          };
-        }
-        break;
-      }
-      case 'ArmorSynergy': {
-        const synergyCount = wallRuneCounts.get(effect.synergyType) ?? 0;
-        nextPlayer = {
-          ...nextPlayer,
-          armor: nextPlayer.armor + effect.amount * synergyCount,
-        };
-        break;
-      }
-      case 'Fragile': {
-        if (!wallHasRuneType(player.wall, effect.fragileType) && nextEnemy) {
-          nextEnemy = {
-            ...nextEnemy,
-            health: Math.max(0, nextEnemy.health - effect.amount),
-          };
-        }
-        break;
-      }
-      case 'Channel':
-      case 'ChannelSynergy':
-        break;
-    }
-  });
+  void rune;
 
   return {
-    player: nextPlayer,
-    enemy: nextEnemy,
-    arcaneDustDelta,
+    player,
+    enemy,
+    arcaneDustDelta: 0,
   };
 }
 
@@ -345,7 +282,9 @@ export function collectVictoryDeck({
       addRune({
         id: charge.completedRuneId,
         runeType: wallCell.runeType,
-        effects: copyRuneEffects(wallCell.effects),
+        rarity: wallCell.rarity ?? 'common',
+        castEffectRefs: copyEffectRefs(wallCell.castEffectRefs),
+        passiveEffectRefs: copyEffectRefs(wallCell.passiveEffectRefs),
       });
     });
   });

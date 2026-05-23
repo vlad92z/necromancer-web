@@ -14,7 +14,7 @@ import type {
   Enemy,
   SpellWallCharge,
 } from '../types/game';
-import { getRuneEffectsForType } from './runeEffects';
+import { createRune } from './runeEffects';
 import { getOverloadDamageForGame } from './overload';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
@@ -30,7 +30,7 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
     .map(() =>
       Array(size)
         .fill(null)
-        .map(() => ({ runeType: null, effects: null }))
+        .map(() => ({ runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }))
     );
 }
 
@@ -76,7 +76,9 @@ export function createPatternLines(count: number = WALL_SIZE): PatternLine[] {
       count: 0,
       runes: [],
       primaryRuneId: null,
-      primaryRuneEffects: null,
+      primaryRuneRarity: null,
+      primaryCastEffectRefs: null,
+      primaryPassiveEffectRefs: null,
     });
   }
   return lines;
@@ -134,11 +136,7 @@ export function createStartingDeck(
     remainder -= extra;
 
     for (let i = 0; i < typeCount; i++) {
-      deck.push({
-        id: `player-1-${runeType}-${i}`,
-        runeType,
-        effects: getRuneEffectsForType(runeType),
-      });
+      deck.push(createRune(`player-1-${runeType}-${i}`, runeType, 'common'));
     }
   });
   

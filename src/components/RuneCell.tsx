@@ -140,7 +140,7 @@ export function RuneCell({
   const variantStyle = VARIANT_STYLES[variant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
-  const runeRarity = showEffect && rune ? getRuneRarity(rune.effects) : null;
+  const runeRarity = showEffect && rune ? getRuneRarity(rune) : null;
   const runeImage = runeType
     ? runeRarity
       ? RUNE_ASSETS_BY_RARITY[runeRarity][runeType]
@@ -153,7 +153,7 @@ export function RuneCell({
     if (!showTooltip || !rune) {
       return null;
     }
-    return getRuneEffectDescription(rune.effects);
+    return getRuneEffectDescription(rune);
   }, [rune, showTooltip]);
   
   const backgroundColor = (variant === 'wall' && rune && variantStyle.backgroundOccupied)

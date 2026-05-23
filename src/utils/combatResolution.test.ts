@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Enemy, Rune, RuneEffects } from '../types/game';
+import type { Enemy, Rune, RuneType, WallCell } from '../types/game';
 import { createEmptyWallCharges, createPlayer } from './gameInitialization';
 import {
   castRuneToWallSlot,
@@ -61,7 +61,9 @@ describe('combatResolution wall casting', () => {
     expect(result.hand).toEqual([]);
     expect(result.player.wall[1][1]).toEqual({
       runeType: 'Fire',
-      effects: finalRune.effects,
+      rarity: finalRune.rarity,
+      castEffectRefs: finalRune.castEffectRefs,
+      passiveEffectRefs: finalRune.passiveEffectRefs,
     });
     expect(result.wallCharges[1][1]).toMatchObject({
       currentCount: 2,
@@ -188,7 +190,7 @@ describe('combatResolution turn cycling', () => {
 });
 
 describe('combatResolution basic combat effects', () => {
-  it('applies damage to enemy health', () => {
+  it('leaves damage refs unresolved during Stage 1 cutover', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const enemy = createTestEnemy(10);
     const rune = createTestRuneWithEffects('damage-rune', 'Fire', [
@@ -197,12 +199,12 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy, rune });
 
-    expect(result.enemy?.health).toBe(7);
+    expect(result.enemy?.health).toBe(10);
     expect(result.player).toBe(player);
     expect(result.arcaneDustDelta).toBe(0);
   });
 
-  it('clamps healing at max health and adds armor', () => {
+  it('leaves healing and armor refs unresolved during Stage 1 cutover', () => {
     const player = {
       ...createPlayer('player-1', 'Tester', 10, [], 10),
       health: 8,
@@ -215,11 +217,11 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(10), rune });
 
-    expect(result.player.health).toBe(10);
-    expect(result.player.armor).toBe(3);
+    expect(result.player.health).toBe(8);
+    expect(result.player.armor).toBe(1);
   });
 
-  it('returns fortune as arcane dust delta and keeps Channel effects disabled', () => {
+  it('keeps fortune and channel refs unresolved during Stage 1 cutover', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const enemy = createTestEnemy(10);
     const rune = createTestRuneWithEffects('mixed-rune', 'Wind', [
@@ -230,7 +232,7 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy, rune });
 
-    expect(result.arcaneDustDelta).toBe(4);
+    expect(result.arcaneDustDelta).toBe(0);
     expect(result.player).toBe(player);
     expect(result.enemy).toBe(enemy);
   });
@@ -238,9 +240,9 @@ describe('combatResolution basic combat effects', () => {
   it('counts filled wall runes by type across the whole wall', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const wall = player.wall.map((row) => [...row]);
-    wall[0][0] = { runeType: 'Void', effects: [] };
-    wall[0][1] = { runeType: 'Fire', effects: [] };
-    wall[3][4] = { runeType: 'Void', effects: [] };
+    wall[0][0] = createWallCell('Void');
+    wall[0][1] = createWallCell('Fire');
+    wall[3][4] = createWallCell('Void');
 
     const counts = countFilledWallRunesByType(wall);
 
@@ -251,7 +253,7 @@ describe('combatResolution basic combat effects', () => {
     expect(wallHasRuneType(wall, 'Life')).toBe(false);
   });
 
-  it('applies Synergy damage using whole completed wall counts', () => {
+  it('leaves Synergy refs unresolved during Stage 1 cutover', () => {
     const player = createPlayerWithWall([
       [0, 4, 'Void'],
       [1, 4, 'Void'],
@@ -264,11 +266,11 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy, rune });
 
-    expect(result.enemy?.health).toBe(16);
+    expect(result.enemy?.health).toBe(20);
     expect(result.player).toBe(player);
   });
 
-  it('applies ArmorSynergy using whole completed wall counts', () => {
+  it('leaves ArmorSynergy refs unresolved during Stage 1 cutover', () => {
     const player = {
       ...createPlayerWithWall([
         [0, 3, 'Frost'],
@@ -283,10 +285,10 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
 
-    expect(result.player.armor).toBe(7);
+    expect(result.player.armor).toBe(1);
   });
 
-  it('applies Fragile only when the blocked type is absent from the whole wall', () => {
+  it('leaves Fragile refs unresolved during Stage 1 cutover', () => {
     const absentPlayer = createPlayerWithWall([
       [0, 3, 'Frost'],
       [1, 2, 'Wind'],
@@ -303,7 +305,7 @@ describe('combatResolution basic combat effects', () => {
       player: absentPlayer,
       enemy: createTestEnemy(20),
       rune,
-    }).enemy?.health).toBe(15);
+    }).enemy?.health).toBe(20);
     expect(resolveCompletedRuneEffects({
       player: presentPlayer,
       enemy: createTestEnemy(20),
@@ -311,7 +313,7 @@ describe('combatResolution basic combat effects', () => {
     }).enemy?.health).toBe(20);
   });
 
-  it('combines advanced effects with basic effects', () => {
+  it('leaves mixed refs unresolved during Stage 1 cutover', () => {
     const player = {
       ...createPlayerWithWall([
         [0, 4, 'Void'],
@@ -330,9 +332,9 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
 
-    expect(result.enemy?.health).toBe(11);
-    expect(result.player.armor).toBe(3);
-    expect(result.arcaneDustDelta).toBe(5);
+    expect(result.enemy?.health).toBe(20);
+    expect(result.player.armor).toBe(0);
+    expect(result.arcaneDustDelta).toBe(0);
   });
 
   it('enemy attack consumes armor before health', () => {
@@ -373,7 +375,12 @@ describe('combatResolution victory deck collection', () => {
     const player = createPlayer('player-1', 'Tester', 10, [drawRune], 10);
     const wallCharges = createEmptyWallCharges(6);
     const wall = player.wall.map((row) => [...row]);
-    wall[1][1] = { runeType: completedRune.runeType, effects: completedRune.effects };
+    wall[1][1] = {
+      runeType: completedRune.runeType,
+      rarity: completedRune.rarity,
+      castEffectRefs: completedRune.castEffectRefs,
+      passiveEffectRefs: completedRune.passiveEffectRefs,
+    };
     wallCharges[1][1] = {
       ...wallCharges[1][1],
       currentCount: 2,
@@ -421,11 +428,16 @@ function createTestRune(id: string, runeType: Rune['runeType']): Rune {
   return createTestRuneWithEffects(id, runeType, [{ type: 'Damage', amount: 1, rarity: 'common' }]);
 }
 
-function createTestRuneWithEffects(id: string, runeType: Rune['runeType'], effects: RuneEffects): Rune {
+function createTestRuneWithEffects(id: string, runeType: Rune['runeType'], effects: unknown[]): Rune {
   return {
     id,
     runeType,
-    effects,
+    rarity: 'common',
+    castEffectRefs: effects.map((effect, index) => ({
+      effectId: `legacy-test-effect-${index}`,
+      params: { effect },
+    })),
+    passiveEffectRefs: [],
   };
 }
 
@@ -448,13 +460,19 @@ function createPlayerWithWall(cells: Array<[number, number, Rune['runeType']]>):
   const player = createPlayer('player-1', 'Tester', 10, [], 10);
   const wall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
   cells.forEach(([row, col, runeType]) => {
-    wall[row][col] = {
-      runeType,
-      effects: [],
-    };
+    wall[row][col] = createWallCell(runeType);
   });
   return {
     ...player,
     wall,
+  };
+}
+
+function createWallCell(runeType: RuneType): WallCell {
+  return {
+    runeType,
+    rarity: 'common',
+    castEffectRefs: [],
+    passiveEffectRefs: [],
   };
 }

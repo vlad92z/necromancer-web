@@ -41,15 +41,16 @@ describe('deckDrafting', () => {
     expect(state.selectionLimit).toBe(2);
   });
 
-  it('generates runes with unique ids and draft effects', () => {
+  it('generates runes with unique ids and rarity fields', () => {
     const state = createDeckDraftState('player-1', 0, [], 1);
     const runes = state.runeforges.flatMap((forge) => forge.runes);
     const ids = new Set(runes.map((rune) => rune.id));
 
     expect(ids.size).toBe(runes.length);
     runes.forEach((rune) => {
-      expect(rune.effects.length).toBeGreaterThan(0);
-      expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.effects[0]?.rarity);
+      expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.rarity);
+      expect(rune.castEffectRefs).toEqual([]);
+      expect(rune.passiveEffectRefs).toEqual([]);
     });
   });
 
@@ -66,7 +67,7 @@ describe('deckDrafting', () => {
     const runes = state.runeforges.flatMap((forge) => forge.runes);
 
     expect(runes.length).toBe(12);
-    expect(runes.some((rune) => rune.effects.some((effect) => effect.rarity === 'epic'))).toBe(true);
+    expect(runes.some((rune) => rune.rarity === 'epic')).toBe(true);
   });
 
   it('advances to null after the single draft pick is consumed', () => {
@@ -110,7 +111,9 @@ function createRune(id: string): Rune {
   return {
     id,
     runeType: 'Fire',
-    effects: [{ type: 'Damage', amount: 3, rarity: 'common' }],
+    rarity: 'common',
+    castEffectRefs: [],
+    passiveEffectRefs: [],
   };
 }
 

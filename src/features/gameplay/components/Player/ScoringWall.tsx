@@ -127,7 +127,9 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
         .map((cell) => ({
           id: `wall-${cell.row}-${cell.col}`,
           runeType: (cell.runeType ?? 'Life') as RuneType,
-          effects: cell.effects ?? [],
+          rarity: cell.rarity ?? 'common',
+          castEffectRefs: cell.castEffectRefs ?? [],
+          passiveEffectRefs: cell.passiveEffectRefs ?? [],
         }));
 
       if (tooltipRunes.length === 0) {
@@ -365,7 +367,11 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                 style={{ cursor: 'pointer' }}
               >
                 <WallCell
-                  cell={hiddenWallSlots.has(cellKey(rowIndex, colIndex)) ? { runeType: null, effects: null } : cell}
+                  cell={
+                    hiddenWallSlots.has(cellKey(rowIndex, colIndex))
+                      ? { runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }
+                      : cell
+                  }
                   charge={wallCharges[rowIndex]?.[colIndex] ?? null}
                   row={rowIndex}
                   col={colIndex}

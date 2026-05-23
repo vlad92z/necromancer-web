@@ -4,7 +4,7 @@
 
 import type { DeckDraftEffect, DeckDraftState, Player, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import type { ArtefactId } from '../types/artefacts';
-import { getDraftEffectsForType } from './runeEffects';
+import { createRune } from './runeEffects';
 import { getRuneTypes } from './gameInitialization';
 import type { Runeforge } from '../types/game';
 import { modifyDraftRarityWithRing } from './artefactEffects';
@@ -59,11 +59,7 @@ function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): 
 }
 
 const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rarity: RuneEffectRarity): Rune => {
-  return {
-    id: `draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`,
-    runeType,
-    effects: getDraftEffectsForType(runeType, rarity),
-  };
+  return createRune(`draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`, runeType, rarity);
 };
 
 function createDraftRuneforges(

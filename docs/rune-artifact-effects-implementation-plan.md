@@ -20,7 +20,7 @@ Automated checks for every code stage:
 - `npm run build`
 - `npm run lint`
 
-## Stage 1: Schema Cutover + Save Invalidation
+## Stage 1: Schema Cutover + Save Invalidation ✅ Done
 
 File-level changes:
 - `src/types/game.ts`: replace `Rune.effects`/`RuneEffects` with `rarity`, `castEffectRefs`, `passiveEffectRefs`.
