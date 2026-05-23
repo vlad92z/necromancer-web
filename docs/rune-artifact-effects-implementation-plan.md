@@ -90,7 +90,7 @@ Automated checks:
 Manual play check:
 - Final wall cast updates enemy HP/player health/armor/dust.
 
-## Stage 4: Passive Resolver Core
+## Stage 4: Passive Resolver Core ✅ Done
 
 File-level changes:
 - `src/utils/effectResolver.ts`: add passive collection/order/stacking.

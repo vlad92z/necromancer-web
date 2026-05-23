@@ -22,6 +22,19 @@ export interface EffectRef {
   params?: EffectParams;
 }
 
+export type EffectTrigger = 'onCast' | 'onEnemyAttack' | 'startTurn' | 'endTurn' | 'onDeckDraftOffer';
+export type EffectSourceType = 'rune' | 'artefact';
+
+export interface EffectResolutionLog {
+  sourceType: EffectSourceType;
+  sourceId: string;
+  effectId: string;
+  trigger: EffectTrigger;
+  input: Record<string, unknown>;
+  output: Record<string, unknown>;
+  displayHint: string;
+}
+
 /**
  * A rune in the game
  */

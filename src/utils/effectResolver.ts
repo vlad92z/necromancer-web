@@ -1,23 +1,22 @@
 /**
- * effectResolver - pure effect ref resolution for combat casts.
+ * effectResolver - pure effect ref resolution for casts and passives.
  */
 
-import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall } from '../types/game';
+import { ARTEFACTS } from '../types/artefacts';
+import type { ArtefactId } from '../types/artefacts';
+import type {
+  EffectRef,
+  EffectResolutionLog,
+  EffectSourceType,
+  EffectTrigger,
+  Enemy,
+  Player,
+  Rune,
+  RuneType,
+  ScoringWall,
+} from '../types/game';
 import { EFFECT_CATALOG } from './effectCatalog';
 import type { CastEffectId, CatalogEffectId } from './effectCatalog';
-
-export type EffectTrigger = 'onCast';
-export type EffectSourceType = 'rune';
-
-export interface EffectResolutionLog {
-  sourceType: EffectSourceType;
-  sourceId: string;
-  effectId: string;
-  trigger: EffectTrigger;
-  input: Record<string, unknown>;
-  output: Record<string, unknown>;
-  displayHint: string;
-}
 
 export interface CastEffectResolutionInput {
   player: Player;
@@ -31,6 +30,30 @@ export interface CastEffectResolutionResult {
   enemy: Enemy | null;
   arcaneDustDelta: number;
   logs: EffectResolutionLog[];
+}
+
+export interface ActivePassiveEffect {
+  sourceType: EffectSourceType;
+  sourceId: string;
+  effectRef: EffectRef;
+  sourceOrder: number;
+  refOrder: number;
+}
+
+export interface PassiveCollectionInput {
+  wall: ScoringWall;
+  activeArtefacts: ArtefactId[];
+}
+
+export interface PassiveEffectResolutionInput extends PassiveCollectionInput {
+  trigger: EffectTrigger;
+  baseValues: Record<string, number>;
+}
+
+export interface PassiveEffectResolutionResult {
+  values: Record<string, number>;
+  logs: EffectResolutionLog[];
+  activePassives: ActivePassiveEffect[];
 }
 
 function numberParam(effectRef: EffectRef, key: string, fallback: number = 0): number {
@@ -63,21 +86,153 @@ function isKnownCastEffectId(effectId: string): effectId is CastEffectId {
   return catalogEntry?.kind === 'cast';
 }
 
-function createLog(
-  castRune: Rune,
+function createEffectLog(
+  sourceType: EffectSourceType,
+  sourceId: string,
   effectRef: EffectRef,
+  trigger: EffectTrigger,
   input: Record<string, unknown>,
   output: Record<string, unknown>
 ): EffectResolutionLog {
   const catalogEntry = EFFECT_CATALOG[effectRef.effectId as CatalogEffectId];
   return {
-    sourceType: 'rune',
-    sourceId: castRune.id,
+    sourceType,
+    sourceId,
     effectId: effectRef.effectId,
-    trigger: 'onCast',
+    trigger,
     input,
     output,
     displayHint: catalogEntry?.displayHint ?? 'unknown',
+  };
+}
+
+function createCastLog(
+  castRune: Rune,
+  effectRef: EffectRef,
+  input: Record<string, unknown>,
+  output: Record<string, unknown>
+): EffectResolutionLog {
+  return createEffectLog('rune', castRune.id, effectRef, 'onCast', input, output);
+}
+
+function sourceTypeOrder(sourceType: EffectSourceType): number {
+  return sourceType === 'rune' ? 0 : 1;
+}
+
+function stackingOrder(effectRef: EffectRef): number {
+  const catalogEntry = EFFECT_CATALOG[effectRef.effectId as CatalogEffectId];
+  return catalogEntry?.passive?.stacking === 'multiplier' ? 1 : 0;
+}
+
+function passivePriority(effectRef: EffectRef): number {
+  const catalogEntry = EFFECT_CATALOG[effectRef.effectId as CatalogEffectId];
+  return catalogEntry?.passive?.priority ?? 0;
+}
+
+function sortActivePassiveEffects(passives: ActivePassiveEffect[]): ActivePassiveEffect[] {
+  return [...passives].sort((left, right) => (
+    sourceTypeOrder(left.sourceType) - sourceTypeOrder(right.sourceType) ||
+    passivePriority(left.effectRef) - passivePriority(right.effectRef) ||
+    stackingOrder(left.effectRef) - stackingOrder(right.effectRef) ||
+    left.sourceOrder - right.sourceOrder ||
+    left.refOrder - right.refOrder
+  ));
+}
+
+export function collectActivePassiveEffects({
+  wall,
+  activeArtefacts,
+}: PassiveCollectionInput): ActivePassiveEffect[] {
+  const wallPassives = wall.flatMap((row, rowIndex) =>
+    row.flatMap((cell, colIndex) =>
+      (cell.passiveEffectRefs ?? []).map<ActivePassiveEffect>((effectRef, refOrder) => ({
+        sourceType: 'rune',
+        sourceId: `wall:${rowIndex}:${colIndex}`,
+        effectRef,
+        sourceOrder: rowIndex * row.length + colIndex,
+        refOrder,
+      }))
+    )
+  );
+
+  const artefactPassives = activeArtefacts.flatMap((artefactId, sourceOrder) =>
+    (ARTEFACTS[artefactId]?.passiveEffectRefs ?? []).map<ActivePassiveEffect>((effectRef, refOrder) => ({
+      sourceType: 'artefact',
+      sourceId: artefactId,
+      effectRef,
+      sourceOrder,
+      refOrder,
+    }))
+  );
+
+  return [...wallPassives, ...artefactPassives];
+}
+
+export function resolvePassiveEffects({
+  trigger,
+  wall,
+  activeArtefacts,
+  baseValues,
+}: PassiveEffectResolutionInput): PassiveEffectResolutionResult {
+  const values = { ...baseValues };
+  const logs: EffectResolutionLog[] = [];
+  const activePassives = sortActivePassiveEffects(collectActivePassiveEffects({ wall, activeArtefacts }));
+
+  activePassives.forEach((passive) => {
+    const catalogEntry = EFFECT_CATALOG[passive.effectRef.effectId as CatalogEffectId];
+    const passiveMetadata = catalogEntry?.kind === 'passive' ? catalogEntry.passive : undefined;
+    const input = {
+      params: passive.effectRef.params ?? {},
+      values: { ...values },
+    };
+
+    if (!passiveMetadata) {
+      logs.push(createEffectLog(
+        passive.sourceType,
+        passive.sourceId,
+        passive.effectRef,
+        trigger,
+        input,
+        { noOp: true }
+      ));
+      return;
+    }
+
+    if (passiveMetadata.trigger !== trigger) {
+      return;
+    }
+
+    const previousValue = values[passiveMetadata.target] ?? 0;
+    const modifier = numberParam(
+      passive.effectRef,
+      passiveMetadata.paramKey,
+      passiveMetadata.defaultValue
+    );
+    const nextValue = passiveMetadata.stacking === 'flat'
+      ? previousValue + modifier
+      : previousValue * modifier;
+    values[passiveMetadata.target] = nextValue;
+
+    logs.push(createEffectLog(
+      passive.sourceType,
+      passive.sourceId,
+      passive.effectRef,
+      trigger,
+      input,
+      {
+        target: passiveMetadata.target,
+        stacking: passiveMetadata.stacking,
+        modifier,
+        previousValue,
+        nextValue,
+      }
+    ));
+  });
+
+  return {
+    values,
+    logs,
+    activePassives,
   };
 }
 
@@ -103,7 +258,7 @@ export function resolveCastEffects({
     };
 
     if (!isKnownCastEffectId(effectRef.effectId)) {
-      logs.push(createLog(castRune, effectRef, baseInput, { noOp: true }));
+      logs.push(createCastLog(castRune, effectRef, baseInput, { noOp: true }));
       return;
     }
 
@@ -116,7 +271,7 @@ export function resolveCastEffects({
             health: Math.max(0, nextEnemy.health - damage),
           };
         }
-        logs.push(createLog(castRune, effectRef, baseInput, { damage, enemyHealth: nextEnemy?.health ?? null }));
+        logs.push(createCastLog(castRune, effectRef, baseInput, { damage, enemyHealth: nextEnemy?.health ?? null }));
         break;
       }
       case 'cast.healing': {
@@ -125,7 +280,7 @@ export function resolveCastEffects({
           ...nextPlayer,
           health: Math.min(nextPlayer.maxHealth, nextPlayer.health + healing),
         };
-        logs.push(createLog(castRune, effectRef, baseInput, { healing, playerHealth: nextPlayer.health }));
+        logs.push(createCastLog(castRune, effectRef, baseInput, { healing, playerHealth: nextPlayer.health }));
         break;
       }
       case 'cast.armor': {
@@ -134,13 +289,13 @@ export function resolveCastEffects({
           ...nextPlayer,
           armor: nextPlayer.armor + armor,
         };
-        logs.push(createLog(castRune, effectRef, baseInput, { armor, playerArmor: nextPlayer.armor }));
+        logs.push(createCastLog(castRune, effectRef, baseInput, { armor, playerArmor: nextPlayer.armor }));
         break;
       }
       case 'cast.fortune': {
         const arcaneDust = numberParam(effectRef, 'amount');
         arcaneDustDelta += arcaneDust;
-        logs.push(createLog(castRune, effectRef, baseInput, { arcaneDust, arcaneDustDelta }));
+        logs.push(createCastLog(castRune, effectRef, baseInput, { arcaneDust, arcaneDustDelta }));
         break;
       }
       case 'cast.synergy': {
@@ -153,7 +308,7 @@ export function resolveCastEffects({
             health: Math.max(0, nextEnemy.health - damage),
           };
         }
-        logs.push(createLog(castRune, effectRef, baseInput, {
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
           damage,
           synergyType,
           synergyCount,
@@ -169,7 +324,7 @@ export function resolveCastEffects({
           ...nextPlayer,
           armor: nextPlayer.armor + armor,
         };
-        logs.push(createLog(castRune, effectRef, baseInput, {
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
           armor,
           synergyType,
           synergyCount,
@@ -187,7 +342,7 @@ export function resolveCastEffects({
             health: Math.max(0, nextEnemy.health - damage),
           };
         }
-        logs.push(createLog(castRune, effectRef, baseInput, {
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
           damage,
           fragileType,
           isBlocked,
@@ -197,7 +352,7 @@ export function resolveCastEffects({
       }
       case 'cast.channel':
       case 'cast.channelSynergy':
-        logs.push(createLog(castRune, effectRef, baseInput, { noOp: true }));
+        logs.push(createCastLog(castRune, effectRef, baseInput, { noOp: true }));
         break;
     }
   });

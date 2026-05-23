@@ -2,7 +2,7 @@
  * effectCatalog - central metadata and description helpers for effect refs.
  */
 
-import type { EffectParams, EffectRef, RuneType } from '../types/game';
+import type { EffectParams, EffectRef, EffectTrigger, RuneType } from '../types/game';
 
 export type CastEffectId =
   | 'cast.damage'
@@ -23,12 +23,23 @@ export type PassiveEffectId =
   | 'passive.tomeCastDamage';
 
 export type CatalogEffectId = CastEffectId | PassiveEffectId;
+export type PassiveStackingKind = 'flat' | 'multiplier';
+
+export interface PassiveEffectMetadata {
+  trigger: EffectTrigger;
+  target: string;
+  stacking: PassiveStackingKind;
+  paramKey: string;
+  defaultValue: number;
+  priority?: number;
+}
 
 export interface EffectCatalogEntry {
   id: CatalogEffectId;
   kind: 'cast' | 'passive';
   title: string;
   displayHint: string;
+  passive?: PassiveEffectMetadata;
   describe: (params: EffectParams) => string;
 }
 
@@ -114,6 +125,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'passive',
     title: 'Draft Rarity',
     displayHint: 'deckDraft',
+    passive: {
+      trigger: 'onDeckDraftOffer',
+      target: 'epicChance',
+      stacking: 'multiplier',
+      paramKey: 'epicChanceMultiplier',
+      defaultValue: 1,
+    },
     describe: () => 'Double the odds of drafting epic runes',
   },
   'passive.robeDraftSelection': {
@@ -121,6 +139,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'passive',
     title: 'Draft Selection',
     displayHint: 'deckDraft',
+    passive: {
+      trigger: 'onDeckDraftOffer',
+      target: 'selectionLimit',
+      stacking: 'flat',
+      paramKey: 'selectionBonus',
+      defaultValue: 0,
+    },
     describe: (params) => `Increase total picks by ${numberParam(params, 'selectionBonus', 1)} during deck drafting`,
   },
   'passive.rodHealing': {
@@ -128,6 +153,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'passive',
     title: 'Healing Multiplier',
     displayHint: 'healing',
+    passive: {
+      trigger: 'onCast',
+      target: 'healing',
+      stacking: 'multiplier',
+      paramKey: 'healingMultiplier',
+      defaultValue: 1,
+    },
     describe: () => 'Double all healing',
   },
   'passive.potionArmor': {
@@ -135,6 +167,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'passive',
     title: 'Armor Multiplier',
     displayHint: 'armor',
+    passive: {
+      trigger: 'onCast',
+      target: 'armor',
+      stacking: 'multiplier',
+      paramKey: 'armorMultiplier',
+      defaultValue: 1,
+    },
     describe: () => 'Double all armor gained',
   },
   'passive.tomeCastDamage': {
@@ -142,6 +181,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'passive',
     title: 'Cast Damage',
     displayHint: 'damage',
+    passive: {
+      trigger: 'onCast',
+      target: 'damage',
+      stacking: 'flat',
+      paramKey: 'damageBonus',
+      defaultValue: 0,
+    },
     describe: (params) => `+${numberParam(params, 'damageBonus', 1)} damage on all casts`,
   },
 };

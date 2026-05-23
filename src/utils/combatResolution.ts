@@ -2,8 +2,7 @@
  * Combat resolution helpers for hand-driven spell-wall casting.
  */
 
-import type { Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
-import type { EffectResolutionLog } from './effectResolver';
+import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
 import { resolveCastEffects } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
