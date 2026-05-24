@@ -7,7 +7,7 @@ import type { ArtefactId } from '../types/artefacts';
 import { createRune } from './runeEffects';
 import { getRuneTypes } from './gameInitialization';
 import type { Runeforge } from '../types/game';
-import { modifyDraftRarityWithRing } from './artefactEffects';
+import { resolvePassiveEffects } from './effectResolver';
 
 const BASE_EPIC_CHANCE = 0;
 const BASE_RARE_CHANCE = 0;
@@ -21,6 +21,28 @@ const DECK_DRAFT_EFFECTS: DeckDraftEffect[] = [
 ];
 
 const RARITY_SEQUENCE: RuneEffectRarity[] = ['common', 'uncommon', 'rare', 'epic'];
+const DEFAULT_DECK_DRAFT_SELECTION_LIMIT = 1;
+const MAX_DECK_DRAFT_SELECTION_LIMIT = 3;
+
+interface DeckDraftOfferValues {
+  epicChance: number;
+  rareChance: number;
+  selectionLimit: number;
+}
+
+interface RollDraftRarityInput {
+  winStreak: number;
+  activeArtefacts?: ArtefactId[];
+  random?: () => number;
+}
+
+interface CreateDraftRuneForRarityInput {
+  ownerId: string;
+  index: number;
+  rarity: RuneEffectRarity;
+  runeTypes?: RuneType[];
+  random?: () => number;
+}
 
 function getDeckDraftEffectForIndex(index: number): DeckDraftEffect {
   const effectIndex = index % DECK_DRAFT_EFFECTS.length;
@@ -36,18 +58,61 @@ function boostRarity(rarity: RuneEffectRarity, steps: number = 1): RuneEffectRar
   return RARITY_SEQUENCE[boostedIndex];
 }
 
-function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): RuneEffectRarity {
+function clampPercentage(value: number): number {
+  return Math.max(0, Math.min(100, value));
+}
+
+export function resolveDeckDraftOfferPassives(
+  activeArtefacts: ArtefactId[],
+  baseValues: DeckDraftOfferValues
+): DeckDraftOfferValues {
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'onDeckDraftOffer',
+    wall: [],
+    activeArtefacts,
+    baseValues: { ...baseValues },
+  });
+
+  const epicChance = clampPercentage(passiveResult.values.epicChance ?? baseValues.epicChance);
+  const rareChance = clampPercentage(Math.min(
+    passiveResult.values.rareChance ?? baseValues.rareChance,
+    100 - epicChance
+  ));
+  const selectionLimit = Math.min(
+    MAX_DECK_DRAFT_SELECTION_LIMIT,
+    Math.max(1, passiveResult.values.selectionLimit ?? baseValues.selectionLimit)
+  );
+
+  return {
+    epicChance,
+    rareChance,
+    selectionLimit,
+  };
+}
+
+export function getDeckDraftSelectionLimit(activeArtefacts: ArtefactId[]): number {
+  return resolveDeckDraftOfferPassives(activeArtefacts, {
+    epicChance: 0,
+    rareChance: 0,
+    selectionLimit: DEFAULT_DECK_DRAFT_SELECTION_LIMIT,
+  }).selectionLimit;
+}
+
+export function rollDraftRarity({
+  winStreak,
+  activeArtefacts = [],
+  random = Math.random,
+}: RollDraftRarityInput): RuneEffectRarity {
   const baseEpicChance = Math.min(100, BASE_EPIC_CHANCE + winStreak * EPIC_INCREMENT_PER_WIN);
   const baseRareChance = Math.min(100 - baseEpicChance, BASE_RARE_CHANCE + winStreak * RARE_INCREMENT_PER_WIN);
-  
-  const hasRing = activeArtefacts.includes('ring');
-  const { epicChance, rareChance } = modifyDraftRarityWithRing(
-    baseEpicChance,
-    baseRareChance,
-    hasRing
-  );
-  
-  const roll = Math.random() * 100;
+
+  const { epicChance, rareChance } = resolveDeckDraftOfferPassives(activeArtefacts, {
+    epicChance: baseEpicChance,
+    rareChance: baseRareChance,
+    selectionLimit: DEFAULT_DECK_DRAFT_SELECTION_LIMIT,
+  });
+
+  const roll = random() * 100;
 
   if (roll < epicChance) {
     return 'epic';
@@ -58,9 +123,16 @@ function getDraftRarity(winStreak: number, activeArtefacts: ArtefactId[] = []): 
   return 'uncommon';
 }
 
-const createDraftRune = (ownerId: string, runeType: RuneType, index: number, rarity: RuneEffectRarity): Rune => {
-  return createRune(`draft-${ownerId}-${runeType}-${index}-${Math.random().toString(36).slice(2, 6)}`, runeType, rarity);
-};
+export function createDraftRuneForRarity({
+  ownerId,
+  index,
+  rarity,
+  runeTypes = getRuneTypes(),
+  random = Math.random,
+}: CreateDraftRuneForRarityInput): Rune {
+  const runeType = runeTypes[Math.floor(random() * runeTypes.length)];
+  return createRune(`draft-${ownerId}-${runeType}-${index}-${random().toString(36).slice(2, 6)}`, runeType, rarity);
+}
 
 function createDraftRuneforges(
   ownerId: string,
@@ -69,19 +141,20 @@ function createDraftRuneforges(
   winStreak: number = 0,
   activeArtefacts: ArtefactId[] = []
 ): Runeforge[] {
-  const runeTypes = getRuneTypes();
-
   return Array(runeforgeCount)
     .fill(null)
     .map((_, forgeIndex) => {
       const deckDraftEffect = getDeckDraftEffectForIndex(forgeIndex);
       const runes: Rune[] = [];
       for (let i = 0; i < runesPerRuneforge; i++) {
-        const runeType = runeTypes[Math.floor(Math.random() * runeTypes.length)];
-        const baseRarity = getDraftRarity(winStreak - 1, activeArtefacts);
+        const baseRarity = rollDraftRarity({ winStreak: winStreak - 1, activeArtefacts });
         const shouldBoostRarity = deckDraftEffect.type === 'betterRunes' && i === 0;
         const rarity = shouldBoostRarity ? boostRarity(baseRarity, deckDraftEffect.rarityStep) : baseRarity;
-        runes.push(createDraftRune(ownerId, runeType, forgeIndex * runesPerRuneforge + i, rarity));
+        runes.push(createDraftRuneForRarity({
+          ownerId,
+          index: forgeIndex * runesPerRuneforge + i,
+          rarity,
+        }));
       }
 
       return {

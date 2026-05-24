@@ -1214,6 +1214,7 @@ describe('gameplayStore persistence', () => {
     store.getState().startSoloRun();
     store.setState((state) => ({
       ...state,
+      activeArtefacts: ['ring', 'robe'],
       hand: [lethalRune],
       selectedHandRuneId: lethalRune.id,
       enemy: state.enemy ? { ...state.enemy, health: 1, maxHealth: 10 } : state.enemy,
@@ -1227,6 +1228,7 @@ describe('gameplayStore persistence', () => {
 
     const rewardRuneforgeId = store.getState().deckDraftState?.runeforges[0]?.id;
     expect(rewardRuneforgeId).toBeDefined();
+    expect(store.getState().deckDraftState?.selectionLimit).toBe(2);
     const fullDeckBeforeReward = store.getState().fullDeck.length;
     const activeDeckBeforeReward = store.getState().player.deck.length;
 

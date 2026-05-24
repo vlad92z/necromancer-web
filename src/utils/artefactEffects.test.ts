@@ -6,8 +6,6 @@ import { describe, it, expect } from 'vitest';
 import {
   getActiveArtefacts,
   hasArtefact,
-  modifyDraftRarityWithRing,
-  getDeckDraftSelectionLimit,
   modifyOutgoingDamageWithPotion,
   modifyIncomingDamageWithPotion,
   getDamageToScoreBonusWithRod,
@@ -49,54 +47,6 @@ describe('artefactEffects', () => {
     it('should return false for artefact not in active list', () => {
       const state = { ...initializeSoloGame(), activeArtefacts: ['ring'] as ArtefactId[] };
       expect(hasArtefact(state, 'potion')).toBe(false);
-    });
-  });
-
-  describe('Ring effect - modifyDraftRarityWithRing', () => {
-    it('should not modify probabilities when Ring is not active', () => {
-      const result = modifyDraftRarityWithRing(10, 20, false);
-      expect(result.epicChance).toBe(10);
-      expect(result.rareChance).toBe(20);
-      expect(result.uncommonChance).toBe(70);
-    });
-
-    it('should double epic chance when Ring is active', () => {
-      const result = modifyDraftRarityWithRing(10, 20, true);
-      expect(result.epicChance).toBe(20);
-      // Rare and uncommon should share remaining 80%
-      expect(result.rareChance + result.uncommonChance).toBeCloseTo(80);
-    });
-
-    it('should cap epic chance at 100%', () => {
-      const result = modifyDraftRarityWithRing(60, 20, true);
-      expect(result.epicChance).toBe(100);
-      expect(result.rareChance).toBe(0);
-      expect(result.uncommonChance).toBe(0);
-    });
-
-    it('should maintain proportional distribution of remaining probabilities', () => {
-      const result = modifyDraftRarityWithRing(10, 30, true);
-      expect(result.epicChance).toBe(20);
-      const remainingTotal = result.rareChance + result.uncommonChance;
-      expect(remainingTotal).toBeCloseTo(80);
-      // Original rare was 30/90 = 1/3 of non-epic, should still be ~1/3
-      const rareProportion = result.rareChance / remainingTotal;
-      expect(rareProportion).toBeCloseTo(30 / 90, 1);
-    });
-  });
-
-  describe('deck draft selection limit', () => {
-    it('defaults to one runeforge when no artefacts are active', () => {
-      expect(getDeckDraftSelectionLimit([])).toBe(1);
-    });
-
-    it('allows selecting two runeforges when Robe is active', () => {
-      expect(getDeckDraftSelectionLimit(['robe'] as ArtefactId[])).toBe(2);
-    });
-
-    it('never exceeds the maximum runeforge selection cap', () => {
-      const artefacts = ['robe', 'rod', 'ring', 'potion', 'tome'] as ArtefactId[];
-      expect(getDeckDraftSelectionLimit(artefacts)).toBeLessThanOrEqual(3);
     });
   });
 

@@ -2,18 +2,26 @@
  * Unit tests for post-victory deck drafting helpers.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Player, Rune } from '../types/game';
 import {
   advanceDeckDraftState,
   applyDeckDraftEffectToPlayer,
   createDeckDraftState,
+  createDraftRuneForRarity,
   getDeckDraftEffectDescription,
+  getDeckDraftSelectionLimit,
   mergeDeckWithRuneforge,
+  resolveDeckDraftOfferPassives,
+  rollDraftRarity,
 } from './deckDrafting';
 
 describe('deckDrafting', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
     vi.restoreAllMocks();
   });
 
@@ -71,6 +79,87 @@ describe('deckDrafting', () => {
 
     expect(runes.length).toBe(12);
     expect(runes.some((rune) => rune.rarity === 'epic')).toBe(true);
+  });
+
+  it('resolves Ring and Robe through deck draft offer passives', () => {
+    expect(resolveDeckDraftOfferPassives([], {
+      epicChance: 10,
+      rareChance: 20,
+      selectionLimit: 1,
+    })).toEqual({
+      epicChance: 10,
+      rareChance: 20,
+      selectionLimit: 1,
+    });
+
+    expect(resolveDeckDraftOfferPassives(['ring', 'robe'], {
+      epicChance: 10,
+      rareChance: 20,
+      selectionLimit: 1,
+    })).toEqual({
+      epicChance: 20,
+      rareChance: 20,
+      selectionLimit: 2,
+    });
+
+    expect(resolveDeckDraftOfferPassives(['ring', 'robe'], {
+      epicChance: 60,
+      rareChance: 20,
+      selectionLimit: 3,
+    })).toEqual({
+      epicChance: 100,
+      rareChance: 0,
+      selectionLimit: 3,
+    });
+  });
+
+  it('resolves deck draft selection limit through Robe passives', () => {
+    expect(getDeckDraftSelectionLimit([])).toBe(1);
+    expect(getDeckDraftSelectionLimit(['robe'])).toBe(2);
+    expect(getDeckDraftSelectionLimit(['robe', 'ring', 'rod', 'potion', 'tome'])).toBe(2);
+  });
+
+  it('rolls rarity before creating a draft rune for that rarity', () => {
+    expect(rollDraftRarity({ winStreak: 10, activeArtefacts: ['ring'], random: () => 0.17 })).toBe('epic');
+    expect(rollDraftRarity({ winStreak: 10, activeArtefacts: [], random: () => 0.1 })).toBe('rare');
+    expect(rollDraftRarity({ winStreak: 0, activeArtefacts: [], random: () => 0.99 })).toBe('uncommon');
+
+    const rune = createDraftRuneForRarity({
+      ownerId: 'player-1',
+      index: 0,
+      rarity: 'epic',
+      runeTypes: ['Fire'],
+      random: () => 0,
+    });
+
+    expect(rune.rarity).toBe('epic');
+    expect(rune.runeType).toBe('Fire');
+    expect(rune.castEffectRefs.length).toBeGreaterThan(0);
+  });
+
+  it('boosts the already-rolled rarity for Better Runes reward rows', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    const state = createDeckDraftState('player-1', 1, [], 1);
+
+    expect(state.runeforges[2].deckDraftEffect).toEqual({ type: 'betterRunes', rarityStep: 1 });
+    expect(state.runeforges[2].runes[0].rarity).toBe('rare');
+    expect(state.runeforges[2].runes.slice(1).every((rune) => rune.rarity === 'uncommon')).toBe(true);
+  });
+
+  it('keeps Ring and Robe draft runes on the catalog-ref shape', () => {
+    const state = createDeckDraftState('player-1', 10, ['ring', 'robe'], 2);
+    const runes = state.runeforges.flatMap((forge) => forge.runes);
+
+    expect(state.selectionLimit).toBe(2);
+    runes.forEach((rune) => {
+      expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.rarity);
+      expect(rune.castEffectRefs.length).toBeGreaterThan(0);
+      expect(rune.passiveEffectRefs).toEqual([]);
+      rune.castEffectRefs.forEach((effectRef) => {
+        expect(effectRef.params).not.toHaveProperty('rarity');
+      });
+    });
   });
 
   it('advances to null after the single draft pick is consumed', () => {

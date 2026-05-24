@@ -135,7 +135,7 @@ Manual play check:
 - Select Rod/Potion/Tome.
 - Confirm selected artefacts change cast results.
 
-## Stage 6: Deck Draft Passives
+## Stage 6: Deck Draft Passives ✅ Done
 
 File-level changes:
 - `src/types/artefacts.ts`: define Ring/Robe passive refs.

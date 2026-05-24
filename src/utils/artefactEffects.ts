@@ -24,64 +24,6 @@ export function hasArtefact(state: GameState, artefactId: ArtefactId): boolean {
 }
 
 /**
- * Ring effect: Double the odds of drafting epic runes
- * Modifies the rarity probabilities when generating draft runes
- */
-export function modifyDraftRarityWithRing(
-  baseEpicChance: number,
-  baseRareChance: number,
-  hasRing: boolean
-): { epicChance: number; rareChance: number; uncommonChance: number } {
-  if (!hasRing) {
-    const uncommonChance = 100 - baseEpicChance - baseRareChance;
-    return { epicChance: baseEpicChance, rareChance: baseRareChance, uncommonChance };
-  }
-
-  // Double epic odds, but cap total at 100%
-  const modifiedEpicChance = Math.min(100, baseEpicChance * 2);
-  
-  // Redistribute remaining probability between rare and uncommon proportionally
-  const remainingProbability = 100 - modifiedEpicChance;
-  const originalNonEpic = 100 - baseEpicChance;
-  
-  let rareChance: number;
-  let uncommonChance: number;
-  
-  if (originalNonEpic > 0) {
-    const rareProportion = baseRareChance / originalNonEpic;
-    rareChance = remainingProbability * rareProportion;
-    uncommonChance = remainingProbability * (1 - rareProportion);
-  } else {
-    rareChance = 0;
-    uncommonChance = 0;
-  }
-
-  return {
-    epicChance: modifiedEpicChance,
-    rareChance,
-    uncommonChance,
-  };
-}
-
-/**
- * Robe effect: Increase total picks by 1 during deck drafting
- */
-const DEFAULT_DECK_DRAFT_SELECTION_LIMIT = 1;
-const MAX_DECK_DRAFT_SELECTION_LIMIT = 3;
-
-/**
- * Determines how many runeforges can be selected from a single deck draft offer.
- * Robe grants +1 selection up to a maximum of 3 runeforges at once.
- */
-export function getDeckDraftSelectionLimit(activeArtefacts: ArtefactId[]): number {
-  let limit = DEFAULT_DECK_DRAFT_SELECTION_LIMIT;
-  if (activeArtefacts.includes('robe')) {
-    limit += 1;
-  }
-  return Math.min(limit, MAX_DECK_DRAFT_SELECTION_LIMIT);
-}
-
-/**
  * Potion effect: Double all damage dealt
  */
 export function modifyOutgoingDamageWithPotion(damage: number, hasPotion: boolean): number {

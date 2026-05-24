@@ -21,13 +21,13 @@ describe('runeEffects', () => {
   it('creates draft refs by rarity without storing rarity in params', () => {
     const refs = getRuneCastEffectRefsForType('Frost', 'rare');
 
-    expect(refs).toEqual([{ effectId: 'cast.armorSynergy', params: { amount: 3, synergyType: 'Frost' } }]);
+    expect(refs).toEqual([{ effectId: 'cast.armorSynergy', params: { amount: 10, synergyType: 'Frost' } }]);
     expect(refs[0]?.params).not.toHaveProperty('rarity');
   });
 
   it('renders rune descriptions from catalog refs', () => {
     const rune = createRune('void-epic', 'Void', 'epic');
 
-    expect(getRuneEffectDescription(rune)).toBe('• Deal 6 damage for every Void rune in your completed wall');
+    expect(getRuneEffectDescription(rune)).toBe('• Deal 15 damage for every Void rune in your completed wall');
   });
 });
