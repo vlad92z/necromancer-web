@@ -6,7 +6,7 @@ import type { GameState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 3;
+export const SOLO_STATE_VERSION = 4;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -21,7 +21,15 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   }
 
   const candidate = value as Partial<SoloStatePayload>;
-  return candidate.version === SOLO_STATE_VERSION && Boolean(candidate.state);
+  if (candidate.version !== SOLO_STATE_VERSION || !candidate.state) {
+    return false;
+  }
+
+  const state = candidate.state as Partial<GameState> & Record<string, unknown>;
+  return Array.isArray(state.hand)
+    && Array.isArray(state.discardPile)
+    && Array.isArray(state.wallCharges)
+    && typeof state.enemyMaxHealth === 'number';
 }
 
 export function saveSoloState(state: GameState): void {

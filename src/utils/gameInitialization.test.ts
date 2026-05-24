@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyWallCharges, initializeSoloGame } from './gameInitialization';
 
 describe('gameInitialization combat state', () => {
-  it('initializes a goblin encounter using targetScore as enemy health', () => {
+  it('initializes a goblin encounter using enemy max health', () => {
     const state = initializeSoloGame(42);
 
     expect(state.enemy).toMatchObject({
@@ -15,7 +15,6 @@ describe('gameInitialization combat state', () => {
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(6);
     expect(state.player.deck).toHaveLength(state.fullDeck.length - 6);
-    expect(state.runeforges).toEqual([]);
     expect(state.discardPile).toEqual([]);
     expect(state.selectedHandRuneId).toBeNull();
   });

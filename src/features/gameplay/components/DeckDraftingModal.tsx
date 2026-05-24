@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, animate, useMotionValue } from 'framer-motion';
-import type { DeckDraftState, Runeforge as RuneforgeType, Rune } from '../../../types/game';
+import type { DeckDraftOffer, DeckDraftState, Rune } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
 import { useClickSound } from '../../../hooks/useClickSound';
@@ -22,14 +22,14 @@ export function DeckDraftingModal({
   const arcaneDustReward = 50;//placeholder
   const { deck } = useGameplayDeckState();
   const totalDeckSize = deck.length;
-  const { selectDeckDraftRuneforge: onSelectRuneforge, startNextSoloGame } = useGameplayActions();
+  const { selectDeckDraftOffer: onSelectOffer, startNextSoloGame } = useGameplayActions();
   const { toggleDeckOverlay: onOpenDeckOverlay } = useUIActions();
   const playClickSound = useClickSound();
-  const [displayedRuneforges, setDisplayedRuneforges] = useState<RuneforgeType[]>(draftState.runeforges);
-  const [pendingRuneforges, setPendingRuneforges] = useState<RuneforgeType[] | null>(null);
-  const [selectedRuneforgeId, setSelectedRuneforgeId] = useState<string | null>(null);
+  const [displayedOffers, setDisplayedOffers] = useState<DeckDraftOffer[]>(draftState.offers);
+  const [pendingOffers, setPendingOffers] = useState<DeckDraftOffer[] | null>(null);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [animationPhase, setAnimationPhase] = useState<'idle' | 'hidingOthers' | 'selectedExit'>('idle');
-  const [showSelectedRuneforge, setShowSelectedRuneforge] = useState(true);
+  const [showSelectedOffer, setShowSelectedOffer] = useState(true);
   const deckCountValue = useMotionValue(totalDeckSize);
   const [displayedDeckCount, setDisplayedDeckCount] = useState(totalDeckSize);
   const deckCountAnimation = useRef<ReturnType<typeof animate> | null>(null);
@@ -62,23 +62,23 @@ export function DeckDraftingModal({
 
   useEffect(() => {
     if (animationPhase === 'idle') {
-      setDisplayedRuneforges(draftState.runeforges);
-      setPendingRuneforges(null);
-      setSelectedRuneforgeId(null);
-      setShowSelectedRuneforge(true);
+      setDisplayedOffers(draftState.offers);
+      setPendingOffers(null);
+      setSelectedOfferId(null);
+      setShowSelectedOffer(true);
       return;
     }
 
-    const incomingKey = draftState.runeforges.map((forge) => forge.id).join('|');
-    const currentKey = displayedRuneforges.map((forge) => forge.id).join('|');
+    const incomingKey = draftState.offers.map((offer) => offer.id).join('|');
+    const currentKey = displayedOffers.map((offer) => offer.id).join('|');
 
     if (incomingKey !== currentKey) {
-      setPendingRuneforges(draftState.runeforges);
+      setPendingOffers(draftState.offers);
     }
-  }, [animationPhase, displayedRuneforges, draftState.runeforges]);
+  }, [animationPhase, displayedOffers, draftState.offers]);
 
   useEffect(() => {
-    if (animationPhase === 'hidingOthers' && selectedRuneforgeId) {
+    if (animationPhase === 'hidingOthers' && selectedOfferId) {
       const timeout = setTimeout(() => {
         setAnimationPhase('selectedExit');
       }, 240);
@@ -86,14 +86,14 @@ export function DeckDraftingModal({
         clearTimeout(timeout);
       };
     }
-  }, [animationPhase, selectedRuneforgeId]);
+  }, [animationPhase, selectedOfferId]);
 
   useEffect(() => {
-    if (animationPhase === 'selectedExit' && selectedRuneforgeId) {
-      setShowSelectedRuneforge(false);
-      onSelectRuneforge(selectedRuneforgeId);
+    if (animationPhase === 'selectedExit' && selectedOfferId) {
+      setShowSelectedOffer(false);
+      onSelectOffer(selectedOfferId);
     }
-  }, [animationPhase, onSelectRuneforge, selectedRuneforgeId]);
+  }, [animationPhase, onSelectOffer, selectedOfferId]);
 
   useEffect(() => {
     return () => {
@@ -101,39 +101,39 @@ export function DeckDraftingModal({
     };
   }, []);
 
-  const visibleRuneforges = displayedRuneforges.filter((runeforge) => {
-    if (animationPhase === 'selectedExit' && runeforge.id === selectedRuneforgeId) {
-      return showSelectedRuneforge;
+  const visibleOffers = displayedOffers.filter((offer) => {
+    if (animationPhase === 'selectedExit' && offer.id === selectedOfferId) {
+      return showSelectedOffer;
     }
     return true;
   });
 
-  const getRuneforgeAnimationState = (runeforgeId: string) => {
-    if (!selectedRuneforgeId) {
+  const getOfferAnimationState = (offerId: string) => {
+    if (!selectedOfferId) {
       return 'visible';
     }
-    if (animationPhase === 'hidingOthers' && runeforgeId !== selectedRuneforgeId) {
+    if (animationPhase === 'hidingOthers' && offerId !== selectedOfferId) {
       return 'dimmed';
     }
-    if (animationPhase === 'selectedExit' && runeforgeId !== selectedRuneforgeId) {
+    if (animationPhase === 'selectedExit' && offerId !== selectedOfferId) {
       return 'dimmed';
     }
     return 'visible';
   };
 
-  const handleRuneforgeExitComplete = () => {
+  const handleOfferExitComplete = () => {
     if (animationPhase === 'hidingOthers') {
       setAnimationPhase('selectedExit');
       return;
     }
 
     if (animationPhase === 'selectedExit') {
-      if (pendingRuneforges) {
-        setDisplayedRuneforges(pendingRuneforges);
-        setPendingRuneforges(null);
+      if (pendingOffers) {
+        setDisplayedOffers(pendingOffers);
+        setPendingOffers(null);
       }
-      setShowSelectedRuneforge(true);
-      setSelectedRuneforgeId(null);
+      setShowSelectedOffer(true);
+      setSelectedOfferId(null);
       setAnimationPhase('idle');
     }
   };
@@ -146,14 +146,14 @@ export function DeckDraftingModal({
     });
   };
 
-  const handleSelect = (runeforge: RuneforgeType) => {
+  const handleSelect = (offer: DeckDraftOffer) => {
     if (selectionLocked) {
       return;
     }
     playClickSound();
-    setSelectedRuneforgeId(runeforge.id);
+    setSelectedOfferId(offer.id);
     setAnimationPhase('hidingOthers');
-    animateDeckCounter(totalDeckSize + runeforge.runes.length);
+    animateDeckCounter(totalDeckSize + offer.runes.length);
   };
 
   const handleOpenDeckOverlay = () => {
@@ -167,8 +167,8 @@ export function DeckDraftingModal({
   };
 
   const computeSlots = useCallback(
-    (runeforgeId: string, runes: Rune[], totalSlots: number): (Rune | null)[] => {
-      const existingAssignments = runeSlotAssignmentsRef.current[runeforgeId] ?? {};
+    (offerId: string, runes: Rune[], totalSlots: number): (Rune | null)[] => {
+      const existingAssignments = runeSlotAssignmentsRef.current[offerId] ?? {};
       const nextAssignments: Record<string, number> = {};
       const usedSlots = new Set<number>();
 
@@ -193,7 +193,7 @@ export function DeckDraftingModal({
         usedSlots.add(assignedSlot);
       });
 
-      runeSlotAssignmentsRef.current[runeforgeId] = nextAssignments;
+      runeSlotAssignmentsRef.current[offerId] = nextAssignments;
 
       const runeBySlot = new Map<number, Rune>();
       runes.forEach((rune) => {
@@ -208,15 +208,15 @@ export function DeckDraftingModal({
     []
   );
 
-  const renderRuneforgeRow = (runeforge: RuneforgeType) => {
+  const renderOfferRow = (offer: DeckDraftOffer) => {
     const runeSize = 55;
     const runeGap = 14;
     const containerPadding = 24;
-    const hasRunes = runeforge.runes.length > 0;
-    const slotCount = Math.max(runeforge.runes.length, 1);
-    const slots = hasRunes ? computeSlots(runeforge.id, runeforge.runes, slotCount) : [];
-    const baseRuneforgeWidth = (slotCount * runeSize) + (Math.max(0, slotCount - 1) * runeGap) + containerPadding;
-    const runeforgeWidth = Math.min(520, Math.max(280, baseRuneforgeWidth));
+    const hasRunes = offer.runes.length > 0;
+    const slotCount = Math.max(offer.runes.length, 1);
+    const slots = hasRunes ? computeSlots(offer.id, offer.runes, slotCount) : [];
+    const baseOfferWidth = (slotCount * runeSize) + (Math.max(0, slotCount - 1) * runeGap) + containerPadding;
+    const offerWidth = Math.min(520, Math.max(280, baseOfferWidth));
     const drafted = hasRunes ? slots.some((slotRune) => slotRune === null) : false;
     const containerBoxShadow = drafted ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)';
     const glowBase = `${containerBoxShadow}, 0 0 36px rgba(235, 170, 255, 0.48), 0 0 72px rgba(235, 170, 255, 0.22)`;
@@ -235,7 +235,7 @@ export function DeckDraftingModal({
     return (
       <motion.div
         style={{
-          width: `${runeforgeWidth}px`,
+          width: `${offerWidth}px`,
           padding: '12px',
           borderRadius: '16px',
           border: drafted ? 'transparent' : '1px solid rgba(255, 255, 255, 0.12)',
@@ -267,7 +267,7 @@ export function DeckDraftingModal({
               if (!slotRune) {
                 return (
                   <div
-                    key={`placeholder-${runeforge.id}-${slotIndex}`}
+                    key={`placeholder-${offer.id}-${slotIndex}`}
                     style={{
                       width: `${runeSize}px`,
                       height: `${runeSize}px`,
@@ -287,7 +287,7 @@ export function DeckDraftingModal({
                     justifyContent: 'center',
                   }}
                 >
-                  <RuneCell rune={slotRune} variant="runeforge" size="large" showEffect showTooltip />
+                  <RuneCell rune={slotRune} variant="draft" size="large" showEffect showTooltip />
                 </div>
               );
             })}
@@ -326,21 +326,21 @@ export function DeckDraftingModal({
         {selectionLimit > 1 && (
           <div className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">
             {selectionsRemaining > 0
-              ? `Select ${selectionsRemaining} more runeforge${selectionsRemaining === 1 ? '' : 's'} from this pool`
+              ? `Select ${selectionsRemaining} more offer${selectionsRemaining === 1 ? '' : 's'} from this pool`
               : 'Preparing the next pool...'}
           </div>
         )}
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <AnimatePresence mode="sync" onExitComplete={handleRuneforgeExitComplete}>
-            {visibleRuneforges.map((runeforge) => {
-              const isSelected = runeforge.id === selectedRuneforgeId;
-              const animationState = getRuneforgeAnimationState(runeforge.id);
-              const effectDescription = getDeckDraftEffectDescription(runeforge.deckDraftEffect);
+          <AnimatePresence mode="sync" onExitComplete={handleOfferExitComplete}>
+            {visibleOffers.map((offer) => {
+              const isSelected = offer.id === selectedOfferId;
+              const animationState = getOfferAnimationState(offer.id);
+              const effectDescription = getDeckDraftEffectDescription(offer.deckDraftEffect);
               return (
                 <motion.div
                   layout="position"
-                  key={runeforge.id}
+                  key={offer.id}
                   initial="initial"
                   animate={animationState}
                   exit="exit"
@@ -350,7 +350,7 @@ export function DeckDraftingModal({
                     pointerEvents: animationState === 'dimmed' ? 'none' : 'auto',
                   }}
                 >
-                  {renderRuneforgeRow(runeforge)}
+                  {renderOfferRow(offer)}
                   {effectDescription && (
                     <div className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[0_0_28px_rgba(255,255,255,0.08)]">
                       {effectDescription}
@@ -358,7 +358,7 @@ export function DeckDraftingModal({
                   )}
                   <button
                     type="button"
-                    onClick={() => handleSelect(runeforge)}
+                    onClick={() => handleSelect(offer)}
                     disabled={selectionLocked}
                     className="w-full rounded-xl border border-sky-400/40 bg-gradient-to-r from-sky-500/80 to-indigo-500/80 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:opacity-60 disabled:cursor-not-allowed"
                   >

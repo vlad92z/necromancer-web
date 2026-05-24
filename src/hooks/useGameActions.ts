@@ -5,7 +5,6 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { gameplayActions } from '../state/stores/gameplayActions';
-import { useSelectionStore } from '../state/stores/selectionStore';
 import { useUIStore } from '../state/stores/uiStore';
 
 export function useGameplayActions() {
@@ -39,13 +38,9 @@ export function useUIActions() {
 }
 
 export function useSelectionActions() {
-  return useSelectionStore(
+  return useUIStore(
     useShallow((state) => ({
-      clearSelection: state.clearSelection,
-      replaceSelection: state.replaceSelection,
       setActiveElement: state.setActiveElement,
-      setSelection: state.setSelection,
-      setSelectionState: state.setSelectionState,
     })),
   );
 }

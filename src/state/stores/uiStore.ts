@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import type { TooltipCard } from '../../types/game';
+import type { ActiveElement } from '../../features/gameplay/components/keyboardNavigation';
 import { createDefaultTooltipCards } from '../../utils/gameInitialization';
 
 interface UIStore {
@@ -17,6 +18,7 @@ interface UIStore {
   hasMusicSessionStarted: boolean;
   tooltipCards: TooltipCard[];
   tooltipOverrideActive: boolean;
+  activeElement: ActiveElement | null;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
@@ -29,6 +31,7 @@ interface UIStore {
   markMusicSessionStarted: () => void;
   setTooltipCards: (cards: TooltipCard[], overrideSelection?: boolean) => void;
   resetTooltipCards: () => void;
+  setActiveElement: (next: ActiveElement | null | ((current: ActiveElement | null) => ActiveElement | null)) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -57,6 +60,7 @@ export const useUIStore = create<UIStore>((set) => ({
   hasMusicSessionStarted: false,
   tooltipCards: createDefaultTooltipCards(),
   tooltipOverrideActive: false,
+  activeElement: null,
   
   // Actions
   toggleRulesOverlay: () => {
@@ -114,5 +118,11 @@ export const useUIStore = create<UIStore>((set) => ({
       tooltipCards: createDefaultTooltipCards(),
       tooltipOverrideActive: false,
     });
+  },
+
+  setActiveElement: (next) => {
+    set((state) => ({
+      activeElement: typeof next === 'function' ? next(state.activeElement) : next,
+    }));
   },
 }));

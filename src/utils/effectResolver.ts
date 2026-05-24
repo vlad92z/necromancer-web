@@ -344,10 +344,6 @@ export function resolveCastEffects({
         }));
         break;
       }
-      case 'cast.channel':
-      case 'cast.channelSynergy':
-        logs.push(createCastLog(castRune, effectRef, baseInput, { noOp: true }));
-        break;
     }
   });
 

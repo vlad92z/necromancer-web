@@ -54,11 +54,10 @@ describe('effectResolver resolveCastEffects', () => {
     ]);
   });
 
-  it('keeps channel and unknown refs as no-op logs', () => {
+  it('keeps misplaced passive and unknown refs as no-op logs', () => {
     const player = createTestPlayer();
     const enemy = createTestEnemy(20);
-    const castRune = createTestRune('channel-cast', 'Lightning', [
-      createEffectRef('cast.channelSynergy', { amount: 4, synergyType: 'Lightning' }),
+    const castRune = createTestRune('unknown-cast', 'Lightning', [
       { effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } },
       { effectId: 'unknown.effect', params: { amount: 99 } },
     ]);
@@ -69,7 +68,6 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.enemy).toBe(enemy);
     expect(result.arcaneDustDelta).toBe(0);
     expect(result.logs).toMatchObject([
-      { effectId: 'cast.channelSynergy', displayHint: 'channel', output: { noOp: true } },
       { effectId: 'passive.tomeCastDamage', displayHint: 'damage', output: { noOp: true } },
       { effectId: 'unknown.effect', displayHint: 'unknown', output: { noOp: true } },
     ]);

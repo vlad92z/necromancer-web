@@ -6,9 +6,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { useBoardStore } from '../state/stores/boardStore';
 import { useCombatStore } from '../state/stores/combatStore';
-import { useResolutionStore } from '../state/stores/resolutionStore';
 import { useRunStore } from '../state/stores/runStore';
-import { useSelectionStore } from '../state/stores/selectionStore';
 import { useUIStore } from '../state/stores/uiStore';
 
 export function useGameStarted() {
@@ -28,7 +26,7 @@ export function useSelectedArtefactIds() {
 }
 
 export function useActiveElement() {
-  return useSelectionStore((state) => state.activeElement);
+  return useUIStore((state) => state.activeElement);
 }
 
 export function useSoundVolume() {
@@ -118,9 +116,8 @@ export function useCombatZoneState() {
 export function useGameplayWallState() {
   const wall = useBoardStore((state) => state.player.wall);
   const wallCharges = useCombatStore((state) => state.wallCharges);
-  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
 
-  return { wall, wallCharges, scoringSequence };
+  return { wall, wallCharges };
 }
 
 export function useGameplayDeckState() {
@@ -131,16 +128,13 @@ export function useGameplayDeckState() {
 }
 
 export function useGameplayHealthState() {
-  const board = useBoardStore(
+  return useBoardStore(
     useShallow((state) => ({
       health: state.player.health,
       maxHealth: state.player.maxHealth,
       armor: state.player.armor,
     })),
   );
-  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
-
-  return { ...board, scoringSequence };
 }
 
 export function useGameplayStatusState() {
@@ -155,9 +149,8 @@ export function useGameplayStatusState() {
 export function useGameplaySummaryState() {
   return useRunStore(
     useShallow((state) => ({
-      progress: state.runePowerTotal,
-      targetScore: state.targetScore,
       gameIndex: state.gameIndex,
+      enemyMaxHealth: state.enemyMaxHealth,
     })),
   );
 }

@@ -30,15 +30,15 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 3,
+      version: 4,
       state: {
         gameStarted: true,
-        targetScore: 17,
+        enemyMaxHealth: 17,
       },
     });
     expect(loadSoloState()).toMatchObject({
       gameStarted: true,
-      targetScore: 17,
+      enemyMaxHealth: 17,
     });
   });
 
@@ -73,11 +73,6 @@ describe('soloPersistence', () => {
       },
     };
     legacyState.player.deck = [legacyRune as typeof legacyState.player.deck[number], ...legacyState.player.deck.slice(1)];
-    legacyState.player.patternLines[0] = {
-      ...legacyState.player.patternLines[0],
-      firstRuneEffects: { cast: [], passive: [] },
-      primaryRuneEffects: { cast: [], passive: [] },
-    } as typeof legacyState.player.patternLines[number];
 
     storage.set('necromancer-solo-state', JSON.stringify({ version: 2, state: legacyState }));
 

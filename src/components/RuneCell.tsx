@@ -1,6 +1,5 @@
 /**
- * RuneCell component - unified cell display for runes across all game areas
- * Supports: Wall cells, Pattern lines, Floor line, Runeforges, Center pool
+ * RuneCell component - unified cell display for runes across current game areas.
  * Now uses centralized design tokens for consistent styling
  */
 
@@ -79,7 +78,7 @@ const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> 
   epic: RUNE_EPIC_ASSETS,
 };
 
-export type RuneCellVariant = 'wall' | 'runeforge';
+export type RuneCellVariant = 'wall' | 'draft';
 
 export interface RuneCellProps {
   rune?: Rune | null;
@@ -114,7 +113,7 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
     backgroundOccupied: '#46350dff',
     emptyOpacity: 0.35,
   },
-  runeforge: {
+  draft: {
     border: 'none',
     background: 'transparent',
   },

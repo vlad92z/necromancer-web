@@ -13,9 +13,6 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }))).toBe(
       'Deal 2 damage for every Void rune in your completed wall'
     );
-    expect(getEffectDescription(createEffectRef('cast.channelSynergy', { amount: 1, synergyType: 'Lightning' }))).toBe(
-      'No combat effect yet'
-    );
   });
 
   it('keeps rarity out of effect ref params', () => {

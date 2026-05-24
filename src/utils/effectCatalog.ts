@@ -11,9 +11,7 @@ export type CastEffectId =
   | 'cast.fortune'
   | 'cast.synergy'
   | 'cast.armorSynergy'
-  | 'cast.fragile'
-  | 'cast.channel'
-  | 'cast.channelSynergy';
+  | 'cast.fragile';
 
 export type PassiveEffectId =
   | 'passive.ringDraftRarity'
@@ -105,20 +103,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage if your completed wall has no ${runeTypeParam(params, 'fragileType')} runes`,
-  },
-  'cast.channel': {
-    id: 'cast.channel',
-    kind: 'cast',
-    title: 'Channel',
-    displayHint: 'channel',
-    describe: () => 'No combat effect yet',
-  },
-  'cast.channelSynergy': {
-    id: 'cast.channelSynergy',
-    kind: 'cast',
-    title: 'Channel Synergy',
-    displayHint: 'channel',
-    describe: () => 'No combat effect yet',
   },
   'passive.ringDraftRarity': {
     id: 'passive.ringDraftRarity',

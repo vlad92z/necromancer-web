@@ -233,13 +233,12 @@ describe('combatResolution basic combat effects', () => {
     expect(result.logs.map((log) => log.effectId)).toEqual(['cast.healing', 'cast.armor']);
   });
 
-  it('returns fortune as arcane dust delta and keeps Channel effects as no-op logs', () => {
+  it('returns fortune as arcane dust delta and keeps unknown effects as no-op logs', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const enemy = createTestEnemy(10);
     const rune = createTestRuneWithEffects('mixed-rune', 'Wind', [
       { type: 'Fortune', amount: 4, rarity: 'common' },
-      { type: 'Channel', amount: 9, rarity: 'common' },
-      { type: 'ChannelSynergy', amount: 9, synergyType: 'Lightning', rarity: 'common' },
+      { type: 'RemovedLegacyEffect', amount: 9, rarity: 'common' },
     ]);
 
     const result = resolveCompletedRuneCastEffects({ player, enemy, rune });
@@ -249,8 +248,7 @@ describe('combatResolution basic combat effects', () => {
     expect(result.enemy).toBe(enemy);
     expect(result.logs).toMatchObject([
       { effectId: 'cast.fortune', output: { arcaneDust: 4, arcaneDustDelta: 4 } },
-      { effectId: 'cast.channel', output: { noOp: true } },
-      { effectId: 'cast.channelSynergy', output: { noOp: true } },
+      { effectId: 'legacy.unknown', output: { noOp: true } },
     ]);
   });
 
@@ -583,10 +581,6 @@ function toCatalogEffectRef(effect: unknown): Rune['castEffectRefs'][number] {
       return createEffectRef('cast.armorSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
     case 'Fragile':
       return createEffectRef('cast.fragile', { amount: candidate.amount ?? 0, fragileType: candidate.fragileType });
-    case 'Channel':
-      return createEffectRef('cast.channel', { amount: candidate.amount ?? 0 });
-    case 'ChannelSynergy':
-      return createEffectRef('cast.channelSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
     default:
       return { effectId: 'legacy.unknown' };
   }

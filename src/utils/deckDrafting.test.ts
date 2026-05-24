@@ -11,7 +11,7 @@ import {
   createDraftRuneForRarity,
   getDeckDraftEffectDescription,
   getDeckDraftSelectionLimit,
-  mergeDeckWithRuneforge,
+  mergeDeckWithOffer,
   resolveDeckDraftOfferPassives,
   rollDraftRarity,
 } from './deckDrafting';
@@ -32,12 +32,11 @@ describe('deckDrafting', () => {
     expect(state.picksRemaining).toBe(1);
     expect(state.selectionLimit).toBe(1);
     expect(state.selectionsThisOffer).toBe(0);
-    expect(state.runeforges).toHaveLength(3);
-    state.runeforges.forEach((forge) => {
-      expect(forge.ownerId).toBe('player-1');
-      expect(forge.runes).toHaveLength(4);
-      expect(forge.disabled).toBe(false);
-      expect(forge.deckDraftEffect).toBeDefined();
+    expect(state.offers).toHaveLength(3);
+    state.offers.forEach((offer) => {
+      expect(offer.ownerId).toBe('player-1');
+      expect(offer.runes).toHaveLength(4);
+      expect(offer.deckDraftEffect).toBeDefined();
     });
   });
 
@@ -51,7 +50,7 @@ describe('deckDrafting', () => {
 
   it('generates runes with unique ids and rarity fields', () => {
     const state = createDeckDraftState('player-1', 0, [], 1);
-    const runes = state.runeforges.flatMap((forge) => forge.runes);
+    const runes = state.offers.flatMap((offer) => offer.runes);
     const ids = new Set(runes.map((rune) => rune.id));
 
     expect(ids.size).toBe(runes.length);
@@ -75,7 +74,7 @@ describe('deckDrafting', () => {
     });
 
     const state = createDeckDraftState('player-1', 10, ['ring'], 1);
-    const runes = state.runeforges.flatMap((forge) => forge.runes);
+    const runes = state.offers.flatMap((offer) => offer.runes);
 
     expect(runes.length).toBe(12);
     expect(runes.some((rune) => rune.rarity === 'epic')).toBe(true);
@@ -142,14 +141,14 @@ describe('deckDrafting', () => {
 
     const state = createDeckDraftState('player-1', 1, [], 1);
 
-    expect(state.runeforges[2].deckDraftEffect).toEqual({ type: 'betterRunes', rarityStep: 1 });
-    expect(state.runeforges[2].runes[0].rarity).toBe('rare');
-    expect(state.runeforges[2].runes.slice(1).every((rune) => rune.rarity === 'uncommon')).toBe(true);
+    expect(state.offers[2].deckDraftEffect).toEqual({ type: 'betterRunes', rarityStep: 1 });
+    expect(state.offers[2].runes[0].rarity).toBe('rare');
+    expect(state.offers[2].runes.slice(1).every((rune) => rune.rarity === 'uncommon')).toBe(true);
   });
 
   it('keeps Ring and Robe draft runes on the catalog-ref shape', () => {
     const state = createDeckDraftState('player-1', 10, ['ring', 'robe'], 2);
-    const runes = state.runeforges.flatMap((forge) => forge.runes);
+    const runes = state.offers.flatMap((offer) => offer.runes);
 
     expect(state.selectionLimit).toBe(2);
     runes.forEach((rune) => {
@@ -171,11 +170,10 @@ describe('deckDrafting', () => {
   it('merges selected reward runes onto the deck', () => {
     const deckRune = createRune('deck-rune');
     const rewardRune = createRune('reward-rune');
-    const merged = mergeDeckWithRuneforge([deckRune], {
+    const merged = mergeDeckWithOffer([deckRune], {
       id: 'reward-row',
       ownerId: 'player-1',
       runes: [rewardRune],
-      disabled: false,
     });
 
     expect(merged.map((rune) => rune.id)).toEqual(['deck-rune', 'reward-rune']);
@@ -213,7 +211,6 @@ function createPlayer(): Player {
   return {
     id: 'player-1',
     name: 'Tester',
-    patternLines: [],
     wall: [],
     health: 80,
     maxHealth: 100,

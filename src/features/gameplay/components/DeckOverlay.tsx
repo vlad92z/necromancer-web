@@ -219,7 +219,7 @@ export function DeckOverlay() {
                         >
                           <RuneCell
                             rune={rune}
-                            variant="runeforge"
+                            variant="draft"
                             size={runeSize}
                             showEffect
                             showTooltip

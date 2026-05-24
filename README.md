@@ -51,7 +51,6 @@ npm run preview
 - Fortune grants Arcane Dust.
 - Synergy and ArmorSynergy count matching rune types across the completed wall.
 - Fragile checks for absence across the completed wall.
-- Channel effects are currently disabled in combat.
 
 ### Turn End & Deck Cycle
 - End Turn discards the remaining hand.
@@ -74,17 +73,17 @@ src/
 ├── components/             # Reusable UI (layout primitives, runes, stats)
 ├── features/gameplay/      # Gameboard, overlays, Solo UI
 ├── hooks/                  # Zustand selector/action hooks
-├── routes/                 # MainMenu, Solo, and future feature screens
-├── state/stores/           # Zustand stores (run, board, resolution, selection, gameplay, UI)
+├── routes/                 # MainMenu and Solo screens
+├── state/stores/           # Zustand stores (run, board, combat, gameplay, UI)
 ├── styles/                 # Design tokens and global styles
-├── systems/                # Gameplay orchestration, analytics, scoring sequences
+├── systems/                # Gameplay orchestration and analytics
 ├── types/                  # Domain types (game, rune, controllers)
 ├── utils/                  # Pure logic (scoring, init, rune effects)
 ├── App.tsx
 └── main.tsx
 ```
 
-`App.tsx` currently wires `/`, `/solo`, `/campaign`, `/deck-builder`, `/rewards`, and `/matchmaking`, with unknown paths redirected to `/`.
+`App.tsx` wires `/` and `/solo`, with unknown paths redirected to `/`.
 
 ## Deployment (Cloudflare Pages)
 
@@ -134,8 +133,8 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 ## Architecture Notes
 
-- `gameplayStore.ts` remains the compatibility action engine.
-- Read ownership is split across `runStore`, `boardStore`, `resolutionStore`, `selectionStore`, `uiStore`, and `artefactStore`.
+- `gameplayStore.ts` owns current encounter actions only: start, cast, end turn, defeat, victory, deck draft, and next encounter.
+- Read ownership is split across `runStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`.
 - Pure game rules live in `src/utils/`; side-effect orchestration lives in `src/systems/`.
 - See `Agents.md` for detailed AI agent workflows and coding standards.
 
