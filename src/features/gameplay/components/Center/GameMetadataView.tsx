@@ -6,7 +6,6 @@ import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { useUIActions } from '../../../../hooks/useGameActions';
 import { useActiveElement, useArcaneDust, useCombatZoneState, useGameIndex } from '../../../../hooks/useGameState';
-import { HealthView } from '../HealthView';
 import { DeckButton } from '../../../../components/DeckButton';
 
 export function GameMetadataView() {
@@ -48,7 +47,7 @@ export function GameMetadataView() {
       </div>
 
       {/* Right Side */}
-      <div className="flex flex-row flex-[60] items-center gap-3">
+      <div className="flex flex-row flex-[44] items-center justify-end gap-3">
         <DeckButton/>
         <div className="flex min-w-[150px] items-center justify-center gap-3 rounded-[16px] border border-violet-400/30 bg-violet-500/10 px-3.5 py-3 text-slate-100">
           <div className="flex flex-col items-center leading-[1.2]">
@@ -61,7 +60,6 @@ export function GameMetadataView() {
             <span className="text-[1.15rem] font-semibold">{discardPile.length}</span>
           </div>
         </div>
-        <HealthView/>
       </div>
     </div>
   );

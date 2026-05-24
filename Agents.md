@@ -21,12 +21,18 @@ Current scope:
 ## File Placement
 
 - `src/components/`: reusable UI such as rune cells, buttons, overlays, settings, artefact rows.
-- `src/features/gameplay/components/`: solo gameplay UI such as enemy panel, spell wall, hand, end turn, deck draft modal.
+- `src/features/gameplay/components/`: solo gameplay UI such as player/enemy panels, spell wall, hand tray, end turn, deck draft modal.
 - `src/hooks/`: selector/action hooks and audio hooks.
 - `src/state/stores/`: Zustand stores. Current read stores are run, board, combat, UI, artefact; `gameplayStore` owns actions.
 - `src/systems/`: cross-store orchestration and analytics only.
 - `src/types/`: serializable game and artefact types.
 - `src/utils/`: pure game logic such as initialization, combat resolution, effect resolution, deck drafting, persistence, tooltip data.
+
+## Combat Layout
+
+- Keep the top metadata bar focused on run progress and combat counters; player HP and armor render in the left combat panel.
+- The solo combat board is composed as player panel, centered spell wall, enemy panel, with the hand tray spanning the bottom.
+- Layout composition belongs in `SoloGameBoard.tsx`; panel-specific rendering belongs in dedicated gameplay components.
 
 ## Current Combat Rules
 

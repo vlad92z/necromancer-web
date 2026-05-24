@@ -6,14 +6,18 @@ import { Button } from '../../../components/layout';
 import { useGameplayActions } from '../../../hooks/useGameActions';
 import { useCombatEnemyState, useGameplayStatusState } from '../../../hooks/useGameState';
 
-export function EndTurnButton() {
+interface EndTurnButtonProps {
+  className?: string;
+}
+
+export function EndTurnButton({ className = '' }: EndTurnButtonProps) {
   const { endCombatTurn } = useGameplayActions();
   const { combatPhase } = useCombatEnemyState();
   const { isDefeat, deckDraftState } = useGameplayStatusState();
   const isEnabled = combatPhase === 'player-turn' && !isDefeat && !deckDraftState;
 
   return (
-    <div className="absolute bottom-5 right-5">
+    <div className={className}>
       <Button
         type="button"
         variant="secondary"

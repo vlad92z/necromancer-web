@@ -9,7 +9,7 @@ import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { CardView } from './CardView';
 
 const STATIC_CW_ROTATION = 2;
-const CARD_MAX_ROTATION = 8;
+const CARD_MAX_ROTATION = 6;
 
 const getTooltipCardRotation = (total: number, index: number): number => {
   if (total <= 1) {
@@ -47,14 +47,21 @@ export function TooltipView() {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [measuredCardWidth, setMeasuredCardWidth] = useState<number>(DEFAULT_CARD_WIDTH);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
 
   const firstCardId = handCards[0]?.card.id ?? null;
 
   useLayoutEffect(() => {
     const measure = () => {
-      const width = cardRef.current?.getBoundingClientRect().width;
-      if (typeof width === 'number' && width > 0) {
-        setMeasuredCardWidth(width);
+      const nextCardWidth = cardRef.current?.getBoundingClientRect().width;
+      const nextContainerWidth = containerRef.current?.getBoundingClientRect().width;
+
+      if (typeof nextCardWidth === 'number' && nextCardWidth > 0) {
+        setMeasuredCardWidth(nextCardWidth);
+      }
+
+      if (typeof nextContainerWidth === 'number' && nextContainerWidth > 0) {
+        setContainerWidth(nextContainerWidth);
       }
     };
 
@@ -70,12 +77,16 @@ export function TooltipView() {
     };
   }, [handCards.length, firstCardId]);
 
-  
-  function padding(n: number) {
-    const p = measuredCardWidth * 1.21 * (1 - Math.exp(-0.158 * (n - 2.594)));
-    return Math.round(p);
-  }
-  const overlapOffset = -padding(handCards.length) - 10;
+  const availableWidth = Math.max(measuredCardWidth, containerWidth - 24);
+  const minOverlap = Math.round(measuredCardWidth * 0.08);
+  const maxOverlap = Math.round(measuredCardWidth * 0.52);
+  const requiredOverlap = handCards.length > 1
+    ? measuredCardWidth - (availableWidth - measuredCardWidth) / (handCards.length - 1)
+    : 0;
+  const overlapAmount = handCards.length > 1
+    ? Math.min(maxOverlap, Math.max(minOverlap, Math.round(requiredOverlap)))
+    : 0;
+  const overlapOffset = -overlapAmount;
 
   if (handCards.length === 0) {
     return (
@@ -89,7 +100,7 @@ export function TooltipView() {
   }
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center px-2 overflow-visible">
+    <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-visible px-2 pb-2">
       {handCards.map(({ rune, card }, index) => {
         const rotation = getTooltipCardRotation(handCards.length, index);
         const isSelected = selectedHandRuneId === rune.id;

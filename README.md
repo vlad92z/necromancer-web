@@ -58,6 +58,11 @@ npm run preview
 - The player draws up to 6 cards from the draw deck.
 - If the draw deck runs short, the discard pile is shuffled only when needed.
 
+### Combat Screen Layout
+- The top status bar shows run metadata and combat counters, but player HP and armor live in the left combat panel.
+- The middle playfield is arranged left-to-right as player panel, spell wall, enemy panel.
+- The bottom tray holds the playable hand and the End Turn action.
+
 ### Victory & Run End
 - An encounter is won when the enemy reaches 0 HP.
 - Victory immediately opens deck draft rewards.
@@ -136,6 +141,7 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 - `gameplayStore.ts` owns current encounter actions only: start, cast, end turn, defeat, victory, deck draft, and next encounter.
 - Read ownership is split across `runStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`.
 - Pure game rules live in `src/utils/`; side-effect orchestration lives in `src/systems/`.
+- `SoloGameBoard.tsx` owns combat-screen composition; `PlayerPanel.tsx`, `EnemyPanel.tsx`, and `TooltipView.tsx` render the left panel, right panel, and bottom hand tray surfaces.
 - See `Agents.md` for detailed AI agent workflows and coding standards.
 
 ---
