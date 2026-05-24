@@ -15,14 +15,10 @@ export function PlayerPanel() {
 
   return (
     <section className="h-full p-5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
         <div>
           <div className="text-xs font-extrabold uppercase tracking-[0.24em] text-sky-200/80">Player</div>
           <h2 className="mt-1 text-2xl font-black text-sky-50">Wizard</h2>
-        </div>
-        <div className="rounded-md border border-sky-300/30 bg-sky-950/45 px-3 py-2 text-right">
-          <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-sky-100/75">Armor</div>
-          <div className="text-lg font-black text-sky-50">{armor}</div>
         </div>
       </div>
 
@@ -36,7 +32,15 @@ export function PlayerPanel() {
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-sm font-bold text-sky-50">
-          <span>HP</span>
+          <span className="flex items-center gap-1.5">
+            <span>HP</span>
+            {armor > 0 && (
+              <span className="flex items-center gap-1 text-sky-100">
+                <span aria-hidden="true" className="text-sky-200">🛡</span>
+                <span>{armor}</span>
+              </span>
+            )}
+          </span>
           <span>{health} / {maxHealth}</span>
         </div>
         <div className="h-3 overflow-hidden rounded-full bg-sky-950/80">
