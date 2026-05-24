@@ -47,14 +47,33 @@ describe('effectResolver resolveCastEffects', () => {
 
     const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall });
 
-    expect(result.enemy?.health).toBe(11);
+    expect(result.enemy?.health).toBe(9);
     expect(result.logs).toMatchObject([
-      { effectId: 'cast.synergy', output: { damage: 4, synergyCount: 2 } },
+      { effectId: 'cast.synergy', output: { damage: 6, synergyCount: 3 } },
       { effectId: 'cast.fragile', output: { damage: 5, isBlocked: false } },
     ]);
   });
 
-  it('resolves adjacent damage with diagonal and orthogonal completed wall runes only', () => {
+  it('does not add triggering runes to mismatched synergy counts', () => {
+    const player = createTestPlayer([
+      [0, 4, 'Void'],
+      [1, 4, 'Void'],
+    ]);
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('fire-cast', 'Fire', [
+      createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }),
+    ]);
+
+    const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall });
+
+    expect(result.enemy?.health).toBe(16);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.synergy',
+      output: { damage: 4, synergyCount: 2 },
+    });
+  });
+
+  it('resolves adjacent damage with diagonal and orthogonal completed wall runes plus the source', () => {
     const player = createTestPlayer([
       [0, 0, 'Frost'],
       [0, 1, 'Fire'],
@@ -75,10 +94,10 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.enemy?.health).toBe(12);
+    expect(result.enemy?.health).toBe(10);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.damageAdjacent',
-      output: { damage: 8, adjacentCount: 4 },
+      output: { damage: 10, adjacentCount: 5 },
     });
   });
 
@@ -99,9 +118,9 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.enemy?.health).toBe(17);
+    expect(result.enemy?.health).toBe(14);
     expect(result.logs[0]).toMatchObject({
-      output: { damage: 3, adjacentCount: 1 },
+      output: { damage: 6, adjacentCount: 2 },
     });
   });
 
@@ -163,7 +182,34 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
-  it('resolves adjacent armor from diagonal and orthogonal completed wall runes', () => {
+  it('does not double-count the triggering rune for matching passive synergy', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Lightning', [
+      createEffectRef('passive.damageBoostSynergy', { percent: 10, synergyType: 'Frost' }),
+    ]);
+    wall[0][1] = createWallCell('Frost');
+    wall[1][1] = createWallCell('Frost');
+    const player = { ...createTestPlayer(), wall };
+    const castRune = createTestRune('frost-cast', 'Frost', [
+      createEffectRef('cast.damage', { amount: 10 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy: createTestEnemy(30),
+      castRune,
+      wall,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(18);
+    expect(result.logs[1]).toMatchObject({
+      effectId: 'passive.damageBoostSynergy',
+      output: { synergyType: 'Frost', synergyCount: 2, previousValue: 0, nextValue: 20 },
+    });
+  });
+
+  it('resolves adjacent armor from diagonal and orthogonal completed wall runes plus the source', () => {
     const player = createTestPlayer([
       [0, 0, 'Frost'],
       [0, 1, 'Fire'],
@@ -183,10 +229,10 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.player.armor).toBe(12);
+    expect(result.player.armor).toBe(15);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.armorAdjacent',
-      output: { armor: 12, adjacentCount: 4 },
+      output: { armor: 15, adjacentCount: 5 },
     });
   });
 
@@ -226,10 +272,10 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.drawCount).toBe(3);
+    expect(result.drawCount).toBe(4);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.drawAdjacent',
-      output: { drawCount: 3, adjacentCount: 3 },
+      output: { drawCount: 4, adjacentCount: 4 },
     });
   });
 
@@ -261,6 +307,7 @@ describe('effectResolver resolveCastEffects', () => {
       [0, 0, 'Frost'],
       [0, 1, 'Fire'],
       [1, 0, 'Life'],
+      [1, 1, 'Void'],
       [2, 2, 'Wind'],
       [3, 3, 'Void'],
     ]);
@@ -283,6 +330,7 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.wall[0][0].runeType).toBeNull();
     expect(result.wall[0][1].runeType).toBeNull();
     expect(result.wall[1][0].runeType).toBeNull();
+    expect(result.wall[1][1].runeType).toBe('Void');
     expect(result.wall[2][2].runeType).toBeNull();
     expect(result.wall[3][3].runeType).toBe('Void');
     expect(result.suppressedRunes.map((rune) => rune.id)).toEqual([
@@ -357,7 +405,7 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.player.armor).toBe(8);
   });
 
-  it('resolves healing synergy from completed wall counts', () => {
+  it('resolves healing synergy from completed wall counts and the triggering rune', () => {
     const player = { ...createTestPlayer([[0, 2, 'Life'], [1, 2, 'Life']]), health: 4, maxHealth: 20 };
     const castRune = createTestRune('life-epic', 'Life', [
       createEffectRef('cast.healSynergy', { amount: 3, synergyType: 'Life' }),
@@ -365,7 +413,7 @@ describe('effectResolver resolveCastEffects', () => {
 
     const result = resolveCastEffects({ player, enemy: createTestEnemy(20), castRune, wall: player.wall });
 
-    expect(result.player.health).toBe(10);
+    expect(result.player.health).toBe(13);
   });
 
   it('heals vampire from actual enemy hp loss after overkill clamp', () => {
@@ -539,7 +587,7 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.player.health).toBe(6);
   });
 
-  it('gains adjacent arcane dust from completed neighbors only', () => {
+  it('gains adjacent arcane dust from completed neighbors plus the source', () => {
     const player = createTestPlayer([
       [0, 0, 'Frost'],
       [0, 1, 'Fire'],
@@ -556,7 +604,7 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.arcaneDustDelta).toBe(15);
+    expect(result.arcaneDustDelta).toBe(20);
   });
 
   it('charges adjacent incomplete slots without creating spent runes or completing them', () => {

@@ -90,7 +90,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Adjacent Damage',
     displayHint: 'damage',
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent completed rune`,
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent completed rune, including this rune`,
   },
   'cast.damageConditional': {
     id: 'cast.damageConditional',
@@ -164,7 +164,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Healing Synergy',
     displayHint: 'healing',
     describe: (params) =>
-      `Heal ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `Heal ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall, including this rune if it matches`,
   },
   'cast.armor': {
     id: 'cast.armor',
@@ -178,7 +178,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Adjacent Armor',
     displayHint: 'armor',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} armor for every adjacent completed rune`,
+    describe: (params) => `Gain ${numberParam(params, 'amount')} armor for every adjacent completed rune, including this rune`,
   },
   'cast.healthIncrease': {
     id: 'cast.healthIncrease',
@@ -199,7 +199,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Adjacent Draw',
     displayHint: 'deck',
-    describe: () => 'Draw one rune for every adjacent completed rune',
+    describe: () => 'Draw one rune for every adjacent completed rune, including this rune',
   },
   'cast.returnAdjacent': {
     id: 'cast.returnAdjacent',
@@ -213,7 +213,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Adjacent Arcane Dust',
     displayHint: 'arcaneDust',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} arcane dust for every adjacent completed rune`,
+    describe: (params) => `Gain ${numberParam(params, 'amount')} arcane dust for every adjacent completed rune, including this rune`,
   },
   'cast.chargeAdjacent': {
     id: 'cast.chargeAdjacent',
@@ -235,7 +235,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Synergy',
     displayHint: 'damage',
     describe: (params) =>
-      `Deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `Deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall, including this rune if it matches`,
   },
   'cast.armorSynergy': {
     id: 'cast.armorSynergy',
@@ -243,7 +243,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Armor Synergy',
     displayHint: 'armor',
     describe: (params) =>
-      `Gain ${numberParam(params, 'amount')} armor for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `Gain ${numberParam(params, 'amount')} armor for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall, including this rune if it matches`,
   },
   'cast.fragile': {
     id: 'cast.fragile',
@@ -336,7 +336,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       defaultValue: 0,
     },
     describe: (params) =>
-      `Increase all damage by ${numberParam(params, 'percent')}% for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `Increase all damage by ${numberParam(params, 'percent')}% for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall, including the triggering rune if it matches`,
   },
   'passive.pulseSynergy': {
     id: 'passive.pulseSynergy',
@@ -351,7 +351,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       defaultValue: 0,
     },
     describe: (params) =>
-      `At end of turn, deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `At end of turn, deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall, including this rune if it matches`,
   },
   'passive.healingStartTurn': {
     id: 'passive.healingStartTurn',

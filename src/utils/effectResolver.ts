@@ -94,6 +94,7 @@ export interface PassiveEffectResolutionInput extends PassiveCollectionInput {
   trigger: EffectTrigger;
   baseValues: Record<string, number>;
   castRuneType?: RuneType;
+  sourcePosition?: WallPosition | null;
 }
 
 export interface PassiveEffectResolutionResult {
@@ -123,6 +124,30 @@ function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
   }, new Map<RuneType, number>());
 }
 
+function countWallRunesByTypeIncludingTrigger({
+  wall,
+  counts,
+  sourcePosition,
+  castRuneType,
+  runeType,
+}: {
+  wall: ScoringWall;
+  counts: Map<RuneType, number>;
+  sourcePosition: WallPosition | null | undefined;
+  castRuneType?: RuneType;
+  runeType: RuneType | null;
+}): number {
+  if (!runeType) {
+    return 0;
+  }
+
+  const wallCount = counts.get(runeType) ?? 0;
+  const sourceCell = sourcePosition ? wall[sourcePosition.row]?.[sourcePosition.col] : null;
+  const sourceAlreadyCounted = sourceCell?.runeType === runeType;
+
+  return wallCount + (!sourceAlreadyCounted && castRuneType === runeType ? 1 : 0);
+}
+
 function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
   return wall.some((row) => row.some((cell) => cell.runeType === runeType));
 }
@@ -147,6 +172,20 @@ function countAdjacentCompletedRunes(wall: ScoringWall, sourcePosition: WallPosi
   }
 
   return count;
+}
+
+function countAdjacentCompletedRunesIncludingSource(
+  wall: ScoringWall,
+  sourcePosition: WallPosition | null | undefined,
+  castRuneType: RuneType
+): number {
+  if (!sourcePosition) {
+    return 0;
+  }
+
+  const sourceCell = wall[sourcePosition.row]?.[sourcePosition.col];
+  const sourceCount = sourceCell?.runeType ? 1 : (castRuneType ? 1 : 0);
+  return countAdjacentCompletedRunes(wall, sourcePosition) + sourceCount;
 }
 
 function getAdjacentCompletedPositions(wall: ScoringWall, sourcePosition: WallPosition | null | undefined): WallPosition[] {
@@ -426,6 +465,7 @@ export function resolvePassiveEffects({
   activeArtefacts,
   baseValues,
   castRuneType,
+  sourcePosition = null,
 }: PassiveEffectResolutionInput): PassiveEffectResolutionResult {
   const values = { ...baseValues };
   const logs: EffectResolutionLog[] = [];
@@ -499,7 +539,13 @@ export function resolvePassiveEffects({
     ) {
       const synergyType = runeTypeParam(passive.effectRef, 'synergyType');
       const wallRuneCounts = countFilledWallRunesByType(wall);
-      const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
+      const synergyCount = countWallRunesByTypeIncludingTrigger({
+        wall,
+        counts: wallRuneCounts,
+        sourcePosition,
+        castRuneType,
+        runeType: synergyType,
+      });
       const paramKey = passive.effectRef.effectId === 'passive.damageBoostSynergy' ? 'percent' : 'amount';
       const modifier = numberParam(passive.effectRef, paramKey) * synergyCount;
       const previousValue = values[passiveMetadata.target] ?? 0;
@@ -618,7 +664,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.damageAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunes(wall, sourcePosition);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
         const damage = numberParam(effectRef, 'amount') * adjacentCount;
         baseDamage += damage;
         if (projectedEnemyHealth !== null) {
@@ -786,7 +832,13 @@ export function resolveCastEffects({
       }
       case 'cast.healSynergy': {
         const synergyType = runeTypeParam(effectRef, 'synergyType');
-        const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
+        const synergyCount = countWallRunesByTypeIncludingTrigger({
+          wall: nextWall,
+          counts: wallRuneCounts,
+          sourcePosition,
+          castRuneType: castRune.runeType,
+          runeType: synergyType,
+        });
         const healing = numberParam(effectRef, 'amount') * synergyCount;
         baseHealing += healing;
         projectedPlayerHealth = Math.min(projectedPlayerMaxHealth, projectedPlayerHealth + healing);
@@ -806,7 +858,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.armorAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunes(wall, sourcePosition);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
         const armor = numberParam(effectRef, 'amount') * adjacentCount;
         baseArmor += armor;
         projectedPlayerArmor += armor;
@@ -844,7 +896,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.drawAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunes(wall, sourcePosition);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
         baseDrawCount += adjacentCount;
         logs.push(createCastLog(castRune, effectRef, baseInput, {
           drawCount: adjacentCount,
@@ -882,7 +934,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.arcaneDustAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunes(wall, sourcePosition);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
         const arcaneDust = numberParam(effectRef, 'amount') * adjacentCount;
         baseArcaneDustDelta += arcaneDust;
         logs.push(createCastLog(castRune, effectRef, baseInput, {
@@ -1081,7 +1133,13 @@ export function resolveCastEffects({
       }
       case 'cast.synergy': {
         const synergyType = runeTypeParam(effectRef, 'synergyType');
-        const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
+        const synergyCount = countWallRunesByTypeIncludingTrigger({
+          wall: nextWall,
+          counts: wallRuneCounts,
+          sourcePosition,
+          castRuneType: castRune.runeType,
+          runeType: synergyType,
+        });
         const damage = numberParam(effectRef, 'amount') * synergyCount;
         baseDamage += damage;
         if (projectedEnemyHealth !== null) {
@@ -1097,7 +1155,13 @@ export function resolveCastEffects({
       }
       case 'cast.armorSynergy': {
         const synergyType = runeTypeParam(effectRef, 'synergyType');
-        const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
+        const synergyCount = countWallRunesByTypeIncludingTrigger({
+          wall: nextWall,
+          counts: wallRuneCounts,
+          sourcePosition,
+          castRuneType: castRune.runeType,
+          runeType: synergyType,
+        });
         const armor = numberParam(effectRef, 'amount') * synergyCount;
         baseArmor += armor;
         projectedPlayerArmor += armor;
@@ -1140,6 +1204,7 @@ export function resolveCastEffects({
       arcaneDustDelta: baseArcaneDustDelta,
     },
     castRuneType: castRune.runeType,
+    sourcePosition,
   });
 
   const damageAfterFlatBonuses = passiveResult.values.damage ?? 0;
