@@ -18,6 +18,15 @@ describe('effectCatalog', () => {
       threshold: 2,
       conditionType: 'Void',
     }))).toBe('Deal 25 damage if at least 2 Void runes are in your completed wall');
+    expect(getEffectDescription(createEffectRef('cast.armorAdjacent', { amount: 3 }))).toBe(
+      'Gain 3 armor for every adjacent completed rune'
+    );
+    expect(getEffectDescription(createEffectRef('cast.healthIncrease', { amount: 1 }))).toBe(
+      'Increase maximum health by 1 and heal 1'
+    );
+    expect(getEffectDescription(createEffectRef('cast.drawAdjacent'))).toBe(
+      'Draw one rune for every adjacent completed rune'
+    );
     expect(getEffectDescription(createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }))).toBe(
       'Deal 2 damage for every Void rune in your completed wall'
     );
@@ -25,6 +34,10 @@ describe('effectCatalog', () => {
       percent: 5,
       synergyType: 'Frost',
     }))).toBe('Increase all damage by 5% for every Frost rune in your completed wall');
+    expect(getEffectDescription(createEffectRef('passive.pulseSynergy', {
+      amount: 5,
+      synergyType: 'Void',
+    }))).toBe('At end of turn, deal 5 damage for every Void rune in your completed wall');
   });
 
   it('keeps rarity out of effect ref params', () => {

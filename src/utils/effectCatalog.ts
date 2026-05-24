@@ -10,6 +10,9 @@ export type CastEffectId =
   | 'cast.damageConditional'
   | 'cast.healing'
   | 'cast.armor'
+  | 'cast.armorAdjacent'
+  | 'cast.healthIncrease'
+  | 'cast.drawAdjacent'
   | 'cast.fortune'
   | 'cast.synergy'
   | 'cast.armorSynergy'
@@ -21,7 +24,8 @@ export type PassiveEffectId =
   | 'passive.rodHealing'
   | 'passive.potionArmor'
   | 'passive.tomeCastDamage'
-  | 'passive.damageBoostSynergy';
+  | 'passive.damageBoostSynergy'
+  | 'passive.pulseSynergy';
 
 export type CatalogEffectId = CastEffectId | PassiveEffectId;
 export type PassiveStackingKind = 'flat' | 'multiplier';
@@ -90,6 +94,27 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Armor',
     displayHint: 'armor',
     describe: (params) => `Gain ${numberParam(params, 'amount')} armor on cast`,
+  },
+  'cast.armorAdjacent': {
+    id: 'cast.armorAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Armor',
+    displayHint: 'armor',
+    describe: (params) => `Gain ${numberParam(params, 'amount')} armor for every adjacent completed rune`,
+  },
+  'cast.healthIncrease': {
+    id: 'cast.healthIncrease',
+    kind: 'cast',
+    title: 'Health Increase',
+    displayHint: 'healing',
+    describe: (params) => `Increase maximum health by ${numberParam(params, 'amount')} and heal ${numberParam(params, 'amount')}`,
+  },
+  'cast.drawAdjacent': {
+    id: 'cast.drawAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Draw',
+    displayHint: 'deck',
+    describe: () => 'Draw one rune for every adjacent completed rune',
   },
   'cast.fortune': {
     id: 'cast.fortune',
@@ -206,6 +231,21 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) =>
       `Increase all damage by ${numberParam(params, 'percent')}% for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+  },
+  'passive.pulseSynergy': {
+    id: 'passive.pulseSynergy',
+    kind: 'passive',
+    title: 'Synergy Pulse',
+    displayHint: 'damage',
+    passive: {
+      trigger: 'endTurn',
+      target: 'damage',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) =>
+      `At end of turn, deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
 };
 

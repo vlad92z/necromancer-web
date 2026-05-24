@@ -4,11 +4,12 @@
 
 import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
-import { resolveCastEffects } from './effectResolver';
+import { resolveCastEffects, resolveEndTurnEffects } from './effectResolver';
 import type { WallPosition } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
+export const EXTRA_DRAW_HAND_LIMIT = 10;
 
 export type WallCastStatus = 'invalid' | 'charged' | 'completed';
 
@@ -45,6 +46,21 @@ export interface EndPlayerTurnResult {
   discardPile: Rune[];
 }
 
+export interface DrawRunesInput {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+  drawCount: number;
+  handLimit?: number;
+  shuffleRunes?: (runes: Rune[]) => Rune[];
+}
+
+export interface DrawRunesResult {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+}
+
 export interface CompletedRuneCastEffectsInput {
   player: Player;
   enemy: Enemy | null;
@@ -57,6 +73,19 @@ export interface CompletedRuneCastEffectsResult {
   player: Player;
   enemy: Enemy | null;
   arcaneDustDelta: number;
+  drawCount: number;
+  logs: EffectResolutionLog[];
+}
+
+export interface EndTurnEffectsInput {
+  player: Player;
+  enemy: Enemy | null;
+  activeArtefacts?: ArtefactId[];
+}
+
+export interface EndTurnEffectsResult {
+  player: Player;
+  enemy: Enemy | null;
   logs: EffectResolutionLog[];
 }
 
@@ -108,6 +137,47 @@ export function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, num
 
 export function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
   return wall.some((row) => row.some((cell) => cell.runeType === runeType));
+}
+
+export function drawRunes({
+  player,
+  hand,
+  discardPile,
+  drawCount,
+  handLimit = EXTRA_DRAW_HAND_LIMIT,
+  shuffleRunes: shuffle = shuffleRunes,
+}: DrawRunesInput): DrawRunesResult {
+  let drawDeck = [...player.deck];
+  let nextDiscardPile = [...discardPile];
+  let nextHand = [...hand];
+  const targetHandSize = Math.min(handLimit, nextHand.length + Math.max(0, drawCount));
+
+  const drawFromDeck = () => {
+    const count = Math.min(targetHandSize - nextHand.length, drawDeck.length);
+    if (count <= 0) {
+      return;
+    }
+
+    nextHand = [...nextHand, ...drawDeck.slice(0, count)];
+    drawDeck = drawDeck.slice(count);
+  };
+
+  drawFromDeck();
+
+  if (nextHand.length < targetHandSize && nextDiscardPile.length > 0) {
+    drawDeck = shuffle(nextDiscardPile);
+    nextDiscardPile = [];
+    drawFromDeck();
+  }
+
+  return {
+    player: {
+      ...player,
+      deck: drawDeck,
+    },
+    hand: nextHand,
+    discardPile: nextDiscardPile,
+  };
 }
 
 export function castRuneToWallSlot({
@@ -233,36 +303,27 @@ export function endPlayerTurn({
   handSize = DEFAULT_HAND_SIZE,
   shuffleRunes: shuffle = shuffleRunes,
 }: EndPlayerTurnInput): EndPlayerTurnResult {
-  let drawDeck = [...player.deck];
-  let nextDiscardPile = [...discardPile, ...hand];
-  let nextHand: Rune[] = [];
+  return drawRunes({
+    player,
+    hand: [],
+    discardPile: [...discardPile, ...hand],
+    drawCount: handSize,
+    handLimit: handSize,
+    shuffleRunes: shuffle,
+  });
+}
 
-  const drawFromDeck = () => {
-    const drawCount = Math.min(handSize - nextHand.length, drawDeck.length);
-    if (drawCount <= 0) {
-      return;
-    }
-
-    nextHand = [...nextHand, ...drawDeck.slice(0, drawCount)];
-    drawDeck = drawDeck.slice(drawCount);
-  };
-
-  drawFromDeck();
-
-  if (nextHand.length < handSize && nextDiscardPile.length > 0) {
-    drawDeck = shuffle(nextDiscardPile);
-    nextDiscardPile = [];
-    drawFromDeck();
-  }
-
-  return {
-    player: {
-      ...player,
-      deck: drawDeck,
-    },
-    hand: nextHand,
-    discardPile: nextDiscardPile,
-  };
+export function resolveCompletedEndTurnEffects({
+  player,
+  enemy,
+  activeArtefacts = [],
+}: EndTurnEffectsInput): EndTurnEffectsResult {
+  return resolveEndTurnEffects({
+    player,
+    enemy,
+    wall: player.wall,
+    activeArtefacts,
+  });
 }
 
 export function collectVictoryDeck({

@@ -36,6 +36,20 @@ export interface CastEffectResolutionResult {
   player: Player;
   enemy: Enemy | null;
   arcaneDustDelta: number;
+  drawCount: number;
+  logs: EffectResolutionLog[];
+}
+
+export interface EndTurnEffectResolutionInput {
+  player: Player;
+  enemy: Enemy | null;
+  wall: ScoringWall;
+  activeArtefacts?: ArtefactId[];
+}
+
+export interface EndTurnEffectResolutionResult {
+  player: Player;
+  enemy: Enemy | null;
   logs: EffectResolutionLog[];
 }
 
@@ -231,13 +245,17 @@ export function resolvePassiveEffects({
       return;
     }
 
-    if (passive.effectRef.effectId === 'passive.damageBoostSynergy') {
+    if (
+      passive.effectRef.effectId === 'passive.damageBoostSynergy' ||
+      passive.effectRef.effectId === 'passive.pulseSynergy'
+    ) {
       const synergyType = runeTypeParam(passive.effectRef, 'synergyType');
       const wallRuneCounts = countFilledWallRunesByType(wall);
       const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
-      const percent = numberParam(passive.effectRef, 'percent') * synergyCount;
+      const paramKey = passive.effectRef.effectId === 'passive.damageBoostSynergy' ? 'percent' : 'amount';
+      const modifier = numberParam(passive.effectRef, paramKey) * synergyCount;
       const previousValue = values[passiveMetadata.target] ?? 0;
-      const nextValue = previousValue + percent;
+      const nextValue = previousValue + modifier;
       values[passiveMetadata.target] = nextValue;
 
       logs.push(createEffectLog(
@@ -249,7 +267,7 @@ export function resolvePassiveEffects({
         {
           target: passiveMetadata.target,
           stacking: passiveMetadata.stacking,
-          modifier: percent,
+          modifier,
           synergyType,
           synergyCount,
           previousValue,
@@ -305,9 +323,12 @@ export function resolveCastEffects({
   let baseHealing = 0;
   let baseArmor = 0;
   let baseArcaneDustDelta = 0;
+  let baseDrawCount = 0;
+  let baseMaxHealthIncrease = 0;
   let projectedEnemyHealth = enemy?.health ?? null;
   let projectedPlayerHealth = player.health;
   let projectedPlayerArmor = player.armor;
+  let projectedPlayerMaxHealth = player.maxHealth;
   const logs: EffectResolutionLog[] = [];
   const wallRuneCounts = countFilledWallRunesByType(wall);
 
@@ -316,8 +337,10 @@ export function resolveCastEffects({
       params: effectRef.params ?? {},
       enemyHealth: projectedEnemyHealth,
       playerHealth: projectedPlayerHealth,
+      playerMaxHealth: projectedPlayerMaxHealth,
       playerArmor: projectedPlayerArmor,
       arcaneDustDelta: baseArcaneDustDelta,
+      drawCount: baseDrawCount,
     };
 
     if (!isKnownCastEffectId(effectRef.effectId)) {
@@ -373,7 +396,7 @@ export function resolveCastEffects({
       case 'cast.healing': {
         const healing = numberParam(effectRef, 'amount');
         baseHealing += healing;
-        projectedPlayerHealth = Math.min(player.maxHealth, projectedPlayerHealth + healing);
+        projectedPlayerHealth = Math.min(projectedPlayerMaxHealth, projectedPlayerHealth + healing);
         logs.push(createCastLog(castRune, effectRef, baseInput, { healing, playerHealth: projectedPlayerHealth }));
         break;
       }
@@ -382,6 +405,42 @@ export function resolveCastEffects({
         baseArmor += armor;
         projectedPlayerArmor += armor;
         logs.push(createCastLog(castRune, effectRef, baseInput, { armor, playerArmor: projectedPlayerArmor }));
+        break;
+      }
+      case 'cast.armorAdjacent': {
+        const adjacentCount = countAdjacentCompletedRunes(wall, sourcePosition);
+        const armor = numberParam(effectRef, 'amount') * adjacentCount;
+        baseArmor += armor;
+        projectedPlayerArmor += armor;
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          armor,
+          adjacentCount,
+          sourcePosition,
+          playerArmor: projectedPlayerArmor,
+        }));
+        break;
+      }
+      case 'cast.healthIncrease': {
+        const healthIncrease = numberParam(effectRef, 'amount');
+        baseMaxHealthIncrease += healthIncrease;
+        projectedPlayerMaxHealth += healthIncrease;
+        projectedPlayerHealth += healthIncrease;
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          healthIncrease,
+          playerMaxHealth: projectedPlayerMaxHealth,
+          playerHealth: projectedPlayerHealth,
+        }));
+        break;
+      }
+      case 'cast.drawAdjacent': {
+        const adjacentCount = countAdjacentCompletedRunes(wall, sourcePosition);
+        baseDrawCount += adjacentCount;
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          drawCount: adjacentCount,
+          adjacentCount,
+          sourcePosition,
+          totalDrawCount: baseDrawCount,
+        }));
         break;
       }
       case 'cast.fortune': {
@@ -466,10 +525,13 @@ export function resolveCastEffects({
       health: Math.max(0, enemy.health - finalDamage),
     }
     : enemy;
-  const nextPlayer = finalHealing > 0 || finalArmor > 0
+  const finalMaxHealth = player.maxHealth + baseMaxHealthIncrease;
+  const finalHealth = Math.min(finalMaxHealth, player.health + finalHealing + baseMaxHealthIncrease);
+  const nextPlayer = finalHealing > 0 || finalArmor > 0 || baseMaxHealthIncrease > 0
     ? {
       ...player,
-      health: Math.min(player.maxHealth, player.health + finalHealing),
+      health: finalHealth,
+      maxHealth: finalMaxHealth,
       armor: player.armor + finalArmor,
     }
     : player;
@@ -478,6 +540,34 @@ export function resolveCastEffects({
     player: nextPlayer,
     enemy: nextEnemy,
     arcaneDustDelta,
+    drawCount: baseDrawCount,
     logs: [...logs, ...passiveResult.logs],
+  };
+}
+
+export function resolveEndTurnEffects({
+  player,
+  enemy,
+  wall,
+  activeArtefacts = [],
+}: EndTurnEffectResolutionInput): EndTurnEffectResolutionResult {
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'endTurn',
+    wall,
+    activeArtefacts,
+    baseValues: { damage: 0 },
+  });
+  const damage = passiveResult.values.damage ?? 0;
+  const nextEnemy = enemy && damage > 0
+    ? {
+      ...enemy,
+      health: Math.max(0, enemy.health - damage),
+    }
+    : enemy;
+
+  return {
+    player,
+    enemy: nextEnemy,
+    logs: passiveResult.logs,
   };
 }

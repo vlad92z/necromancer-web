@@ -63,7 +63,14 @@ Acceptance:
 - Common-only deck is fully playable.
 - Existing uncommon/rare/epic runes still work with prior behavior.
 
-## Stage 2: Uncommon Effects + End-Turn Passive
+## Stage 2: Uncommon Effects + End-Turn Passive ✅ Done
+
+Completed:
+- Uncommon rune identity refs implemented.
+- Adjacent armor, health increase, draw adjacent, and pulse synergy implemented.
+- Extra draw uses shared deck/discard draw helper with hand cap 10.
+- End-turn pulse resolves before enemy attack and can enter victory.
+- Automated checks passed.
 
 File-level changes before implementation:
 - `src/utils/runeEffects.ts`: update uncommon assignments.

@@ -23,7 +23,10 @@ import {
 import {
   castRuneToWallSlot,
   collectVictoryDeck,
+  drawRunes,
   endPlayerTurn,
+  EXTRA_DRAW_HAND_LIMIT,
+  resolveCompletedEndTurnEffects,
   resolveCompletedRuneCastEffects,
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
@@ -255,11 +258,26 @@ export const gameplayStoreConfig = (
           });
         }
 
+        const drawResult = resolvedEffects.drawCount > 0
+          ? drawRunes({
+            player: resolvedEffects.player,
+            hand: result.hand,
+            discardPile: state.discardPile,
+            drawCount: resolvedEffects.drawCount,
+            handLimit: EXTRA_DRAW_HAND_LIMIT,
+          })
+          : {
+            player: resolvedEffects.player,
+            hand: result.hand,
+            discardPile: state.discardPile,
+          };
+
         return {
           ...state,
-          player: resolvedEffects.player,
+          player: drawResult.player,
           enemy: resolvedEffects.enemy,
-          hand: result.hand,
+          hand: drawResult.hand,
+          discardPile: drawResult.discardPile,
           wallCharges: result.wallCharges,
           selectedHandRuneId: result.selectedHandRuneId,
         };
@@ -283,14 +301,45 @@ export const gameplayStoreConfig = (
   },
 
   endCombatTurn: () => {
+    let deckDraftRewardGameIndex: number | null = null;
+
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.deckDraftState) {
         return state;
       }
 
-      const enemyTurnResult = resolveEnemyTurn({
+      const endTurnEffects = resolveCompletedEndTurnEffects({
         player: state.player,
         enemy: state.enemy,
+        activeArtefacts: state.activeArtefacts,
+      });
+
+      if ((endTurnEffects.enemy?.health ?? 1) <= 0) {
+        deckDraftRewardGameIndex = state.gameIndex;
+        const victoryDeck = collectVictoryDeck({
+          player: endTurnEffects.player,
+          hand: state.hand,
+          discardPile: state.discardPile,
+          wallCharges: state.wallCharges,
+        });
+
+        return enterDeckDraftMode({
+          ...state,
+          player: {
+            ...victoryDeck.player,
+            wall: createEmptyWall(),
+          },
+          enemy: endTurnEffects.enemy,
+          hand: victoryDeck.hand,
+          discardPile: victoryDeck.discardPile,
+          wallCharges: createEmptyWallCharges(),
+          selectedHandRuneId: null,
+        });
+      }
+
+      const enemyTurnResult = resolveEnemyTurn({
+        player: endTurnEffects.player,
+        enemy: endTurnEffects.enemy,
       });
       const discardPile = [...state.discardPile, ...state.hand];
 
@@ -323,6 +372,10 @@ export const gameplayStoreConfig = (
         combatPhase: 'player-turn',
       };
     });
+
+    if (deckDraftRewardGameIndex !== null) {
+      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
+    }
   },
 
   disenchantRuneFromDeck: (runeId: string) => {

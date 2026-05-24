@@ -5,7 +5,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Rune, RuneType } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
-import { createEmptyWallCharges } from '../../utils/gameInitialization';
+import { createEmptyWall, createEmptyWallCharges } from '../../utils/gameInitialization';
 import { createRune } from '../../utils/runeEffects';
 import { useArtefactStore } from './artefactStore';
 import { createGameplayStoreInstance } from './gameplayStore';
@@ -141,6 +141,39 @@ describe('gameplayStore current combat', () => {
     store.getState().castRuneToWall(0, 2);
 
     expect(useArtefactStore.getState().arcaneDust).toBe(10);
+  });
+
+  it('opens deck draft from lethal end-turn pulse before enemy attacks', () => {
+    const store = createGameplayStoreInstance();
+    const hand = [createTestRune('hand-fire', 'Fire', 3)];
+    const wall = createEmptyWall();
+    wall[0][0] = {
+      runeType: 'Void',
+      rarity: 'uncommon',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.pulseSynergy', { amount: 5, synergyType: 'Void' })],
+    };
+    wall[0][4] = {
+      runeType: 'Void',
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [],
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand,
+      player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+    }));
+
+    store.getState().endCombatTurn();
+
+    const state = store.getState();
+    expect(state.combatPhase).toBe('victory');
+    expect(state.deckDraftState?.offers).toHaveLength(3);
+    expect(state.player.health).toBe(10);
   });
 });
 

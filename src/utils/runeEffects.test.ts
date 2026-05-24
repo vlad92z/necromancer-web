@@ -46,6 +46,37 @@ describe('runeEffects', () => {
     expect(refs[0]?.params).not.toHaveProperty('rarity');
   });
 
+  it('maps all uncommon rune identities to Stage 2 refs', () => {
+    expect(createRune('fire-uncommon', 'Fire', 'uncommon')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.synergy', params: { amount: 5, synergyType: 'Fire' } }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('frost-uncommon', 'Frost', 'uncommon')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.armorAdjacent', params: { amount: 3 } }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('life-uncommon', 'Life', 'uncommon')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 1 } }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('wind-uncommon', 'Wind', 'uncommon')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.drawAdjacent' }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('lightning-uncommon', 'Lightning', 'uncommon')).toMatchObject({
+      castEffectRefs: [],
+      passiveEffectRefs: [
+        { effectId: 'passive.damageBoostSynergy', params: { percent: 15, synergyType: 'Lightning' } },
+      ],
+    });
+    expect(createRune('void-uncommon', 'Void', 'uncommon')).toMatchObject({
+      castEffectRefs: [],
+      passiveEffectRefs: [
+        { effectId: 'passive.pulseSynergy', params: { amount: 5, synergyType: 'Void' } },
+      ],
+    });
+  });
+
   it('renders rune descriptions from catalog refs', () => {
     const rune = createRune('void-epic', 'Void', 'epic');
 

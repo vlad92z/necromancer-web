@@ -6,6 +6,7 @@ import {
   castRuneToWallSlot,
   collectVictoryDeck,
   countFilledWallRunesByType,
+  drawRunes,
   endPlayerTurn,
   resolveCompletedRuneCastEffects,
   resolveEnemyTurn,
@@ -96,6 +97,34 @@ describe('combatResolution wall casting', () => {
 });
 
 describe('combatResolution turn cycling', () => {
+  it('draws extra runes from deck then discard while respecting hand cap', () => {
+    const hand = createRunes('hand', 8);
+    const deckRunes = createRunes('deck-extra', 1);
+    const discardRunes = createRunes('discard-extra', 4);
+    const player = createPlayer('player-1', 'Tester', 10, deckRunes, 10);
+
+    const result = drawRunes({
+      player,
+      hand,
+      discardPile: discardRunes,
+      drawCount: 5,
+      handLimit: 10,
+      shuffleRunes: (runes) => runes,
+    });
+
+    expect(result.hand.map((rune) => rune.id)).toEqual([
+      ...hand.map((rune) => rune.id),
+      'deck-extra-0',
+      'discard-extra-0',
+    ]);
+    expect(result.player.deck.map((rune) => rune.id)).toEqual([
+      'discard-extra-1',
+      'discard-extra-2',
+      'discard-extra-3',
+    ]);
+    expect(result.discardPile).toEqual([]);
+  });
+
   it('moves remaining hand to discard before drawing from deck', () => {
     const handRune = createTestRune('hand-1', 'Fire');
     const deckRunes = createRunes('deck', 6);

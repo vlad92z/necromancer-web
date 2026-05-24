@@ -56,10 +56,12 @@ describe('deckDrafting', () => {
     expect(ids.size).toBe(runes.length);
     runes.forEach((rune) => {
       expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.rarity);
-      expect(rune.castEffectRefs.length).toBeGreaterThan(0);
-      expect(rune.passiveEffectRefs).toEqual([]);
+      expect(rune.castEffectRefs.length + rune.passiveEffectRefs.length).toBeGreaterThan(0);
       rune.castEffectRefs.forEach((effectRef) => {
-        expect(effectRef.params).not.toHaveProperty('rarity');
+        expect(effectRef.params ?? {}).not.toHaveProperty('rarity');
+      });
+      rune.passiveEffectRefs.forEach((effectRef) => {
+        expect(effectRef.params ?? {}).not.toHaveProperty('rarity');
       });
     });
   });
@@ -153,10 +155,12 @@ describe('deckDrafting', () => {
     expect(state.selectionLimit).toBe(2);
     runes.forEach((rune) => {
       expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.rarity);
-      expect(rune.castEffectRefs.length).toBeGreaterThan(0);
-      expect(rune.passiveEffectRefs).toEqual([]);
+      expect(rune.castEffectRefs.length + rune.passiveEffectRefs.length).toBeGreaterThan(0);
       rune.castEffectRefs.forEach((effectRef) => {
-        expect(effectRef.params).not.toHaveProperty('rarity');
+        expect(effectRef.params ?? {}).not.toHaveProperty('rarity');
+      });
+      rune.passiveEffectRefs.forEach((effectRef) => {
+        expect(effectRef.params ?? {}).not.toHaveProperty('rarity');
       });
     });
   });

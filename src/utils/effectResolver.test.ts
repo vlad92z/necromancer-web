@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
 import { createEffectRef, EFFECT_CATALOG } from './effectCatalog';
-import { collectActivePassiveEffects, resolveCastEffects, resolvePassiveEffects } from './effectResolver';
+import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects } from './effectResolver';
 import { createEmptyWall, createPlayer } from './gameInitialization';
 
 describe('effectResolver resolveCastEffects', () => {
@@ -163,6 +163,76 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
+  it('resolves adjacent armor from diagonal and orthogonal completed wall runes', () => {
+    const player = createTestPlayer([
+      [0, 0, 'Frost'],
+      [0, 1, 'Fire'],
+      [1, 0, 'Life'],
+      [2, 2, 'Void'],
+    ]);
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('frost-adjacent', 'Frost', [
+      createEffectRef('cast.armorAdjacent', { amount: 3 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.player.armor).toBe(12);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.armorAdjacent',
+      output: { armor: 12, adjacentCount: 4 },
+    });
+  });
+
+  it('resolves health increase into current and maximum health', () => {
+    const player = { ...createTestPlayer(), health: 8, maxHealth: 10 };
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('life-increase', 'Life', [
+      createEffectRef('cast.healthIncrease', { amount: 1 }),
+    ]);
+
+    const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall });
+
+    expect(result.player.maxHealth).toBe(11);
+    expect(result.player.health).toBe(9);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.healthIncrease',
+      output: { healthIncrease: 1, playerMaxHealth: 11, playerHealth: 9 },
+    });
+  });
+
+  it('returns adjacent draw count without mutating card zones', () => {
+    const player = createTestPlayer([
+      [0, 0, 'Frost'],
+      [0, 1, 'Fire'],
+      [1, 0, 'Life'],
+    ]);
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('wind-draw', 'Wind', [
+      createEffectRef('cast.drawAdjacent'),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.drawCount).toBe(3);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.drawAdjacent',
+      output: { drawCount: 3, adjacentCount: 3 },
+    });
+  });
+
   it('keeps misplaced passive and unknown refs as no-op logs', () => {
     const player = createTestPlayer();
     const enemy = createTestEnemy(20);
@@ -253,6 +323,33 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.player.armor).toBe(2);
     expect(result.arcaneDustDelta).toBe(4);
     expect(result.logs.filter((log) => log.effectId === 'passive.tomeCastDamage')).toHaveLength(1);
+  });
+});
+
+describe('effectResolver end turn effects', () => {
+  it('resolves pulse synergy before enemy attack flow consumes the result', () => {
+    const player = createTestPlayer([
+      [0, 4, 'Void'],
+      [1, 4, 'Void'],
+    ]);
+    const wall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
+    wall[0][0] = createWallCell('Void', [
+      createEffectRef('passive.pulseSynergy', { amount: 5, synergyType: 'Void' }),
+    ]);
+    const playerWithPulse = { ...player, wall };
+
+    const result = resolveEndTurnEffects({
+      player: playerWithPulse,
+      enemy: createTestEnemy(20),
+      wall: playerWithPulse.wall,
+    });
+
+    expect(result.enemy?.health).toBe(5);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'passive.pulseSynergy',
+      trigger: 'endTurn',
+      output: { modifier: 15, synergyType: 'Void', synergyCount: 3 },
+    });
   });
 });
 
