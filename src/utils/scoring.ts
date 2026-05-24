@@ -1,6 +1,6 @@
 /**
  * Scoring utilities for Massive Spell: Arcane Arena
- * Implements connected segment scoring
+ * Provides scoring wall geometry helpers.
  */
 
 import type { EffectRef, RuneEffectRarity, RuneType, ScoringWall } from '../types/game';
@@ -85,95 +85,6 @@ export function calculateSegmentSize(
   col: number
 ): number {
   return collectSegmentCells(wall, row, col).length;
-}
-
-export interface ResolvedSegment {
-  segmentSize: number;
-  damage: number;
-  healing: number;
-  arcaneDust: number;
-  armor: number;
-  orderedCells: SegmentCell[];
-  resolutionSteps: RuneResolutionStep[];
-  channelSynergyTriggered: boolean;
-}
-
-export interface RuneResolutionStep {
-  cell: SegmentCell;
-  damageDelta: number;
-  healingDelta: number;
-  arcaneDustDelta: number;
-  armorDelta: number;
-}
-
-/**
- * Resolve scoring effects for a connected segment. Effects are applied in
- * reading order (left-to-right within each row, then top-to-bottom across rows).
- */
-export function resolveSegment(
-  wall: ScoringWall,
-  row: number,
-  col: number,
-  overloadRuneCounts?: Map<RuneType, number>
-): ResolvedSegment {
-  const connectedCells = collectSegmentCells(wall, row, col);
-  return resolveSegmentFromCells(connectedCells, overloadRuneCounts);
-}
-
-export function resolveSegmentFromCells(
-  connectedCells: SegmentCell[],
-  overloadRuneCounts: Map<RuneType, number> = new Map()
-): ResolvedSegment {
-  if (connectedCells.length === 0) {
-    return {
-      segmentSize: 0,
-      damage: 0,
-      healing: 0,
-      arcaneDust: 0,
-      armor: 0,
-      orderedCells: [],
-      resolutionSteps: [],
-      channelSynergyTriggered: false,
-    };
-  }
-
-  const orderedCells = [...connectedCells].sort((a, b) =>
-    a.row === b.row ? a.col - b.col : a.row - b.row
-  );
-
-  const channelSynergyTriggered = false;
-  const resolutionSteps: RuneResolutionStep[] = orderedCells.map((cell) => {
-    void overloadRuneCounts;
-
-    return {
-      cell,
-      damageDelta: 0,
-      healingDelta: 0,
-      arcaneDustDelta: 0,
-      armorDelta: 0,
-    };
-  });
-
-  const totals = resolutionSteps.reduce(
-    (acc, step) => ({
-      damage: acc.damage + step.damageDelta,
-      healing: acc.healing + step.healingDelta,
-      arcaneDust: acc.arcaneDust + step.arcaneDustDelta,
-      armor: acc.armor + step.armorDelta,
-    }),
-    { damage: 0, healing: 0, arcaneDust: 0, armor: 0 }
-  );
-
-  return {
-    segmentSize: connectedCells.length,
-    damage: totals.damage,
-    healing: totals.healing,
-    arcaneDust: totals.arcaneDust,
-    armor: totals.armor,
-    orderedCells,
-    resolutionSteps,
-    channelSynergyTriggered,
-  };
 }
 
 /**

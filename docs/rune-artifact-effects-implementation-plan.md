@@ -181,7 +181,7 @@ Manual play check:
 - Deck overlay, wall tooltip, artefact tooltip all render.
 - Old persisted schema invalidates safely.
 
-## Stage 8: Delete Legacy Scoring Effects
+## Stage 8: Delete Legacy Scoring Effects ✅ Done
 
 File-level changes:
 - `src/utils/scoring.ts`, `src/utils/scoring.test.ts`: delete or strip obsolete segment effect resolution.
@@ -203,7 +203,7 @@ Manual play check:
 - `/solo` loadable.
 - Combat and deck draft still work.
 
-## Stage 9: Final PRD Acceptance
+## Stage 9: Final PRD Acceptance ✅ Done
 
 File-level changes:
 - Mark implementation plan stages complete as done.

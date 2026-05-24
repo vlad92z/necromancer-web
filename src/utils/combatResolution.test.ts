@@ -7,7 +7,7 @@ import {
   collectVictoryDeck,
   countFilledWallRunesByType,
   endPlayerTurn,
-  resolveCompletedRuneEffects,
+  resolveCompletedRuneCastEffects,
   resolveEnemyTurn,
   wallHasRuneType,
 } from './combatResolution';
@@ -198,7 +198,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'Damage', amount: 3, rarity: 'common' },
     ]);
 
-    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+    const result = resolveCompletedRuneCastEffects({ player, enemy, rune });
 
     expect(result.enemy?.health).toBe(7);
     expect(result.player).toBe(player);
@@ -226,7 +226,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'Armor', amount: 2, rarity: 'common' },
     ]);
 
-    const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(10), rune });
+    const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(10), rune });
 
     expect(result.player.health).toBe(10);
     expect(result.player.armor).toBe(3);
@@ -242,7 +242,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'ChannelSynergy', amount: 9, synergyType: 'Lightning', rarity: 'common' },
     ]);
 
-    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+    const result = resolveCompletedRuneCastEffects({ player, enemy, rune });
 
     expect(result.arcaneDustDelta).toBe(4);
     expect(result.player).toBe(player);
@@ -281,7 +281,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' },
     ]);
 
-    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+    const result = resolveCompletedRuneCastEffects({ player, enemy, rune });
 
     expect(result.enemy?.health).toBe(16);
     expect(result.player).toBe(player);
@@ -304,7 +304,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'ArmorSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
     ]);
 
-    const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
+    const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(20), rune });
 
     expect(result.player.armor).toBe(7);
     expect(result.logs[0]).toMatchObject({
@@ -326,12 +326,12 @@ describe('combatResolution basic combat effects', () => {
       { type: 'Fragile', amount: 5, fragileType: 'Fire', rarity: 'uncommon' },
     ]);
 
-    expect(resolveCompletedRuneEffects({
+    expect(resolveCompletedRuneCastEffects({
       player: absentPlayer,
       enemy: createTestEnemy(20),
       rune,
     }).enemy?.health).toBe(15);
-    expect(resolveCompletedRuneEffects({
+    expect(resolveCompletedRuneCastEffects({
       player: presentPlayer,
       enemy: createTestEnemy(20),
       rune,
@@ -355,7 +355,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'Fortune', amount: 5, rarity: 'common' },
     ]);
 
-    const result = resolveCompletedRuneEffects({ player, enemy: createTestEnemy(20), rune });
+    const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(20), rune });
 
     expect(result.enemy?.health).toBe(11);
     expect(result.player.armor).toBe(3);
@@ -377,7 +377,7 @@ describe('combatResolution basic combat effects', () => {
       castEffectRefs: [{ effectId: 'legacy.unknown', params: { amount: 999 } }],
     };
 
-    const result = resolveCompletedRuneEffects({ player, enemy, rune });
+    const result = resolveCompletedRuneCastEffects({ player, enemy, rune });
 
     expect(result.player).toBe(player);
     expect(result.enemy).toBe(enemy);
@@ -404,7 +404,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'Armor', amount: 2, rarity: 'common' },
     ]);
 
-    const result = resolveCompletedRuneEffects({
+    const result = resolveCompletedRuneCastEffects({
       player,
       enemy,
       rune,
@@ -438,7 +438,7 @@ describe('combatResolution basic combat effects', () => {
       { type: 'ArmorSynergy', amount: 2, synergyType: 'Frost', rarity: 'rare' },
     ]);
 
-    const result = resolveCompletedRuneEffects({
+    const result = resolveCompletedRuneCastEffects({
       player,
       enemy,
       rune,

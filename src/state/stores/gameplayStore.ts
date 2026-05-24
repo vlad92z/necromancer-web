@@ -15,7 +15,7 @@ import type {
   SelectionState,
 } from '../../types/game';
 import { fillFactories, initializeSoloGame, createSoloFactories } from '../../utils/gameInitialization';
-import { resolveSegment, getWallColumnForRune } from '../../utils/scoring';
+import { getWallColumnForRune } from '../../utils/scoring';
 import { copyEffectRefs } from '../../utils/runeEffects';
 import {
   createDeckDraftState,
@@ -25,22 +25,15 @@ import {
   getDeckDraftSelectionLimit,
 } from '../../utils/deckDrafting';
 import { getArcaneDustReward } from '../../utils/arcaneDust';
-import {
-  applyIncomingDamageModifiers,
-  applyOutgoingDamageModifiers,
-  applyOutgoingHealingModifiers,
-  getArmorGainMultiplier,
-} from '../../utils/artefactEffects';
 import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelpers';
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
-import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
 import { getRuneDisenchantDust } from '../../utils/runeRarity';
 import {
   castRuneToWallSlot,
   collectVictoryDeck,
   endPlayerTurn,
-  resolveCompletedRuneEffects,
+  resolveCompletedRuneCastEffects,
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
@@ -198,17 +191,15 @@ function getOverloadResult(
 ): { overloadDamage: number; nextHealth: number; nextArmor: number; scoreBonus: number; channelTriggered: boolean } {
   const baseDamage = newlyOverloadedRunes.length * state.overloadDamage;
 
-  // Apply artefact modifiers to incoming damage (Potion triples, Rod converts to score)
-  const { damage: modifiedDamage, scoreBonus: rodScoreBonus } = applyIncomingDamageModifiers(baseDamage, state);
-  const armorAbsorbed = Math.min(currentArmor, modifiedDamage);
-  const unabsorbedDamage = modifiedDamage - armorAbsorbed;
+  const armorAbsorbed = Math.min(currentArmor, baseDamage);
+  const unabsorbedDamage = baseDamage - armorAbsorbed;
   const nextArmor = currentArmor - armorAbsorbed;
   const nextHealth = Math.max(0, currentHealth - unabsorbedDamage);
   return {
     overloadDamage: unabsorbedDamage,
     nextHealth,
     nextArmor,
-    scoreBonus: rodScoreBonus,
+    scoreBonus: 0,
     channelTriggered: false,
   };
 }
@@ -789,8 +780,6 @@ export const gameplayStoreConfig = (
       }
 
       const scoringSteps: ScoringStep[] = [];
-      const overloadRuneCounts = runeTypeCounts(state.overloadRunes);
-      let scoringChannelTriggered = false;
       const recycledRunes: Rune[] = [];
 
       completedLines.forEach(({ line, index }) => {
@@ -820,27 +809,16 @@ export const gameplayStoreConfig = (
           primaryPassiveEffectRefs: null,
         };
 
-        const resolvedSegment = resolveSegment(updatedWall, index, col, overloadRuneCounts);
-        if (resolvedSegment.channelSynergyTriggered) {
-          scoringChannelTriggered = true;
-        }
-        const damageMultiplier = applyOutgoingDamageModifiers(1, resolvedSegment.segmentSize, state);
-        const healingMultiplier = applyOutgoingHealingModifiers(1, resolvedSegment.segmentSize, state);
-        const segmentDelay = getRuneResolutionDelayMs(resolvedSegment.segmentSize);
-
-        const armorMultiplier = getArmorGainMultiplier(resolvedSegment.segmentSize, state);
-        const segmentSteps = resolvedSegment.resolutionSteps.map((step) => ({
-          row: step.cell.row,
-          col: step.cell.col,
-          runeType: step.cell.runeType ?? runeType,
-          damageDelta: step.damageDelta * damageMultiplier,
-          healingDelta: step.healingDelta * healingMultiplier,
-          arcaneDustDelta: step.arcaneDustDelta,
-          armorDelta: step.armorDelta * armorMultiplier,
-          delayMs: segmentDelay,
-        }));
-
-        scoringSteps.push(...segmentSteps);
+        scoringSteps.push({
+          row: index,
+          col,
+          runeType,
+          damageDelta: 0,
+          healingDelta: 0,
+          arcaneDustDelta: 0,
+          armorDelta: 0,
+          delayMs: getRuneResolutionDelayMs(1),
+        });
 
         if (state.patternLineLock) {
           updatedLockedPatternLines = updatedLockedPatternLines.includes(index)
@@ -882,7 +860,6 @@ export const gameplayStoreConfig = (
         : null;
       scoringSequenceToEnqueue = scoringSequence;
 
-      const nextChannelSoundPending = scoringChannelTriggered || state.channelSoundPending;
       const baseNextState = {
         ...state,
         player: {
@@ -898,7 +875,7 @@ export const gameplayStoreConfig = (
         ...getPostDraftPhase(state.runeforges),
         lockedPatternLines: updatedLockedPatternLines,
         isDefeat: state.isDefeat,
-        channelSoundPending: nextChannelSoundPending,
+        channelSoundPending: state.channelSoundPending,
         runePowerTotal: targetRunePowerTotal,
       };
 
@@ -1044,7 +1021,7 @@ export const gameplayStoreConfig = (
       }
 
       if (result.status === 'completed' && result.completedRune) {
-        const resolvedEffects = resolveCompletedRuneEffects({
+        const resolvedEffects = resolveCompletedRuneCastEffects({
           player: result.player,
           enemy: state.enemy,
           rune: result.completedRune,

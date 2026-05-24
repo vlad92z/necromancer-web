@@ -329,7 +329,7 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().scoringSequence).not.toBeNull();
   });
 
-  it('keeps durable scoring final while scoring sequence display advances one rune at a time', async () => {
+  it('keeps durable scoring final while scoring sequence pulses the newly placed wall rune', async () => {
     vi.useFakeTimers();
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const { useSelectionStore } = await import('./selectionStore');
@@ -366,13 +366,11 @@ describe('gameplayStore persistence', () => {
       targetHealth: 99,
     });
 
-    await vi.advanceTimersByTimeAsync(398);
+    await vi.advanceTimersByTimeAsync(840);
 
-    expect(store.getState().scoringSequence).toMatchObject({
-      activeIndex: 1,
-      displayRunePowerTotal: 0,
-      displayHealth: 99,
-    });
+    expect(store.getState().scoringSequence).toBeNull();
+    expect(store.getState().runePowerTotal).toBe(0);
+    expect(store.getState().player.health).toBe(99);
   });
 
   it('accepts another cast during active scoring and queues the next scoring display', async () => {
@@ -427,7 +425,7 @@ describe('gameplayStore persistence', () => {
       displayRunePowerTotal: 0,
     });
 
-    await vi.advanceTimersByTimeAsync(1194);
+    await vi.advanceTimersByTimeAsync(840);
 
     expect(store.getState().round).toBe(1);
 

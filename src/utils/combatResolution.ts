@@ -43,14 +43,14 @@ export interface EndPlayerTurnResult {
   discardPile: Rune[];
 }
 
-export interface CompletedRuneEffectsInput {
+export interface CompletedRuneCastEffectsInput {
   player: Player;
   enemy: Enemy | null;
   rune: Rune;
   activeArtefacts?: ArtefactId[];
 }
 
-export interface CompletedRuneEffectsResult {
+export interface CompletedRuneCastEffectsResult {
   player: Player;
   enemy: Enemy | null;
   arcaneDustDelta: number;
@@ -184,12 +184,12 @@ export function castRuneToWallSlot({
   };
 }
 
-export function resolveCompletedRuneEffects({
+export function resolveCompletedRuneCastEffects({
   player,
   enemy,
   rune,
   activeArtefacts = [],
-}: CompletedRuneEffectsInput): CompletedRuneEffectsResult {
+}: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
   const result = resolveCastEffects({
     player,
     enemy,
