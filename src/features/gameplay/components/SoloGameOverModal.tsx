@@ -8,9 +8,9 @@ import { useClickSound } from '../../../hooks/useClickSound';
 
 export function SoloGameOverModal() {
   const { returnToStartScreen: returnToStart } = useGameplayActions();
-  const { runeScore, targetScore, gameIndex: game } = useGameplaySummaryState();
+  const { enemyMaxHealth, gameIndex: game } = useGameplaySummaryState();
   const playClickSound = useClickSound();
-  const subline = 'You have succumbed to arcance overload.';
+  const subline = 'Your health reached zero.';
   const accentClasses = 'border-rose-300/70 from-rose-500/20';
 
   return (
@@ -24,7 +24,7 @@ export function SoloGameOverModal() {
 
       <div className="mb-5 grid grid-cols-3 gap-3">
         <StatCard label="Games Cleared" value={game - 1} accent="#60a5fa" />
-        <StatCard label="Rune Score" value={`${runeScore} / ${targetScore}`} accent="#facc15" />
+        <StatCard label="Enemy HP Tier" value={enemyMaxHealth} accent="#facc15" />
       </div>
 
       <button

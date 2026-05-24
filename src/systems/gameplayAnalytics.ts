@@ -10,20 +10,17 @@ interface NewGameAnalyticsEvent {
   gameNumber: number;
   activeArtefacts: ArtefactId[];
   deck: Player['deck'];
-  targetScore: number;
-  strain: number;
+  enemyMaxHealth: number;
   startingHealth: number;
 }
 
 interface DefeatAnalyticsEvent {
   gameNumber: number;
   deck: Player['deck'];
-  runePowerTotal: number;
   activeArtefacts: ArtefactId[];
-  cause: 'overload' | 'deck-empty';
-  strain: number;
+  cause: 'health-zero';
   health: number;
-  targetScore: number;
+  enemyMaxHealth: number;
 }
 
 export function trackGameplayNewGame(event: NewGameAnalyticsEvent): void {

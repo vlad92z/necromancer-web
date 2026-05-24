@@ -5,28 +5,24 @@
 
 import { create } from 'zustand';
 import type { TooltipCard } from '../../types/game';
+import type { ActiveElement } from '../../features/gameplay/components/keyboardNavigation';
 import { createDefaultTooltipCards } from '../../utils/gameInitialization';
 
 interface UIStore {
   // Overlay visibility states
   showRulesOverlay: boolean;
   showDeckOverlay: boolean;
-  showOverloadOverlay: boolean
-  showRuneforgeOverlay: boolean;
   showSettingsOverlay: boolean;
-  selectedRuneforgeId: string | null; // For runeforge overlay
   soundVolume: number;
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
   tooltipCards: TooltipCard[];
   tooltipOverrideActive: boolean;
+  activeElement: ActiveElement | null;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
   toggleDeckOverlay: () => void;
-  toggleOverloadOverlay: () => void;
-  openRuneforgeOverlay: (runeforgeId: string) => void;
-  closeRuneforgeOverlay: () => void;
   toggleSettingsOverlay: () => void;
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
@@ -35,6 +31,7 @@ interface UIStore {
   markMusicSessionStarted: () => void;
   setTooltipCards: (cards: TooltipCard[], overrideSelection?: boolean) => void;
   resetTooltipCards: () => void;
+  setActiveElement: (next: ActiveElement | null | ((current: ActiveElement | null) => ActiveElement | null)) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -57,15 +54,13 @@ export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
   showDeckOverlay: false,
-  showOverloadOverlay: false,
-  showRuneforgeOverlay: false,
   showSettingsOverlay: false,
-  selectedRuneforgeId: null,
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
   tooltipCards: createDefaultTooltipCards(),
   tooltipOverrideActive: false,
+  activeElement: null,
   
   // Actions
   toggleRulesOverlay: () => {
@@ -74,18 +69,6 @@ export const useUIStore = create<UIStore>((set) => ({
   
   toggleDeckOverlay: () => {
     set((state) => ({ showDeckOverlay: !state.showDeckOverlay }));
-  },
-
-  toggleOverloadOverlay: () => {
-    set((state) => ({ showOverloadOverlay: !state.showOverloadOverlay }));
-  },
-  
-  openRuneforgeOverlay: (runeforgeId: string) => {
-    set({ showRuneforgeOverlay: true, selectedRuneforgeId: runeforgeId });
-  },
-  
-  closeRuneforgeOverlay: () => {
-    set({ showRuneforgeOverlay: false, selectedRuneforgeId: null });
   },
   
   toggleSettingsOverlay: () => {
@@ -96,9 +79,7 @@ export const useUIStore = create<UIStore>((set) => ({
     set({
       showRulesOverlay: false,
       showDeckOverlay: false,
-      showRuneforgeOverlay: false,
       showSettingsOverlay: false,
-      selectedRuneforgeId: null,
     });
   },
 
@@ -137,5 +118,11 @@ export const useUIStore = create<UIStore>((set) => ({
       tooltipCards: createDefaultTooltipCards(),
       tooltipOverrideActive: false,
     });
+  },
+
+  setActiveElement: (next) => {
+    set((state) => ({
+      activeElement: typeof next === 'function' ? next(state.activeElement) : next,
+    }));
   },
 }));

@@ -1,10 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { MainMenu } from './routes/MainMenu'
-import { CampaignMap } from './routes/CampaignMap'
-import { DeckBuilder } from './routes/DeckBuilder'
-import { PostMatchRewards } from './routes/PostMatchRewards'
-import { Matchmaking } from './routes/Matchmaking'
 import { SoloStartScreen } from './routes/SoloStartScreen'
 import { useUIActions } from './hooks/useGameActions'
 import { useAppAudioState, useGameStarted } from './hooks/useGameState'
@@ -57,14 +53,6 @@ function App() {
       <Routes>
         <Route path="/" element={<MainMenu />} />
         <Route path="/solo" element={<SoloStartScreen />} />
-        
-        {/* Future feature routes - currently inaccessible stubs */}
-        <Route path="/campaign" element={<CampaignMap />} />
-        <Route path="/deck-builder" element={<DeckBuilder />} />
-        <Route path="/rewards" element={<PostMatchRewards />} />
-        <Route path="/matchmaking" element={<Matchmaking />} />
-        
-        {/* Catch-all redirect to main menu */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -11,7 +11,7 @@ type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
 
 export function HealthView() {
-  const { health, maxHealth, armor, scoringSequence } = useGameplayHealthState();
+  const { health, maxHealth, armor } = useGameplayHealthState();
 
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   useHealthChangeSound(clampedHealth);
@@ -29,51 +29,6 @@ export function HealthView() {
   const animatedArmor = useMotionValue(armor);
   const [displayedHealth, setDisplayedHealth] = useState(health);
   const [displayedArmor, setDisplayedArmor] = useState(armor);
-  type ForcedArmorIndicator = {
-    amount: number;
-    key: number;
-  };
-  const [forcedArmorIndicator, setForcedArmorIndicator] = useState<ForcedArmorIndicator | null>(null);
-  const lastArmorStepRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!forcedArmorIndicator) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      setForcedArmorIndicator(null);
-    }, 900);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [forcedArmorIndicator]);
-
-  useEffect(() => {
-    if (!scoringSequence) {
-      lastArmorStepRef.current = null;
-    }
-  }, [scoringSequence]);
-
-  useEffect(() => {
-    const sequence = scoringSequence;
-
-    if (!sequence || sequence.activeIndex < 0) {
-      return;
-    }
-
-    const step = sequence.steps[sequence.activeIndex];
-    const stepKey = `${sequence.sequenceId}:${sequence.activeIndex}`;
-
-    if (!step || step.armorDelta <= 0 || lastArmorStepRef.current === stepKey) {
-      return;
-    }
-
-    lastArmorStepRef.current = stepKey;
-    const indicatorKey = Date.now();
-    setForcedArmorIndicator({ amount: step.armorDelta, key: indicatorKey });
-  }, [scoringSequence]);
-
   useMotionValueEvent(animatedHealth, 'change', (value) => {
     setDisplayedHealth(Math.round(value));
   });

@@ -6,7 +6,7 @@ import type { PointerEvent } from 'react';
 import { useUIActions } from '../hooks/useGameActions';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
-import { getArtefactEffectDescription } from '../utils/artefactEffects';
+import { getArtefactEffectDescription } from '../utils/artefactDescriptions';
 import { buildArtefactTooltipCards } from '../utils/tooltipCards';
 
 interface ArtefactsRowProps {

@@ -7,6 +7,8 @@ import ringPng from '../assets/artefacts/ring.png';
 import robePng from '../assets/artefacts/robe.png';
 import potionPng from '../assets/artefacts/potion.png';
 import rodPng from '../assets/artefacts/rod.png';
+import type { EffectRef } from './game';
+import { createEffectRef } from '../utils/effectCatalog';
 
 export type ArtefactId = 'rod' | 'robe' | 'tome' | 'ring' | 'potion';
 
@@ -15,6 +17,7 @@ export interface Artefact {
   name: string;
   cost: number; // Arcane Dust
   image: string; // path to png
+  passiveEffectRefs: EffectRef[];
 }
 
 /**
@@ -31,30 +34,35 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
     name: 'Frost Potion',
     cost: 500,
     image: potionPng,
+    passiveEffectRefs: [createEffectRef('passive.potionArmor', { armorMultiplier: 2 })],
   },
   rod: {
     id: 'rod',
     name: 'Rod of Healing',
     cost: 1000,
     image: rodPng,
+    passiveEffectRefs: [createEffectRef('passive.rodHealing', { healingMultiplier: 2 })],
   },
   tome: {
     id: 'tome',
     name: 'Primer of Solitude',
     cost: 2000,
     image: tomePng,
+    passiveEffectRefs: [createEffectRef('passive.tomeCastDamage', { damageBonus: 1 })],
   },
   ring: {
     id: 'ring',
     name: 'Signet of Fortune',
     cost: 5000,
     image: ringPng,
+    passiveEffectRefs: [createEffectRef('passive.ringDraftRarity', { epicChanceMultiplier: 2 })],
   },
   robe: {
     id: 'robe',
     name: 'Weaver\'s Mantle',
     cost: 10000,
     image: robePng,
+    passiveEffectRefs: [createEffectRef('passive.robeDraftSelection', { selectionBonus: 1, maxSelectionLimit: 3 })],
   },
 };
 

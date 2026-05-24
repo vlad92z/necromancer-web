@@ -5,30 +5,9 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { useBoardStore } from '../state/stores/boardStore';
-import { useResolutionStore } from '../state/stores/resolutionStore';
+import { useCombatStore } from '../state/stores/combatStore';
 import { useRunStore } from '../state/stores/runStore';
-import { useSelectionStore } from '../state/stores/selectionStore';
 import { useUIStore } from '../state/stores/uiStore';
-
-export function useFactories() {
-  return useBoardStore(
-    useShallow((state) => ({
-      runeforges: state.runeforges,
-    })),
-  );
-}
-
-export function useTurnPhase() {
-  return useResolutionStore((state) => state.turnPhase);
-}
-
-export function useSelectedRunes() {
-  return useSelectionStore((state) => state.selectedRunes);
-}
-
-export function useGame() {
-  return useRunStore((state) => state.gameIndex);
-}
 
 export function useGameStarted() {
   return useRunStore((state) => state.gameStarted);
@@ -47,7 +26,7 @@ export function useSelectedArtefactIds() {
 }
 
 export function useActiveElement() {
-  return useSelectionStore((state) => state.activeElement);
+  return useUIStore((state) => state.activeElement);
 }
 
 export function useSoundVolume() {
@@ -56,25 +35,6 @@ export function useSoundVolume() {
 
 export function useShowSettingsOverlay() {
   return useUIStore((state) => state.showSettingsOverlay);
-}
-
-export function useSelectionState() {
-  return useSelectionStore(
-    useShallow((state) => ({
-      selectedRunes: state.selectedRunes,
-      draftSource: state.draftSource,
-      activeElement: state.activeElement,
-    })),
-  );
-}
-
-export function useTooltipSelectionState() {
-  return useSelectionStore(
-    useShallow((state) => ({
-      selectedRunes: state.selectedRunes,
-      activeElement: state.activeElement,
-    })),
-  );
 }
 
 export function useArtefactInventoryState() {
@@ -121,7 +81,6 @@ export function useUIOverlayState() {
     useShallow((state) => ({
       showSettingsOverlay: state.showSettingsOverlay,
       showDeckOverlay: state.showDeckOverlay,
-      showOverloadOverlay: state.showOverloadOverlay,
     })),
   );
 }
@@ -135,47 +94,30 @@ export function useTooltipState() {
   );
 }
 
-export function useGameplayContainerState() {
-  const channelSoundPending = useResolutionStore((state) => state.channelSoundPending);
-  const overloadSoundPending = useResolutionStore((state) => state.overloadSoundPending);
-  const player = useBoardStore((state) => state.player);
-
-  return { player, channelSoundPending, overloadSoundPending };
+export function useCombatEnemyState() {
+  return useCombatStore(
+    useShallow((state) => ({
+      enemy: state.enemy,
+      combatPhase: state.combatPhase,
+    })),
+  );
 }
 
-export function useGameplayPatternLineState() {
-  return useBoardStore(
+export function useCombatZoneState() {
+  return useCombatStore(
     useShallow((state) => ({
-      lockedPatternLines: state.lockedPatternLines,
-      wall: state.player.wall,
-      patternLines: state.player.patternLines,
-      overloadDamage: state.overloadDamage,
+      hand: state.hand,
+      discardPile: state.discardPile,
+      selectedHandRuneId: state.selectedHandRuneId,
     })),
   );
 }
 
 export function useGameplayWallState() {
-  const board = useBoardStore(
-    useShallow((state) => ({
-      wall: state.player.wall,
-      patternLines: state.player.patternLines,
-    })),
-  );
-  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
+  const wall = useBoardStore((state) => state.player.wall);
+  const wallCharges = useCombatStore((state) => state.wallCharges);
 
-  return { ...board, scoringSequence };
-}
-
-export function useGameplayRuneforgeState() {
-  const board = useBoardStore(
-    useShallow((state) => ({
-      draftStage: state.runeforgeDraftStage,
-      runeforges: state.runeforges,
-    })),
-  );
-  const runesPerRuneforge = useRunStore((state) => state.runesPerRuneforge);
-
-  return { ...board, runesPerRuneforge };
+  return { wall, wallCharges };
 }
 
 export function useGameplayDeckState() {
@@ -185,35 +127,12 @@ export function useGameplayDeckState() {
   return { deck, isDrafting };
 }
 
-export function useGameplayOverloadState() {
-  return useBoardStore(
-    useShallow((state) => ({
-      overloadDamage: state.overloadDamage,
-      overloadRunes: state.overloadRunes,
-      overloadedRuneCount: state.overloadRunes.length,
-      playerName: state.player.name,
-    })),
-  );
-}
-
 export function useGameplayHealthState() {
-  const board = useBoardStore(
+  return useBoardStore(
     useShallow((state) => ({
       health: state.player.health,
       maxHealth: state.player.maxHealth,
       armor: state.player.armor,
-    })),
-  );
-  const scoringSequence = useResolutionStore((state) => state.scoringSequence);
-
-  return { ...board, scoringSequence };
-}
-
-export function useGameplayScoreState() {
-  return useRunStore(
-    useShallow((state) => ({
-      currentScore: state.runePowerTotal,
-      targetScore: state.targetScore,
     })),
   );
 }
@@ -230,9 +149,8 @@ export function useGameplayStatusState() {
 export function useGameplaySummaryState() {
   return useRunStore(
     useShallow((state) => ({
-      runeScore: state.runePowerTotal,
-      targetScore: state.targetScore,
       gameIndex: state.gameIndex,
+      enemyMaxHealth: state.enemyMaxHealth,
     })),
   );
 }

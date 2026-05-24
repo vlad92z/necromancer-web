@@ -1,10 +1,10 @@
 /**
- * Gameplay state composition helpers for split Zustand stores.
+ * Gameplay state composition helpers for split Zustand read stores.
  */
 
 import type { GameState } from '../../types/game';
 import { pickBoardState, useBoardStore } from './boardStore';
-import { pickResolutionState, useResolutionStore } from './resolutionStore';
+import { pickCombatState, useCombatStore } from './combatStore';
 import { pickRunState, useRunStore } from './runStore';
 
 const gameplayListeners = new Set<(state: GameState) => void>();
@@ -21,39 +21,29 @@ function notifyGameplayListeners(): void {
 export function getGameplayState(): GameState {
   const run = useRunStore.getState();
   const board = useBoardStore.getState();
-  const resolution = useResolutionStore.getState();
+  const combat = useCombatStore.getState();
 
   return {
     gameStarted: run.gameStarted,
-    runesPerRuneforge: run.runesPerRuneforge,
     startingHealth: run.startingHealth,
-    overflowCapacity: run.overflowCapacity,
     player: board.player,
     fullDeck: run.fullDeck,
-    runeforges: board.runeforges,
-    runeforgeDraftStage: board.runeforgeDraftStage,
-    turnPhase: resolution.turnPhase,
     gameIndex: run.gameIndex,
-    round: run.round,
-    overloadDamage: board.overloadDamage,
-    startingStrain: board.startingStrain,
-    overloadRunes: board.overloadRunes,
-    animatingRunes: board.animatingRunes,
-    pendingPlacement: board.pendingPlacement,
-    scoringSequence: resolution.scoringSequence,
-    overloadSoundPending: resolution.overloadSoundPending,
-    channelSoundPending: resolution.channelSoundPending,
-    lockedPatternLines: board.lockedPatternLines,
-    shouldTriggerEndRound: resolution.shouldTriggerEndRound,
-    runePowerTotal: run.runePowerTotal,
-    targetScore: run.targetScore,
+    enemyMaxHealth: run.enemyMaxHealth,
+    enemyAttackDamage: run.enemyAttackDamage,
+    baseEnemyMaxHealth: run.baseEnemyMaxHealth,
     isDefeat: run.isDefeat,
-    patternLineLock: run.patternLineLock,
     longestRun: run.longestRun,
     deckDraftState: run.deckDraftState,
-    baseTargetScore: run.baseTargetScore,
     deckDraftReadyForNextGame: run.deckDraftReadyForNextGame,
     activeArtefacts: run.activeArtefacts,
+    enemy: combat.enemy,
+    combatPhase: combat.combatPhase,
+    hand: combat.hand,
+    discardPile: combat.discardPile,
+    suppressedRunes: combat.suppressedRunes,
+    wallCharges: combat.wallCharges,
+    selectedHandRuneId: combat.selectedHandRuneId,
   };
 }
 
@@ -62,7 +52,7 @@ export function replaceGameplayState(next: GameState): void {
   try {
     useRunStore.getState().replaceRunState(pickRunState(next));
     useBoardStore.getState().replaceBoardState(pickBoardState(next));
-    useResolutionStore.getState().replaceResolutionState(pickResolutionState(next));
+    useCombatStore.getState().replaceCombatState(pickCombatState(next));
   } finally {
     isReplacingGameplayState = false;
   }
@@ -82,7 +72,7 @@ function attachStoreSubscriptions(): void {
 
   useRunStore.subscribe(notifyIfDirectStoreChange);
   useBoardStore.subscribe(notifyIfDirectStoreChange);
-  useResolutionStore.subscribe(notifyIfDirectStoreChange);
+  useCombatStore.subscribe(notifyIfDirectStoreChange);
   areStoreSubscriptionsAttached = true;
 }
 

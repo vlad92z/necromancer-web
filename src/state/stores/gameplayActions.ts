@@ -1,11 +1,8 @@
 /**
- * Gameplay Actions - orchestration entry points for gameplay flows.
- *
- * The action surface is intentionally separate from read stores so components
- * can depend on stable hooks while gameplay state is split by concern.
+ * Gameplay Actions - stable orchestration entry points for current combat.
  */
 
-import type { GameState, RuneType } from '../../types/game';
+import type { GameState } from '../../types/game';
 import { useGameplayStore } from './gameplayStore';
 
 export interface GameplayActions {
@@ -14,17 +11,11 @@ export interface GameplayActions {
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   startNextSoloGame: () => void;
-  draftRune: (runeforgeId: string, runeType: RuneType, primaryRuneId: string) => void;
-  placeRunes: (patternLineIndex: number) => void;
-  moveRunesToWall: () => void;
-  placeRunesInFloor: () => void;
-  cancelSelection: () => void;
-  autoPlaceSelection: () => void;
-  acknowledgeOverloadSound: () => void;
-  acknowledgeChannelSound: () => void;
-  endRound: () => void;
+  selectHandRune: (runeId: string) => void;
+  castRuneToWall: (row: number, col: number) => void;
+  endCombatTurn: () => void;
   resetGame: () => void;
-  selectDeckDraftRuneforge: (runeforgeId: string) => void;
+  selectDeckDraftOffer: (offerId: string) => void;
   disenchantRuneFromDeck: (runeId: string) => number;
 }
 
@@ -34,17 +25,10 @@ export const gameplayActions: GameplayActions = {
   hydrateGameState: (nextState) => useGameplayStore.getState().hydrateGameState(nextState),
   returnToStartScreen: () => useGameplayStore.getState().returnToStartScreen(),
   startNextSoloGame: () => useGameplayStore.getState().startNextSoloGame(),
-  draftRune: (runeforgeId, runeType, primaryRuneId) =>
-    useGameplayStore.getState().draftRune(runeforgeId, runeType, primaryRuneId),
-  placeRunes: (patternLineIndex) => useGameplayStore.getState().placeRunes(patternLineIndex),
-  moveRunesToWall: () => useGameplayStore.getState().moveRunesToWall(),
-  placeRunesInFloor: () => useGameplayStore.getState().placeRunesInFloor(),
-  cancelSelection: () => useGameplayStore.getState().cancelSelection(),
-  autoPlaceSelection: () => useGameplayStore.getState().autoPlaceSelection(),
-  acknowledgeOverloadSound: () => useGameplayStore.getState().acknowledgeOverloadSound(),
-  acknowledgeChannelSound: () => useGameplayStore.getState().acknowledgeChannelSound(),
-  endRound: () => useGameplayStore.getState().endRound(),
+  selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),
+  castRuneToWall: (row, col) => useGameplayStore.getState().castRuneToWall(row, col),
+  endCombatTurn: () => useGameplayStore.getState().endCombatTurn(),
   resetGame: () => useGameplayStore.getState().resetGame(),
-  selectDeckDraftRuneforge: (runeforgeId) => useGameplayStore.getState().selectDeckDraftRuneforge(runeforgeId),
+  selectDeckDraftOffer: (offerId) => useGameplayStore.getState().selectDeckDraftOffer(offerId),
   disenchantRuneFromDeck: (runeId) => useGameplayStore.getState().disenchantRuneFromDeck(runeId),
 };

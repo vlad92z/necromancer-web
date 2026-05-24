@@ -4,51 +4,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { DeckOverlay } from './DeckOverlay';
-import { OverloadOverlay } from './OverloadOverlay';
-import { RuneAnimation } from '../../../components/RuneAnimation';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useGameplayContainerState, useGameplayOverloadState, useSelectionState, useSoundVolume, useUIOverlayState } from '../../../hooks/useGameState';
-import { useRunePlacementSounds } from '../../../hooks/useRunePlacementSounds';
-import { useRunePlacementAnimations } from '../../../hooks/useRunePlacementAnimations';
+import { useUIOverlayState } from '../../../hooks/useGameState';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
 export function GameContainer() {
-  const { player, channelSoundPending, overloadSoundPending } =
-    useGameplayContainerState();
-  const { acknowledgeOverloadSound, acknowledgeChannelSound, returnToStartScreen } =
-    useGameplayActions();
-  const { selectedRunes, draftSource } = useSelectionState();
-  const { overloadedRuneCount } = useGameplayOverloadState();
-  const soundVolume = useSoundVolume();
-  const { showSettingsOverlay, showDeckOverlay, showOverloadOverlay } = useUIOverlayState();
-  const {
-    animatingRunes: placementAnimatingRunes,
-    activeAnimatingRunes,
-    hiddenPatternSlots,
-    hiddenWallSlots,
-    isAnimatingPlacement,
-    handlePlacementAnimationComplete,
-  } = useRunePlacementAnimations({
-    player,
-    selectedRunes,
-    draftSource,
-    overloadRuneCount: overloadedRuneCount,
-  });
-  const animatingRuneIdSet = useMemo(
-    () => new Set(activeAnimatingRunes.map((rune) => rune.id)),
-    [activeAnimatingRunes],
-  );
-
-  useRunePlacementSounds(
-    activeAnimatingRunes,
-    soundVolume,
-    overloadSoundPending,
-    acknowledgeOverloadSound,
-    channelSoundPending,
-    acknowledgeChannelSound
-  );
+  const { returnToStartScreen } = useGameplayActions();
+  const { showSettingsOverlay, showDeckOverlay } = useUIOverlayState();
+  const hiddenWallSlots = useMemo(() => new Set<string>(), []);
 
   const [boardScale, setBoardScale] = useState(() => {
     if (typeof window === 'undefined') {
@@ -89,20 +54,15 @@ export function GameContainer() {
           onClick={(event) => event.stopPropagation()}
         >
           <SoloGameView
-            animatingRuneIdSet={animatingRuneIdSet}
-            hiddenPatternSlots={hiddenPatternSlots}
             hiddenWallSlots={hiddenWallSlots}
-            isPlacementAnimating={isAnimatingPlacement}
           />
         </div>
       </div>
 
       {showDeckOverlay && (<DeckOverlay />)}
-      {showOverloadOverlay && (<OverloadOverlay />)}
       {showSettingsOverlay && (
         <SettingsOverlay onQuitRun={returnToStartScreen} />
       )}
-      <RuneAnimation animatingRunes={placementAnimatingRunes} onAnimationComplete={handlePlacementAnimationComplete} />
     </div>
   );
 };

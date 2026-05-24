@@ -1,6 +1,6 @@
 # Massive Spell: Arcane Arena
 
-A single-player roguelite rune-drafting game where players build spell segments from elemental runes, chase the target RuneScore, and survive escalating arcane overload damage.
+A single-player roguelite rune-drafting game where players cast elemental runes into a spell wall, defeat enemies, and draft deck rewards between encounters.
 
 ## Tech Stack
 
@@ -32,39 +32,43 @@ npm run preview
 ## Gameplay Rules (current build)
 
 ### Board & Setup
-- Board size 6x6 with 6 unique rune types.
-- 6 pattern lines of length 1-6.
-- 5 runeforges, each dealt 4 runes from the player's deck.
+- Spell wall size is 6x6 with 6 unique rune types.
+- The player draws a hand of up to 6 runes from the draw deck.
 - Rune types: Fire, Life, Wind, Frost, Void, Lightning.
+- Each enemy shows HP and an intent. The current basic intent is Attack 5.
 
-### Select & Place (Actions)
-- In the single-forge stage, choose one rune type from an enabled runeforge, then place the selected runes.
-- After placement, the chosen runeforge is disabled and selected runes are removed from it.
-- Once every runeforge has been selected once, all runeforges unlock into the global draft stage.
-- In the global draft stage, choosing a rune type collects that type from all runeforges.
-- Place all selected runes on a single pattern line that is empty or already holds that type. You cannot place a rune type in a row where it already sits on your wall.
-- Overflow goes to the Overload pile, damaging the player immediately. This damage scales by game and round.
+### Cast Runes
+- Select a rune from hand, then click a matching empty wall slot.
+- Wall rows require increasing charges: row 1 completes with 1 rune, row 2 with 2 runes, and so on.
+- Incomplete charged slots show progress like `1/3`.
+- Invalid casts leave the selected card active.
+- Final charges place the rune on the wall and resolve its effects.
 
-### Segment Damage (instant scoring)
-- When a pattern line fills, its primary rune moves to the wall immediately and clears that line.
-- The effects of every rune in the connected wall segment resolve one by one.
-- Effects currently include damage, healing, armor, fortune, synergy, fragile, channel, channel synergy, and armor synergy.
+### Rune Effects
+- Damage lowers enemy HP.
+- Healing restores player health up to max health.
+- Armor absorbs enemy attacks before health.
+- Fortune grants Arcane Dust.
+- Synergy and ArmorSynergy count matching rune types across the completed wall.
+- Fragile checks for absence across the completed wall.
 
-### Round End & Run Progression
-- A **Round** ends when all runeforges are empty, then runeforges are repopulated from the player's deck.
-- Locked pattern lines unlock when the next round starts.
-- If there are not enough runes to refill runeforges, the run ends in defeat.
+### Turn End & Deck Cycle
+- End Turn discards the remaining hand.
+- The enemy attacks before the next hand is drawn.
+- The player draws up to 6 cards from the draw deck.
+- If the draw deck runs short, the discard pile is shuffled only when needed.
 
-### Game End
-- A **Game** completes when the player reaches the target RuneScore.
-- The player enters deck draft, chooses a runeforge of upgraded runes, and can disenchant unwanted runes for Arcane Dust.
-- Deck draft offers can also heal, raise max health, or improve rune rarity depending on the selected runeforge.
-- The next game has a higher target RuneScore and higher overload pressure.
-- Health is not automatically restored to max between games unless a deck draft effect does so.
+### Combat Screen Layout
+- The top status bar shows run metadata and combat counters, but player HP and armor live in the left combat panel.
+- The middle playfield is arranged left-to-right as player panel, spell wall, enemy panel.
+- The bottom tray holds the playable hand and the End Turn action.
 
-### Run End
-- A **Run** ends when the player dies (0 HP).
-- Game over also triggers when there are not enough runes to refill runeforges.
+### Victory & Run End
+- An encounter is won when the enemy reaches 0 HP.
+- Victory immediately opens deck draft rewards.
+- Deck draft rewards can add upgraded runes, heal, raise max health, or improve rune rarity.
+- Starting the next encounter creates a fresh wall, hand, discard pile, and stronger enemy.
+- A **Run** ends when the player reaches 0 HP.
 
 ## Project Structure
 
@@ -74,17 +78,17 @@ src/
 ├── components/             # Reusable UI (layout primitives, runes, stats)
 ├── features/gameplay/      # Gameboard, overlays, Solo UI
 ├── hooks/                  # Zustand selector/action hooks
-├── routes/                 # MainMenu, Solo, and future feature screens
-├── state/stores/           # Zustand stores (run, board, resolution, selection, gameplay, UI)
+├── routes/                 # MainMenu and Solo screens
+├── state/stores/           # Zustand stores (run, board, combat, gameplay, UI)
 ├── styles/                 # Design tokens and global styles
-├── systems/                # Gameplay orchestration, analytics, scoring sequences
+├── systems/                # Gameplay orchestration and analytics
 ├── types/                  # Domain types (game, rune, controllers)
 ├── utils/                  # Pure logic (scoring, init, rune effects)
 ├── App.tsx
 └── main.tsx
 ```
 
-`App.tsx` currently wires `/`, `/solo`, `/campaign`, `/deck-builder`, `/rewards`, and `/matchmaking`, with unknown paths redirected to `/`.
+`App.tsx` wires `/` and `/solo`, with unknown paths redirected to `/`.
 
 ## Deployment (Cloudflare Pages)
 
@@ -134,9 +138,10 @@ Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `publi
 
 ## Architecture Notes
 
-- `gameplayStore.ts` remains the compatibility action engine.
-- Read ownership is split across `runStore`, `boardStore`, `resolutionStore`, `selectionStore`, `uiStore`, and `artefactStore`.
+- `gameplayStore.ts` owns current encounter actions only: start, cast, end turn, defeat, victory, deck draft, and next encounter.
+- Read ownership is split across `runStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`.
 - Pure game rules live in `src/utils/`; side-effect orchestration lives in `src/systems/`.
+- `SoloGameBoard.tsx` owns combat-screen composition; `PlayerPanel.tsx`, `EnemyPanel.tsx`, and `TooltipView.tsx` render the left panel, right panel, and bottom hand tray surfaces.
 - See `Agents.md` for detailed AI agent workflows and coding standards.
 
 ---

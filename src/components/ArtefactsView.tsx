@@ -10,7 +10,7 @@ import { useArtefactActions } from '../hooks/useGameActions';
 import { useArtefactInventoryState } from '../hooks/useGameState';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS, getAllArtefacts, MAX_SELECTED_ARTEFACTS } from '../types/artefacts';
-import { getArtefactEffectDescription } from '../utils/artefactEffects';
+import { getArtefactEffectDescription } from '../utils/artefactDescriptions';
 import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { useClickSound } from '../hooks/useClickSound';
 
