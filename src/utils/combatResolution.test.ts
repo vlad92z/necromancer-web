@@ -71,6 +71,7 @@ describe('combatResolution wall casting', () => {
       completedRuneId: 'fire-final',
     });
     expect(result.wallCharges[1][1].spentRunes.map((rune) => rune.id)).toEqual(['fire-spent']);
+    expect(result.completedPosition).toEqual({ row: 1, col: 1 });
   });
 
   it('rejects wrong-type casts without clearing selection', () => {
@@ -266,6 +267,32 @@ describe('combatResolution basic combat effects', () => {
     expect(counts.get('Life')).toBeUndefined();
     expect(wallHasRuneType(wall, 'Void')).toBe(true);
     expect(wallHasRuneType(wall, 'Life')).toBe(false);
+  });
+
+  it('passes completed wall position into adjacent damage resolution', () => {
+    const player = createPlayerWithWall([
+      [0, 0, 'Frost'],
+      [0, 1, 'Life'],
+      [1, 0, 'Wind'],
+    ]);
+    const enemy = createTestEnemy(20);
+    const rune = {
+      ...createTestRune('adjacent-fire', 'Fire'),
+      castEffectRefs: [createEffectRef('cast.damageAdjacent', { amount: 2 })],
+    };
+
+    const result = resolveCompletedRuneCastEffects({
+      player,
+      enemy,
+      rune,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(14);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.damageAdjacent',
+      output: { adjacentCount: 3, damage: 6 },
+    });
   });
 
   it('applies Synergy damage using whole completed wall counts', () => {

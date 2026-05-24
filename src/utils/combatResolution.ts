@@ -5,6 +5,7 @@
 import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
 import { resolveCastEffects } from './effectResolver';
+import type { WallPosition } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
@@ -27,6 +28,7 @@ export interface WallCastResult {
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   completedRune: Rune | null;
+  completedPosition: WallPosition | null;
 }
 
 export interface EndPlayerTurnInput {
@@ -48,6 +50,7 @@ export interface CompletedRuneCastEffectsInput {
   enemy: Enemy | null;
   rune: Rune;
   activeArtefacts?: ArtefactId[];
+  sourcePosition?: WallPosition | null;
 }
 
 export interface CompletedRuneCastEffectsResult {
@@ -136,6 +139,7 @@ export function castRuneToWallSlot({
       wallCharges,
       selectedHandRuneId,
       completedRune: null,
+      completedPosition: null,
     };
   }
 
@@ -160,6 +164,7 @@ export function castRuneToWallSlot({
       wallCharges: nextWallCharges,
       selectedHandRuneId: null,
       completedRune: null,
+      completedPosition: null,
     };
   }
 
@@ -181,6 +186,7 @@ export function castRuneToWallSlot({
     wallCharges: nextWallCharges,
     selectedHandRuneId: null,
     completedRune: selectedRune,
+    completedPosition: { row, col },
   };
 }
 
@@ -189,6 +195,7 @@ export function resolveCompletedRuneCastEffects({
   enemy,
   rune,
   activeArtefacts = [],
+  sourcePosition = null,
 }: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
   const result = resolveCastEffects({
     player,
@@ -196,6 +203,7 @@ export function resolveCompletedRuneCastEffects({
     castRune: rune,
     wall: player.wall,
     activeArtefacts,
+    sourcePosition,
   });
 
   return result;

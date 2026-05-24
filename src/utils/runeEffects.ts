@@ -6,12 +6,12 @@ import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game'
 import { createEffectRef, getEffectRefDescriptions } from './effectCatalog';
 
 const BASE_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [createEffectRef('cast.damage', { amount: 3 })],
-  Frost: [createEffectRef('cast.armor', { amount: 5 })],
+  Fire: [createEffectRef('cast.damageAdjacent', { amount: 1 })],
+  Frost: [createEffectRef('cast.armor', { amount: 3 })],
   Life: [createEffectRef('cast.healing', { amount: 2 })],
-  Void: [createEffectRef('cast.damage', { amount: 3 })],
-  Wind: [createEffectRef('cast.damage', { amount: 3 })],
-  Lightning: [createEffectRef('cast.damage', { amount: 3 })],
+  Void: [createEffectRef('cast.damageConditional', { amount: 25, threshold: 2, conditionType: 'Void' })],
+  Wind: [createEffectRef('cast.fortune', { amount: 10 })],
+  Lightning: [],
 };
 
 const UNCOMMON_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
@@ -53,8 +53,10 @@ export function getRuneCastEffectRefsForType(runeType: RuneType, rarity: RuneEff
 }
 
 export function getRunePassiveEffectRefsForType(_runeType: RuneType, _rarity: RuneEffectRarity = 'common'): EffectRef[] {
-  void _runeType;
-  void _rarity;
+  if (_rarity === 'common' && _runeType === 'Lightning') {
+    return [createEffectRef('passive.damageBoostSynergy', { percent: 5, synergyType: 'Frost' })];
+  }
+
   return [];
 }
 

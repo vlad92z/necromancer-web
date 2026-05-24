@@ -2,13 +2,19 @@
  * Tests for the current solo encounter gameplay store.
  */
 
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { Rune, RuneType } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWallCharges } from '../../utils/gameInitialization';
+import { createRune } from '../../utils/runeEffects';
+import { useArtefactStore } from './artefactStore';
 import { createGameplayStoreInstance } from './gameplayStore';
 
 describe('gameplayStore current combat', () => {
+  beforeEach(() => {
+    useArtefactStore.setState({ arcaneDust: 0 });
+  });
+
   it('starts a solo run with enemy, hand, draw deck, and no draft offers', () => {
     const store = createGameplayStoreInstance();
 
@@ -118,6 +124,23 @@ describe('gameplayStore current combat', () => {
     expect(store.getState().enemy?.intent.amount).toBe(6);
     expect(store.getState().enemyMaxHealth).toBe(15);
     expect(store.getState().enemyAttackDamage).toBe(6);
+  });
+
+  it('adds common Wind arcane dust through gameplay store casting', () => {
+    const store = createGameplayStoreInstance();
+    const windRune = createRune('wind-common', 'Wind', 'common');
+
+    store.setState((state) => ({
+      ...state,
+      hand: [windRune],
+      selectedHandRuneId: windRune.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+    }));
+
+    store.getState().castRuneToWall(0, 2);
+
+    expect(useArtefactStore.getState().arcaneDust).toBe(10);
   });
 });
 

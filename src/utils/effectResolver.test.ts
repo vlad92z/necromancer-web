@@ -54,6 +54,115 @@ describe('effectResolver resolveCastEffects', () => {
     ]);
   });
 
+  it('resolves adjacent damage with diagonal and orthogonal completed wall runes only', () => {
+    const player = createTestPlayer([
+      [0, 0, 'Frost'],
+      [0, 1, 'Fire'],
+      [1, 0, 'Life'],
+      [2, 2, 'Void'],
+      [3, 3, 'Wind'],
+    ]);
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('fire-adjacent', 'Fire', [
+      createEffectRef('cast.damageAdjacent', { amount: 2 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(12);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.damageAdjacent',
+      output: { damage: 8, adjacentCount: 4 },
+    });
+  });
+
+  it('does not count partial charge runes for adjacent damage', () => {
+    const player = createTestPlayer([
+      [0, 0, 'Frost'],
+    ]);
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('fire-adjacent-partial', 'Fire', [
+      createEffectRef('cast.damageAdjacent', { amount: 3 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(17);
+    expect(result.logs[0]).toMatchObject({
+      output: { damage: 3, adjacentCount: 1 },
+    });
+  });
+
+  it('resolves conditional damage from completed wall counts', () => {
+    const belowThresholdPlayer = createTestPlayer([[0, 4, 'Void']]);
+    const atThresholdPlayer = createTestPlayer([
+      [0, 4, 'Void'],
+      [1, 4, 'Void'],
+    ]);
+    const castRune = createTestRune('void-conditional', 'Void', [
+      createEffectRef('cast.damageConditional', { amount: 25, threshold: 2, conditionType: 'Void' }),
+    ]);
+
+    expect(resolveCastEffects({
+      player: belowThresholdPlayer,
+      enemy: createTestEnemy(30),
+      castRune,
+      wall: belowThresholdPlayer.wall,
+    }).enemy?.health).toBe(30);
+    expect(resolveCastEffects({
+      player: atThresholdPlayer,
+      enemy: createTestEnemy(30),
+      castRune,
+      wall: atThresholdPlayer.wall,
+    }).enemy?.health).toBe(5);
+  });
+
+  it('applies damage boost synergy after flat damage bonuses and rounds positive damage up', () => {
+    const player = createTestPlayer([
+      [0, 3, 'Frost'],
+      [1, 3, 'Frost'],
+    ]);
+    const wall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
+    wall[0][0] = createWallCell('Lightning', [
+      createEffectRef('passive.damageBoostSynergy', { percent: 5, synergyType: 'Frost' }),
+    ]);
+    const playerWithPassive = { ...player, wall };
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('boosted-fire', 'Fire', [
+      createEffectRef('cast.damage', { amount: 3 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player: playerWithPassive,
+      enemy,
+      castRune,
+      wall: playerWithPassive.wall,
+      activeArtefacts: ['tome'],
+    });
+
+    expect(result.enemy?.health).toBe(15);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'cast.damage',
+      'passive.damageBoostSynergy',
+      'passive.tomeCastDamage',
+    ]);
+    expect(result.logs[1]).toMatchObject({
+      output: { synergyType: 'Frost', synergyCount: 2, previousValue: 0, nextValue: 10 },
+    });
+  });
+
   it('keeps misplaced passive and unknown refs as no-op logs', () => {
     const player = createTestPlayer();
     const enemy = createTestEnemy(20);

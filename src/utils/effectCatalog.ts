@@ -6,6 +6,8 @@ import type { EffectParams, EffectRef, EffectTrigger, RuneType } from '../types/
 
 export type CastEffectId =
   | 'cast.damage'
+  | 'cast.damageAdjacent'
+  | 'cast.damageConditional'
   | 'cast.healing'
   | 'cast.armor'
   | 'cast.fortune'
@@ -18,7 +20,8 @@ export type PassiveEffectId =
   | 'passive.robeDraftSelection'
   | 'passive.rodHealing'
   | 'passive.potionArmor'
-  | 'passive.tomeCastDamage';
+  | 'passive.tomeCastDamage'
+  | 'passive.damageBoostSynergy';
 
 export type CatalogEffectId = CastEffectId | PassiveEffectId;
 export type PassiveStackingKind = 'flat' | 'multiplier';
@@ -58,6 +61,21 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Damage',
     displayHint: 'damage',
     describe: (params) => `Deal ${numberParam(params, 'amount')} damage on cast`,
+  },
+  'cast.damageAdjacent': {
+    id: 'cast.damageAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Damage',
+    displayHint: 'damage',
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent completed rune`,
+  },
+  'cast.damageConditional': {
+    id: 'cast.damageConditional',
+    kind: 'cast',
+    title: 'Conditional Damage',
+    displayHint: 'damage',
+    describe: (params) =>
+      `Deal ${numberParam(params, 'amount')} damage if at least ${numberParam(params, 'threshold')} ${runeTypeParam(params, 'conditionType')} runes are in your completed wall`,
   },
   'cast.healing': {
     id: 'cast.healing',
@@ -173,6 +191,21 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       defaultValue: 0,
     },
     describe: (params) => `+${numberParam(params, 'damageBonus', 1)} damage on all casts`,
+  },
+  'passive.damageBoostSynergy': {
+    id: 'passive.damageBoostSynergy',
+    kind: 'passive',
+    title: 'Synergy Damage Boost',
+    displayHint: 'damage',
+    passive: {
+      trigger: 'onCast',
+      target: 'damagePercentBonus',
+      stacking: 'multiplier',
+      paramKey: 'percent',
+      defaultValue: 0,
+    },
+    describe: (params) =>
+      `Increase all damage by ${numberParam(params, 'percent')}% for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
 };
 

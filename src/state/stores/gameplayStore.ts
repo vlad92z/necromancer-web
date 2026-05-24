@@ -227,6 +227,7 @@ export const gameplayStoreConfig = (
           enemy: state.enemy,
           rune: result.completedRune,
           activeArtefacts: state.activeArtefacts,
+          sourcePosition: result.completedPosition,
         });
 
         arcaneDustGain += resolvedEffects.arcaneDustDelta;

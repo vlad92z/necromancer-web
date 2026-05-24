@@ -27,7 +27,13 @@ Manual play check every stage:
 - Pick draft reward.
 - Start next encounter.
 
-## Stage 1: Common Effects + Resolver Primitives
+## Stage 1: Common Effects + Resolver Primitives ✅ Done
+
+Completed:
+- Common rune identity refs implemented.
+- Adjacent, conditional, and percent-boost damage primitives implemented.
+- Source position passed through wall completion resolution.
+- Automated checks passed.
 
 File-level changes before implementation:
 - `src/utils/effectCatalog.ts`: add all new effect ids/descriptions; unused effects may be catalog-only.

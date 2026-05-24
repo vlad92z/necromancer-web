@@ -18,12 +18,18 @@ import type {
 import { EFFECT_CATALOG } from './effectCatalog';
 import type { CastEffectId, CatalogEffectId } from './effectCatalog';
 
+export interface WallPosition {
+  row: number;
+  col: number;
+}
+
 export interface CastEffectResolutionInput {
   player: Player;
   enemy: Enemy | null;
   castRune: Rune;
   wall: ScoringWall;
   activeArtefacts?: ArtefactId[];
+  sourcePosition?: WallPosition | null;
 }
 
 export interface CastEffectResolutionResult {
@@ -80,6 +86,28 @@ function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
 
 function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
   return wall.some((row) => row.some((cell) => cell.runeType === runeType));
+}
+
+function countAdjacentCompletedRunes(wall: ScoringWall, sourcePosition: WallPosition | null | undefined): number {
+  if (!sourcePosition) {
+    return 0;
+  }
+
+  let count = 0;
+  for (let rowDelta = -1; rowDelta <= 1; rowDelta += 1) {
+    for (let colDelta = -1; colDelta <= 1; colDelta += 1) {
+      if (rowDelta === 0 && colDelta === 0) {
+        continue;
+      }
+
+      const cell = wall[sourcePosition.row + rowDelta]?.[sourcePosition.col + colDelta];
+      if (cell?.runeType) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
 }
 
 function isKnownCastEffectId(effectId: string): effectId is CastEffectId {
@@ -203,6 +231,34 @@ export function resolvePassiveEffects({
       return;
     }
 
+    if (passive.effectRef.effectId === 'passive.damageBoostSynergy') {
+      const synergyType = runeTypeParam(passive.effectRef, 'synergyType');
+      const wallRuneCounts = countFilledWallRunesByType(wall);
+      const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
+      const percent = numberParam(passive.effectRef, 'percent') * synergyCount;
+      const previousValue = values[passiveMetadata.target] ?? 0;
+      const nextValue = previousValue + percent;
+      values[passiveMetadata.target] = nextValue;
+
+      logs.push(createEffectLog(
+        passive.sourceType,
+        passive.sourceId,
+        passive.effectRef,
+        trigger,
+        input,
+        {
+          target: passiveMetadata.target,
+          stacking: passiveMetadata.stacking,
+          modifier: percent,
+          synergyType,
+          synergyCount,
+          previousValue,
+          nextValue,
+        }
+      ));
+      return;
+    }
+
     const previousValue = values[passiveMetadata.target] ?? 0;
     const modifier = numberParam(
       passive.effectRef,
@@ -243,6 +299,7 @@ export function resolveCastEffects({
   castRune,
   wall,
   activeArtefacts = [],
+  sourcePosition = null,
 }: CastEffectResolutionInput): CastEffectResolutionResult {
   let baseDamage = 0;
   let baseHealing = 0;
@@ -276,6 +333,41 @@ export function resolveCastEffects({
           projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
         }
         logs.push(createCastLog(castRune, effectRef, baseInput, { damage, enemyHealth: projectedEnemyHealth }));
+        break;
+      }
+      case 'cast.damageAdjacent': {
+        const adjacentCount = countAdjacentCompletedRunes(wall, sourcePosition);
+        const damage = numberParam(effectRef, 'amount') * adjacentCount;
+        baseDamage += damage;
+        if (projectedEnemyHealth !== null) {
+          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
+        }
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          damage,
+          adjacentCount,
+          sourcePosition,
+          enemyHealth: projectedEnemyHealth,
+        }));
+        break;
+      }
+      case 'cast.damageConditional': {
+        const conditionType = runeTypeParam(effectRef, 'conditionType');
+        const threshold = numberParam(effectRef, 'threshold');
+        const conditionCount = conditionType ? wallRuneCounts.get(conditionType) ?? 0 : 0;
+        const isMet = conditionCount >= threshold;
+        const damage = isMet ? numberParam(effectRef, 'amount') : 0;
+        baseDamage += damage;
+        if (projectedEnemyHealth !== null) {
+          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
+        }
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          damage,
+          conditionType,
+          conditionCount,
+          threshold,
+          isMet,
+          enemyHealth: projectedEnemyHealth,
+        }));
         break;
       }
       case 'cast.healing': {
@@ -353,13 +445,18 @@ export function resolveCastEffects({
     activeArtefacts,
     baseValues: {
       damage: baseDamage,
+      damagePercentBonus: 0,
       healing: baseHealing,
       armor: baseArmor,
       arcaneDustDelta: baseArcaneDustDelta,
     },
   });
 
-  const finalDamage = passiveResult.values.damage ?? 0;
+  const damageAfterFlatBonuses = passiveResult.values.damage ?? 0;
+  const damagePercentBonus = passiveResult.values.damagePercentBonus ?? 0;
+  const finalDamage = damageAfterFlatBonuses > 0
+    ? Math.ceil(damageAfterFlatBonuses * (1 + damagePercentBonus / 100))
+    : 0;
   const finalHealing = passiveResult.values.healing ?? 0;
   const finalArmor = passiveResult.values.armor ?? 0;
   const arcaneDustDelta = passiveResult.values.arcaneDustDelta ?? baseArcaneDustDelta;
