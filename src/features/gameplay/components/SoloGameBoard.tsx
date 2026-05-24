@@ -43,7 +43,7 @@ export const SoloGameView = memo(function SoloGameView({
         </div>
 
         <section className="relative flex min-h-[240px] flex-col rounded-lg border border-sky-300/20 bg-sky-950/10 px-4 py-3">
-          <div className="flex min-h-0 flex-1 items-center pb-14 pr-32">
+          <div className="flex min-h-0 flex-1 items-center">
             <TooltipView />
           </div>
           <EndTurnButton className="absolute bottom-3 right-4 z-20" />

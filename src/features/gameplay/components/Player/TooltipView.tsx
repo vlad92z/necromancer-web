@@ -99,7 +99,7 @@ export function TooltipView() {
   }
 
   return (
-    <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-visible px-1">
+    <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-visible px-1 py-4">
       {handCards.map(({ rune, card }, index) => {
         const rotation = getTooltipCardRotation(handCards.length, index);
         const isSelected = selectedHandRuneId === rune.id;
@@ -120,6 +120,7 @@ export function TooltipView() {
               runeType={card.runeType}
               runeRarity={card.runeRarity}
               variant={card.variant}
+              size="hand"
               isSelected={isSelected}
               onClick={() => selectHandRune(rune.id)}
             />
