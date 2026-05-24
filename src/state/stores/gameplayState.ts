@@ -30,6 +30,7 @@ export function getGameplayState(): GameState {
     fullDeck: run.fullDeck,
     gameIndex: run.gameIndex,
     enemyMaxHealth: run.enemyMaxHealth,
+    enemyAttackDamage: run.enemyAttackDamage,
     baseEnemyMaxHealth: run.baseEnemyMaxHealth,
     isDefeat: run.isDefeat,
     longestRun: run.longestRun,

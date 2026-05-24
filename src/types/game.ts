@@ -126,6 +126,7 @@ export interface GameState extends CombatZoneState {
   fullDeck: Rune[];
   gameIndex: number;
   enemyMaxHealth: number;
+  enemyAttackDamage: number;
   baseEnemyMaxHealth: number;
   isDefeat: boolean;
   longestRun: number;

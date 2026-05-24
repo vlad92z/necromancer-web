@@ -114,7 +114,10 @@ describe('gameplayStore current combat', () => {
     store.getState().startNextSoloGame();
     expect(store.getState().combatPhase).toBe('player-turn');
     expect(store.getState().deckDraftState).toBeNull();
-    expect(store.getState().enemy?.maxHealth).toBe(35);
+    expect(store.getState().enemy?.maxHealth).toBe(15);
+    expect(store.getState().enemy?.intent.amount).toBe(6);
+    expect(store.getState().enemyMaxHealth).toBe(15);
+    expect(store.getState().enemyAttackDamage).toBe(6);
   });
 });
 

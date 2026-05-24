@@ -4,7 +4,15 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, Player } from '../../types/game';
-import { createEmptyWall, createEmptyWallCharges, createGoblinEnemy, ENEMY_HEALTH_STEP, initializeSoloGame } from '../../utils/gameInitialization';
+import {
+  createEmptyWall,
+  createEmptyWallCharges,
+  createGoblinEnemy,
+  DEFAULT_ENEMY_ATTACK_DAMAGE,
+  initializeSoloGame,
+  scaleEnemyAttackDamage,
+  scaleEnemyMaxHealth,
+} from '../../utils/gameInitialization';
 import {
   advanceDeckDraftState,
   applyDeckDraftEffectToPlayer,
@@ -41,6 +49,10 @@ function enterDeckDraftMode(state: GameState): GameState {
     selectionLimit
   );
 
+  const currentEnemyAttackDamage = typeof state.enemyAttackDamage === 'number'
+    ? state.enemyAttackDamage
+    : state.enemy?.intent.amount ?? DEFAULT_ENEMY_ATTACK_DAMAGE;
+
   return {
     ...state,
     deckDraftState,
@@ -48,7 +60,8 @@ function enterDeckDraftMode(state: GameState): GameState {
     combatPhase: 'victory',
     isDefeat: false,
     longestRun: nextLongestRun,
-    enemyMaxHealth: state.enemyMaxHealth + ENEMY_HEALTH_STEP,
+    enemyMaxHealth: scaleEnemyMaxHealth(state.enemyMaxHealth),
+    enemyAttackDamage: scaleEnemyAttackDamage(currentEnemyAttackDamage),
     baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
     selectedHandRuneId: null,
   };
@@ -62,16 +75,24 @@ function awardDeckDraftEntryArcaneDust(gameIndex: number): void {
 }
 
 function normalizeHydratedGameState(currentState: GameState, nextState: GameState): GameState {
+  const enemyAttackDamage = typeof nextState.enemyAttackDamage === 'number'
+    ? nextState.enemyAttackDamage
+    : currentState.enemyAttackDamage;
+
   return {
     ...currentState,
     ...nextState,
     deckDraftState: nextState.deckDraftState ?? null,
     deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
     enemyMaxHealth: typeof nextState.enemyMaxHealth === 'number' ? nextState.enemyMaxHealth : currentState.enemyMaxHealth,
+    enemyAttackDamage,
     baseEnemyMaxHealth: typeof nextState.baseEnemyMaxHealth === 'number'
       ? nextState.baseEnemyMaxHealth
       : currentState.baseEnemyMaxHealth,
-    enemy: nextState.enemy ?? createGoblinEnemy(nextState.enemyMaxHealth ?? currentState.enemyMaxHealth),
+    enemy: nextState.enemy ?? createGoblinEnemy(
+      nextState.enemyMaxHealth ?? currentState.enemyMaxHealth,
+      enemyAttackDamage
+    ),
     combatPhase: nextState.combatPhase ?? 'player-turn',
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
@@ -422,11 +443,12 @@ export const gameplayStoreConfig = (
   startNextSoloGame: () => {
     set((state) => {
       const nextEnemyMaxHealth = state.enemyMaxHealth;
+      const nextEnemyAttackDamage = state.enemyAttackDamage;
       const nextGameIndex = state.gameIndex + 1;
       const previousHealth = Math.max(0, state.player.health);
       const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
       const clampedHealth = Math.min(nextMaxHealth, previousHealth);
-      const nextGameState = initializeSoloGame(nextEnemyMaxHealth, state.fullDeck);
+      const nextGameState = initializeSoloGame(nextEnemyMaxHealth, state.fullDeck, nextEnemyAttackDamage);
       const nextState = {
         ...nextGameState,
         player: {

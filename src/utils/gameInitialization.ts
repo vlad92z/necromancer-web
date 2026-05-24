@@ -19,7 +19,9 @@ export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 
 export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 6;
 export const DEFAULT_ENEMY_MAX_HEALTH = 10;
-export const ENEMY_HEALTH_STEP = 25;
+export const DEFAULT_ENEMY_ATTACK_DAMAGE = 5;
+export const ENEMY_SCALING_MULTIPLIER = 1.2;
+export const ENEMY_HEALTH_ROUNDING_STEP = 5;
 
 export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
   return Array(size)
@@ -31,14 +33,25 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
     );
 }
 
-export function createGoblinEnemy(maxHealth: number): Enemy {
+export function scaleEnemyMaxHealth(maxHealth: number): number {
+  return Math.ceil((maxHealth * ENEMY_SCALING_MULTIPLIER) / ENEMY_HEALTH_ROUNDING_STEP) * ENEMY_HEALTH_ROUNDING_STEP;
+}
+
+export function scaleEnemyAttackDamage(attackDamage: number): number {
+  return Math.ceil(attackDamage * ENEMY_SCALING_MULTIPLIER);
+}
+
+export function createGoblinEnemy(
+  maxHealth: number,
+  attackDamage: number = DEFAULT_ENEMY_ATTACK_DAMAGE
+): Enemy {
   return {
     id: 'goblin',
     name: 'Goblin',
     imageSrc: goblinImageSrc,
     health: maxHealth,
     maxHealth,
-    intent: { type: 'Attack', amount: 5 },
+    intent: { type: 'Attack', amount: attackDamage },
   };
 }
 
@@ -112,7 +125,8 @@ function shuffleRunes(runes: Rune[]): Rune[] {
 
 export function initializeSoloGame(
   enemyMaxHealth: number = DEFAULT_ENEMY_MAX_HEALTH,
-  fullDeck: Rune[] = createStartingDeck(25)
+  fullDeck: Rune[] = createStartingDeck(25),
+  enemyAttackDamage: number = DEFAULT_ENEMY_ATTACK_DAMAGE
 ): GameState {
   const maxHealth = 100;
   const activeDeck = shuffleRunes(fullDeck);
@@ -127,13 +141,14 @@ export function initializeSoloGame(
     fullDeck,
     gameIndex: 1,
     enemyMaxHealth,
+    enemyAttackDamage,
     baseEnemyMaxHealth: DEFAULT_ENEMY_MAX_HEALTH,
     isDefeat: false,
     longestRun: 0,
     deckDraftState: null,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
-    enemy: createGoblinEnemy(enemyMaxHealth),
+    enemy: createGoblinEnemy(enemyMaxHealth, enemyAttackDamage),
     combatPhase: 'player-turn',
     hand,
     discardPile: [],
