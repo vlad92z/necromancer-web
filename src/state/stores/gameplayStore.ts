@@ -1042,6 +1042,7 @@ export const gameplayStoreConfig = (
           player: result.player,
           enemy: state.enemy,
           rune: result.completedRune,
+          activeArtefacts: state.activeArtefacts,
         });
         arcaneDustGain += resolvedEffects.arcaneDustDelta;
         const isVictory = (resolvedEffects.enemy?.health ?? 1) <= 0;

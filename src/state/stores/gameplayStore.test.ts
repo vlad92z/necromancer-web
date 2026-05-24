@@ -842,6 +842,28 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().combatPhase).toBe('player-turn');
   });
 
+  it('applies selected Tome to final combat wall casts', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const damageRune = createTestRuneWithEffects('combat-tome-damage', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      activeArtefacts: ['tome'],
+      hand: [damageRune],
+      selectedHandRuneId: damageRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 10, maxHealth: 10 } : state.enemy,
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().enemy?.health).toBe(6);
+    expect(store.getState().combatPhase).toBe('player-turn');
+  });
+
   it('does not resolve effects for non-final wall charges', async () => {
     const { createGameplayStoreInstance } = await import('./gameplayStore');
     const store = createGameplayStoreInstance();
@@ -852,6 +874,7 @@ describe('gameplayStore persistence', () => {
     store.getState().startSoloRun();
     store.setState((state) => ({
       ...state,
+      activeArtefacts: ['tome'],
       hand: [damageRune],
       selectedHandRuneId: damageRune.id,
       enemy: state.enemy ? { ...state.enemy, health: 10, maxHealth: 10 } : state.enemy,
@@ -861,6 +884,54 @@ describe('gameplayStore persistence', () => {
 
     expect(store.getState().enemy?.health).toBe(10);
     expect(store.getState().wallCharges[1][1].currentCount).toBe(1);
+  });
+
+  it('applies selected Rod to final healing casts', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const healingRune = createTestRuneWithEffects('combat-rod-healing', 'Life', [
+      { type: 'Healing', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      activeArtefacts: ['rod'],
+      hand: [healingRune],
+      selectedHandRuneId: healingRune.id,
+      player: {
+        ...state.player,
+        health: 90,
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 1);
+
+    expect(store.getState().player.health).toBe(96);
+  });
+
+  it('applies selected Potion to final armor casts', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const armorRune = createTestRuneWithEffects('combat-potion-armor', 'Frost', [
+      { type: 'Armor', amount: 2, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      activeArtefacts: ['potion'],
+      hand: [armorRune],
+      selectedHandRuneId: armorRune.id,
+      player: {
+        ...state.player,
+        armor: 1,
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 3);
+
+    expect(store.getState().player.armor).toBe(5);
   });
 
   it('resolves final Healing, Armor, and Fortune casts', async () => {
@@ -1029,6 +1100,33 @@ describe('gameplayStore persistence', () => {
     expect(store.getState().deckDraftState).not.toBeNull();
     expect(store.getState().player.health).toBe(10);
     expect(store.getState().hand).toEqual([]);
+  });
+
+  it('enters victory when selected Tome makes a final cast lethal', async () => {
+    const { createGameplayStoreInstance } = await import('./gameplayStore');
+    const store = createGameplayStoreInstance();
+    const tomeLethalRune = createTestRuneWithEffects('combat-tome-lethal', 'Fire', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+    ]);
+
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      activeArtefacts: ['tome'],
+      hand: [tomeLethalRune],
+      selectedHandRuneId: tomeLethalRune.id,
+      enemy: state.enemy ? { ...state.enemy, health: 4, maxHealth: 10 } : state.enemy,
+      player: {
+        ...state.player,
+        deck: [],
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().enemy?.health).toBe(0);
+    expect(store.getState().combatPhase).toBe('victory');
+    expect(store.getState().turnPhase).toBe('deck-draft');
   });
 
   it('returns draw, hand, discard, completed wall, and charge-spent runes before deck draft', async () => {

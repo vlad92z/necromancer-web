@@ -74,6 +74,79 @@ describe('effectResolver resolveCastEffects', () => {
       { effectId: 'unknown.effect', displayHint: 'unknown', output: { noOp: true } },
     ]);
   });
+
+  it('applies selected combat artefact passives once per completed cast', () => {
+    const player = { ...createTestPlayer(), health: 4, armor: 1 };
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('artefact-cast', 'Fire', [
+      createEffectRef('cast.damage', { amount: 3 }),
+      createEffectRef('cast.damage', { amount: 2 }),
+      createEffectRef('cast.healing', { amount: 4 }),
+      createEffectRef('cast.armor', { amount: 3 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+      activeArtefacts: ['tome', 'rod', 'potion'],
+    });
+
+    expect(result.enemy?.health).toBe(14);
+    expect(result.player.health).toBe(10);
+    expect(result.player.armor).toBe(7);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'cast.damage',
+      'cast.damage',
+      'cast.healing',
+      'cast.armor',
+      'passive.tomeCastDamage',
+      'passive.rodHealing',
+      'passive.potionArmor',
+    ]);
+    expect(result.logs.slice(4)).toMatchObject([
+      {
+        sourceType: 'artefact',
+        sourceId: 'tome',
+        output: { target: 'damage', stacking: 'flat', previousValue: 5, nextValue: 6 },
+      },
+      {
+        sourceType: 'artefact',
+        sourceId: 'rod',
+        output: { target: 'healing', stacking: 'multiplier', previousValue: 4, nextValue: 8 },
+      },
+      {
+        sourceType: 'artefact',
+        sourceId: 'potion',
+        output: { target: 'armor', stacking: 'multiplier', previousValue: 3, nextValue: 6 },
+      },
+    ]);
+  });
+
+  it('adds Tome damage to non-damage casts exactly once', () => {
+    const player = createTestPlayer();
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('support-tome-cast', 'Life', [
+      createEffectRef('cast.healing', { amount: 3 }),
+      createEffectRef('cast.armor', { amount: 2 }),
+      createEffectRef('cast.fortune', { amount: 4 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+      activeArtefacts: ['tome'],
+    });
+
+    expect(result.enemy?.health).toBe(19);
+    expect(result.player.health).toBe(10);
+    expect(result.player.armor).toBe(2);
+    expect(result.arcaneDustDelta).toBe(4);
+    expect(result.logs.filter((log) => log.effectId === 'passive.tomeCastDamage')).toHaveLength(1);
+  });
 });
 
 describe('effectResolver passive effects', () => {

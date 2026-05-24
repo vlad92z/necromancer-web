@@ -23,6 +23,7 @@ export interface CastEffectResolutionInput {
   enemy: Enemy | null;
   castRune: Rune;
   wall: ScoringWall;
+  activeArtefacts?: ArtefactId[];
 }
 
 export interface CastEffectResolutionResult {
@@ -241,20 +242,25 @@ export function resolveCastEffects({
   enemy,
   castRune,
   wall,
+  activeArtefacts = [],
 }: CastEffectResolutionInput): CastEffectResolutionResult {
-  let nextPlayer = player;
-  let nextEnemy = enemy;
-  let arcaneDustDelta = 0;
+  let baseDamage = 0;
+  let baseHealing = 0;
+  let baseArmor = 0;
+  let baseArcaneDustDelta = 0;
+  let projectedEnemyHealth = enemy?.health ?? null;
+  let projectedPlayerHealth = player.health;
+  let projectedPlayerArmor = player.armor;
   const logs: EffectResolutionLog[] = [];
   const wallRuneCounts = countFilledWallRunesByType(wall);
 
   castRune.castEffectRefs.forEach((effectRef) => {
     const baseInput = {
       params: effectRef.params ?? {},
-      enemyHealth: nextEnemy?.health ?? null,
-      playerHealth: nextPlayer.health,
-      playerArmor: nextPlayer.armor,
-      arcaneDustDelta,
+      enemyHealth: projectedEnemyHealth,
+      playerHealth: projectedPlayerHealth,
+      playerArmor: projectedPlayerArmor,
+      arcaneDustDelta: baseArcaneDustDelta,
     };
 
     if (!isKnownCastEffectId(effectRef.effectId)) {
@@ -265,54 +271,46 @@ export function resolveCastEffects({
     switch (effectRef.effectId) {
       case 'cast.damage': {
         const damage = numberParam(effectRef, 'amount');
-        if (nextEnemy) {
-          nextEnemy = {
-            ...nextEnemy,
-            health: Math.max(0, nextEnemy.health - damage),
-          };
+        baseDamage += damage;
+        if (projectedEnemyHealth !== null) {
+          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
         }
-        logs.push(createCastLog(castRune, effectRef, baseInput, { damage, enemyHealth: nextEnemy?.health ?? null }));
+        logs.push(createCastLog(castRune, effectRef, baseInput, { damage, enemyHealth: projectedEnemyHealth }));
         break;
       }
       case 'cast.healing': {
         const healing = numberParam(effectRef, 'amount');
-        nextPlayer = {
-          ...nextPlayer,
-          health: Math.min(nextPlayer.maxHealth, nextPlayer.health + healing),
-        };
-        logs.push(createCastLog(castRune, effectRef, baseInput, { healing, playerHealth: nextPlayer.health }));
+        baseHealing += healing;
+        projectedPlayerHealth = Math.min(player.maxHealth, projectedPlayerHealth + healing);
+        logs.push(createCastLog(castRune, effectRef, baseInput, { healing, playerHealth: projectedPlayerHealth }));
         break;
       }
       case 'cast.armor': {
         const armor = numberParam(effectRef, 'amount');
-        nextPlayer = {
-          ...nextPlayer,
-          armor: nextPlayer.armor + armor,
-        };
-        logs.push(createCastLog(castRune, effectRef, baseInput, { armor, playerArmor: nextPlayer.armor }));
+        baseArmor += armor;
+        projectedPlayerArmor += armor;
+        logs.push(createCastLog(castRune, effectRef, baseInput, { armor, playerArmor: projectedPlayerArmor }));
         break;
       }
       case 'cast.fortune': {
         const arcaneDust = numberParam(effectRef, 'amount');
-        arcaneDustDelta += arcaneDust;
-        logs.push(createCastLog(castRune, effectRef, baseInput, { arcaneDust, arcaneDustDelta }));
+        baseArcaneDustDelta += arcaneDust;
+        logs.push(createCastLog(castRune, effectRef, baseInput, { arcaneDust, arcaneDustDelta: baseArcaneDustDelta }));
         break;
       }
       case 'cast.synergy': {
         const synergyType = runeTypeParam(effectRef, 'synergyType');
         const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
         const damage = numberParam(effectRef, 'amount') * synergyCount;
-        if (nextEnemy) {
-          nextEnemy = {
-            ...nextEnemy,
-            health: Math.max(0, nextEnemy.health - damage),
-          };
+        baseDamage += damage;
+        if (projectedEnemyHealth !== null) {
+          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
         }
         logs.push(createCastLog(castRune, effectRef, baseInput, {
           damage,
           synergyType,
           synergyCount,
-          enemyHealth: nextEnemy?.health ?? null,
+          enemyHealth: projectedEnemyHealth,
         }));
         break;
       }
@@ -320,15 +318,13 @@ export function resolveCastEffects({
         const synergyType = runeTypeParam(effectRef, 'synergyType');
         const synergyCount = synergyType ? wallRuneCounts.get(synergyType) ?? 0 : 0;
         const armor = numberParam(effectRef, 'amount') * synergyCount;
-        nextPlayer = {
-          ...nextPlayer,
-          armor: nextPlayer.armor + armor,
-        };
+        baseArmor += armor;
+        projectedPlayerArmor += armor;
         logs.push(createCastLog(castRune, effectRef, baseInput, {
           armor,
           synergyType,
           synergyCount,
-          playerArmor: nextPlayer.armor,
+          playerArmor: projectedPlayerArmor,
         }));
         break;
       }
@@ -336,17 +332,15 @@ export function resolveCastEffects({
         const fragileType = runeTypeParam(effectRef, 'fragileType');
         const isBlocked = fragileType ? wallHasRuneType(wall, fragileType) : true;
         const damage = isBlocked ? 0 : numberParam(effectRef, 'amount');
-        if (nextEnemy) {
-          nextEnemy = {
-            ...nextEnemy,
-            health: Math.max(0, nextEnemy.health - damage),
-          };
+        baseDamage += damage;
+        if (projectedEnemyHealth !== null) {
+          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
         }
         logs.push(createCastLog(castRune, effectRef, baseInput, {
           damage,
           fragileType,
           isBlocked,
-          enemyHealth: nextEnemy?.health ?? null,
+          enemyHealth: projectedEnemyHealth,
         }));
         break;
       }
@@ -357,10 +351,40 @@ export function resolveCastEffects({
     }
   });
 
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'onCast',
+    wall,
+    activeArtefacts,
+    baseValues: {
+      damage: baseDamage,
+      healing: baseHealing,
+      armor: baseArmor,
+      arcaneDustDelta: baseArcaneDustDelta,
+    },
+  });
+
+  const finalDamage = passiveResult.values.damage ?? 0;
+  const finalHealing = passiveResult.values.healing ?? 0;
+  const finalArmor = passiveResult.values.armor ?? 0;
+  const arcaneDustDelta = passiveResult.values.arcaneDustDelta ?? baseArcaneDustDelta;
+  const nextEnemy = enemy && finalDamage > 0
+    ? {
+      ...enemy,
+      health: Math.max(0, enemy.health - finalDamage),
+    }
+    : enemy;
+  const nextPlayer = finalHealing > 0 || finalArmor > 0
+    ? {
+      ...player,
+      health: Math.min(player.maxHealth, player.health + finalHealing),
+      armor: player.armor + finalArmor,
+    }
+    : player;
+
   return {
     player: nextPlayer,
     enemy: nextEnemy,
     arcaneDustDelta,
-    logs,
+    logs: [...logs, ...passiveResult.logs],
   };
 }

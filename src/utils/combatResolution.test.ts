@@ -391,6 +391,70 @@ describe('combatResolution basic combat effects', () => {
     ]);
   });
 
+  it('applies Rod, Potion, and Tome passives through completed rune effects', () => {
+    const player = {
+      ...createPlayer('player-1', 'Tester', 10, [], 10),
+      health: 4,
+      armor: 1,
+    };
+    const enemy = createTestEnemy(20);
+    const rune = createTestRuneWithEffects('artefact-combat-rune', 'Life', [
+      { type: 'Damage', amount: 3, rarity: 'common' },
+      { type: 'Healing', amount: 4, rarity: 'common' },
+      { type: 'Armor', amount: 2, rarity: 'common' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({
+      player,
+      enemy,
+      rune,
+      activeArtefacts: ['tome', 'rod', 'potion'],
+    });
+
+    expect(result.enemy?.health).toBe(16);
+    expect(result.player.health).toBe(10);
+    expect(result.player.armor).toBe(5);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'cast.damage',
+      'cast.healing',
+      'cast.armor',
+      'passive.tomeCastDamage',
+      'passive.rodHealing',
+      'passive.potionArmor',
+    ]);
+  });
+
+  it('applies Potion to armor synergy and Tome before final damage application', () => {
+    const player = {
+      ...createPlayerWithWall([
+        [0, 3, 'Frost'],
+        [1, 3, 'Frost'],
+      ]),
+      armor: 1,
+    };
+    const enemy = createTestEnemy(10);
+    const rune = createTestRuneWithEffects('artefact-synergy-rune', 'Frost', [
+      { type: 'Damage', amount: 1, rarity: 'common' },
+      { type: 'ArmorSynergy', amount: 2, synergyType: 'Frost', rarity: 'rare' },
+    ]);
+
+    const result = resolveCompletedRuneEffects({
+      player,
+      enemy,
+      rune,
+      activeArtefacts: ['tome', 'potion'],
+    });
+
+    expect(result.enemy?.health).toBe(8);
+    expect(result.player.armor).toBe(9);
+    expect(result.logs).toMatchObject([
+      { effectId: 'cast.damage', output: { damage: 1, enemyHealth: 9 } },
+      { effectId: 'cast.armorSynergy', output: { armor: 4, playerArmor: 5 } },
+      { effectId: 'passive.tomeCastDamage', output: { previousValue: 1, nextValue: 2 } },
+      { effectId: 'passive.potionArmor', output: { previousValue: 4, nextValue: 8 } },
+    ]);
+  });
+
   it('enemy attack consumes armor before health', () => {
     const player = {
       ...createPlayer('player-1', 'Tester', 10, [], 10),

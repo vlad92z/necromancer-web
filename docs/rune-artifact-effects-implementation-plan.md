@@ -112,7 +112,7 @@ Automated checks:
 Manual play check:
 - Start solo and cast/end turn without crash while passives are present.
 
-## Stage 5: Combat Artefact Passives
+## Stage 5: Combat Artefact Passives ✅ Done
 
 File-level changes:
 - `src/types/artefacts.ts`: define Rod/Potion/Tome passive refs.

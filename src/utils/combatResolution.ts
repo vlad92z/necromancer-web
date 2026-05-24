@@ -2,6 +2,7 @@
  * Combat resolution helpers for hand-driven spell-wall casting.
  */
 
+import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
 import { resolveCastEffects } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
@@ -46,6 +47,7 @@ export interface CompletedRuneEffectsInput {
   player: Player;
   enemy: Enemy | null;
   rune: Rune;
+  activeArtefacts?: ArtefactId[];
 }
 
 export interface CompletedRuneEffectsResult {
@@ -186,12 +188,14 @@ export function resolveCompletedRuneEffects({
   player,
   enemy,
   rune,
+  activeArtefacts = [],
 }: CompletedRuneEffectsInput): CompletedRuneEffectsResult {
   const result = resolveCastEffects({
     player,
     enemy,
     castRune: rune,
     wall: player.wall,
+    activeArtefacts,
   });
 
   return result;
