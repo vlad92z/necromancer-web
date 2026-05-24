@@ -9,7 +9,7 @@ export function EnemyPanel() {
 
   if (!enemy) {
     return (
-      <section className="h-full rounded-lg border border-white/10 bg-slate-950/60 p-5 text-slate-300">
+      <section className="h-full p-5 text-slate-300">
         <div className="text-sm font-bold uppercase tracking-[0.22em] text-slate-400">Enemy</div>
         <div className="mt-4 text-lg font-semibold">No enemy</div>
       </section>
@@ -20,7 +20,7 @@ export function EnemyPanel() {
   const healthPercent = Math.round(healthRatio * 100);
 
   return (
-    <section className="h-full rounded-lg border border-red-400/25 bg-[rgba(19,7,22,0.82)] p-5 shadow-[0_18px_48px_rgba(0,0,0,0.35)]">
+    <section className="h-full p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-xs font-extrabold uppercase tracking-[0.24em] text-red-200/80">Enemy</div>

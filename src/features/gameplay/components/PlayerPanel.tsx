@@ -14,7 +14,7 @@ export function PlayerPanel() {
   const healthPercent = Math.round(healthRatio * 100);
 
   return (
-    <section className="h-full rounded-lg border border-sky-300/25 bg-[rgba(8,16,32,0.84)] p-5 shadow-[0_18px_48px_rgba(0,0,0,0.35)]">
+    <section className="h-full p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-xs font-extrabold uppercase tracking-[0.24em] text-sky-200/80">Player</div>

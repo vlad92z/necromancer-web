@@ -35,14 +35,14 @@ export const SoloGameView = memo(function SoloGameView({
         >
           <PlayerPanel />
 
-          <section className="flex h-full min-h-0 items-start justify-center overflow-visible rounded-lg border border-white/10 bg-slate-950/35 p-5">
+          <section className="flex h-full min-h-0 items-start justify-center overflow-visible p-5">
             <ScoringWall hiddenWallSlots={hiddenWallSlots} />
           </section>
 
           <EnemyPanel />
         </div>
 
-        <section className="relative flex min-h-[240px] flex-col rounded-lg border border-sky-300/20 bg-sky-950/10 px-4 py-3">
+        <section className="relative flex min-h-[240px] flex-col px-4 py-3">
           <div className="flex min-h-0 flex-1 items-center">
             <TooltipView />
           </div>
