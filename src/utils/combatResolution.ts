@@ -16,6 +16,7 @@ export type WallCastStatus = 'invalid' | 'charged' | 'completed';
 export interface WallCastInput {
   player: Player;
   hand: Rune[];
+  discardPile: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   row: number;
@@ -26,6 +27,7 @@ export interface WallCastResult {
   status: WallCastStatus;
   player: Player;
   hand: Rune[];
+  discardPile: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   completedRune: Rune | null;
@@ -203,6 +205,7 @@ export function drawRunes({
 export function castRuneToWallSlot({
   player,
   hand,
+  discardPile,
   wallCharges,
   selectedHandRuneId,
   row,
@@ -226,6 +229,7 @@ export function castRuneToWallSlot({
       status: 'invalid',
       player,
       hand,
+      discardPile,
       wallCharges,
       selectedHandRuneId,
       completedRune: null,
@@ -238,11 +242,13 @@ export function castRuneToWallSlot({
   const nextCharge = nextWallCharges[row][col];
   const nextCurrentCount = Math.min(nextCharge.requiredCount, nextCharge.currentCount + 1);
   const isCompleted = nextCurrentCount >= nextCharge.requiredCount;
+  const spentRunes = isCompleted ? [] : [...nextCharge.spentRunes, selectedRune];
+  const nextDiscardPile = isCompleted ? [...discardPile, ...nextCharge.spentRunes] : discardPile;
 
   nextWallCharges[row][col] = {
     ...nextCharge,
     currentCount: nextCurrentCount,
-    spentRunes: isCompleted ? nextCharge.spentRunes : [...nextCharge.spentRunes, selectedRune],
+    spentRunes,
     completedRuneId: isCompleted ? selectedRune.id : nextCharge.completedRuneId,
   };
 
@@ -251,6 +257,7 @@ export function castRuneToWallSlot({
       status: 'charged',
       player,
       hand: nextHand,
+      discardPile: nextDiscardPile,
       wallCharges: nextWallCharges,
       selectedHandRuneId: null,
       completedRune: null,
@@ -273,6 +280,7 @@ export function castRuneToWallSlot({
       wall: nextWall,
     },
     hand: nextHand,
+    discardPile: nextDiscardPile,
     wallCharges: nextWallCharges,
     selectedHandRuneId: null,
     completedRune: selectedRune,

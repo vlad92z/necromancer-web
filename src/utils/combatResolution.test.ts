@@ -21,6 +21,7 @@ describe('combatResolution wall casting', () => {
     const result = castRuneToWallSlot({
       player,
       hand: [fireRune],
+      discardPile: [],
       wallCharges: createEmptyWallCharges(6),
       selectedHandRuneId: fireRune.id,
       row: 1,
@@ -29,6 +30,7 @@ describe('combatResolution wall casting', () => {
 
     expect(result.status).toBe('charged');
     expect(result.hand).toEqual([]);
+    expect(result.discardPile).toEqual([]);
     expect(result.selectedHandRuneId).toBeNull();
     expect(result.player.wall[1][1].runeType).toBeNull();
     expect(result.wallCharges[1][1]).toMatchObject({
@@ -53,6 +55,7 @@ describe('combatResolution wall casting', () => {
     const result = castRuneToWallSlot({
       player,
       hand: [finalRune],
+      discardPile: [],
       wallCharges,
       selectedHandRuneId: finalRune.id,
       row: 1,
@@ -61,6 +64,7 @@ describe('combatResolution wall casting', () => {
 
     expect(result.status).toBe('completed');
     expect(result.hand).toEqual([]);
+    expect(result.discardPile).toEqual([firstRune]);
     expect(result.player.wall[1][1]).toEqual({
       runeType: 'Fire',
       rarity: finalRune.rarity,
@@ -71,8 +75,36 @@ describe('combatResolution wall casting', () => {
       currentCount: 2,
       completedRuneId: 'fire-final',
     });
-    expect(result.wallCharges[1][1].spentRunes.map((rune) => rune.id)).toEqual(['fire-spent']);
+    expect(result.wallCharges[1][1].spentRunes).toEqual([]);
     expect(result.completedPosition).toEqual({ row: 1, col: 1 });
+  });
+
+  it('keeps the final matching rune out of discard when completing a slot', () => {
+    const firstRune = createTestRune('fire-spent', 'Fire');
+    const finalRune = createTestRune('fire-final', 'Fire');
+    const existingDiscardRune = createTestRune('existing-discard', 'Void');
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    const wallCharges = createEmptyWallCharges(6);
+    wallCharges[1][1] = {
+      ...wallCharges[1][1],
+      currentCount: 1,
+      spentRunes: [firstRune],
+    };
+
+    const result = castRuneToWallSlot({
+      player,
+      hand: [finalRune],
+      discardPile: [existingDiscardRune],
+      wallCharges,
+      selectedHandRuneId: finalRune.id,
+      row: 1,
+      col: 1,
+    });
+
+    expect(result.status).toBe('completed');
+    expect(result.discardPile.map((rune) => rune.id)).toEqual(['existing-discard', 'fire-spent']);
+    expect(result.discardPile).not.toContain(finalRune);
+    expect(result.wallCharges[1][1].completedRuneId).toBe(finalRune.id);
   });
 
   it('rejects wrong-type casts without clearing selection', () => {
@@ -83,6 +115,7 @@ describe('combatResolution wall casting', () => {
     const result = castRuneToWallSlot({
       player,
       hand: [lifeRune],
+      discardPile: [],
       wallCharges,
       selectedHandRuneId: lifeRune.id,
       row: 0,
@@ -91,6 +124,7 @@ describe('combatResolution wall casting', () => {
 
     expect(result.status).toBe('invalid');
     expect(result.hand).toEqual([lifeRune]);
+    expect(result.discardPile).toEqual([]);
     expect(result.wallCharges).toBe(wallCharges);
     expect(result.selectedHandRuneId).toBe(lifeRune.id);
   });
@@ -554,7 +588,7 @@ describe('combatResolution victory deck collection', () => {
     const drawRune = createTestRune('victory-draw', 'Fire');
     const handRune = createTestRune('victory-hand', 'Life');
     const discardRune = createTestRune('victory-discard', 'Void');
-    const spentRune = createTestRune('victory-spent', 'Fire');
+    const incompleteSpentRune = createTestRune('victory-incomplete-spent', 'Frost');
     const completedRune = createTestRuneWithEffects('victory-completed', 'Fire', [
       { type: 'Damage', amount: 3, rarity: 'common' },
     ]);
@@ -570,8 +604,13 @@ describe('combatResolution victory deck collection', () => {
     wallCharges[1][1] = {
       ...wallCharges[1][1],
       currentCount: 2,
-      spentRunes: [spentRune],
+      spentRunes: [],
       completedRuneId: completedRune.id,
+    };
+    wallCharges[2][2] = {
+      ...wallCharges[2][2],
+      currentCount: 1,
+      spentRunes: [incompleteSpentRune],
     };
 
     const result = collectVictoryDeck({
@@ -588,8 +627,8 @@ describe('combatResolution victory deck collection', () => {
       'victory-draw',
       'victory-hand',
       'victory-discard',
-      'victory-spent',
       'victory-completed',
+      'victory-incomplete-spent',
     ]);
     expect(result.hand).toEqual([]);
     expect(result.discardPile).toEqual([]);

@@ -216,6 +216,7 @@ export const gameplayStoreConfig = (
       const result = castRuneToWallSlot({
         player: state.player,
         hand: state.hand,
+        discardPile: state.discardPile,
         wallCharges: state.wallCharges,
         selectedHandRuneId: state.selectedHandRuneId,
         row,
@@ -246,7 +247,7 @@ export const gameplayStoreConfig = (
           const victoryDeck = collectVictoryDeck({
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
-            discardPile: state.discardPile,
+            discardPile: result.discardPile,
             suppressedRunes: resolvedEffects.suppressedRunes,
             wallCharges: resolvedEffects.wallCharges,
           });
@@ -271,14 +272,14 @@ export const gameplayStoreConfig = (
           ? drawRunes({
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
-            discardPile: state.discardPile,
+            discardPile: result.discardPile,
             drawCount: resolvedEffects.drawCount,
             handLimit: EXTRA_DRAW_HAND_LIMIT,
           })
           : {
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
-            discardPile: state.discardPile,
+            discardPile: result.discardPile,
           };
 
         return {
@@ -297,6 +298,7 @@ export const gameplayStoreConfig = (
         ...state,
         player: result.player,
         hand: result.hand,
+        discardPile: result.discardPile,
         wallCharges: result.wallCharges,
         selectedHandRuneId: result.selectedHandRuneId,
       };

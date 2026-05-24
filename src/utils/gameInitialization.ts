@@ -125,7 +125,7 @@ function shuffleRunes(runes: Rune[]): Rune[] {
 
 export function initializeSoloGame(
   enemyMaxHealth: number = DEFAULT_ENEMY_MAX_HEALTH,
-  fullDeck: Rune[] = createStartingDeck(25),
+  fullDeck: Rune[] = createStartingDeck(30),
   enemyAttackDamage: number = DEFAULT_ENEMY_ATTACK_DAMAGE
 ): GameState {
   const maxHealth = 100;
