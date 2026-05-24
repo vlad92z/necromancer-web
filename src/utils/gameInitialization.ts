@@ -152,6 +152,7 @@ export function initializeSoloGame(
     combatPhase: 'player-turn',
     hand,
     discardPile: [],
+    suppressedRunes: [],
     wallCharges: createEmptyWallCharges(WALL_SIZE),
     selectedHandRuneId: null,
   };

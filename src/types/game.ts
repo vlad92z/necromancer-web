@@ -115,6 +115,7 @@ export interface CombatZoneState {
   combatPhase: CombatPhase;
   hand: Rune[];
   discardPile: Rune[];
+  suppressedRunes: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
 }

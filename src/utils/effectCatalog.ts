@@ -8,6 +8,9 @@ export type CastEffectId =
   | 'cast.damage'
   | 'cast.damageAdjacent'
   | 'cast.damageConditional'
+  | 'cast.damageFragile'
+  | 'cast.damageConsuming'
+  | 'cast.retriggerAdjacent'
   | 'cast.healing'
   | 'cast.armor'
   | 'cast.armorAdjacent'
@@ -25,7 +28,9 @@ export type PassiveEffectId =
   | 'passive.potionArmor'
   | 'passive.tomeCastDamage'
   | 'passive.damageBoostSynergy'
-  | 'passive.pulseSynergy';
+  | 'passive.pulseSynergy'
+  | 'passive.healingStartTurn'
+  | 'passive.drawingStartTurn';
 
 export type CatalogEffectId = CastEffectId | PassiveEffectId;
 export type PassiveStackingKind = 'flat' | 'multiplier';
@@ -80,6 +85,28 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage if at least ${numberParam(params, 'threshold')} ${runeTypeParam(params, 'conditionType')} runes are in your completed wall`,
+  },
+  'cast.damageFragile': {
+    id: 'cast.damageFragile',
+    kind: 'cast',
+    title: 'Fragile Damage',
+    displayHint: 'damage',
+    describe: (params) =>
+      `Deal ${numberParam(params, 'amount')} damage, reduced by ${numberParam(params, 'reduction')} for every ${runeTypeParam(params, 'fragileType')} rune in your completed wall`,
+  },
+  'cast.damageConsuming': {
+    id: 'cast.damageConsuming',
+    kind: 'cast',
+    title: 'Consuming Damage',
+    displayHint: 'damage',
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent completed rune, then destroy them`,
+  },
+  'cast.retriggerAdjacent': {
+    id: 'cast.retriggerAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Retrigger',
+    displayHint: 'damage',
+    describe: () => 'Retrigger adjacent completed runes',
   },
   'cast.healing': {
     id: 'cast.healing',
@@ -246,6 +273,34 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) =>
       `At end of turn, deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+  },
+  'passive.healingStartTurn': {
+    id: 'passive.healingStartTurn',
+    kind: 'passive',
+    title: 'Start Turn Healing',
+    displayHint: 'healing',
+    passive: {
+      trigger: 'startTurn',
+      target: 'healing',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `At start of turn, heal ${numberParam(params, 'amount')}`,
+  },
+  'passive.drawingStartTurn': {
+    id: 'passive.drawingStartTurn',
+    kind: 'passive',
+    title: 'Start Turn Draw',
+    displayHint: 'deck',
+    passive: {
+      trigger: 'startTurn',
+      target: 'drawCount',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `At start of turn, draw ${numberParam(params, 'amount')} additional runes`,
   },
 };
 

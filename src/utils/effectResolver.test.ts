@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
 import { createEffectRef, EFFECT_CATALOG } from './effectCatalog';
-import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects } from './effectResolver';
+import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import { createEmptyWall, createPlayer } from './gameInitialization';
 
 describe('effectResolver resolveCastEffects', () => {
@@ -233,6 +233,93 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
+  it('resolves fragile damage with a floor of zero', () => {
+    const player = createTestPlayer([
+      [0, 3, 'Frost'],
+      [1, 3, 'Frost'],
+      [2, 3, 'Frost'],
+      [3, 3, 'Frost'],
+      [4, 3, 'Frost'],
+      [5, 3, 'Frost'],
+    ]);
+    const enemy = createTestEnemy(30);
+    const castRune = createTestRune('rare-fire', 'Fire', [
+      createEffectRef('cast.damageFragile', { amount: 25, reduction: 5, fragileType: 'Frost' }),
+    ]);
+
+    const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall });
+
+    expect(result.enemy?.health).toBe(30);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.damageFragile',
+      output: { damage: 0, fragileCount: 6, reduction: 30 },
+    });
+  });
+
+  it('consumes adjacent completed runes and suppresses them for recovery', () => {
+    const player = createTestPlayer([
+      [0, 0, 'Frost'],
+      [0, 1, 'Fire'],
+      [1, 0, 'Life'],
+      [2, 2, 'Wind'],
+      [3, 3, 'Void'],
+    ]);
+    const wallCharges = createTestWallCharges(player.wall);
+    const enemy = createTestEnemy(50);
+    const castRune = createTestRune('rare-void', 'Void', [
+      createEffectRef('cast.damageConsuming', { amount: 10 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+      wallCharges,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(10);
+    expect(result.wall[0][0].runeType).toBeNull();
+    expect(result.wall[0][1].runeType).toBeNull();
+    expect(result.wall[1][0].runeType).toBeNull();
+    expect(result.wall[2][2].runeType).toBeNull();
+    expect(result.wall[3][3].runeType).toBe('Void');
+    expect(result.suppressedRunes.map((rune) => rune.id)).toEqual([
+      'completed-0-0',
+      'completed-0-1',
+      'completed-1-0',
+      'completed-2-2',
+    ]);
+  });
+
+  it('replays adjacent cast effects while skipping retriggers', () => {
+    const player = createTestPlayer();
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Fire', [], [createEffectRef('cast.damage', { amount: 3 })]);
+    wall[0][1] = createWallCell('Lightning', [], [createEffectRef('cast.retriggerAdjacent')]);
+    wall[1][0] = createWallCell('Wind', [], [createEffectRef('cast.fortune', { amount: 4 })]);
+    const playerWithWall = { ...player, wall };
+    const wallCharges = createTestWallCharges(wall);
+    const castRune = createTestRune('rare-lightning', 'Lightning', [
+      createEffectRef('cast.retriggerAdjacent'),
+    ]);
+
+    const result = resolveCastEffects({
+      player: playerWithWall,
+      enemy: createTestEnemy(20),
+      castRune,
+      wall,
+      wallCharges,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(17);
+    expect(result.arcaneDustDelta).toBe(4);
+    expect(result.logs.map((log) => log.effectId)).toContain('cast.damage');
+    expect(result.logs.filter((log) => log.output.skipped === true)).toHaveLength(0);
+  });
+
   it('keeps misplaced passive and unknown refs as no-op logs', () => {
     const player = createTestPlayer();
     const enemy = createTestEnemy(20);
@@ -350,6 +437,26 @@ describe('effectResolver end turn effects', () => {
       trigger: 'endTurn',
       output: { modifier: 15, synergyType: 'Void', synergyCount: 3 },
     });
+  });
+});
+
+describe('effectResolver start turn effects', () => {
+  it('heals and requests draw from completed wall passives', () => {
+    const player = { ...createTestPlayer(), health: 6, maxHealth: 10 };
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Life', [createEffectRef('passive.healingStartTurn', { amount: 2 })]);
+    wall[0][1] = createWallCell('Wind', [createEffectRef('passive.drawingStartTurn', { amount: 1 })]);
+    const result = resolveStartTurnEffects({
+      player: { ...player, wall },
+      wall,
+    });
+
+    expect(result.player.health).toBe(8);
+    expect(result.drawCount).toBe(1);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'passive.healingStartTurn',
+      'passive.drawingStartTurn',
+    ]);
   });
 });
 
@@ -548,11 +655,23 @@ function createTestEnemy(health: number): Enemy {
   };
 }
 
-function createWallCell(runeType: RuneType, passiveEffectRefs: EffectRef[] = []): WallCell {
+function createWallCell(runeType: RuneType, passiveEffectRefs: EffectRef[] = [], castEffectRefs: EffectRef[] = []): WallCell {
   return {
     runeType,
     rarity: 'common',
-    castEffectRefs: [],
+    castEffectRefs,
     passiveEffectRefs,
   };
+}
+
+function createTestWallCharges(wall: ScoringWall) {
+  return wall.map((row, rowIndex) => row.map((cell, colIndex) => ({
+    row: rowIndex,
+    col: colIndex,
+    runeType: cell.runeType ?? 'Fire',
+    requiredCount: rowIndex + 1,
+    currentCount: cell.runeType ? rowIndex + 1 : 0,
+    spentRunes: [],
+    completedRuneId: cell.runeType ? `completed-${rowIndex}-${colIndex}` : null,
+  })));
 }

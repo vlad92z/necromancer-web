@@ -41,6 +41,7 @@ export function getGameplayState(): GameState {
     combatPhase: combat.combatPhase,
     hand: combat.hand,
     discardPile: combat.discardPile,
+    suppressedRunes: combat.suppressedRunes,
     wallCharges: combat.wallCharges,
     selectedHandRuneId: combat.selectedHandRuneId,
   };

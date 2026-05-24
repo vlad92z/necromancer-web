@@ -4,7 +4,7 @@
 
 import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
-import { resolveCastEffects, resolveEndTurnEffects } from './effectResolver';
+import { resolveCastEffects, resolveEndTurnEffects, resolveStartTurnEffects } from './effectResolver';
 import type { WallPosition } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
@@ -67,11 +67,16 @@ export interface CompletedRuneCastEffectsInput {
   rune: Rune;
   activeArtefacts?: ArtefactId[];
   sourcePosition?: WallPosition | null;
+  wallCharges?: SpellWallCharge[][];
+  suppressedRunes?: Rune[];
 }
 
 export interface CompletedRuneCastEffectsResult {
   player: Player;
   enemy: Enemy | null;
+  wallCharges: SpellWallCharge[][];
+  suppressedRunes: Rune[];
+  wallChanged: boolean;
   arcaneDustDelta: number;
   drawCount: number;
   logs: EffectResolutionLog[];
@@ -89,6 +94,17 @@ export interface EndTurnEffectsResult {
   logs: EffectResolutionLog[];
 }
 
+export interface StartTurnEffectsInput {
+  player: Player;
+  activeArtefacts?: ArtefactId[];
+}
+
+export interface StartTurnEffectsResult {
+  player: Player;
+  drawCount: number;
+  logs: EffectResolutionLog[];
+}
+
 export interface EnemyTurnInput {
   player: Player;
   enemy: Enemy | null;
@@ -102,6 +118,7 @@ export interface VictoryDeckInput {
   player: Player;
   hand: Rune[];
   discardPile: Rune[];
+  suppressedRunes?: Rune[];
   wallCharges: SpellWallCharge[][];
 }
 
@@ -266,6 +283,8 @@ export function resolveCompletedRuneCastEffects({
   rune,
   activeArtefacts = [],
   sourcePosition = null,
+  wallCharges = [],
+  suppressedRunes = [],
 }: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
   const result = resolveCastEffects({
     player,
@@ -274,9 +293,17 @@ export function resolveCompletedRuneCastEffects({
     wall: player.wall,
     activeArtefacts,
     sourcePosition,
+    wallCharges,
+    suppressedRunes,
   });
 
-  return result;
+  return {
+    ...result,
+    player: result.wallChanged ? {
+      ...result.player,
+      wall: result.wall,
+    } : result.player,
+  };
 }
 
 export function resolveEnemyTurn({ player, enemy }: EnemyTurnInput): EnemyTurnResult {
@@ -326,10 +353,22 @@ export function resolveCompletedEndTurnEffects({
   });
 }
 
+export function resolveCompletedStartTurnEffects({
+  player,
+  activeArtefacts = [],
+}: StartTurnEffectsInput): StartTurnEffectsResult {
+  return resolveStartTurnEffects({
+    player,
+    wall: player.wall,
+    activeArtefacts,
+  });
+}
+
 export function collectVictoryDeck({
   player,
   hand,
   discardPile,
+  suppressedRunes = [],
   wallCharges,
 }: VictoryDeckInput): VictoryDeckResult {
   const returnedRunesById = new Map<string, Rune>();
@@ -341,6 +380,7 @@ export function collectVictoryDeck({
   player.deck.forEach(addRune);
   hand.forEach(addRune);
   discardPile.forEach(addRune);
+  suppressedRunes.forEach(addRune);
 
   wallCharges.forEach((chargeRow) => {
     chargeRow.forEach((charge) => {

@@ -581,6 +581,21 @@ describe('combatResolution victory deck collection', () => {
     expect(result.discardPile).toEqual([]);
   });
 
+  it('returns suppressed runes after encounter recovery', () => {
+    const suppressedRune = createTestRune('suppressed-void', 'Void');
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+
+    const result = collectVictoryDeck({
+      player,
+      hand: [],
+      discardPile: [],
+      suppressedRunes: [suppressedRune],
+      wallCharges: createEmptyWallCharges(6),
+    });
+
+    expect(result.player.deck.map((rune) => rune.id)).toEqual(['suppressed-void']);
+  });
+
   it('does not duplicate cards returned from multiple combat zones', () => {
     const duplicateRune = createTestRune('duplicate-rune', 'Fire');
     const player = createPlayer('player-1', 'Tester', 10, [duplicateRune], 10);

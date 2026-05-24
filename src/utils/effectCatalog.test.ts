@@ -18,6 +18,15 @@ describe('effectCatalog', () => {
       threshold: 2,
       conditionType: 'Void',
     }))).toBe('Deal 25 damage if at least 2 Void runes are in your completed wall');
+    expect(getEffectDescription(createEffectRef('cast.damageFragile', {
+      amount: 25,
+      reduction: 5,
+      fragileType: 'Frost',
+    }))).toBe('Deal 25 damage, reduced by 5 for every Frost rune in your completed wall');
+    expect(getEffectDescription(createEffectRef('cast.damageConsuming', { amount: 10 }))).toBe(
+      'Deal 10 damage for every adjacent completed rune, then destroy them'
+    );
+    expect(getEffectDescription(createEffectRef('cast.retriggerAdjacent'))).toBe('Retrigger adjacent completed runes');
     expect(getEffectDescription(createEffectRef('cast.armorAdjacent', { amount: 3 }))).toBe(
       'Gain 3 armor for every adjacent completed rune'
     );
@@ -38,6 +47,12 @@ describe('effectCatalog', () => {
       amount: 5,
       synergyType: 'Void',
     }))).toBe('At end of turn, deal 5 damage for every Void rune in your completed wall');
+    expect(getEffectDescription(createEffectRef('passive.healingStartTurn', { amount: 2 }))).toBe(
+      'At start of turn, heal 2'
+    );
+    expect(getEffectDescription(createEffectRef('passive.drawingStartTurn', { amount: 1 }))).toBe(
+      'At start of turn, draw 1 additional runes'
+    );
   });
 
   it('keeps rarity out of effect ref params', () => {

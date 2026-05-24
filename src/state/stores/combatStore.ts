@@ -11,6 +11,7 @@ export interface CombatState {
   combatPhase: CombatPhase;
   hand: Rune[];
   discardPile: Rune[];
+  suppressedRunes: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
 }
@@ -25,6 +26,7 @@ export function pickCombatState(state: GameState): CombatState {
     combatPhase: state.combatPhase,
     hand: state.hand,
     discardPile: state.discardPile,
+    suppressedRunes: state.suppressedRunes,
     wallCharges: state.wallCharges,
     selectedHandRuneId: state.selectedHandRuneId,
   };

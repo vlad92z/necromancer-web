@@ -28,6 +28,7 @@ import {
   EXTRA_DRAW_HAND_LIMIT,
   resolveCompletedEndTurnEffects,
   resolveCompletedRuneCastEffects,
+  resolveCompletedStartTurnEffects,
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { getArcaneDustReward } from '../../utils/arcaneDust';
@@ -99,6 +100,7 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     combatPhase: nextState.combatPhase ?? 'player-turn',
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
+    suppressedRunes: nextState.suppressedRunes ?? [],
     wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
   };
@@ -231,6 +233,8 @@ export const gameplayStoreConfig = (
           rune: result.completedRune,
           activeArtefacts: state.activeArtefacts,
           sourcePosition: result.completedPosition,
+          wallCharges: result.wallCharges,
+          suppressedRunes: state.suppressedRunes,
         });
 
         arcaneDustGain += resolvedEffects.arcaneDustDelta;
@@ -241,7 +245,8 @@ export const gameplayStoreConfig = (
             player: resolvedEffects.player,
             hand: result.hand,
             discardPile: state.discardPile,
-            wallCharges: result.wallCharges,
+            suppressedRunes: resolvedEffects.suppressedRunes,
+            wallCharges: resolvedEffects.wallCharges,
           });
 
           return enterDeckDraftMode({
@@ -253,6 +258,7 @@ export const gameplayStoreConfig = (
             enemy: resolvedEffects.enemy,
             hand: victoryDeck.hand,
             discardPile: victoryDeck.discardPile,
+            suppressedRunes: [],
             wallCharges: createEmptyWallCharges(),
             selectedHandRuneId: null,
           });
@@ -278,7 +284,8 @@ export const gameplayStoreConfig = (
           enemy: resolvedEffects.enemy,
           hand: drawResult.hand,
           discardPile: drawResult.discardPile,
-          wallCharges: result.wallCharges,
+          suppressedRunes: resolvedEffects.suppressedRunes,
+          wallCharges: resolvedEffects.wallCharges,
           selectedHandRuneId: result.selectedHandRuneId,
         };
       }
@@ -320,6 +327,7 @@ export const gameplayStoreConfig = (
           player: endTurnEffects.player,
           hand: state.hand,
           discardPile: state.discardPile,
+          suppressedRunes: state.suppressedRunes,
           wallCharges: state.wallCharges,
         });
 
@@ -332,6 +340,7 @@ export const gameplayStoreConfig = (
           enemy: endTurnEffects.enemy,
           hand: victoryDeck.hand,
           discardPile: victoryDeck.discardPile,
+          suppressedRunes: [],
           wallCharges: createEmptyWallCharges(),
           selectedHandRuneId: null,
         });
@@ -362,12 +371,29 @@ export const gameplayStoreConfig = (
         hand: state.hand,
         discardPile: state.discardPile,
       });
+      const startTurnEffects = resolveCompletedStartTurnEffects({
+        player: result.player,
+        activeArtefacts: state.activeArtefacts,
+      });
+      const startTurnDrawResult = startTurnEffects.drawCount > 0
+        ? drawRunes({
+          player: startTurnEffects.player,
+          hand: result.hand,
+          discardPile: result.discardPile,
+          drawCount: startTurnEffects.drawCount,
+          handLimit: EXTRA_DRAW_HAND_LIMIT,
+        })
+        : {
+          player: startTurnEffects.player,
+          hand: result.hand,
+          discardPile: result.discardPile,
+        };
 
       return {
         ...state,
-        player: result.player,
-        hand: result.hand,
-        discardPile: result.discardPile,
+        player: startTurnDrawResult.player,
+        hand: startTurnDrawResult.hand,
+        discardPile: startTurnDrawResult.discardPile,
         selectedHandRuneId: null,
         combatPhase: 'player-turn',
       };

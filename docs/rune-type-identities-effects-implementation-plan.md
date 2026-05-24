@@ -98,7 +98,14 @@ Tests:
 Acceptance:
 - Uncommon rune rewards are playable and resolve new effects.
 
-## Stage 3: Rare Effects + Mutation Foundation
+## Stage 3: Rare Effects + Mutation Foundation ✅ Done
+
+Completed:
+- Rare rune identity refs implemented.
+- Fragile, consuming, retrigger adjacent, and start-turn passives implemented.
+- Suppressed rune recovery metadata added and restored on victory.
+- Start-turn healing/draw resolves after normal refill.
+- Automated checks passed.
 
 File-level changes before implementation:
 - `src/types/game.ts`: add serializable encounter recovery/mutation metadata if needed.

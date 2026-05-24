@@ -42,7 +42,7 @@ describe('runeEffects', () => {
   it('creates draft refs by rarity without storing rarity in params', () => {
     const refs = getRuneCastEffectRefsForType('Frost', 'rare');
 
-    expect(refs).toEqual([{ effectId: 'cast.armorSynergy', params: { amount: 10, synergyType: 'Frost' } }]);
+    expect(refs).toEqual([{ effectId: 'cast.armorSynergy', params: { amount: 5, synergyType: 'Frost' } }]);
     expect(refs[0]?.params).not.toHaveProperty('rarity');
   });
 
@@ -74,6 +74,33 @@ describe('runeEffects', () => {
       passiveEffectRefs: [
         { effectId: 'passive.pulseSynergy', params: { amount: 5, synergyType: 'Void' } },
       ],
+    });
+  });
+
+  it('maps all rare rune identities to Stage 3 refs', () => {
+    expect(createRune('fire-rare', 'Fire', 'rare')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.damageFragile', params: { amount: 25, reduction: 5, fragileType: 'Frost' } }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('frost-rare', 'Frost', 'rare')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.armorSynergy', params: { amount: 5, synergyType: 'Frost' } }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('life-rare', 'Life', 'rare')).toMatchObject({
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.healingStartTurn', params: { amount: 2 } }],
+    });
+    expect(createRune('lightning-rare', 'Lightning', 'rare')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.retriggerAdjacent' }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('void-rare', 'Void', 'rare')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 10 } }],
+      passiveEffectRefs: [],
+    });
+    expect(createRune('wind-rare', 'Wind', 'rare')).toMatchObject({
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.drawingStartTurn', params: { amount: 1 } }],
     });
   });
 
