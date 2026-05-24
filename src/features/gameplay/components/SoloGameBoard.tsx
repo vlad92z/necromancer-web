@@ -42,18 +42,11 @@ export const SoloGameView = memo(function SoloGameView({
           <EnemyPanel />
         </div>
 
-        <section className="flex min-h-[280px] flex-col rounded-lg border border-sky-300/20 bg-sky-950/10 px-5 py-4">
-          <div className="flex items-center justify-between gap-4 border-b border-sky-300/15 pb-4">
-            <div>
-              <div className="text-xs font-extrabold uppercase tracking-[0.22em] text-sky-200/70">Hand</div>
-              <div className="mt-1 text-lg font-bold text-sky-50">Rune tray</div>
-            </div>
-            <EndTurnButton className="shrink-0" />
-          </div>
-
-          <div className="flex min-h-0 flex-1 items-center pt-4">
+        <section className="relative flex min-h-[240px] flex-col rounded-lg border border-sky-300/20 bg-sky-950/10 px-4 py-3">
+          <div className="flex min-h-0 flex-1 items-center pb-14 pr-32">
             <TooltipView />
           </div>
+          <EndTurnButton className="absolute bottom-3 right-4 z-20" />
         </section>
       </div>
       { deckDraftState && (<DeckDraftingModal draftState={deckDraftState}/>)}

@@ -92,15 +92,14 @@ export function TooltipView() {
     return (
       <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-sky-300/25 bg-sky-950/20 px-5 py-4 text-center">
         <div>
-          <div className="text-xs font-extrabold uppercase tracking-[0.22em] text-sky-200/70">Hand</div>
-          <div className="mt-2 text-lg font-bold text-sky-100">No runes in hand</div>
+          <div className="text-lg font-bold text-sky-100">No runes in hand</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-visible px-2 pb-2">
+    <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-visible px-1">
       {handCards.map(({ rune, card }, index) => {
         const rotation = getTooltipCardRotation(handCards.length, index);
         const isSelected = selectedHandRuneId === rune.id;

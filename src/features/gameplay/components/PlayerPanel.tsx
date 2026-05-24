@@ -47,8 +47,7 @@ export function PlayerPanel() {
         </div>
       </div>
 
-      <div className="mt-5 rounded-lg border border-sky-300/15 bg-sky-950/25 px-4 py-3">
-        <div className="mb-3 text-[0.7rem] font-extrabold uppercase tracking-[0.22em] text-sky-100/70">Artefacts</div>
+      <div className="mt-4 rounded-lg border border-sky-300/15 bg-sky-950/25 px-3 py-2">
         {selectedArtefactIds.length > 0 ? (
           <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
         ) : (

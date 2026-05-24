@@ -50,8 +50,7 @@ export function GameMetadataView() {
       <div className="flex flex-row flex-[44] items-center justify-end gap-3">
         <DeckButton/>
         <div className="flex min-w-[150px] items-center justify-center gap-3 rounded-[16px] border border-violet-400/30 bg-violet-500/10 px-3.5 py-3 text-slate-100">
-          <div className="flex flex-col items-center leading-[1.2]">
-            <span className="text-[0.6rem] font-extrabold uppercase tracking-[0.16em] text-violet-100/70">Hand</span>
+          <div className="flex flex-col items-center leading-[1.2]" aria-label="Hand count">
             <span className="text-[1.15rem] font-semibold">{hand.length}</span>
           </div>
           <div className="h-8 w-px bg-white/15" />
