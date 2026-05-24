@@ -5,11 +5,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
-import type { ScoringWall as ScoringWallType } from '../../../../types/game';
+import type { RuneType, ScoringWall as ScoringWallType } from '../../../../types/game';
 import { collectConnectedWallCells, getRuneOrderForSize } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
-import type { RuneType } from '../../../../types/game';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
+import { wallCellToRune } from '../../../../utils/wallCellRune';
 
 // Layout constants (kept in sync with RuneCell size config)
 const CELL_SIZE = 65; // matches RuneCell size="large"
@@ -123,14 +123,8 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
       const orderedCells = primaryCell ? [primaryCell, ...remainingCells] : remainingCells;
 
       const tooltipRunes = orderedCells
-        .filter((cell) => cell.runeType !== null)
-        .map((cell) => ({
-          id: `wall-${cell.row}-${cell.col}`,
-          runeType: (cell.runeType ?? 'Life') as RuneType,
-          rarity: cell.rarity ?? 'common',
-          castEffectRefs: cell.castEffectRefs ?? [],
-          passiveEffectRefs: cell.passiveEffectRefs ?? [],
-        }));
+        .map((cell) => wallCellToRune(cell, cell.row, cell.col))
+        .filter((rune) => rune !== null);
 
       if (tooltipRunes.length === 0) {
         resetTooltipCards();

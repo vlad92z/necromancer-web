@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { ARTEFACTS } from '../types/artefacts';
-import { getArtefactEffectDescription } from './artefactEffects';
+import { getArtefactEffectDescription } from './artefactDescriptions';
 import { createEffectRef, getEffectDescription } from './effectCatalog';
 
 describe('effectCatalog', () => {

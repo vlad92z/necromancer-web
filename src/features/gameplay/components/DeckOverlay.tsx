@@ -4,20 +4,14 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Rune, RuneEffectRarity, RuneType } from '../../../types/game';
+import type { Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
 import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
 import { useArcaneDust, useGameplayDeckState } from '../../../hooks/useGameState';
+import { compareRunesByRarityThenId, getRuneDisenchantDust } from '../../../utils/runeRarity';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
-
-const RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
-  common: 0,
-  uncommon: 1,
-  rare: 5,
-  epic: 25,
-};
 
 export function DeckOverlay() {
   const { disenchantRuneFromDeck: onDisenchantRune } = useGameplayActions();
@@ -45,14 +39,7 @@ export function DeckOverlay() {
   const remainingRuneIds = new Set(deck.map((rune) => rune.id));
   const sortedRunes = runeTypes.flatMap((runeType) => {
     const runes = deck.filter((rune) => rune.runeType === runeType);
-    const ordered = [...runes].sort((a, b) => {
-      const aHasEffects = a.castEffectRefs.length > 0 || a.passiveEffectRefs.length > 0;
-      const bHasEffects = b.castEffectRefs.length > 0 || b.passiveEffectRefs.length > 0;
-      if (aHasEffects !== bHasEffects) {
-        return aHasEffects ? -1 : 1;
-      }
-      return a.id.localeCompare(b.id);
-    });
+    const ordered = [...runes].sort(compareRunesByRarityThenId);
     return ordered.map((rune) => ({
       rune,
       isDrafted: !remainingRuneIds.has(rune.id),
@@ -82,7 +69,7 @@ export function DeckOverlay() {
   const pendingDustTotal = useMemo(
     () =>
       selectedRunes.reduce((acc, rune) => {
-        return acc + (RARITY_DUST_REWARD[rune.rarity] ?? 0);
+        return acc + getRuneDisenchantDust(rune.rarity);
       }, 0),
     [selectedRunes],
   );
@@ -125,7 +112,7 @@ export function DeckOverlay() {
       if (typeof awardedDust === 'number') {
         totalDustAwarded += awardedDust;
       } else {
-        totalDustAwarded += RARITY_DUST_REWARD[rune.rarity] ?? 0;
+        totalDustAwarded += getRuneDisenchantDust(rune.rarity);
       }
     });
 

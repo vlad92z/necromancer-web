@@ -5,7 +5,7 @@
 import type { SpellWallCharge, WallCell as WallCellType, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getRuneOrderForSize, getWallColumnForRune } from '../../../utils/scoring';
-import { copyEffectRefs } from '../../../utils/runeEffects';
+import { wallCellToRune } from '../../../utils/wallCellRune';
 
 interface WallCellProps {
   cell: WallCellType;
@@ -43,14 +43,7 @@ export function WallCell({ cell, charge, row, col, wallSize, availableRuneTypes,
   const expectedRuneType = getExpectedRuneType(row, col, wallSize, availableRuneTypes);
   const showChargeText = !cell.runeType && charge !== null && charge.currentCount > 0;
   
-  // Convert WallCell to Rune format if occupied
-  const rune = cell.runeType ? {
-    id: `wall-${row}-${col}`,
-    runeType: cell.runeType,
-    rarity: cell.rarity ?? 'common',
-    castEffectRefs: copyEffectRefs(cell.castEffectRefs),
-    passiveEffectRefs: copyEffectRefs(cell.passiveEffectRefs),
-  } : null;
+  const rune = wallCellToRune(cell, row, col);
   
   return (
     <div

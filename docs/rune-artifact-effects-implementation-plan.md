@@ -159,7 +159,7 @@ Manual play check:
 - Deck draft opens.
 - Reward selection works with Ring/Robe selected.
 
-## Stage 7: UI + Persistence Cleanup
+## Stage 7: UI + Persistence Cleanup ✅ Done
 
 File-level changes:
 - `src/features/gameplay/components/DeckOverlay.tsx`, `src/features/gameplay/components/WallCell.tsx`, `src/features/gameplay/components/Player/ScoringWall.tsx`: remove old effect-field assumptions.

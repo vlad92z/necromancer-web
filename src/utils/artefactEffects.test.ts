@@ -14,8 +14,8 @@ import {
   applyOutgoingHealingModifiers,
   applyIncomingDamageModifiers,
   getArmorGainMultiplier,
-  getArtefactEffectDescription,
 } from './artefactEffects';
+import { getArtefactEffectDescription } from './artefactDescriptions';
 import { initializeSoloGame } from './gameInitialization';
 import type { ArtefactId } from '../types/artefacts';
 

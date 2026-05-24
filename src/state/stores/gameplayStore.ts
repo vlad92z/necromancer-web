@@ -35,6 +35,7 @@ import { findBestPatternLineForAutoPlacement } from '../../utils/patternLineHelp
 import { getOverloadDamageForGame, getOverloadDamageForRound } from '../../utils/overload';
 import { runeTypeCounts } from '../../utils/runeCounting';
 import { primaryRuneFirst } from '../../utils/runeHelpers';
+import { getRuneDisenchantDust } from '../../utils/runeRarity';
 import {
   castRuneToWallSlot,
   collectVictoryDeck,
@@ -1247,14 +1248,7 @@ export const gameplayStoreConfig = (
         return state;
       }
 
-      const rarity = runeToRemove.rarity;
-      const rarityDustMap: Record<typeof rarity, number> = {
-        common: 0,
-        uncommon: 1,
-        rare: 5,
-        epic: 25,
-      } as const;
-      dustAwarded = rarityDustMap[rarity] ?? 0;
+      dustAwarded = getRuneDisenchantDust(runeToRemove.rarity);
 
       const updatedDeck = runeInDeck
         ? state.player.deck.filter((rune) => rune.id !== runeId)

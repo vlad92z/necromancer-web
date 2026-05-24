@@ -4,9 +4,7 @@
  */
 
 import type { ArtefactId } from '../types/artefacts';
-import { ARTEFACTS } from '../types/artefacts';
 import type { GameState } from '../types/game';
-import { getEffectRefDescriptions } from './effectCatalog';
 import type { ResolvedSegment } from './scoring';
 
 /**
@@ -133,11 +131,4 @@ export function applyIncomingDamageModifiers(
   const scoreBonus = 0;
   
   return { damage, scoreBonus };
-}
-
-/**
- * Get artefact effect description for tooltips
- */
-export function getArtefactEffectDescription(artefactId: ArtefactId): string {
-  return getEffectRefDescriptions(ARTEFACTS[artefactId]?.passiveEffectRefs).join('\n');
 }

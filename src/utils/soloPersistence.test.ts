@@ -60,4 +60,28 @@ describe('soloPersistence', () => {
     expect(loadSoloState()).toBeNull();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
   });
+
+  it('invalidates old versioned payloads with legacy rune effect fields', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState } = await import('./soloPersistence');
+    const legacyState = initializeSoloGame();
+    const legacyRune = {
+      ...legacyState.player.deck[0],
+      effects: {
+        cast: [{ type: 'Damage', amount: 1, rarity: 'common' }],
+        passive: [],
+      },
+    };
+    legacyState.player.deck = [legacyRune as typeof legacyState.player.deck[number], ...legacyState.player.deck.slice(1)];
+    legacyState.player.patternLines[0] = {
+      ...legacyState.player.patternLines[0],
+      firstRuneEffects: { cast: [], passive: [] },
+      primaryRuneEffects: { cast: [], passive: [] },
+    } as typeof legacyState.player.patternLines[number];
+
+    storage.set('necromancer-solo-state', JSON.stringify({ version: 2, state: legacyState }));
+
+    expect(loadSoloState()).toBeNull();
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
+  });
 });
