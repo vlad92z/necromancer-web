@@ -51,13 +51,13 @@ export function PlayerPanel() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-lg border border-sky-300/15 bg-sky-950/25 px-3 py-2">
+      
         {selectedArtefactIds.length > 0 ? (
-          <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
-        ) : (
-          <div className="text-sm font-semibold text-sky-100/70">No active artefacts</div>
-        )}
-      </div>
+          <div className="mt-4 rounded-lg border border-sky-300/15 bg-sky-950/25 px-3 py-2">
+            <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
+          </div>
+        ) : null }
+      
     </section>
   );
 }
