@@ -48,6 +48,7 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.healthDecrease', { amount: 2 }))).toBe(
       'Reduce maximum health by 2'
     );
+    expect(getEffectDescription(createEffectRef('cast.draw', { amount: 1 }))).toBe('Draw 1 rune on cast');
     expect(getEffectDescription(createEffectRef('cast.drawAdjacent'))).toBe(
       'Draw one rune for every adjacent completed rune, including this rune'
     );

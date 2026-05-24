@@ -6,16 +6,16 @@ import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game'
 import { createEffectRef, getEffectRefDescriptions } from './effectCatalog';
 
 const BASE_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [createEffectRef('cast.damageAdjacent', { amount: 1 })],
+  Fire: [createEffectRef('cast.damage', { amount: 1 })],
   Frost: [createEffectRef('cast.armor', { amount: 3 })],
   Life: [createEffectRef('cast.healing', { amount: 2 })],
-  Void: [createEffectRef('cast.damageConditional', { amount: 25, threshold: 2, conditionType: 'Void' })],
-  Wind: [createEffectRef('cast.fortune', { amount: 10 })],
-  Lightning: [],
+  Void: [createEffectRef('cast.damageConditional', { amount: 10, threshold: 3, conditionType: 'Void' })],
+  Wind: [createEffectRef('cast.draw', { amount: 1 })],
+  Lightning: [createEffectRef('cast.damage', { amount: 1 })],
 };
 
 const UNCOMMON_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [createEffectRef('cast.synergy', { amount: 5, synergyType: 'Fire' })],
+  Fire: [createEffectRef('cast.damageAdjacent', { amount: 1 })],
   Frost: [createEffectRef('cast.armorAdjacent', { amount: 3 })],
   Life: [createEffectRef('cast.healthIncrease', { amount: 1 })],
   Void: [],
@@ -29,7 +29,7 @@ const RARE_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
   Life: [],
   Void: [createEffectRef('cast.damageConsuming', { amount: 10 })],
   Wind: [],
-  Lightning: [createEffectRef('cast.retriggerAdjacent')],
+  Lightning: [],
 };
 
 const EPIC_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
@@ -38,7 +38,7 @@ const EPIC_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
   Life: [createEffectRef('cast.healSynergy', { amount: 3, synergyType: 'Life' })],
   Void: [],
   Wind: [createEffectRef('cast.returnAdjacent')],
-  Lightning: [],
+  Lightning: [createEffectRef('cast.retriggerAdjacent')],
 };
 
 const CAST_EFFECT_REFS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, EffectRef[]>> = {
@@ -54,16 +54,16 @@ const COMMON_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
   Life: [],
   Void: [],
   Wind: [],
-  Lightning: [createEffectRef('passive.damageBoostSynergy', { percent: 5, synergyType: 'Frost' })],
+  Lightning: [],
 };
 
 const UNCOMMON_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
   Fire: [],
   Frost: [],
   Life: [],
-  Void: [createEffectRef('passive.pulseSynergy', { amount: 5, synergyType: 'Void' })],
+  Void: [createEffectRef('passive.pulseSynergy', { amount: 2, synergyType: 'Void' })],
   Wind: [],
-  Lightning: [createEffectRef('passive.damageBoostSynergy', { percent: 15, synergyType: 'Lightning' })],
+  Lightning: [createEffectRef('passive.damageBoostSynergy', { percent: 10, synergyType: 'Lightning' })],
 };
 
 const RARE_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
@@ -72,7 +72,7 @@ const RARE_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
   Life: [createEffectRef('passive.healingStartTurn', { amount: 2 })],
   Void: [],
   Wind: [createEffectRef('passive.drawingStartTurn', { amount: 1 })],
-  Lightning: [],
+  Lightning: [createEffectRef('passive.explosive', { amount: 30 })],
 };
 
 const EPIC_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
@@ -81,7 +81,7 @@ const EPIC_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
   Life: [],
   Void: [createEffectRef('passive.vampire', { percent: 25 })],
   Wind: [],
-  Lightning: [createEffectRef('passive.explosive', { amount: 50 })],
+  Lightning: [],
 };
 
 const PASSIVE_EFFECT_REFS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, EffectRef[]>> = {

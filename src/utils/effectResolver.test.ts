@@ -279,6 +279,27 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
+  it('returns plain draw count without mutating card zones', () => {
+    const player = createTestPlayer();
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('wind-draw-plain', 'Wind', [
+      createEffectRef('cast.draw', { amount: 1 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+    });
+
+    expect(result.drawCount).toBe(1);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.draw',
+      output: { drawCount: 1, totalDrawCount: 1 },
+    });
+  });
+
   it('resolves fragile damage with a floor of zero', () => {
     const player = createTestPlayer([
       [0, 3, 'Frost'],

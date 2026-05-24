@@ -21,6 +21,7 @@ export type CastEffectId =
   | 'cast.armorAdjacent'
   | 'cast.healthIncrease'
   | 'cast.healthDecrease'
+  | 'cast.draw'
   | 'cast.drawAdjacent'
   | 'cast.returnAdjacent'
   | 'cast.arcaneDustAdjacent'
@@ -193,6 +194,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Health Decrease',
     displayHint: 'damage',
     describe: (params) => `Reduce maximum health by ${numberParam(params, 'amount')}`,
+  },
+  'cast.draw': {
+    id: 'cast.draw',
+    kind: 'cast',
+    title: 'Draw',
+    displayHint: 'deck',
+    describe: (params) => `Draw ${numberParam(params, 'amount')} rune on cast`,
   },
   'cast.drawAdjacent': {
     id: 'cast.drawAdjacent',

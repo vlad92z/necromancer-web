@@ -12,7 +12,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
 }>> = {
   common: {
     Fire: {
-      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
       passiveEffectRefs: [],
     },
     Frost: {
@@ -24,21 +24,21 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [],
     },
     Void: {
-      castEffectRefs: [{ effectId: 'cast.damageConditional', params: { amount: 25, threshold: 2, conditionType: 'Void' } }],
+      castEffectRefs: [{ effectId: 'cast.damageConditional', params: { amount: 10, threshold: 3, conditionType: 'Void' } }],
       passiveEffectRefs: [],
     },
     Wind: {
-      castEffectRefs: [{ effectId: 'cast.fortune', params: { amount: 10 } }],
+      castEffectRefs: [{ effectId: 'cast.draw', params: { amount: 1 } }],
       passiveEffectRefs: [],
     },
     Lightning: {
-      castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.damageBoostSynergy', params: { percent: 5, synergyType: 'Frost' } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+      passiveEffectRefs: [],
     },
   },
   uncommon: {
     Fire: {
-      castEffectRefs: [{ effectId: 'cast.synergy', params: { amount: 5, synergyType: 'Fire' } }],
+      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
       passiveEffectRefs: [],
     },
     Frost: {
@@ -51,7 +51,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
     },
     Void: {
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.pulseSynergy', params: { amount: 5, synergyType: 'Void' } }],
+      passiveEffectRefs: [{ effectId: 'passive.pulseSynergy', params: { amount: 2, synergyType: 'Void' } }],
     },
     Wind: {
       castEffectRefs: [{ effectId: 'cast.drawAdjacent' }],
@@ -59,7 +59,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
     },
     Lightning: {
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.damageBoostSynergy', params: { percent: 15, synergyType: 'Lightning' } }],
+      passiveEffectRefs: [{ effectId: 'passive.damageBoostSynergy', params: { percent: 10, synergyType: 'Lightning' } }],
     },
   },
   rare: {
@@ -84,8 +84,8 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [{ effectId: 'passive.drawingStartTurn', params: { amount: 1 } }],
     },
     Lightning: {
-      castEffectRefs: [{ effectId: 'cast.retriggerAdjacent' }],
-      passiveEffectRefs: [],
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.explosive', params: { amount: 30 } }],
     },
   },
   epic: {
@@ -110,8 +110,8 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [],
     },
     Lightning: {
-      castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.explosive', params: { amount: 50 } }],
+      castEffectRefs: [{ effectId: 'cast.retriggerAdjacent' }],
+      passiveEffectRefs: [],
     },
   },
 };
@@ -132,7 +132,7 @@ describe('runeEffects', () => {
       id: 'fire-common',
       runeType: 'Fire',
       rarity: 'common',
-      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
       passiveEffectRefs: [],
     });
   });
@@ -145,16 +145,14 @@ describe('runeEffects', () => {
       { effectId: 'cast.healing', params: { amount: 2 } },
     ]);
     expect(createRune('void-common', 'Void', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.damageConditional', params: { amount: 25, threshold: 2, conditionType: 'Void' } },
+      { effectId: 'cast.damageConditional', params: { amount: 10, threshold: 3, conditionType: 'Void' } },
     ]);
     expect(createRune('wind-common', 'Wind', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.fortune', params: { amount: 10 } },
+      { effectId: 'cast.draw', params: { amount: 1 } },
     ]);
     expect(createRune('lightning-common', 'Lightning', 'common')).toMatchObject({
-      castEffectRefs: [],
-      passiveEffectRefs: [
-        { effectId: 'passive.damageBoostSynergy', params: { percent: 5, synergyType: 'Frost' } },
-      ],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+      passiveEffectRefs: [],
     });
   });
 
@@ -167,7 +165,7 @@ describe('runeEffects', () => {
 
   it('maps all uncommon rune identities to Stage 2 refs', () => {
     expect(createRune('fire-uncommon', 'Fire', 'uncommon')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.synergy', params: { amount: 5, synergyType: 'Fire' } }],
+      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
       passiveEffectRefs: [],
     });
     expect(createRune('frost-uncommon', 'Frost', 'uncommon')).toMatchObject({
@@ -185,13 +183,13 @@ describe('runeEffects', () => {
     expect(createRune('lightning-uncommon', 'Lightning', 'uncommon')).toMatchObject({
       castEffectRefs: [],
       passiveEffectRefs: [
-        { effectId: 'passive.damageBoostSynergy', params: { percent: 15, synergyType: 'Lightning' } },
+        { effectId: 'passive.damageBoostSynergy', params: { percent: 10, synergyType: 'Lightning' } },
       ],
     });
     expect(createRune('void-uncommon', 'Void', 'uncommon')).toMatchObject({
       castEffectRefs: [],
       passiveEffectRefs: [
-        { effectId: 'passive.pulseSynergy', params: { amount: 5, synergyType: 'Void' } },
+        { effectId: 'passive.pulseSynergy', params: { amount: 2, synergyType: 'Void' } },
       ],
     });
   });
@@ -210,8 +208,8 @@ describe('runeEffects', () => {
       passiveEffectRefs: [{ effectId: 'passive.healingStartTurn', params: { amount: 2 } }],
     });
     expect(createRune('lightning-rare', 'Lightning', 'rare')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.retriggerAdjacent' }],
-      passiveEffectRefs: [],
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.explosive', params: { amount: 30 } }],
     });
     expect(createRune('void-rare', 'Void', 'rare')).toMatchObject({
       castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 10 } }],
@@ -237,8 +235,8 @@ describe('runeEffects', () => {
       passiveEffectRefs: [],
     });
     expect(createRune('lightning-epic', 'Lightning', 'epic')).toMatchObject({
-      castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.explosive', params: { amount: 50 } }],
+      castEffectRefs: [{ effectId: 'cast.retriggerAdjacent' }],
+      passiveEffectRefs: [],
     });
     expect(createRune('void-epic', 'Void', 'epic')).toMatchObject({
       castEffectRefs: [],
@@ -258,7 +256,7 @@ describe('runeEffects', () => {
 
   it('renders mixed and passive-only rune descriptions from catalog refs', () => {
     expect(getRuneEffectDescription(createRune('life-epic', 'Life', 'epic'))).toBe(
-      '• Heal 3 for every Life rune in your completed wall'
+      '• Heal 3 for every Life rune in your completed wall, including this rune if it matches'
     );
     expect(getRuneEffectDescription(createRune('fire-epic', 'Fire', 'epic'))).toBe(
       '• Fire runes deal +5 damage'

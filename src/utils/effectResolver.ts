@@ -895,6 +895,15 @@ export function resolveCastEffects({
         }));
         break;
       }
+      case 'cast.draw': {
+        const drawCount = numberParam(effectRef, 'amount');
+        baseDrawCount += drawCount;
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          drawCount,
+          totalDrawCount: baseDrawCount,
+        }));
+        break;
+      }
       case 'cast.drawAdjacent': {
         const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
         baseDrawCount += adjacentCount;
