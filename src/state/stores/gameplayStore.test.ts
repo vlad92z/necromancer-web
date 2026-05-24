@@ -244,6 +244,41 @@ describe('gameplayStore current combat', () => {
     expect(state.player.deck.map((rune) => rune.id)).toContain('adjacent-fire');
     expect(state.player.deck.map((rune) => rune.id)).toContain('rare-void');
   });
+
+  it('returns adjacent completed runes to hand with epic Wind', () => {
+    const store = createGameplayStoreInstance();
+    const epicWind = createRune('epic-wind', 'Wind', 'epic');
+    const wall = createEmptyWall();
+    wall[0][1] = {
+      runeType: 'Life',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.healing', { amount: 2 })],
+      passiveEffectRefs: [],
+    };
+    const wallCharges = createEmptyWallCharges();
+    wallCharges[0][1] = {
+      ...wallCharges[0][1],
+      currentCount: 1,
+      completedRuneId: 'adjacent-life',
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand: [epicWind],
+      selectedHandRuneId: epicWind.id,
+      player: { ...state.player, wall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
+      wallCharges,
+      suppressedRunes: [],
+    }));
+
+    store.getState().castRuneToWall(0, 2);
+
+    const state = store.getState();
+    expect(state.hand.map((rune) => rune.id)).toEqual(['adjacent-life']);
+    expect(state.player.wall[0][1].runeType).toBeNull();
+    expect(state.suppressedRunes).toEqual([]);
+  });
 });
 
 function createTestRune(id: string, runeType: RuneType, damage: number): Rune {

@@ -4,7 +4,7 @@
 
 import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
-import { resolveCastEffects, resolveEndTurnEffects, resolveStartTurnEffects } from './effectResolver';
+import { resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import type { WallPosition } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
@@ -69,6 +69,7 @@ export interface CompletedRuneCastEffectsInput {
   sourcePosition?: WallPosition | null;
   wallCharges?: SpellWallCharge[][];
   suppressedRunes?: Rune[];
+  handSize?: number;
 }
 
 export interface CompletedRuneCastEffectsResult {
@@ -76,6 +77,7 @@ export interface CompletedRuneCastEffectsResult {
   enemy: Enemy | null;
   wallCharges: SpellWallCharge[][];
   suppressedRunes: Rune[];
+  returnedRunes: Rune[];
   wallChanged: boolean;
   arcaneDustDelta: number;
   drawCount: number;
@@ -108,6 +110,7 @@ export interface StartTurnEffectsResult {
 export interface EnemyTurnInput {
   player: Player;
   enemy: Enemy | null;
+  activeArtefacts?: ArtefactId[];
 }
 
 export interface EnemyTurnResult {
@@ -285,6 +288,7 @@ export function resolveCompletedRuneCastEffects({
   sourcePosition = null,
   wallCharges = [],
   suppressedRunes = [],
+  handSize = 0,
 }: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
   const result = resolveCastEffects({
     player,
@@ -295,6 +299,7 @@ export function resolveCompletedRuneCastEffects({
     sourcePosition,
     wallCharges,
     suppressedRunes,
+    handSize,
   });
 
   return {
@@ -306,13 +311,20 @@ export function resolveCompletedRuneCastEffects({
   };
 }
 
-export function resolveEnemyTurn({ player, enemy }: EnemyTurnInput): EnemyTurnResult {
+export function resolveEnemyTurn({ player, enemy, activeArtefacts = [] }: EnemyTurnInput): EnemyTurnResult {
   if (!enemy || enemy.intent.type !== 'Attack') {
     return { player };
   }
 
-  const armorAbsorbed = Math.min(player.armor, enemy.intent.amount);
-  const healthDamage = enemy.intent.amount - armorAbsorbed;
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'onEnemyAttack',
+    wall: player.wall,
+    activeArtefacts,
+    baseValues: { incomingDamage: enemy.intent.amount },
+  });
+  const incomingDamage = Math.max(0, passiveResult.values.incomingDamage ?? enemy.intent.amount);
+  const armorAbsorbed = Math.min(player.armor, incomingDamage);
+  const healthDamage = incomingDamage - armorAbsorbed;
 
   return {
     player: {
@@ -374,7 +386,9 @@ export function collectVictoryDeck({
   const returnedRunesById = new Map<string, Rune>();
 
   const addRune = (rune: Rune) => {
-    returnedRunesById.set(rune.id, rune);
+    if (!returnedRunesById.has(rune.id)) {
+      returnedRunesById.set(rune.id, rune);
+    }
   };
 
   player.deck.forEach(addRune);

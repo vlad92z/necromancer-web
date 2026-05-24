@@ -135,7 +135,7 @@ describe('deckDrafting', () => {
 
     expect(rune.rarity).toBe('epic');
     expect(rune.runeType).toBe('Fire');
-    expect(rune.castEffectRefs.length).toBeGreaterThan(0);
+    expect(rune.castEffectRefs.length + rune.passiveEffectRefs.length).toBeGreaterThan(0);
   });
 
   it('boosts the already-rolled rarity for Better Runes reward rows', () => {

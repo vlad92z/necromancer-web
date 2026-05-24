@@ -10,12 +10,21 @@ export type CastEffectId =
   | 'cast.damageConditional'
   | 'cast.damageFragile'
   | 'cast.damageConsuming'
+  | 'cast.destroyType'
+  | 'cast.convertRandom'
+  | 'cast.convertAdjacent'
   | 'cast.retriggerAdjacent'
+  | 'cast.retriggerType'
   | 'cast.healing'
+  | 'cast.healSynergy'
   | 'cast.armor'
   | 'cast.armorAdjacent'
   | 'cast.healthIncrease'
+  | 'cast.healthDecrease'
   | 'cast.drawAdjacent'
+  | 'cast.returnAdjacent'
+  | 'cast.arcaneDustAdjacent'
+  | 'cast.chargeAdjacent'
   | 'cast.fortune'
   | 'cast.synergy'
   | 'cast.armorSynergy'
@@ -30,7 +39,12 @@ export type PassiveEffectId =
   | 'passive.damageBoostSynergy'
   | 'passive.pulseSynergy'
   | 'passive.healingStartTurn'
-  | 'passive.drawingStartTurn';
+  | 'passive.drawingStartTurn'
+  | 'passive.addDamage'
+  | 'passive.armorBoost'
+  | 'passive.explosive'
+  | 'passive.vampire'
+  | 'passive.reduceDamage';
 
 export type CatalogEffectId = CastEffectId | PassiveEffectId;
 export type PassiveStackingKind = 'flat' | 'multiplier';
@@ -101,6 +115,28 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent completed rune, then destroy them`,
   },
+  'cast.destroyType': {
+    id: 'cast.destroyType',
+    kind: 'cast',
+    title: 'Type Destroy',
+    displayHint: 'damage',
+    describe: (params) => `Destroy a random completed ${runeTypeParam(params, 'targetType')} rune`,
+  },
+  'cast.convertRandom': {
+    id: 'cast.convertRandom',
+    kind: 'cast',
+    title: 'Random Convert',
+    displayHint: 'deck',
+    describe: (params) =>
+      `Convert a random completed ${runeTypeParam(params, 'sourceType')} rune into a common ${runeTypeParam(params, 'targetType')} rune with no effects`,
+  },
+  'cast.convertAdjacent': {
+    id: 'cast.convertAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Convert',
+    displayHint: 'deck',
+    describe: (params) => `Convert adjacent completed runes into common ${runeTypeParam(params, 'targetType')} runes with no effects`,
+  },
   'cast.retriggerAdjacent': {
     id: 'cast.retriggerAdjacent',
     kind: 'cast',
@@ -108,12 +144,27 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: () => 'Retrigger adjacent completed runes',
   },
+  'cast.retriggerType': {
+    id: 'cast.retriggerType',
+    kind: 'cast',
+    title: 'Type Retrigger',
+    displayHint: 'damage',
+    describe: (params) => `Retrigger completed ${runeTypeParam(params, 'targetType')} runes`,
+  },
   'cast.healing': {
     id: 'cast.healing',
     kind: 'cast',
     title: 'Healing',
     displayHint: 'healing',
     describe: (params) => `Heal ${numberParam(params, 'amount')} on cast`,
+  },
+  'cast.healSynergy': {
+    id: 'cast.healSynergy',
+    kind: 'cast',
+    title: 'Healing Synergy',
+    displayHint: 'healing',
+    describe: (params) =>
+      `Heal ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
   'cast.armor': {
     id: 'cast.armor',
@@ -136,12 +187,40 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'healing',
     describe: (params) => `Increase maximum health by ${numberParam(params, 'amount')} and heal ${numberParam(params, 'amount')}`,
   },
+  'cast.healthDecrease': {
+    id: 'cast.healthDecrease',
+    kind: 'cast',
+    title: 'Health Decrease',
+    displayHint: 'damage',
+    describe: (params) => `Reduce maximum health by ${numberParam(params, 'amount')}`,
+  },
   'cast.drawAdjacent': {
     id: 'cast.drawAdjacent',
     kind: 'cast',
     title: 'Adjacent Draw',
     displayHint: 'deck',
     describe: () => 'Draw one rune for every adjacent completed rune',
+  },
+  'cast.returnAdjacent': {
+    id: 'cast.returnAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Return',
+    displayHint: 'deck',
+    describe: () => 'Return adjacent completed runes to your hand',
+  },
+  'cast.arcaneDustAdjacent': {
+    id: 'cast.arcaneDustAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Arcane Dust',
+    displayHint: 'arcaneDust',
+    describe: (params) => `Gain ${numberParam(params, 'amount')} arcane dust for every adjacent completed rune`,
+  },
+  'cast.chargeAdjacent': {
+    id: 'cast.chargeAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Charge',
+    displayHint: 'deck',
+    describe: () => 'Charge adjacent incomplete rune slots by 1',
   },
   'cast.fortune': {
     id: 'cast.fortune',
@@ -301,6 +380,76 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       defaultValue: 0,
     },
     describe: (params) => `At start of turn, draw ${numberParam(params, 'amount')} additional runes`,
+  },
+  'passive.addDamage': {
+    id: 'passive.addDamage',
+    kind: 'passive',
+    title: 'Type Damage',
+    displayHint: 'damage',
+    passive: {
+      trigger: 'onCast',
+      target: 'damage',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `${runeTypeParam(params, 'runeType')} runes deal +${numberParam(params, 'amount')} damage`,
+  },
+  'passive.armorBoost': {
+    id: 'passive.armorBoost',
+    kind: 'passive',
+    title: 'Armor Boost',
+    displayHint: 'armor',
+    passive: {
+      trigger: 'onCast',
+      target: 'armor',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `Increase all armor gained by ${numberParam(params, 'amount')}`,
+  },
+  'passive.explosive': {
+    id: 'passive.explosive',
+    kind: 'passive',
+    title: 'Explosive',
+    displayHint: 'damage',
+    passive: {
+      trigger: 'onCast',
+      target: 'explosiveDamage',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage if destroyed or transformed`,
+  },
+  'passive.vampire': {
+    id: 'passive.vampire',
+    kind: 'passive',
+    title: 'Vampire',
+    displayHint: 'healing',
+    passive: {
+      trigger: 'onCast',
+      target: 'vampirePercent',
+      stacking: 'flat',
+      paramKey: 'percent',
+      defaultValue: 0,
+    },
+    describe: (params) => `Heal ${numberParam(params, 'percent')}% of damage dealt`,
+  },
+  'passive.reduceDamage': {
+    id: 'passive.reduceDamage',
+    kind: 'passive',
+    title: 'Damage Reduction',
+    displayHint: 'armor',
+    passive: {
+      trigger: 'onEnemyAttack',
+      target: 'incomingDamage',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `Reduce incoming damage by ${numberParam(params, 'amount')}`,
   },
 };
 

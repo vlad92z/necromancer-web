@@ -26,16 +26,39 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.damageConsuming', { amount: 10 }))).toBe(
       'Deal 10 damage for every adjacent completed rune, then destroy them'
     );
+    expect(getEffectDescription(createEffectRef('cast.destroyType', { targetType: 'Fire' }))).toBe(
+      'Destroy a random completed Fire rune'
+    );
+    expect(getEffectDescription(createEffectRef('cast.convertRandom', { sourceType: 'Fire', targetType: 'Frost' }))).toBe(
+      'Convert a random completed Fire rune into a common Frost rune with no effects'
+    );
+    expect(getEffectDescription(createEffectRef('cast.convertAdjacent', { targetType: 'Void' }))).toBe(
+      'Convert adjacent completed runes into common Void runes with no effects'
+    );
     expect(getEffectDescription(createEffectRef('cast.retriggerAdjacent'))).toBe('Retrigger adjacent completed runes');
+    expect(getEffectDescription(createEffectRef('cast.retriggerType', { targetType: 'Life' }))).toBe(
+      'Retrigger completed Life runes'
+    );
     expect(getEffectDescription(createEffectRef('cast.armorAdjacent', { amount: 3 }))).toBe(
       'Gain 3 armor for every adjacent completed rune'
     );
     expect(getEffectDescription(createEffectRef('cast.healthIncrease', { amount: 1 }))).toBe(
       'Increase maximum health by 1 and heal 1'
     );
+    expect(getEffectDescription(createEffectRef('cast.healthDecrease', { amount: 2 }))).toBe(
+      'Reduce maximum health by 2'
+    );
     expect(getEffectDescription(createEffectRef('cast.drawAdjacent'))).toBe(
       'Draw one rune for every adjacent completed rune'
     );
+    expect(getEffectDescription(createEffectRef('cast.healSynergy', { amount: 3, synergyType: 'Life' }))).toBe(
+      'Heal 3 for every Life rune in your completed wall'
+    );
+    expect(getEffectDescription(createEffectRef('cast.returnAdjacent'))).toBe('Return adjacent completed runes to your hand');
+    expect(getEffectDescription(createEffectRef('cast.arcaneDustAdjacent', { amount: 5 }))).toBe(
+      'Gain 5 arcane dust for every adjacent completed rune'
+    );
+    expect(getEffectDescription(createEffectRef('cast.chargeAdjacent'))).toBe('Charge adjacent incomplete rune slots by 1');
     expect(getEffectDescription(createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }))).toBe(
       'Deal 2 damage for every Void rune in your completed wall'
     );
@@ -52,6 +75,21 @@ describe('effectCatalog', () => {
     );
     expect(getEffectDescription(createEffectRef('passive.drawingStartTurn', { amount: 1 }))).toBe(
       'At start of turn, draw 1 additional runes'
+    );
+    expect(getEffectDescription(createEffectRef('passive.addDamage', { amount: 5, runeType: 'Fire' }))).toBe(
+      'Fire runes deal +5 damage'
+    );
+    expect(getEffectDescription(createEffectRef('passive.armorBoost', { amount: 5 }))).toBe(
+      'Increase all armor gained by 5'
+    );
+    expect(getEffectDescription(createEffectRef('passive.explosive', { amount: 50 }))).toBe(
+      'Deal 50 damage if destroyed or transformed'
+    );
+    expect(getEffectDescription(createEffectRef('passive.vampire', { percent: 25 }))).toBe(
+      'Heal 25% of damage dealt'
+    );
+    expect(getEffectDescription(createEffectRef('passive.reduceDamage', { amount: 3 }))).toBe(
+      'Reduce incoming damage by 3'
     );
   });
 

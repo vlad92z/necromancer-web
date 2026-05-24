@@ -235,15 +235,17 @@ export const gameplayStoreConfig = (
           sourcePosition: result.completedPosition,
           wallCharges: result.wallCharges,
           suppressedRunes: state.suppressedRunes,
+          handSize: result.hand.length,
         });
 
         arcaneDustGain += resolvedEffects.arcaneDustDelta;
 
         if ((resolvedEffects.enemy?.health ?? 1) <= 0) {
           deckDraftRewardGameIndex = state.gameIndex;
+          const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
           const victoryDeck = collectVictoryDeck({
             player: resolvedEffects.player,
-            hand: result.hand,
+            hand: handWithReturnedRunes,
             discardPile: state.discardPile,
             suppressedRunes: resolvedEffects.suppressedRunes,
             wallCharges: resolvedEffects.wallCharges,
@@ -264,17 +266,18 @@ export const gameplayStoreConfig = (
           });
         }
 
+        const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
         const drawResult = resolvedEffects.drawCount > 0
           ? drawRunes({
             player: resolvedEffects.player,
-            hand: result.hand,
+            hand: handWithReturnedRunes,
             discardPile: state.discardPile,
             drawCount: resolvedEffects.drawCount,
             handLimit: EXTRA_DRAW_HAND_LIMIT,
           })
           : {
             player: resolvedEffects.player,
-            hand: result.hand,
+            hand: handWithReturnedRunes,
             discardPile: state.discardPile,
           };
 
@@ -349,6 +352,7 @@ export const gameplayStoreConfig = (
       const enemyTurnResult = resolveEnemyTurn({
         player: endTurnEffects.player,
         enemy: endTurnEffects.enemy,
+        activeArtefacts: state.activeArtefacts,
       });
       const discardPile = [...state.discardPile, ...state.hand];
 

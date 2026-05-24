@@ -136,7 +136,14 @@ Tests:
 Acceptance:
 - Rare effects are playable without permanent deck loss.
 
-## Stage 4: Epic Effects + Passive-Only Support
+## Stage 4: Epic Effects + Passive-Only Support ✅ Done
+
+Completed:
+- Epic rune identity refs implemented.
+- Add damage, armor boost, heal synergy, vampire, explosive, and return adjacent implemented.
+- Returned runes move to hand without suppression.
+- Passive-only epic runes complete safely and activate from wall.
+- Automated checks passed.
 
 File-level changes before implementation:
 - `src/utils/runeEffects.ts`: update epic assignments.
@@ -167,7 +174,14 @@ Tests:
 Acceptance:
 - Full assigned rarity table is playable.
 
-## Stage 5: Full Table Cleanup + Persistence Acceptance
+## Stage 5: Full Table Cleanup + Persistence Acceptance ✅ Done
+
+Completed:
+- Final rune identity matrix normalized into explicit cast/passive tables.
+- Full rarity matrix exact-ref test added.
+- Tooltip/description coverage tightened for passive-only and mixed refs.
+- Persistence remains schema version 5.
+- Automated checks passed.
 
 File-level changes before implementation:
 - `src/utils/runeEffects.ts`: remove old rarity effect values.
@@ -191,7 +205,14 @@ Acceptance:
 - No old rune identity behavior remains in active table.
 - Existing artefact effects still work.
 
-## Stage 6: Future/Unassigned Effects
+## Stage 6: Future/Unassigned Effects ✅ Done
+
+Completed:
+- Future/unassigned PRD effects implemented.
+- Deterministic RNG target selection added for random effects.
+- Destroy, convert, type retrigger, adjacent dust, virtual charge, health decrease, and enemy attack reduction covered.
+- Converted originals recover through suppressed rune restoration.
+- Automated checks passed.
 
 File-level changes before implementation:
 - `src/utils/effectResolver.ts`: implement remaining PRD effects.

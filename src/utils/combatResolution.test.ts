@@ -522,6 +522,20 @@ describe('combatResolution basic combat effects', () => {
     expect(result.player.health).toBe(8);
   });
 
+  it('reduces enemy attack damage before armor', () => {
+    const player = {
+      ...createPlayerWithWall([[0, 0, 'Frost']]),
+      health: 10,
+      armor: 3,
+    };
+    player.wall[0][0] = createWallCell('Frost', [createEffectRef('passive.reduceDamage', { amount: 4 })]);
+
+    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 8) });
+
+    expect(result.player.armor).toBe(0);
+    expect(result.player.health).toBe(9);
+  });
+
   it('lethal enemy attack reaches zero health', () => {
     const player = {
       ...createPlayer('player-1', 'Tester', 10, [], 10),
@@ -594,6 +608,37 @@ describe('combatResolution victory deck collection', () => {
     });
 
     expect(result.player.deck.map((rune) => rune.id)).toEqual(['suppressed-void']);
+  });
+
+  it('prefers suppressed originals over converted wall placeholders on recovery', () => {
+    const originalRune = {
+      ...createTestRune('converted-original', 'Fire'),
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 9 })],
+    };
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    const wall = player.wall.map((row) => [...row]);
+    const wallCharges = createEmptyWallCharges(6);
+    wall[0][0] = {
+      runeType: 'Frost',
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [],
+    };
+    wallCharges[0][0] = {
+      ...wallCharges[0][0],
+      currentCount: 1,
+      completedRuneId: originalRune.id,
+    };
+
+    const result = collectVictoryDeck({
+      player: { ...player, wall },
+      hand: [],
+      discardPile: [],
+      suppressedRunes: [originalRune],
+      wallCharges,
+    });
+
+    expect(result.player.deck).toEqual([originalRune]);
   });
 
   it('does not duplicate cards returned from multiple combat zones', () => {
@@ -684,11 +729,11 @@ function createPlayerWithWall(cells: Array<[number, number, Rune['runeType']]>):
   };
 }
 
-function createWallCell(runeType: RuneType): WallCell {
+function createWallCell(runeType: RuneType, passiveEffectRefs: Rune['passiveEffectRefs'] = []): WallCell {
   return {
     runeType,
     rarity: 'common',
     castEffectRefs: [],
-    passiveEffectRefs: [],
+    passiveEffectRefs,
   };
 }
