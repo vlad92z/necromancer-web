@@ -38,6 +38,7 @@ export function getGameplayState(): GameState {
     deckDraftReadyForNextGame: run.deckDraftReadyForNextGame,
     activeArtefacts: run.activeArtefacts,
     runeSoundSignals: run.runeSoundSignals,
+    wallChargeSoundSignal: run.wallChargeSoundSignal,
     enemyAttackSoundSignal: run.enemyAttackSoundSignal,
     shieldSoundSignal: run.shieldSoundSignal,
     enemy: combat.enemy,

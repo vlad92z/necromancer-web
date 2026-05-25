@@ -150,6 +150,10 @@ export function useRuneSoundSignals() {
   return useRunStore((state) => state.runeSoundSignals);
 }
 
+export function useWallChargeSoundSignal() {
+  return useRunStore((state) => state.wallChargeSoundSignal);
+}
+
 export function useEnemyAttackSoundSignal() {
   return useRunStore((state) => state.enemyAttackSoundSignal);
 }

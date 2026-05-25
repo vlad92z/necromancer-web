@@ -105,6 +105,9 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
     runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
+    wallChargeSoundSignal: typeof nextState.wallChargeSoundSignal === 'number'
+      ? nextState.wallChargeSoundSignal
+      : currentState.wallChargeSoundSignal,
     enemyAttackSoundSignal: typeof nextState.enemyAttackSoundSignal === 'number'
       ? nextState.enemyAttackSoundSignal
       : currentState.enemyAttackSoundSignal,
@@ -430,6 +433,7 @@ export const gameplayStoreConfig = (
         discardPile: result.discardPile,
         wallCharges: result.wallCharges,
         selectedHandRuneId: result.selectedHandRuneId,
+        wallChargeSoundSignal: state.wallChargeSoundSignal + 1,
       };
     });
 

@@ -138,6 +138,7 @@ export interface GameState extends CombatZoneState {
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
+  wallChargeSoundSignal: number;
   enemyAttackSoundSignal: number;
   shieldSoundSignal: number;
 }

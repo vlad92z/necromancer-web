@@ -358,6 +358,7 @@ export function initializeSoloGame(
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
     runeSoundSignals: createRuneSoundSignals(),
+    wallChargeSoundSignal: 0,
     enemyAttackSoundSignal: 0,
     shieldSoundSignal: 0,
     enemy: createGoblinEnemy(enemyMaxHealth, enemyAttackDamage),

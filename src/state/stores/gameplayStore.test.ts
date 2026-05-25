@@ -271,6 +271,7 @@ describe('gameplayStore current combat', () => {
     store.getState().castRuneToWall(1, 4);
 
     expect(store.getState().runeSoundSignals.Frost).toBe(0);
+    expect(store.getState().wallChargeSoundSignal).toBe(1);
   });
 
   it('increments the casting rune sound signal for non-Frost armor gain', () => {
