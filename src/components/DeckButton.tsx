@@ -44,8 +44,11 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
         || activeRuneZoneOverlay === zone;
     const zoneTooltip = copy.tooltip(zoneCount);
     const statBaseClass = 'flex min-w-[110px] items-center rounded-[16px] px-3.5 py-3 text-slate-100 border cursor-pointer';
-    const deckActiveClass = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-900/70';
-    const deckClassName = `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 ${deckActiveClass}`;
+    const zoneClassName: Record<RuneZoneOverlay, string> = {
+        draw: `${statBaseClass} border-emerald-500/40 bg-emerald-600/10 hover:bg-emerald-600/20 data-[active=true]:border-emerald-300 data-[active=true]:bg-slate-900/70 data-[active=true]:shadow-[0_0_28px_rgba(110,231,183,0.9),_0_0_56px_rgba(16,185,129,0.45)]`,
+        discard: `${statBaseClass} border-slate-400/50 bg-slate-700/10 hover:bg-slate-700/20 data-[active=true]:border-slate-200 data-[active=true]:bg-slate-900/70 data-[active=true]:shadow-[0_0_24px_rgba(226,232,240,0.38),_0_0_48px_rgba(148,163,184,0.22)]`,
+        deck: `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 data-[active=true]:bg-slate-900/70 data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)]`,
+    };
     return (
         <button
             type="button"
@@ -56,7 +59,7 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
             onClick={() => openRuneZoneOverlay(zone)}
             data-active={isActive ? 'true' : undefined}
             data-deck-counter="true"
-            className={deckClassName}
+            className={zoneClassName[zone]}
         >
             <img
                 src={zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg}
