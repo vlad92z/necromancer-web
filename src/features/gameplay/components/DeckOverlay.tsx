@@ -20,19 +20,16 @@ interface RuneZoneOverlayProps {
 
 const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 
-const ZONE_COPY: Record<RuneZoneOverlayType, { eyebrow: string; title: string; emptyText: string }> = {
+const ZONE_COPY: Record<RuneZoneOverlayType, { title: string; emptyText: string }> = {
   draw: {
-    eyebrow: 'Draw Overview',
     title: 'Draw',
     emptyText: 'No runes in draw deck',
   },
   discard: {
-    eyebrow: 'Discard Overview',
     title: 'Discard',
     emptyText: 'No discarded runes',
   },
   deck: {
-    eyebrow: 'Deck Overview',
     title: 'Deck',
     emptyText: 'No runes in deck',
   },
@@ -96,9 +93,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex justify-between w-full">
-              <div>
-                
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">{zoneCopy.eyebrow}</div>
+              <div>                
               <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{`${zoneCopy.title} (${totalRuneCount})`}</h2>
               </div>
               <button
