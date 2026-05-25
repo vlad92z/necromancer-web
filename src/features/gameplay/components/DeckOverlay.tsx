@@ -1,22 +1,21 @@
 /**
- * DeckOverlay component - displays player's remaining deck runes in a grid
+ * DeckOverlay component - displays player's remaining deck runes as cards
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
 import type { Rune, RuneType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { useUIActions } from '../../../hooks/useGameActions';
 import { useArcaneDust, useGameplayDeckState } from '../../../hooks/useGameState';
 import { compareRunesByRarityThenId } from '../../../utils/runeRarity';
+import { buildRuneTooltipCards } from '../../../utils/tooltipCards';
+import { CardView } from './Player/CardView';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
 export function DeckOverlay() {
   const { deck } = useGameplayDeckState();
   const { toggleDeckOverlay: onClose } = useUIActions();
   const arcaneDust = useArcaneDust();
-  const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
   const deckForTotals = deck;
   // Group runes by type for ordering and totals
   const runesByType = deckForTotals.reduce((acc, rune) => {
@@ -32,7 +31,7 @@ export function DeckOverlay() {
     const runes = deck.filter((rune) => rune.runeType === runeType);
     return [...runes].sort(compareRunesByRarityThenId);
   });
-  const runeSize = sortedRunes.length > 140 ? 'small' : 'medium';
+  const deckCards = buildRuneTooltipCards(sortedRunes);
   const runeTypeCounts = runeTypes.reduce(
     (acc, runeType) => ({
       ...acc,
@@ -94,32 +93,25 @@ export function DeckOverlay() {
                 exit={{ opacity: 0, y: 16 }}
                 className="rounded-2xl border border-[#9575ff]/30 bg-[linear-gradient(135deg,rgba(67,31,120,0.35),rgba(21,10,46,0.92))] p-3.5 shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
               >
-                <div className="grid grid-cols-[repeat(auto-fill,_minmax(38px,_1fr))] gap-2.5">
-                  {sortedRunes.map((rune) => {
-                    const isHovered = hoveredRuneId === rune.id;
+                <div className="grid grid-cols-[repeat(auto-fill,_minmax(9rem,_1fr))] gap-4">
+                  {sortedRunes.map((rune, index) => {
+                    const card = deckCards[index];
+
+                    if (!card) {
+                      return null;
+                    }
 
                     return (
-                      <div key={rune.id}>
-                        <div
-                          className="relative flex h-full w-full items-center justify-center rounded-full"
-                          style={{
-                            border: '1px solid transparent',
-                            padding: '2px',
-                            position: 'relative',
-                            zIndex: isHovered ? 50 : 1,
-                          }}
-                          onMouseEnter={() => setHoveredRuneId(rune.id)}
-                          onMouseLeave={() => setHoveredRuneId(null)}
-                        >
-                          <RuneCell
-                            rune={rune}
-                            variant="draft"
-                            size={runeSize}
-                            showEffect
-                            showTooltip
-                            tooltipPlacement="bottom"
-                          />
-                        </div>
+                      <div key={rune.id} className="flex min-h-[13.5rem] items-center justify-center">
+                        <CardView
+                          title={card.title}
+                          imageSrc={card.imageSrc}
+                          description={card.description}
+                          runeType={card.runeType}
+                          runeRarity={card.runeRarity}
+                          variant={card.variant}
+                          size="hand"
+                        />
                       </div>
                     );
                   })}
