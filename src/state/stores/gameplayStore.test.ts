@@ -182,6 +182,32 @@ describe('gameplayStore current combat', () => {
     expect(state.player.health).toBe(10);
   });
 
+  it('deals uncommon Void pulse damage after completing a top-row slot', () => {
+    const store = createGameplayStoreInstance();
+    const voidRune = createRuneFromPool({ id: 'void-pulse', runeType: 'Void', rarity: 'uncommon' });
+
+    store.setState((state) => ({
+      ...state,
+      hand: [voidRune],
+      selectedHandRuneId: voidRune.id,
+      player: { ...state.player, deck: [], armor: 0, health: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 0 } },
+      wallCharges: createEmptyWallCharges(),
+      discardPile: [],
+    }));
+
+    store.getState().castRuneToWall(0, 4);
+
+    expect(store.getState().player.wall[0][4]).toMatchObject({ runeType: 'Void', rarity: 'uncommon' });
+    expect(store.getState().enemy?.health).toBe(10);
+
+    store.getState().endCombatTurn();
+
+    const state = store.getState();
+    expect(state.enemy?.health).toBe(8);
+    expect(state.combatPhase).toBe('player-turn');
+  });
+
   it('resolves start-turn healing and drawing after normal refill', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();

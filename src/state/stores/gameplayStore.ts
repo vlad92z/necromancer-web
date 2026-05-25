@@ -371,6 +371,7 @@ export const gameplayStoreConfig = (
         return {
           ...state,
           player: enemyTurnResult.player,
+          enemy: endTurnEffects.enemy,
           hand: [],
           discardPile,
           selectedHandRuneId: null,
@@ -406,6 +407,7 @@ export const gameplayStoreConfig = (
       return {
         ...state,
         player: startTurnDrawResult.player,
+        enemy: endTurnEffects.enemy,
         hand: startTurnDrawResult.hand,
         discardPile: startTurnDrawResult.discardPile,
         selectedHandRuneId: null,
