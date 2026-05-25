@@ -1,10 +1,10 @@
 /**
- * Unit tests for rune rarity ordering and disenchant rewards.
+ * Unit tests for rune rarity ordering.
  */
 
 import { describe, expect, it } from 'vitest';
 import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
-import { compareRunesByRarityThenId, getRuneDisenchantDust } from './runeRarity';
+import { compareRunesByRarityThenId } from './runeRarity';
 
 function createRune(id: string, rarity: RuneEffectRarity, castRefCount = 0): Rune {
   return {
@@ -37,10 +37,4 @@ describe('runeRarity', () => {
     ]);
   });
 
-  it('returns disenchant dust from direct rune rarity values', () => {
-    expect(getRuneDisenchantDust('common')).toBe(0);
-    expect(getRuneDisenchantDust('uncommon')).toBe(1);
-    expect(getRuneDisenchantDust('rare')).toBe(5);
-    expect(getRuneDisenchantDust('epic')).toBe(25);
-  });
 });

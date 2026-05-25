@@ -147,7 +147,6 @@ Implement:
 - Ring: modifies draft rarity odds through passive resolver.
 - Robe: modifies deck draft selection limit through passive resolver.
 - Drafted runes receive direct `rarity` plus catalog cast refs.
-- Disenchant value reads `rune.rarity`.
 
 Automated checks:
 - `npx vitest run`
@@ -168,7 +167,7 @@ File-level changes:
 
 Implement:
 - Wall cells store completed rune effect refs, not legacy effects.
-- Deck overlay sorting/disenchant uses rarity field.
+- Deck overlay sorting uses rarity field.
 - Artefact tooltips use registry metadata.
 - Remove obsolete hydration paths for `firstRuneEffects`/`primaryRuneEffects`.
 

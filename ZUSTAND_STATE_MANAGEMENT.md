@@ -41,7 +41,7 @@ It also owns the largest action surface:
 - run lifecycle: `startSoloRun`, `prepareSoloMode`, `hydrateGameState`, `returnToStartScreen`, `startNextSoloGame`, `resetGame`
 - drafting/placement: `draftRune`, `placeRunes`, `placeRunesInFloor`, `cancelSelection`, `autoPlaceSelection`
 - resolution: `moveRunesToWall`, `endRound`
-- deck drafting: `selectDeckDraftRuneforge`, `disenchantRuneFromDeck`
+- deck drafting: `selectDeckDraftOffer`
 - tooltip controls: `setTooltipCards`, `resetTooltipCards`
 
 In practice, this store is both:

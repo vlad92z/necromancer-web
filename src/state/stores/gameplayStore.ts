@@ -33,7 +33,6 @@ import {
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { getArcaneDustReward } from '../../utils/arcaneDust';
-import { getRuneDisenchantDust } from '../../utils/runeRarity';
 import {
   addGameplayArcaneDust,
   clearPersistedSoloRun,
@@ -129,7 +128,6 @@ export interface GameplayStore extends GameState {
   endCombatTurn: () => void;
   resetGame: () => void;
   selectDeckDraftOffer: (offerId: string) => void;
-  disenchantRuneFromDeck: (runeId: string) => number;
 }
 
 export const gameplayStoreConfig = (
@@ -418,40 +416,6 @@ export const gameplayStoreConfig = (
     if (deckDraftRewardGameIndex !== null) {
       awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
     }
-  },
-
-  disenchantRuneFromDeck: (runeId: string) => {
-    let dustAwarded = 0;
-
-    set((state) => {
-      if (!state.deckDraftState) {
-        return state;
-      }
-
-      const runeInDeck = state.player.deck.find((rune) => rune.id === runeId);
-      const runeInTemplate = state.fullDeck.find((rune) => rune.id === runeId);
-      const runeToRemove = runeInDeck ?? runeInTemplate;
-
-      if (!runeToRemove) {
-        return state;
-      }
-
-      dustAwarded = getRuneDisenchantDust(runeToRemove.rarity);
-      if (dustAwarded > 0) {
-        addGameplayArcaneDust(dustAwarded);
-      }
-
-      return {
-        ...state,
-        player: {
-          ...state.player,
-          deck: runeInDeck ? state.player.deck.filter((rune) => rune.id !== runeId) : state.player.deck,
-        },
-        fullDeck: state.fullDeck.filter((rune) => rune.id !== runeId),
-      };
-    });
-
-    return dustAwarded;
   },
 
   selectDeckDraftOffer: (offerId: string) => {
