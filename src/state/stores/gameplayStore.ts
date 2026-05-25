@@ -24,6 +24,7 @@ import {
   castRuneToWallSlot,
   collectVictoryDeck,
   drawRunes,
+  drawRunesOfType,
   endPlayerTurn,
   EXTRA_DRAW_HAND_LIMIT,
   resolveCompletedEndTurnEffects,
@@ -268,7 +269,7 @@ export const gameplayStoreConfig = (
         }
 
         const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
-        const drawResult = resolvedEffects.drawCount > 0
+        const plainDrawResult = resolvedEffects.drawCount > 0
           ? drawRunes({
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
@@ -281,6 +282,15 @@ export const gameplayStoreConfig = (
             hand: handWithReturnedRunes,
             discardPile: result.discardPile,
           };
+        const drawResult = resolvedEffects.drawTypeRequests.length > 0
+          ? drawRunesOfType({
+            player: plainDrawResult.player,
+            hand: plainDrawResult.hand,
+            discardPile: plainDrawResult.discardPile,
+            drawTypeRequests: resolvedEffects.drawTypeRequests,
+            handLimit: EXTRA_DRAW_HAND_LIMIT,
+          })
+          : plainDrawResult;
 
         return {
           ...state,

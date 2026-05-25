@@ -5,7 +5,7 @@
 import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
 import { resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
-import type { WallPosition } from './effectResolver';
+import type { DrawTypeRequest, WallPosition } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
@@ -57,6 +57,14 @@ export interface DrawRunesInput {
   shuffleRunes?: (runes: Rune[]) => Rune[];
 }
 
+export interface DrawRunesOfTypeInput {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+  drawTypeRequests: DrawTypeRequest[];
+  handLimit?: number;
+}
+
 export interface DrawRunesResult {
   player: Player;
   hand: Rune[];
@@ -83,6 +91,7 @@ export interface CompletedRuneCastEffectsResult {
   wallChanged: boolean;
   arcaneDustDelta: number;
   drawCount: number;
+  drawTypeRequests: DrawTypeRequest[];
   logs: EffectResolutionLog[];
 }
 
@@ -199,6 +208,49 @@ export function drawRunes({
     },
     hand: nextHand,
     discardPile: nextDiscardPile,
+  };
+}
+
+export function drawRunesOfType({
+  player,
+  hand,
+  discardPile,
+  drawTypeRequests,
+  handLimit = EXTRA_DRAW_HAND_LIMIT,
+}: DrawRunesOfTypeInput): DrawRunesResult {
+  let drawDeck = [...player.deck];
+  let nextHand = [...hand];
+
+  drawTypeRequests.forEach(({ amount, targetType }) => {
+    let remaining = Math.max(0, amount);
+    if (remaining <= 0 || nextHand.length >= handLimit) {
+      return;
+    }
+
+    const nextDrawDeck: Rune[] = [];
+    const drawnRunes: Rune[] = [];
+
+    drawDeck.forEach((rune) => {
+      if (rune.runeType === targetType && remaining > 0 && nextHand.length + drawnRunes.length < handLimit) {
+        drawnRunes.push(rune);
+        remaining -= 1;
+        return;
+      }
+
+      nextDrawDeck.push(rune);
+    });
+
+    nextHand = [...nextHand, ...drawnRunes];
+    drawDeck = nextDrawDeck;
+  });
+
+  return {
+    player: {
+      ...player,
+      deck: drawDeck,
+    },
+    hand: nextHand,
+    discardPile,
   };
 }
 

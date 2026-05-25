@@ -22,6 +22,7 @@ export type CastEffectId =
   | 'cast.healthIncrease'
   | 'cast.healthDecrease'
   | 'cast.draw'
+  | 'cast.drawType'
   | 'cast.drawAdjacent'
   | 'cast.returnAdjacent'
   | 'cast.arcaneDustAdjacent'
@@ -201,6 +202,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Draw',
     displayHint: 'deck',
     describe: (params) => `Draw ${numberParam(params, 'amount')} rune on cast`,
+  },
+  'cast.drawType': {
+    id: 'cast.drawType',
+    kind: 'cast',
+    title: 'Typed Draw',
+    displayHint: 'deck',
+    describe: (params) => `Draw ${numberParam(params, 'amount')} ${runeTypeParam(params, 'targetType')} rune on cast`,
   },
   'cast.drawAdjacent': {
     id: 'cast.drawAdjacent',

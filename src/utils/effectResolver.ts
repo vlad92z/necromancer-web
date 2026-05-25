@@ -39,6 +39,11 @@ export interface CastEffectResolutionInput {
   rng?: () => number;
 }
 
+export interface DrawTypeRequest {
+  amount: number;
+  targetType: RuneType;
+}
+
 export interface CastEffectResolutionResult {
   player: Player;
   enemy: Enemy | null;
@@ -49,6 +54,7 @@ export interface CastEffectResolutionResult {
   wallChanged: boolean;
   arcaneDustDelta: number;
   drawCount: number;
+  drawTypeRequests: DrawTypeRequest[];
   logs: EffectResolutionLog[];
 }
 
@@ -629,6 +635,7 @@ export function resolveCastEffects({
   let baseArmor = 0;
   let baseArcaneDustDelta = 0;
   let baseDrawCount = 0;
+  let drawTypeRequests: DrawTypeRequest[] = [];
   let baseMaxHealthDelta = 0;
   let projectedEnemyHealth = enemy?.health ?? null;
   let projectedPlayerHealth = player.health;
@@ -646,6 +653,7 @@ export function resolveCastEffects({
       playerArmor: projectedPlayerArmor,
       arcaneDustDelta: baseArcaneDustDelta,
       drawCount: baseDrawCount,
+      drawTypeRequests,
     };
 
     if (!isKnownCastEffectId(effectRef.effectId)) {
@@ -904,6 +912,19 @@ export function resolveCastEffects({
         }));
         break;
       }
+      case 'cast.drawType': {
+        const drawCount = numberParam(effectRef, 'amount');
+        const targetType = runeTypeParam(effectRef, 'targetType');
+        if (targetType && drawCount > 0) {
+          drawTypeRequests = [...drawTypeRequests, { amount: drawCount, targetType }];
+        }
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          drawCount,
+          targetType,
+          totalDrawTypeCount: drawTypeRequests.reduce((total, request) => total + request.amount, 0),
+        }));
+        break;
+      }
       case 'cast.drawAdjacent': {
         const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
         baseDrawCount += adjacentCount;
@@ -1039,6 +1060,7 @@ export function resolveCastEffects({
           baseArmor += Math.max(0, retriggerResult.player.armor - previousProjectedPlayerArmor);
           baseArcaneDustDelta += retriggerResult.arcaneDustDelta;
           baseDrawCount += retriggerResult.drawCount;
+          drawTypeRequests = [...drawTypeRequests, ...retriggerResult.drawTypeRequests];
           nextWall = retriggerResult.wall;
           nextWallCharges = retriggerResult.wallCharges;
           nextSuppressedRunes = retriggerResult.suppressedRunes;
@@ -1117,6 +1139,7 @@ export function resolveCastEffects({
           baseArmor += Math.max(0, retriggerResult.player.armor - previousProjectedPlayerArmor);
           baseArcaneDustDelta += retriggerResult.arcaneDustDelta;
           baseDrawCount += retriggerResult.drawCount;
+          drawTypeRequests = [...drawTypeRequests, ...retriggerResult.drawTypeRequests];
           nextWall = retriggerResult.wall;
           nextWallCharges = retriggerResult.wallCharges;
           nextSuppressedRunes = retriggerResult.suppressedRunes;
@@ -1272,6 +1295,7 @@ export function resolveCastEffects({
     wallChanged,
     arcaneDustDelta,
     drawCount: baseDrawCount,
+    drawTypeRequests,
     logs: [...logs, ...passiveResult.logs, ...explosiveLogs, ...vampireLogs],
   };
 }

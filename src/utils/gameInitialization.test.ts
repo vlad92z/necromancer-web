@@ -39,7 +39,17 @@ describe('gameInitialization combat state', () => {
     expect(deck.filter((rune) => rune.runeType === 'Void')).toHaveLength(5);
     expect(deck.filter((rune) => rune.runeType === 'Lightning')).toHaveLength(5);
     expect(deck.every((rune) => rune.rarity === 'common')).toBe(true);
-    expect(deck.find((rune) => rune.id === 'player-1-Void-0')?.castEffectRefs).toEqual([
+    expect(deck.filter((rune) => rune.runeType !== 'Wind').flatMap((rune) => rune.castEffectRefs)).not.toContainEqual(
+      expect.objectContaining({ effectId: 'cast.drawType' })
+    );
+    expect(deck.filter((rune) => rune.runeType === 'Wind').map((rune) => rune.castEffectRefs)).toEqual([
+      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Fire' } }],
+      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Frost' } }],
+      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Lightning' } }],
+      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Void' } }],
+      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Life' } }],
+    ]);
+    expect(deck.find((rune) => rune.id === 'player-1-Void-2')?.castEffectRefs).toEqual([
       { effectId: 'cast.damage', params: { amount: 1 } },
     ]);
   });
@@ -48,10 +58,12 @@ describe('gameInitialization combat state', () => {
     const firstDeck = createStartingDeck();
     const secondDeck = createStartingDeck();
 
-    firstDeck[0].castEffectRefs[0].params = { amount: 99 };
+    firstDeck[10].castEffectRefs[0].params = { amount: 99 };
 
-    expect(secondDeck[0].castEffectRefs).toEqual([{ effectId: 'cast.damage', params: { amount: 1 } }]);
-    expect(firstDeck[0].castEffectRefs).not.toBe(secondDeck[0].castEffectRefs);
+    expect(secondDeck[10].castEffectRefs).toEqual([
+      { effectId: 'cast.drawType', params: { amount: 1, targetType: 'Fire' } },
+    ]);
+    expect(firstDeck[10].castEffectRefs).not.toBe(secondDeck[10].castEffectRefs);
   });
 
   it('scales enemy max health by 20 percent and rounds up to 1 HP', () => {

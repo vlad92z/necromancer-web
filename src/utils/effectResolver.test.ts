@@ -300,6 +300,29 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
+  it('returns typed draw requests without mutating card zones', () => {
+    const player = createTestPlayer();
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('wind-draw-fire', 'Wind', [
+      createEffectRef('cast.drawType', { amount: 2, targetType: 'Fire' }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+    });
+
+    expect(result.drawCount).toBe(0);
+    expect(result.drawTypeRequests).toEqual([{ amount: 2, targetType: 'Fire' }]);
+    expect(result.player.deck).toEqual(player.deck);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.drawType',
+      output: { drawCount: 2, targetType: 'Fire', totalDrawTypeCount: 2 },
+    });
+  });
+
   it('resolves fragile damage with a floor of zero', () => {
     const player = createTestPlayer([
       [0, 3, 'Frost'],
