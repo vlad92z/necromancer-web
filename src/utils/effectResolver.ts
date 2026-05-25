@@ -252,6 +252,25 @@ function samePosition(left: WallPosition | null | undefined, right: WallPosition
   return left?.row === right.row && left.col === right.col;
 }
 
+function isAdjacentPosition(left: WallPosition | null | undefined, right: WallPosition | null | undefined): boolean {
+  if (!left || !right || samePosition(left, right)) {
+    return false;
+  }
+
+  return Math.abs(left.row - right.row) <= 1 && Math.abs(left.col - right.col) <= 1;
+}
+
+function sourcePositionFromId(sourceId: string): WallPosition | null {
+  const [, row, col] = sourceId.split(':');
+  const parsedRow = Number(row);
+  const parsedCol = Number(col);
+  if (!Number.isInteger(parsedRow) || !Number.isInteger(parsedCol)) {
+    return null;
+  }
+
+  return { row: parsedRow, col: parsedCol };
+}
+
 function getCompletedPositionsByType(
   wall: ScoringWall,
   runeType: RuneType,
@@ -349,6 +368,7 @@ function clearCompletedCell(
   nextWall[position.row][position.col] = createEmptyWallCell();
   nextWallCharges[position.row][position.col] = {
     ...nextWallCharges[position.row][position.col],
+    lockedRuneType: null,
     currentCount: 0,
     spentRunes: [],
     completedRuneId: null,
@@ -449,7 +469,11 @@ function sortActivePassiveEffects(passives: ActivePassiveEffect[]): ActivePassiv
 }
 
 function isDamageFinalizerPassive(effectId: string): boolean {
-  return effectId === 'passive.damageBoost' || effectId === 'passive.damageBoostSynergy';
+  return (
+    effectId === 'passive.damageBoost' ||
+    effectId === 'passive.adjacentDamageBoost' ||
+    effectId === 'passive.damageBoostSynergy'
+  );
 }
 
 function damageFinalizerOrder(effectId: string): number {
@@ -565,7 +589,8 @@ export function resolvePassiveEffects({
 
     if (
       passive.effectRef.effectId === 'passive.damageBoostSynergy' ||
-      passive.effectRef.effectId === 'passive.pulseSynergy'
+      passive.effectRef.effectId === 'passive.pulseSynergy' ||
+      passive.effectRef.effectId === 'passive.healingStartTurnSynergy'
     ) {
       const synergyType = runeTypeParam(passive.effectRef, 'synergyType');
       const wallRuneCounts = countFilledWallRunesByType(wall);
@@ -671,6 +696,34 @@ function resolveDamage({
     };
 
     if (passive.effectRef.effectId === 'passive.damageBoost') {
+      const modifier = numberParam(passive.effectRef, 'amount');
+      const previousValue = damage;
+      damage += modifier;
+      logs.push(createEffectLog(
+        passive.sourceType,
+        passive.sourceId,
+        passive.effectRef,
+        trigger,
+        input,
+        {
+          target: 'damage',
+          stacking: 'flat',
+          modifier,
+          previousValue,
+          nextValue: damage,
+        }
+      ));
+      return;
+    }
+
+    if (passive.effectRef.effectId === 'passive.adjacentDamageBoost') {
+      const passivePosition = passive.sourceType === 'rune'
+        ? sourcePositionFromId(passive.sourceId)
+        : null;
+      if (!isAdjacentPosition(passivePosition, sourcePosition)) {
+        return;
+      }
+
       const modifier = numberParam(passive.effectRef, 'amount');
       const previousValue = damage;
       damage += modifier;
@@ -1456,28 +1509,79 @@ export function resolveEndTurnEffects({
   wall,
   activeArtefacts = [],
 }: EndTurnEffectResolutionInput): EndTurnEffectResolutionResult {
-  const passiveResult = resolvePassiveEffects({
-    trigger: 'endTurn',
-    wall,
-    activeArtefacts,
-    baseValues: { damage: 0 },
-  });
-  const damageResult = resolveDamage({
-    trigger: 'endTurn',
-    baseDamage: passiveResult.values.damage ?? 0,
-    wall,
-    activeArtefacts,
-  });
-  const nextEnemy = enemy && damageResult.damage > 0
-    ? {
-      ...enemy,
-      health: Math.max(0, enemy.health - damageResult.damage),
+  let nextEnemy = enemy;
+  const logs: EffectResolutionLog[] = [];
+  const activePassives = sortActivePassiveEffects(collectActivePassiveEffects({ wall, activeArtefacts }));
+
+  activePassives.forEach((passive) => {
+    const catalogEntry = EFFECT_CATALOG[passive.effectRef.effectId as CatalogEffectId];
+    const passiveMetadata = catalogEntry?.kind === 'passive' ? catalogEntry.passive : undefined;
+    if (!passiveMetadata || passiveMetadata.trigger !== 'endTurn' || passiveMetadata.target !== 'damage') {
+      return;
     }
-    : enemy;
+
+    const sourcePosition = passive.sourceType === 'rune'
+      ? sourcePositionFromId(passive.sourceId)
+      : null;
+    const input = {
+      params: passive.effectRef.params ?? {},
+      values: { damage: 0 },
+    };
+    let damage = numberParam(
+      passive.effectRef,
+      passiveMetadata.paramKey,
+      passiveMetadata.defaultValue
+    );
+    let synergyType: RuneType | null = null;
+    let synergyCount = 0;
+
+    if (passive.effectRef.effectId === 'passive.pulseSynergy') {
+      synergyType = runeTypeParam(passive.effectRef, 'synergyType');
+      synergyCount = countWallRunesByTypeIncludingTrigger({
+        wall,
+        counts: countFilledWallRunesByType(wall),
+        sourcePosition,
+        runeType: synergyType,
+      });
+      damage *= synergyCount;
+    }
+
+    logs.push(createEffectLog(
+      passive.sourceType,
+      passive.sourceId,
+      passive.effectRef,
+      'endTurn',
+      input,
+      {
+        target: passiveMetadata.target,
+        stacking: passiveMetadata.stacking,
+        modifier: damage,
+        ...(synergyType ? { synergyType, synergyCount } : {}),
+        previousValue: 0,
+        nextValue: damage,
+      }
+    ));
+
+    const damageResult = resolveDamage({
+      trigger: 'endTurn',
+      baseDamage: damage,
+      wall,
+      activeArtefacts,
+      sourcePosition,
+    });
+    logs.push(...damageResult.logs);
+
+    if (nextEnemy && damageResult.damage > 0) {
+      nextEnemy = {
+        ...nextEnemy,
+        health: Math.max(0, nextEnemy.health - damageResult.damage),
+      };
+    }
+  });
 
   return {
     player,
     enemy: nextEnemy,
-    logs: [...passiveResult.logs, ...damageResult.logs],
+    logs,
   };
 }

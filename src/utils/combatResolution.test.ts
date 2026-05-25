@@ -26,20 +26,21 @@ describe('combatResolution wall casting', () => {
       wallCharges: createEmptyWallCharges(6),
       selectedHandRuneId: fireRune.id,
       row: 1,
-      col: 1,
+      col: 2,
     });
 
     expect(result.status).toBe('charged');
     expect(result.hand).toEqual([]);
     expect(result.discardPile).toEqual([]);
     expect(result.selectedHandRuneId).toBeNull();
-    expect(result.player.wall[1][1].runeType).toBeNull();
-    expect(result.wallCharges[1][1]).toMatchObject({
+    expect(result.player.wall[1][2].runeType).toBeNull();
+    expect(result.wallCharges[1][2]).toMatchObject({
+      lockedRuneType: 'Fire',
       currentCount: 1,
       requiredCount: 2,
       completedRuneId: null,
     });
-    expect(result.wallCharges[1][1].spentRunes.map((rune) => rune.id)).toEqual(['fire-charge']);
+    expect(result.wallCharges[1][2].spentRunes.map((rune) => rune.id)).toEqual(['fire-charge']);
   });
 
   it('fills the wall slot on the final matching charge', () => {
@@ -47,8 +48,9 @@ describe('combatResolution wall casting', () => {
     const finalRune = createTestRune('fire-final', 'Fire');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const wallCharges = createEmptyWallCharges(6);
-    wallCharges[1][1] = {
-      ...wallCharges[1][1],
+    wallCharges[1][2] = {
+      ...wallCharges[1][2],
+      lockedRuneType: 'Fire',
       currentCount: 1,
       spentRunes: [firstRune],
     };
@@ -60,24 +62,25 @@ describe('combatResolution wall casting', () => {
       wallCharges,
       selectedHandRuneId: finalRune.id,
       row: 1,
-      col: 1,
+      col: 2,
     });
 
     expect(result.status).toBe('completed');
     expect(result.hand).toEqual([]);
     expect(result.discardPile).toEqual([firstRune]);
-    expect(result.player.wall[1][1]).toEqual({
+    expect(result.player.wall[1][2]).toEqual({
       runeType: 'Fire',
       rarity: finalRune.rarity,
       castEffectRefs: finalRune.castEffectRefs,
       passiveEffectRefs: finalRune.passiveEffectRefs,
     });
-    expect(result.wallCharges[1][1]).toMatchObject({
+    expect(result.wallCharges[1][2]).toMatchObject({
+      lockedRuneType: 'Fire',
       currentCount: 2,
       completedRuneId: 'fire-final',
     });
-    expect(result.wallCharges[1][1].spentRunes).toEqual([]);
-    expect(result.completedPosition).toEqual({ row: 1, col: 1 });
+    expect(result.wallCharges[1][2].spentRunes).toEqual([]);
+    expect(result.completedPosition).toEqual({ row: 1, col: 2 });
   });
 
   it('keeps the final matching rune out of discard when completing a slot', () => {
@@ -86,8 +89,9 @@ describe('combatResolution wall casting', () => {
     const existingDiscardRune = createTestRune('existing-discard', 'Void');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const wallCharges = createEmptyWallCharges(6);
-    wallCharges[1][1] = {
-      ...wallCharges[1][1],
+    wallCharges[1][2] = {
+      ...wallCharges[1][2],
+      lockedRuneType: 'Fire',
       currentCount: 1,
       spentRunes: [firstRune],
     };
@@ -99,13 +103,62 @@ describe('combatResolution wall casting', () => {
       wallCharges,
       selectedHandRuneId: finalRune.id,
       row: 1,
-      col: 1,
+      col: 2,
     });
 
     expect(result.status).toBe('completed');
     expect(result.discardPile.map((rune) => rune.id)).toEqual(['existing-discard', 'fire-spent']);
     expect(result.discardPile).not.toContain(finalRune);
-    expect(result.wallCharges[1][1].completedRuneId).toBe(finalRune.id);
+    expect(result.wallCharges[1][2].completedRuneId).toBe(finalRune.id);
+  });
+
+  it('accepts either rune type in an unlocked dual-type slot', () => {
+    const voidRune = createTestRune('void-start', 'Void');
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+
+    const result = castRuneToWallSlot({
+      player,
+      hand: [voidRune],
+      discardPile: [],
+      wallCharges: createEmptyWallCharges(6),
+      selectedHandRuneId: voidRune.id,
+      row: 1,
+      col: 2,
+    });
+
+    expect(result.status).toBe('charged');
+    expect(result.wallCharges[1][2]).toMatchObject({
+      slotFamily: 'fireVoid',
+      lockedRuneType: 'Void',
+      currentCount: 1,
+    });
+  });
+
+  it('rejects the other family rune after a real charge locks the slot', () => {
+    const fireRune = createTestRune('fire-spent', 'Fire');
+    const voidRune = createTestRune('void-rejected', 'Void');
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    const wallCharges = createEmptyWallCharges(6);
+    wallCharges[1][2] = {
+      ...wallCharges[1][2],
+      lockedRuneType: 'Fire',
+      currentCount: 1,
+      spentRunes: [fireRune],
+    };
+
+    const result = castRuneToWallSlot({
+      player,
+      hand: [voidRune],
+      discardPile: [],
+      wallCharges,
+      selectedHandRuneId: voidRune.id,
+      row: 1,
+      col: 2,
+    });
+
+    expect(result.status).toBe('invalid');
+    expect(result.wallCharges).toBe(wallCharges);
+    expect(result.selectedHandRuneId).toBe(voidRune.id);
   });
 
   it('rejects wrong-type casts without clearing selection', () => {

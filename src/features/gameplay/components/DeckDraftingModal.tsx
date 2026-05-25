@@ -1,46 +1,48 @@
 /**
- * DeckDraftingModal - post-victory drafting overlay for Solo mode
+ * DeckDraftingModal - post-victory rune pack overlay for Solo mode.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, animate, useMotionValue } from 'framer-motion';
-import type { DeckDraftOffer, DeckDraftState, Rune } from '../../../types/game';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { animate, motion, useMotionValue } from 'framer-motion';
+import type { DeckDraftOffer, DeckDraftState, Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
 import { useClickSound } from '../../../hooks/useClickSound';
 import { useGameplayDeckState } from '../../../hooks/useGameState';
-import { getDeckDraftEffectDescription } from '../../../utils/deckDrafting';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
 interface DeckDraftingModalProps {
   draftState: DeckDraftState;
 }
 
+function createPackFaceRune(offer: DeckDraftOffer): Rune {
+  return {
+    id: `${offer.id}-face`,
+    runeType: offer.runeType,
+    rarity: offer.displayRarity,
+    castEffectRefs: [],
+    passiveEffectRefs: [],
+  };
+}
+
+function getPackText(runeType: RuneType): string {
+  return `Contains 3 ${runeType} runes`;
+}
+
 export function DeckDraftingModal({
   draftState,
 }: DeckDraftingModalProps) {
-  const arcaneDustReward = 50;//placeholder
+  const arcaneDustReward = 50; // placeholder
   const { deck } = useGameplayDeckState();
   const totalDeckSize = deck.length;
-  const { selectDeckDraftOffer: onSelectOffer, startNextSoloGame } = useGameplayActions();
+  const { selectDeckDraftOffer, startNextSoloGame } = useGameplayActions();
   const { openRuneZoneOverlay } = useUIActions();
   const playClickSound = useClickSound();
-  const [displayedOffers, setDisplayedOffers] = useState<DeckDraftOffer[]>(draftState.offers);
-  const [pendingOffers, setPendingOffers] = useState<DeckDraftOffer[] | null>(null);
-  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
-  const [animationPhase, setAnimationPhase] = useState<'idle' | 'hidingOthers' | 'selectedExit'>('idle');
-  const [showSelectedOffer, setShowSelectedOffer] = useState(true);
+  const selectedOffer = draftState.selectedOffer;
+  const hasSelectedPack = selectedOffer !== null;
   const deckCountValue = useMotionValue(totalDeckSize);
   const [displayedDeckCount, setDisplayedDeckCount] = useState(totalDeckSize);
   const deckCountAnimation = useRef<ReturnType<typeof animate> | null>(null);
-  const runeSlotAssignmentsRef = useRef<Record<string, Record<string, number>>>({});
-  const picksUsed = draftState.totalPicks - draftState.picksRemaining;
-  const isAnimating = animationPhase !== 'idle';
-  const draftComplete = draftState.picksRemaining === 0;
-  const selectionLocked = isAnimating || draftComplete;
-  const selectionLimit = draftState.selectionLimit ?? 1;
-  const selectionsThisOffer = draftState.selectionsThisOffer ?? 0;
-  const selectionsRemaining = Math.max(selectionLimit - selectionsThisOffer, 0);
 
   useEffect(() => {
     const unsubscribe = deckCountValue.on('change', (latest) => {
@@ -52,48 +54,12 @@ export function DeckDraftingModal({
   }, [deckCountValue]);
 
   useEffect(() => {
-    if (animationPhase === 'idle') {
-      deckCountValue.set(totalDeckSize);
-      setDisplayedDeckCount(totalDeckSize);
-    } else if (totalDeckSize > displayedDeckCount) {
-      deckCountValue.set(totalDeckSize);
-    }
-  }, [animationPhase, totalDeckSize, deckCountValue, displayedDeckCount]);
-
-  useEffect(() => {
-    if (animationPhase === 'idle') {
-      setDisplayedOffers(draftState.offers);
-      setPendingOffers(null);
-      setSelectedOfferId(null);
-      setShowSelectedOffer(true);
-      return;
-    }
-
-    const incomingKey = draftState.offers.map((offer) => offer.id).join('|');
-    const currentKey = displayedOffers.map((offer) => offer.id).join('|');
-
-    if (incomingKey !== currentKey) {
-      setPendingOffers(draftState.offers);
-    }
-  }, [animationPhase, displayedOffers, draftState.offers]);
-
-  useEffect(() => {
-    if (animationPhase === 'hidingOthers' && selectedOfferId) {
-      const timeout = setTimeout(() => {
-        setAnimationPhase('selectedExit');
-      }, 240);
-      return () => {
-        clearTimeout(timeout);
-      };
-    }
-  }, [animationPhase, selectedOfferId]);
-
-  useEffect(() => {
-    if (animationPhase === 'selectedExit' && selectedOfferId) {
-      setShowSelectedOffer(false);
-      onSelectOffer(selectedOfferId);
-    }
-  }, [animationPhase, onSelectOffer, selectedOfferId]);
+    deckCountAnimation.current?.stop();
+    deckCountAnimation.current = animate(deckCountValue, totalDeckSize, {
+      duration: 0.45,
+      ease: 'easeOut',
+    });
+  }, [deckCountValue, totalDeckSize]);
 
   useEffect(() => {
     return () => {
@@ -101,59 +67,16 @@ export function DeckDraftingModal({
     };
   }, []);
 
-  const visibleOffers = displayedOffers.filter((offer) => {
-    if (animationPhase === 'selectedExit' && offer.id === selectedOfferId) {
-      return showSelectedOffer;
-    }
-    return true;
-  });
+  const packFaceRunes = useMemo(() => (
+    new Map(draftState.offers.map((offer) => [offer.id, createPackFaceRune(offer)]))
+  ), [draftState.offers]);
 
-  const getOfferAnimationState = (offerId: string) => {
-    if (!selectedOfferId) {
-      return 'visible';
-    }
-    if (animationPhase === 'hidingOthers' && offerId !== selectedOfferId) {
-      return 'dimmed';
-    }
-    if (animationPhase === 'selectedExit' && offerId !== selectedOfferId) {
-      return 'dimmed';
-    }
-    return 'visible';
-  };
-
-  const handleOfferExitComplete = () => {
-    if (animationPhase === 'hidingOthers') {
-      setAnimationPhase('selectedExit');
-      return;
-    }
-
-    if (animationPhase === 'selectedExit') {
-      if (pendingOffers) {
-        setDisplayedOffers(pendingOffers);
-        setPendingOffers(null);
-      }
-      setShowSelectedOffer(true);
-      setSelectedOfferId(null);
-      setAnimationPhase('idle');
-    }
-  };
-
-  const animateDeckCounter = (target: number) => {
-    deckCountAnimation.current?.stop();
-    deckCountAnimation.current = animate(deckCountValue, target, {
-      duration: 0.6,
-      ease: 'easeOut',
-    });
-  };
-
-  const handleSelect = (offer: DeckDraftOffer) => {
-    if (selectionLocked) {
+  const handleSelectPack = (offer: DeckDraftOffer) => {
+    if (hasSelectedPack) {
       return;
     }
     playClickSound();
-    setSelectedOfferId(offer.id);
-    setAnimationPhase('hidingOthers');
-    animateDeckCounter(totalDeckSize + offer.runes.length);
+    selectDeckDraftOffer(offer.id);
   };
 
   const handleOpenDeckOverlay = () => {
@@ -166,144 +89,15 @@ export function DeckDraftingModal({
     startNextSoloGame();
   };
 
-  const computeSlots = useCallback(
-    (offerId: string, runes: Rune[], totalSlots: number): (Rune | null)[] => {
-      const existingAssignments = runeSlotAssignmentsRef.current[offerId] ?? {};
-      const nextAssignments: Record<string, number> = {};
-      const usedSlots = new Set<number>();
-
-      runes.forEach((rune) => {
-        const existingSlot = existingAssignments[rune.id];
-        if (typeof existingSlot === 'number' && existingSlot >= 0 && existingSlot < totalSlots) {
-          nextAssignments[rune.id] = existingSlot;
-          usedSlots.add(existingSlot);
-        }
-      });
-
-      let cursor = 0;
-      runes.forEach((rune) => {
-        if (typeof nextAssignments[rune.id] === 'number') {
-          return;
-        }
-        while (usedSlots.has(cursor)) {
-          cursor += 1;
-        }
-        const assignedSlot = Math.min(cursor, totalSlots - 1);
-        nextAssignments[rune.id] = assignedSlot;
-        usedSlots.add(assignedSlot);
-      });
-
-      runeSlotAssignmentsRef.current[offerId] = nextAssignments;
-
-      const runeBySlot = new Map<number, Rune>();
-      runes.forEach((rune) => {
-        const slotIndex = nextAssignments[rune.id];
-        if (typeof slotIndex === 'number' && slotIndex >= 0 && slotIndex < totalSlots) {
-          runeBySlot.set(slotIndex, rune);
-        }
-      });
-
-      return Array.from({ length: totalSlots }, (_, index) => runeBySlot.get(index) ?? null);
-    },
-    []
-  );
-
-  const renderOfferRow = (offer: DeckDraftOffer) => {
-    const runeSize = 55;
-    const runeGap = 14;
-    const containerPadding = 24;
-    const hasRunes = offer.runes.length > 0;
-    const slotCount = Math.max(offer.runes.length, 1);
-    const slots = hasRunes ? computeSlots(offer.id, offer.runes, slotCount) : [];
-    const baseOfferWidth = (slotCount * runeSize) + (Math.max(0, slotCount - 1) * runeGap) + containerPadding;
-    const offerWidth = Math.min(520, Math.max(280, baseOfferWidth));
-    const drafted = hasRunes ? slots.some((slotRune) => slotRune === null) : false;
-    const containerBoxShadow = drafted ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.45)';
-    const glowBase = `${containerBoxShadow}, 0 0 36px rgba(235, 170, 255, 0.48), 0 0 72px rgba(235, 170, 255, 0.22)`;
-    const glowStrong = `${containerBoxShadow}, 0 0 48px rgba(235, 140, 255, 0.60), 0 0 120px rgba(235, 140, 255, 0.28)`;
-    const shouldGlow = !drafted && !selectionLocked;
-    const glowAnimation = shouldGlow
-      ? {
-          boxShadow: [glowBase, glowStrong, glowBase],
-          filter: ['brightness(1)', 'brightness(1.06)', 'brightness(1)'],
-        }
-      : { boxShadow: containerBoxShadow, filter: 'brightness(1)' };
-    const glowTransition = shouldGlow
-      ? { duration: 4, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
-      : { duration: 3, ease: 'easeOut' as const };
-
-    return (
-      <motion.div
-        style={{
-          width: `${offerWidth}px`,
-          padding: '12px',
-          borderRadius: '16px',
-          border: drafted ? 'transparent' : '1px solid rgba(255, 255, 255, 0.12)',
-          backgroundColor: drafted ? 'transparent' : '#1c1034',
-          boxShadow: containerBoxShadow,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '96px',
-          transition: 'border-color 160ms ease',
-          margin: '0 auto',
-        }}
-        initial={false}
-        animate={glowAnimation}
-        transition={glowTransition}
-      >
-        {hasRunes && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${slotCount}, ${runeSize}px)`,
-              gap: `${runeGap}px`,
-              alignItems: 'center',
-              justifyContent: 'center',
-              justifyItems: 'center',
-            }}
-          >
-            {slots.map((slotRune, slotIndex) => {
-              if (!slotRune) {
-                return (
-                  <div
-                    key={`placeholder-${offer.id}-${slotIndex}`}
-                    style={{
-                      width: `${runeSize}px`,
-                      height: `${runeSize}px`,
-                    }}
-                  />
-                );
-              }
-
-              return (
-                <div
-                  key={slotRune.id}
-                  style={{
-                    width: `${runeSize}px`,
-                    height: `${runeSize}px`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <RuneCell rune={slotRune} variant="draft" size="large" showEffect showTooltip />
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </motion.div>
-    );
-  };
-
   return (
     <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-sm px-4">
-      <div className="w-full max-w-5xl rounded-3xl border border-white/12 bg-[rgba(10,10,24,0.9)] p-6 md:p-8 shadow-[0_34px_80px_rgba(0,0,0,0.7)] backdrop-blur">
+      <div className="w-full max-w-5xl rounded-3xl border border-white/12 bg-[rgba(10,10,24,0.9)] p-6 shadow-[0_34px_80px_rgba(0,0,0,0.7)] backdrop-blur md:p-8">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.22em] text-slate-300/80">victory</div>
-            <h2 className="text-2xl font-bold text-white">{draftComplete ? 'Draft complete' : 'Choose your new runes'}</h2>
+            <h2 className="text-2xl font-bold text-white">
+              {hasSelectedPack ? 'Pack opened' : 'Choose a rune pack'}
+            </h2>
           </div>
           <div className="rounded-2xl border border-sky-400/40 bg-sky-900/30 px-4 py-3 text-left">
             <div className="flex items-center gap-2">
@@ -314,85 +108,81 @@ export function DeckDraftingModal({
           </div>
         </div>
 
-        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-800/80">
-          <div
-            className="h-full bg-gradient-to-r from-sky-400 to-purple-500 transition-all duration-300"
-            style={{
-              width: `${Math.min(100, (picksUsed / draftState.totalPicks) * 100)}%`,
-            }}
-          />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {draftState.offers.map((offer) => {
+            const isSelected = selectedOffer?.id === offer.id;
+            const faceRune = packFaceRunes.get(offer.id);
+            return (
+              <motion.button
+                type="button"
+                key={offer.id}
+                onClick={() => handleSelectPack(offer)}
+                disabled={hasSelectedPack}
+                whileHover={hasSelectedPack ? undefined : { scale: 1.03 }}
+                whileFocus={hasSelectedPack ? undefined : { scale: 1.03 }}
+                animate={{
+                  opacity: hasSelectedPack && !isSelected ? 0.42 : 1,
+                  boxShadow: isSelected
+                    ? '0 0 48px rgba(235, 140, 255, 0.64), 0 0 120px rgba(235, 140, 255, 0.30)'
+                    : '0 8px 24px rgba(0, 0, 0, 0.45)',
+                }}
+                className="min-h-[188px] rounded-2xl border border-white/12 bg-[#1c1034] p-4 text-center transition hover:border-fuchsia-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-200 disabled:cursor-default"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  {faceRune && (
+                    <RuneCell rune={faceRune} variant="draft" size="large" showEffect showTooltip={false} />
+                  )}
+                  <div className="text-sm font-bold text-white">{getPackText(offer.runeType)}</div>
+                </div>
+              </motion.button>
+            );
+          })}
         </div>
 
-        {selectionLimit > 1 && (
-          <div className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">
-            {selectionsRemaining > 0
-              ? `Select ${selectionsRemaining} more offer${selectionsRemaining === 1 ? '' : 's'} from this pool`
-              : 'Preparing the next pool...'}
+        {selectedOffer && (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">
+              Added to deck
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              {selectedOffer.runes.map((rune) => (
+                <RuneCell
+                  key={rune.id}
+                  rune={rune}
+                  variant="draft"
+                  size="large"
+                  showEffect
+                  showTooltip
+                  tooltipPlacement="top"
+                />
+              ))}
+            </div>
           </div>
         )}
-
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <AnimatePresence mode="sync" onExitComplete={handleOfferExitComplete}>
-            {visibleOffers.map((offer) => {
-              const isSelected = offer.id === selectedOfferId;
-              const animationState = getOfferAnimationState(offer.id);
-              const effectDescription = getDeckDraftEffectDescription(offer.deckDraftEffect);
-              return (
-                <motion.div
-                  layout="position"
-                  key={offer.id}
-                  initial="initial"
-                  animate={animationState}
-                  exit="exit"
-                  custom={isSelected}
-                  className="flex flex-col items-center gap-3 px-3 py-4"
-                  style={{
-                    pointerEvents: animationState === 'dimmed' ? 'none' : 'auto',
-                  }}
-                >
-                  {renderOfferRow(offer)}
-                  {effectDescription && (
-                    <div className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[0_0_28px_rgba(255,255,255,0.08)]">
-                      {effectDescription}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleSelect(offer)}
-                    disabled={selectionLocked}
-                    className="w-full rounded-xl border border-sky-400/40 bg-gradient-to-r from-sky-500/80 to-indigo-500/80 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Draft
-                  </button>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
 
         <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/80">Deck Size</div>
             <motion.div
-              animate={{ scale: isAnimating ? [1, 1.08, 1] : 1 }}
+              animate={{ scale: hasSelectedPack ? [1, 1.08, 1] : 1 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
               className="text-base font-bold text-white"
             >
               {displayedDeckCount} runes
             </motion.div>
           </div>
-          <div className="flex w-full justify-end sm:w-auto gap-2">
+          <div className="flex w-full justify-end gap-2 sm:w-auto">
             <button
               type="button"
               onClick={handleStartNextGame}
-              className="w-full sm:w-auto rounded-xl border border-emerald-300/60 bg-gradient-to-r from-emerald-500/85 to-cyan-500/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-emerald-300/60 bg-gradient-to-r from-emerald-500/85 to-cyan-500/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 sm:w-auto"
             >
               Next Game
             </button>
             <button
               type="button"
               onClick={handleOpenDeckOverlay}
-              className="w-full sm:w-auto rounded-xl border border-sky-400/40 bg-sky-900/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-50 transition hover:border-sky-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+              className="w-full rounded-xl border border-sky-400/40 bg-sky-900/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-50 transition hover:border-sky-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 sm:w-auto"
             >
               View Deck
             </button>

@@ -5,6 +5,7 @@
 import type { ArtefactId } from './artefacts';
 
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
+export type WallSlotFamily = 'fireVoid' | 'lightningWind' | 'lifeFrost';
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 export type RuneSoundSignals = Record<RuneType, number>;
 
@@ -53,31 +54,27 @@ export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
 export interface SpellWallCharge {
   row: number;
   col: number;
-  runeType: RuneType;
+  slotFamily: WallSlotFamily;
+  lockedRuneType: RuneType | null;
   requiredCount: number;
   currentCount: number;
   spentRunes: Rune[];
   completedRuneId: string | null;
 }
 
-export type DeckDraftEffect =
-  | { type: 'heal'; amount: number }
-  | { type: 'maxHealth'; amount: number }
-  | { type: 'betterRunes'; rarityStep: number };
-
 export interface DeckDraftOffer {
   id: string;
   ownerId: Player['id'];
+  runeType: RuneType;
+  displayRarity: RuneEffectRarity;
   runes: Rune[];
-  deckDraftEffect?: DeckDraftEffect;
 }
 
 export interface DeckDraftState {
   offers: DeckDraftOffer[];
   picksRemaining: number;
   totalPicks: number;
-  selectionLimit: number;
-  selectionsThisOffer: number;
+  selectedOffer: DeckDraftOffer | null;
 }
 
 export type TooltipCardVariant = 'default' | 'nonPrimary';
@@ -136,6 +133,7 @@ export interface GameState extends CombatZoneState {
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
+  wallChargeSoundSignal: number;
   enemyAttackSoundSignal: number;
   shieldSoundSignal: number;
 }

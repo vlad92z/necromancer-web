@@ -57,7 +57,7 @@ describe('gameInitialization combat state', () => {
     });
     expect(deck.find((rune) => rune.id === 'player-1-Life-2')).toMatchObject({
       rarity: 'uncommon',
-      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 2 } }],
       passiveEffectRefs: [],
     });
     expect(deck.find((rune) => rune.id === 'player-1-Frost-2')).toMatchObject({
@@ -67,13 +67,13 @@ describe('gameInitialization combat state', () => {
     });
     expect(deck.find((rune) => rune.id === 'player-1-Void-2')).toMatchObject({
       rarity: 'uncommon',
-      castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.pulseSynergy', params: { amount: 2, synergyType: 'Void' } }],
+      castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 2 } }],
+      passiveEffectRefs: [],
     });
     expect(deck.find((rune) => rune.id === 'player-1-Lightning-2')).toMatchObject({
       rarity: 'uncommon',
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
+      passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 1 } }],
     });
   });
 
@@ -89,15 +89,15 @@ describe('gameInitialization combat state', () => {
     expect(firstDeck[10].castEffectRefs).not.toBe(secondDeck[10].castEffectRefs);
   });
 
-  it('scales enemy max health by 20 percent and rounds up to 1 HP', () => {
-    expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([12, 18, 24, 30, 36]);
+  it('scales enemy max health by 50 percent and rounds up to 1 HP', () => {
+    expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([15, 23, 30, 38, 45]);
   });
 
-  it('scales enemy attack by 20 percent and rounds up to 1 damage', () => {
-    expect([5, 6, 8, 10].map(scaleEnemyAttackDamage)).toEqual([6, 8, 10, 12]);
+  it('scales enemy attack by 50 percent and rounds up to 1 damage', () => {
+    expect([5, 6, 8, 10].map(scaleEnemyAttackDamage)).toEqual([8, 9, 12, 15]);
   });
 
-  it('creates spell-wall charges with row-based requirements and expected rune types', () => {
+  it('creates spell-wall charges with row-based requirements and slot families', () => {
     const wallCharges = createEmptyWallCharges(6);
 
     expect(wallCharges).toHaveLength(6);
@@ -105,7 +105,8 @@ describe('gameInitialization combat state', () => {
     expect(wallCharges[0][0]).toMatchObject({
       row: 0,
       col: 0,
-      runeType: 'Fire',
+      slotFamily: 'fireVoid',
+      lockedRuneType: null,
       requiredCount: 1,
       currentCount: 0,
       spentRunes: [],
@@ -114,13 +115,13 @@ describe('gameInitialization combat state', () => {
     expect(wallCharges[2][0]).toMatchObject({
       row: 2,
       col: 0,
-      runeType: 'Void',
+      slotFamily: 'lifeFrost',
       requiredCount: 3,
     });
     expect(wallCharges[5][5]).toMatchObject({
       row: 5,
       col: 5,
-      runeType: 'Fire',
+      slotFamily: 'lightningWind',
       requiredCount: 6,
     });
   });

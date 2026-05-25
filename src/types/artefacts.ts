@@ -55,14 +55,14 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
     name: 'Signet of Fortune',
     cost: 5000,
     image: ringPng,
-    passiveEffectRefs: [createEffectRef('passive.ringDraftRarity', { epicChanceMultiplier: 2 })],
+    passiveEffectRefs: [],
   },
   robe: {
     id: 'robe',
     name: 'Weaver\'s Mantle',
     cost: 10000,
     image: robePng,
-    passiveEffectRefs: [createEffectRef('passive.robeDraftSelection', { selectionBonus: 1, maxSelectionLimit: 3 })],
+    passiveEffectRefs: [],
   },
 };
 

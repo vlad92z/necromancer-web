@@ -2,14 +2,34 @@
  * Spell wall geometry helpers.
  */
 
-import type { RuneType } from '../types/game';
-import { RUNE_TYPES } from './gameInitialization';
+import type { RuneType, WallSlotFamily } from '../types/game';
 
-export function getRuneOrderForSize(size: number): RuneType[] {
-  return RUNE_TYPES.slice(0, size);
+export const WALL_SLOT_FAMILY_RUNE_TYPES: Record<WallSlotFamily, readonly RuneType[]> = {
+  fireVoid: ['Fire', 'Void'],
+  lightningWind: ['Lightning', 'Wind'],
+  lifeFrost: ['Life', 'Frost'],
+};
+
+export const WALL_SLOT_FAMILY_LABELS: Record<WallSlotFamily, string> = {
+  fireVoid: 'Fire/Void',
+  lightningWind: 'Lightning/Wind',
+  lifeFrost: 'Life/Frost',
+};
+
+const WALL_SLOT_FAMILY_ORDER: readonly WallSlotFamily[] = ['fireVoid', 'lightningWind', 'lifeFrost'];
+
+export function getWallSlotFamily(row: number, col: number): WallSlotFamily {
+  return WALL_SLOT_FAMILY_ORDER[(row + col) % WALL_SLOT_FAMILY_ORDER.length];
 }
 
-export function getExpectedRuneType(row: number, col: number, size: number): RuneType {
-  const runeTypes = getRuneOrderForSize(size);
-  return runeTypes[(col - row + size) % size];
+export function getWallSlotFamilyRuneTypes(slotFamily: WallSlotFamily): readonly RuneType[] {
+  return WALL_SLOT_FAMILY_RUNE_TYPES[slotFamily];
+}
+
+export function getWallSlotFamilyLabel(slotFamily: WallSlotFamily): string {
+  return WALL_SLOT_FAMILY_LABELS[slotFamily];
+}
+
+export function isRuneTypeAcceptedBySlotFamily(runeType: RuneType, slotFamily: WallSlotFamily): boolean {
+  return WALL_SLOT_FAMILY_RUNE_TYPES[slotFamily].includes(runeType);
 }

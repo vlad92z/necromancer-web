@@ -15,10 +15,7 @@ import {
   scaleEnemyMaxHealth,
 } from '../../utils/gameInitialization';
 import {
-  advanceDeckDraftState,
-  applyDeckDraftEffectToPlayer,
   createDeckDraftState,
-  getDeckDraftSelectionLimit,
   mergeDeckWithOffer,
 } from '../../utils/deckDrafting';
 import {
@@ -46,12 +43,9 @@ import { replaceGameplayState } from './gameplayState';
 
 function enterDeckDraftMode(state: GameState): GameState {
   const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
-  const selectionLimit = getDeckDraftSelectionLimit(state.activeArtefacts);
   const deckDraftState = createDeckDraftState(
     state.player.id,
-    nextLongestRun,
-    state.activeArtefacts,
-    selectionLimit
+    nextLongestRun
   );
 
   const currentEnemyAttackDamage = typeof state.enemyAttackDamage === 'number'
@@ -105,6 +99,9 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
     runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
+    wallChargeSoundSignal: typeof nextState.wallChargeSoundSignal === 'number'
+      ? nextState.wallChargeSoundSignal
+      : currentState.wallChargeSoundSignal,
     enemyAttackSoundSignal: typeof nextState.enemyAttackSoundSignal === 'number'
       ? nextState.enemyAttackSoundSignal
       : currentState.enemyAttackSoundSignal,
@@ -430,6 +427,7 @@ export const gameplayStoreConfig = (
         discardPile: result.discardPile,
         wallCharges: result.wallCharges,
         selectedHandRuneId: result.selectedHandRuneId,
+        wallChargeSoundSignal: state.wallChargeSoundSignal + 1,
       };
     });
 
@@ -578,78 +576,32 @@ export const gameplayStoreConfig = (
         return state;
       }
 
+      if (state.deckDraftState.selectedOffer || state.deckDraftReadyForNextGame) {
+        return state;
+      }
+
       const selectedOffer = state.deckDraftState.offers.find((offer) => offer.id === offerId);
       if (!selectedOffer) {
         return state;
       }
 
-      const playerAfterEffect = applyDeckDraftEffectToPlayer(
-        state.player,
-        selectedOffer.deckDraftEffect,
-        state.startingHealth
-      );
       const updatedDeckTemplate = mergeDeckWithOffer(state.fullDeck, selectedOffer);
       const updatedPlayer: Player = {
-        ...playerAfterEffect,
-        deck: mergeDeckWithOffer(playerAfterEffect.deck, selectedOffer),
+        ...state.player,
+        deck: mergeDeckWithOffer(state.player.deck, selectedOffer),
       };
-
-      const selectionLimit = state.deckDraftState.selectionLimit ?? 1;
-      const selectionsThisOffer = state.deckDraftState.selectionsThisOffer ?? 0;
-      const nextSelectionsThisOffer = selectionsThisOffer + 1;
-      const remainingOffers = state.deckDraftState.offers.filter((offer) => offer.id !== offerId);
-      const shouldAdvanceOffer =
-        nextSelectionsThisOffer >= selectionLimit || remainingOffers.length === 0;
-
-      if (shouldAdvanceOffer) {
-        const draftStateAfterSelection = {
-          ...state.deckDraftState,
-          offers: remainingOffers,
-          selectionsThisOffer: nextSelectionsThisOffer,
-        };
-        const nextDraftState = advanceDeckDraftState(
-          draftStateAfterSelection,
-          state.player.id,
-          state.longestRun,
-          state.activeArtefacts
-        );
-
-        if (!nextDraftState) {
-          return {
-            ...state,
-            player: updatedPlayer,
-            fullDeck: updatedDeckTemplate,
-            deckDraftState: {
-              offers: [],
-              picksRemaining: 0,
-              totalPicks: state.deckDraftState.totalPicks,
-              selectionLimit,
-              selectionsThisOffer: 0,
-            },
-            baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
-            deckDraftReadyForNextGame: true,
-          };
-        }
-
-        return {
-          ...state,
-          player: updatedPlayer,
-          deckDraftState: nextDraftState,
-          fullDeck: updatedDeckTemplate,
-          deckDraftReadyForNextGame: false,
-        };
-      }
 
       return {
         ...state,
         player: updatedPlayer,
+        fullDeck: updatedDeckTemplate,
         deckDraftState: {
           ...state.deckDraftState,
-          offers: remainingOffers,
-          selectionsThisOffer: nextSelectionsThisOffer,
+          picksRemaining: 0,
+          selectedOffer,
         },
-        fullDeck: updatedDeckTemplate,
-        deckDraftReadyForNextGame: false,
+        baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
+        deckDraftReadyForNextGame: true,
       };
     });
   },

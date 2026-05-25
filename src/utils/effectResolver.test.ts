@@ -3,10 +3,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
+import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge, WallCell } from '../types/game';
 import { createEffectRef, EFFECT_CATALOG } from './effectCatalog';
 import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import { createEmptyWall, createPlayer } from './gameInitialization';
+import { getWallSlotFamily } from './scoring';
 
 describe('effectResolver resolveCastEffects', () => {
   it('resolves damage, healing, armor, and fortune in ref order', () => {
@@ -211,6 +212,40 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.logs.map((log) => log.effectId)).toEqual(['cast.healing']);
   });
 
+  it('applies adjacent damage boost only to neighboring cast damage', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Lightning', [
+      createEffectRef('passive.adjacentDamageBoost', { amount: 1 }),
+    ]);
+    wall[3][3] = createWallCell('Lightning', [
+      createEffectRef('passive.adjacentDamageBoost', { amount: 1 }),
+    ]);
+    const player = { ...createTestPlayer(), wall };
+
+    const adjacentResult = resolveCastEffects({
+      player,
+      enemy: createTestEnemy(20),
+      castRune: createTestRune('adjacent-fire', 'Fire', [createEffectRef('cast.damage', { amount: 3 })]),
+      wall,
+      sourcePosition: { row: 0, col: 1 },
+    });
+    const distantResult = resolveCastEffects({
+      player,
+      enemy: createTestEnemy(20),
+      castRune: createTestRune('distant-fire', 'Fire', [createEffectRef('cast.damage', { amount: 3 })]),
+      wall,
+      sourcePosition: { row: 5, col: 5 },
+    });
+
+    expect(adjacentResult.enemy?.health).toBe(16);
+    expect(adjacentResult.logs.map((log) => log.effectId)).toEqual([
+      'cast.damage',
+      'passive.adjacentDamageBoost',
+    ]);
+    expect(distantResult.enemy?.health).toBe(17);
+    expect(distantResult.logs.map((log) => log.effectId)).toEqual(['cast.damage']);
+  });
+
   it('does not double-count the triggering rune for matching passive synergy', () => {
     const wall = createEmptyWall(6);
     wall[0][0] = createWallCell('Lightning', [
@@ -269,16 +304,16 @@ describe('effectResolver resolveCastEffects', () => {
     const player = { ...createTestPlayer(), health: 8, maxHealth: 10 };
     const enemy = createTestEnemy(20);
     const castRune = createTestRune('life-increase', 'Life', [
-      createEffectRef('cast.healthIncrease', { amount: 1 }),
+      createEffectRef('cast.healthIncrease', { amount: 2 }),
     ]);
 
     const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall });
 
-    expect(result.player.maxHealth).toBe(11);
-    expect(result.player.health).toBe(9);
+    expect(result.player.maxHealth).toBe(12);
+    expect(result.player.health).toBe(10);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.healthIncrease',
-      output: { healthIncrease: 1, playerMaxHealth: 11, playerHealth: 9 },
+      output: { healthIncrease: 2, playerMaxHealth: 12, playerHealth: 10 },
     });
   });
 
@@ -363,7 +398,7 @@ describe('effectResolver resolveCastEffects', () => {
     ]);
     const enemy = createTestEnemy(30);
     const castRune = createTestRune('rare-fire', 'Fire', [
-      createEffectRef('cast.damageFragile', { amount: 25, reduction: 5, fragileType: 'Frost' }),
+      createEffectRef('cast.damageFragile', { amount: 15, reduction: 3, fragileType: 'Frost' }),
     ]);
 
     const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall });
@@ -371,7 +406,7 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.enemy?.health).toBe(30);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.damageFragile',
-      output: { damage: 0, fragileCount: 6, reduction: 30 },
+      output: { damage: 0, fragileCount: 6, reduction: 18 },
     });
   });
 
@@ -386,8 +421,8 @@ describe('effectResolver resolveCastEffects', () => {
     ]);
     const wallCharges = createTestWallCharges(player.wall);
     const enemy = createTestEnemy(50);
-    const castRune = createTestRune('rare-void', 'Void', [
-      createEffectRef('cast.damageConsuming', { amount: 10 }),
+    const castRune = createTestRune('uncommon-void', 'Void', [
+      createEffectRef('cast.damageConsuming', { amount: 2 }),
     ]);
 
     const result = resolveCastEffects({
@@ -399,7 +434,7 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.enemy?.health).toBe(10);
+    expect(result.enemy?.health).toBe(42);
     expect(result.wall[0][0].runeType).toBeNull();
     expect(result.wall[0][1].runeType).toBeNull();
     expect(result.wall[1][0].runeType).toBeNull();
@@ -491,7 +526,7 @@ describe('effectResolver resolveCastEffects', () => {
 
   it('heals vampire from actual enemy hp loss after overkill clamp', () => {
     const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Void', [createEffectRef('passive.vampire', { percent: 25 })]);
+    wall[0][0] = createWallCell('Void', [createEffectRef('passive.vampire', { percent: 50 })]);
     const player = { ...createTestPlayer(), wall, health: 5, maxHealth: 20 };
     const castRune = createTestRune('void-hit', 'Void', [createEffectRef('cast.damage', { amount: 10 })]);
 
@@ -503,7 +538,7 @@ describe('effectResolver resolveCastEffects', () => {
     });
 
     expect(result.enemy?.health).toBe(0);
-    expect(result.player.health).toBe(6);
+    expect(result.player.health).toBe(7);
   });
 
   it('fires explosive once when consumed', () => {
@@ -685,8 +720,8 @@ describe('effectResolver resolveCastEffects', () => {
     wall[1][1] = createWallCell('Wind');
     wall[2][2] = createWallCell('Fire');
     const wallCharges = createTestWallCharges(wall);
-    wallCharges[1][2] = { ...wallCharges[1][2], currentCount: 0, requiredCount: 2, runeType: 'Fire' };
-    wallCharges[2][1] = { ...wallCharges[2][1], currentCount: 1, requiredCount: 3, runeType: 'Frost' };
+    wallCharges[1][2] = { ...wallCharges[1][2], currentCount: 0, requiredCount: 2 };
+    wallCharges[2][1] = { ...wallCharges[2][1], currentCount: 1, requiredCount: 3, lockedRuneType: null };
     const castRune = createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]);
 
     const result = resolveCastEffects({
@@ -884,6 +919,38 @@ describe('effectResolver end turn effects', () => {
     expect(emptyEndTurn.enemy?.health).toBe(20);
     expect(emptyEndTurn.logs).toEqual([]);
   });
+
+  it('applies adjacent damage boost to neighboring end-turn pulse damage only', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Void', [
+      createEffectRef('passive.pulseSynergy', { amount: 1, synergyType: 'Void' }),
+    ]);
+    wall[0][1] = createWallCell('Lightning', [
+      createEffectRef('passive.adjacentDamageBoost', { amount: 1 }),
+    ]);
+    wall[5][5] = createWallCell('Lightning', [
+      createEffectRef('passive.adjacentDamageBoost', { amount: 1 }),
+    ]);
+    const player = { ...createTestPlayer(), wall };
+
+    const result = resolveEndTurnEffects({
+      player,
+      enemy: createTestEnemy(20),
+      wall,
+    });
+
+    expect(result.enemy?.health).toBe(18);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'passive.pulseSynergy',
+      'passive.adjacentDamageBoost',
+    ]);
+    expect(result.logs[0]).toMatchObject({
+      output: { modifier: 1, synergyType: 'Void', synergyCount: 1 },
+    });
+    expect(result.logs[1]).toMatchObject({
+      output: { modifier: 1, previousValue: 1, nextValue: 2 },
+    });
+  });
 });
 
 describe('effectResolver start turn effects', () => {
@@ -904,6 +971,28 @@ describe('effectResolver start turn effects', () => {
       'passive.drawingStartTurn',
     ]);
   });
+
+  it('heals from completed Life runes at start of turn', () => {
+    const player = { ...createTestPlayer(), health: 6, maxHealth: 20 };
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Life', [
+      createEffectRef('passive.healingStartTurnSynergy', { amount: 1, synergyType: 'Life' }),
+    ]);
+    wall[0][1] = createWallCell('Life');
+    wall[1][1] = createWallCell('Life');
+    wall[2][2] = createWallCell('Void');
+
+    const result = resolveStartTurnEffects({
+      player: { ...player, wall },
+      wall,
+    });
+
+    expect(result.player.health).toBe(9);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'passive.healingStartTurnSynergy',
+      output: { modifier: 3, synergyType: 'Life', synergyCount: 3 },
+    });
+  });
 });
 
 describe('effectResolver passive effects', () => {
@@ -923,7 +1012,6 @@ describe('effectResolver passive effects', () => {
       { sourceType: 'rune', sourceId: 'wall:0:5', effectId: 'passive.potionArmor', sourceOrder: 5 },
       { sourceType: 'rune', sourceId: 'wall:1:2', effectId: 'passive.tomeCastDamage', sourceOrder: 8 },
       { sourceType: 'artefact', sourceId: 'rod', effectId: 'passive.rodHealing', sourceOrder: 0 },
-      { sourceType: 'artefact', sourceId: 'robe', effectId: 'passive.robeDraftSelection', sourceOrder: 1 },
     ]);
   });
 
@@ -935,7 +1023,6 @@ describe('effectResolver passive effects', () => {
       healing: 5,
       armor: 4,
       epicChance: 3,
-      selectionLimit: 1,
     };
 
     const onCast = resolvePassiveEffects({
@@ -949,7 +1036,6 @@ describe('effectResolver passive effects', () => {
       healing: 10,
       armor: 8,
       epicChance: 3,
-      selectionLimit: 1,
     });
     expect(onCast.logs.map((log) => log.effectId)).toEqual([
       'passive.tomeCastDamage',
@@ -967,13 +1053,9 @@ describe('effectResolver passive effects', () => {
       damage: 10,
       healing: 5,
       armor: 4,
-      epicChance: 6,
-      selectionLimit: 2,
+      epicChance: 3,
     });
-    expect(onDeckDraftOffer.logs.map((log) => log.effectId)).toEqual([
-      'passive.robeDraftSelection',
-      'passive.ringDraftRarity',
-    ]);
+    expect(onDeckDraftOffer.logs).toEqual([]);
 
     (['onEnemyAttack', 'startTurn', 'endTurn'] as const).forEach((trigger) => {
       const result = resolvePassiveEffects({
@@ -1110,11 +1192,12 @@ function createWallCell(runeType: RuneType, passiveEffectRefs: EffectRef[] = [],
   };
 }
 
-function createTestWallCharges(wall: ScoringWall) {
+function createTestWallCharges(wall: ScoringWall): SpellWallCharge[][] {
   return wall.map((row, rowIndex) => row.map((cell, colIndex) => ({
     row: rowIndex,
     col: colIndex,
-    runeType: cell.runeType ?? 'Fire',
+    slotFamily: getWallSlotFamily(rowIndex, colIndex),
+    lockedRuneType: cell.runeType,
     requiredCount: rowIndex + 1,
     currentCount: cell.runeType ? rowIndex + 1 : 0,
     spentRunes: [],

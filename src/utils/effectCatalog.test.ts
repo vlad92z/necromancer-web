@@ -9,7 +9,7 @@ import { createEffectRef, getEffectDescription } from './effectCatalog';
 
 describe('effectCatalog', () => {
   it('renders cast effect descriptions from refs', () => {
-    expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage on cast');
+    expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage');
     expect(getEffectDescription(createEffectRef('cast.damageAdjacent', { amount: 1 }))).toBe(
       'Deal 1 damage for every adjacent rune'
     );
@@ -48,9 +48,9 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.healthDecrease', { amount: 2 }))).toBe(
       'Reduce maximum health by 2'
     );
-    expect(getEffectDescription(createEffectRef('cast.draw', { amount: 1 }))).toBe('Draw 1 rune on cast');
+    expect(getEffectDescription(createEffectRef('cast.draw', { amount: 1 }))).toBe('Draw 1 rune');
     expect(getEffectDescription(createEffectRef('cast.drawType', { amount: 1, targetType: 'Fire' }))).toBe(
-      'Draw 1 Fire rune on cast'
+      'Draw 1 Fire rune'
     );
     expect(getEffectDescription(createEffectRef('cast.drawAdjacent'))).toBe(
       'Draw one rune for every adjacent rune'
@@ -76,6 +76,9 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.damageBoost', { amount: 1 }))).toBe(
       'Increase all damage by 1'
     );
+    expect(getEffectDescription(createEffectRef('passive.adjacentDamageBoost', { amount: 1 }))).toBe(
+      'Adjacent runes deal +1 damage'
+    );
     expect(getEffectDescription(createEffectRef('passive.pulseSynergy', {
       amount: 5,
       synergyType: 'Void',
@@ -83,6 +86,10 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.healingStartTurn', { amount: 2 }))).toBe(
       'At start of turn, heal 2'
     );
+    expect(getEffectDescription(createEffectRef('passive.healingStartTurnSynergy', {
+      amount: 1,
+      synergyType: 'Life',
+    }))).toBe('At start of turn, heal 1 for every Life rune in your completed wall');
     expect(getEffectDescription(createEffectRef('passive.drawingStartTurn', { amount: 1 }))).toBe(
       'At start of turn, draw 1 additional runes'
     );
@@ -95,8 +102,8 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.explosive', { amount: 50 }))).toBe(
       'Deal 50 damage if destroyed or transformed'
     );
-    expect(getEffectDescription(createEffectRef('passive.vampire', { percent: 25 }))).toBe(
-      'Heal 25% of damage dealt'
+    expect(getEffectDescription(createEffectRef('passive.vampire', { percent: 50 }))).toBe(
+      'Heal 50% of damage dealt'
     );
     expect(getEffectDescription(createEffectRef('passive.reduceDamage', { amount: 3 }))).toBe(
       'Reduce incoming damage by 3'
@@ -111,13 +118,13 @@ describe('effectCatalog', () => {
   });
 
   it('defines artefact passive refs and catalog descriptions', () => {
-    expect(ARTEFACTS.ring.passiveEffectRefs[0]?.effectId).toBe('passive.ringDraftRarity');
-    expect(ARTEFACTS.robe.passiveEffectRefs[0]?.effectId).toBe('passive.robeDraftSelection');
+    expect(ARTEFACTS.ring.passiveEffectRefs).toEqual([]);
+    expect(ARTEFACTS.robe.passiveEffectRefs).toEqual([]);
     expect(ARTEFACTS.rod.passiveEffectRefs[0]?.effectId).toBe('passive.rodHealing');
     expect(ARTEFACTS.potion.passiveEffectRefs[0]?.effectId).toBe('passive.potionArmor');
     expect(ARTEFACTS.tome.passiveEffectRefs[0]?.effectId).toBe('passive.tomeCastDamage');
 
-    expect(getArtefactEffectDescription('ring')).toContain('Double the odds');
+    expect(getArtefactEffectDescription('ring')).toBe('');
     expect(getArtefactEffectDescription('tome')).toBe('+1 damage on all casts');
   });
 });

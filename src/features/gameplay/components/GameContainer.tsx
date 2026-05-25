@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useEnemyAttackSoundSignal, useRuneSoundSignals, useShieldSoundSignal, useUIOverlayState } from '../../../hooks/useGameState';
+import { useEnemyAttackSoundSignal, useRuneSoundSignals, useShieldSoundSignal, useUIOverlayState, useWallChargeSoundSignal } from '../../../hooks/useGameState';
+import { useChargeSound } from '../../../hooks/useChargeSound';
 import { useEnemyAttackSound } from '../../../hooks/useEnemyAttackSound';
 import { useRuneSound } from '../../../hooks/useRuneSound';
 import { useShieldSound } from '../../../hooks/useShieldSound';
@@ -20,12 +21,15 @@ export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
   const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
   const runeSoundSignals = useRuneSoundSignals();
+  const wallChargeSoundSignal = useWallChargeSoundSignal();
   const enemyAttackSoundSignal = useEnemyAttackSoundSignal();
   const shieldSoundSignal = useShieldSoundSignal();
+  const playChargeSound = useChargeSound();
   const playRuneSound = useRuneSound();
   const playEnemyAttackSound = useEnemyAttackSound();
   const playShieldSound = useShieldSound();
   const previousRuneSoundSignalsRef = useRef<RuneSoundSignals>(runeSoundSignals);
+  const previousWallChargeSoundSignalRef = useRef(wallChargeSoundSignal);
   const previousEnemyAttackSoundSignalRef = useRef(enemyAttackSoundSignal);
   const previousShieldSoundSignalRef = useRef(shieldSoundSignal);
   const hiddenWallSlots = useMemo(() => new Set<string>(), []);
@@ -60,6 +64,16 @@ export function GameContainer() {
 
     previousRuneSoundSignalsRef.current = runeSoundSignals;
   }, [playRuneSound, runeSoundSignals]);
+
+  useEffect(() => {
+    if (wallChargeSoundSignal <= previousWallChargeSoundSignalRef.current) {
+      previousWallChargeSoundSignalRef.current = wallChargeSoundSignal;
+      return;
+    }
+
+    playChargeSound();
+    previousWallChargeSoundSignalRef.current = wallChargeSoundSignal;
+  }, [playChargeSound, wallChargeSoundSignal]);
 
   useEffect(() => {
     if (enemyAttackSoundSignal <= previousEnemyAttackSoundSignalRef.current) {

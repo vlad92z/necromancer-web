@@ -13,6 +13,9 @@ describe('tooltipCards', () => {
       title: 'Primer of Solitude',
       description: '+1 damage on all casts',
     });
-    expect(cards[1]?.description).toContain('Double the odds');
+    expect(cards[1]).toMatchObject({
+      title: 'Signet of Fortune',
+      description: '',
+    });
   });
 });

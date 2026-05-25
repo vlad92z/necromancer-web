@@ -2,9 +2,10 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import type { SpellWallCharge, WallCell as WallCellType, RuneType } from '../../../types/game';
+import type { SpellWallCharge, WallCell as WallCellType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
-import { getExpectedRuneType } from '../../../utils/scoring';
+import { getWallSlotFamily, getWallSlotFamilyLabel } from '../../../utils/scoring';
+import { WALL_SLOT_PLACEHOLDER_ASSETS } from '../../../utils/wallSlotPlaceholders';
 import { wallCellToRune } from '../../../utils/wallCellRune';
 
 interface WallCellProps {
@@ -14,14 +15,14 @@ interface WallCellProps {
   col: number;
   // Number of columns/rows of the scoring wall (3, 4 or 5)
   wallSize: number;
-  // Rune types available for this wall size (ordered)
-  availableRuneTypes: RuneType[];
   pulseKey?: number;
 }
 
-export function WallCell({ cell, charge, row, col, wallSize, availableRuneTypes, pulseKey }: WallCellProps) {
-  const expectedRuneType = getExpectedRuneType(row, col, wallSize);
-  void availableRuneTypes;
+export function WallCell({ cell, charge, row, col, wallSize, pulseKey }: WallCellProps) {
+  void wallSize;
+  const slotFamily = charge?.slotFamily ?? getWallSlotFamily(row, col);
+  const lockedRuneType = !cell.runeType ? charge?.lockedRuneType ?? null : null;
+  const placeholderLabel = lockedRuneType ?? getWallSlotFamilyLabel(slotFamily);
   const showChargeText = !cell.runeType && charge !== null && charge.currentCount > 0;
   
   const rune = wallCellToRune(cell, row, col);
@@ -29,15 +30,16 @@ export function WallCell({ cell, charge, row, col, wallSize, availableRuneTypes,
   return (
     <div
       style={{ position: 'relative', display: 'inline-block' }}
-      aria-label={`${expectedRuneType} rune cell`}
+      aria-label={`${placeholderLabel} rune cell`}
     >
       <RuneCell
         rune={rune}
         variant="wall"
         size="large"
+        emptyIcon={lockedRuneType ? undefined : WALL_SLOT_PLACEHOLDER_ASSETS[slotFamily]}
         placeholder={{
           type: 'rune',
-          runeType: expectedRuneType,
+          runeType: lockedRuneType ?? undefined,
         }}
         showEffect
         showTooltip={false}
