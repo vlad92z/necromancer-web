@@ -76,6 +76,9 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.damageBoost', { amount: 1 }))).toBe(
       'Increase all damage by 1'
     );
+    expect(getEffectDescription(createEffectRef('passive.adjacentDamageBoost', { amount: 1 }))).toBe(
+      'Adjacent runes deal +1 damage'
+    );
     expect(getEffectDescription(createEffectRef('passive.pulseSynergy', {
       amount: 5,
       synergyType: 'Void',
@@ -83,6 +86,10 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.healingStartTurn', { amount: 2 }))).toBe(
       'At start of turn, heal 2'
     );
+    expect(getEffectDescription(createEffectRef('passive.healingStartTurnSynergy', {
+      amount: 1,
+      synergyType: 'Life',
+    }))).toBe('At start of turn, heal 1 for every Life rune in your completed wall');
     expect(getEffectDescription(createEffectRef('passive.drawingStartTurn', { amount: 1 }))).toBe(
       'At start of turn, draw 1 additional runes'
     );
@@ -95,8 +102,8 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.explosive', { amount: 50 }))).toBe(
       'Deal 50 damage if destroyed or transformed'
     );
-    expect(getEffectDescription(createEffectRef('passive.vampire', { percent: 25 }))).toBe(
-      'Heal 25% of damage dealt'
+    expect(getEffectDescription(createEffectRef('passive.vampire', { percent: 50 }))).toBe(
+      'Heal 50% of damage dealt'
     );
     expect(getEffectDescription(createEffectRef('passive.reduceDamage', { amount: 3 }))).toBe(
       'Reduce incoming damage by 3'

@@ -37,9 +37,11 @@ export type PassiveEffectId =
   | 'passive.potionArmor'
   | 'passive.tomeCastDamage'
   | 'passive.damageBoost'
+  | 'passive.adjacentDamageBoost'
   | 'passive.damageBoostSynergy'
   | 'passive.pulseSynergy'
   | 'passive.healingStartTurn'
+  | 'passive.healingStartTurnSynergy'
   | 'passive.drawingStartTurn'
   | 'passive.addDamage'
   | 'passive.armorBoost'
@@ -186,7 +188,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Health Increase',
     displayHint: 'healing',
-    describe: (params) => `Increase maximum health by ${numberParam(params, 'amount')} and heal ${numberParam(params, 'amount')}`,
+    describe: (params) => `Increase maximum health by ${numberParam(params, 'amount')}`,
   },
   'cast.healthDecrease': {
     id: 'cast.healthDecrease',
@@ -317,6 +319,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) => `Increase all damage by ${numberParam(params, 'amount')}`,
   },
+  'passive.adjacentDamageBoost': {
+    id: 'passive.adjacentDamageBoost',
+    kind: 'passive',
+    title: 'Adjacent Damage Boost',
+    displayHint: 'damage',
+    describe: (params) => `Adjacent runes deal +${numberParam(params, 'amount')} damage`,
+  },
   'passive.damageBoostSynergy': {
     id: 'passive.damageBoostSynergy',
     kind: 'passive',
@@ -360,6 +369,21 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       defaultValue: 0,
     },
     describe: (params) => `At start of turn, heal ${numberParam(params, 'amount')}`,
+  },
+  'passive.healingStartTurnSynergy': {
+    id: 'passive.healingStartTurnSynergy',
+    kind: 'passive',
+    title: 'Start Turn Healing Synergy',
+    displayHint: 'healing',
+    passive: {
+      trigger: 'startTurn',
+      target: 'healing',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) =>
+      `At start of turn, heal ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
   'passive.drawingStartTurn': {
     id: 'passive.drawingStartTurn',

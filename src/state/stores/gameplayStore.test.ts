@@ -22,7 +22,7 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.gameStarted).toBe(true);
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 5, intent: { type: 'Attack', amount: 3 } });
+    expect(state.enemy).toMatchObject({ id: 'goblin', health: 7, intent: { type: 'Attack', amount: 3 } });
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(6);
     expect(state.discardPile).toEqual([]);
@@ -217,10 +217,10 @@ describe('gameplayStore current combat', () => {
     store.getState().startNextSoloGame();
     expect(store.getState().combatPhase).toBe('player-turn');
     expect(store.getState().deckDraftState).toBeNull();
-    expect(store.getState().enemy?.maxHealth).toBe(6);
-    expect(store.getState().enemy?.intent.amount).toBe(4);
-    expect(store.getState().enemyMaxHealth).toBe(6);
-    expect(store.getState().enemyAttackDamage).toBe(4);
+    expect(store.getState().enemy?.maxHealth).toBe(11);
+    expect(store.getState().enemy?.intent.amount).toBe(5);
+    expect(store.getState().enemyMaxHealth).toBe(11);
+    expect(store.getState().enemyAttackDamage).toBe(5);
   });
 
   it('starts the next encounter from victory without selecting a pack', () => {
@@ -479,9 +479,9 @@ describe('gameplayStore current combat', () => {
     expect(state.player.health).toBe(10);
   });
 
-  it('deals uncommon Void pulse damage after completing a top-row slot', () => {
+  it('deals rare Void pulse damage after completing a top-row slot', () => {
     const store = createGameplayStoreInstance();
-    const voidRune = createRuneFromPool({ id: 'void-pulse', runeType: 'Void', rarity: 'uncommon' });
+    const voidRune = createRuneFromPool({ id: 'void-pulse', runeType: 'Void', rarity: 'rare' });
 
     store.setState((state) => ({
       ...state,
@@ -495,13 +495,13 @@ describe('gameplayStore current combat', () => {
 
     store.getState().castRuneToWall(0, 0);
 
-    expect(store.getState().player.wall[0][0]).toMatchObject({ runeType: 'Void', rarity: 'uncommon' });
+    expect(store.getState().player.wall[0][0]).toMatchObject({ runeType: 'Void', rarity: 'rare' });
     expect(store.getState().enemy?.health).toBe(10);
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.enemy?.health).toBe(8);
+    expect(state.enemy?.health).toBe(9);
     expect(state.combatPhase).toBe('player-turn');
   });
 
@@ -540,7 +540,7 @@ describe('gameplayStore current combat', () => {
 
   it('restores consumed adjacent runes on victory', () => {
     const store = createGameplayStoreInstance();
-    const rareVoid = createRuneFromPool({ id: 'rare-void', runeType: 'Void', rarity: 'rare' });
+    const uncommonVoid = createRuneFromPool({ id: 'uncommon-void', runeType: 'Void', rarity: 'uncommon' });
     const wall = createEmptyWall();
     wall[0][1] = {
       runeType: 'Fire',
@@ -557,10 +557,10 @@ describe('gameplayStore current combat', () => {
 
     store.setState((state) => ({
       ...state,
-      hand: [rareVoid],
-      selectedHandRuneId: rareVoid.id,
+      hand: [uncommonVoid],
+      selectedHandRuneId: uncommonVoid.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 2, maxHealth: 2, intent: { type: 'Attack', amount: 5 } },
       wallCharges,
       suppressedRunes: [],
     }));
@@ -571,7 +571,7 @@ describe('gameplayStore current combat', () => {
     expect(state.combatPhase).toBe('victory');
     expect(state.suppressedRunes).toEqual([]);
     expect(state.player.deck.map((rune) => rune.id)).toContain('adjacent-fire');
-    expect(state.player.deck.map((rune) => rune.id)).toContain('rare-void');
+    expect(state.player.deck.map((rune) => rune.id)).toContain('uncommon-void');
   });
 
   it('returns adjacent completed runes to hand with epic Wind', () => {

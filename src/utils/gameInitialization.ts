@@ -19,9 +19,9 @@ import goblinImageSrc from '../assets/enemies/goblin.png';
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 6;
-export const DEFAULT_ENEMY_MAX_HEALTH = 5;
+export const DEFAULT_ENEMY_MAX_HEALTH = 7;
 export const DEFAULT_ENEMY_ATTACK_DAMAGE = 3;
-export const ENEMY_SCALING_MULTIPLIER = 1.2;
+export const ENEMY_SCALING_MULTIPLIER = 1.35;
 export const ENEMY_HEALTH_ROUNDING_STEP = 1;
 export const STARTING_DECK: Rune[] = [
   {
@@ -77,7 +77,7 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Life-2',
     runeType: 'Life',
     rarity: 'uncommon',
-    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 1 } }],
+    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 2 } }],
     passiveEffectRefs: [],
   },
   {
@@ -182,8 +182,8 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Void-2',
     runeType: 'Void',
     rarity: 'uncommon',
-    castEffectRefs: [],
-    passiveEffectRefs: [{ effectId: 'passive.pulseSynergy', params: { amount: 2, synergyType: 'Void' } }],
+    castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 2 } }],
+    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Void-3',
@@ -218,7 +218,7 @@ export const STARTING_DECK: Rune[] = [
     runeType: 'Lightning',
     rarity: 'uncommon',
     castEffectRefs: [],
-    passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
+    passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 1 } }],
   },
   {
     id: 'player-1-Lightning-3',

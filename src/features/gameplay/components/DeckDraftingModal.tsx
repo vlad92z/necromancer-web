@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { animate, motion, useMotionValue } from 'framer-motion';
-import type { DeckDraftOffer, DeckDraftState, Rune, RuneEffectRarity, RuneType } from '../../../types/game';
+import type { DeckDraftOffer, DeckDraftState, Rune, RuneType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
 import { useClickSound } from '../../../hooks/useClickSound';
@@ -14,13 +14,6 @@ import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 interface DeckDraftingModalProps {
   draftState: DeckDraftState;
 }
-
-const RARITY_LABELS: Record<RuneEffectRarity, string> = {
-  common: 'Common',
-  uncommon: 'Uncommon',
-  rare: 'Rare',
-  epic: 'Epic',
-};
 
 function createPackFaceRune(offer: DeckDraftOffer): Rune {
   return {
