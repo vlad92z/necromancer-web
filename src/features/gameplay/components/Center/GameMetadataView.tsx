@@ -5,13 +5,11 @@
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { useUIActions } from '../../../../hooks/useGameActions';
-import { useActiveElement, useArcaneDust, useCombatZoneState, useGameIndex } from '../../../../hooks/useGameState';
-import { DeckButton } from '../../../../components/DeckButton';
+import { useActiveElement, useArcaneDust } from '../../../../hooks/useGameState';
+import { RuneZoneButton } from '../../../../components/DeckButton';
 
 export function GameMetadataView() {
-  const gameNumber = useGameIndex();
   const arcaneDust = useArcaneDust();
-  const { hand, discardPile } = useCombatZoneState();
   const { toggleSettingsOverlay: openSettings } = useUIActions();
   const activeElement = useActiveElement();
   const isSettingsActive = activeElement?.type === 'settings';
@@ -22,21 +20,9 @@ export function GameMetadataView() {
 
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2 bg-slate-900/80 px-5 pt-3">
-      {/* Left side: Game Title, Arcane Dust Counter, Settings Button */}
+      {/* Left side: Game Title and Arcane Dust Counter */}
       <div className="w-full flex flex-row flex-[29] items-center">
-        <ClickSoundButton
-          title="⚙"
-          action={openSettings}
-          isActive={isSettingsActive}
-          className={actionButtonBase}
-        />
-
-        <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
-          <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
-          <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameNumber}</span>
-        </div>
-
-        <div className="px-4 py-3 flex items-center gap-3 pr-20">
+        <div className="px-3 py-3 flex items-center gap-3">
           <img
             src={arcaneDustIcon}
             alt="Arcane Dust"
@@ -48,17 +34,15 @@ export function GameMetadataView() {
 
       {/* Right Side */}
       <div className="flex flex-row flex-[44] items-center justify-end gap-3">
-        <DeckButton/>
-        <div className="flex min-w-[150px] items-center justify-center gap-3 rounded-[16px] border border-violet-400/30 bg-violet-500/10 px-3.5 py-3 text-slate-100">
-          <div className="flex flex-col items-center leading-[1.2]" aria-label="Hand count">
-            <span className="text-[1.15rem] font-semibold">{hand.length}</span>
-          </div>
-          <div className="h-8 w-px bg-white/15" />
-          <div className="flex flex-col items-center leading-[1.2]">
-            <span className="text-[0.6rem] font-extrabold uppercase tracking-[0.16em] text-violet-100/70">Discard</span>
-            <span className="text-[1.15rem] font-semibold">{discardPile.length}</span>
-          </div>
-        </div>
+        <RuneZoneButton zone="draw" />
+        <RuneZoneButton zone="discard" />
+        <RuneZoneButton zone="deck" />
+        <ClickSoundButton
+          title="⚙"
+          action={openSettings}
+          isActive={isSettingsActive}
+          className={actionButtonBase}
+        />
       </div>
     </div>
   );

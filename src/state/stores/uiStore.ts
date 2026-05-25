@@ -8,10 +8,12 @@ import type { TooltipCard } from '../../types/game';
 import type { ActiveElement } from '../../features/gameplay/components/keyboardNavigation';
 import { createDefaultTooltipCards } from '../../utils/gameInitialization';
 
+export type RuneZoneOverlay = 'draw' | 'discard' | 'deck';
+
 interface UIStore {
   // Overlay visibility states
   showRulesOverlay: boolean;
-  showDeckOverlay: boolean;
+  activeRuneZoneOverlay: RuneZoneOverlay | null;
   showSettingsOverlay: boolean;
   soundVolume: number;
   isMusicMuted: boolean;
@@ -22,7 +24,8 @@ interface UIStore {
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
-  toggleDeckOverlay: () => void;
+  openRuneZoneOverlay: (zone: RuneZoneOverlay) => void;
+  closeRuneZoneOverlay: () => void;
   toggleSettingsOverlay: () => void;
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
@@ -53,7 +56,7 @@ const getInitialMusicMuted = (): boolean => {
 export const useUIStore = create<UIStore>((set) => ({
   // Initial state
   showRulesOverlay: false,
-  showDeckOverlay: false,
+  activeRuneZoneOverlay: null,
   showSettingsOverlay: false,
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
@@ -67,8 +70,12 @@ export const useUIStore = create<UIStore>((set) => ({
     set((state) => ({ showRulesOverlay: !state.showRulesOverlay }));
   },
   
-  toggleDeckOverlay: () => {
-    set((state) => ({ showDeckOverlay: !state.showDeckOverlay }));
+  openRuneZoneOverlay: (zone) => {
+    set({ activeRuneZoneOverlay: zone });
+  },
+
+  closeRuneZoneOverlay: () => {
+    set({ activeRuneZoneOverlay: null });
   },
   
   toggleSettingsOverlay: () => {
@@ -78,7 +85,7 @@ export const useUIStore = create<UIStore>((set) => ({
   closeAllOverlays: () => {
     set({
       showRulesOverlay: false,
-      showDeckOverlay: false,
+      activeRuneZoneOverlay: null,
       showSettingsOverlay: false,
     });
   },

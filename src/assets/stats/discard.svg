@@ -9,7 +9,7 @@
    height="800px"
    viewBox="0 0 596.143 596.143"
    xml:space="preserve"
-   sodipodi:docname="deck.svg"
+   sodipodi:docname="discard.svg"
    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -17,14 +17,6 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"><defs
    id="defs6"><linearGradient
-     id="linearGradient12"
-     inkscape:collect="always"><stop
-       style="stop-color:#006dbb;stop-opacity:1;"
-       offset="0"
-       id="stop13" /><stop
-       style="stop-color:#1d99ca;stop-opacity:1;"
-       offset="1"
-       id="stop14" /></linearGradient><linearGradient
      id="linearGradient4"
      inkscape:collect="always"><stop
        style="stop-color:#006dbb;stop-opacity:1;"
@@ -40,16 +32,7 @@
      y1="477.81879"
      x2="191.42899"
      y2="188.41435"
-     gradientUnits="userSpaceOnUse" /><linearGradient
-     inkscape:collect="always"
-     xlink:href="#linearGradient12"
-     id="linearGradient14"
-     x1="514.94617"
-     y1="576.54785"
-     x2="97.023582"
-     y2="26.377968"
-     gradientUnits="userSpaceOnUse"
-     gradientTransform="matrix(0.78996722,0,0,0.75257682,61.138809,68.932603)" /></defs><sodipodi:namedview
+     gradientUnits="userSpaceOnUse" /></defs><sodipodi:namedview
    id="namedview6"
    pagecolor="#ffffff"
    bordercolor="#000000"
@@ -60,13 +43,13 @@
    inkscape:deskcolor="#d1d1d1"
    inkscape:zoom="0.98875"
    inkscape:cx="397.97724"
-   inkscape:cy="399.49431"
+   inkscape:cy="384.32364"
    inkscape:window-width="1920"
    inkscape:window-height="947"
    inkscape:window-x="1080"
    inkscape:window-y="350"
    inkscape:window-maximized="0"
-   inkscape:current-layer="g4" />
+   inkscape:current-layer="g5" />
 <g
    id="g6"
    style="fill:url(#linearGradient6);fill-opacity:1">
@@ -75,28 +58,33 @@
    style="fill:url(#linearGradient6);fill-opacity:1.0">
 		<g
    id="g2"
-   style="fill:url(#linearGradient6);fill-opacity:1.0">
+   style="fill:#757575;fill-opacity:1;stroke-width:0;stroke-dasharray:none">
 			<path
    d="M65.824,58.64v478.863c0,32.059,26.082,58.14,58.14,58.14h348.214c32.059,0,58.141-26.081,58.141-58.14V58.64     c0-32.059-26.082-58.14-58.141-58.14H123.964C91.906,0.5,65.824,26.582,65.824,58.64z M487.479,58.64v478.863     c0,8.45-6.85,15.3-15.3,15.3H123.964c-8.45,0-15.3-6.85-15.3-15.3V58.64c0-8.45,6.85-15.3,15.3-15.3h348.214     C480.629,43.34,487.479,50.19,487.479,58.64z"
    id="path1"
-   style="fill:url(#linearGradient6);fill-opacity:1.0" />
+   style="fill:#757575;fill-opacity:1;stroke-width:0;stroke-dasharray:none" />
 			<path
    d="M472.178,596.143H123.964c-32.334,0-58.64-26.306-58.64-58.64V58.64C65.324,26.306,91.63,0,123.964,0h348.214     c32.335,0,58.641,26.306,58.641,58.64v478.863C530.818,569.837,504.513,596.143,472.178,596.143z M123.964,1     c-31.783,0-57.64,25.857-57.64,57.64v478.863c0,31.782,25.857,57.64,57.64,57.64h348.214c31.783,0,57.641-25.857,57.641-57.64     V58.64c0-31.783-25.857-57.64-57.641-57.64H123.964z M472.179,553.303H123.964c-8.712,0-15.8-7.088-15.8-15.8V58.64     c0-8.712,7.088-15.8,15.8-15.8h348.214c8.713,0,15.801,7.088,15.801,15.8v478.863     C487.979,546.215,480.891,553.303,472.179,553.303z M123.964,43.84c-8.161,0-14.8,6.639-14.8,14.8v478.863     c0,8.161,6.639,14.8,14.8,14.8h348.215c8.161,0,14.8-6.639,14.8-14.8V58.64c0-8.161-6.64-14.8-14.801-14.8H123.964z"
    id="path2"
-   style="fill:url(#linearGradient6);fill-opacity:1.0" />
+   style="fill:#757575;fill-opacity:1;stroke-width:0;stroke-dasharray:none" />
 		</g>
 		<g
    id="g4"
    style="fill:url(#linearGradient6);fill-opacity:1.0">
 			
 			
-		<ellipse
-   style="fill:url(#linearGradient14);fill-rule:evenodd;stroke:#ffffff;stroke-width:4.34318"
-   id="path5"
-   cx="293.92636"
-   cy="296.94098"
-   rx="79.778862"
-   ry="78.27153" /></g>
-	</g>
+		</g>
+	<text
+   xml:space="preserve"
+   style="font-size:310.568px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#757575;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0;stroke-dasharray:none"
+   x="254.57436"
+   y="475.78113"
+   id="text1"
+   transform="scale(1.1536412,0.86682064)"><tspan
+     sodipodi:role="line"
+     id="tspan1"
+     style="fill:#757575;fill-opacity:1;stroke-width:0;stroke-dasharray:none"
+     x="254.57436"
+     y="475.78113">X</tspan></text></g>
 </g>
 </svg>

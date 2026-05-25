@@ -4,7 +4,7 @@
 
 import type { ArtefactId } from '../types/artefacts';
 import type { DeckDraftEffect, DeckDraftOffer, DeckDraftState, Player, Rune, RuneEffectRarity, RuneType } from '../types/game';
-import { createRune } from './runeEffects';
+import { createRuneFromPool } from './runeEffects';
 import { getRuneTypes } from './gameInitialization';
 import { resolvePassiveEffects } from './effectResolver';
 
@@ -118,7 +118,8 @@ export function createDraftRuneForRarity({
   random = Math.random,
 }: CreateDraftRuneForRarityInput): Rune {
   const runeType = runeTypes[Math.floor(random() * runeTypes.length)];
-  return createRune(`draft-${ownerId}-${runeType}-${index}-${random().toString(36).slice(2, 6)}`, runeType, rarity);
+  const id = `draft-${ownerId}-${runeType}-${index}-${random().toString(36).slice(2, 6)}`;
+  return createRuneFromPool({ id, runeType, rarity, random });
 }
 
 function createDraftOffers(

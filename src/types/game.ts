@@ -6,6 +6,7 @@ import type { ArtefactId } from './artefacts';
 
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
+export type RuneSoundSignals = Record<RuneType, number>;
 
 export type EffectId = string;
 export type EffectParams = Record<string, unknown>;
@@ -134,4 +135,7 @@ export interface GameState extends CombatZoneState {
   deckDraftState: DeckDraftState | null;
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
+  runeSoundSignals: RuneSoundSignals;
+  enemyAttackSoundSignal: number;
+  shieldSoundSignal: number;
 }

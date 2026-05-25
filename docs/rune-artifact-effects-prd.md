@@ -143,7 +143,6 @@ Rarity drives:
 - Card art.
 - Tooltip styling.
 - Draft odds.
-- Disenchant value.
 
 Rarity does not drive v1 effect resolution.
 
@@ -176,7 +175,7 @@ Rarity does not drive v1 effect resolution.
 - Flat bonuses apply before multipliers.
 - Artefact passives affect cast output.
 - Artefact passives affect deck draft.
-- Rune rarity controls card art, disenchant value, draft odds.
+- Rune rarity controls card art and draft odds.
 - Effect data contains no rarity.
 - Old persisted schema is invalidated safely.
 

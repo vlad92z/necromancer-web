@@ -2,17 +2,32 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import { DeckOverlay } from './DeckOverlay';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useUIOverlayState } from '../../../hooks/useGameState';
+import { useEnemyAttackSoundSignal, useRuneSoundSignals, useShieldSoundSignal, useUIOverlayState } from '../../../hooks/useGameState';
+import { useEnemyAttackSound } from '../../../hooks/useEnemyAttackSound';
+import { useRuneSound } from '../../../hooks/useRuneSound';
+import { useShieldSound } from '../../../hooks/useShieldSound';
+import type { RuneSoundSignals, RuneType } from '../../../types/game';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
+const RUNE_SOUND_TYPES: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind', 'Lightning'];
+
 export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
-  const { showSettingsOverlay, showDeckOverlay } = useUIOverlayState();
+  const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
+  const runeSoundSignals = useRuneSoundSignals();
+  const enemyAttackSoundSignal = useEnemyAttackSoundSignal();
+  const shieldSoundSignal = useShieldSoundSignal();
+  const playRuneSound = useRuneSound();
+  const playEnemyAttackSound = useEnemyAttackSound();
+  const playShieldSound = useShieldSound();
+  const previousRuneSoundSignalsRef = useRef<RuneSoundSignals>(runeSoundSignals);
+  const previousEnemyAttackSoundSignalRef = useRef(enemyAttackSoundSignal);
+  const previousShieldSoundSignalRef = useRef(shieldSoundSignal);
   const hiddenWallSlots = useMemo(() => new Set<string>(), []);
 
   const [boardScale, setBoardScale] = useState(() => {
@@ -34,6 +49,37 @@ export function GameContainer() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    RUNE_SOUND_TYPES.forEach((runeType) => {
+      const signalDelta = runeSoundSignals[runeType] - previousRuneSoundSignalsRef.current[runeType];
+      for (let index = 0; index < signalDelta; index += 1) {
+        playRuneSound(runeType);
+      }
+    });
+
+    previousRuneSoundSignalsRef.current = runeSoundSignals;
+  }, [playRuneSound, runeSoundSignals]);
+
+  useEffect(() => {
+    if (enemyAttackSoundSignal <= previousEnemyAttackSoundSignalRef.current) {
+      previousEnemyAttackSoundSignalRef.current = enemyAttackSoundSignal;
+      return;
+    }
+
+    playEnemyAttackSound();
+    previousEnemyAttackSoundSignalRef.current = enemyAttackSoundSignal;
+  }, [enemyAttackSoundSignal, playEnemyAttackSound]);
+
+  useEffect(() => {
+    if (shieldSoundSignal <= previousShieldSoundSignalRef.current) {
+      previousShieldSoundSignalRef.current = shieldSoundSignal;
+      return;
+    }
+
+    playShieldSound();
+    previousShieldSoundSignalRef.current = shieldSoundSignal;
+  }, [playShieldSound, shieldSoundSignal]);
 
   const scaledBoardWidth = SCALING_CONFIG.baseWidth * boardScale;
   const scaledBoardHeight = SCALING_CONFIG.baseHeight * boardScale;
@@ -59,7 +105,7 @@ export function GameContainer() {
         </div>
       </div>
 
-      {showDeckOverlay && (<DeckOverlay />)}
+      {activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
       {showSettingsOverlay && (
         <SettingsOverlay onQuitRun={returnToStartScreen} />
       )}

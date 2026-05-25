@@ -5,7 +5,7 @@
 import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
 import { resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
-import type { WallPosition } from './effectResolver';
+import type { DrawTypeRequest, WallPosition } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
 
 const DEFAULT_HAND_SIZE = 6;
@@ -57,6 +57,14 @@ export interface DrawRunesInput {
   shuffleRunes?: (runes: Rune[]) => Rune[];
 }
 
+export interface DrawRunesOfTypeInput {
+  player: Player;
+  hand: Rune[];
+  discardPile: Rune[];
+  drawTypeRequests: DrawTypeRequest[];
+  handLimit?: number;
+}
+
 export interface DrawRunesResult {
   player: Player;
   hand: Rune[];
@@ -83,6 +91,7 @@ export interface CompletedRuneCastEffectsResult {
   wallChanged: boolean;
   arcaneDustDelta: number;
   drawCount: number;
+  drawTypeRequests: DrawTypeRequest[];
   logs: EffectResolutionLog[];
 }
 
@@ -117,6 +126,8 @@ export interface EnemyTurnInput {
 
 export interface EnemyTurnResult {
   player: Player;
+  logs: EffectResolutionLog[];
+  healthDamage: number;
 }
 
 export interface VictoryDeckInput {
@@ -199,6 +210,49 @@ export function drawRunes({
     },
     hand: nextHand,
     discardPile: nextDiscardPile,
+  };
+}
+
+export function drawRunesOfType({
+  player,
+  hand,
+  discardPile,
+  drawTypeRequests,
+  handLimit = EXTRA_DRAW_HAND_LIMIT,
+}: DrawRunesOfTypeInput): DrawRunesResult {
+  let drawDeck = [...player.deck];
+  let nextHand = [...hand];
+
+  drawTypeRequests.forEach(({ amount, targetType }) => {
+    let remaining = Math.max(0, amount);
+    if (remaining <= 0 || nextHand.length >= handLimit) {
+      return;
+    }
+
+    const nextDrawDeck: Rune[] = [];
+    const drawnRunes: Rune[] = [];
+
+    drawDeck.forEach((rune) => {
+      if (rune.runeType === targetType && remaining > 0 && nextHand.length + drawnRunes.length < handLimit) {
+        drawnRunes.push(rune);
+        remaining -= 1;
+        return;
+      }
+
+      nextDrawDeck.push(rune);
+    });
+
+    nextHand = [...nextHand, ...drawnRunes];
+    drawDeck = nextDrawDeck;
+  });
+
+  return {
+    player: {
+      ...player,
+      deck: drawDeck,
+    },
+    hand: nextHand,
+    discardPile,
   };
 }
 
@@ -321,7 +375,7 @@ export function resolveCompletedRuneCastEffects({
 
 export function resolveEnemyTurn({ player, enemy, activeArtefacts = [] }: EnemyTurnInput): EnemyTurnResult {
   if (!enemy || enemy.intent.type !== 'Attack') {
-    return { player };
+    return { player, logs: [], healthDamage: 0 };
   }
 
   const passiveResult = resolvePassiveEffects({
@@ -340,6 +394,8 @@ export function resolveEnemyTurn({ player, enemy, activeArtefacts = [] }: EnemyT
       armor: player.armor - armorAbsorbed,
       health: Math.max(0, player.health - healthDamage),
     },
+    logs: passiveResult.logs,
+    healthDamage,
   };
 }
 

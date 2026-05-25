@@ -157,6 +157,9 @@ describe('effectResolver resolveCastEffects', () => {
     wall[0][0] = createWallCell('Lightning', [
       createEffectRef('passive.damageBoostSynergy', { percent: 5, synergyType: 'Frost' }),
     ]);
+    wall[0][1] = createWallCell('Lightning', [
+      createEffectRef('passive.damageBoost', { amount: 1 }),
+    ]);
     const playerWithPassive = { ...player, wall };
     const enemy = createTestEnemy(20);
     const castRune = createTestRune('boosted-fire', 'Fire', [
@@ -171,15 +174,41 @@ describe('effectResolver resolveCastEffects', () => {
       activeArtefacts: ['tome'],
     });
 
-    expect(result.enemy?.health).toBe(15);
+    expect(result.enemy?.health).toBe(14);
     expect(result.logs.map((log) => log.effectId)).toEqual([
       'cast.damage',
-      'passive.damageBoostSynergy',
       'passive.tomeCastDamage',
+      'passive.damageBoost',
+      'passive.damageBoostSynergy',
     ]);
-    expect(result.logs[1]).toMatchObject({
+    expect(result.logs[2]).toMatchObject({
+      output: { previousValue: 4, nextValue: 5 },
+    });
+    expect(result.logs[3]).toMatchObject({
       output: { synergyType: 'Frost', synergyCount: 2, previousValue: 0, nextValue: 10 },
     });
+  });
+
+  it('does not create cast damage from flat damage boost alone', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Lightning', [
+      createEffectRef('passive.damageBoost', { amount: 1 }),
+    ]);
+    const player = { ...createTestPlayer(), wall };
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('support-cast', 'Life', [
+      createEffectRef('cast.healing', { amount: 2 }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall,
+    });
+
+    expect(result.enemy).toBe(enemy);
+    expect(result.logs.map((log) => log.effectId)).toEqual(['cast.healing']);
   });
 
   it('does not double-count the triggering rune for matching passive synergy', () => {
@@ -297,6 +326,29 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.draw',
       output: { drawCount: 1, totalDrawCount: 1 },
+    });
+  });
+
+  it('returns typed draw requests without mutating card zones', () => {
+    const player = createTestPlayer();
+    const enemy = createTestEnemy(20);
+    const castRune = createTestRune('wind-draw-fire', 'Wind', [
+      createEffectRef('cast.drawType', { amount: 2, targetType: 'Fire' }),
+    ]);
+
+    const result = resolveCastEffects({
+      player,
+      enemy,
+      castRune,
+      wall: player.wall,
+    });
+
+    expect(result.drawCount).toBe(0);
+    expect(result.drawTypeRequests).toEqual([{ amount: 2, targetType: 'Fire' }]);
+    expect(result.player.deck).toEqual(player.deck);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.drawType',
+      output: { drawCount: 2, targetType: 'Fire', totalDrawTypeCount: 2 },
     });
   });
 
@@ -792,6 +844,45 @@ describe('effectResolver end turn effects', () => {
       trigger: 'endTurn',
       output: { modifier: 15, synergyType: 'Void', synergyCount: 3 },
     });
+  });
+
+  it('applies flat damage boost to pulse damage without creating damage on empty end turns', () => {
+    const player = createTestPlayer([
+      [0, 4, 'Void'],
+      [1, 4, 'Void'],
+    ]);
+    const wall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
+    wall[0][0] = createWallCell('Void', [
+      createEffectRef('passive.pulseSynergy', { amount: 5, synergyType: 'Void' }),
+    ]);
+    wall[0][1] = createWallCell('Lightning', [
+      createEffectRef('passive.damageBoost', { amount: 1 }),
+    ]);
+    const playerWithBoostedPulse = { ...player, wall };
+
+    const result = resolveEndTurnEffects({
+      player: playerWithBoostedPulse,
+      enemy: createTestEnemy(20),
+      wall: playerWithBoostedPulse.wall,
+    });
+
+    expect(result.enemy?.health).toBe(4);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'passive.pulseSynergy',
+      'passive.damageBoost',
+    ]);
+    expect(result.logs[1]).toMatchObject({
+      trigger: 'endTurn',
+      output: { modifier: 1, previousValue: 15, nextValue: 16 },
+    });
+
+    const emptyEndTurn = resolveEndTurnEffects({
+      player: playerWithBoostedPulse,
+      enemy: createTestEnemy(20),
+      wall: createEmptyWall(6),
+    });
+    expect(emptyEndTurn.enemy?.health).toBe(20);
+    expect(emptyEndTurn.logs).toEqual([]);
   });
 });
 

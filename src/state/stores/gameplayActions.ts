@@ -16,7 +16,6 @@ export interface GameplayActions {
   endCombatTurn: () => void;
   resetGame: () => void;
   selectDeckDraftOffer: (offerId: string) => void;
-  disenchantRuneFromDeck: (runeId: string) => number;
 }
 
 export const gameplayActions: GameplayActions = {
@@ -30,5 +29,4 @@ export const gameplayActions: GameplayActions = {
   endCombatTurn: () => useGameplayStore.getState().endCombatTurn(),
   resetGame: () => useGameplayStore.getState().resetGame(),
   selectDeckDraftOffer: (offerId) => useGameplayStore.getState().selectDeckDraftOffer(offerId),
-  disenchantRuneFromDeck: (runeId) => useGameplayStore.getState().disenchantRuneFromDeck(runeId),
 };

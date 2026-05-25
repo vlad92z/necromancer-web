@@ -80,7 +80,7 @@ export function useUIOverlayState() {
   return useUIStore(
     useShallow((state) => ({
       showSettingsOverlay: state.showSettingsOverlay,
-      showDeckOverlay: state.showDeckOverlay,
+      activeRuneZoneOverlay: state.activeRuneZoneOverlay,
     })),
   );
 }
@@ -144,6 +144,18 @@ export function useGameplayStatusState() {
       deckDraftState: state.deckDraftState,
     })),
   );
+}
+
+export function useRuneSoundSignals() {
+  return useRunStore((state) => state.runeSoundSignals);
+}
+
+export function useEnemyAttackSoundSignal() {
+  return useRunStore((state) => state.enemyAttackSoundSignal);
+}
+
+export function useShieldSoundSignal() {
+  return useRunStore((state) => state.shieldSoundSignal);
 }
 
 export function useGameplaySummaryState() {

@@ -82,5 +82,5 @@ Keep tests focused on current systems:
 - Combat resolution: valid/invalid casts, charge completion, enemy damage, healing, armor, fortune, synergy, fragile.
 - Turn flow: discard, draw, discard reshuffle, partial/empty hands.
 - Victory: return hand/discard/wall/spent charge runes to deck and open draft offers.
-- Deck drafting: offer generation, offer selection, artefact passives, rarity, disenchanting.
+- Deck drafting: offer generation, offer selection, artefact passives, rarity.
 - Persistence: old schema invalidation and current schema load/save.

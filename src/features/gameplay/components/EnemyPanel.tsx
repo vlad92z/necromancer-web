@@ -23,7 +23,6 @@ export function EnemyPanel() {
     <section className="h-full p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-extrabold uppercase tracking-[0.24em] text-red-200/80">Enemy</div>
           <h2 className="mt-1 text-2xl font-black text-red-100">{enemy.name}</h2>
         </div>
         <div className="rounded-md border border-red-300/30 bg-red-950/50 px-3 py-2 text-right">

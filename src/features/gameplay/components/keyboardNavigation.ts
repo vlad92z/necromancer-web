@@ -4,7 +4,7 @@
 
 export type ActiveElement =
   | { type: 'settings' }
-  | { type: 'deck' }
+  | { type: 'rune-zone'; zone: 'draw' | 'discard' | 'deck' }
   | { type: 'scoring-wall'; row: number; col: number }
   | { type: 'artefact'; artefactIndex: number };
 

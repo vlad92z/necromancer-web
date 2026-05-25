@@ -1,31 +1,54 @@
 /**
- * DeckOverlay component - displays player's remaining deck runes in a grid
+ * RuneZoneOverlay component - displays runes from a combat zone as cards.
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Rune, RuneType } from '../../../types/game';
-import { RuneCell } from '../../../components/RuneCell';
+import type { RuneZoneOverlay as RuneZoneOverlayType } from '../../../state/stores/uiStore';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
-import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
-import { useArcaneDustSound } from '../../../hooks/useArcaneDustSound';
-import { useArcaneDust, useGameplayDeckState } from '../../../hooks/useGameState';
-import { compareRunesByRarityThenId, getRuneDisenchantDust } from '../../../utils/runeRarity';
+import { useUIActions } from '../../../hooks/useGameActions';
+import { useClickSound } from '../../../hooks/useClickSound';
+import { useArcaneDust, useCombatZoneState, useGameplayDeckState } from '../../../hooks/useGameState';
+import { compareRunesByRarityThenId } from '../../../utils/runeRarity';
+import { buildRuneTooltipCards } from '../../../utils/tooltipCards';
+import { CardView } from './Player/CardView';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
-export function DeckOverlay() {
-  const { disenchantRuneFromDeck: onDisenchantRune } = useGameplayActions();
-  const { deck, isDrafting } = useGameplayDeckState();
-  const { toggleDeckOverlay: onClose } = useUIActions();
-  const playArcaneDustSound = useArcaneDustSound();
+interface RuneZoneOverlayProps {
+  zone: RuneZoneOverlayType;
+}
+
+const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+
+const ZONE_COPY: Record<RuneZoneOverlayType, { title: string; emptyText: string }> = {
+  draw: {
+    title: 'Draw',
+    emptyText: 'No runes in draw deck',
+  },
+  discard: {
+    title: 'Discard',
+    emptyText: 'No discarded runes',
+  },
+  deck: {
+    title: 'Deck',
+    emptyText: 'No runes in deck',
+  },
+};
+
+export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
+  const { deck } = useGameplayDeckState();
+  const { hand, discardPile } = useCombatZoneState();
+  const { closeRuneZoneOverlay: onClose } = useUIActions();
+  const playClickSound = useClickSound();
   const arcaneDust = useArcaneDust();
-  const [dustGain, setDustGain] = useState<{ amount: number; key: number } | null>(null);
-  const dustGainKeyRef = useRef(0);
-  const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
-  const [hoveredRuneId, setHoveredRuneId] = useState<string | null>(null);
-  const deckForTotals = deck;
-  // Group runes by type for ordering and totals
-  const runesByType = deckForTotals.reduce((acc, rune) => {
+  const zoneCopy = ZONE_COPY[zone];
+  const zoneRunes = zone === 'draw'
+    ? deck
+    : zone === 'discard'
+      ? discardPile
+      : [...deck, ...discardPile, ...hand];
+
+  const runesByType = zoneRunes.reduce((acc, rune) => {
     if (!acc[rune.runeType]) {
       acc[rune.runeType] = [];
     }
@@ -33,21 +56,12 @@ export function DeckOverlay() {
     return acc;
   }, {} as Record<RuneType, Rune[]>);
 
-  const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
-  const runeById = useMemo(() => new Map(deck.map((rune) => [rune.id, rune])), [deck]);
-  const selectedRuneIdSet = useMemo(() => new Set(selectedRuneIds), [selectedRuneIds]);
-  const remainingRuneIds = new Set(deck.map((rune) => rune.id));
-  const sortedRunes = runeTypes.flatMap((runeType) => {
-    const runes = deck.filter((rune) => rune.runeType === runeType);
-    const ordered = [...runes].sort(compareRunesByRarityThenId);
-    return ordered.map((rune) => ({
-      rune,
-      isDrafted: !remainingRuneIds.has(rune.id),
-      isSelected: selectedRuneIdSet.has(rune.id),
-    }));
+  const sortedRunes = RUNE_TYPES.flatMap((runeType) => {
+    const runes = zoneRunes.filter((rune) => rune.runeType === runeType);
+    return [...runes].sort(compareRunesByRarityThenId);
   });
-  const runeSize = sortedRunes.length > 140 ? 'small' : 'medium';
-  const runeTypeCounts = runeTypes.reduce(
+  const runeCards = buildRuneTooltipCards(sortedRunes);
+  const runeTypeCounts = RUNE_TYPES.reduce(
     (acc, runeType) => ({
       ...acc,
       [runeType]: runesByType[runeType]?.length ?? 0,
@@ -55,75 +69,10 @@ export function DeckOverlay() {
     {} as Record<RuneType, number>,
   );
 
-  const totalRuneCount = deckForTotals.length;
-
-  const canSelectRunes = isDrafting && Boolean(onDisenchantRune);
-  const shouldDimDrafted = !isDrafting;
-  const selectedRunes = useMemo(
-    () =>
-      selectedRuneIds
-        .map((id) => runeById.get(id))
-        .filter((rune): rune is Rune => Boolean(rune)),
-    [runeById, selectedRuneIds],
-  );
-  const pendingDustTotal = useMemo(
-    () =>
-      selectedRunes.reduce((acc, rune) => {
-        return acc + getRuneDisenchantDust(rune.rarity);
-      }, 0),
-    [selectedRunes],
-  );
-
-  useEffect(() => {
-    if (!dustGain) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      setDustGain(null);
-    }, 1200);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [dustGain]);
-
-  const toggleRuneSelection = (runeId: string) => {
-    if (!canSelectRunes) {
-      return;
-    }
-
-    setSelectedRuneIds((prev) => (prev.includes(runeId) ? prev.filter((id) => id !== runeId) : [...prev, runeId]));
-  };
-
-  const clearSelection = () => {
-    setSelectedRuneIds([]);
-  };
-
-  const handleDisenchantSelected = () => {
-    if (!canSelectRunes || !onDisenchantRune || selectedRunes.length === 0) {
-      return;
-    }
-
-    let totalDustAwarded = 0;
-
-    selectedRunes.forEach((rune) => {
-      const awardedDust = onDisenchantRune(rune.id);
-      if (typeof awardedDust === 'number') {
-        totalDustAwarded += awardedDust;
-      } else {
-        totalDustAwarded += getRuneDisenchantDust(rune.rarity);
-      }
-    });
-
-    if (totalDustAwarded > 0) {
-      const nextKey = dustGainKeyRef.current + 1;
-      dustGainKeyRef.current = nextKey;
-      setDustGain({ amount: totalDustAwarded, key: nextKey });
-      playArcaneDustSound();
-    }
-
-    clearSelection();
+  const totalRuneCount = zoneRunes.length;
+  const handleCloseButton = () => {
+    playClickSound();
+    onClose();
   };
 
   return (
@@ -144,13 +93,11 @@ export function DeckOverlay() {
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex justify-between w-full">
-              <div>
-                
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">Deck Overview</div>
-              <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{`Deck (${totalRuneCount})`}</h2>
+              <div>                
+              <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{`${zoneCopy.title} (${totalRuneCount})`}</h2>
               </div>
               <button
-                onClick={onClose}
+                onClick={handleCloseButton}
                 type="button"
                 className="rounded-xl border border-white/20 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-400 px-4 py-2 text-sm font-extrabold uppercase tracking-[0.12em] text-slate-900 shadow-[0_10px_25px_rgba(99,102,241,0.45)] transition hover:from-purple-400 hover:via-indigo-400 hover:to-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
               >
@@ -158,25 +105,11 @@ export function DeckOverlay() {
               </button>
             </div>
             <div className="flex flex-wrap justify-between w-full items-center gap-3" >
-              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts}/>
+              <RuneTypeTotals runeTypes={RUNE_TYPES} counts={runeTypeCounts}/>
               <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
                 <img src={arcaneDustIcon} alt="Arcane Dust" className="h-7 w-7" />
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg text-amber-200">{arcaneDust.toLocaleString()}</span>
-                  <AnimatePresence>
-                    {dustGain && dustGain.amount > 0 && (
-                      <motion.span
-                        key={dustGain.key}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.35, ease: 'easeOut' }}
-                        className="text-emerald-200 text-sm font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]"
-                      >
-                        +{dustGain.amount}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
                 </div>
               
                 </div>
@@ -191,43 +124,25 @@ export function DeckOverlay() {
                 exit={{ opacity: 0, y: 16 }}
                 className="rounded-2xl border border-[#9575ff]/30 bg-[linear-gradient(135deg,rgba(67,31,120,0.35),rgba(21,10,46,0.92))] p-3.5 shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
               >
-                <div className="grid grid-cols-[repeat(auto-fill,_minmax(38px,_1fr))] gap-2.5">
-                  {sortedRunes.map(({ rune, isDrafted, isSelected }) => {
-                    const isHovered = hoveredRuneId === rune.id;
+                <div className="grid grid-cols-[repeat(auto-fill,_minmax(9rem,_1fr))] gap-4">
+                  {sortedRunes.map((rune, index) => {
+                    const card = runeCards[index];
+
+                    if (!card) {
+                      return null;
+                    }
 
                     return (
-                      <div key={rune.id}>
-                        <button
-                          type="button"
-                          onClick={() => toggleRuneSelection(rune.id)}
-                          disabled={!canSelectRunes}
-                          aria-pressed={isSelected}
-                          className="relative flex h-full w-full items-center justify-center rounded-full"
-                          style={{
-                            cursor: canSelectRunes ? 'pointer' : 'default',
-                            boxShadow: isSelected
-                              ? '0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(196, 181, 253, 0.35)'
-                              : 'none',
-                            filter: isSelected ? 'brightness(1.12)' : 'none',
-                            border: isSelected ? '1px solid rgba(196, 181, 253, 0.55)' : '1px solid transparent',
-                            padding: '2px',
-                            position: 'relative',
-                            zIndex: isHovered ? 50 : 1,
-                          }}
-                          onMouseEnter={() => setHoveredRuneId(rune.id)}
-                          onMouseLeave={() => setHoveredRuneId(null)}
-                        >
-                          <RuneCell
-                            rune={rune}
-                            variant="draft"
-                            size={runeSize}
-                            showEffect
-                            showTooltip
-                            runeOpacity={shouldDimDrafted && isDrafted ? 0.25 : 1}
-                            tooltipPlacement="bottom"
-                            clickable={canSelectRunes}
-                          />
-                        </button>
+                      <div key={rune.id} className="flex min-h-[13.5rem] items-center justify-center">
+                        <CardView
+                          title={card.title}
+                          imageSrc={card.imageSrc}
+                          description={card.description}
+                          runeType={card.runeType}
+                          runeRarity={card.runeRarity}
+                          variant={card.variant}
+                          size="hand"
+                        />
                       </div>
                     );
                   })}
@@ -237,42 +152,11 @@ export function DeckOverlay() {
 
             {sortedRunes.length === 0 && (
               <div className="rounded-2xl border border-dashed border-slate-400/50 bg-white/5 px-12 py-12 text-center text-slate-200">
-                <div className="mb-3 text-5xl">🎴</div>
-                <p className="text-lg font-extrabold">No runes remaining</p>
+                <p className="text-lg font-extrabold">{zoneCopy.emptyText}</p>
               </div>
             )}
           </div>
 
-          <AnimatePresence>
-            {canSelectRunes && selectedRuneIds.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.2 }}
-                className="mt-4 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.35)]"
-              >
-                <button
-                  type="button"
-                  onClick={clearSelection}
-                  className="rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-bold uppercase tracking-[0.12em] text-white/80 transition hover:border-white/40 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDisenchantSelected}
-                  className="inline-flex items-center gap-2 rounded-xl border border-amber-300/60 bg-gradient-to-r from-amber-300/20 via-amber-200/20 to-amber-100/10 px-4 py-2 text-sm font-extrabold uppercase tracking-[0.14em] text-amber-100 shadow-[0_14px_38px_rgba(0,0,0,0.45)] transition hover:border-amber-200 hover:from-amber-200/30 hover:via-amber-100/25 hover:to-amber-50/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
-                >
-                  <img src={arcaneDustIcon} alt="Arcane Dust" className="h-5 w-5" />
-                  <span>Disenchant</span>
-                  <span className="rounded-lg bg-black/25 px-2 py-1 text-[12px] font-black text-amber-100 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]">
-                    +{pendingDustTotal}
-                  </span>
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       </motion.div>
     </AnimatePresence>

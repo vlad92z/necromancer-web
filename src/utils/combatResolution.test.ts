@@ -7,6 +7,7 @@ import {
   collectVictoryDeck,
   countFilledWallRunesByType,
   drawRunes,
+  drawRunesOfType,
   endPlayerTurn,
   resolveCompletedRuneCastEffects,
   resolveEnemyTurn,
@@ -157,6 +158,60 @@ describe('combatResolution turn cycling', () => {
       'discard-extra-3',
     ]);
     expect(result.discardPile).toEqual([]);
+  });
+
+  it('draws typed runes from deck only while preserving deck order', () => {
+    const hand = createRunes('hand', 1);
+    const deckRunes = [
+      createTestRune('deck-fire-0', 'Fire'),
+      createTestRune('deck-life-0', 'Life'),
+      createTestRune('deck-fire-1', 'Fire'),
+      createTestRune('deck-void-0', 'Void'),
+      createTestRune('deck-fire-2', 'Fire'),
+    ];
+    const discardRunes = [createTestRune('discard-fire-0', 'Fire')];
+    const player = createPlayer('player-1', 'Tester', 10, deckRunes, 10);
+
+    const result = drawRunesOfType({
+      player,
+      hand,
+      discardPile: discardRunes,
+      drawTypeRequests: [{ amount: 2, targetType: 'Fire' }],
+      handLimit: 10,
+    });
+
+    expect(result.hand.map((rune) => rune.id)).toEqual([
+      'hand-0',
+      'deck-fire-0',
+      'deck-fire-1',
+    ]);
+    expect(result.player.deck.map((rune) => rune.id)).toEqual([
+      'deck-life-0',
+      'deck-void-0',
+      'deck-fire-2',
+    ]);
+    expect(result.discardPile.map((rune) => rune.id)).toEqual(['discard-fire-0']);
+  });
+
+  it('draws as many typed runes as are available from deck', () => {
+    const deckRunes = [
+      createTestRune('deck-fire-0', 'Fire'),
+      createTestRune('deck-life-0', 'Life'),
+    ];
+    const discardRunes = [createTestRune('discard-fire-0', 'Fire')];
+    const player = createPlayer('player-1', 'Tester', 10, deckRunes, 10);
+
+    const result = drawRunesOfType({
+      player,
+      hand: [],
+      discardPile: discardRunes,
+      drawTypeRequests: [{ amount: 3, targetType: 'Fire' }],
+      handLimit: 10,
+    });
+
+    expect(result.hand.map((rune) => rune.id)).toEqual(['deck-fire-0']);
+    expect(result.player.deck.map((rune) => rune.id)).toEqual(['deck-life-0']);
+    expect(result.discardPile.map((rune) => rune.id)).toEqual(['discard-fire-0']);
   });
 
   it('moves remaining hand to discard before drawing from deck', () => {
@@ -351,10 +406,10 @@ describe('combatResolution basic combat effects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.enemy?.health).toBe(14);
+    expect(result.enemy?.health).toBe(12);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.damageAdjacent',
-      output: { adjacentCount: 3, damage: 6 },
+      output: { adjacentCount: 4, damage: 8 },
     });
   });
 
@@ -371,11 +426,11 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneCastEffects({ player, enemy, rune });
 
-    expect(result.enemy?.health).toBe(16);
+    expect(result.enemy?.health).toBe(14);
     expect(result.player).toBe(player);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.synergy',
-      output: { damage: 4, synergyType: 'Void', synergyCount: 2, enemyHealth: 16 },
+      output: { damage: 6, synergyType: 'Void', synergyCount: 3, enemyHealth: 14 },
     });
   });
 
@@ -394,10 +449,10 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(20), rune });
 
-    expect(result.player.armor).toBe(7);
+    expect(result.player.armor).toBe(10);
     expect(result.logs[0]).toMatchObject({
       effectId: 'cast.armorSynergy',
-      output: { armor: 6, synergyType: 'Frost', synergyCount: 2, playerArmor: 7 },
+      output: { armor: 9, synergyType: 'Frost', synergyCount: 3, playerArmor: 10 },
     });
   });
 
@@ -445,7 +500,7 @@ describe('combatResolution basic combat effects', () => {
 
     const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(20), rune });
 
-    expect(result.enemy?.health).toBe(11);
+    expect(result.enemy?.health).toBe(9);
     expect(result.player.armor).toBe(3);
     expect(result.arcaneDustDelta).toBe(5);
     expect(result.logs.map((log) => log.effectId)).toEqual([
@@ -534,12 +589,12 @@ describe('combatResolution basic combat effects', () => {
     });
 
     expect(result.enemy?.health).toBe(8);
-    expect(result.player.armor).toBe(9);
+    expect(result.player.armor).toBe(13);
     expect(result.logs).toMatchObject([
       { effectId: 'cast.damage', output: { damage: 1, enemyHealth: 9 } },
-      { effectId: 'cast.armorSynergy', output: { armor: 4, playerArmor: 5 } },
+      { effectId: 'cast.armorSynergy', output: { armor: 6, playerArmor: 7 } },
       { effectId: 'passive.tomeCastDamage', output: { previousValue: 1, nextValue: 2 } },
-      { effectId: 'passive.potionArmor', output: { previousValue: 4, nextValue: 8 } },
+      { effectId: 'passive.potionArmor', output: { previousValue: 6, nextValue: 12 } },
     ]);
   });
 
@@ -554,6 +609,7 @@ describe('combatResolution basic combat effects', () => {
 
     expect(result.player.armor).toBe(0);
     expect(result.player.health).toBe(8);
+    expect(result.healthDamage).toBe(2);
   });
 
   it('reduces enemy attack damage before armor', () => {
@@ -568,6 +624,7 @@ describe('combatResolution basic combat effects', () => {
 
     expect(result.player.armor).toBe(0);
     expect(result.player.health).toBe(9);
+    expect(result.healthDamage).toBe(1);
   });
 
   it('lethal enemy attack reaches zero health', () => {
@@ -580,6 +637,35 @@ describe('combatResolution basic combat effects', () => {
     const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
 
     expect(result.player.health).toBe(0);
+    expect(result.healthDamage).toBe(5);
+  });
+
+  it('reports zero health damage when armor fully absorbs enemy attack', () => {
+    const player = {
+      ...createPlayer('player-1', 'Tester', 10, [], 10),
+      health: 10,
+      armor: 6,
+    };
+
+    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
+
+    expect(result.player.armor).toBe(1);
+    expect(result.player.health).toBe(10);
+    expect(result.healthDamage).toBe(0);
+  });
+
+  it('reports zero health damage when passives reduce enemy attack to zero', () => {
+    const player = {
+      ...createPlayerWithWall([[0, 0, 'Frost']]),
+      health: 10,
+      armor: 0,
+    };
+    player.wall[0][0] = createWallCell('Frost', [createEffectRef('passive.reduceDamage', { amount: 5 })]);
+
+    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
+
+    expect(result.player.health).toBe(10);
+    expect(result.healthDamage).toBe(0);
   });
 });
 

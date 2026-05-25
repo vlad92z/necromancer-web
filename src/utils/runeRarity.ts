@@ -1,5 +1,5 @@
 /**
- * Shared rune rarity ordering and disenchant reward helpers.
+ * Shared rune rarity ordering helpers.
  */
 
 import type { Rune, RuneEffectRarity } from '../types/game';
@@ -11,13 +11,6 @@ export const RUNE_RARITY_SORT_RANK: Record<RuneEffectRarity, number> = {
   common: 3,
 };
 
-export const RUNE_RARITY_DUST_REWARD: Record<RuneEffectRarity, number> = {
-  common: 0,
-  uncommon: 1,
-  rare: 5,
-  epic: 25,
-};
-
 export function compareRunesByRarityThenId(a: Rune, b: Rune): number {
   const rarityDelta = RUNE_RARITY_SORT_RANK[a.rarity] - RUNE_RARITY_SORT_RANK[b.rarity];
 
@@ -26,8 +19,4 @@ export function compareRunesByRarityThenId(a: Rune, b: Rune): number {
   }
 
   return a.id.localeCompare(b.id);
-}
-
-export function getRuneDisenchantDust(rarity: RuneEffectRarity): number {
-  return RUNE_RARITY_DUST_REWARD[rarity];
 }
