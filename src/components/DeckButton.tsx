@@ -2,6 +2,8 @@ import { useUIActions } from '../hooks/useGameActions';
 import { useActiveElement, useCombatZoneState, useGameplayDeckState, useUIOverlayState } from '../hooks/useGameState';
 import type { RuneZoneOverlay } from '../state/stores/uiStore';
 import deckSvg from '../assets/stats/deck.svg';
+import drawSvg from '../assets/stats/draw.svg';
+import discardSvg from '../assets/stats/discard.svg';
 import { buildTextTooltipCard } from '../utils/tooltipCards';
 
 const ZONE_COPY: Record<RuneZoneOverlay, { label: string; title: string; tooltip: (count: number) => string }> = {
@@ -47,9 +49,9 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
     return (
         <button
             type="button"
-            onMouseEnter={() => setTooltip(buildTextTooltipCard(`${zone}-tooltip`, copy.title, zoneTooltip, deckSvg))}
+            onMouseEnter={() => setTooltip(buildTextTooltipCard(`${zone}-tooltip`, copy.title, zoneTooltip, zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg))}
             onMouseLeave={resetTooltips}
-            onFocus={() => setTooltip(buildTextTooltipCard(`${zone}-tooltip`, copy.title, zoneTooltip, deckSvg))}
+            onFocus={() => setTooltip(buildTextTooltipCard(`${zone}-tooltip`, copy.title, zoneTooltip, zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg))}
             onBlur={resetTooltips}
             onClick={() => openRuneZoneOverlay(zone)}
             data-active={isActive ? 'true' : undefined}
@@ -57,12 +59,11 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
             className={deckClassName}
         >
             <img
-                src={deckSvg}
+                src={zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg}
                 aria-hidden={true}
                 className="inline-flex w-[35px] h-[35px]"
             />
             <div className="flex flex-col leading-[1.2] ml-2">
-                <span className="text-[0.6rem] font-extrabold uppercase tracking-[0.16em] text-sky-100/70">{copy.label}</span>
                 <span className="text-[1.15rem] font-semibold">{zoneCount}</span>
             </div>
         </button>
