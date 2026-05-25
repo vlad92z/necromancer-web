@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { DeckOverlay } from './DeckOverlay';
+import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
 import { useUIOverlayState } from '../../../hooks/useGameState';
@@ -12,7 +12,7 @@ import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
 export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
-  const { showSettingsOverlay, showDeckOverlay } = useUIOverlayState();
+  const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
   const hiddenWallSlots = useMemo(() => new Set<string>(), []);
 
   const [boardScale, setBoardScale] = useState(() => {
@@ -59,7 +59,7 @@ export function GameContainer() {
         </div>
       </div>
 
-      {showDeckOverlay && (<DeckOverlay />)}
+      {activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
       {showSettingsOverlay && (
         <SettingsOverlay onQuitRun={returnToStartScreen} />
       )}

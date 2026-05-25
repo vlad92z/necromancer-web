@@ -80,7 +80,7 @@ export function useUIOverlayState() {
   return useUIStore(
     useShallow((state) => ({
       showSettingsOverlay: state.showSettingsOverlay,
-      showDeckOverlay: state.showDeckOverlay,
+      activeRuneZoneOverlay: state.activeRuneZoneOverlay,
     })),
   );
 }

@@ -23,7 +23,7 @@ export function DeckDraftingModal({
   const { deck } = useGameplayDeckState();
   const totalDeckSize = deck.length;
   const { selectDeckDraftOffer: onSelectOffer, startNextSoloGame } = useGameplayActions();
-  const { toggleDeckOverlay: onOpenDeckOverlay } = useUIActions();
+  const { openRuneZoneOverlay } = useUIActions();
   const playClickSound = useClickSound();
   const [displayedOffers, setDisplayedOffers] = useState<DeckDraftOffer[]>(draftState.offers);
   const [pendingOffers, setPendingOffers] = useState<DeckDraftOffer[] | null>(null);
@@ -158,7 +158,7 @@ export function DeckDraftingModal({
 
   const handleOpenDeckOverlay = () => {
     playClickSound();
-    onOpenDeckOverlay();
+    openRuneZoneOverlay('deck');
   };
 
   const handleStartNextGame = () => {

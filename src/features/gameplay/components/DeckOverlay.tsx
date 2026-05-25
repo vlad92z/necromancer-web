@@ -1,24 +1,55 @@
 /**
- * DeckOverlay component - displays player's remaining deck runes as cards
+ * RuneZoneOverlay component - displays runes from a combat zone as cards.
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Rune, RuneType } from '../../../types/game';
+import type { RuneZoneOverlay as RuneZoneOverlayType } from '../../../state/stores/uiStore';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { useUIActions } from '../../../hooks/useGameActions';
-import { useArcaneDust, useGameplayDeckState } from '../../../hooks/useGameState';
+import { useArcaneDust, useCombatZoneState, useGameplayDeckState } from '../../../hooks/useGameState';
 import { compareRunesByRarityThenId } from '../../../utils/runeRarity';
 import { buildRuneTooltipCards } from '../../../utils/tooltipCards';
 import { CardView } from './Player/CardView';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
 
-export function DeckOverlay() {
+interface RuneZoneOverlayProps {
+  zone: RuneZoneOverlayType;
+}
+
+const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
+
+const ZONE_COPY: Record<RuneZoneOverlayType, { eyebrow: string; title: string; emptyText: string }> = {
+  draw: {
+    eyebrow: 'Draw Overview',
+    title: 'Draw',
+    emptyText: 'No runes in draw deck',
+  },
+  discard: {
+    eyebrow: 'Discard Overview',
+    title: 'Discard',
+    emptyText: 'No discarded runes',
+  },
+  deck: {
+    eyebrow: 'Deck Overview',
+    title: 'Deck',
+    emptyText: 'No runes in deck',
+  },
+};
+
+export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
   const { deck } = useGameplayDeckState();
-  const { toggleDeckOverlay: onClose } = useUIActions();
+  const { hand, discardPile } = useCombatZoneState();
+  const { closeRuneZoneOverlay: onClose } = useUIActions();
   const arcaneDust = useArcaneDust();
-  const deckForTotals = deck;
-  // Group runes by type for ordering and totals
-  const runesByType = deckForTotals.reduce((acc, rune) => {
+  const zoneCopy = ZONE_COPY[zone];
+  const zoneRunes = zone === 'draw'
+    ? deck
+    : zone === 'discard'
+      ? discardPile
+      : [...deck, ...discardPile, ...hand];
+
+  const runesByType = zoneRunes.reduce((acc, rune) => {
     if (!acc[rune.runeType]) {
       acc[rune.runeType] = [];
     }
@@ -26,13 +57,12 @@ export function DeckOverlay() {
     return acc;
   }, {} as Record<RuneType, Rune[]>);
 
-  const runeTypes: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
-  const sortedRunes = runeTypes.flatMap((runeType) => {
-    const runes = deck.filter((rune) => rune.runeType === runeType);
+  const sortedRunes = RUNE_TYPES.flatMap((runeType) => {
+    const runes = zoneRunes.filter((rune) => rune.runeType === runeType);
     return [...runes].sort(compareRunesByRarityThenId);
   });
-  const deckCards = buildRuneTooltipCards(sortedRunes);
-  const runeTypeCounts = runeTypes.reduce(
+  const runeCards = buildRuneTooltipCards(sortedRunes);
+  const runeTypeCounts = RUNE_TYPES.reduce(
     (acc, runeType) => ({
       ...acc,
       [runeType]: runesByType[runeType]?.length ?? 0,
@@ -40,7 +70,7 @@ export function DeckOverlay() {
     {} as Record<RuneType, number>,
   );
 
-  const totalRuneCount = deckForTotals.length;
+  const totalRuneCount = zoneRunes.length;
 
   return (
     <AnimatePresence>
@@ -62,8 +92,8 @@ export function DeckOverlay() {
             <div className="inline-flex justify-between w-full">
               <div>
                 
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">Deck Overview</div>
-              <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{`Deck (${totalRuneCount})`}</h2>
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">{zoneCopy.eyebrow}</div>
+              <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{`${zoneCopy.title} (${totalRuneCount})`}</h2>
               </div>
               <button
                 onClick={onClose}
@@ -74,7 +104,7 @@ export function DeckOverlay() {
               </button>
             </div>
             <div className="flex flex-wrap justify-between w-full items-center gap-3" >
-              <RuneTypeTotals runeTypes={runeTypes} counts={runeTypeCounts}/>
+              <RuneTypeTotals runeTypes={RUNE_TYPES} counts={runeTypeCounts}/>
               <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
                 <img src={arcaneDustIcon} alt="Arcane Dust" className="h-7 w-7" />
                 <div className="flex items-baseline gap-2">
@@ -95,7 +125,7 @@ export function DeckOverlay() {
               >
                 <div className="grid grid-cols-[repeat(auto-fill,_minmax(9rem,_1fr))] gap-4">
                   {sortedRunes.map((rune, index) => {
-                    const card = deckCards[index];
+                    const card = runeCards[index];
 
                     if (!card) {
                       return null;
@@ -121,8 +151,7 @@ export function DeckOverlay() {
 
             {sortedRunes.length === 0 && (
               <div className="rounded-2xl border border-dashed border-slate-400/50 bg-white/5 px-12 py-12 text-center text-slate-200">
-                <div className="mb-3 text-5xl">🎴</div>
-                <p className="text-lg font-extrabold">No runes remaining</p>
+                <p className="text-lg font-extrabold">{zoneCopy.emptyText}</p>
               </div>
             )}
           </div>
