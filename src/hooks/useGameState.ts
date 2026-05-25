@@ -146,8 +146,8 @@ export function useGameplayStatusState() {
   );
 }
 
-export function useFrostSoundSignal() {
-  return useRunStore((state) => state.frostSoundSignal);
+export function useRuneSoundSignals() {
+  return useRunStore((state) => state.runeSoundSignals);
 }
 
 export function useGameplaySummaryState() {

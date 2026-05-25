@@ -37,7 +37,7 @@ export function getGameplayState(): GameState {
     deckDraftState: run.deckDraftState,
     deckDraftReadyForNextGame: run.deckDraftReadyForNextGame,
     activeArtefacts: run.activeArtefacts,
-    frostSoundSignal: run.frostSoundSignal,
+    runeSoundSignals: run.runeSoundSignals,
     enemy: combat.enemy,
     combatPhase: combat.combatPhase,
     hand: combat.hand,

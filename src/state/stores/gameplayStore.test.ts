@@ -149,24 +149,31 @@ describe('gameplayStore current combat', () => {
     expect(useArtefactStore.getState().arcaneDust).toBe(10);
   });
 
-  it('increments frost sound signal after completing a Frost rune slot', () => {
+  it.each<[RuneType, number]>([
+    ['Fire', 0],
+    ['Life', 1],
+    ['Wind', 2],
+    ['Frost', 3],
+    ['Void', 4],
+    ['Lightning', 5],
+  ])('increments %s rune sound signal after completing a matching row-one slot', (runeType, col) => {
     const store = createGameplayStoreInstance();
-    const frostRune = createTestRune('frost-1', 'Frost', 0);
+    const rune = createTestRune(`${runeType.toLowerCase()}-1`, runeType, 0);
 
     store.setState((state) => ({
       ...state,
-      hand: [frostRune],
-      selectedHandRuneId: frostRune.id,
+      hand: [rune],
+      selectedHandRuneId: rune.id,
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
       wallCharges: createEmptyWallCharges(),
     }));
 
-    store.getState().castRuneToWall(0, 3);
+    store.getState().castRuneToWall(0, col);
 
-    expect(store.getState().frostSoundSignal).toBe(1);
+    expect(store.getState().runeSoundSignals[runeType]).toBe(1);
   });
 
-  it('does not increment frost sound signal for non-final Frost charges', () => {
+  it('does not increment rune sound signal for non-final charges', () => {
     const store = createGameplayStoreInstance();
     const frostRune = createTestRune('frost-1', 'Frost', 0);
 
@@ -180,10 +187,10 @@ describe('gameplayStore current combat', () => {
 
     store.getState().castRuneToWall(1, 4);
 
-    expect(store.getState().frostSoundSignal).toBe(0);
+    expect(store.getState().runeSoundSignals.Frost).toBe(0);
   });
 
-  it('does not increment frost sound signal for non-Frost armor gain', () => {
+  it('increments the casting rune sound signal for non-Frost armor gain', () => {
     const store = createGameplayStoreInstance();
     const armorRune: Rune = {
       id: 'fire-armor',
@@ -205,10 +212,11 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.player.armor).toBe(3);
-    expect(state.frostSoundSignal).toBe(0);
+    expect(state.runeSoundSignals.Fire).toBe(1);
+    expect(state.runeSoundSignals.Frost).toBe(0);
   });
 
-  it('increments frost sound signal when a completed Frost passive triggers', () => {
+  it('increments rune sound signal when a completed rune passive triggers', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
     wall[0][3] = {
@@ -236,10 +244,12 @@ describe('gameplayStore current combat', () => {
 
     store.getState().castRuneToWall(0, 0);
 
-    expect(store.getState().frostSoundSignal).toBe(1);
+    const state = store.getState();
+    expect(state.runeSoundSignals.Fire).toBe(1);
+    expect(state.runeSoundSignals.Frost).toBe(1);
   });
 
-  it('increments frost sound signal when a completed Frost rune is retriggered', () => {
+  it('increments rune sound signal when a completed rune is retriggered', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
     wall[0][3] = {
@@ -275,7 +285,8 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.enemy?.health).toBe(8);
-    expect(state.frostSoundSignal).toBe(1);
+    expect(state.runeSoundSignals.Void).toBe(1);
+    expect(state.runeSoundSignals.Frost).toBe(1);
   });
 
   it('opens deck draft from lethal end-turn pulse before enemy attacks', () => {

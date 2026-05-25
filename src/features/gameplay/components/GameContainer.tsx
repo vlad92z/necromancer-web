@@ -6,17 +6,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useFrostSoundSignal, useUIOverlayState } from '../../../hooks/useGameState';
-import { useFrostSound } from '../../../hooks/useFrostSound';
+import { useRuneSoundSignals, useUIOverlayState } from '../../../hooks/useGameState';
+import { useRuneSound } from '../../../hooks/useRuneSound';
+import type { RuneSoundSignals, RuneType } from '../../../types/game';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
+
+const RUNE_SOUND_TYPES: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind', 'Lightning'];
 
 export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
   const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
-  const frostSoundSignal = useFrostSoundSignal();
-  const playFrostSound = useFrostSound();
-  const previousFrostSoundSignalRef = useRef(frostSoundSignal);
+  const runeSoundSignals = useRuneSoundSignals();
+  const playRuneSound = useRuneSound();
+  const previousRuneSoundSignalsRef = useRef<RuneSoundSignals>(runeSoundSignals);
   const hiddenWallSlots = useMemo(() => new Set<string>(), []);
 
   const [boardScale, setBoardScale] = useState(() => {
@@ -40,14 +43,15 @@ export function GameContainer() {
   }, []);
 
   useEffect(() => {
-    if (frostSoundSignal <= previousFrostSoundSignalRef.current) {
-      previousFrostSoundSignalRef.current = frostSoundSignal;
-      return;
-    }
+    RUNE_SOUND_TYPES.forEach((runeType) => {
+      const signalDelta = runeSoundSignals[runeType] - previousRuneSoundSignalsRef.current[runeType];
+      for (let index = 0; index < signalDelta; index += 1) {
+        playRuneSound(runeType);
+      }
+    });
 
-    playFrostSound();
-    previousFrostSoundSignalRef.current = frostSoundSignal;
-  }, [frostSoundSignal, playFrostSound]);
+    previousRuneSoundSignalsRef.current = runeSoundSignals;
+  }, [playRuneSound, runeSoundSignals]);
 
   const scaledBoardWidth = SCALING_CONFIG.baseWidth * boardScale;
   const scaledBoardHeight = SCALING_CONFIG.baseHeight * boardScale;

@@ -8,6 +8,7 @@ import {
   createEmptyWall,
   createEmptyWallCharges,
   createGoblinEnemy,
+  createRuneSoundSignals,
   DEFAULT_ENEMY_ATTACK_DAMAGE,
   initializeSoloGame,
   scaleEnemyAttackDamage,
@@ -103,9 +104,7 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     suppressedRunes: nextState.suppressedRunes ?? [],
     wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
-    frostSoundSignal: typeof nextState.frostSoundSignal === 'number'
-      ? nextState.frostSoundSignal
-      : currentState.frostSoundSignal,
+    runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
   };
 }
 
@@ -147,7 +146,34 @@ function getCompletedRuneTypesById(wall: ScoringWall, wallCharges: SpellWallChar
   }, new Map<string, RuneType>());
 }
 
-function countFrostSoundEvents({
+function createEmptyRuneSoundEvents(): Record<RuneType, number> {
+  return createRuneSoundSignals();
+}
+
+function addRuneSoundEvent(events: Record<RuneType, number>, runeType: RuneType): void {
+  events[runeType] += 1;
+}
+
+function mergeRuneSoundEvents(
+  left: Record<RuneType, number>,
+  right: Record<RuneType, number>
+): Record<RuneType, number> {
+  const next = createEmptyRuneSoundEvents();
+  Object.keys(next).forEach((runeType) => {
+    const typedRuneType = runeType as RuneType;
+    next[typedRuneType] = left[typedRuneType] + right[typedRuneType];
+  });
+  return next;
+}
+
+function applyRuneSoundEvents(
+  signals: Record<RuneType, number>,
+  events: Record<RuneType, number>
+): Record<RuneType, number> {
+  return mergeRuneSoundEvents(signals, events);
+}
+
+function countRuneSoundEvents({
   completedRune = null,
   logs,
   wall,
@@ -157,11 +183,14 @@ function countFrostSoundEvents({
   logs: EffectResolutionLog[];
   wall: ScoringWall;
   wallCharges: SpellWallCharge[][];
-}): number {
-  const completedFrostCastCount = completedRune?.runeType === 'Frost' ? 1 : 0;
+}): Record<RuneType, number> {
+  const events = createEmptyRuneSoundEvents();
   const completedRuneTypesById = getCompletedRuneTypesById(wall, wallCharges);
-  const retriggeredFrostRuneIds = new Set<string>();
-  let passiveFrostTriggerCount = 0;
+  const retriggeredRuneIdsByType = new Map<RuneType, Set<string>>();
+
+  if (completedRune) {
+    addRuneSoundEvent(events, completedRune.runeType);
+  }
 
   logs.forEach((log) => {
     if (log.sourceType !== 'rune') {
@@ -169,22 +198,30 @@ function countFrostSoundEvents({
     }
 
     if (log.effectId.startsWith('passive.')) {
-      if (getWallRuneTypeFromLogSource(log.sourceId, wall) === 'Frost') {
-        passiveFrostTriggerCount += 1;
+      const runeType = getWallRuneTypeFromLogSource(log.sourceId, wall);
+      if (runeType) {
+        addRuneSoundEvent(events, runeType);
       }
       return;
     }
 
+    const runeType = completedRuneTypesById.get(log.sourceId);
     if (
       log.effectId.startsWith('cast.') &&
       log.sourceId !== completedRune?.id &&
-      completedRuneTypesById.get(log.sourceId) === 'Frost'
+      runeType
     ) {
-      retriggeredFrostRuneIds.add(log.sourceId);
+      const retriggeredRuneIds = retriggeredRuneIdsByType.get(runeType) ?? new Set<string>();
+      retriggeredRuneIds.add(log.sourceId);
+      retriggeredRuneIdsByType.set(runeType, retriggeredRuneIds);
     }
   });
 
-  return completedFrostCastCount + passiveFrostTriggerCount + retriggeredFrostRuneIds.size;
+  retriggeredRuneIdsByType.forEach((runeIds, runeType) => {
+    events[runeType] += runeIds.size;
+  });
+
+  return events;
 }
 
 export interface GameplayStore extends GameState {
@@ -309,7 +346,7 @@ export const gameplayStoreConfig = (
         });
 
         arcaneDustGain += resolvedEffects.arcaneDustDelta;
-        const resolvedFrostSoundEvents = countFrostSoundEvents({
+        const resolvedRuneSoundEvents = countRuneSoundEvents({
           completedRune: result.completedRune,
           logs: resolvedEffects.logs,
           wall: resolvedEffects.player.wall,
@@ -339,7 +376,7 @@ export const gameplayStoreConfig = (
             suppressedRunes: [],
             wallCharges: createEmptyWallCharges(),
             selectedHandRuneId: null,
-            frostSoundSignal: state.frostSoundSignal + resolvedFrostSoundEvents,
+            runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, resolvedRuneSoundEvents),
           });
         }
 
@@ -376,7 +413,7 @@ export const gameplayStoreConfig = (
           suppressedRunes: resolvedEffects.suppressedRunes,
           wallCharges: resolvedEffects.wallCharges,
           selectedHandRuneId: result.selectedHandRuneId,
-          frostSoundSignal: state.frostSoundSignal + resolvedFrostSoundEvents,
+          runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, resolvedRuneSoundEvents),
         };
       }
 
@@ -411,7 +448,7 @@ export const gameplayStoreConfig = (
         enemy: state.enemy,
         activeArtefacts: state.activeArtefacts,
       });
-      let frostSoundEvents = countFrostSoundEvents({
+      let runeSoundEvents = countRuneSoundEvents({
         logs: endTurnEffects.logs,
         wall: endTurnEffects.player.wall,
         wallCharges: state.wallCharges,
@@ -439,7 +476,7 @@ export const gameplayStoreConfig = (
           suppressedRunes: [],
           wallCharges: createEmptyWallCharges(),
           selectedHandRuneId: null,
-          frostSoundSignal: state.frostSoundSignal + frostSoundEvents,
+          runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
         });
       }
 
@@ -448,11 +485,14 @@ export const gameplayStoreConfig = (
         enemy: endTurnEffects.enemy,
         activeArtefacts: state.activeArtefacts,
       });
-      frostSoundEvents += countFrostSoundEvents({
-        logs: enemyTurnResult.logs,
-        wall: enemyTurnResult.player.wall,
-        wallCharges: state.wallCharges,
-      });
+      runeSoundEvents = mergeRuneSoundEvents(
+        runeSoundEvents,
+        countRuneSoundEvents({
+          logs: enemyTurnResult.logs,
+          wall: enemyTurnResult.player.wall,
+          wallCharges: state.wallCharges,
+        })
+      );
       const discardPile = [...state.discardPile, ...state.hand];
 
       if (enemyTurnResult.player.health <= 0) {
@@ -467,7 +507,7 @@ export const gameplayStoreConfig = (
           isDefeat: true,
           combatPhase: 'defeat',
           longestRun: Math.max(state.longestRun, state.gameIndex),
-          frostSoundSignal: state.frostSoundSignal + frostSoundEvents,
+          runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
         };
       }
 
@@ -480,11 +520,14 @@ export const gameplayStoreConfig = (
         player: result.player,
         activeArtefacts: state.activeArtefacts,
       });
-      frostSoundEvents += countFrostSoundEvents({
-        logs: startTurnEffects.logs,
-        wall: startTurnEffects.player.wall,
-        wallCharges: state.wallCharges,
-      });
+      runeSoundEvents = mergeRuneSoundEvents(
+        runeSoundEvents,
+        countRuneSoundEvents({
+          logs: startTurnEffects.logs,
+          wall: startTurnEffects.player.wall,
+          wallCharges: state.wallCharges,
+        })
+      );
       const startTurnDrawResult = startTurnEffects.drawCount > 0
         ? drawRunes({
           player: startTurnEffects.player,
@@ -507,7 +550,7 @@ export const gameplayStoreConfig = (
         discardPile: startTurnDrawResult.discardPile,
         selectedHandRuneId: null,
         combatPhase: 'player-turn',
-        frostSoundSignal: state.frostSoundSignal + frostSoundEvents,
+        runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
       };
     });
 

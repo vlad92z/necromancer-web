@@ -290,6 +290,13 @@ export function getRuneTypes(): RuneType[] {
   return [...RUNE_TYPES];
 }
 
+export function createRuneSoundSignals(): Record<RuneType, number> {
+  return RUNE_TYPES.reduce<Record<RuneType, number>>((signals, runeType) => {
+    signals[runeType] = 0;
+    return signals;
+  }, {} as Record<RuneType, number>);
+}
+
 export function createStartingDeck(): Rune[] {
   return STARTING_DECK.map((rune) => ({
     ...rune,
@@ -349,7 +356,7 @@ export function initializeSoloGame(
     deckDraftState: null,
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
-    frostSoundSignal: 0,
+    runeSoundSignals: createRuneSoundSignals(),
     enemy: createGoblinEnemy(enemyMaxHealth, enemyAttackDamage),
     combatPhase: 'player-turn',
     hand,
