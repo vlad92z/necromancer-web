@@ -212,6 +212,8 @@ describe('gameplayStore current combat', () => {
     expect(victoryState.hand).toEqual([]);
     expect(victoryState.discardPile).toEqual([]);
     expect(victoryState.suppressedRunes).toEqual([]);
+    expect(victoryState.player.deck).toEqual([encounterDeckRune]);
+    expect(victoryState.fullDeck.map((rune) => rune.id)).toEqual([lethalRune.id, baseDeckRune.id]);
 
     const fireOffer = victoryState.deckDraftState?.offers[0];
     expect(fireOffer?.runeType).toBe('Fire');
@@ -223,6 +225,7 @@ describe('gameplayStore current combat', () => {
     expect(selectedState.deckDraftReadyForNextGame).toBe(true);
     expect(selectedState.deckDraftState?.selectedOffer?.id).toBe(fireOffer?.id);
     expect(selectedState.player.deck).toEqual(encounterDeckBeforeSelection);
+    expect(selectedState.player.deck).toHaveLength(1);
     expect(selectedState.fullDeck).toHaveLength(fullDeckBeforeSelection.length + 3);
     expect(selectedState.fullDeck.slice(-3).every((rune) => rune.runeType === 'Fire')).toBe(true);
 

@@ -63,21 +63,21 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Life-0',
     runeType: 'Life',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 1 } }],
+    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
     passiveEffectRefs: [],
   },
   {
     id: 'player-1-Life-1',
     runeType: 'Life',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 1 } }],
+    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
     passiveEffectRefs: [],
   },
   {
     id: 'player-1-Life-2',
     runeType: 'Life',
     rarity: 'uncommon',
-    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 2 } }],
+    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 4 } }],
     passiveEffectRefs: [],
   },
   {
@@ -218,7 +218,7 @@ export const STARTING_DECK: Rune[] = [
     runeType: 'Lightning',
     rarity: 'uncommon',
     castEffectRefs: [],
-    passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 1 } }],
+    passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 2 } }],
   },
   {
     id: 'player-1-Lightning-3',
