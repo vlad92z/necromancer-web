@@ -89,12 +89,15 @@ export interface RuneCellProps {
   placeholder?: {
     type: 'rune' | 'text';
     runeType?: RuneType; // For wall cells
+    runeRarity?: RuneEffectRarity;
     text?: string;
   };
   clickable?: boolean;
   onClick?: () => void;
   showEffect?: boolean;
   showTooltip?: boolean;
+  tooltipRune?: Rune | null;
+  tooltipIncludeChargeRequirement?: boolean;
   tooltipPlacement?: 'top' | 'bottom';
   runeOpacity?: number;
   runePulseKey?: number;
@@ -129,6 +132,8 @@ export function RuneCell({
   onClick,
   showEffect = true,
   showTooltip = false,
+  tooltipRune,
+  tooltipIncludeChargeRequirement = true,
   tooltipPlacement = 'top',
   runeOpacity = 1,
   runePulseKey,
@@ -139,7 +144,9 @@ export function RuneCell({
   const variantStyle = VARIANT_STYLES[variant];
   
   const runeType = rune?.runeType || placeholder?.runeType;
-  const runeRarity = showEffect && rune ? rune.rarity : null;
+  const runeRarity = showEffect && rune
+    ? rune.rarity
+    : placeholder?.runeRarity ?? null;
   const runeImage = runeType
     ? runeRarity
       ? RUNE_ASSETS_BY_RARITY[runeRarity][runeType]
@@ -148,12 +155,13 @@ export function RuneCell({
   
   const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
+  const tooltipSourceRune = tooltipRune ?? rune;
   const tooltipText = useMemo(() => {
-    if (!showTooltip || !rune) {
+    if (!showTooltip || !tooltipSourceRune) {
       return null;
     }
-    return getRuneEffectDescription(rune);
-  }, [rune, showTooltip]);
+    return getRuneEffectDescription(tooltipSourceRune, { includeChargeRequirement: tooltipIncludeChargeRequirement });
+  }, [showTooltip, tooltipIncludeChargeRequirement, tooltipSourceRune]);
   
   const backgroundColor = (variant === 'wall' && rune && variantStyle.backgroundOccupied)
     ? variantStyle.backgroundOccupied
@@ -166,7 +174,7 @@ export function RuneCell({
     if (clickable) {
       e.currentTarget.style.transform = 'scale(1.05)';
     }
-    if (showTooltip && rune) {
+    if (showTooltip && tooltipSourceRune) {
       setIsTooltipVisible(true);
     }
   };

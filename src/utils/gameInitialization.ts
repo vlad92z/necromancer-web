@@ -7,10 +7,10 @@ import type {
   GameState,
   Player,
   Rune,
+  RuneEffectRarity,
   RuneType,
   ScoringWall,
   SpellWallCharge,
-  TooltipCard,
 } from '../types/game';
 import { copyEffectRefs } from './runeEffects';
 import { getWallSlotFamily } from './scoring';
@@ -63,21 +63,21 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Life-0',
     runeType: 'Life',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 1 } }],
+    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
     passiveEffectRefs: [],
   },
   {
     id: 'player-1-Life-1',
     runeType: 'Life',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 1 } }],
+    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
     passiveEffectRefs: [],
   },
   {
     id: 'player-1-Life-2',
     runeType: 'Life',
     rarity: 'uncommon',
-    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 2 } }],
+    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 4 } }],
     passiveEffectRefs: [],
   },
   {
@@ -218,7 +218,7 @@ export const STARTING_DECK: Rune[] = [
     runeType: 'Lightning',
     rarity: 'uncommon',
     castEffectRefs: [],
-    passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 1 } }],
+    passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 2 } }],
   },
   {
     id: 'player-1-Lightning-3',
@@ -242,7 +242,7 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
     .map(() =>
       Array(size)
         .fill(null)
-        .map(() => ({ runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }))
+        .map(() => ({ id: null, runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }))
     );
 }
 
@@ -252,6 +252,19 @@ export function scaleEnemyMaxHealth(maxHealth: number): number {
 
 export function scaleEnemyAttackDamage(attackDamage: number): number {
   return Math.ceil(attackDamage * ENEMY_SCALING_MULTIPLIER);
+}
+
+export function getRequiredChargesForRarity(rarity: RuneEffectRarity): number {
+  switch (rarity) {
+    case 'common':
+      return 0;
+    case 'uncommon':
+      return 1;
+    case 'rare':
+      return 2;
+    case 'epic':
+      return 3;
+  }
 }
 
 export function createGoblinEnemy(
@@ -279,8 +292,9 @@ export function createEmptyWallCharges(size: number = WALL_SIZE): SpellWallCharg
           col,
           slotFamily: getWallSlotFamily(row, col),
           lockedRuneType: null,
-          requiredCount: row + 1,
+          requiredCount: 0,
           currentCount: 0,
+          stagedRune: null,
           spentRunes: [],
           completedRuneId: null,
         }))
@@ -304,10 +318,6 @@ export function createStartingDeck(): Rune[] {
     castEffectRefs: copyEffectRefs(rune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(rune.passiveEffectRefs),
   }));
-}
-
-export function createDefaultTooltipCards(): TooltipCard[] {
-  return [];
 }
 
 export function createPlayer(
@@ -338,7 +348,8 @@ export function initializeSoloGame(
   enemyAttackDamage: number = DEFAULT_ENEMY_ATTACK_DAMAGE
 ): GameState {
   const maxHealth = 100;
-  const activeDeck = shuffleRunes(fullDeck);
+  const deckTemplate = [...fullDeck];
+  const activeDeck = shuffleRunes(deckTemplate);
   const hand = activeDeck.slice(0, DEFAULT_HAND_SIZE);
   const remainingDeck = activeDeck.slice(DEFAULT_HAND_SIZE);
   const player = createPlayer('player-1', 'Arcane Apprentice', maxHealth, remainingDeck, maxHealth);
@@ -347,7 +358,7 @@ export function initializeSoloGame(
     gameStarted: false,
     startingHealth: player.maxHealth,
     player,
-    fullDeck,
+    fullDeck: deckTemplate,
     gameIndex: 1,
     enemyMaxHealth,
     enemyAttackDamage,

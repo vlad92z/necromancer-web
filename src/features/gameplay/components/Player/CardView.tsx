@@ -112,20 +112,13 @@ export function CardView({
   const sizeClassName = size === 'hand'
     ? 'h-full max-h-[18rem] w-auto min-w-0 aspect-[2/3] p-1.5 gap-1.5'
     : 'w-[clamp(14em,22vmin,24em)] aspect-[2/3] p-2 gap-2';
-  const titleClassName = size === 'hand'
-    ? 'flex-[1] text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 pb-0'
-    : 'flex-[1] text-center text-sm font-semibold uppercase tracking-[0.22em] text-slate-100 pb-0';
   const descriptionClassName = size === 'hand'
-    ? `flex-[4] ${border} bg-slate-950/70 px-2 py-2 text-xs tracking-[0.06em] leading-snug text-slate-100/90`
-    : `flex-[4] ${border} bg-slate-950/70 px-3 py-3 tracking-[0.1em] leading-relaxed text-slate-100/90`;
+    ? `flex-[4] ${border} bg-slate-950/70 px-2 py-2 text-xs tracking-[0.06em] leading-snug text-slate-100/90 whitespace-pre-line`
+    : `flex-[4] ${border} bg-slate-950/70 px-3 py-3 tracking-[0.1em] leading-relaxed text-slate-100/90 whitespace-pre-line`;
   const className = `flex flex-col ${sizeClassName} ${border} bg-gray-900 transition duration-150 ease-out ${selectedClassName} ${interactiveClassName}`;
 
   const content = (
     <>
-      <div className={titleClassName}>
-        {title}
-      </div>
-
       <div className={`flex-[4] ${border} bg-gradient-to-b from-slate-700/80 to-slate-900 overflow-hidden min-h-0 relative`}>
         <img
           className="h-full w-full object-cover"

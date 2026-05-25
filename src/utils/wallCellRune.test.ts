@@ -9,6 +9,7 @@ import { wallCellToRune } from './wallCellRune';
 describe('wallCellRune', () => {
   it('preserves wall cell rarity and effect refs for tooltip display runes', () => {
     const cell: WallCell = {
+      id: 'wall-copy-void',
       runeType: 'Void',
       rarity: 'rare',
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
@@ -18,7 +19,7 @@ describe('wallCellRune', () => {
     const rune = wallCellToRune(cell, 2, 3);
 
     expect(rune).toEqual({
-      id: 'wall-2-3',
+      id: 'wall-copy-void',
       runeType: 'Void',
       rarity: 'rare',
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
@@ -32,6 +33,7 @@ describe('wallCellRune', () => {
     expect(
       wallCellToRune(
         {
+          id: null,
           runeType: null,
           rarity: null,
           castEffectRefs: null,

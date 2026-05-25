@@ -5,7 +5,7 @@
 import type { Rune, WallCell } from '../types/game';
 import { copyEffectRefs } from './runeEffects';
 
-type WallCellRuneSource = Pick<WallCell, 'runeType' | 'rarity' | 'castEffectRefs' | 'passiveEffectRefs'>;
+type WallCellRuneSource = Pick<WallCell, 'id' | 'runeType' | 'rarity' | 'castEffectRefs' | 'passiveEffectRefs'>;
 
 export function wallCellToRune(cell: WallCellRuneSource, row: number, col: number): Rune | null {
   if (!cell.runeType) {
@@ -13,7 +13,7 @@ export function wallCellToRune(cell: WallCellRuneSource, row: number, col: numbe
   }
 
   return {
-    id: `wall-${row}-${col}`,
+    id: cell.id ?? `wall-${row}-${col}`,
     runeType: cell.runeType,
     rarity: cell.rarity ?? 'common',
     castEffectRefs: copyEffectRefs(cell.castEffectRefs),

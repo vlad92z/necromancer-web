@@ -33,8 +33,8 @@ export function DeckDraftingModal({
   draftState,
 }: DeckDraftingModalProps) {
   const arcaneDustReward = 50; // placeholder
-  const { deck } = useGameplayDeckState();
-  const totalDeckSize = deck.length;
+  const { fullDeck } = useGameplayDeckState();
+  const totalDeckSize = fullDeck.length;
   const { selectDeckDraftOffer, startNextSoloGame } = useGameplayActions();
   const { openRuneZoneOverlay } = useUIActions();
   const playClickSound = useClickSound();

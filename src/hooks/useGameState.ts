@@ -85,15 +85,6 @@ export function useUIOverlayState() {
   );
 }
 
-export function useTooltipState() {
-  return useUIStore(
-    useShallow((state) => ({
-      tooltipCards: state.tooltipCards,
-      tooltipOverrideActive: state.tooltipOverrideActive,
-    })),
-  );
-}
-
 export function useCombatEnemyState() {
   return useCombatStore(
     useShallow((state) => ({
@@ -122,9 +113,10 @@ export function useGameplayWallState() {
 
 export function useGameplayDeckState() {
   const deck = useBoardStore((state) => state.player.deck);
+  const fullDeck = useRunStore((state) => state.fullDeck);
   const isDrafting = useRunStore((state) => state.deckDraftState !== null);
 
-  return { deck, isDrafting };
+  return { deck, fullDeck, isDrafting };
 }
 
 export function useGameplayHealthState() {

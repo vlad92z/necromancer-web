@@ -36,7 +36,7 @@ const ZONE_COPY: Record<RuneZoneOverlayType, { title: string; emptyText: string 
 };
 
 export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
-  const { deck } = useGameplayDeckState();
+  const { deck, fullDeck, isDrafting } = useGameplayDeckState();
   const { hand, discardPile } = useCombatZoneState();
   const { closeRuneZoneOverlay: onClose } = useUIActions();
   const playClickSound = useClickSound();
@@ -46,7 +46,9 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
     ? deck
     : zone === 'discard'
       ? discardPile
-      : [...deck, ...discardPile, ...hand];
+      : isDrafting
+        ? fullDeck
+        : [...deck, ...discardPile, ...hand];
 
   const runesByType = zoneRunes.reduce((acc, rune) => {
     if (!acc[rune.runeType]) {

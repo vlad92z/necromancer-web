@@ -6,6 +6,7 @@ import {
   scaleEnemyAttackDamage,
   scaleEnemyMaxHealth,
   STARTING_DECK,
+  getRequiredChargesForRarity,
 } from './gameInitialization';
 
 describe('gameInitialization combat state', () => {
@@ -89,15 +90,22 @@ describe('gameInitialization combat state', () => {
     expect(firstDeck[10].castEffectRefs).not.toBe(secondDeck[10].castEffectRefs);
   });
 
-  it('scales enemy max health by 50 percent and rounds up to 1 HP', () => {
-    expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([15, 23, 30, 38, 45]);
+  it('scales enemy max health by the configured multiplier and rounds up to 1 HP', () => {
+    expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([14, 21, 27, 34, 41]);
   });
 
-  it('scales enemy attack by 50 percent and rounds up to 1 damage', () => {
-    expect([5, 6, 8, 10].map(scaleEnemyAttackDamage)).toEqual([8, 9, 12, 15]);
+  it('scales enemy attack by the configured multiplier and rounds up to 1 damage', () => {
+    expect([5, 6, 8, 10].map(scaleEnemyAttackDamage)).toEqual([7, 9, 11, 14]);
   });
 
-  it('creates spell-wall charges with row-based requirements and slot families', () => {
+  it('maps rune rarity to required charges', () => {
+    expect(getRequiredChargesForRarity('common')).toBe(0);
+    expect(getRequiredChargesForRarity('uncommon')).toBe(1);
+    expect(getRequiredChargesForRarity('rare')).toBe(2);
+    expect(getRequiredChargesForRarity('epic')).toBe(3);
+  });
+
+  it('creates spell-wall charges without row-based requirements', () => {
     const wallCharges = createEmptyWallCharges(6);
 
     expect(wallCharges).toHaveLength(6);
@@ -107,8 +115,9 @@ describe('gameInitialization combat state', () => {
       col: 0,
       slotFamily: 'fireVoid',
       lockedRuneType: null,
-      requiredCount: 1,
+      requiredCount: 0,
       currentCount: 0,
+      stagedRune: null,
       spentRunes: [],
       completedRuneId: null,
     });
@@ -116,13 +125,13 @@ describe('gameInitialization combat state', () => {
       row: 2,
       col: 0,
       slotFamily: 'lifeFrost',
-      requiredCount: 3,
+      requiredCount: 0,
     });
     expect(wallCharges[5][5]).toMatchObject({
       row: 5,
       col: 5,
       slotFamily: 'lightningWind',
-      requiredCount: 6,
+      requiredCount: 0,
     });
   });
 });

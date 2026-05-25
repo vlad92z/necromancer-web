@@ -27,8 +27,6 @@ export function useUIActions() {
     useShallow((state) => ({
       markMusicSessionStarted: state.markMusicSessionStarted,
       setMusicMuted: state.setMusicMuted,
-      setTooltipCards: state.setTooltipCards,
-      resetTooltipCards: state.resetTooltipCards,
       setSoundVolume: state.setSoundVolume,
       openRuneZoneOverlay: state.openRuneZoneOverlay,
       closeRuneZoneOverlay: state.closeRuneZoneOverlay,
