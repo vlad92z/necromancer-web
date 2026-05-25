@@ -146,6 +146,10 @@ export function useGameplayStatusState() {
   );
 }
 
+export function useFrostSoundSignal() {
+  return useRunStore((state) => state.frostSoundSignal);
+}
+
 export function useGameplaySummaryState() {
   return useRunStore(
     useShallow((state) => ({

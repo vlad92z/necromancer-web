@@ -3,7 +3,7 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { GameState, Player } from '../../types/game';
+import type { EffectResolutionLog, GameState, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../../types/game';
 import {
   createEmptyWall,
   createEmptyWallCharges,
@@ -103,6 +103,9 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     suppressedRunes: nextState.suppressedRunes ?? [],
     wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
+    frostSoundSignal: typeof nextState.frostSoundSignal === 'number'
+      ? nextState.frostSoundSignal
+      : currentState.frostSoundSignal,
   };
 }
 
@@ -115,6 +118,73 @@ function trackDefeat(state: GameState, player: Player): void {
     health: player.health,
     enemyMaxHealth: state.enemyMaxHealth,
   });
+}
+
+function getWallRuneTypeFromLogSource(sourceId: string, wall: ScoringWall): RuneType | null {
+  const match = /^wall:(\d+):(\d+)$/.exec(sourceId);
+  if (!match) {
+    return null;
+  }
+
+  const row = Number.parseInt(match[1], 10);
+  const col = Number.parseInt(match[2], 10);
+  return wall[row]?.[col]?.runeType ?? null;
+}
+
+function getCompletedRuneTypesById(wall: ScoringWall, wallCharges: SpellWallCharge[][]): Map<string, RuneType> {
+  return wallCharges.reduce<Map<string, RuneType>>((runeTypesById, chargeRow) => {
+    chargeRow.forEach((charge) => {
+      if (!charge.completedRuneId) {
+        return;
+      }
+
+      const runeType = wall[charge.row]?.[charge.col]?.runeType;
+      if (runeType) {
+        runeTypesById.set(charge.completedRuneId, runeType);
+      }
+    });
+    return runeTypesById;
+  }, new Map<string, RuneType>());
+}
+
+function countFrostSoundEvents({
+  completedRune = null,
+  logs,
+  wall,
+  wallCharges,
+}: {
+  completedRune?: Rune | null;
+  logs: EffectResolutionLog[];
+  wall: ScoringWall;
+  wallCharges: SpellWallCharge[][];
+}): number {
+  const completedFrostCastCount = completedRune?.runeType === 'Frost' ? 1 : 0;
+  const completedRuneTypesById = getCompletedRuneTypesById(wall, wallCharges);
+  const retriggeredFrostRuneIds = new Set<string>();
+  let passiveFrostTriggerCount = 0;
+
+  logs.forEach((log) => {
+    if (log.sourceType !== 'rune') {
+      return;
+    }
+
+    if (log.effectId.startsWith('passive.')) {
+      if (getWallRuneTypeFromLogSource(log.sourceId, wall) === 'Frost') {
+        passiveFrostTriggerCount += 1;
+      }
+      return;
+    }
+
+    if (
+      log.effectId.startsWith('cast.') &&
+      log.sourceId !== completedRune?.id &&
+      completedRuneTypesById.get(log.sourceId) === 'Frost'
+    ) {
+      retriggeredFrostRuneIds.add(log.sourceId);
+    }
+  });
+
+  return completedFrostCastCount + passiveFrostTriggerCount + retriggeredFrostRuneIds.size;
 }
 
 export interface GameplayStore extends GameState {
@@ -239,6 +309,12 @@ export const gameplayStoreConfig = (
         });
 
         arcaneDustGain += resolvedEffects.arcaneDustDelta;
+        const resolvedFrostSoundEvents = countFrostSoundEvents({
+          completedRune: result.completedRune,
+          logs: resolvedEffects.logs,
+          wall: resolvedEffects.player.wall,
+          wallCharges: resolvedEffects.wallCharges,
+        });
 
         if ((resolvedEffects.enemy?.health ?? 1) <= 0) {
           deckDraftRewardGameIndex = state.gameIndex;
@@ -263,6 +339,7 @@ export const gameplayStoreConfig = (
             suppressedRunes: [],
             wallCharges: createEmptyWallCharges(),
             selectedHandRuneId: null,
+            frostSoundSignal: state.frostSoundSignal + resolvedFrostSoundEvents,
           });
         }
 
@@ -299,6 +376,7 @@ export const gameplayStoreConfig = (
           suppressedRunes: resolvedEffects.suppressedRunes,
           wallCharges: resolvedEffects.wallCharges,
           selectedHandRuneId: result.selectedHandRuneId,
+          frostSoundSignal: state.frostSoundSignal + resolvedFrostSoundEvents,
         };
       }
 
@@ -333,6 +411,11 @@ export const gameplayStoreConfig = (
         enemy: state.enemy,
         activeArtefacts: state.activeArtefacts,
       });
+      let frostSoundEvents = countFrostSoundEvents({
+        logs: endTurnEffects.logs,
+        wall: endTurnEffects.player.wall,
+        wallCharges: state.wallCharges,
+      });
 
       if ((endTurnEffects.enemy?.health ?? 1) <= 0) {
         deckDraftRewardGameIndex = state.gameIndex;
@@ -356,6 +439,7 @@ export const gameplayStoreConfig = (
           suppressedRunes: [],
           wallCharges: createEmptyWallCharges(),
           selectedHandRuneId: null,
+          frostSoundSignal: state.frostSoundSignal + frostSoundEvents,
         });
       }
 
@@ -363,6 +447,11 @@ export const gameplayStoreConfig = (
         player: endTurnEffects.player,
         enemy: endTurnEffects.enemy,
         activeArtefacts: state.activeArtefacts,
+      });
+      frostSoundEvents += countFrostSoundEvents({
+        logs: enemyTurnResult.logs,
+        wall: enemyTurnResult.player.wall,
+        wallCharges: state.wallCharges,
       });
       const discardPile = [...state.discardPile, ...state.hand];
 
@@ -378,6 +467,7 @@ export const gameplayStoreConfig = (
           isDefeat: true,
           combatPhase: 'defeat',
           longestRun: Math.max(state.longestRun, state.gameIndex),
+          frostSoundSignal: state.frostSoundSignal + frostSoundEvents,
         };
       }
 
@@ -389,6 +479,11 @@ export const gameplayStoreConfig = (
       const startTurnEffects = resolveCompletedStartTurnEffects({
         player: result.player,
         activeArtefacts: state.activeArtefacts,
+      });
+      frostSoundEvents += countFrostSoundEvents({
+        logs: startTurnEffects.logs,
+        wall: startTurnEffects.player.wall,
+        wallCharges: state.wallCharges,
       });
       const startTurnDrawResult = startTurnEffects.drawCount > 0
         ? drawRunes({
@@ -412,6 +507,7 @@ export const gameplayStoreConfig = (
         discardPile: startTurnDrawResult.discardPile,
         selectedHandRuneId: null,
         combatPhase: 'player-turn',
+        frostSoundSignal: state.frostSoundSignal + frostSoundEvents,
       };
     });
 

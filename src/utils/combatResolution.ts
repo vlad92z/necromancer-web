@@ -126,6 +126,7 @@ export interface EnemyTurnInput {
 
 export interface EnemyTurnResult {
   player: Player;
+  logs: EffectResolutionLog[];
 }
 
 export interface VictoryDeckInput {
@@ -373,7 +374,7 @@ export function resolveCompletedRuneCastEffects({
 
 export function resolveEnemyTurn({ player, enemy, activeArtefacts = [] }: EnemyTurnInput): EnemyTurnResult {
   if (!enemy || enemy.intent.type !== 'Attack') {
-    return { player };
+    return { player, logs: [] };
   }
 
   const passiveResult = resolvePassiveEffects({
@@ -392,6 +393,7 @@ export function resolveEnemyTurn({ player, enemy, activeArtefacts = [] }: EnemyT
       armor: player.armor - armorAbsorbed,
       health: Math.max(0, player.health - healthDamage),
     },
+    logs: passiveResult.logs,
   };
 }
 

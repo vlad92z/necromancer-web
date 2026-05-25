@@ -2,17 +2,21 @@
  * GameContainer - shared logic and layout shell for the solo board
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useUIOverlayState } from '../../../hooks/useGameState';
+import { useFrostSoundSignal, useUIOverlayState } from '../../../hooks/useGameState';
+import { useFrostSound } from '../../../hooks/useFrostSound';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 
 export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
   const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
+  const frostSoundSignal = useFrostSoundSignal();
+  const playFrostSound = useFrostSound();
+  const previousFrostSoundSignalRef = useRef(frostSoundSignal);
   const hiddenWallSlots = useMemo(() => new Set<string>(), []);
 
   const [boardScale, setBoardScale] = useState(() => {
@@ -34,6 +38,16 @@ export function GameContainer() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (frostSoundSignal <= previousFrostSoundSignalRef.current) {
+      previousFrostSoundSignalRef.current = frostSoundSignal;
+      return;
+    }
+
+    playFrostSound();
+    previousFrostSoundSignalRef.current = frostSoundSignal;
+  }, [frostSoundSignal, playFrostSound]);
 
   const scaledBoardWidth = SCALING_CONFIG.baseWidth * boardScale;
   const scaledBoardHeight = SCALING_CONFIG.baseHeight * boardScale;

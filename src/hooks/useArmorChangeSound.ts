@@ -1,15 +1,13 @@
 /**
- * useArmorChangeSound - plays armor gain or loss audio cues when armor changes.
+ * useArmorChangeSound - plays armor loss audio cues when armor changes.
  */
 import { useEffect, useRef } from 'react';
-import armorSoundUrl from '../assets/sounds/armor.mp3';
 import armorDamageSoundUrl from '../assets/sounds/armor_damage.mp3';
 import { useSoundVolume } from './useGameState';
 
 export function useArmorChangeSound(armor: number): void {
   const soundVolume = useSoundVolume();
   const previousArmorRef = useRef(armor);
-  const armorAudioRef = useRef<HTMLAudioElement | null>(null);
   const armorDamageAudioRef = useRef<HTMLAudioElement | null>(null);
   const volumeRef = useRef(soundVolume);
 
@@ -22,17 +20,10 @@ export function useArmorChangeSound(armor: number): void {
       return;
     }
 
-    if (!armorAudioRef.current) {
-      armorAudioRef.current = new Audio(armorSoundUrl);
-    }
-
     if (!armorDamageAudioRef.current) {
       armorDamageAudioRef.current = new Audio(armorDamageSoundUrl);
     }
 
-    if (armorAudioRef.current) {
-      armorAudioRef.current.volume = soundVolume;
-    }
     if (armorDamageAudioRef.current) {
       armorDamageAudioRef.current.volume = soundVolume;
     }
@@ -44,8 +35,13 @@ export function useArmorChangeSound(armor: number): void {
       return;
     }
 
-    const isGain = armor > previousArmor;
-    const audioElement = isGain ? armorAudioRef.current : armorDamageAudioRef.current;
+    const isLoss = armor < previousArmor;
+    if (!isLoss) {
+      previousArmorRef.current = armor;
+      return;
+    }
+
+    const audioElement = armorDamageAudioRef.current;
     if (!audioElement) {
       previousArmorRef.current = armor;
       return;

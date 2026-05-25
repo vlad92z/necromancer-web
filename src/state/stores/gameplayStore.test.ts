@@ -149,6 +149,135 @@ describe('gameplayStore current combat', () => {
     expect(useArtefactStore.getState().arcaneDust).toBe(10);
   });
 
+  it('increments frost sound signal after completing a Frost rune slot', () => {
+    const store = createGameplayStoreInstance();
+    const frostRune = createTestRune('frost-1', 'Frost', 0);
+
+    store.setState((state) => ({
+      ...state,
+      hand: [frostRune],
+      selectedHandRuneId: frostRune.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+    }));
+
+    store.getState().castRuneToWall(0, 3);
+
+    expect(store.getState().frostSoundSignal).toBe(1);
+  });
+
+  it('does not increment frost sound signal for non-final Frost charges', () => {
+    const store = createGameplayStoreInstance();
+    const frostRune = createTestRune('frost-1', 'Frost', 0);
+
+    store.setState((state) => ({
+      ...state,
+      hand: [frostRune],
+      selectedHandRuneId: frostRune.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+    }));
+
+    store.getState().castRuneToWall(1, 4);
+
+    expect(store.getState().frostSoundSignal).toBe(0);
+  });
+
+  it('does not increment frost sound signal for non-Frost armor gain', () => {
+    const store = createGameplayStoreInstance();
+    const armorRune: Rune = {
+      id: 'fire-armor',
+      runeType: 'Fire',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
+      passiveEffectRefs: [],
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand: [armorRune],
+      selectedHandRuneId: armorRune.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    const state = store.getState();
+    expect(state.player.armor).toBe(3);
+    expect(state.frostSoundSignal).toBe(0);
+  });
+
+  it('increments frost sound signal when a completed Frost passive triggers', () => {
+    const store = createGameplayStoreInstance();
+    const wall = createEmptyWall();
+    wall[0][3] = {
+      runeType: 'Frost',
+      rarity: 'epic',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.armorBoost', { amount: 5 })],
+    };
+    const wallCharges = createEmptyWallCharges();
+    wallCharges[0][3] = {
+      ...wallCharges[0][3],
+      currentCount: 1,
+      completedRuneId: 'completed-frost',
+    };
+    const fireRune = createTestRune('fire-1', 'Fire', 0);
+
+    store.setState((state) => ({
+      ...state,
+      hand: [fireRune],
+      selectedHandRuneId: fireRune.id,
+      player: { ...state.player, wall, armor: 0 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      wallCharges,
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().frostSoundSignal).toBe(1);
+  });
+
+  it('increments frost sound signal when a completed Frost rune is retriggered', () => {
+    const store = createGameplayStoreInstance();
+    const wall = createEmptyWall();
+    wall[0][3] = {
+      runeType: 'Frost',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 2 })],
+      passiveEffectRefs: [],
+    };
+    const wallCharges = createEmptyWallCharges();
+    wallCharges[0][3] = {
+      ...wallCharges[0][3],
+      currentCount: 1,
+      completedRuneId: 'completed-frost',
+    };
+    const voidRune: Rune = {
+      id: 'void-retrigger',
+      runeType: 'Void',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.retriggerAdjacent')],
+      passiveEffectRefs: [],
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand: [voidRune],
+      selectedHandRuneId: voidRune.id,
+      player: { ...state.player, wall },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      wallCharges,
+    }));
+
+    store.getState().castRuneToWall(0, 4);
+
+    const state = store.getState();
+    expect(state.enemy?.health).toBe(8);
+    expect(state.frostSoundSignal).toBe(1);
+  });
+
   it('opens deck draft from lethal end-turn pulse before enemy attacks', () => {
     const store = createGameplayStoreInstance();
     const hand = [createTestRune('hand-fire', 'Fire', 3)];

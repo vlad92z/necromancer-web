@@ -20,6 +20,7 @@ export interface RunState {
   deckDraftState: DeckDraftState | null;
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
+  frostSoundSignal: number;
 }
 
 export interface RunStore extends RunState {
@@ -40,6 +41,7 @@ export function pickRunState(state: GameState): RunState {
     deckDraftState: state.deckDraftState,
     deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
     activeArtefacts: state.activeArtefacts,
+    frostSoundSignal: state.frostSoundSignal,
   };
 }
 

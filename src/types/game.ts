@@ -134,4 +134,5 @@ export interface GameState extends CombatZoneState {
   deckDraftState: DeckDraftState | null;
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
+  frostSoundSignal: number;
 }
