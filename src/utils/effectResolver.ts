@@ -349,6 +349,7 @@ function clearCompletedCell(
   nextWall[position.row][position.col] = createEmptyWallCell();
   nextWallCharges[position.row][position.col] = {
     ...nextWallCharges[position.row][position.col],
+    lockedRuneType: null,
     currentCount: 0,
     spentRunes: [],
     completedRuneId: null,

@@ -38,8 +38,9 @@ npm run preview
 - Each enemy shows HP and an intent. The current basic intent is Attack 5.
 
 ### Cast Runes
-- Select a rune from hand, then click a matching empty wall slot.
+- Select a rune from hand, then click a compatible dual-type wall slot.
 - Wall rows require increasing charges: row 1 completes with 1 rune, row 2 with 2 runes, and so on.
+- The first real charge locks an incomplete slot to that rune type until completed.
 - Incomplete charged slots show progress like `1/3`.
 - Invalid casts leave the selected card active.
 - Final charges place the rune on the wall and resolve its effects.

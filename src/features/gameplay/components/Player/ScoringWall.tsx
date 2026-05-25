@@ -5,8 +5,6 @@
 import { useCallback } from 'react';
 import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
-import type { RuneType } from '../../../../types/game';
-import { getRuneOrderForSize } from '../../../../utils/scoring';
 import { WallCell } from '../WallCell';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { wallCellToRune } from '../../../../utils/wallCellRune';
@@ -54,7 +52,6 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
   );
 
   const gridSize = wall.length;
-  const availableRuneTypes: RuneType[] = getRuneOrderForSize(gridSize);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: `${GAP}px` }}>
@@ -88,7 +85,6 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                 row={rowIndex}
                 col={colIndex}
                 wallSize={gridSize}
-                availableRuneTypes={availableRuneTypes}
               />
             </div>
           ))}

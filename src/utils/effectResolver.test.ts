@@ -3,10 +3,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
+import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge, WallCell } from '../types/game';
 import { createEffectRef, EFFECT_CATALOG } from './effectCatalog';
 import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import { createEmptyWall, createPlayer } from './gameInitialization';
+import { getWallSlotFamily } from './scoring';
 
 describe('effectResolver resolveCastEffects', () => {
   it('resolves damage, healing, armor, and fortune in ref order', () => {
@@ -685,8 +686,8 @@ describe('effectResolver resolveCastEffects', () => {
     wall[1][1] = createWallCell('Wind');
     wall[2][2] = createWallCell('Fire');
     const wallCharges = createTestWallCharges(wall);
-    wallCharges[1][2] = { ...wallCharges[1][2], currentCount: 0, requiredCount: 2, runeType: 'Fire' };
-    wallCharges[2][1] = { ...wallCharges[2][1], currentCount: 1, requiredCount: 3, runeType: 'Frost' };
+    wallCharges[1][2] = { ...wallCharges[1][2], currentCount: 0, requiredCount: 2 };
+    wallCharges[2][1] = { ...wallCharges[2][1], currentCount: 1, requiredCount: 3, lockedRuneType: null };
     const castRune = createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]);
 
     const result = resolveCastEffects({
@@ -1110,11 +1111,12 @@ function createWallCell(runeType: RuneType, passiveEffectRefs: EffectRef[] = [],
   };
 }
 
-function createTestWallCharges(wall: ScoringWall) {
+function createTestWallCharges(wall: ScoringWall): SpellWallCharge[][] {
   return wall.map((row, rowIndex) => row.map((cell, colIndex) => ({
     row: rowIndex,
     col: colIndex,
-    runeType: cell.runeType ?? 'Fire',
+    slotFamily: getWallSlotFamily(rowIndex, colIndex),
+    lockedRuneType: cell.runeType,
     requiredCount: rowIndex + 1,
     currentCount: cell.runeType ? rowIndex + 1 : 0,
     spentRunes: [],

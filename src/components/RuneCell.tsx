@@ -242,7 +242,7 @@ export function RuneCell({
             width: '60%',
             height: '60%',
             objectFit: 'contain',
-            opacity: 0.95,
+            opacity: variantStyle.emptyOpacity ?? 1,
             pointerEvents: 'none',
           }}
         />

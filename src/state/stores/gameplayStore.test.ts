@@ -227,18 +227,18 @@ describe('gameplayStore current combat', () => {
       wallCharges: createEmptyWallCharges(),
     }));
 
-    store.getState().castRuneToWall(0, 2);
+    store.getState().castRuneToWall(0, 1);
 
     expect(useArtefactStore.getState().arcaneDust).toBe(10);
   });
 
   it.each<[RuneType, number]>([
     ['Fire', 0],
-    ['Life', 1],
-    ['Wind', 2],
-    ['Frost', 3],
-    ['Void', 4],
-    ['Lightning', 5],
+    ['Life', 2],
+    ['Wind', 1],
+    ['Frost', 2],
+    ['Void', 0],
+    ['Lightning', 1],
   ])('increments %s rune sound signal after completing a matching row-one slot', (runeType, col) => {
     const store = createGameplayStoreInstance();
     const rune = createTestRune(`${runeType.toLowerCase()}-1`, runeType, 0);
@@ -335,15 +335,15 @@ describe('gameplayStore current combat', () => {
   it('increments rune sound signal when a completed rune is retriggered', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
-    wall[0][3] = {
+    wall[0][1] = {
       runeType: 'Frost',
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.damage', { amount: 2 })],
       passiveEffectRefs: [],
     };
     const wallCharges = createEmptyWallCharges();
-    wallCharges[0][3] = {
-      ...wallCharges[0][3],
+    wallCharges[0][1] = {
+      ...wallCharges[0][1],
       currentCount: 1,
       completedRuneId: 'completed-frost',
     };
@@ -364,7 +364,7 @@ describe('gameplayStore current combat', () => {
       wallCharges,
     }));
 
-    store.getState().castRuneToWall(0, 4);
+    store.getState().castRuneToWall(0, 0);
 
     const state = store.getState();
     expect(state.enemy?.health).toBe(8);
@@ -419,9 +419,9 @@ describe('gameplayStore current combat', () => {
       discardPile: [],
     }));
 
-    store.getState().castRuneToWall(0, 4);
+    store.getState().castRuneToWall(0, 0);
 
-    expect(store.getState().player.wall[0][4]).toMatchObject({ runeType: 'Void', rarity: 'uncommon' });
+    expect(store.getState().player.wall[0][0]).toMatchObject({ runeType: 'Void', rarity: 'uncommon' });
     expect(store.getState().enemy?.health).toBe(10);
 
     store.getState().endCombatTurn();
@@ -468,15 +468,15 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const rareVoid = createRuneFromPool({ id: 'rare-void', runeType: 'Void', rarity: 'rare' });
     const wall = createEmptyWall();
-    wall[0][3] = {
+    wall[0][1] = {
       runeType: 'Fire',
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
       passiveEffectRefs: [],
     };
     const wallCharges = createEmptyWallCharges();
-    wallCharges[0][3] = {
-      ...wallCharges[0][3],
+    wallCharges[0][1] = {
+      ...wallCharges[0][1],
       currentCount: 1,
       completedRuneId: 'adjacent-fire',
     };
@@ -491,7 +491,7 @@ describe('gameplayStore current combat', () => {
       suppressedRunes: [],
     }));
 
-    store.getState().castRuneToWall(0, 4);
+    store.getState().castRuneToWall(0, 0);
 
     const state = store.getState();
     expect(state.combatPhase).toBe('victory');
@@ -504,15 +504,15 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const epicWind = createRuneFromPool({ id: 'epic-wind', runeType: 'Wind', rarity: 'epic' });
     const wall = createEmptyWall();
-    wall[0][1] = {
+    wall[0][2] = {
       runeType: 'Life',
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.healing', { amount: 2 })],
       passiveEffectRefs: [],
     };
     const wallCharges = createEmptyWallCharges();
-    wallCharges[0][1] = {
-      ...wallCharges[0][1],
+    wallCharges[0][2] = {
+      ...wallCharges[0][2],
       currentCount: 1,
       completedRuneId: 'adjacent-life',
     };
@@ -527,11 +527,11 @@ describe('gameplayStore current combat', () => {
       suppressedRunes: [],
     }));
 
-    store.getState().castRuneToWall(0, 2);
+    store.getState().castRuneToWall(0, 1);
 
     const state = store.getState();
     expect(state.hand.map((rune) => rune.id)).toEqual(['adjacent-life']);
-    expect(state.player.wall[0][1].runeType).toBeNull();
+    expect(state.player.wall[0][2].runeType).toBeNull();
     expect(state.suppressedRunes).toEqual([]);
   });
 });

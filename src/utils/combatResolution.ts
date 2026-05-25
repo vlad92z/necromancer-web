@@ -7,6 +7,7 @@ import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, S
 import { resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import type { DrawTypeRequest, WallPosition } from './effectResolver';
 import { copyEffectRefs } from './runeEffects';
+import { isRuneTypeAcceptedBySlotFamily } from './scoring';
 
 const DEFAULT_HAND_SIZE = 6;
 export const EXTRA_DRAW_HAND_LIMIT = 10;
@@ -277,7 +278,9 @@ export function castRuneToWallSlot({
     !targetCell ||
     targetCell.runeType !== null ||
     targetCharge.currentCount >= targetCharge.requiredCount ||
-    selectedRune.runeType !== targetCharge.runeType
+    (targetCharge.lockedRuneType
+      ? selectedRune.runeType !== targetCharge.lockedRuneType
+      : !isRuneTypeAcceptedBySlotFamily(selectedRune.runeType, targetCharge.slotFamily))
   ) {
     return {
       status: 'invalid',
@@ -301,6 +304,7 @@ export function castRuneToWallSlot({
 
   nextWallCharges[row][col] = {
     ...nextCharge,
+    lockedRuneType: nextCharge.lockedRuneType ?? selectedRune.runeType,
     currentCount: nextCurrentCount,
     spentRunes,
     completedRuneId: isCompleted ? selectedRune.id : nextCharge.completedRuneId,

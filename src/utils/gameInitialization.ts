@@ -13,6 +13,7 @@ import type {
   TooltipCard,
 } from '../types/game';
 import { copyEffectRefs } from './runeEffects';
+import { getWallSlotFamily } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
@@ -268,7 +269,6 @@ export function createGoblinEnemy(
 }
 
 export function createEmptyWallCharges(size: number = WALL_SIZE): SpellWallCharge[][] {
-  const runeTypes = RUNE_TYPES.slice(0, size);
   return Array(size)
     .fill(null)
     .map((_, row) =>
@@ -277,7 +277,8 @@ export function createEmptyWallCharges(size: number = WALL_SIZE): SpellWallCharg
         .map((_, col) => ({
           row,
           col,
-          runeType: runeTypes[(col - row + size) % size],
+          slotFamily: getWallSlotFamily(row, col),
+          lockedRuneType: null,
           requiredCount: row + 1,
           currentCount: 0,
           spentRunes: [],

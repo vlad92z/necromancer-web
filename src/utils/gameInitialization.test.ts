@@ -97,7 +97,7 @@ describe('gameInitialization combat state', () => {
     expect([5, 6, 8, 10].map(scaleEnemyAttackDamage)).toEqual([6, 8, 10, 12]);
   });
 
-  it('creates spell-wall charges with row-based requirements and expected rune types', () => {
+  it('creates spell-wall charges with row-based requirements and slot families', () => {
     const wallCharges = createEmptyWallCharges(6);
 
     expect(wallCharges).toHaveLength(6);
@@ -105,7 +105,8 @@ describe('gameInitialization combat state', () => {
     expect(wallCharges[0][0]).toMatchObject({
       row: 0,
       col: 0,
-      runeType: 'Fire',
+      slotFamily: 'fireVoid',
+      lockedRuneType: null,
       requiredCount: 1,
       currentCount: 0,
       spentRunes: [],
@@ -114,13 +115,13 @@ describe('gameInitialization combat state', () => {
     expect(wallCharges[2][0]).toMatchObject({
       row: 2,
       col: 0,
-      runeType: 'Void',
+      slotFamily: 'lifeFrost',
       requiredCount: 3,
     });
     expect(wallCharges[5][5]).toMatchObject({
       row: 5,
       col: 5,
-      runeType: 'Fire',
+      slotFamily: 'lightningWind',
       requiredCount: 6,
     });
   });

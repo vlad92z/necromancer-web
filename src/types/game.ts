@@ -5,6 +5,7 @@
 import type { ArtefactId } from './artefacts';
 
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
+export type WallSlotFamily = 'fireVoid' | 'lightningWind' | 'lifeFrost';
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 export type RuneSoundSignals = Record<RuneType, number>;
 
@@ -53,7 +54,8 @@ export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
 export interface SpellWallCharge {
   row: number;
   col: number;
-  runeType: RuneType;
+  slotFamily: WallSlotFamily;
+  lockedRuneType: RuneType | null;
   requiredCount: number;
   currentCount: number;
   spentRunes: Rune[];

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="200mm"
+   height="200mm"
+   viewBox="0 0 200 200"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   sodipodi:docname="placeholder_fire_void.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.45926479"
+     inkscape:cx="566.12221"
+     inkscape:cy="573.74309"
+     inkscape:window-width="1200"
+     inkscape:window-height="976"
+     inkscape:window-x="0"
+     inkscape:window-y="804"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient6"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#f60000;stop-opacity:1;"
+         offset="0.37937742"
+         id="stop6" />
+      <stop
+         style="stop-color:#5700a3;stop-opacity:1;"
+         offset="0.60700387"
+         id="stop7" />
+    </linearGradient>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter24"
+       x="-0.13972733"
+       y="-0.13972733"
+       width="1.2794547"
+       height="1.2794547">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="8.7329575"
+         id="feGaussianBlur24" />
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient6"
+       id="linearGradient1"
+       x1="4.5939364"
+       y1="3.4937577"
+       x2="194.85304"
+       y2="195.95161"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     inkscape:label="Rune Base"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="fill:#ffffff;fill-opacity:1"
+     transform="matrix(1.2308231,0,0,1.2308231,-23.370358,-22.794256)">
+    <circle
+       style="display:inline;fill:url(#linearGradient1);fill-rule:evenodd;stroke-width:0.910445;filter:url(#filter24)"
+       id="Rune_Base"
+       cx="100"
+       cy="100"
+       r="75"
+       inkscape:label="Base"
+       transform="matrix(0.84635159,0,0,0.84391272,15.598872,15.608728)" />
+  </g>
+</svg>
