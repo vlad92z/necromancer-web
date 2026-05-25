@@ -4,9 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { TooltipCard } from '../../types/game';
 import type { ActiveElement } from '../../features/gameplay/components/keyboardNavigation';
-import { createDefaultTooltipCards } from '../../utils/gameInitialization';
 
 export type RuneZoneOverlay = 'draw' | 'discard' | 'deck';
 
@@ -18,8 +16,6 @@ interface UIStore {
   soundVolume: number;
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
-  tooltipCards: TooltipCard[];
-  tooltipOverrideActive: boolean;
   activeElement: ActiveElement | null;
   
   // Actions to toggle overlays
@@ -32,8 +28,6 @@ interface UIStore {
   setMusicMuted: (muted: boolean) => void;
   toggleMusicMuted: () => void;
   markMusicSessionStarted: () => void;
-  setTooltipCards: (cards: TooltipCard[], overrideSelection?: boolean) => void;
-  resetTooltipCards: () => void;
   setActiveElement: (next: ActiveElement | null | ((current: ActiveElement | null) => ActiveElement | null)) => void;
 }
 
@@ -61,8 +55,6 @@ export const useUIStore = create<UIStore>((set) => ({
   soundVolume: getInitialVolume(),
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
-  tooltipCards: createDefaultTooltipCards(),
-  tooltipOverrideActive: false,
   activeElement: null,
   
   // Actions
@@ -111,20 +103,6 @@ export const useUIStore = create<UIStore>((set) => ({
 
   markMusicSessionStarted: () => {
     set({ hasMusicSessionStarted: true });
-  },
-
-  setTooltipCards: (cards: TooltipCard[], overrideSelection = false) => {
-    set({
-      tooltipCards: cards,
-      tooltipOverrideActive: overrideSelection,
-    });
-  },
-
-  resetTooltipCards: () => {
-    set({
-      tooltipCards: createDefaultTooltipCards(),
-      tooltipOverrideActive: false,
-    });
   },
 
   setActiveElement: (next) => {

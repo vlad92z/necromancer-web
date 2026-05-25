@@ -2,13 +2,8 @@
  * Tooltip card builders - helper functions to map game data to tooltip cards
  */
 
-import type { ArtefactId } from '../types/artefacts';
-import { ARTEFACTS } from '../types/artefacts';
-import type { Rune, RuneType, TooltipCard } from '../types/game';
-import { getArtefactEffectDescription } from './artefactDescriptions';
+import type { Rune, TooltipCard } from '../types/game';
 import { getRuneEffectDescription } from './runeEffects';
-
-const FALLBACK_RUNE_TYPE: RuneType = 'Life';
 
 function orderPrimaryFirst<T extends { id: string }>(items: T[], primaryId?: string | null): T[] {
   if (!primaryId) {
@@ -36,55 +31,4 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
     description: getRuneEffectDescription(rune),
     runeRarity: rune.rarity,
   }));
-}
-
-/**
- * Build tooltip cards for artefacts, showing the focused artefact first and
- * preserving other active artefacts afterwards.
- */
-export function buildArtefactTooltipCards(
-  activeArtefactIds: ArtefactId[],
-  primaryArtefactId: ArtefactId
-): TooltipCard[] {
-  const orderedArtefacts = orderPrimaryFirst(
-    activeArtefactIds.map((id) => ({ id })),
-    primaryArtefactId
-  ).map(({ id }) => id);
-
-  return orderedArtefacts
-    .map<TooltipCard | null>((artefactId, index) => {
-      const artefact = ARTEFACTS[artefactId];
-      if (!artefact) {
-        return null;
-      }
-      return {
-        id: `artefact-tooltip-${artefactId}-${index}`,
-        runeType: FALLBACK_RUNE_TYPE,
-        title: artefact.name,
-        description: getArtefactEffectDescription(artefactId),
-        imageSrc: artefact.image,
-      };
-    })
-    .filter((card): card is TooltipCard => card !== null);
-}
-
-/**
- * Build a single text-based tooltip card.
- */
-export function buildTextTooltipCard(
-  id: string,
-  title: string,
-  description: string,
-  imageSrc?: string,
-  runeType: RuneType = FALLBACK_RUNE_TYPE
-): TooltipCard[] {
-  return [
-    {
-      id,
-      runeType,
-      title,
-      description,
-      imageSrc,
-    },
-  ];
 }

@@ -85,15 +85,6 @@ export function useUIOverlayState() {
   );
 }
 
-export function useTooltipState() {
-  return useUIStore(
-    useShallow((state) => ({
-      tooltipCards: state.tooltipCards,
-      tooltipOverrideActive: state.tooltipOverrideActive,
-    })),
-  );
-}
-
 export function useCombatEnemyState() {
   return useCombatStore(
     useShallow((state) => ({

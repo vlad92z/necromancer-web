@@ -11,7 +11,6 @@ import type {
   RuneType,
   ScoringWall,
   SpellWallCharge,
-  TooltipCard,
 } from '../types/game';
 import { copyEffectRefs } from './runeEffects';
 import { getWallSlotFamily } from './scoring';
@@ -319,10 +318,6 @@ export function createStartingDeck(): Rune[] {
     castEffectRefs: copyEffectRefs(rune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(rune.passiveEffectRefs),
   }));
-}
-
-export function createDefaultTooltipCards(): TooltipCard[] {
-  return [];
 }
 
 export function createPlayer(

@@ -2,12 +2,9 @@
  * ArtefactsRow - displays a horizontal row of selected artefact icons
  */
 
-import type { PointerEvent } from 'react';
-import { useUIActions } from '../hooks/useGameActions';
 import type { ArtefactId } from '../types/artefacts';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from '../utils/artefactDescriptions';
-import { buildArtefactTooltipCards } from '../utils/tooltipCards';
 
 interface ArtefactsRowProps {
   selectedArtefactIds: ArtefactId[];
@@ -15,24 +12,11 @@ interface ArtefactsRowProps {
 }
 
 export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
-  const { setTooltipCards, resetTooltipCards } = useUIActions();
   const isEmpty = selectedArtefactIds.length === 0;
 
   // Match rune cell sizes: medium = 35px, large = 60px
   const iconSize = compact ? 'w-[60px] h-[60px]' : 'w-[100px] h-[100px]';
   const gap = compact ? 'gap-1.5' : 'gap-2';
-
-  const handlePointerEnter = (artefactId: ArtefactId, event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== 'touch') {
-      setTooltipCards(buildArtefactTooltipCards(selectedArtefactIds, artefactId));
-    }
-  };
-
-  const handlePointerDown = (artefactId: ArtefactId, event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'touch') {
-      setTooltipCards(buildArtefactTooltipCards(selectedArtefactIds, artefactId));
-    }
-  };
 
   if (isEmpty) {
     return null;
@@ -51,9 +35,6 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
           <div
             key={artefactId}
             className={`${iconSize} rounded-lg overflow-hidden border border-slate-600/50 bg-slate-900/50 shadow-lg`}
-            onPointerEnter={(event) => handlePointerEnter(artefactId, event)}
-            onPointerLeave={resetTooltipCards}
-            onPointerDown={(event) => handlePointerDown(artefactId, event)}
             role="img"
             aria-label={tooltipText}
           >

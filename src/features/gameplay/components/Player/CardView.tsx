@@ -116,8 +116,8 @@ export function CardView({
     ? 'flex-[1] text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 pb-0'
     : 'flex-[1] text-center text-sm font-semibold uppercase tracking-[0.22em] text-slate-100 pb-0';
   const descriptionClassName = size === 'hand'
-    ? `flex-[4] ${border} bg-slate-950/70 px-2 py-2 text-xs tracking-[0.06em] leading-snug text-slate-100/90`
-    : `flex-[4] ${border} bg-slate-950/70 px-3 py-3 tracking-[0.1em] leading-relaxed text-slate-100/90`;
+    ? `flex-[4] ${border} bg-slate-950/70 px-2 py-2 text-xs tracking-[0.06em] leading-snug text-slate-100/90 whitespace-pre-line`
+    : `flex-[4] ${border} bg-slate-950/70 px-3 py-3 tracking-[0.1em] leading-relaxed text-slate-100/90 whitespace-pre-line`;
   const className = `flex flex-col ${sizeClassName} ${border} bg-gray-900 transition duration-150 ease-out ${selectedClassName} ${interactiveClassName}`;
 
   const content = (

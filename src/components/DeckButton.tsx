@@ -5,7 +5,6 @@ import type { RuneZoneOverlay } from '../state/stores/uiStore';
 import deckSvg from '../assets/stats/deck.svg';
 import drawSvg from '../assets/stats/draw.svg';
 import discardSvg from '../assets/stats/discard.svg';
-import { buildTextTooltipCard } from '../utils/tooltipCards';
 
 const ZONE_COPY: Record<RuneZoneOverlay, { label: string; title: string; tooltip: (count: number) => string }> = {
     draw: {
@@ -33,7 +32,7 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
     const { deck } = useGameplayDeckState();
     const { hand, discardPile } = useCombatZoneState();
     const { activeRuneZoneOverlay } = useUIOverlayState();
-    const { resetTooltipCards: resetTooltips, setTooltipCards: setTooltip, openRuneZoneOverlay } = useUIActions();
+    const { openRuneZoneOverlay } = useUIActions();
     const playClickSound = useClickSound();
     const activeElement = useActiveElement();
     const zoneCount = zone === 'draw'
@@ -59,11 +58,8 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
     return (
         <button
             type="button"
-            onMouseEnter={() => setTooltip(buildTextTooltipCard(`${zone}-tooltip`, copy.title, zoneTooltip, zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg))}
-            onMouseLeave={resetTooltips}
-            onFocus={() => setTooltip(buildTextTooltipCard(`${zone}-tooltip`, copy.title, zoneTooltip, zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg))}
-            onBlur={resetTooltips}
             onClick={handleClick}
+            aria-label={`${copy.title}: ${zoneTooltip}`}
             data-active={isActive ? 'true' : undefined}
             data-deck-counter="true"
             className={zoneClassName[zone]}

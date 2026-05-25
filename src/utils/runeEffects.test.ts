@@ -270,15 +270,15 @@ describe('runeEffects', () => {
   it('renders rune descriptions from catalog refs', () => {
     const rune = createRune('void-epic', 'Void', 'epic');
 
-    expect(getRuneEffectDescription(rune)).toBe('• Heal 50% of damage dealt\n• Requires 3 charges');
+    expect(getRuneEffectDescription(rune)).toBe('• Heal 50% of damage dealt\n\n• Requires 3 charges');
   });
 
   it('renders mixed and passive-only rune descriptions from catalog refs', () => {
     expect(getRuneEffectDescription(createRune('life-epic', 'Life', 'epic'))).toBe(
-      '• Heal 3 for every Life rune in your completed wall\n• Requires 3 charges'
+      '• Heal 3 for every Life rune in your completed wall\n\n• Requires 3 charges'
     );
     expect(getRuneEffectDescription(createRune('fire-epic', 'Fire', 'epic'))).toBe(
-      '• Fire runes deal +6 damage\n• Requires 3 charges'
+      '• Fire runes deal +6 damage\n\n• Requires 3 charges'
     );
   });
 
@@ -287,6 +287,12 @@ describe('runeEffects', () => {
     expect(getRuneEffectDescription(createRune('fire-uncommon', 'Fire', 'uncommon'))).toContain('• Requires 1 charge');
     expect(getRuneEffectDescription(createRune('void-rare', 'Void', 'rare'))).toContain('• Requires 2 charges');
     expect(getRuneEffectDescription(createRune('wind-epic', 'Wind', 'epic'))).toContain('• Requires 3 charges');
+  });
+
+  it('can omit rarity charge requirements for compact hover tooltips', () => {
+    expect(getRuneEffectDescription(createRune('fire-uncommon', 'Fire', 'uncommon'), {
+      includeChargeRequirement: false,
+    })).toBe('• Deal 1 damage for every adjacent rune');
   });
 });
 

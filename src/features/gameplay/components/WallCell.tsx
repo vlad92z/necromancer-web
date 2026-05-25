@@ -13,19 +13,20 @@ interface WallCellProps {
   charge: SpellWallCharge | null;
   row: number;
   col: number;
-  // Number of columns/rows of the scoring wall (3, 4 or 5)
+  // Number of columns/rows of the scoring wall.
   wallSize: number;
   pulseKey?: number;
 }
 
 export function WallCell({ cell, charge, row, col, wallSize, pulseKey }: WallCellProps) {
-  void wallSize;
   const slotFamily = charge?.slotFamily ?? getWallSlotFamily(row, col);
   const lockedRuneType = !cell.runeType ? charge?.lockedRuneType ?? null : null;
   const placeholderLabel = lockedRuneType ?? getWallSlotFamilyLabel(slotFamily);
   const showChargeText = !cell.runeType && charge !== null && charge.stagedRune !== null;
   
   const rune = wallCellToRune(cell, row, col);
+  const tooltipRune = rune ?? charge?.stagedRune ?? null;
+  const tooltipPlacement = row < wallSize / 2 ? 'bottom' : 'top';
   
   return (
     <div
@@ -40,9 +41,13 @@ export function WallCell({ cell, charge, row, col, wallSize, pulseKey }: WallCel
         placeholder={{
           type: 'rune',
           runeType: lockedRuneType ?? undefined,
+          runeRarity: charge?.stagedRune?.rarity,
         }}
         showEffect
-        showTooltip={false}
+        showTooltip={tooltipRune !== null}
+        tooltipRune={tooltipRune}
+        tooltipIncludeChargeRequirement={false}
+        tooltipPlacement={tooltipPlacement}
         runePulseKey={pulseKey}
       />
       {showChargeText && (

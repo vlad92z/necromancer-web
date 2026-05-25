@@ -227,7 +227,14 @@ export function createRuneFromPool({
   };
 }
 
-export function getRuneEffectDescription(rune: Rune | null | undefined): string {
+interface RuneEffectDescriptionOptions {
+  includeChargeRequirement?: boolean;
+}
+
+export function getRuneEffectDescription(
+  rune: Rune | null | undefined,
+  options: RuneEffectDescriptionOptions = {},
+): string {
   if (!rune) {
     return '';
   }
@@ -237,9 +244,9 @@ export function getRuneEffectDescription(rune: Rune | null | undefined): string 
     ...getEffectRefDescriptions(rune.passiveEffectRefs),
   ];
   const requiredCharges = getRequiredChargesForRarity(rune.rarity);
-  if (requiredCharges > 0) {
+  if (options.includeChargeRequirement !== false && requiredCharges > 0) {
     effectLines.push(`Requires ${requiredCharges} charge` + (requiredCharges === 1 ? '' : 's'));
   }
 
-  return effectLines.map((line) => `• ${line}`).join('\n');
+  return effectLines.map((line) => `• ${line}`).join('\n\n');
 }
