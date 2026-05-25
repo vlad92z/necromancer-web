@@ -586,14 +586,9 @@ export const gameplayStoreConfig = (
       }
 
       const updatedDeckTemplate = mergeDeckWithOffer(state.fullDeck, selectedOffer);
-      const updatedPlayer: Player = {
-        ...state.player,
-        deck: mergeDeckWithOffer(state.player.deck, selectedOffer),
-      };
 
       return {
         ...state,
-        player: updatedPlayer,
         fullDeck: updatedDeckTemplate,
         deckDraftState: {
           ...state.deckDraftState,

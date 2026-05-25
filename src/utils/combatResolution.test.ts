@@ -827,7 +827,7 @@ describe('combatResolution basic combat effects', () => {
 });
 
 describe('combatResolution victory deck collection', () => {
-  it('returns draw deck, hand, discard, completed wall, and spent charge runes', () => {
+  it('clears encounter zones without rebuilding the persistent deck', () => {
     const drawRune = createTestRune('victory-draw', 'Fire');
     const handRune = createTestRune('victory-hand', 'Life');
     const discardRune = createTestRune('victory-discard', 'Void');
@@ -867,18 +867,12 @@ describe('combatResolution victory deck collection', () => {
       wallCharges,
     });
 
-    expect(result.player.deck.map((rune) => rune.id)).toEqual([
-      'victory-draw',
-      'victory-hand',
-      'victory-discard',
-      'victory-completed',
-      'victory-incomplete-spent',
-    ]);
+    expect(result.player.deck).toEqual([drawRune]);
     expect(result.hand).toEqual([]);
     expect(result.discardPile).toEqual([]);
   });
 
-  it('returns suppressed runes after encounter recovery', () => {
+  it('does not persist suppressed runes into the base deck on victory cleanup', () => {
     const suppressedRune = createTestRune('suppressed-void', 'Void');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
 
@@ -890,10 +884,10 @@ describe('combatResolution victory deck collection', () => {
       wallCharges: createEmptyWallCharges(6),
     });
 
-    expect(result.player.deck.map((rune) => rune.id)).toEqual(['suppressed-void']);
+    expect(result.player.deck).toEqual([]);
   });
 
-  it('prefers suppressed originals over converted wall placeholders on recovery', () => {
+  it('does not inject converted wall placeholders or suppressed originals into the base deck', () => {
     const originalRune = {
       ...createTestRune('converted-original', 'Fire'),
       castEffectRefs: [createEffectRef('cast.damage', { amount: 9 })],
@@ -922,10 +916,10 @@ describe('combatResolution victory deck collection', () => {
       wallCharges,
     });
 
-    expect(result.player.deck).toEqual([originalRune]);
+    expect(result.player.deck).toEqual([]);
   });
 
-  it('does not duplicate cards returned from multiple combat zones', () => {
+  it('preserves the existing base deck without adding duplicates from encounter zones', () => {
     const duplicateRune = createTestRune('duplicate-rune', 'Fire');
     const player = createPlayer('player-1', 'Tester', 10, [duplicateRune], 10);
 

@@ -485,57 +485,9 @@ export function resolveCompletedStartTurnEffects({
   });
 }
 
-export function collectVictoryDeck({
-  player,
-  hand,
-  discardPile,
-  suppressedRunes = [],
-  wallCharges,
-}: VictoryDeckInput): VictoryDeckResult {
-  const returnedRunesById = new Map<string, Rune>();
-
-  const addRune = (rune: Rune) => {
-    if (!returnedRunesById.has(rune.id)) {
-      returnedRunesById.set(rune.id, rune);
-    }
-  };
-
-  player.deck.forEach(addRune);
-  hand.forEach(addRune);
-  discardPile.forEach(addRune);
-  suppressedRunes.forEach(addRune);
-
-  wallCharges.forEach((chargeRow) => {
-    chargeRow.forEach((charge) => {
-      if (charge.stagedRune) {
-        addRune(charge.stagedRune);
-      }
-      charge.spentRunes.forEach(addRune);
-
-      if (!charge.completedRuneId) {
-        return;
-      }
-
-      const wallCell = player.wall[charge.row]?.[charge.col] ?? null;
-      if (!wallCell?.runeType) {
-        return;
-      }
-
-      addRune({
-        id: wallCell.id ?? charge.completedRuneId,
-        runeType: wallCell.runeType,
-        rarity: wallCell.rarity ?? 'common',
-        castEffectRefs: copyEffectRefs(wallCell.castEffectRefs),
-        passiveEffectRefs: copyEffectRefs(wallCell.passiveEffectRefs),
-      });
-    });
-  });
-
+export function collectVictoryDeck({ player }: VictoryDeckInput): VictoryDeckResult {
   return {
-    player: {
-      ...player,
-      deck: Array.from(returnedRunesById.values()),
-    },
+    player,
     hand: [],
     discardPile: [],
   };

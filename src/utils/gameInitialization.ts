@@ -353,7 +353,8 @@ export function initializeSoloGame(
   enemyAttackDamage: number = DEFAULT_ENEMY_ATTACK_DAMAGE
 ): GameState {
   const maxHealth = 100;
-  const activeDeck = shuffleRunes(fullDeck);
+  const deckTemplate = [...fullDeck];
+  const activeDeck = shuffleRunes(deckTemplate);
   const hand = activeDeck.slice(0, DEFAULT_HAND_SIZE);
   const remainingDeck = activeDeck.slice(DEFAULT_HAND_SIZE);
   const player = createPlayer('player-1', 'Arcane Apprentice', maxHealth, remainingDeck, maxHealth);
@@ -362,7 +363,7 @@ export function initializeSoloGame(
     gameStarted: false,
     startingHealth: player.maxHealth,
     player,
-    fullDeck,
+    fullDeck: deckTemplate,
     gameIndex: 1,
     enemyMaxHealth,
     enemyAttackDamage,

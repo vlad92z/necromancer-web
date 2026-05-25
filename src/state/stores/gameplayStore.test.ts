@@ -178,15 +178,21 @@ describe('gameplayStore current combat', () => {
   it('opens rune pack offers after lethal cast, selects a pack, and starts the next encounter', () => {
     const store = createGameplayStoreInstance();
     const lethalRune = createTestRune('lethal-fire', 'Fire', 20);
+    const baseDeckRune = createTestRune('base-life', 'Life', 2);
+    const encounterDeckRune = createTestRune('encounter-wind', 'Wind', 2);
+    const encounterDiscardRune = createTestRune('encounter-frost', 'Frost', 2);
+    const suppressedRune = createTestRune('suppressed-void', 'Void', 2);
 
     store.setState((state) => ({
       ...state,
       hand: [lethalRune],
+      discardPile: [encounterDiscardRune],
+      suppressedRunes: [suppressedRune],
       selectedHandRuneId: lethalRune.id,
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
       wallCharges: createEmptyWallCharges(),
-      fullDeck: [lethalRune],
-      player: { ...state.player, deck: [] },
+      fullDeck: [lethalRune, baseDeckRune],
+      player: { ...state.player, deck: [encounterDeckRune] },
     }));
 
     store.getState().castRuneToWall(0, 0);
@@ -203,25 +209,40 @@ describe('gameplayStore current combat', () => {
       'Lightning',
     ]);
     expect(victoryState.player.wall.flat().every((cell) => cell.runeType === null)).toBe(true);
+    expect(victoryState.hand).toEqual([]);
+    expect(victoryState.discardPile).toEqual([]);
+    expect(victoryState.suppressedRunes).toEqual([]);
 
     const fireOffer = victoryState.deckDraftState?.offers[0];
     expect(fireOffer?.runeType).toBe('Fire');
-    const deckSizeBeforeSelection = victoryState.player.deck.length;
+    const encounterDeckBeforeSelection = victoryState.player.deck;
+    const fullDeckBeforeSelection = victoryState.fullDeck;
     store.getState().selectDeckDraftOffer(fireOffer?.id as string);
 
     const selectedState = store.getState();
     expect(selectedState.deckDraftReadyForNextGame).toBe(true);
     expect(selectedState.deckDraftState?.selectedOffer?.id).toBe(fireOffer?.id);
-    expect(selectedState.player.deck).toHaveLength(deckSizeBeforeSelection + 3);
-    expect(selectedState.player.deck.slice(-3).every((rune) => rune.runeType === 'Fire')).toBe(true);
+    expect(selectedState.player.deck).toEqual(encounterDeckBeforeSelection);
+    expect(selectedState.fullDeck).toHaveLength(fullDeckBeforeSelection.length + 3);
+    expect(selectedState.fullDeck.slice(-3).every((rune) => rune.runeType === 'Fire')).toBe(true);
 
     store.getState().startNextSoloGame();
-    expect(store.getState().combatPhase).toBe('player-turn');
-    expect(store.getState().deckDraftState).toBeNull();
-    expect(store.getState().enemy?.maxHealth).toBe(10);
-    expect(store.getState().enemy?.intent.amount).toBe(5);
-    expect(store.getState().enemyMaxHealth).toBe(10);
-    expect(store.getState().enemyAttackDamage).toBe(5);
+    const nextState = store.getState();
+    expect(nextState.combatPhase).toBe('player-turn');
+    expect(nextState.deckDraftState).toBeNull();
+    expect(nextState.enemy?.maxHealth).toBe(10);
+    expect(nextState.enemy?.intent.amount).toBe(5);
+    expect(nextState.enemyMaxHealth).toBe(10);
+    expect(nextState.enemyAttackDamage).toBe(5);
+    expect(nextState.suppressedRunes).toEqual([]);
+    expect(nextState.discardPile).toEqual([]);
+    expect(nextState.wallCharges.flat().every((charge) => charge.stagedRune === null && charge.spentRunes.length === 0)).toBe(true);
+    expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id).sort()).toEqual(
+      selectedState.fullDeck.map((rune) => rune.id).sort()
+    );
+    expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id)).not.toContain(encounterDeckRune.id);
+    expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id)).not.toContain(encounterDiscardRune.id);
+    expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id)).not.toContain(suppressedRune.id);
   });
 
   it('starts the next encounter from victory without selecting a pack', () => {
@@ -279,7 +300,8 @@ describe('gameplayStore current combat', () => {
     const selectedState = store.getState();
     expect(selectedState.player.health).toBe(4);
     expect(selectedState.player.maxHealth).toBe(10);
-    expect(selectedState.player.deck).toHaveLength(victoryState.player.deck.length + 3);
+    expect(selectedState.player.deck).toEqual(victoryState.player.deck);
+    expect(selectedState.fullDeck).toHaveLength(victoryState.fullDeck.length + 3);
     expect(selectedState.deckDraftState?.picksRemaining).toBe(0);
   });
 
@@ -553,7 +575,7 @@ describe('gameplayStore current combat', () => {
     expect(state.player.deck).toEqual([]);
   });
 
-  it('restores consumed adjacent runes on victory', () => {
+  it('does not persist consumed adjacent runes across victory', () => {
     const store = createGameplayStoreInstance();
     const uncommonVoid = createRuneFromPool({ id: 'uncommon-void', runeType: 'Void', rarity: 'uncommon' });
     const chargeVoid = createTestRune('charge-void', 'Void', 0);
@@ -588,9 +610,17 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.combatPhase).toBe('victory');
+    expect(state.hand).toEqual([]);
     expect(state.suppressedRunes).toEqual([]);
-    expect(state.player.deck.map((rune) => rune.id)).toContain('adjacent-fire');
-    expect(state.player.deck.map((rune) => rune.id)).toContain('uncommon-void');
+    expect(state.player.deck.map((rune) => rune.id)).not.toContain('adjacent-fire');
+    expect(state.player.deck.map((rune) => rune.id)).not.toContain('uncommon-void');
+
+    store.getState().startNextSoloGame();
+
+    const nextState = store.getState();
+    const nextEncounterRuneIds = [...nextState.hand, ...nextState.player.deck].map((rune) => rune.id);
+    expect(nextEncounterRuneIds).not.toContain('adjacent-fire');
+    expect(nextEncounterRuneIds).not.toContain('uncommon-void');
   });
 
   it('returns adjacent completed runes to hand with epic Wind', () => {

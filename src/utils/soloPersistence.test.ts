@@ -30,7 +30,7 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 9,
+      version: 10,
       state: {
         gameStarted: true,
         enemyMaxHealth: 17,
@@ -55,7 +55,7 @@ describe('soloPersistence', () => {
   it('invalidates wrong-version payloads', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { loadSoloState } = await import('./soloPersistence');
-    storage.set('necromancer-solo-state', JSON.stringify({ version: 6, state: initializeSoloGame() }));
+    storage.set('necromancer-solo-state', JSON.stringify({ version: 9, state: initializeSoloGame() }));
 
     expect(loadSoloState()).toBeNull();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');

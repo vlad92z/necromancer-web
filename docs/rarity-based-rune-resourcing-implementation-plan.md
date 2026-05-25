@@ -87,7 +87,7 @@ Manual:
 - Stage non-common next to adjacency-dependent rune; confirm no benefit.
 - Complete it; confirm benefit appears.
 
-## Stage 3: Encounter Deck vs Base Deck
+## Stage 3: Encounter Deck vs Base Deck (Done)
 
 File-level changes before implementation:
 - `src/utils/gameInitialization.ts`: each encounter draw deck from fresh copied `fullDeck`.
