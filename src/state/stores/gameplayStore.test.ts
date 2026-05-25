@@ -370,6 +370,66 @@ describe('gameplayStore current combat', () => {
     expect(store.getState().wallChargeSoundSignal).toBe(1);
   });
 
+  it.each<[{ rarity: Rune['rarity']; runeType: RuneType; row: number; col: number; requiredCharges: number }]>([
+    [{ rarity: 'common', runeType: 'Fire', row: 0, col: 0, requiredCharges: 0 }],
+    [{ rarity: 'uncommon', runeType: 'Frost', row: 0, col: 2, requiredCharges: 1 }],
+    [{ rarity: 'rare', runeType: 'Void', row: 0, col: 0, requiredCharges: 2 }],
+    [{ rarity: 'epic', runeType: 'Wind', row: 0, col: 1, requiredCharges: 3 }],
+  ])('applies $rarity charge requirements during casting flow', ({ rarity, runeType, row, col, requiredCharges }) => {
+    const store = createGameplayStoreInstance();
+    const rune = createTestRune(`${rarity}-${runeType.toLowerCase()}`, runeType, 0, rarity);
+    const chargeRunes = Array.from(
+      { length: requiredCharges },
+      (_, index) => createTestRune(`${rarity}-${runeType.toLowerCase()}-charge-${index}`, runeType, 0)
+    );
+
+    store.setState((state) => ({
+      ...state,
+      hand: [rune, ...chargeRunes],
+      selectedHandRuneId: rune.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+      discardPile: [],
+    }));
+
+    store.getState().castRuneToWall(row, col);
+
+    if (requiredCharges === 0) {
+      const state = store.getState();
+      expect(state.player.wall[row][col]).toMatchObject({ runeType, rarity });
+      expect(state.discardPile).toHaveLength(1);
+      return;
+    }
+
+    expect(store.getState().player.wall[row][col].runeType).toBeNull();
+    expect(store.getState().wallCharges[row][col]).toMatchObject({
+      currentCount: 0,
+      requiredCount: requiredCharges,
+      lockedRuneType: runeType,
+    });
+
+    chargeRunes.forEach((chargeRune, index) => {
+      store.getState().selectHandRune(chargeRune.id);
+      store.getState().castRuneToWall(row, col);
+
+      const state = store.getState();
+      if (index < requiredCharges - 1) {
+        expect(state.player.wall[row][col].runeType).toBeNull();
+        expect(state.wallCharges[row][col].currentCount).toBe(index + 1);
+        return;
+      }
+
+      expect(state.player.wall[row][col]).toMatchObject({ runeType, rarity });
+      expect(state.wallCharges[row][col]).toMatchObject({
+        currentCount: requiredCharges,
+        requiredCount: requiredCharges,
+        completedRuneId: expect.any(String),
+        stagedRune: null,
+      });
+      expect(state.discardPile).toHaveLength(requiredCharges + 1);
+    });
+  });
+
   it('increments the casting rune sound signal for non-Frost armor gain', () => {
     const store = createGameplayStoreInstance();
     const armorRune: Rune = {

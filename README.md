@@ -39,7 +39,7 @@ npm run preview
 
 ### Cast Runes
 - Select a rune from hand, then click a compatible dual-type wall slot.
-- Wall rows require increasing charges: row 1 completes with 1 rune, row 2 with 2 runes, and so on.
+- Charge requirement depends on the staged rune's rarity: Common completes immediately, Uncommon needs 1 charge, Rare needs 2, and Epic needs 3.
 - The first real charge locks an incomplete slot to that rune type until completed.
 - Incomplete charged slots show progress like `1/3`.
 - Invalid casts leave the selected card active.

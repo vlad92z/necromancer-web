@@ -144,7 +144,7 @@ Manual:
 - Use `chargeAdjacent` near staged slots.
 - Empty ignored; staged progresses; 1-away completes/casts.
 
-## Stage 5: UI Text + Final Acceptance
+## Stage 5: UI Text + Final Acceptance (Done)
 
 File-level changes before implementation:
 - `src/features/gameplay/components/WallCell.tsx`: show staged progress from `0/N`.

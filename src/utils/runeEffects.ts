@@ -1,5 +1,6 @@
 import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import { createEffectRef, getEffectRefDescriptions } from './effectCatalog';
+import { getRequiredChargesForRarity } from './gameInitialization';
 
 type RuneTemplate = Omit<Rune, 'id'> & {
   templateId: string;
@@ -235,5 +236,10 @@ export function getRuneEffectDescription(rune: Rune | null | undefined): string 
     ...getEffectRefDescriptions(rune.castEffectRefs),
     ...getEffectRefDescriptions(rune.passiveEffectRefs),
   ];
+  const requiredCharges = getRequiredChargesForRarity(rune.rarity);
+  if (requiredCharges > 0) {
+    effectLines.push(`Requires ${requiredCharges} charge` + (requiredCharges === 1 ? '' : 's'));
+  }
+
   return effectLines.map((line) => `• ${line}`).join('\n');
 }
