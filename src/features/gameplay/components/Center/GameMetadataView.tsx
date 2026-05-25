@@ -5,11 +5,10 @@
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { useUIActions } from '../../../../hooks/useGameActions';
-import { useActiveElement, useArcaneDust, useGameIndex } from '../../../../hooks/useGameState';
+import { useActiveElement, useArcaneDust } from '../../../../hooks/useGameState';
 import { RuneZoneButton } from '../../../../components/DeckButton';
 
 export function GameMetadataView() {
-  const gameNumber = useGameIndex();
   const arcaneDust = useArcaneDust();
   const { toggleSettingsOverlay: openSettings } = useUIActions();
   const activeElement = useActiveElement();
@@ -21,21 +20,9 @@ export function GameMetadataView() {
 
   return (
     <div className="flex flex-row w-full border-b border-slate-600/70 pb-2 bg-slate-900/80 px-5 pt-3">
-      {/* Left side: Game Title, Arcane Dust Counter, Settings Button */}
+      {/* Left side: Game Title and Arcane Dust Counter */}
       <div className="w-full flex flex-row flex-[29] items-center">
-        <ClickSoundButton
-          title="⚙"
-          action={openSettings}
-          isActive={isSettingsActive}
-          className={actionButtonBase}
-        />
-
-        <div className="flex flex-row gap-2 px-3 flex-1 justify-center items-center">
-          <span className="text-lg font-semibold uppercase tracking-[0.28em] text-sky-200">Game</span>
-          <span className="text-xl font-extrabold text-slate-200 leading-tight">{gameNumber}</span>
-        </div>
-
-        <div className="px-4 py-3 flex items-center gap-3 pr-20">
+        <div className="px-3 py-3 flex items-center gap-3">
           <img
             src={arcaneDustIcon}
             alt="Arcane Dust"
@@ -50,6 +37,12 @@ export function GameMetadataView() {
         <RuneZoneButton zone="draw" />
         <RuneZoneButton zone="discard" />
         <RuneZoneButton zone="deck" />
+        <ClickSoundButton
+          title="⚙"
+          action={openSettings}
+          isActive={isSettingsActive}
+          className={actionButtonBase}
+        />
       </div>
     </div>
   );
