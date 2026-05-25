@@ -239,8 +239,8 @@ export function RuneCell({
           alt=""
           aria-hidden
           style={{
-            width: '60%',
-            height: '60%',
+            width: variant === 'wall' ? '100%' : '60%',
+            height: variant === 'wall' ? '100%' : '60%',
             objectFit: 'contain',
             opacity: variantStyle.emptyOpacity ?? 1,
             pointerEvents: 'none',
