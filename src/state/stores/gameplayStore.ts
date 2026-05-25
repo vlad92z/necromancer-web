@@ -122,17 +122,6 @@ function trackDefeat(state: GameState, player: Player): void {
   });
 }
 
-function getWallRuneTypeFromLogSource(sourceId: string, wall: ScoringWall): RuneType | null {
-  const match = /^wall:(\d+):(\d+)$/.exec(sourceId);
-  if (!match) {
-    return null;
-  }
-
-  const row = Number.parseInt(match[1], 10);
-  const col = Number.parseInt(match[2], 10);
-  return wall[row]?.[col]?.runeType ?? null;
-}
-
 function getCompletedRuneTypesById(wall: ScoringWall, wallCharges: SpellWallCharge[][]): Map<string, RuneType> {
   return wallCharges.reduce<Map<string, RuneType>>((runeTypesById, chargeRow) => {
     chargeRow.forEach((charge) => {
@@ -147,6 +136,17 @@ function getCompletedRuneTypesById(wall: ScoringWall, wallCharges: SpellWallChar
     });
     return runeTypesById;
   }, new Map<string, RuneType>());
+}
+
+function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType>, wall: ScoringWall): Map<string, RuneType> {
+  wall.forEach((row) => {
+    row.forEach((cell) => {
+      if (cell.id && cell.runeType) {
+        runeTypesById.set(cell.id, cell.runeType);
+      }
+    });
+  });
+  return runeTypesById;
 }
 
 function createEmptyRuneSoundEvents(): Record<RuneType, number> {
@@ -188,7 +188,7 @@ function countRuneSoundEvents({
   wallCharges: SpellWallCharge[][];
 }): Record<RuneType, number> {
   const events = createEmptyRuneSoundEvents();
-  const completedRuneTypesById = getCompletedRuneTypesById(wall, wallCharges);
+  const completedRuneTypesById = addCompletedWallRuneTypesById(getCompletedRuneTypesById(wall, wallCharges), wall);
   const retriggeredRuneIdsByType = new Map<RuneType, Set<string>>();
 
   if (completedRune) {
@@ -201,7 +201,7 @@ function countRuneSoundEvents({
     }
 
     if (log.effectId.startsWith('passive.')) {
-      const runeType = getWallRuneTypeFromLogSource(log.sourceId, wall);
+      const runeType = completedRuneTypesById.get(log.sourceId) ?? null;
       if (runeType) {
         addRuneSoundEvent(events, runeType);
       }

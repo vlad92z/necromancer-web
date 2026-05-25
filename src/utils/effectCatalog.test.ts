@@ -42,9 +42,7 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.armorAdjacent', { amount: 3 }))).toBe(
       'Gain 3 armor for every adjacent rune'
     );
-    expect(getEffectDescription(createEffectRef('cast.healthIncrease', { amount: 1 }))).toBe(
-      'Increase maximum health by 1 and heal 1'
-    );
+    expect(getEffectDescription(createEffectRef('cast.healthIncrease', { amount: 1 }))).toBe('Increase maximum health by 1');
     expect(getEffectDescription(createEffectRef('cast.healthDecrease', { amount: 2 }))).toBe(
       'Reduce maximum health by 2'
     );

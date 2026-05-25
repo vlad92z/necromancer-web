@@ -58,6 +58,7 @@ export interface SpellWallCharge {
   lockedRuneType: RuneType | null;
   requiredCount: number;
   currentCount: number;
+  stagedRune: Rune | null;
   spentRunes: Rune[];
   completedRuneId: string | null;
 }
@@ -90,6 +91,7 @@ export interface TooltipCard {
 }
 
 export interface WallCell {
+  id: string | null;
   runeType: RuneType | null;
   rarity: RuneEffectRarity | null;
   castEffectRefs: EffectRef[] | null;

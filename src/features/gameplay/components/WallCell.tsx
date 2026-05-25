@@ -23,7 +23,7 @@ export function WallCell({ cell, charge, row, col, wallSize, pulseKey }: WallCel
   const slotFamily = charge?.slotFamily ?? getWallSlotFamily(row, col);
   const lockedRuneType = !cell.runeType ? charge?.lockedRuneType ?? null : null;
   const placeholderLabel = lockedRuneType ?? getWallSlotFamilyLabel(slotFamily);
-  const showChargeText = !cell.runeType && charge !== null && charge.currentCount > 0;
+  const showChargeText = !cell.runeType && charge !== null && charge.stagedRune !== null;
   
   const rune = wallCellToRune(cell, row, col);
   

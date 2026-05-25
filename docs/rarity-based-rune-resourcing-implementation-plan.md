@@ -28,7 +28,7 @@ Manual smoke every stage:
 - Pick draft reward.
 - Start next encounter.
 
-## Stage 1: Rarity Charge Slot Core
+## Stage 1: Rarity Charge Slot Core (Done)
 
 File-level changes before implementation:
 - `src/types/game.ts`: staged rune data in `SpellWallCharge`; rarity-derived requirement fields.
@@ -62,7 +62,7 @@ Manual:
 - Cast common into bottom row; effect resolves.
 - Stage uncommon/rare/epic; charge matching type; observe progress/completion.
 
-## Stage 2: Wall Copy + Completed-Only Semantics
+## Stage 2: Wall Copy + Completed-Only Semantics (Done)
 
 File-level changes before implementation:
 - `src/types/game.ts`: completed wall copy stores type, rarity, refs, unique copy id.

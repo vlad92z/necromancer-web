@@ -89,6 +89,7 @@ export interface ActivePassiveEffect {
   effectRef: EffectRef;
   sourceOrder: number;
   refOrder: number;
+  sourcePosition: WallPosition | null;
 }
 
 export interface PassiveCollectionInput {
@@ -131,10 +132,14 @@ function runeTypeParam(effectRef: EffectRef, key: string): RuneType | null {
   return typeof value === 'string' ? value as RuneType : null;
 }
 
+function isCompletedWallCell(cell: WallCell | null | undefined): cell is WallCell & { id: string; runeType: RuneType } {
+  return Boolean(cell?.id && cell.runeType);
+}
+
 function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
   return wall.reduce<Map<RuneType, number>>((counts, row) => {
     row.forEach((cell) => {
-      if (cell.runeType) {
+      if (isCompletedWallCell(cell)) {
         counts.set(cell.runeType, (counts.get(cell.runeType) ?? 0) + 1);
       }
     });
@@ -161,13 +166,13 @@ function countWallRunesByTypeIncludingTrigger({
 
   const wallCount = counts.get(runeType) ?? 0;
   const sourceCell = sourcePosition ? wall[sourcePosition.row]?.[sourcePosition.col] : null;
-  const sourceAlreadyCounted = sourceCell?.runeType === runeType;
+  const sourceAlreadyCounted = isCompletedWallCell(sourceCell) && sourceCell.runeType === runeType;
 
   return wallCount + (!sourceAlreadyCounted && castRuneType === runeType ? 1 : 0);
 }
 
 function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
-  return wall.some((row) => row.some((cell) => cell.runeType === runeType));
+  return wall.some((row) => row.some((cell) => isCompletedWallCell(cell) && cell.runeType === runeType));
 }
 
 function countAdjacentCompletedRunes(wall: ScoringWall, sourcePosition: WallPosition | null | undefined): number {
@@ -183,7 +188,7 @@ function countAdjacentCompletedRunes(wall: ScoringWall, sourcePosition: WallPosi
       }
 
       const cell = wall[sourcePosition.row + rowDelta]?.[sourcePosition.col + colDelta];
-      if (cell?.runeType) {
+      if (isCompletedWallCell(cell)) {
         count += 1;
       }
     }
@@ -202,7 +207,7 @@ function countAdjacentCompletedRunesIncludingSource(
   }
 
   const sourceCell = wall[sourcePosition.row]?.[sourcePosition.col];
-  const sourceCount = sourceCell?.runeType ? 1 : (castRuneType ? 1 : 0);
+  const sourceCount = isCompletedWallCell(sourceCell) ? 1 : (castRuneType ? 1 : 0);
   return countAdjacentCompletedRunes(wall, sourcePosition) + sourceCount;
 }
 
@@ -220,7 +225,7 @@ function getAdjacentCompletedPositions(wall: ScoringWall, sourcePosition: WallPo
 
       const position = { row: sourcePosition.row + rowDelta, col: sourcePosition.col + colDelta };
       const cell = wall[position.row]?.[position.col];
-      if (cell?.runeType) {
+      if (isCompletedWallCell(cell)) {
         positions.push(position);
       }
     }
@@ -260,17 +265,6 @@ function isAdjacentPosition(left: WallPosition | null | undefined, right: WallPo
   return Math.abs(left.row - right.row) <= 1 && Math.abs(left.col - right.col) <= 1;
 }
 
-function sourcePositionFromId(sourceId: string): WallPosition | null {
-  const [, row, col] = sourceId.split(':');
-  const parsedRow = Number(row);
-  const parsedCol = Number(col);
-  if (!Number.isInteger(parsedRow) || !Number.isInteger(parsedCol)) {
-    return null;
-  }
-
-  return { row: parsedRow, col: parsedCol };
-}
-
 function getCompletedPositionsByType(
   wall: ScoringWall,
   runeType: RuneType,
@@ -279,7 +273,7 @@ function getCompletedPositionsByType(
   return wall.flatMap((row, rowIndex) =>
     row.flatMap((cell, colIndex) => {
       const position = { row: rowIndex, col: colIndex };
-      return cell.runeType === runeType && !samePosition(sourcePosition, position) ? [position] : [];
+      return isCompletedWallCell(cell) && cell.runeType === runeType && !samePosition(sourcePosition, position) ? [position] : [];
     })
   );
 }
@@ -306,6 +300,7 @@ function copyEffectRefs(effectRefs: EffectRef[] | null | undefined): EffectRef[]
 
 function cloneWall(wall: ScoringWall): ScoringWall {
   return wall.map((row) => row.map((cell) => ({
+    id: cell.id,
     runeType: cell.runeType,
     rarity: cell.rarity,
     castEffectRefs: cell.castEffectRefs ? copyEffectRefs(cell.castEffectRefs) : null,
@@ -320,12 +315,18 @@ function cloneWallCharges(wallCharges: SpellWallCharge[][] | undefined): SpellWa
 
   return wallCharges.map((row) => row.map((charge) => ({
     ...charge,
+    stagedRune: charge.stagedRune ? {
+      ...charge.stagedRune,
+      castEffectRefs: copyEffectRefs(charge.stagedRune.castEffectRefs),
+      passiveEffectRefs: copyEffectRefs(charge.stagedRune.passiveEffectRefs),
+    } : null,
     spentRunes: [...charge.spentRunes],
   })));
 }
 
 function createEmptyWallCell(): WallCell {
   return {
+    id: null,
     runeType: null,
     rarity: null,
     castEffectRefs: null,
@@ -340,12 +341,13 @@ function runeFromCompletedCell(
 ): Rune | null {
   const cell = wall[position.row]?.[position.col];
   const completedRuneId = wallCharges[position.row]?.[position.col]?.completedRuneId;
-  if (!cell?.runeType || !completedRuneId) {
+  const wallCopyId = cell?.id ?? completedRuneId;
+  if (!isCompletedWallCell(cell) || !wallCopyId) {
     return null;
   }
 
   return {
-    id: completedRuneId,
+    id: wallCopyId,
     runeType: cell.runeType,
     rarity: cell.rarity ?? 'common',
     castEffectRefs: copyEffectRefs(cell.castEffectRefs),
@@ -369,7 +371,9 @@ function clearCompletedCell(
   nextWallCharges[position.row][position.col] = {
     ...nextWallCharges[position.row][position.col],
     lockedRuneType: null,
+    requiredCount: 0,
     currentCount: 0,
+    stagedRune: null,
     spentRunes: [],
     completedRuneId: null,
   };
@@ -391,6 +395,7 @@ function convertCompletedCell(
   const nextWall = cloneWall(wall);
   const nextWallCharges = cloneWallCharges(wallCharges);
   nextWall[position.row][position.col] = {
+    id: suppressedRune.id,
     runeType: targetType,
     rarity: 'common',
     castEffectRefs: [],
@@ -486,12 +491,13 @@ export function collectActivePassiveEffects({
 }: PassiveCollectionInput): ActivePassiveEffect[] {
   const wallPassives = wall.flatMap((row, rowIndex) =>
     row.flatMap((cell, colIndex) =>
-      (cell.passiveEffectRefs ?? []).map<ActivePassiveEffect>((effectRef, refOrder) => ({
+      (isCompletedWallCell(cell) ? cell.passiveEffectRefs ?? [] : []).map<ActivePassiveEffect>((effectRef, refOrder) => ({
         sourceType: 'rune',
-        sourceId: `wall:${rowIndex}:${colIndex}`,
+        sourceId: cell.id!,
         effectRef,
         sourceOrder: rowIndex * row.length + colIndex,
         refOrder,
+        sourcePosition: { row: rowIndex, col: colIndex },
       }))
     )
   );
@@ -503,6 +509,7 @@ export function collectActivePassiveEffects({
       effectRef,
       sourceOrder,
       refOrder,
+      sourcePosition: null,
     }))
   );
 
@@ -717,10 +724,7 @@ function resolveDamage({
     }
 
     if (passive.effectRef.effectId === 'passive.adjacentDamageBoost') {
-      const passivePosition = passive.sourceType === 'rune'
-        ? sourcePositionFromId(passive.sourceId)
-        : null;
-      if (!isAdjacentPosition(passivePosition, sourcePosition)) {
+      if (!isAdjacentPosition(passive.sourcePosition, sourcePosition)) {
         return;
       }
 
@@ -1520,9 +1524,7 @@ export function resolveEndTurnEffects({
       return;
     }
 
-    const sourcePosition = passive.sourceType === 'rune'
-      ? sourcePositionFromId(passive.sourceId)
-      : null;
+    const sourcePosition = passive.sourcePosition;
     const input = {
       params: passive.effectRef.params ?? {},
       values: { damage: 0 },

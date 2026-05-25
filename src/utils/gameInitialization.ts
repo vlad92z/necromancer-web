@@ -7,6 +7,7 @@ import type {
   GameState,
   Player,
   Rune,
+  RuneEffectRarity,
   RuneType,
   ScoringWall,
   SpellWallCharge,
@@ -242,7 +243,7 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
     .map(() =>
       Array(size)
         .fill(null)
-        .map(() => ({ runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }))
+        .map(() => ({ id: null, runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }))
     );
 }
 
@@ -252,6 +253,19 @@ export function scaleEnemyMaxHealth(maxHealth: number): number {
 
 export function scaleEnemyAttackDamage(attackDamage: number): number {
   return Math.ceil(attackDamage * ENEMY_SCALING_MULTIPLIER);
+}
+
+export function getRequiredChargesForRarity(rarity: RuneEffectRarity): number {
+  switch (rarity) {
+    case 'common':
+      return 0;
+    case 'uncommon':
+      return 1;
+    case 'rare':
+      return 2;
+    case 'epic':
+      return 3;
+  }
 }
 
 export function createGoblinEnemy(
@@ -279,8 +293,9 @@ export function createEmptyWallCharges(size: number = WALL_SIZE): SpellWallCharg
           col,
           slotFamily: getWallSlotFamily(row, col),
           lockedRuneType: null,
-          requiredCount: row + 1,
+          requiredCount: 0,
           currentCount: 0,
+          stagedRune: null,
           spentRunes: [],
           completedRuneId: null,
         }))

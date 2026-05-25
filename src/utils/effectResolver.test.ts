@@ -566,9 +566,9 @@ describe('effectResolver resolveCastEffects', () => {
 
   it('returns adjacent runes up to hand cap without suppressing them', () => {
     const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Fire');
-    wall[0][1] = createWallCell('Frost');
-    wall[1][0] = createWallCell('Life');
+    wall[0][0] = createWallCell('Fire', [], [], 'completed-0-0');
+    wall[0][1] = createWallCell('Frost', [], [], 'completed-0-1');
+    wall[1][0] = createWallCell('Life', [], [], 'completed-1-0');
     const player = { ...createTestPlayer(), wall };
     const wallCharges = createTestWallCharges(wall);
     const castRune = createTestRune('wind-return', 'Wind', [createEffectRef('cast.returnAdjacent')]);
@@ -592,9 +592,9 @@ describe('effectResolver resolveCastEffects', () => {
 
   it('destroys a deterministic random type target while excluding the source', () => {
     const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Fire');
-    wall[0][1] = createWallCell('Fire');
-    wall[0][2] = createWallCell('Fire');
+    wall[0][0] = createWallCell('Fire', [], [], 'completed-0-0');
+    wall[0][1] = createWallCell('Fire', [], [], 'completed-0-1');
+    wall[0][2] = createWallCell('Fire', [], [], 'completed-0-2');
     const player = { ...createTestPlayer(), wall };
     const wallCharges = createTestWallCharges(wall);
     const castRune = createTestRune('destroyer', 'Void', [createEffectRef('cast.destroyType', { targetType: 'Fire' })]);
@@ -638,8 +638,8 @@ describe('effectResolver resolveCastEffects', () => {
 
   it('converts random and adjacent targets into common no-effect runes while suppressing originals', () => {
     const randomWall = createEmptyWall(6);
-    randomWall[0][0] = createWallCell('Fire');
-    randomWall[0][1] = createWallCell('Fire', [createEffectRef('passive.explosive', { amount: 4 })], [createEffectRef('cast.damage', { amount: 9 })]);
+    randomWall[0][0] = createWallCell('Fire', [], [], 'completed-0-0');
+    randomWall[0][1] = createWallCell('Fire', [createEffectRef('passive.explosive', { amount: 4 })], [createEffectRef('cast.damage', { amount: 9 })], 'completed-0-1');
     const randomPlayer = { ...createTestPlayer(), wall: randomWall };
     const randomResult = resolveCastEffects({
       player: randomPlayer,
@@ -654,6 +654,7 @@ describe('effectResolver resolveCastEffects', () => {
     });
 
     expect(randomResult.wall[0][1]).toEqual({
+      id: 'completed-0-1',
       runeType: 'Frost',
       rarity: 'common',
       castEffectRefs: [],
@@ -663,9 +664,9 @@ describe('effectResolver resolveCastEffects', () => {
     expect(randomResult.enemy?.health).toBe(16);
 
     const adjacentWall = createEmptyWall(6);
-    adjacentWall[0][0] = createWallCell('Fire');
-    adjacentWall[0][1] = createWallCell('Life');
-    adjacentWall[2][2] = createWallCell('Wind');
+    adjacentWall[0][0] = createWallCell('Fire', [], [], 'completed-0-0');
+    adjacentWall[0][1] = createWallCell('Life', [], [], 'completed-0-1');
+    adjacentWall[2][2] = createWallCell('Wind', [], [], 'completed-2-2');
     const adjacentResult = resolveCastEffects({
       player: { ...createTestPlayer(), wall: adjacentWall },
       enemy: createTestEnemy(20),
@@ -735,7 +736,7 @@ describe('effectResolver resolveCastEffects', () => {
 
     expect(result.wallCharges[1][2]).toMatchObject({ currentCount: 1, spentRunes: [], completedRuneId: null });
     expect(result.wallCharges[2][1]).toMatchObject({ currentCount: 2, spentRunes: [], completedRuneId: null });
-    expect(result.wallCharges[2][2].currentCount).toBe(3);
+    expect(result.wallCharges[2][2].currentCount).toBe(1);
   });
 
   it('replays type-targeted cast effects while skipping retriggers', () => {
@@ -1009,8 +1010,8 @@ describe('effectResolver passive effects', () => {
       effectId: passive.effectRef.effectId,
       sourceOrder: passive.sourceOrder,
     }))).toEqual([
-      { sourceType: 'rune', sourceId: 'wall:0:5', effectId: 'passive.potionArmor', sourceOrder: 5 },
-      { sourceType: 'rune', sourceId: 'wall:1:2', effectId: 'passive.tomeCastDamage', sourceOrder: 8 },
+      { sourceType: 'rune', sourceId: 'completed-Frost', effectId: 'passive.potionArmor', sourceOrder: 5 },
+      { sourceType: 'rune', sourceId: 'completed-Fire', effectId: 'passive.tomeCastDamage', sourceOrder: 8 },
       { sourceType: 'artefact', sourceId: 'rod', effectId: 'passive.rodHealing', sourceOrder: 0 },
     ]);
   });
@@ -1107,8 +1108,8 @@ describe('effectResolver passive effects', () => {
 
       expect(result.values.damage).toBe(52);
       expect(result.logs.map((log) => `${log.sourceId}:${log.effectId}:${log.output.stacking}`)).toEqual([
-        'wall:0:1:passive.tomeCastDamage:flat',
-        'wall:0:0:passive.rodHealing:multiplier',
+        'completed-Fire:passive.tomeCastDamage:flat',
+        'completed-Life:passive.rodHealing:multiplier',
         'rod:passive.rodHealing:multiplier',
       ]);
     } finally {
@@ -1135,7 +1136,7 @@ describe('effectResolver passive effects', () => {
     expect(result.logs).toMatchObject([
       {
         sourceType: 'rune',
-        sourceId: 'wall:0:0',
+        sourceId: 'completed-Fire',
         effectId: 'unknown.passive',
         trigger: 'onCast',
         displayHint: 'unknown',
@@ -1143,7 +1144,7 @@ describe('effectResolver passive effects', () => {
       },
       {
         sourceType: 'rune',
-        sourceId: 'wall:0:0',
+        sourceId: 'completed-Fire',
         effectId: 'cast.damage',
         trigger: 'onCast',
         displayHint: 'damage',
@@ -1151,13 +1152,89 @@ describe('effectResolver passive effects', () => {
       },
     ]);
   });
+
+  it('ignores staged incomplete slots for completed-wall effects and targeting', () => {
+    const wall = createEmptyWall(6);
+    const wallCharges = createTestWallCharges(wall);
+    const stagedVoid = createTestRune('staged-void', 'Void', [
+      createEffectRef('cast.damage', { amount: 9 }),
+    ]);
+    stagedVoid.passiveEffectRefs = [createEffectRef('passive.tomeCastDamage', { damageBonus: 99 })];
+    wallCharges[0][0] = {
+      ...wallCharges[0][0],
+      lockedRuneType: 'Void',
+      requiredCount: 2,
+      currentCount: 1,
+      stagedRune: stagedVoid,
+      spentRunes: [createTestRune('void-fuel', 'Void', [])],
+    };
+    wallCharges[0][1] = {
+      ...wallCharges[0][1],
+      lockedRuneType: 'Fire',
+      requiredCount: 1,
+      currentCount: 0,
+      stagedRune: createTestRune('staged-fire', 'Fire', []),
+    };
+    const castRune = createTestRune('stage-check', 'Wind', [
+      createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }),
+      createEffectRef('cast.fragile', { amount: 5, fragileType: 'Fire' }),
+      createEffectRef('cast.damageAdjacent', { amount: 3 }),
+      createEffectRef('cast.destroyType', { targetType: 'Fire' }),
+      createEffectRef('cast.returnAdjacent'),
+    ]);
+
+    const result = resolveCastEffects({
+      player: { ...createTestPlayer(), wall },
+      enemy: createTestEnemy(30),
+      castRune,
+      wall,
+      wallCharges,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(collectActivePassiveEffects({ wall, activeArtefacts: [] })).toEqual([]);
+    expect(result.enemy?.health).toBe(22);
+    expect(result.logs).toMatchObject([
+      { effectId: 'cast.synergy', output: { synergyCount: 0, damage: 0 } },
+      { effectId: 'cast.fragile', output: { damage: 5, isBlocked: false } },
+      { effectId: 'cast.damageAdjacent', output: { adjacentCount: 1, damage: 3 } },
+      { effectId: 'cast.destroyType', output: { noTarget: true } },
+      { effectId: 'cast.returnAdjacent', output: { adjacentCount: 0, returnedRuneIds: [] } },
+    ]);
+    expect(result.returnedRunes).toEqual([]);
+    expect(result.suppressedRunes).toEqual([]);
+    expect(result.wallCharges[0][0].stagedRune?.id).toBe('staged-void');
+    expect(result.wallCharges[0][1].stagedRune?.id).toBe('staged-fire');
+  });
+
+  it('uses wall-copy ids for retriggered cast logs', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Fire', [], [createEffectRef('cast.damage', { amount: 3 })], 'wall-copy-fire');
+    const castRune = createTestRune('retrigger-source', 'Lightning', [createEffectRef('cast.retriggerAdjacent')]);
+
+    const result = resolveCastEffects({
+      player: { ...createTestPlayer(), wall },
+      enemy: createTestEnemy(20),
+      castRune,
+      wall,
+      wallCharges: createTestWallCharges(wall),
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(17);
+    expect(result.logs).toContainEqual(expect.objectContaining({
+      sourceId: 'wall-copy-fire',
+      effectId: 'cast.damage',
+    }));
+    expect(result.logs).not.toContainEqual(expect.objectContaining({ sourceId: 'wall:0:0' }));
+  });
 });
 
 function createTestPlayer(cells: Array<[number, number, RuneType]> = []): Player {
   const player = createPlayer('player-1', 'Tester', 10, [], 10);
   const wall: ScoringWall = createEmptyWall(6);
   cells.forEach(([row, col, runeType]) => {
-    wall[row][col] = createWallCell(runeType);
+    wall[row][col] = createWallCell(runeType, [], [], `completed-${row}-${col}`);
   });
   return { ...player, wall };
 }
@@ -1183,8 +1260,14 @@ function createTestEnemy(health: number): Enemy {
   };
 }
 
-function createWallCell(runeType: RuneType, passiveEffectRefs: EffectRef[] = [], castEffectRefs: EffectRef[] = []): WallCell {
+function createWallCell(
+  runeType: RuneType,
+  passiveEffectRefs: EffectRef[] = [],
+  castEffectRefs: EffectRef[] = [],
+  id: string = `completed-${runeType}`
+): WallCell {
   return {
+    id,
     runeType,
     rarity: 'common',
     castEffectRefs,
@@ -1198,9 +1281,10 @@ function createTestWallCharges(wall: ScoringWall): SpellWallCharge[][] {
     col: colIndex,
     slotFamily: getWallSlotFamily(rowIndex, colIndex),
     lockedRuneType: cell.runeType,
-    requiredCount: rowIndex + 1,
-    currentCount: cell.runeType ? rowIndex + 1 : 0,
+    requiredCount: cell.runeType ? 1 : 0,
+    currentCount: cell.runeType ? 1 : 0,
+    stagedRune: null,
     spentRunes: [],
-    completedRuneId: cell.runeType ? `completed-${rowIndex}-${colIndex}` : null,
+    completedRuneId: cell.id,
   })));
 }
