@@ -59,7 +59,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
     },
     Lightning: {
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.damageBoostSynergy', params: { percent: 10, synergyType: 'Lightning' } }],
+      passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
     },
   },
   rare: {
@@ -204,7 +204,7 @@ describe('runeEffects', () => {
     expect(createRune('lightning-uncommon', 'Lightning', 'uncommon')).toMatchObject({
       castEffectRefs: [],
       passiveEffectRefs: [
-        { effectId: 'passive.damageBoostSynergy', params: { percent: 10, synergyType: 'Lightning' } },
+        { effectId: 'passive.damageBoost', params: { amount: 1 } },
       ],
     });
     expect(createRune('void-uncommon', 'Void', 'uncommon')).toMatchObject({

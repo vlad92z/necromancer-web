@@ -73,6 +73,9 @@ describe('effectCatalog', () => {
       percent: 5,
       synergyType: 'Frost',
     }))).toBe('Increase all damage by 5% for every Frost rune in your completed wall, including the triggering rune if it matches');
+    expect(getEffectDescription(createEffectRef('passive.damageBoost', { amount: 1 }))).toBe(
+      'Increase all damage by 1'
+    );
     expect(getEffectDescription(createEffectRef('passive.pulseSynergy', {
       amount: 5,
       synergyType: 'Void',

@@ -38,7 +38,8 @@ describe('gameInitialization combat state', () => {
     expect(deck.filter((rune) => rune.runeType === 'Frost')).toHaveLength(5);
     expect(deck.filter((rune) => rune.runeType === 'Void')).toHaveLength(5);
     expect(deck.filter((rune) => rune.runeType === 'Lightning')).toHaveLength(5);
-    expect(deck.every((rune) => rune.rarity === 'common')).toBe(true);
+    expect(deck.filter((rune) => rune.rarity === 'common')).toHaveLength(25);
+    expect(deck.filter((rune) => rune.rarity === 'uncommon')).toHaveLength(5);
     expect(deck.filter((rune) => rune.runeType !== 'Wind').flatMap((rune) => rune.castEffectRefs)).not.toContainEqual(
       expect.objectContaining({ effectId: 'cast.drawType' })
     );
@@ -49,9 +50,31 @@ describe('gameInitialization combat state', () => {
       [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Void' } }],
       [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Life' } }],
     ]);
-    expect(deck.find((rune) => rune.id === 'player-1-Void-2')?.castEffectRefs).toEqual([
-      { effectId: 'cast.damage', params: { amount: 1 } },
-    ]);
+    expect(deck.find((rune) => rune.id === 'player-1-Fire-2')).toMatchObject({
+      rarity: 'uncommon',
+      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
+      passiveEffectRefs: [],
+    });
+    expect(deck.find((rune) => rune.id === 'player-1-Life-2')).toMatchObject({
+      rarity: 'uncommon',
+      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 1 } }],
+      passiveEffectRefs: [],
+    });
+    expect(deck.find((rune) => rune.id === 'player-1-Frost-2')).toMatchObject({
+      rarity: 'uncommon',
+      castEffectRefs: [{ effectId: 'cast.armorAdjacent', params: { amount: 3 } }],
+      passiveEffectRefs: [],
+    });
+    expect(deck.find((rune) => rune.id === 'player-1-Void-2')).toMatchObject({
+      rarity: 'uncommon',
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.pulseSynergy', params: { amount: 2, synergyType: 'Void' } }],
+    });
+    expect(deck.find((rune) => rune.id === 'player-1-Lightning-2')).toMatchObject({
+      rarity: 'uncommon',
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
+    });
   });
 
   it('clones the fixed starting deck refs', () => {

@@ -186,7 +186,7 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
       runeType: 'Lightning',
       rarity: 'uncommon',
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.damageBoostSynergy', { percent: 10, synergyType: 'Lightning' })],
+      passiveEffectRefs: [createEffectRef('passive.damageBoost', { amount: 1 })],
     }],
     rare: [{
       templateId: 'lightning-rare-explosive',

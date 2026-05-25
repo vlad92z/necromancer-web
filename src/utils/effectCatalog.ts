@@ -38,6 +38,7 @@ export type PassiveEffectId =
   | 'passive.rodHealing'
   | 'passive.potionArmor'
   | 'passive.tomeCastDamage'
+  | 'passive.damageBoost'
   | 'passive.damageBoostSynergy'
   | 'passive.pulseSynergy'
   | 'passive.healingStartTurn'
@@ -338,6 +339,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       defaultValue: 0,
     },
     describe: (params) => `+${numberParam(params, 'damageBonus', 1)} damage on all casts`,
+  },
+  'passive.damageBoost': {
+    id: 'passive.damageBoost',
+    kind: 'passive',
+    title: 'Damage Boost',
+    displayHint: 'damage',
+    describe: (params) => `Increase all damage by ${numberParam(params, 'amount')}`,
   },
   'passive.damageBoostSynergy': {
     id: 'passive.damageBoostSynergy',

@@ -40,8 +40,8 @@ export const STARTING_DECK: Rune[] = [
   {
     id: 'player-1-Fire-2',
     runeType: 'Fire',
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+    rarity: 'uncommon',
+    castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
     passiveEffectRefs: [],
   },
   {
@@ -75,8 +75,8 @@ export const STARTING_DECK: Rune[] = [
   {
     id: 'player-1-Life-2',
     runeType: 'Life',
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
+    rarity: 'uncommon',
+    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 1 } }],
     passiveEffectRefs: [],
   },
   {
@@ -145,8 +145,8 @@ export const STARTING_DECK: Rune[] = [
   {
     id: 'player-1-Frost-2',
     runeType: 'Frost',
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+    rarity: 'uncommon',
+    castEffectRefs: [{ effectId: 'cast.armorAdjacent', params: { amount: 3 } }],
     passiveEffectRefs: [],
   },
   {
@@ -180,9 +180,9 @@ export const STARTING_DECK: Rune[] = [
   {
     id: 'player-1-Void-2',
     runeType: 'Void',
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
+    rarity: 'uncommon',
+    castEffectRefs: [],
+    passiveEffectRefs: [{ effectId: 'passive.pulseSynergy', params: { amount: 2, synergyType: 'Void' } }],
   },
   {
     id: 'player-1-Void-3',
@@ -215,9 +215,9 @@ export const STARTING_DECK: Rune[] = [
   {
     id: 'player-1-Lightning-2',
     runeType: 'Lightning',
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
+    rarity: 'uncommon',
+    castEffectRefs: [],
+    passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
   },
   {
     id: 'player-1-Lightning-3',
