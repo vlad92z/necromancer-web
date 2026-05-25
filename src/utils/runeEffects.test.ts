@@ -277,7 +277,7 @@ describe('runeEffects', () => {
 
   it('renders mixed and passive-only rune descriptions from catalog refs', () => {
     expect(getRuneEffectDescription(createRune('life-epic', 'Life', 'epic'))).toBe(
-      '• Heal 3 for every Life rune in your completed wall, including this rune if it matches'
+      '• Heal 3 for every Life rune in your completed wall'
     );
     expect(getRuneEffectDescription(createRune('fire-epic', 'Fire', 'epic'))).toBe(
       '• Fire runes deal +5 damage'

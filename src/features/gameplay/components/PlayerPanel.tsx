@@ -17,7 +17,6 @@ export function PlayerPanel() {
     <section className="h-full p-5">
       <div className="flex items-center gap-3">
         <div>
-          <div className="text-xs font-extrabold uppercase tracking-[0.24em] text-sky-200/80">Player</div>
           <h2 className="mt-1 text-2xl font-black text-sky-50">Wizard</h2>
         </div>
       </div>
