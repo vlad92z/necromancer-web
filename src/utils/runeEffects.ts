@@ -9,7 +9,7 @@ const BASE_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
   Fire: [createEffectRef('cast.damage', { amount: 1 })],
   Frost: [createEffectRef('cast.armor', { amount: 3 })],
   Life: [createEffectRef('cast.healing', { amount: 2 })],
-  Void: [createEffectRef('cast.damageConditional', { amount: 10, threshold: 3, conditionType: 'Void' })],
+  Void: [createEffectRef('cast.damage', { amount: 1 })],
   Wind: [createEffectRef('cast.draw', { amount: 1 })],
   Lightning: [createEffectRef('cast.damage', { amount: 1 })],
 };
