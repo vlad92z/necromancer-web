@@ -86,7 +86,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Damage',
     displayHint: 'damage',
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage on cast`,
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage`,
   },
   'cast.damageAdjacent': {
     id: 'cast.damageAdjacent',
@@ -159,7 +159,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Healing',
     displayHint: 'healing',
-    describe: (params) => `Heal ${numberParam(params, 'amount')} on cast`,
+    describe: (params) => `Heal ${numberParam(params, 'amount')}`,
   },
   'cast.healSynergy': {
     id: 'cast.healSynergy',
@@ -174,7 +174,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Armor',
     displayHint: 'armor',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} armor on cast`,
+    describe: (params) => `Gain ${numberParam(params, 'amount')} armor`,
   },
   'cast.armorAdjacent': {
     id: 'cast.armorAdjacent',
@@ -202,14 +202,14 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Draw',
     displayHint: 'deck',
-    describe: (params) => `Draw ${numberParam(params, 'amount')} rune on cast`,
+    describe: (params) => `Draw ${numberParam(params, 'amount')} rune`,
   },
   'cast.drawType': {
     id: 'cast.drawType',
     kind: 'cast',
     title: 'Typed Draw',
     displayHint: 'deck',
-    describe: (params) => `Draw ${numberParam(params, 'amount')} ${runeTypeParam(params, 'targetType')} rune on cast`,
+    describe: (params) => `Draw ${numberParam(params, 'amount')} ${runeTypeParam(params, 'targetType')} rune`,
   },
   'cast.drawAdjacent': {
     id: 'cast.drawAdjacent',
@@ -244,7 +244,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Fortune',
     displayHint: 'arcaneDust',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} arcane dust on cast`,
+    describe: (params) => `Gain ${numberParam(params, 'amount')} arcane dust`,
   },
   'cast.synergy': {
     id: 'cast.synergy',

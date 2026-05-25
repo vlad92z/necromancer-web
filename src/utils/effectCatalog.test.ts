@@ -9,7 +9,7 @@ import { createEffectRef, getEffectDescription } from './effectCatalog';
 
 describe('effectCatalog', () => {
   it('renders cast effect descriptions from refs', () => {
-    expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage on cast');
+    expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage');
     expect(getEffectDescription(createEffectRef('cast.damageAdjacent', { amount: 1 }))).toBe(
       'Deal 1 damage for every adjacent rune'
     );
@@ -48,9 +48,9 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.healthDecrease', { amount: 2 }))).toBe(
       'Reduce maximum health by 2'
     );
-    expect(getEffectDescription(createEffectRef('cast.draw', { amount: 1 }))).toBe('Draw 1 rune on cast');
+    expect(getEffectDescription(createEffectRef('cast.draw', { amount: 1 }))).toBe('Draw 1 rune');
     expect(getEffectDescription(createEffectRef('cast.drawType', { amount: 1, targetType: 'Fire' }))).toBe(
-      'Draw 1 Fire rune on cast'
+      'Draw 1 Fire rune'
     );
     expect(getEffectDescription(createEffectRef('cast.drawAdjacent'))).toBe(
       'Draw one rune for every adjacent rune'
