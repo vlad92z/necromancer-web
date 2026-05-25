@@ -7,6 +7,7 @@ import type { Rune, RuneType } from '../../../types/game';
 import type { RuneZoneOverlay as RuneZoneOverlayType } from '../../../state/stores/uiStore';
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { useUIActions } from '../../../hooks/useGameActions';
+import { useClickSound } from '../../../hooks/useClickSound';
 import { useArcaneDust, useCombatZoneState, useGameplayDeckState } from '../../../hooks/useGameState';
 import { compareRunesByRarityThenId } from '../../../utils/runeRarity';
 import { buildRuneTooltipCards } from '../../../utils/tooltipCards';
@@ -41,6 +42,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
   const { deck } = useGameplayDeckState();
   const { hand, discardPile } = useCombatZoneState();
   const { closeRuneZoneOverlay: onClose } = useUIActions();
+  const playClickSound = useClickSound();
   const arcaneDust = useArcaneDust();
   const zoneCopy = ZONE_COPY[zone];
   const zoneRunes = zone === 'draw'
@@ -71,6 +73,10 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
   );
 
   const totalRuneCount = zoneRunes.length;
+  const handleCloseButton = () => {
+    playClickSound();
+    onClose();
+  };
 
   return (
     <AnimatePresence>
@@ -96,7 +102,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
               <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{`${zoneCopy.title} (${totalRuneCount})`}</h2>
               </div>
               <button
-                onClick={onClose}
+                onClick={handleCloseButton}
                 type="button"
                 className="rounded-xl border border-white/20 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-400 px-4 py-2 text-sm font-extrabold uppercase tracking-[0.12em] text-slate-900 shadow-[0_10px_25px_rgba(99,102,241,0.45)] transition hover:from-purple-400 hover:via-indigo-400 hover:to-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
               >

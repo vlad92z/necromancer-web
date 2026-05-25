@@ -1,4 +1,5 @@
 import { useUIActions } from '../hooks/useGameActions';
+import { useClickSound } from '../hooks/useClickSound';
 import { useActiveElement, useCombatZoneState, useGameplayDeckState, useUIOverlayState } from '../hooks/useGameState';
 import type { RuneZoneOverlay } from '../state/stores/uiStore';
 import deckSvg from '../assets/stats/deck.svg';
@@ -33,6 +34,7 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
     const { hand, discardPile } = useCombatZoneState();
     const { activeRuneZoneOverlay } = useUIOverlayState();
     const { resetTooltipCards: resetTooltips, setTooltipCards: setTooltip, openRuneZoneOverlay } = useUIActions();
+    const playClickSound = useClickSound();
     const activeElement = useActiveElement();
     const zoneCount = zone === 'draw'
         ? deck.length
@@ -49,6 +51,11 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
         discard: `${statBaseClass} border-slate-400/50 bg-slate-700/10 hover:bg-slate-700/20 data-[active=true]:border-slate-200 data-[active=true]:bg-slate-900/70 data-[active=true]:shadow-[0_0_24px_rgba(226,232,240,0.38),_0_0_48px_rgba(148,163,184,0.22)]`,
         deck: `${statBaseClass} border-sky-500/40 bg-sky-600/10 hover:bg-sky-600/20 data-[active=true]:border-sky-300 data-[active=true]:bg-slate-900/70 data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),_0_0_56px_rgba(125,211,252,0.55)]`,
     };
+    const handleClick = () => {
+        playClickSound();
+        openRuneZoneOverlay(zone);
+    };
+
     return (
         <button
             type="button"
@@ -56,7 +63,7 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
             onMouseLeave={resetTooltips}
             onFocus={() => setTooltip(buildTextTooltipCard(`${zone}-tooltip`, copy.title, zoneTooltip, zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg))}
             onBlur={resetTooltips}
-            onClick={() => openRuneZoneOverlay(zone)}
+            onClick={handleClick}
             data-active={isActive ? 'true' : undefined}
             data-deck-counter="true"
             className={zoneClassName[zone]}
