@@ -105,6 +105,9 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
     runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
+    enemyAttackSoundSignal: typeof nextState.enemyAttackSoundSignal === 'number'
+      ? nextState.enemyAttackSoundSignal
+      : currentState.enemyAttackSoundSignal,
   };
 }
 
@@ -485,6 +488,7 @@ export const gameplayStoreConfig = (
         enemy: endTurnEffects.enemy,
         activeArtefacts: state.activeArtefacts,
       });
+      const enemyAttackSoundSignal = state.enemyAttackSoundSignal + (enemyTurnResult.healthDamage > 0 ? 1 : 0);
       runeSoundEvents = mergeRuneSoundEvents(
         runeSoundEvents,
         countRuneSoundEvents({
@@ -508,6 +512,7 @@ export const gameplayStoreConfig = (
           combatPhase: 'defeat',
           longestRun: Math.max(state.longestRun, state.gameIndex),
           runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
+          enemyAttackSoundSignal,
         };
       }
 
@@ -551,6 +556,7 @@ export const gameplayStoreConfig = (
         selectedHandRuneId: null,
         combatPhase: 'player-turn',
         runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
+        enemyAttackSoundSignal,
       };
     });
 

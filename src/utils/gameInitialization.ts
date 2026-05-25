@@ -357,6 +357,7 @@ export function initializeSoloGame(
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
     runeSoundSignals: createRuneSoundSignals(),
+    enemyAttackSoundSignal: 0,
     enemy: createGoblinEnemy(enemyMaxHealth, enemyAttackDamage),
     combatPhase: 'player-turn',
     hand,

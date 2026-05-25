@@ -87,8 +87,87 @@ describe('gameplayStore current combat', () => {
     const state = store.getState();
     expect(state.player.health).toBe(7);
     expect(state.player.armor).toBe(0);
+    expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.hand.map((rune) => rune.id)).toEqual(['deck-fire', 'deck-life', 'hand-fire']);
     expect(state.discardPile).toEqual([]);
+  });
+
+  it('does not increment enemy attack sound signal when armor fully absorbs attack', () => {
+    const store = createGameplayStoreInstance();
+
+    store.setState((state) => ({
+      ...state,
+      hand: [],
+      player: { ...state.player, deck: [], armor: 5, health: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+    }));
+
+    store.getState().endCombatTurn();
+
+    const state = store.getState();
+    expect(state.player.health).toBe(10);
+    expect(state.player.armor).toBe(0);
+    expect(state.enemyAttackSoundSignal).toBe(0);
+  });
+
+  it('increments enemy attack sound signal when armor partially absorbs attack', () => {
+    const store = createGameplayStoreInstance();
+
+    store.setState((state) => ({
+      ...state,
+      hand: [],
+      player: { ...state.player, deck: [], armor: 3, health: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+    }));
+
+    store.getState().endCombatTurn();
+
+    const state = store.getState();
+    expect(state.player.health).toBe(8);
+    expect(state.player.armor).toBe(0);
+    expect(state.enemyAttackSoundSignal).toBe(1);
+  });
+
+  it('increments enemy attack sound signal for lethal enemy HP damage', () => {
+    const store = createGameplayStoreInstance();
+
+    store.setState((state) => ({
+      ...state,
+      hand: [],
+      player: { ...state.player, deck: [], armor: 0, health: 4 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+    }));
+
+    store.getState().endCombatTurn();
+
+    const state = store.getState();
+    expect(state.combatPhase).toBe('defeat');
+    expect(state.player.health).toBe(0);
+    expect(state.enemyAttackSoundSignal).toBe(1);
+  });
+
+  it('does not increment enemy attack sound signal when passives reduce attack to zero', () => {
+    const store = createGameplayStoreInstance();
+    const wall = createEmptyWall();
+    wall[0][3] = {
+      runeType: 'Frost',
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.reduceDamage', { amount: 5 })],
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand: [],
+      player: { ...state.player, wall, deck: [], armor: 0, health: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+    }));
+
+    store.getState().endCombatTurn();
+
+    const state = store.getState();
+    expect(state.player.health).toBe(10);
+    expect(state.enemyAttackSoundSignal).toBe(0);
   });
 
   it('opens deck draft offers after lethal cast and starts the next encounter', () => {

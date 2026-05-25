@@ -609,6 +609,7 @@ describe('combatResolution basic combat effects', () => {
 
     expect(result.player.armor).toBe(0);
     expect(result.player.health).toBe(8);
+    expect(result.healthDamage).toBe(2);
   });
 
   it('reduces enemy attack damage before armor', () => {
@@ -623,6 +624,7 @@ describe('combatResolution basic combat effects', () => {
 
     expect(result.player.armor).toBe(0);
     expect(result.player.health).toBe(9);
+    expect(result.healthDamage).toBe(1);
   });
 
   it('lethal enemy attack reaches zero health', () => {
@@ -635,6 +637,35 @@ describe('combatResolution basic combat effects', () => {
     const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
 
     expect(result.player.health).toBe(0);
+    expect(result.healthDamage).toBe(5);
+  });
+
+  it('reports zero health damage when armor fully absorbs enemy attack', () => {
+    const player = {
+      ...createPlayer('player-1', 'Tester', 10, [], 10),
+      health: 10,
+      armor: 6,
+    };
+
+    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
+
+    expect(result.player.armor).toBe(1);
+    expect(result.player.health).toBe(10);
+    expect(result.healthDamage).toBe(0);
+  });
+
+  it('reports zero health damage when passives reduce enemy attack to zero', () => {
+    const player = {
+      ...createPlayerWithWall([[0, 0, 'Frost']]),
+      health: 10,
+      armor: 0,
+    };
+    player.wall[0][0] = createWallCell('Frost', [createEffectRef('passive.reduceDamage', { amount: 5 })]);
+
+    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
+
+    expect(result.player.health).toBe(10);
+    expect(result.healthDamage).toBe(0);
   });
 });
 

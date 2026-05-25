@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useRuneSoundSignals, useUIOverlayState } from '../../../hooks/useGameState';
+import { useEnemyAttackSoundSignal, useRuneSoundSignals, useUIOverlayState } from '../../../hooks/useGameState';
+import { useEnemyAttackSound } from '../../../hooks/useEnemyAttackSound';
 import { useRuneSound } from '../../../hooks/useRuneSound';
 import type { RuneSoundSignals, RuneType } from '../../../types/game';
 import { SoloGameView } from './SoloGameBoard';
@@ -18,8 +19,11 @@ export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
   const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
   const runeSoundSignals = useRuneSoundSignals();
+  const enemyAttackSoundSignal = useEnemyAttackSoundSignal();
   const playRuneSound = useRuneSound();
+  const playEnemyAttackSound = useEnemyAttackSound();
   const previousRuneSoundSignalsRef = useRef<RuneSoundSignals>(runeSoundSignals);
+  const previousEnemyAttackSoundSignalRef = useRef(enemyAttackSoundSignal);
   const hiddenWallSlots = useMemo(() => new Set<string>(), []);
 
   const [boardScale, setBoardScale] = useState(() => {
@@ -52,6 +56,16 @@ export function GameContainer() {
 
     previousRuneSoundSignalsRef.current = runeSoundSignals;
   }, [playRuneSound, runeSoundSignals]);
+
+  useEffect(() => {
+    if (enemyAttackSoundSignal <= previousEnemyAttackSoundSignalRef.current) {
+      previousEnemyAttackSoundSignalRef.current = enemyAttackSoundSignal;
+      return;
+    }
+
+    playEnemyAttackSound();
+    previousEnemyAttackSoundSignalRef.current = enemyAttackSoundSignal;
+  }, [enemyAttackSoundSignal, playEnemyAttackSound]);
 
   const scaledBoardWidth = SCALING_CONFIG.baseWidth * boardScale;
   const scaledBoardHeight = SCALING_CONFIG.baseHeight * boardScale;

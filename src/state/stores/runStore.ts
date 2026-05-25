@@ -21,6 +21,7 @@ export interface RunState {
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
+  enemyAttackSoundSignal: number;
 }
 
 export interface RunStore extends RunState {
@@ -42,6 +43,7 @@ export function pickRunState(state: GameState): RunState {
     deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
+    enemyAttackSoundSignal: state.enemyAttackSoundSignal,
   };
 }
 
