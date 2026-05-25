@@ -22,6 +22,7 @@ export interface RunState {
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
   enemyAttackSoundSignal: number;
+  shieldSoundSignal: number;
 }
 
 export interface RunStore extends RunState {
@@ -44,6 +45,7 @@ export function pickRunState(state: GameState): RunState {
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
     enemyAttackSoundSignal: state.enemyAttackSoundSignal,
+    shieldSoundSignal: state.shieldSoundSignal,
   };
 }
 

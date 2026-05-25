@@ -108,6 +108,7 @@ describe('gameplayStore current combat', () => {
     expect(state.player.health).toBe(10);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(0);
+    expect(state.shieldSoundSignal).toBe(1);
   });
 
   it('increments enemy attack sound signal when armor partially absorbs attack', () => {
@@ -126,6 +127,7 @@ describe('gameplayStore current combat', () => {
     expect(state.player.health).toBe(8);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
+    expect(state.shieldSoundSignal).toBe(0);
   });
 
   it('increments enemy attack sound signal for lethal enemy HP damage', () => {
@@ -144,9 +146,10 @@ describe('gameplayStore current combat', () => {
     expect(state.combatPhase).toBe('defeat');
     expect(state.player.health).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
+    expect(state.shieldSoundSignal).toBe(0);
   });
 
-  it('does not increment enemy attack sound signal when passives reduce attack to zero', () => {
+  it('increments shield sound signal when passives reduce attack to zero', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
     wall[0][3] = {
@@ -168,6 +171,7 @@ describe('gameplayStore current combat', () => {
     const state = store.getState();
     expect(state.player.health).toBe(10);
     expect(state.enemyAttackSoundSignal).toBe(0);
+    expect(state.shieldSoundSignal).toBe(1);
   });
 
   it('opens deck draft offers after lethal cast and starts the next encounter', () => {

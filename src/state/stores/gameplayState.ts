@@ -39,6 +39,7 @@ export function getGameplayState(): GameState {
     activeArtefacts: run.activeArtefacts,
     runeSoundSignals: run.runeSoundSignals,
     enemyAttackSoundSignal: run.enemyAttackSoundSignal,
+    shieldSoundSignal: run.shieldSoundSignal,
     enemy: combat.enemy,
     combatPhase: combat.combatPhase,
     hand: combat.hand,

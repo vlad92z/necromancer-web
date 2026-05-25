@@ -137,4 +137,5 @@ export interface GameState extends CombatZoneState {
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
   enemyAttackSoundSignal: number;
+  shieldSoundSignal: number;
 }

@@ -108,6 +108,9 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     enemyAttackSoundSignal: typeof nextState.enemyAttackSoundSignal === 'number'
       ? nextState.enemyAttackSoundSignal
       : currentState.enemyAttackSoundSignal,
+    shieldSoundSignal: typeof nextState.shieldSoundSignal === 'number'
+      ? nextState.shieldSoundSignal
+      : currentState.shieldSoundSignal,
   };
 }
 
@@ -488,7 +491,9 @@ export const gameplayStoreConfig = (
         enemy: endTurnEffects.enemy,
         activeArtefacts: state.activeArtefacts,
       });
+      const enemyPerformedAttack = endTurnEffects.enemy?.intent.type === 'Attack';
       const enemyAttackSoundSignal = state.enemyAttackSoundSignal + (enemyTurnResult.healthDamage > 0 ? 1 : 0);
+      const shieldSoundSignal = state.shieldSoundSignal + (enemyPerformedAttack && enemyTurnResult.healthDamage === 0 ? 1 : 0);
       runeSoundEvents = mergeRuneSoundEvents(
         runeSoundEvents,
         countRuneSoundEvents({
@@ -513,6 +518,7 @@ export const gameplayStoreConfig = (
           longestRun: Math.max(state.longestRun, state.gameIndex),
           runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
           enemyAttackSoundSignal,
+          shieldSoundSignal,
         };
       }
 
@@ -557,6 +563,7 @@ export const gameplayStoreConfig = (
         combatPhase: 'player-turn',
         runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
         enemyAttackSoundSignal,
+        shieldSoundSignal,
       };
     });
 
