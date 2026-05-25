@@ -34,7 +34,7 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Fire-1',
     runeType: 'Fire',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+    castEffectRefs: [],
     passiveEffectRefs: [],
   },
   {
@@ -69,7 +69,7 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Life-1',
     runeType: 'Life',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
+    castEffectRefs: [],
     passiveEffectRefs: [],
   },
   {
@@ -97,7 +97,7 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Wind-0',
     runeType: 'Wind',
     rarity: 'common',
-    castEffectRefs: [],
+    castEffectRefs: [{ effectId: 'cast.draw', params: { amount: 1 } }],
     passiveEffectRefs: [],
   },
   {
@@ -139,7 +139,7 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Frost-1',
     runeType: 'Frost',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+    castEffectRefs: [],
     passiveEffectRefs: [],
   },
   {
@@ -174,7 +174,7 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Void-1',
     runeType: 'Void',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+    castEffectRefs: [],
     passiveEffectRefs: [],
   },
   {
@@ -209,7 +209,7 @@ export const STARTING_DECK: Rune[] = [
     id: 'player-1-Lightning-1',
     runeType: 'Lightning',
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+    castEffectRefs: [],
     passiveEffectRefs: [],
   },
   {
