@@ -111,13 +111,13 @@ describe('effectCatalog', () => {
   });
 
   it('defines artefact passive refs and catalog descriptions', () => {
-    expect(ARTEFACTS.ring.passiveEffectRefs[0]?.effectId).toBe('passive.ringDraftRarity');
-    expect(ARTEFACTS.robe.passiveEffectRefs[0]?.effectId).toBe('passive.robeDraftSelection');
+    expect(ARTEFACTS.ring.passiveEffectRefs).toEqual([]);
+    expect(ARTEFACTS.robe.passiveEffectRefs).toEqual([]);
     expect(ARTEFACTS.rod.passiveEffectRefs[0]?.effectId).toBe('passive.rodHealing');
     expect(ARTEFACTS.potion.passiveEffectRefs[0]?.effectId).toBe('passive.potionArmor');
     expect(ARTEFACTS.tome.passiveEffectRefs[0]?.effectId).toBe('passive.tomeCastDamage');
 
-    expect(getArtefactEffectDescription('ring')).toContain('Double the odds');
+    expect(getArtefactEffectDescription('ring')).toBe('');
     expect(getArtefactEffectDescription('tome')).toBe('+1 damage on all casts');
   });
 });

@@ -33,8 +33,6 @@ export type CastEffectId =
   | 'cast.fragile';
 
 export type PassiveEffectId =
-  | 'passive.ringDraftRarity'
-  | 'passive.robeDraftSelection'
   | 'passive.rodHealing'
   | 'passive.potionArmor'
   | 'passive.tomeCastDamage'
@@ -269,34 +267,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage if your completed wall has no ${runeTypeParam(params, 'fragileType')} runes`,
-  },
-  'passive.ringDraftRarity': {
-    id: 'passive.ringDraftRarity',
-    kind: 'passive',
-    title: 'Draft Rarity',
-    displayHint: 'deckDraft',
-    passive: {
-      trigger: 'onDeckDraftOffer',
-      target: 'epicChance',
-      stacking: 'multiplier',
-      paramKey: 'epicChanceMultiplier',
-      defaultValue: 1,
-    },
-    describe: () => 'Double the odds of drafting epic runes',
-  },
-  'passive.robeDraftSelection': {
-    id: 'passive.robeDraftSelection',
-    kind: 'passive',
-    title: 'Draft Selection',
-    displayHint: 'deckDraft',
-    passive: {
-      trigger: 'onDeckDraftOffer',
-      target: 'selectionLimit',
-      stacking: 'flat',
-      paramKey: 'selectionBonus',
-      defaultValue: 0,
-    },
-    describe: (params) => `Increase total picks by ${numberParam(params, 'selectionBonus', 1)} during deck drafting`,
   },
   'passive.rodHealing': {
     id: 'passive.rodHealing',

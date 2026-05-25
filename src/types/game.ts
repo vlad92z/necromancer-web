@@ -62,24 +62,19 @@ export interface SpellWallCharge {
   completedRuneId: string | null;
 }
 
-export type DeckDraftEffect =
-  | { type: 'heal'; amount: number }
-  | { type: 'maxHealth'; amount: number }
-  | { type: 'betterRunes'; rarityStep: number };
-
 export interface DeckDraftOffer {
   id: string;
   ownerId: Player['id'];
+  runeType: RuneType;
+  displayRarity: RuneEffectRarity;
   runes: Rune[];
-  deckDraftEffect?: DeckDraftEffect;
 }
 
 export interface DeckDraftState {
   offers: DeckDraftOffer[];
   picksRemaining: number;
   totalPicks: number;
-  selectionLimit: number;
-  selectionsThisOffer: number;
+  selectedOffer: DeckDraftOffer | null;
 }
 
 export type TooltipCardVariant = 'default' | 'nonPrimary';

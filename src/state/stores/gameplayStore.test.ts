@@ -174,7 +174,7 @@ describe('gameplayStore current combat', () => {
     expect(state.shieldSoundSignal).toBe(1);
   });
 
-  it('opens deck draft offers after lethal cast and starts the next encounter', () => {
+  it('opens rune pack offers after lethal cast, selects a pack, and starts the next encounter', () => {
     const store = createGameplayStoreInstance();
     const lethalRune = createTestRune('lethal-fire', 'Fire', 20);
 
@@ -192,13 +192,27 @@ describe('gameplayStore current combat', () => {
 
     const victoryState = store.getState();
     expect(victoryState.combatPhase).toBe('victory');
-    expect(victoryState.deckDraftState?.offers).toHaveLength(3);
+    expect(victoryState.deckDraftState?.offers).toHaveLength(6);
+    expect(victoryState.deckDraftState?.offers.map((offer) => offer.runeType)).toEqual([
+      'Fire',
+      'Life',
+      'Wind',
+      'Frost',
+      'Void',
+      'Lightning',
+    ]);
     expect(victoryState.player.wall.flat().every((cell) => cell.runeType === null)).toBe(true);
 
-    const offerId = victoryState.deckDraftState?.offers[0]?.id;
-    expect(offerId).toBeDefined();
-    store.getState().selectDeckDraftOffer(offerId as string);
-    expect(store.getState().deckDraftReadyForNextGame).toBe(true);
+    const fireOffer = victoryState.deckDraftState?.offers[0];
+    expect(fireOffer?.runeType).toBe('Fire');
+    const deckSizeBeforeSelection = victoryState.player.deck.length;
+    store.getState().selectDeckDraftOffer(fireOffer?.id as string);
+
+    const selectedState = store.getState();
+    expect(selectedState.deckDraftReadyForNextGame).toBe(true);
+    expect(selectedState.deckDraftState?.selectedOffer?.id).toBe(fireOffer?.id);
+    expect(selectedState.player.deck).toHaveLength(deckSizeBeforeSelection + 3);
+    expect(selectedState.player.deck.slice(-3).every((rune) => rune.runeType === 'Fire')).toBe(true);
 
     store.getState().startNextSoloGame();
     expect(store.getState().combatPhase).toBe('player-turn');
@@ -207,6 +221,65 @@ describe('gameplayStore current combat', () => {
     expect(store.getState().enemy?.intent.amount).toBe(4);
     expect(store.getState().enemyMaxHealth).toBe(6);
     expect(store.getState().enemyAttackDamage).toBe(4);
+  });
+
+  it('starts the next encounter from victory without selecting a pack', () => {
+    const store = createGameplayStoreInstance();
+    const lethalRune = createTestRune('lethal-fire', 'Fire', 20);
+
+    store.setState((state) => ({
+      ...state,
+      hand: [lethalRune],
+      selectedHandRuneId: lethalRune.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+      fullDeck: [lethalRune],
+      player: { ...state.player, deck: [] },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    const victoryState = store.getState();
+    const deckSizeBeforeSkip = victoryState.fullDeck.length;
+    expect(victoryState.deckDraftState?.selectedOffer).toBeNull();
+
+    store.getState().startNextSoloGame();
+
+    const nextState = store.getState();
+    expect(nextState.combatPhase).toBe('player-turn');
+    expect(nextState.deckDraftState).toBeNull();
+    expect(nextState.fullDeck).toHaveLength(deckSizeBeforeSkip);
+  });
+
+  it('does not apply old draft bonuses or Ring/Robe draft passives to packs', () => {
+    const store = createGameplayStoreInstance();
+    const lethalRune = createTestRune('lethal-fire', 'Fire', 20);
+
+    store.setState((state) => ({
+      ...state,
+      activeArtefacts: ['ring', 'robe'],
+      hand: [lethalRune],
+      selectedHandRuneId: lethalRune.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+      fullDeck: [lethalRune],
+      player: { ...state.player, deck: [], health: 4, maxHealth: 10 },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    const victoryState = store.getState();
+    expect(victoryState.deckDraftState?.offers).toHaveLength(6);
+    expect(victoryState.deckDraftState?.picksRemaining).toBe(1);
+
+    const offerId = victoryState.deckDraftState?.offers[0]?.id;
+    store.getState().selectDeckDraftOffer(offerId as string);
+
+    const selectedState = store.getState();
+    expect(selectedState.player.health).toBe(4);
+    expect(selectedState.player.maxHealth).toBe(10);
+    expect(selectedState.player.deck).toHaveLength(victoryState.player.deck.length + 3);
+    expect(selectedState.deckDraftState?.picksRemaining).toBe(0);
   });
 
   it('adds fortune arcane dust through gameplay store casting', () => {
@@ -402,7 +475,7 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.combatPhase).toBe('victory');
-    expect(state.deckDraftState?.offers).toHaveLength(3);
+    expect(state.deckDraftState?.offers).toHaveLength(6);
     expect(state.player.health).toBe(10);
   });
 

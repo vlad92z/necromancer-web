@@ -924,7 +924,6 @@ describe('effectResolver passive effects', () => {
       { sourceType: 'rune', sourceId: 'wall:0:5', effectId: 'passive.potionArmor', sourceOrder: 5 },
       { sourceType: 'rune', sourceId: 'wall:1:2', effectId: 'passive.tomeCastDamage', sourceOrder: 8 },
       { sourceType: 'artefact', sourceId: 'rod', effectId: 'passive.rodHealing', sourceOrder: 0 },
-      { sourceType: 'artefact', sourceId: 'robe', effectId: 'passive.robeDraftSelection', sourceOrder: 1 },
     ]);
   });
 
@@ -936,7 +935,6 @@ describe('effectResolver passive effects', () => {
       healing: 5,
       armor: 4,
       epicChance: 3,
-      selectionLimit: 1,
     };
 
     const onCast = resolvePassiveEffects({
@@ -950,7 +948,6 @@ describe('effectResolver passive effects', () => {
       healing: 10,
       armor: 8,
       epicChance: 3,
-      selectionLimit: 1,
     });
     expect(onCast.logs.map((log) => log.effectId)).toEqual([
       'passive.tomeCastDamage',
@@ -968,13 +965,9 @@ describe('effectResolver passive effects', () => {
       damage: 10,
       healing: 5,
       armor: 4,
-      epicChance: 6,
-      selectionLimit: 2,
+      epicChance: 3,
     });
-    expect(onDeckDraftOffer.logs.map((log) => log.effectId)).toEqual([
-      'passive.robeDraftSelection',
-      'passive.ringDraftRarity',
-    ]);
+    expect(onDeckDraftOffer.logs).toEqual([]);
 
     (['onEnemyAttack', 'startTurn', 'endTurn'] as const).forEach((trigger) => {
       const result = resolvePassiveEffects({
