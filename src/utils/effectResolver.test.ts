@@ -1055,6 +1055,31 @@ describe('effectResolver end turn effects', () => {
       output: { modifier: 1, previousValue: 1, nextValue: 2 },
     });
   });
+
+  it('grants end-turn armor for completed Frost runes', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Frost', [
+      createEffectRef('passive.armorEndTurnSynergy', { amount: 2, synergyType: 'Frost' }),
+    ]);
+    wall[0][1] = createWallCell('Frost');
+    wall[0][2] = createWallCell('Fire');
+    const player = { ...createTestPlayer(), wall, armor: 1 };
+
+    const result = resolveEndTurnEffects({
+      player,
+      enemy: createTestEnemy(20),
+      wall,
+    });
+
+    expect(result.player.armor).toBe(5);
+    expect(result.enemy?.health).toBe(20);
+    expect(result.logs).toHaveLength(1);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'passive.armorEndTurnSynergy',
+      trigger: 'endTurn',
+      output: { modifier: 4, synergyType: 'Frost', synergyCount: 2 },
+    });
+  });
 });
 
 describe('effectResolver start turn effects', () => {

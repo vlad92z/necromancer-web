@@ -1616,6 +1616,7 @@ export function resolveEndTurnEffects({
   wall,
   activeArtefacts = [],
 }: EndTurnEffectResolutionInput): EndTurnEffectResolutionResult {
+  let nextPlayer = player;
   let nextEnemy = enemy;
   const logs: EffectResolutionLog[] = [];
   const activePassives = sortActivePassiveEffects(collectActivePassiveEffects({ wall, activeArtefacts }));
@@ -1623,16 +1624,16 @@ export function resolveEndTurnEffects({
   activePassives.forEach((passive) => {
     const catalogEntry = EFFECT_CATALOG[passive.effectRef.effectId as CatalogEffectId];
     const passiveMetadata = catalogEntry?.kind === 'passive' ? catalogEntry.passive : undefined;
-    if (!passiveMetadata || passiveMetadata.trigger !== 'endTurn' || passiveMetadata.target !== 'damage') {
+    if (!passiveMetadata || passiveMetadata.trigger !== 'endTurn') {
       return;
     }
 
     const sourcePosition = passive.sourcePosition;
     const input = {
       params: passive.effectRef.params ?? {},
-      values: { damage: 0 },
+      values: { [passiveMetadata.target]: 0 },
     };
-    let damage = numberParam(
+    let modifier = numberParam(
       passive.effectRef,
       passiveMetadata.paramKey,
       passiveMetadata.defaultValue
@@ -1640,7 +1641,10 @@ export function resolveEndTurnEffects({
     let synergyType: RuneType | null = null;
     let synergyCount = 0;
 
-    if (passive.effectRef.effectId === 'passive.pulseSynergy') {
+    if (
+      passive.effectRef.effectId === 'passive.pulseSynergy' ||
+      passive.effectRef.effectId === 'passive.armorEndTurnSynergy'
+    ) {
       synergyType = runeTypeParam(passive.effectRef, 'synergyType');
       synergyCount = countWallRunesByTypeIncludingTrigger({
         wall,
@@ -1648,7 +1652,7 @@ export function resolveEndTurnEffects({
         sourcePosition,
         runeType: synergyType,
       });
-      damage *= synergyCount;
+      modifier *= synergyCount;
     }
 
     logs.push(createEffectLog(
@@ -1660,16 +1664,28 @@ export function resolveEndTurnEffects({
       {
         target: passiveMetadata.target,
         stacking: passiveMetadata.stacking,
-        modifier: damage,
+        modifier,
         ...(synergyType ? { synergyType, synergyCount } : {}),
         previousValue: 0,
-        nextValue: damage,
+        nextValue: modifier,
       }
     ));
 
+    if (passiveMetadata.target === 'armor') {
+      nextPlayer = {
+        ...nextPlayer,
+        armor: nextPlayer.armor + modifier,
+      };
+      return;
+    }
+
+    if (passiveMetadata.target !== 'damage') {
+      return;
+    }
+
     const damageResult = resolveDamage({
       trigger: 'endTurn',
-      baseDamage: damage,
+      baseDamage: modifier,
       wall,
       activeArtefacts,
       sourcePosition,
@@ -1685,7 +1701,7 @@ export function resolveEndTurnEffects({
   });
 
   return {
-    player,
+    player: nextPlayer,
     enemy: nextEnemy,
     logs,
   };

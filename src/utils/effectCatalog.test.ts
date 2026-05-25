@@ -81,6 +81,10 @@ describe('effectCatalog', () => {
       amount: 5,
       synergyType: 'Void',
     }))).toBe('At end of turn, deal 5 damage for every Void rune in your completed wall');
+    expect(getEffectDescription(createEffectRef('passive.armorEndTurnSynergy', {
+      amount: 2,
+      synergyType: 'Frost',
+    }))).toBe('At end of turn, gain 2 armor for every Frost rune in your completed wall');
     expect(getEffectDescription(createEffectRef('passive.healingStartTurn', { amount: 2 }))).toBe(
       'At start of turn, heal 2'
     );

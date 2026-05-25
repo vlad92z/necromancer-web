@@ -64,12 +64,12 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
   },
   rare: {
     Fire: {
-      castEffectRefs: [{ effectId: 'cast.damageFragile', params: { amount: 15, reduction: 3, fragileType: 'Frost' } }],
+      castEffectRefs: [{ effectId: 'cast.damageFragile', params: { amount: 20, reduction: 3, fragileType: 'Frost' } }],
       passiveEffectRefs: [],
     },
     Frost: {
-      castEffectRefs: [{ effectId: 'cast.armorSynergy', params: { amount: 6, synergyType: 'Frost' } }],
-      passiveEffectRefs: [],
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.armorEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } }],
     },
     Life: {
       castEffectRefs: [],
@@ -91,7 +91,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
   epic: {
     Fire: {
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.addDamage', params: { amount: 6, runeType: 'Fire' } }],
+      passiveEffectRefs: [{ effectId: 'passive.addDamage', params: { amount: 10, runeType: 'Fire' } }],
     },
     Frost: {
       castEffectRefs: [],
@@ -159,8 +159,10 @@ describe('runeEffects', () => {
   it('creates draft refs by rarity without storing rarity in params', () => {
     const rune = createRune('frost-rare', 'Frost', 'rare');
 
-    expect(rune.castEffectRefs).toEqual([{ effectId: 'cast.armorSynergy', params: { amount: 6, synergyType: 'Frost' } }]);
-    expect(rune.castEffectRefs[0]?.params).not.toHaveProperty('rarity');
+    expect(rune.passiveEffectRefs).toEqual([
+      { effectId: 'passive.armorEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } },
+    ]);
+    expect(rune.passiveEffectRefs[0]?.params).not.toHaveProperty('rarity');
   });
 
   it('clones refs from predefined rune variants', () => {
@@ -215,12 +217,12 @@ describe('runeEffects', () => {
 
   it('maps all rare rune identities to Stage 3 refs', () => {
     expect(createRune('fire-rare', 'Fire', 'rare')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.damageFragile', params: { amount: 15, reduction: 3, fragileType: 'Frost' } }],
+      castEffectRefs: [{ effectId: 'cast.damageFragile', params: { amount: 20, reduction: 3, fragileType: 'Frost' } }],
       passiveEffectRefs: [],
     });
     expect(createRune('frost-rare', 'Frost', 'rare')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.armorSynergy', params: { amount: 6, synergyType: 'Frost' } }],
-      passiveEffectRefs: [],
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.armorEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } }],
     });
     expect(createRune('life-rare', 'Life', 'rare')).toMatchObject({
       castEffectRefs: [],
@@ -243,7 +245,7 @@ describe('runeEffects', () => {
   it('maps all epic rune identities to Stage 4 refs', () => {
     expect(createRune('fire-epic', 'Fire', 'epic')).toMatchObject({
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.addDamage', params: { amount: 6, runeType: 'Fire' } }],
+      passiveEffectRefs: [{ effectId: 'passive.addDamage', params: { amount: 10, runeType: 'Fire' } }],
     });
     expect(createRune('frost-epic', 'Frost', 'epic')).toMatchObject({
       castEffectRefs: [],
@@ -278,7 +280,7 @@ describe('runeEffects', () => {
       '• Heal 3 for every Life rune in your completed wall\n\n• Requires 3 charges'
     );
     expect(getRuneEffectDescription(createRune('fire-epic', 'Fire', 'epic'))).toBe(
-      '• Fire runes deal +6 damage\n\n• Requires 3 charges'
+      '• Fire runes deal +10 damage\n\n• Requires 3 charges'
     );
   });
 

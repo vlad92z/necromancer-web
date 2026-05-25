@@ -40,6 +40,7 @@ export type PassiveEffectId =
   | 'passive.adjacentDamageBoost'
   | 'passive.damageBoostSynergy'
   | 'passive.pulseSynergy'
+  | 'passive.armorEndTurnSynergy'
   | 'passive.healingStartTurn'
   | 'passive.healingStartTurnSynergy'
   | 'passive.drawingStartTurn'
@@ -355,6 +356,21 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) =>
       `At end of turn, deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+  },
+  'passive.armorEndTurnSynergy': {
+    id: 'passive.armorEndTurnSynergy',
+    kind: 'passive',
+    title: 'End Turn Armor Synergy',
+    displayHint: 'armor',
+    passive: {
+      trigger: 'endTurn',
+      target: 'armor',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) =>
+      `At end of turn, gain ${numberParam(params, 'amount')} armor for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
   'passive.healingStartTurn': {
     id: 'passive.healingStartTurn',

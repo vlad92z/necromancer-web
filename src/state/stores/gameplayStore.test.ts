@@ -566,6 +566,42 @@ describe('gameplayStore current combat', () => {
     expect(state.player.health).toBe(10);
   });
 
+  it('applies rare Frost end-turn armor before enemy attacks', () => {
+    const store = createGameplayStoreInstance();
+    const hand = [createTestRune('hand-fire', 'Fire', 0)];
+    const wall = createEmptyWall();
+    wall[0][0] = {
+      id: 'completed-frost-rare',
+      runeType: 'Frost',
+      rarity: 'rare',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.armorEndTurnSynergy', { amount: 2, synergyType: 'Frost' })],
+    };
+    wall[0][1] = {
+      id: 'completed-frost-support',
+      runeType: 'Frost',
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [],
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand,
+      player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      wallCharges: createEmptyWallCharges(),
+      discardPile: [],
+    }));
+
+    store.getState().endCombatTurn();
+
+    const state = store.getState();
+    expect(state.player.health).toBe(9);
+    expect(state.player.armor).toBe(0);
+    expect(state.combatPhase).toBe('player-turn');
+  });
+
   it('deals rare Void pulse damage after completing a top-row slot', () => {
     const store = createGameplayStoreInstance();
     const voidRune = createRuneFromPool({ id: 'void-pulse', runeType: 'Void', rarity: 'rare' });
