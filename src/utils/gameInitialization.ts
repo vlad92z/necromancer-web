@@ -18,10 +18,10 @@ import goblinImageSrc from '../assets/enemies/goblin.png';
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 6;
-export const DEFAULT_ENEMY_MAX_HEALTH = 10;
-export const DEFAULT_ENEMY_ATTACK_DAMAGE = 5;
+export const DEFAULT_ENEMY_MAX_HEALTH = 5;
+export const DEFAULT_ENEMY_ATTACK_DAMAGE = 3;
 export const ENEMY_SCALING_MULTIPLIER = 1.2;
-export const ENEMY_HEALTH_ROUNDING_STEP = 5;
+export const ENEMY_HEALTH_ROUNDING_STEP = 1;
 
 export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
   return Array(size)
