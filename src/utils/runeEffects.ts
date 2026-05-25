@@ -1,102 +1,15 @@
-/**
- * runeEffects - helpers for rune effect refs, rarity, and catalog-backed descriptions.
- */
-
 import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import { createEffectRef, getEffectRefDescriptions } from './effectCatalog';
 
-const BASE_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [createEffectRef('cast.damage', { amount: 1 })],
-  Frost: [createEffectRef('cast.armor', { amount: 3 })],
-  Life: [createEffectRef('cast.healing', { amount: 2 })],
-  Void: [createEffectRef('cast.damage', { amount: 1 })],
-  Wind: [createEffectRef('cast.draw', { amount: 1 })],
-  Lightning: [createEffectRef('cast.damage', { amount: 1 })],
+type RuneTemplate = Omit<Rune, 'id'> & {
+  templateId: string;
 };
 
-const UNCOMMON_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [createEffectRef('cast.damageAdjacent', { amount: 1 })],
-  Frost: [createEffectRef('cast.armorAdjacent', { amount: 3 })],
-  Life: [createEffectRef('cast.healthIncrease', { amount: 1 })],
-  Void: [],
-  Wind: [createEffectRef('cast.drawAdjacent')],
-  Lightning: [],
-};
-
-const RARE_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [createEffectRef('cast.damageFragile', { amount: 25, reduction: 5, fragileType: 'Frost' })],
-  Frost: [createEffectRef('cast.armorSynergy', { amount: 5, synergyType: 'Frost' })],
-  Life: [],
-  Void: [createEffectRef('cast.damageConsuming', { amount: 10 })],
-  Wind: [],
-  Lightning: [],
-};
-
-const EPIC_CAST_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [],
-  Frost: [],
-  Life: [createEffectRef('cast.healSynergy', { amount: 3, synergyType: 'Life' })],
-  Void: [],
-  Wind: [createEffectRef('cast.returnAdjacent')],
-  Lightning: [createEffectRef('cast.retriggerAdjacent')],
-};
-
-const CAST_EFFECT_REFS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, EffectRef[]>> = {
-  common: BASE_CAST_EFFECT_REFS,
-  uncommon: UNCOMMON_CAST_EFFECT_REFS,
-  rare: RARE_CAST_EFFECT_REFS,
-  epic: EPIC_CAST_EFFECT_REFS,
-};
-
-const COMMON_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [],
-  Frost: [],
-  Life: [],
-  Void: [],
-  Wind: [],
-  Lightning: [],
-};
-
-const UNCOMMON_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [],
-  Frost: [],
-  Life: [],
-  Void: [createEffectRef('passive.pulseSynergy', { amount: 2, synergyType: 'Void' })],
-  Wind: [],
-  Lightning: [createEffectRef('passive.damageBoostSynergy', { percent: 10, synergyType: 'Lightning' })],
-};
-
-const RARE_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [],
-  Frost: [],
-  Life: [createEffectRef('passive.healingStartTurn', { amount: 2 })],
-  Void: [],
-  Wind: [createEffectRef('passive.drawingStartTurn', { amount: 1 })],
-  Lightning: [createEffectRef('passive.explosive', { amount: 30 })],
-};
-
-const EPIC_PASSIVE_EFFECT_REFS: Record<RuneType, EffectRef[]> = {
-  Fire: [createEffectRef('passive.addDamage', { amount: 5, runeType: 'Fire' })],
-  Frost: [createEffectRef('passive.armorBoost', { amount: 5 })],
-  Life: [],
-  Void: [createEffectRef('passive.vampire', { percent: 25 })],
-  Wind: [],
-  Lightning: [],
-};
-
-const PASSIVE_EFFECT_REFS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, EffectRef[]>> = {
-  common: COMMON_PASSIVE_EFFECT_REFS,
-  uncommon: UNCOMMON_PASSIVE_EFFECT_REFS,
-  rare: RARE_PASSIVE_EFFECT_REFS,
-  epic: EPIC_PASSIVE_EFFECT_REFS,
-};
-
-export function getRuneCastEffectRefsForType(runeType: RuneType, rarity: RuneEffectRarity = 'common'): EffectRef[] {
-  return copyEffectRefs(CAST_EFFECT_REFS_BY_RARITY[rarity][runeType]);
-}
-
-export function getRunePassiveEffectRefsForType(runeType: RuneType, rarity: RuneEffectRarity = 'common'): EffectRef[] {
-  return copyEffectRefs(PASSIVE_EFFECT_REFS_BY_RARITY[rarity][runeType]);
+interface CreateRuneFromPoolInput {
+  id: string;
+  runeType: RuneType;
+  rarity?: RuneEffectRarity;
+  random?: () => number;
 }
 
 export function copyEffectRefs(effectRefs: EffectRef[] | null | undefined): EffectRef[] {
@@ -109,17 +22,207 @@ export function copyEffectRefs(effectRefs: EffectRef[] | null | undefined): Effe
   }));
 }
 
-export function createRune(
-  id: string,
-  runeType: RuneType,
-  rarity: RuneEffectRarity = 'common'
-): Rune {
+export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity, RuneTemplate[]>> = {
+  Fire: {
+    common: [{
+      templateId: 'fire-common-spark',
+      runeType: 'Fire',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
+      passiveEffectRefs: [],
+    }],
+    uncommon: [{
+      templateId: 'fire-uncommon-adjacent',
+      runeType: 'Fire',
+      rarity: 'uncommon',
+      castEffectRefs: [createEffectRef('cast.damageAdjacent', { amount: 1 })],
+      passiveEffectRefs: [],
+    }],
+    rare: [{
+      templateId: 'fire-rare-fragile',
+      runeType: 'Fire',
+      rarity: 'rare',
+      castEffectRefs: [createEffectRef('cast.damageFragile', { amount: 25, reduction: 5, fragileType: 'Frost' })],
+      passiveEffectRefs: [],
+    }],
+    epic: [{
+      templateId: 'fire-epic-add-damage',
+      runeType: 'Fire',
+      rarity: 'epic',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.addDamage', { amount: 5, runeType: 'Fire' })],
+    }],
+  },
+  Frost: {
+    common: [{
+      templateId: 'frost-common-armor',
+      runeType: 'Frost',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
+      passiveEffectRefs: [],
+    }],
+    uncommon: [{
+      templateId: 'frost-uncommon-adjacent',
+      runeType: 'Frost',
+      rarity: 'uncommon',
+      castEffectRefs: [createEffectRef('cast.armorAdjacent', { amount: 3 })],
+      passiveEffectRefs: [],
+    }],
+    rare: [{
+      templateId: 'frost-rare-synergy',
+      runeType: 'Frost',
+      rarity: 'rare',
+      castEffectRefs: [createEffectRef('cast.armorSynergy', { amount: 5, synergyType: 'Frost' })],
+      passiveEffectRefs: [],
+    }],
+    epic: [{
+      templateId: 'frost-epic-armor-boost',
+      runeType: 'Frost',
+      rarity: 'epic',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.armorBoost', { amount: 5 })],
+    }],
+  },
+  Life: {
+    common: [{
+      templateId: 'life-common-healing',
+      runeType: 'Life',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.healing', { amount: 2 })],
+      passiveEffectRefs: [],
+    }],
+    uncommon: [{
+      templateId: 'life-uncommon-health-increase',
+      runeType: 'Life',
+      rarity: 'uncommon',
+      castEffectRefs: [createEffectRef('cast.healthIncrease', { amount: 1 })],
+      passiveEffectRefs: [],
+    }],
+    rare: [{
+      templateId: 'life-rare-healing-start-turn',
+      runeType: 'Life',
+      rarity: 'rare',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.healingStartTurn', { amount: 2 })],
+    }],
+    epic: [{
+      templateId: 'life-epic-heal-synergy',
+      runeType: 'Life',
+      rarity: 'epic',
+      castEffectRefs: [createEffectRef('cast.healSynergy', { amount: 3, synergyType: 'Life' })],
+      passiveEffectRefs: [],
+    }],
+  },
+  Void: {
+    common: [{
+      templateId: 'void-common-damage',
+      runeType: 'Void',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
+      passiveEffectRefs: [],
+    }],
+    uncommon: [{
+      templateId: 'void-uncommon-pulse-synergy',
+      runeType: 'Void',
+      rarity: 'uncommon',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.pulseSynergy', { amount: 2, synergyType: 'Void' })],
+    }],
+    rare: [{
+      templateId: 'void-rare-consuming',
+      runeType: 'Void',
+      rarity: 'rare',
+      castEffectRefs: [createEffectRef('cast.damageConsuming', { amount: 10 })],
+      passiveEffectRefs: [],
+    }],
+    epic: [{
+      templateId: 'void-epic-vampire',
+      runeType: 'Void',
+      rarity: 'epic',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.vampire', { percent: 25 })],
+    }],
+  },
+  Wind: {
+    common: [{
+      templateId: 'wind-common-draw',
+      runeType: 'Wind',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.draw', { amount: 1 })],
+      passiveEffectRefs: [],
+    }],
+    uncommon: [{
+      templateId: 'wind-uncommon-draw-adjacent',
+      runeType: 'Wind',
+      rarity: 'uncommon',
+      castEffectRefs: [createEffectRef('cast.drawAdjacent')],
+      passiveEffectRefs: [],
+    }],
+    rare: [{
+      templateId: 'wind-rare-drawing-start-turn',
+      runeType: 'Wind',
+      rarity: 'rare',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.drawingStartTurn', { amount: 1 })],
+    }],
+    epic: [{
+      templateId: 'wind-epic-return-adjacent',
+      runeType: 'Wind',
+      rarity: 'epic',
+      castEffectRefs: [createEffectRef('cast.returnAdjacent')],
+      passiveEffectRefs: [],
+    }],
+  },
+  Lightning: {
+    common: [{
+      templateId: 'lightning-common-damage',
+      runeType: 'Lightning',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
+      passiveEffectRefs: [],
+    }],
+    uncommon: [{
+      templateId: 'lightning-uncommon-damage-boost',
+      runeType: 'Lightning',
+      rarity: 'uncommon',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.damageBoostSynergy', { percent: 10, synergyType: 'Lightning' })],
+    }],
+    rare: [{
+      templateId: 'lightning-rare-explosive',
+      runeType: 'Lightning',
+      rarity: 'rare',
+      castEffectRefs: [],
+      passiveEffectRefs: [createEffectRef('passive.explosive', { amount: 30 })],
+    }],
+    epic: [{
+      templateId: 'lightning-epic-retrigger-adjacent',
+      runeType: 'Lightning',
+      rarity: 'epic',
+      castEffectRefs: [createEffectRef('cast.retriggerAdjacent')],
+      passiveEffectRefs: [],
+    }],
+  },
+};
+
+export function createRuneFromPool({
+  id,
+  runeType,
+  rarity = 'common',
+  random = Math.random,
+}: CreateRuneFromPoolInput): Rune {
+  const variants = PREDEFINED_RUNE_VARIANTS[runeType][rarity];
+  if (variants.length === 0) {
+    throw new Error(`No predefined rune variants for ${rarity} ${runeType}`);
+  }
+
+  const template = variants[Math.floor(random() * variants.length)];
   return {
     id,
-    runeType,
-    rarity,
-    castEffectRefs: getRuneCastEffectRefsForType(runeType, rarity),
-    passiveEffectRefs: getRunePassiveEffectRefsForType(runeType, rarity),
+    runeType: template.runeType,
+    rarity: template.rarity,
+    castEffectRefs: copyEffectRefs(template.castEffectRefs),
+    passiveEffectRefs: copyEffectRefs(template.passiveEffectRefs),
   };
 }
 

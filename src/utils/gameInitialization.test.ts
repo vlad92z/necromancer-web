@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createStartingDeck,
   createEmptyWallCharges,
   initializeSoloGame,
   scaleEnemyAttackDamage,
   scaleEnemyMaxHealth,
+  STARTING_DECK,
 } from './gameInitialization';
 
 describe('gameInitialization combat state', () => {
@@ -25,8 +27,35 @@ describe('gameInitialization combat state', () => {
     expect(state.selectedHandRuneId).toBeNull();
   });
 
-  it('scales enemy max health by 20 percent and rounds up to 5 HP', () => {
-    expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([15, 20, 25, 30, 40]);
+  it('creates the fixed literal starting deck', () => {
+    const deck = createStartingDeck();
+
+    expect(deck).toHaveLength(30);
+    expect(deck.map((rune) => rune.id)).toEqual(STARTING_DECK.map((rune) => rune.id));
+    expect(deck.filter((rune) => rune.runeType === 'Fire')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeType === 'Life')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeType === 'Wind')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeType === 'Frost')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeType === 'Void')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeType === 'Lightning')).toHaveLength(5);
+    expect(deck.every((rune) => rune.rarity === 'common')).toBe(true);
+    expect(deck.find((rune) => rune.id === 'player-1-Void-0')?.castEffectRefs).toEqual([
+      { effectId: 'cast.damage', params: { amount: 1 } },
+    ]);
+  });
+
+  it('clones the fixed starting deck refs', () => {
+    const firstDeck = createStartingDeck();
+    const secondDeck = createStartingDeck();
+
+    firstDeck[0].castEffectRefs[0].params = { amount: 99 };
+
+    expect(secondDeck[0].castEffectRefs).toEqual([{ effectId: 'cast.damage', params: { amount: 1 } }]);
+    expect(firstDeck[0].castEffectRefs).not.toBe(secondDeck[0].castEffectRefs);
+  });
+
+  it('scales enemy max health by 20 percent and rounds up to 1 HP', () => {
+    expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([12, 18, 24, 30, 36]);
   });
 
   it('scales enemy attack by 20 percent and rounds up to 1 damage', () => {

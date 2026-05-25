@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Rune, RuneType } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall, createEmptyWallCharges } from '../../utils/gameInitialization';
-import { createRune } from '../../utils/runeEffects';
+import { createRuneFromPool } from '../../utils/runeEffects';
 import { useArtefactStore } from './artefactStore';
 import { createGameplayStoreInstance } from './gameplayStore';
 
@@ -22,7 +22,7 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.gameStarted).toBe(true);
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 10, intent: { type: 'Attack', amount: 5 } });
+    expect(state.enemy).toMatchObject({ id: 'goblin', health: 5, intent: { type: 'Attack', amount: 3 } });
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(6);
     expect(state.discardPile).toEqual([]);
@@ -120,15 +120,21 @@ describe('gameplayStore current combat', () => {
     store.getState().startNextSoloGame();
     expect(store.getState().combatPhase).toBe('player-turn');
     expect(store.getState().deckDraftState).toBeNull();
-    expect(store.getState().enemy?.maxHealth).toBe(15);
-    expect(store.getState().enemy?.intent.amount).toBe(6);
-    expect(store.getState().enemyMaxHealth).toBe(15);
-    expect(store.getState().enemyAttackDamage).toBe(6);
+    expect(store.getState().enemy?.maxHealth).toBe(6);
+    expect(store.getState().enemy?.intent.amount).toBe(4);
+    expect(store.getState().enemyMaxHealth).toBe(6);
+    expect(store.getState().enemyAttackDamage).toBe(4);
   });
 
-  it('adds common Wind arcane dust through gameplay store casting', () => {
+  it('adds fortune arcane dust through gameplay store casting', () => {
     const store = createGameplayStoreInstance();
-    const windRune = createRune('wind-common', 'Wind', 'common');
+    const windRune: Rune = {
+      id: 'wind-fortune',
+      runeType: 'Wind',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.fortune', { amount: 10 })],
+      passiveEffectRefs: [],
+    };
 
     store.setState((state) => ({
       ...state,
@@ -211,7 +217,7 @@ describe('gameplayStore current combat', () => {
 
   it('restores consumed adjacent runes on victory', () => {
     const store = createGameplayStoreInstance();
-    const rareVoid = createRune('rare-void', 'Void', 'rare');
+    const rareVoid = createRuneFromPool({ id: 'rare-void', runeType: 'Void', rarity: 'rare' });
     const wall = createEmptyWall();
     wall[0][3] = {
       runeType: 'Fire',
@@ -247,7 +253,7 @@ describe('gameplayStore current combat', () => {
 
   it('returns adjacent completed runes to hand with epic Wind', () => {
     const store = createGameplayStoreInstance();
-    const epicWind = createRune('epic-wind', 'Wind', 'epic');
+    const epicWind = createRuneFromPool({ id: 'epic-wind', runeType: 'Wind', rarity: 'epic' });
     const wall = createEmptyWall();
     wall[0][1] = {
       runeType: 'Life',

@@ -15,6 +15,7 @@ import {
   resolveDeckDraftOfferPassives,
   rollDraftRarity,
 } from './deckDrafting';
+import { PREDEFINED_RUNE_VARIANTS } from './runeEffects';
 
 describe('deckDrafting', () => {
   beforeEach(() => {
@@ -136,6 +137,42 @@ describe('deckDrafting', () => {
     expect(rune.rarity).toBe('epic');
     expect(rune.runeType).toBe('Fire');
     expect(rune.castEffectRefs.length + rune.passiveEffectRefs.length).toBeGreaterThan(0);
+  });
+
+  it('uses injected randomness for draft rune type and pool variant selection', () => {
+    const variants = PREDEFINED_RUNE_VARIANTS.Fire.epic;
+    PREDEFINED_RUNE_VARIANTS.Fire.epic = [
+      ...variants,
+      {
+        templateId: 'fire-epic-test-variant',
+        runeType: 'Fire',
+        rarity: 'epic',
+        castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
+        passiveEffectRefs: [],
+      },
+    ];
+    const randomValues = [0, 0.1234, 0.75];
+    let callIndex = 0;
+
+    try {
+      const rune = createDraftRuneForRarity({
+        ownerId: 'player-1',
+        index: 2,
+        rarity: 'epic',
+        runeTypes: ['Fire', 'Frost'],
+        random: () => randomValues[callIndex++] ?? 0,
+      });
+
+      expect(rune).toMatchObject({
+        id: 'draft-player-1-Fire-2-4fxc',
+        runeType: 'Fire',
+        rarity: 'epic',
+        castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
+        passiveEffectRefs: [],
+      });
+    } finally {
+      PREDEFINED_RUNE_VARIANTS.Fire.epic = variants;
+    }
   });
 
   it('boosts the already-rolled rarity for Better Runes reward rows', () => {

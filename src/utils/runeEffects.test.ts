@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { EffectRef, RuneEffectRarity, RuneType } from '../types/game';
-import { createRune, getRuneCastEffectRefsForType, getRuneEffectDescription } from './runeEffects';
+import { createRuneFromPool, getRuneEffectDescription, PREDEFINED_RUNE_VARIANTS } from './runeEffects';
 
 const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
   castEffectRefs: EffectRef[];
@@ -24,7 +24,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [],
     },
     Void: {
-      castEffectRefs: [{ effectId: 'cast.damageConditional', params: { amount: 10, threshold: 3, conditionType: 'Void' } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
       passiveEffectRefs: [],
     },
     Wind: {
@@ -145,7 +145,7 @@ describe('runeEffects', () => {
       { effectId: 'cast.healing', params: { amount: 2 } },
     ]);
     expect(createRune('void-common', 'Void', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.damageConditional', params: { amount: 10, threshold: 3, conditionType: 'Void' } },
+      { effectId: 'cast.damage', params: { amount: 1 } },
     ]);
     expect(createRune('wind-common', 'Wind', 'common').castEffectRefs).toEqual([
       { effectId: 'cast.draw', params: { amount: 1 } },
@@ -157,10 +157,31 @@ describe('runeEffects', () => {
   });
 
   it('creates draft refs by rarity without storing rarity in params', () => {
-    const refs = getRuneCastEffectRefsForType('Frost', 'rare');
+    const rune = createRune('frost-rare', 'Frost', 'rare');
 
-    expect(refs).toEqual([{ effectId: 'cast.armorSynergy', params: { amount: 5, synergyType: 'Frost' } }]);
-    expect(refs[0]?.params).not.toHaveProperty('rarity');
+    expect(rune.castEffectRefs).toEqual([{ effectId: 'cast.armorSynergy', params: { amount: 5, synergyType: 'Frost' } }]);
+    expect(rune.castEffectRefs[0]?.params).not.toHaveProperty('rarity');
+  });
+
+  it('clones refs from predefined rune variants', () => {
+    const first = createRune('fire-a', 'Fire', 'common');
+    const second = createRune('fire-b', 'Fire', 'common');
+
+    first.castEffectRefs[0].params = { amount: 99 };
+
+    expect(second.castEffectRefs).toEqual([{ effectId: 'cast.damage', params: { amount: 1 } }]);
+    expect(first.castEffectRefs).not.toBe(second.castEffectRefs);
+  });
+
+  it('throws when a predefined rune variant pool is empty', () => {
+    const variants = PREDEFINED_RUNE_VARIANTS.Fire.common;
+    PREDEFINED_RUNE_VARIANTS.Fire.common = [];
+
+    try {
+      expect(() => createRune('fire-common', 'Fire', 'common')).toThrow('No predefined rune variants for common Fire');
+    } finally {
+      PREDEFINED_RUNE_VARIANTS.Fire.common = variants;
+    }
   });
 
   it('maps all uncommon rune identities to Stage 2 refs', () => {
@@ -263,3 +284,7 @@ describe('runeEffects', () => {
     );
   });
 });
+
+function createRune(id: string, runeType: RuneType, rarity: RuneEffectRarity) {
+  return createRuneFromPool({ id, runeType, rarity, random: () => 0 });
+}
