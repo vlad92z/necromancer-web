@@ -583,11 +583,16 @@ describe('effectResolver resolveCastEffects', () => {
       handSize: 8,
     });
 
-    expect(result.returnedRunes.map((rune) => rune.id)).toEqual(['completed-0-0', 'completed-0-1']);
+    expect(result.returnedRunes).toHaveLength(2);
+    expect(result.returnedRunes.map((rune) => rune.runeType)).toEqual(['Fire', 'Frost']);
+    expect(result.returnedRunes.every((rune) => !['completed-0-0', 'completed-0-1'].includes(rune.id))).toBe(true);
+    expect(result.returnedOverflowRunes).toHaveLength(1);
+    expect(result.returnedOverflowRunes[0]?.runeType).toBe('Life');
+    expect(result.returnedOverflowRunes[0]?.id).not.toBe('completed-1-0');
     expect(result.suppressedRunes).toEqual([]);
     expect(result.wall[0][0].runeType).toBeNull();
     expect(result.wall[0][1].runeType).toBeNull();
-    expect(result.wall[1][0].runeType).toBe('Life');
+    expect(result.wall[1][0].runeType).toBeNull();
   });
 
   it('destroys a deterministic random type target while excluding the source', () => {
@@ -721,8 +726,20 @@ describe('effectResolver resolveCastEffects', () => {
     wall[1][1] = createWallCell('Wind');
     wall[2][2] = createWallCell('Fire');
     const wallCharges = createTestWallCharges(wall);
-    wallCharges[1][2] = { ...wallCharges[1][2], currentCount: 0, requiredCount: 2 };
-    wallCharges[2][1] = { ...wallCharges[2][1], currentCount: 1, requiredCount: 3, lockedRuneType: null };
+    wallCharges[1][2] = {
+      ...wallCharges[1][2],
+      currentCount: 0,
+      requiredCount: 2,
+      stagedRune: createTestRune('staged-life', 'Life', []),
+      lockedRuneType: 'Life',
+    };
+    wallCharges[2][1] = {
+      ...wallCharges[2][1],
+      currentCount: 1,
+      requiredCount: 3,
+      stagedRune: createTestRune('staged-void', 'Void', []),
+      lockedRuneType: 'Void',
+    };
     const castRune = createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]);
 
     const result = resolveCastEffects({
@@ -737,6 +754,92 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.wallCharges[1][2]).toMatchObject({ currentCount: 1, spentRunes: [], completedRuneId: null });
     expect(result.wallCharges[2][1]).toMatchObject({ currentCount: 2, spentRunes: [], completedRuneId: null });
     expect(result.wallCharges[2][2].currentCount).toBe(1);
+  });
+
+  it('completes a one-away staged rune via virtual charge and resolves its cast effects', () => {
+    const wall = createEmptyWall(6);
+    wall[1][1] = createWallCell('Wind');
+    const wallCharges = createTestWallCharges(wall);
+    wallCharges[1][2] = {
+      ...wallCharges[1][2],
+      currentCount: 1,
+      requiredCount: 2,
+      stagedRune: {
+        id: 'staged-fire',
+        runeType: 'Fire',
+        rarity: 'uncommon',
+        castEffectRefs: [createEffectRef('cast.damage', { amount: 4 })],
+        passiveEffectRefs: [],
+      },
+      spentRunes: [createTestRune('spent-fire', 'Fire', [])],
+      lockedRuneType: 'Fire',
+    };
+
+    const result = resolveCastEffects({
+      player: { ...createTestPlayer(), wall },
+      enemy: createTestEnemy(10),
+      castRune: createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]),
+      wall,
+      wallCharges,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(6);
+    expect(result.wall[1][2]).toMatchObject({ runeType: 'Fire', rarity: 'uncommon' });
+    expect(result.wallCharges[1][2]).toMatchObject({
+      currentCount: 2,
+      stagedRune: null,
+      spentRunes: [],
+      completedRuneId: expect.any(String),
+    });
+    expect(result.discardedRunes.map((rune) => rune.id)).toEqual(['staged-fire', 'spent-fire']);
+    expect(result.logs.filter((log) => log.effectId === 'cast.damage')).toMatchObject([
+      { output: { damage: 4, enemyHealth: 6 } },
+    ]);
+  });
+
+  it('resolves multiple virtual completions in deterministic adjacent order', () => {
+    const wall = createEmptyWall(6);
+    wall[1][1] = createWallCell('Wind');
+    const wallCharges = createTestWallCharges(wall);
+    wallCharges[0][0] = {
+      ...wallCharges[0][0],
+      currentCount: 1,
+      requiredCount: 2,
+      stagedRune: {
+        id: 'staged-fire',
+        runeType: 'Fire',
+        rarity: 'uncommon',
+        castEffectRefs: [createEffectRef('cast.damage', { amount: 2 })],
+        passiveEffectRefs: [],
+      },
+      lockedRuneType: 'Fire',
+    };
+    wallCharges[0][1] = {
+      ...wallCharges[0][1],
+      currentCount: 1,
+      requiredCount: 2,
+      stagedRune: {
+        id: 'staged-frost',
+        runeType: 'Frost',
+        rarity: 'uncommon',
+        castEffectRefs: [createEffectRef('cast.damage', { amount: 3 })],
+        passiveEffectRefs: [],
+      },
+      lockedRuneType: 'Frost',
+    };
+
+    const result = resolveCastEffects({
+      player: { ...createTestPlayer(), wall },
+      enemy: createTestEnemy(10),
+      castRune: createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]),
+      wall,
+      wallCharges,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(5);
+    expect(result.logs.filter((log) => log.effectId === 'cast.damage').map((log) => log.output.damage)).toEqual([2, 3]);
   });
 
   it('replays type-targeted cast effects while skipping retriggers', () => {

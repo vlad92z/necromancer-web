@@ -663,9 +663,119 @@ describe('gameplayStore current combat', () => {
     store.getState().castRuneToWall(0, 1);
 
     const state = store.getState();
-    expect(state.hand.map((rune) => rune.id)).toEqual(['adjacent-life']);
+    expect(state.hand).toHaveLength(1);
+    expect(state.hand[0]?.runeType).toBe('Life');
+    expect(state.hand[0]?.id).not.toBe('adjacent-life');
     expect(state.player.wall[0][2].runeType).toBeNull();
     expect(state.suppressedRunes).toEqual([]);
+  });
+
+  it('sends returned overflow to discard when hand is already at cap after cast completion', () => {
+    const store = createGameplayStoreInstance();
+    const epicWind = createRuneFromPool({ id: 'epic-wind-overflow', runeType: 'Wind', rarity: 'epic' });
+    const chargeOne = createTestRune('wind-overflow-charge-1', 'Wind', 0);
+    const chargeTwo = createTestRune('wind-overflow-charge-2', 'Wind', 0);
+    const chargeThree = createTestRune('wind-overflow-charge-3', 'Wind', 0);
+    const fillerHand = Array.from({ length: 9 }, (_, index) => createTestRune(`filler-${index}`, 'Fire', 0));
+    const wall = createEmptyWall();
+    wall[0][2] = {
+      id: 'adjacent-life-overflow',
+      runeType: 'Life',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.healing', { amount: 2 })],
+      passiveEffectRefs: [],
+    };
+    wall[1][2] = {
+      id: 'adjacent-fire-overflow',
+      runeType: 'Fire',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
+      passiveEffectRefs: [],
+    };
+    const wallCharges = createEmptyWallCharges();
+    wallCharges[0][2] = {
+      ...wallCharges[0][2],
+      currentCount: 1,
+      completedRuneId: 'adjacent-life-overflow',
+    };
+    wallCharges[1][2] = {
+      ...wallCharges[1][2],
+      currentCount: 1,
+      completedRuneId: 'adjacent-fire-overflow',
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand: [epicWind, chargeOne, chargeTwo, chargeThree, ...fillerHand],
+      selectedHandRuneId: epicWind.id,
+      player: { ...state.player, wall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
+      wallCharges,
+      suppressedRunes: [],
+      discardPile: [],
+    }));
+
+    store.getState().castRuneToWall(0, 1);
+    store.getState().selectHandRune(chargeOne.id);
+    store.getState().castRuneToWall(0, 1);
+    store.getState().selectHandRune(chargeTwo.id);
+    store.getState().castRuneToWall(0, 1);
+    store.getState().selectHandRune(chargeThree.id);
+    store.getState().castRuneToWall(0, 1);
+
+    const state = store.getState();
+    expect(state.hand).toHaveLength(10);
+    expect(state.hand.some((rune) => rune.runeType === 'Life' || rune.runeType === 'Fire')).toBe(true);
+    expect(state.discardPile.some((rune) => rune.runeType === 'Life' || rune.runeType === 'Fire')).toBe(true);
+    expect(state.player.wall[0][2].runeType).toBeNull();
+    expect(state.player.wall[1][2].runeType).toBeNull();
+  });
+
+  it('opens victory immediately when virtual charge completion deals lethal damage', () => {
+    const store = createGameplayStoreInstance();
+    const chargerRune: Rune = {
+      id: 'charger-rune',
+      runeType: 'Wind',
+      rarity: 'common',
+      castEffectRefs: [createEffectRef('cast.chargeAdjacent')],
+      passiveEffectRefs: [],
+    };
+    const wallCharges = createEmptyWallCharges();
+    wallCharges[0][0] = {
+      ...wallCharges[0][0],
+      currentCount: 1,
+      requiredCount: 2,
+      stagedRune: {
+        id: 'staged-fire-lethal',
+        runeType: 'Fire',
+        rarity: 'uncommon',
+        castEffectRefs: [createEffectRef('cast.damage', { amount: 5 })],
+        passiveEffectRefs: [],
+      },
+      spentRunes: [createTestRune('spent-fire-lethal', 'Fire', 0)],
+      lockedRuneType: 'Fire',
+      completedRuneId: null,
+    };
+
+    store.setState((state) => ({
+      ...state,
+      hand: [chargerRune],
+      selectedHandRuneId: chargerRune.id,
+      player: { ...state.player, deck: [], health: 10, maxHealth: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5, intent: { type: 'Attack', amount: 5 } },
+      wallCharges,
+      discardPile: [],
+    }));
+
+    store.getState().castRuneToWall(0, 1);
+
+    const state = store.getState();
+    expect(state.combatPhase).toBe('victory');
+    expect(state.enemy?.health).toBe(0);
+    expect(state.player.health).toBe(10);
+    expect(state.enemyAttackSoundSignal).toBe(0);
+    expect(state.discardPile).toEqual([]);
+    expect(state.deckDraftState?.offers).toHaveLength(6);
   });
 });
 

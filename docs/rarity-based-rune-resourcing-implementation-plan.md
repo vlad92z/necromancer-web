@@ -115,7 +115,7 @@ Manual:
 - Pick draft pack.
 - Start next encounter; deck is base + reward, no duplicate combat-used cards.
 
-## Stage 4: Resolver Mutations + Virtual Charge
+## Stage 4: Resolver Mutations + Virtual Charge (Done)
 
 File-level changes before implementation:
 - `src/utils/effectResolver.ts`: clear/return/charge-adjacent semantics.

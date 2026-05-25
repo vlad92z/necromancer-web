@@ -9,6 +9,7 @@ import type { DrawTypeRequest, WallPosition } from './effectResolver';
 import { getRequiredChargesForRarity } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
 import { isRuneTypeAcceptedBySlotFamily } from './scoring';
+import { createCompletedRuneId as createDefaultCompletedRuneId } from './wallChargeCompletion';
 
 const DEFAULT_HAND_SIZE = 6;
 export const EXTRA_DRAW_HAND_LIMIT = 10;
@@ -91,6 +92,8 @@ export interface CompletedRuneCastEffectsResult {
   wallCharges: SpellWallCharge[][];
   suppressedRunes: Rune[];
   returnedRunes: Rune[];
+  returnedOverflowRunes: Rune[];
+  discardedRunes: Rune[];
   wallChanged: boolean;
   arcaneDustDelta: number;
   drawCount: number;
@@ -167,15 +170,6 @@ function cloneRune(rune: Rune): Rune {
     castEffectRefs: copyEffectRefs(rune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(rune.passiveEffectRefs),
   };
-}
-
-function createDefaultCompletedRuneId(rune: Rune, position: WallPosition): string {
-  const randomId = globalThis.crypto?.randomUUID?.();
-  if (randomId) {
-    return randomId;
-  }
-
-  return `${rune.id}-wall-${position.row}-${position.col}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {

@@ -355,14 +355,19 @@ export const gameplayStoreConfig = (
           wall: resolvedEffects.player.wall,
           wallCharges: resolvedEffects.wallCharges,
         });
+        const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
+        const discardWithResolvedRunes = [
+          ...result.discardPile,
+          ...resolvedEffects.discardedRunes,
+          ...resolvedEffects.returnedOverflowRunes,
+        ];
 
         if ((resolvedEffects.enemy?.health ?? 1) <= 0) {
           deckDraftRewardGameIndex = state.gameIndex;
-          const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
           const victoryDeck = collectVictoryDeck({
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
-            discardPile: result.discardPile,
+            discardPile: discardWithResolvedRunes,
             suppressedRunes: resolvedEffects.suppressedRunes,
             wallCharges: resolvedEffects.wallCharges,
           });
@@ -383,19 +388,18 @@ export const gameplayStoreConfig = (
           });
         }
 
-        const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
         const plainDrawResult = resolvedEffects.drawCount > 0
           ? drawRunes({
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
-            discardPile: result.discardPile,
+            discardPile: discardWithResolvedRunes,
             drawCount: resolvedEffects.drawCount,
             handLimit: EXTRA_DRAW_HAND_LIMIT,
           })
           : {
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
-            discardPile: result.discardPile,
+            discardPile: discardWithResolvedRunes,
           };
         const drawResult = resolvedEffects.drawTypeRequests.length > 0
           ? drawRunesOfType({
