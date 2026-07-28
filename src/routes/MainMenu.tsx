@@ -18,7 +18,7 @@ export function MainMenu() {
     }
     return window.innerWidth < BREAKPOINTS.tablet
   })
-  const [activeElement, setActiveElement] = useState<'solo' | 'settings' | null>(null)
+  const [activeElement, setActiveElement] = useState<'solo' | 'arena' | 'settings' | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -35,6 +35,10 @@ export function MainMenu() {
 
   const handleSolo = useCallback(() => {
     navigate('/solo')
+  }, [navigate])
+
+  const handleArena = useCallback(() => {
+    navigate('/arena')
   }, [navigate])
 
   const handleSettings = useCallback(() => {
@@ -65,7 +69,7 @@ export function MainMenu() {
       return
     }
 
-    const menuOrder: Array<'solo' | 'settings'> = ['solo', 'settings']
+    const menuOrder: Array<'solo' | 'arena' | 'settings'> = ['solo', 'arena', 'settings']
 
     const moveSelection = (direction: 'up' | 'down') => {
       setActiveElement((current) => {
@@ -89,10 +93,16 @@ export function MainMenu() {
       })
     }
 
-    const triggerActiveAction = (element: 'solo' | 'settings' | null) => {
+    const triggerActiveAction = (element: 'solo' | 'arena' | 'settings' | null) => {
       if (element === 'solo') {
         playClickSound()
         handleSolo()
+        return
+      }
+
+      if (element === 'arena') {
+        playClickSound()
+        handleArena()
         return
       }
 
@@ -142,10 +152,19 @@ export function MainMenu() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeElement, handleSettings, handleSolo, isMobileViewport, playClickSound, showSettingsOverlay])
+  }, [activeElement, handleSettings, handleSolo, handleArena, isMobileViewport, playClickSound, showSettingsOverlay])
 
-  const pixelButtonBase = 'font-pixel flex min-h-16 w-full items-center justify-center border-4 border-[#141313] px-8 py-6 text-center text-xl leading-none tracking-[0.5em] text-[#171518] shadow-[8px_8px_0_#141313] transition-none hover:bg-[#fff8d8] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[3px_3px_0_#141313] data-[active=true]:bg-[#fff8d8] data-[active=true]:outline data-[active=true]:outline-4 data-[active=true]:outline-offset-4 data-[active=true]:outline-[#ffdc52]'
-  const soloButtonClasses = `${pixelButtonBase} bg-[#e15f4f] text-[#fff8d8] hover:bg-[#f27661] data-[active=true]:bg-[#f27661]`
+  const pixelButtonLayoutClasses = 'font-pixel flex min-h-16 w-full items-center justify-center border-4 border-[#141313] px-8 py-6 text-center text-xl leading-none tracking-[0.5em]'
+  const pixelButtonSurfaceClasses = 'text-[#171518] shadow-[8px_8px_0_#141313] transition-none'
+  const pixelButtonInteractionClasses = 'hover:bg-[#aff8d8] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[3px_3px_0_#141313]'
+  const pixelButtonActiveClasses = 'data-[active=true]:bg-[#aff8d8] data-[active=true]:outline data-[active=true]:outline-4 data-[active=true]:outline-offset-4 data-[active=true]:outline-[#ffdc52]'
+  const pixelButtonBase = [
+    pixelButtonLayoutClasses,
+    pixelButtonSurfaceClasses,
+    pixelButtonInteractionClasses,
+    pixelButtonActiveClasses,
+  ].join(' ')
+  const gameButtonClasses = `${pixelButtonBase} bg-[#e15f4f] text-[#fff8d8] hover:bg-[#f27661] data-[active=true]:bg-[#f27661]`
   const settingsButtonClasses = `${pixelButtonBase} bg-[#efe7c3]`
 
   return (
@@ -156,39 +175,42 @@ export function MainMenu() {
 
       <div className="relative w-full max-w-140">
         <section className="border-4 border-[#141313] bg-[#354542] p-2 shadow-[10px_10px_0_#141313]">
-          <div className="border-4 border-[#98b6a7] bg-[#293532] px-6 py-8 text-center md:px-10 md:py-10">
+          <div className="border-4 border-[#98b6a7] bg-[#293532] px-6 text-center md:px-10 md:py-10">
             <h1 className="font-pixel text-4xl uppercase leading-[0.95] tracking-tighter text-[#fff8d8] [text-shadow:4px_4px_0_#141313] md:text-6xl">
               Massive<br /><span className="text-[#f2c14e]">Spell</span>
             </h1>
             <div className="mt-7 flex items-center justify-center gap-3" aria-hidden="true">
-              <span className="h-3 w-3 bg-[#e15f4f]" />
-              <span className="h-3 w-3 bg-[#5dc6b0]" />
-              <span className="h-3 w-3 bg-[#f2c14e]" />
+              <span className="h-5 w-5 bg-[#e15f4f]" />
+              <span className="h-5 w-5 bg-[#5dc6b0]" />
+              <span className="h-5 w-5 bg-[#f2c14e]" />
+              <span className="h-5 w-5 bg-[#2692ff]" />
+              <span className="h-5 w-5 bg-[#5b02ff]" />
+              <span className="h-5 w-5 bg-[#ffffff]" />
             </div>
-            <p className="font-pixel mt-4 text-xs uppercase tracking-[0.2em] text-[#b5d3bd]">Arcane Arena</p>
+            <p className="font-pixel text-xs uppercase tracking-[0.3em] text-[#b5d3bd]">Arcane Arena</p>
           </div>
         </section>
-
-        {isMobileViewport ? (
-          <div className="mt-8 border-4 border-[#141313] bg-[#354542] px-6 py-5 text-center shadow-[6px_6px_0_#141313]">
+        <div className="mt-5">
+          {isMobileViewport ? (
+          <div className="border-4 border-[#141313] bg-[#354542] px-6 py-5 text-center shadow-[6px_6px_0_#141313]">
             <p className="font-pixel text-sm uppercase text-[#fff8d8]">Desktop spellbook required</p>
             <p className="font-pixel mt-3 text-[11px] leading-5 text-[#b5d3bd]">
               Please use a tablet or desktop device to play Massive Spell: Arcane Arena.
             </p>
           </div>
-        ) : (
-          <div className="mx-auto mt-8 flex w-full flex-col gap-6">
+          ) : (
+            <div className="flex w-full flex-col gap-4">
               <ClickSoundButton
                 title="Adventure"
-                className={soloButtonClasses}
+                className={gameButtonClasses}
                 action={handleSolo}
                 isActive={activeElement === 'solo'}
               />
               <ClickSoundButton
                 title="Arena"
-                className={soloButtonClasses}
-                action={handleSolo}
-                isActive={activeElement === 'solo'}
+                className={gameButtonClasses}
+                action={handleArena}
+                isActive={activeElement === 'arena'}
               />
               <ClickSoundButton
                 title="Settings"
@@ -196,9 +218,10 @@ export function MainMenu() {
                 action={handleSettings}
                 isActive={activeElement === 'settings'}
               />
-            <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select · enter confirm</p>
-          </div>
-        )}
+            <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {showSettingsOverlay && (
