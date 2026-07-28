@@ -236,7 +236,6 @@ describe('gameplayStore current combat', () => {
     expect(nextState.enemy?.maxHealth).toBe(10);
     expect(nextState.enemy?.intent.amount).toBe(5);
     expect(nextState.enemyMaxHealth).toBe(10);
-    expect(nextState.enemyAttackDamage).toBe(5);
     expect(nextState.suppressedRunes).toEqual([]);
     expect(nextState.discardPile).toEqual([]);
     expect(nextState.wallCharges.flat().every((charge) => charge.stagedRune === null && charge.spentRunes.length === 0)).toBe(true);

@@ -46,7 +46,7 @@ export function EnemyPanel() {
         </div>
         <div className="h-3 overflow-hidden rounded-full bg-red-950/80">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-300"
+            className="h-full rounded-full bg-linear-to-r from-red-500 to-orange-300"
             style={{ width: `${healthPercent}%` }}
           />
         </div>

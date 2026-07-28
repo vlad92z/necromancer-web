@@ -13,7 +13,7 @@ interface VolumeControlProps {
 export function VolumeControl({ soundVolume, isMusicMuted, onToggleMusic, onVolumeChange }: VolumeControlProps): ReactElement {
   return (
     <div
-      className="pointer-events-auto flex items-center gap-3 rounded-full border border-slate-400/40 bg-[rgba(12,10,24,0.75)] px-3 py-2 shadow-[0_14px_36px_rgba(0,0,0,0.45)] backdrop-blur"
+      className="pointer-events-auto flex items-center gap-3 rounded-full border border-slate-400/40 bg-[rgba(12,10,24,0.75)] px-3 py-2 shadow-[0_14px_36px_rgba(0,0,0,0.45)] backdrop-blur-sm"
     >
       <div className="flex min-w-[200px] flex-col gap-1.5">
         <div className="flex items-center justify-between">
@@ -35,10 +35,10 @@ export function VolumeControl({ soundVolume, isMusicMuted, onToggleMusic, onVolu
         type="button"
         onClick={onToggleMusic}
         aria-pressed={isMusicMuted}
-        className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-[0_14px_36px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.6)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 ${
+        className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-[0_14px_36px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.6)] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 ${
           isMusicMuted
-            ? 'bg-gradient-to-r from-rose-400/30 to-rose-900/60'
-            : 'bg-gradient-to-r from-sky-500/30 to-purple-700/50'
+            ? 'bg-linear-to-r from-rose-400/30 to-rose-900/60'
+            : 'bg-linear-to-r from-sky-500/30 to-purple-700/50'
         }`}
       >
         <span

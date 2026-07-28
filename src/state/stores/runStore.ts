@@ -13,7 +13,6 @@ export interface RunState {
   fullDeck: Rune[];
   gameIndex: number;
   enemyMaxHealth: number;
-  enemyAttackDamage: number;
   baseEnemyMaxHealth: number;
   isDefeat: boolean;
   longestRun: number;
@@ -37,7 +36,6 @@ export function pickRunState(state: GameState): RunState {
     fullDeck: state.fullDeck,
     gameIndex: state.gameIndex,
     enemyMaxHealth: state.enemyMaxHealth,
-    enemyAttackDamage: state.enemyAttackDamage,
     baseEnemyMaxHealth: state.baseEnemyMaxHealth,
     isDefeat: state.isDefeat,
     longestRun: state.longestRun,

@@ -20,7 +20,6 @@ describe('gameInitialization combat state', () => {
       maxHealth: 42,
       intent: { type: 'Attack', amount: 9 },
     });
-    expect(state.enemyAttackDamage).toBe(9);
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(6);
     expect(state.player.deck).toHaveLength(state.fullDeck.length - 6);

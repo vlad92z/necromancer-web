@@ -100,7 +100,7 @@ export function GameContainer() {
 
   return (
     <div
-      className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#2b184f_0%,_#0c041c_65%,_#05010d_100%)] text-[#f5f3ff] flex items-center justify-center box-border relative"
+      className="min-h-screen w-full bg-[radial-gradient(circle_at_top,#2b184f_0%,#0c041c_65%,#05010d_100%)] text-[#f5f3ff] flex items-center justify-center box-border relative"
     >
       <div className="relative" style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px` }}>
         <div

@@ -107,19 +107,19 @@ export function CardView({
     ? 'ring-4 ring-sky-300 shadow-[0_0_38px_rgba(125,211,252,0.75)] translate-y-[-10px]'
     : 'shadow-[0_10px_28px_rgba(0,0,0,0.28)]';
   const interactiveClassName = onClick
-    ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 hover:translate-y-[-6px]'
+    ? 'cursor-pointer focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 hover:translate-y-[-6px]'
     : '';
   const sizeClassName = size === 'hand'
-    ? 'h-full max-h-[18rem] w-auto min-w-0 aspect-[2/3] p-1.5 gap-1.5'
-    : 'w-[clamp(14em,22vmin,24em)] aspect-[2/3] p-2 gap-2';
+    ? 'h-full max-h-72 w-auto min-w-0 aspect-2/3 p-1.5 gap-1.5'
+    : 'w-[clamp(14em,22vmin,24em)] aspect-2/3 p-2 gap-2';
   const descriptionClassName = size === 'hand'
-    ? `flex-[4] ${border} bg-slate-950/70 px-2 py-2 text-xs tracking-[0.06em] leading-snug text-slate-100/90 whitespace-pre-line`
-    : `flex-[4] ${border} bg-slate-950/70 px-3 py-3 tracking-[0.1em] leading-relaxed text-slate-100/90 whitespace-pre-line`;
+    ? `flex-4 ${border} bg-slate-950/70 px-2 py-2 text-xs tracking-[0.06em] leading-snug text-slate-100/90 whitespace-pre-line`
+    : `flex-4 ${border} bg-slate-950/70 px-3 py-3 tracking-widest leading-relaxed text-slate-100/90 whitespace-pre-line`;
   const className = `flex flex-col ${sizeClassName} ${border} bg-gray-900 transition duration-150 ease-out ${selectedClassName} ${interactiveClassName}`;
 
   const content = (
     <>
-      <div className={`flex-[4] ${border} bg-gradient-to-b from-slate-700/80 to-slate-900 overflow-hidden min-h-0 relative`}>
+      <div className={`flex-4 ${border} bg-linear-to-b from-slate-700/80 to-slate-900 overflow-hidden min-h-0 relative`}>
         <img
           className="h-full w-full object-cover"
           src={resolvedImageSrc}

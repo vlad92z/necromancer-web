@@ -98,7 +98,7 @@ Cast effects:
 - `heal`: heal X.
 - `healAdjacent`: heal X per adjacent completed rune.
 - `healSynergy`: heal X per completed target-type rune.
-- `healthIncrease`: increase max health by X and heal X.
+- `healthIncrease`: increase max health by X.
 - `healthDecrease`: reduce max health by X and clamp current health.
 - `arcaneDust`: gain X arcane dust.
 - `arcaneDustAdjacent`: gain X arcane dust per adjacent completed rune.

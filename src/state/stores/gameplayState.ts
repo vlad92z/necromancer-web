@@ -30,7 +30,6 @@ export function getGameplayState(): GameState {
     fullDeck: run.fullDeck,
     gameIndex: run.gameIndex,
     enemyMaxHealth: run.enemyMaxHealth,
-    enemyAttackDamage: run.enemyAttackDamage,
     baseEnemyMaxHealth: run.baseEnemyMaxHealth,
     isDefeat: run.isDefeat,
     longestRun: run.longestRun,
@@ -48,6 +47,10 @@ export function getGameplayState(): GameState {
     suppressedRunes: combat.suppressedRunes,
     wallCharges: combat.wallCharges,
     selectedHandRuneId: combat.selectedHandRuneId,
+    enemyBoard: combat.enemyBoard,
+    enemyBoardCharges: combat.enemyBoardCharges,
+    enemyQueuedRunes: combat.enemyQueuedRunes,
+    enemyTurnNumber: combat.enemyTurnNumber,
   };
 }
 

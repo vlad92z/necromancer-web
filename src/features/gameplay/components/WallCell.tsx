@@ -7,6 +7,7 @@ import { RuneCell } from '../../../components/RuneCell';
 import { getWallSlotFamily, getWallSlotFamilyLabel } from '../../../utils/scoring';
 import { WALL_SLOT_PLACEHOLDER_ASSETS } from '../../../utils/wallSlotPlaceholders';
 import { wallCellToRune } from '../../../utils/wallCellRune';
+import type { RuneSize } from '../../../styles/tokens';
 
 interface WallCellProps {
   cell: WallCellType;
@@ -16,9 +17,10 @@ interface WallCellProps {
   // Number of columns/rows of the scoring wall.
   wallSize: number;
   pulseKey?: number;
+  size?: RuneSize;
 }
 
-export function WallCell({ cell, charge, row, col, wallSize, pulseKey }: WallCellProps) {
+export function WallCell({ cell, charge, row, col, wallSize, pulseKey, size = 'large' }: WallCellProps) {
   const slotFamily = charge?.slotFamily ?? getWallSlotFamily(row, col);
   const lockedRuneType = !cell.runeType ? charge?.lockedRuneType ?? null : null;
   const placeholderLabel = lockedRuneType ?? getWallSlotFamilyLabel(slotFamily);
@@ -36,7 +38,7 @@ export function WallCell({ cell, charge, row, col, wallSize, pulseKey }: WallCel
       <RuneCell
         rune={rune}
         variant="wall"
-        size="large"
+        size={size}
         emptyIcon={lockedRuneType ? undefined : WALL_SLOT_PLACEHOLDER_ASSETS[slotFamily]}
         placeholder={{
           type: 'rune',
