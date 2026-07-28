@@ -4,7 +4,6 @@ import { ClickSoundButton } from '../components/ClickSoundButton'
 import { useUIActions } from '../hooks/useGameActions'
 import { useClickSound } from '../hooks/useClickSound'
 import { useShowSettingsOverlay } from '../hooks/useGameState'
-import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses'
 import { SettingsOverlay } from '../components/SettingsOverlay'
 import { BREAKPOINTS } from '../styles/tokens'
 
@@ -145,46 +144,65 @@ export function MainMenu() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [activeElement, handleSettings, handleSolo, isMobileViewport, playClickSound, showSettingsOverlay])
 
-  const soloButtonClasses = `${gradientButtonClasses} data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5 data-[active=true]:border data-[active=true]:border-slate-300`
-  const settingsButtonClasses = `${simpleButtonClasses} data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800`
+  const pixelButtonBase = 'font-pixel w-full border-4 border-[#141313] px-7 py-7 text-left text-base leading-none tracking-[0.1em] text-[#171518] shadow-[7px_7px_0_#141313] transition-none hover:bg-[#fff8d8] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[3px_3px_0_#141313] data-[active=true]:bg-[#fff8d8] data-[active=true]:outline data-[active=true]:outline-4 data-[active=true]:outline-offset-4 data-[active=true]:outline-[#ffdc52]'
+  const soloButtonClasses = `${pixelButtonBase} bg-[#e15f4f] text-[#fff8d8] hover:bg-[#f27661] data-[active=true]:bg-[#f27661]`
+  const settingsButtonClasses = `${pixelButtonBase} bg-[#efe7c3]`
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#0b1024] px-6 py-10 text-white">
-      <div className="flex flex-col items-center text-center space-y-2">
-        <h1 className="text-4xl font-bold uppercase tracking-tight text-slate-100 md:text-5xl">
-          Massive Spell: Arcane Arena
-        </h1>
-        <p className="text-lg text-slate-300">A roguelite deck-builder</p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#202827] px-6 py-10 text-[#fff8d8]">
+      <div aria-hidden="true" className="absolute left-[6%] top-[12%] h-4 w-4 bg-[#e15f4f] shadow-[16px_0_0_#e15f4f,0_16px_0_#e15f4f]" />
+      <div aria-hidden="true" className="absolute bottom-[16%] right-[8%] h-4 w-4 bg-[#5dc6b0] shadow-[-16px_0_0_#5dc6b0,0_-16px_0_#5dc6b0]" />
+      <div aria-hidden="true" className="absolute left-[18%] bottom-[10%] hidden h-3 w-3 bg-[#f2c14e] shadow-[12px_0_0_#f2c14e,0_12px_0_#f2c14e] md:block" />
+
+      <div className="relative w-full max-w-140">
+        <section className="border-4 border-[#141313] bg-[#354542] p-2 shadow-[10px_10px_0_#141313]">
+          <div className="border-4 border-[#98b6a7] bg-[#293532] px-6 py-8 text-center md:px-10 md:py-10">
+            <h1 className="font-pixel text-4xl uppercase leading-[0.95] tracking-tighter text-[#fff8d8] [text-shadow:4px_4px_0_#141313] md:text-6xl">
+              Massive<br /><span className="text-[#f2c14e]">Spell</span>
+            </h1>
+            <div className="mt-7 flex items-center justify-center gap-3" aria-hidden="true">
+              <span className="h-3 w-3 bg-[#e15f4f]" />
+              <span className="h-3 w-3 bg-[#5dc6b0]" />
+              <span className="h-3 w-3 bg-[#f2c14e]" />
+            </div>
+            <p className="font-pixel mt-4 text-xs uppercase tracking-[0.2em] text-[#b5d3bd]">Arcane Arena</p>
+          </div>
+        </section>
+
+        {isMobileViewport ? (
+          <div className="mt-8 border-4 border-[#141313] bg-[#354542] px-6 py-5 text-center shadow-[6px_6px_0_#141313]">
+            <p className="font-pixel text-sm uppercase text-[#fff8d8]">Desktop spellbook required</p>
+            <p className="font-pixel mt-3 text-[11px] leading-5 text-[#b5d3bd]">
+              Please use a tablet or desktop device to play Massive Spell: Arcane Arena.
+            </p>
+          </div>
+        ) : (
+          <div className="mx-auto mt-8 flex w-full flex-col gap-6">
+              <ClickSoundButton
+                title="Adventure"
+                className={soloButtonClasses}
+                action={handleSolo}
+                isActive={activeElement === 'solo'}
+              />
+              <ClickSoundButton
+                title="Arena"
+                className={soloButtonClasses}
+                action={handleSolo}
+                isActive={activeElement === 'solo'}
+              />
+              <ClickSoundButton
+                title="Settings"
+                className={settingsButtonClasses}
+                action={handleSettings}
+                isActive={activeElement === 'settings'}
+              />
+            <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select · enter confirm</p>
+          </div>
+        )}
       </div>
 
-      {isMobileViewport ? (
-        <div className="mt-10 w-full max-w-[360px] rounded-2xl border border-slate-700 bg-slate-900/80 px-6 py-5 text-center text-slate-200 shadow-md">
-          <p className="text-lg font-semibold uppercase tracking-wide">Not available on mobile</p>
-          <p className="mt-2 text-sm text-slate-300">
-            Please use a tablet or desktop device to play Massive Spell: Arcane Arena.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="mt-10 flex w-full max-w-[320px] flex-col gap-4">
-            <ClickSoundButton
-              title="Solo"
-              className={soloButtonClasses}
-              action={handleSolo}
-              isActive={activeElement === 'solo'}
-            />
-            <ClickSoundButton
-              title="Settings"
-              className={settingsButtonClasses}
-              action={handleSettings}
-              isActive={activeElement === 'settings'}
-            />
-          </div>
-
-          {showSettingsOverlay && (
-            <SettingsOverlay />
-          )}
-        </>
+      {showSettingsOverlay && (
+        <SettingsOverlay />
       )}
     </main>
   )
