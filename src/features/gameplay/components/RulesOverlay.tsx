@@ -9,7 +9,7 @@ interface RulesOverlayProps {
 export function RulesOverlay({ onClose }: RulesOverlayProps) {
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-6 py-6 backdrop-blur"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 px-6 py-6 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -21,7 +21,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            className="rounded-full border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
             aria-label="Close rules overlay"
           >
             ✕
@@ -73,7 +73,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
           <button
             type="button"
             onClick={onClose}
-            className="mt-2 w-full rounded-xl bg-sky-700 px-6 py-3 text-base font-bold text-white transition hover:bg-sky-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+            className="mt-2 w-full rounded-xl bg-sky-700 px-6 py-3 text-base font-bold text-white transition hover:bg-sky-600 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
           >
             Got it!
           </button>

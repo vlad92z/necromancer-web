@@ -3,10 +3,10 @@
  */
 
 import type { ArtefactId } from '../types/artefacts';
-import type { EffectResolutionLog, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
-import { resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
+import type { EffectResolutionLog, Enemy, EnemyRune, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
+import { resolveCastEffects, resolveEndTurnEffects, resolveStartTurnEffects } from './effectResolver';
 import type { DrawTypeRequest, WallPosition } from './effectResolver';
-import { getRequiredChargesForRarity } from './gameInitialization';
+import { createEmptyWall, createEnemyTurnRunes, createEnemyWallCharges, getRequiredChargesForRarity } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
 import { isRuneTypeAcceptedBySlotFamily } from './scoring';
 import { createCompletedRuneId as createDefaultCompletedRuneId } from './wallChargeCompletion';
@@ -127,11 +127,19 @@ export interface StartTurnEffectsResult {
 export interface EnemyTurnInput {
   player: Player;
   enemy: Enemy | null;
-  activeArtefacts?: ArtefactId[];
+  enemyBoard?: ScoringWall;
+  enemyBoardCharges?: SpellWallCharge[][];
+  enemyQueuedRunes?: EnemyRune[];
+  turnNumber?: number;
+  random?: () => number;
 }
 
 export interface EnemyTurnResult {
   player: Player;
+  enemyBoard: ScoringWall;
+  enemyBoardCharges: SpellWallCharge[][];
+  enemyQueuedRunes: EnemyRune[];
+  boardFull: boolean;
   logs: EffectResolutionLog[];
   healthDamage: number;
 }
@@ -412,28 +420,68 @@ export function resolveCompletedRuneCastEffects({
   };
 }
 
-export function resolveEnemyTurn({ player, enemy, activeArtefacts = [] }: EnemyTurnInput): EnemyTurnResult {
-  if (!enemy || enemy.intent.type !== 'Attack') {
-    return { player, logs: [], healthDamage: 0 };
+export function resolveEnemyTurn({
+  player,
+  enemy,
+  enemyBoard = createEmptyWall(),
+  enemyBoardCharges = createEnemyWallCharges(),
+  enemyQueuedRunes = [],
+  turnNumber = 0,
+  random = Math.random,
+}: EnemyTurnInput): EnemyTurnResult {
+  if (!enemy) {
+    return { player, enemyBoard, enemyBoardCharges, enemyQueuedRunes: [], boardFull: false, logs: [], healthDamage: 0 };
   }
 
-  const passiveResult = resolvePassiveEffects({
-    trigger: 'onEnemyAttack',
-    wall: player.wall,
-    activeArtefacts,
-    baseValues: { incomingDamage: enemy.intent.amount },
-  });
-  const incomingDamage = Math.max(0, passiveResult.values.incomingDamage ?? enemy.intent.amount);
-  const armorAbsorbed = Math.min(player.armor, incomingDamage);
-  const healthDamage = incomingDamage - armorAbsorbed;
+  const runesToPlay = enemyQueuedRunes.length > 0
+    ? [...enemyQueuedRunes]
+    : createEnemyTurnRunes(turnNumber);
+  let nextPlayer = player;
+  const nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
+  const nextCharges = enemyBoardCharges.map((row) => row.map((charge) => ({ ...charge })));
+  let healthDamage = 0;
+
+  for (const rune of runesToPlay) {
+    const openSlots: Array<{ row: number; col: number }> = [];
+    nextBoard.forEach((row, rowIndex) => row.forEach((cell, colIndex) => {
+      if (!cell.id) openSlots.push({ row: rowIndex, col: colIndex });
+    }));
+
+    if (openSlots.length === 0) break;
+    const slot = openSlots[Math.min(openSlots.length - 1, Math.floor(random() * openSlots.length))];
+    if (!slot) break;
+
+    nextBoard[slot.row][slot.col] = {
+      id: rune.id,
+      runeType: rune.runeType,
+      rarity: rune.rarity,
+      castEffectRefs: rune.castEffectRefs,
+      passiveEffectRefs: rune.passiveEffectRefs,
+    };
+    nextCharges[slot.row][slot.col] = {
+      ...nextCharges[slot.row][slot.col],
+      completedRuneId: rune.id,
+      lockedRuneType: rune.runeType,
+    };
+
+    const incomingDamage = Math.max(0, rune.damage);
+    const armorAbsorbed = Math.min(nextPlayer.armor, incomingDamage);
+    const runeHealthDamage = incomingDamage - armorAbsorbed;
+    healthDamage += runeHealthDamage;
+    nextPlayer = {
+      ...nextPlayer,
+      armor: nextPlayer.armor - armorAbsorbed,
+      health: Math.max(0, nextPlayer.health - runeHealthDamage),
+    };
+  }
 
   return {
-    player: {
-      ...player,
-      armor: player.armor - armorAbsorbed,
-      health: Math.max(0, player.health - healthDamage),
-    },
-    logs: passiveResult.logs,
+    player: nextPlayer,
+    enemyBoard: nextBoard,
+    enemyBoardCharges: nextCharges,
+    enemyQueuedRunes: [],
+    boardFull: nextBoard.every((row) => row.every((cell) => cell.id !== null)),
+    logs: [],
     healthDamage,
   };
 }

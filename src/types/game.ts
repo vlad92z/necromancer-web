@@ -49,6 +49,10 @@ export interface Enemy {
   intent: EnemyIntent;
 }
 
+export interface EnemyRune extends Rune {
+  damage: number;
+}
+
 export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
 
 export interface SpellWallCharge {
@@ -118,6 +122,10 @@ export interface CombatZoneState {
   suppressedRunes: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
+  enemyBoard: ScoringWall;
+  enemyBoardCharges: SpellWallCharge[][];
+  enemyQueuedRunes: EnemyRune[];
+  enemyTurnNumber: number;
 }
 
 export interface GameState extends CombatZoneState {
@@ -127,7 +135,6 @@ export interface GameState extends CombatZoneState {
   fullDeck: Rune[];
   gameIndex: number;
   enemyMaxHealth: number;
-  enemyAttackDamage: number;
   baseEnemyMaxHealth: number;
   isDefeat: boolean;
   longestRun: number;

@@ -12,6 +12,7 @@ import { ScoringWall } from './Player/ScoringWall';
 import { EndTurnButton } from './EndTurnButton';
 import { TooltipView } from './Player/TooltipView';
 import { PlayerPanel } from './PlayerPanel';
+import { EnemySpellBoard } from './EnemySpellBoard';
 
 interface SoloGameViewProps {
   hiddenWallSlots: Set<string>;
@@ -31,12 +32,16 @@ export const SoloGameView = memo(function SoloGameView({
       <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[min(1.2vmin,16px)] py-[min(1.2vmin,16px)]">
         <div
           className="grid min-h-0 flex-1 gap-[14px]"
-          style={{ gridTemplateColumns: 'minmax(280px, 0.92fr) minmax(520px, 1.55fr) minmax(280px, 0.92fr)' }}
+          style={{ gridTemplateColumns: '220px minmax(440px, 1fr) minmax(440px, 1fr) 220px' }}
         >
           <PlayerPanel />
 
           <section className="flex h-full min-h-0 items-start justify-center overflow-visible p-5">
             <ScoringWall hiddenWallSlots={hiddenWallSlots} />
+          </section>
+
+          <section className="flex h-full min-h-0 items-start justify-center overflow-visible p-5">
+            <EnemySpellBoard />
           </section>
 
           <EnemyPanel />

@@ -7,11 +7,10 @@ import type { EffectResolutionLog, GameState, Player, Rune, RuneType, ScoringWal
 import {
   createEmptyWall,
   createEmptyWallCharges,
+  createEnemyWallCharges,
   createGoblinEnemy,
   createRuneSoundSignals,
-  DEFAULT_ENEMY_ATTACK_DAMAGE,
   initializeSoloGame,
-  scaleEnemyAttackDamage,
   scaleEnemyMaxHealth,
 } from '../../utils/gameInitialization';
 import {
@@ -48,10 +47,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     nextLongestRun
   );
 
-  const currentEnemyAttackDamage = typeof state.enemyAttackDamage === 'number'
-    ? state.enemyAttackDamage
-    : state.enemy?.intent.amount ?? DEFAULT_ENEMY_ATTACK_DAMAGE;
-
   return {
     ...state,
     deckDraftState,
@@ -60,7 +55,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     isDefeat: false,
     longestRun: nextLongestRun,
     enemyMaxHealth: scaleEnemyMaxHealth(state.enemyMaxHealth),
-    enemyAttackDamage: scaleEnemyAttackDamage(currentEnemyAttackDamage),
     baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
     selectedHandRuneId: null,
   };
@@ -74,29 +68,27 @@ function awardDeckDraftEntryArcaneDust(gameIndex: number): void {
 }
 
 function normalizeHydratedGameState(currentState: GameState, nextState: GameState): GameState {
-  const enemyAttackDamage = typeof nextState.enemyAttackDamage === 'number'
-    ? nextState.enemyAttackDamage
-    : currentState.enemyAttackDamage;
-
   return {
     ...currentState,
     ...nextState,
     deckDraftState: nextState.deckDraftState ?? null,
     deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
     enemyMaxHealth: typeof nextState.enemyMaxHealth === 'number' ? nextState.enemyMaxHealth : currentState.enemyMaxHealth,
-    enemyAttackDamage,
     baseEnemyMaxHealth: typeof nextState.baseEnemyMaxHealth === 'number'
       ? nextState.baseEnemyMaxHealth
       : currentState.baseEnemyMaxHealth,
     enemy: nextState.enemy ?? createGoblinEnemy(
-      nextState.enemyMaxHealth ?? currentState.enemyMaxHealth,
-      enemyAttackDamage
+      nextState.enemyMaxHealth ?? currentState.enemyMaxHealth
     ),
     combatPhase: nextState.combatPhase ?? 'player-turn',
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
     suppressedRunes: nextState.suppressedRunes ?? [],
     wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
+    enemyBoard: nextState.enemyBoard ?? createEmptyWall(),
+    enemyBoardCharges: nextState.enemyBoardCharges ?? createEnemyWallCharges(),
+    enemyQueuedRunes: nextState.enemyQueuedRunes ?? [],
+    enemyTurnNumber: typeof nextState.enemyTurnNumber === 'number' ? nextState.enemyTurnNumber : 0,
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
     runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
     wallChargeSoundSignal: typeof nextState.wallChargeSoundSignal === 'number'
@@ -109,6 +101,10 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
       ? nextState.shieldSoundSignal
       : currentState.shieldSoundSignal,
   };
+}
+
+function isWallFull(wall: ScoringWall): boolean {
+  return wall.length > 0 && wall.every((row) => row.length > 0 && row.every((cell) => cell.id !== null));
 }
 
 function trackDefeat(state: GameState, player: Player): void {
@@ -362,7 +358,7 @@ export const gameplayStoreConfig = (
           ...resolvedEffects.returnedOverflowRunes,
         ];
 
-        if ((resolvedEffects.enemy?.health ?? 1) <= 0) {
+        if ((resolvedEffects.enemy?.health ?? 1) <= 0 || isWallFull(resolvedEffects.player.wall)) {
           deckDraftRewardGameIndex = state.gameIndex;
           const victoryDeck = collectVictoryDeck({
             player: resolvedEffects.player,
@@ -491,11 +487,13 @@ export const gameplayStoreConfig = (
       const enemyTurnResult = resolveEnemyTurn({
         player: endTurnEffects.player,
         enemy: endTurnEffects.enemy,
-        activeArtefacts: state.activeArtefacts,
+        enemyBoard: state.enemyBoard,
+        enemyBoardCharges: state.enemyBoardCharges,
+        enemyQueuedRunes: state.enemyQueuedRunes,
+        turnNumber: state.enemyTurnNumber,
       });
-      const enemyPerformedAttack = endTurnEffects.enemy?.intent.type === 'Attack';
       const enemyAttackSoundSignal = state.enemyAttackSoundSignal + (enemyTurnResult.healthDamage > 0 ? 1 : 0);
-      const shieldSoundSignal = state.shieldSoundSignal + (enemyPerformedAttack && enemyTurnResult.healthDamage === 0 ? 1 : 0);
+      const shieldSoundSignal = state.shieldSoundSignal + (enemyTurnResult.healthDamage === 0 && enemyTurnResult.player.armor < endTurnEffects.player.armor ? 1 : 0);
       runeSoundEvents = mergeRuneSoundEvents(
         runeSoundEvents,
         countRuneSoundEvents({
@@ -506,7 +504,7 @@ export const gameplayStoreConfig = (
       );
       const discardPile = [...state.discardPile, ...state.hand];
 
-      if (enemyTurnResult.player.health <= 0) {
+      if (enemyTurnResult.player.health <= 0 || enemyTurnResult.boardFull) {
         trackDefeat(state, enemyTurnResult.player);
         return {
           ...state,
@@ -514,6 +512,10 @@ export const gameplayStoreConfig = (
           enemy: endTurnEffects.enemy,
           hand: [],
           discardPile,
+          enemyBoard: enemyTurnResult.enemyBoard,
+          enemyBoardCharges: enemyTurnResult.enemyBoardCharges,
+          enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
+          enemyTurnNumber: state.enemyTurnNumber + 1,
           selectedHandRuneId: null,
           isDefeat: true,
           combatPhase: 'defeat',
@@ -561,6 +563,10 @@ export const gameplayStoreConfig = (
         enemy: endTurnEffects.enemy,
         hand: startTurnDrawResult.hand,
         discardPile: startTurnDrawResult.discardPile,
+        enemyBoard: enemyTurnResult.enemyBoard,
+        enemyBoardCharges: enemyTurnResult.enemyBoardCharges,
+        enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
+        enemyTurnNumber: state.enemyTurnNumber + 1,
         selectedHandRuneId: null,
         combatPhase: 'player-turn',
         runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
@@ -608,12 +614,11 @@ export const gameplayStoreConfig = (
   startNextSoloGame: () => {
     set((state) => {
       const nextEnemyMaxHealth = state.enemyMaxHealth;
-      const nextEnemyAttackDamage = state.enemyAttackDamage;
       const nextGameIndex = state.gameIndex + 1;
       const previousHealth = Math.max(0, state.player.health);
       const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
       const clampedHealth = Math.min(nextMaxHealth, previousHealth);
-      const nextGameState = initializeSoloGame(nextEnemyMaxHealth, state.fullDeck, nextEnemyAttackDamage);
+      const nextGameState = initializeSoloGame(nextEnemyMaxHealth, state.fullDeck);
       const nextState = {
         ...nextGameState,
         player: {

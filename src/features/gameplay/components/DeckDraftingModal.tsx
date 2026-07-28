@@ -90,8 +90,8 @@ export function DeckDraftingModal({
   };
 
   return (
-    <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-sm px-4">
-      <div className="w-full max-w-5xl rounded-3xl border border-white/12 bg-[rgba(10,10,24,0.9)] p-6 shadow-[0_34px_80px_rgba(0,0,0,0.7)] backdrop-blur md:p-8">
+    <div className="absolute inset-0 z-90 flex items-center justify-center bg-[rgba(4,2,12,0.75)] backdrop-blur-xs px-4">
+      <div className="w-full max-w-5xl rounded-3xl border border-white/12 bg-[rgba(10,10,24,0.9)] p-6 shadow-[0_34px_80px_rgba(0,0,0,0.7)] backdrop-blur-sm md:p-8">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.22em] text-slate-300/80">victory</div>
@@ -126,7 +126,7 @@ export function DeckDraftingModal({
                     ? '0 0 48px rgba(235, 140, 255, 0.64), 0 0 120px rgba(235, 140, 255, 0.30)'
                     : '0 8px 24px rgba(0, 0, 0, 0.45)',
                 }}
-                className="min-h-[188px] rounded-2xl border border-white/12 bg-[#1c1034] p-4 text-center transition hover:border-fuchsia-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-200 disabled:cursor-default"
+                className="min-h-[188px] rounded-2xl border border-white/12 bg-[#1c1034] p-4 text-center transition hover:border-fuchsia-200 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-200 disabled:cursor-default"
               >
                 <div className="flex flex-col items-center gap-3">
                   {faceRune && (
@@ -175,14 +175,14 @@ export function DeckDraftingModal({
             <button
               type="button"
               onClick={handleStartNextGame}
-              className="w-full rounded-xl border border-emerald-300/60 bg-gradient-to-r from-emerald-500/85 to-cyan-500/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 sm:w-auto"
+              className="w-full rounded-xl border border-emerald-300/60 bg-linear-to-r from-emerald-500/85 to-cyan-500/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.35)] transition hover:brightness-110 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 sm:w-auto"
             >
               Next Game
             </button>
             <button
               type="button"
               onClick={handleOpenDeckOverlay}
-              className="w-full rounded-xl border border-sky-400/40 bg-sky-900/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-50 transition hover:border-sky-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 sm:w-auto"
+              className="w-full rounded-xl border border-sky-400/40 bg-sky-900/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-50 transition hover:border-sky-200 hover:text-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 sm:w-auto"
             >
               View Deck
             </button>

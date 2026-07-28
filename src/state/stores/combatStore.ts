@@ -14,6 +14,10 @@ export interface CombatState {
   suppressedRunes: Rune[];
   wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
+  enemyBoard: GameState['enemyBoard'];
+  enemyBoardCharges: SpellWallCharge[][];
+  enemyQueuedRunes: GameState['enemyQueuedRunes'];
+  enemyTurnNumber: number;
 }
 
 export interface CombatStore extends CombatState {
@@ -29,6 +33,10 @@ export function pickCombatState(state: GameState): CombatState {
     suppressedRunes: state.suppressedRunes,
     wallCharges: state.wallCharges,
     selectedHandRuneId: state.selectedHandRuneId,
+    enemyBoard: state.enemyBoard,
+    enemyBoardCharges: state.enemyBoardCharges,
+    enemyQueuedRunes: state.enemyQueuedRunes,
+    enemyTurnNumber: state.enemyTurnNumber,
   };
 }
 

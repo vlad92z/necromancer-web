@@ -133,11 +133,11 @@ export function SettingsOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-xs"
       onClick={() => handleClose()}
     >
       <div
-        className="w-[min(600px,_94vw)] space-y-6 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)] relative"
+        className="w-[min(600px,94vw)] space-y-6 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,rgba(17,24,39,0.95),rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)] relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button - Top Right */}
@@ -145,7 +145,7 @@ export function SettingsOverlay({
           type="button"
           onClick={() => handleClose()}
           data-active={activeControl === 'close' ? 'true' : undefined}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/80 text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:border-sky-400 data-[active=true]:bg-slate-800 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.6)]"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/80 text-slate-100 transition hover:border-slate-300 hover:bg-slate-800 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:border-sky-400 data-[active=true]:bg-slate-800 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.6)]"
           aria-label="Close settings"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
@@ -190,9 +190,9 @@ export function SettingsOverlay({
                 onClick={() => handleToggleMusic()}
                 aria-pressed={isMusicMuted}
                 data-active={activeControl === 'music' ? 'true' : undefined}
-                className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)] ${isMusicMuted
-                    ? 'bg-gradient-to-r from-rose-400/30 to-rose-900/60'
-                    : 'bg-gradient-to-r from-sky-500/30 to-purple-700/50'
+                className={`inline-flex items-center gap-2 rounded-full border border-slate-400/40 px-4 py-2 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-100 shadow-xs transition hover:shadow-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)] ${isMusicMuted
+                    ? 'bg-linear-to-r from-rose-400/30 to-rose-900/60'
+                    : 'bg-linear-to-r from-sky-500/30 to-purple-700/50'
                   }`}
               >
                 <span
@@ -216,7 +216,7 @@ export function SettingsOverlay({
                 handleClose();
               }}
               isActive={activeControl === 'quit'}
-              className="w-full rounded-xl border border-rose-500/50 bg-rose-900/30 px-6 py-3 text-center text-base font-bold uppercase tracking-[0.2em] text-rose-100 transition hover:border-rose-400 hover:bg-rose-900/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)]"
+              className="w-full rounded-xl border border-rose-500/50 bg-rose-900/30 px-6 py-3 text-center text-base font-bold uppercase tracking-[0.2em] text-rose-100 transition hover:border-rose-400 hover:bg-rose-900/50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 data-[active=true]:border-sky-400 data-[active=true]:shadow-[0_0_0_2px_rgba(56,189,248,0.35)]"
             />
           </section>
         )}

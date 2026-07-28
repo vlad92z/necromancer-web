@@ -111,6 +111,15 @@ export function useGameplayWallState() {
   return { wall, wallCharges };
 }
 
+export function useEnemySpellBoardState() {
+  return useCombatStore(
+    useShallow((state) => ({
+      wall: state.enemyBoard,
+      wallCharges: state.enemyBoardCharges,
+    })),
+  );
+}
+
 export function useGameplayDeckState() {
   const deck = useBoardStore((state) => state.player.deck);
   const fullDeck = useRunStore((state) => state.fullDeck);

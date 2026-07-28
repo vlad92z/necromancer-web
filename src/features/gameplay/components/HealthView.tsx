@@ -162,7 +162,7 @@ export function HealthView() {
       </div>
       <div className={'rounded-full overflow-hidden relative h-[10px] bg-red-500/15'}>
         <motion.div
-          className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-red-500 to-red-700`}
+          className={`absolute top-0 left-0 h-full rounded-full bg-linear-to-r from-red-500 to-red-700`}
           initial={{ width: `${progressPercent}%` }}
           animate={{ width: `${progressPercent}%` }}
           transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}

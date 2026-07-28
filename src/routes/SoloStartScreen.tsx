@@ -219,8 +219,8 @@ export function SoloStartScreen() {
 
   const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
   const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';
-  const backButtonClasses = 'rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:text-sky-100 data-[active=true]:underline';
-  const manageButtonClasses = 'rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-purple-300 data-[active=true]:bg-purple-900/40 data-[active=true]:shadow-[0_0_0_2px_rgba(168,85,247,0.35)]';
+  const backButtonClasses = 'rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:text-sky-100 data-[active=true]:underline';
+  const manageButtonClasses = 'rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-purple-300 data-[active=true]:bg-purple-900/40 data-[active=true]:shadow-[0_0_0_2px_rgba(168,85,247,0.35)]';
   const continueButtonClasses = `${gradientButtonClasses} ${gradientActive} data-[active=true]:border data-[active=true]:border-slate-300`;
   const newGameButtonClasses = hasSavedSoloRun
     ? `${simpleButtonClasses} ${simpleActive}`
@@ -232,7 +232,7 @@ export function SoloStartScreen() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
-      <div className="w-[min(1100px,_94vw)] min-h-[calc(min(1100px,_94vw)_*_2/3)] space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,_rgba(17,24,39,0.95),_rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+      <div className="w-[min(1100px,94vw)] min-h-[calc(min(1100px,94vw)*2/3)] space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,rgba(17,24,39,0.95),rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
         <div className="flex items-center justify-between gap-4">
           <ClickSoundButton
             title="← Back"

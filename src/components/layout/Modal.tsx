@@ -46,7 +46,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-[rgba(0,0,0,0.7)] px-4 py-4"
+      className="fixed inset-0 z-300 flex items-center justify-center bg-[rgba(0,0,0,0.7)] px-4 py-4"
       onClick={handleBackdropClick}
     >
       <div
@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
             {showCloseButton && (
               <button
                 data-active={closeButtonDataActive}
-                className={`rounded-lg p-2 text-2xl leading-none text-slate-400 transition hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 ${closeButtonClassName}`.trim()}
+                className={`rounded-lg p-2 text-2xl leading-none text-slate-400 transition hover:text-slate-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 ${closeButtonClassName}`.trim()}
                 onClick={onClose}
                 aria-label="Close modal"
               >

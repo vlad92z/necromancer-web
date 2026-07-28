@@ -4,6 +4,7 @@
 
 import type {
   Enemy,
+  EnemyRune,
   GameState,
   Player,
   Rune,
@@ -301,6 +302,28 @@ export function createEmptyWallCharges(size: number = WALL_SIZE): SpellWallCharg
     );
 }
 
+export function createEnemyWallCharges(size: number = WALL_SIZE): SpellWallCharge[][] {
+  return createEmptyWallCharges(size).map((row) => row.map((charge) => ({
+    ...charge,
+    slotFamily: 'lifeFrost',
+  })));
+}
+
+export function createEnemyLifeRune(id: string): EnemyRune {
+  return {
+    id,
+    runeType: 'Life',
+    rarity: 'common',
+    castEffectRefs: [],
+    passiveEffectRefs: [],
+    damage: 1,
+  };
+}
+
+export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
+  return [0, 1, 2].map((index) => createEnemyLifeRune(`enemy-${turnNumber}-${index}`));
+}
+
 export function getRuneTypes(): RuneType[] {
   return [...RUNE_TYPES];
 }
@@ -361,7 +384,6 @@ export function initializeSoloGame(
     fullDeck: deckTemplate,
     gameIndex: 1,
     enemyMaxHealth,
-    enemyAttackDamage,
     baseEnemyMaxHealth: DEFAULT_ENEMY_MAX_HEALTH,
     isDefeat: false,
     longestRun: 0,
@@ -379,5 +401,9 @@ export function initializeSoloGame(
     suppressedRunes: [],
     wallCharges: createEmptyWallCharges(WALL_SIZE),
     selectedHandRuneId: null,
+    enemyBoard: createEmptyWall(WALL_SIZE),
+    enemyBoardCharges: createEnemyWallCharges(WALL_SIZE),
+    enemyQueuedRunes: [],
+    enemyTurnNumber: 0,
   };
 }

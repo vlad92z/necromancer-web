@@ -24,15 +24,15 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary:
-      'bg-[#a855f7] text-white hover:bg-[#c084fc] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300',
+      'bg-[#a855f7] text-white hover:bg-[#c084fc] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300',
     secondary:
-      'border border-white/10 bg-[#1a1032] text-white hover:border-white/30 hover:bg-[#231542] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300',
+      'border border-white/10 bg-[#1a1032] text-white hover:border-white/30 hover:bg-[#231542] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300',
     danger:
-      'bg-[#fb7185] text-white hover:bg-[#f43f5e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-300',
+      'bg-[#fb7185] text-white hover:bg-[#f43f5e] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-300',
     success:
-      'bg-[#4ade80] text-[#0c051c] hover:bg-[#22c55e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300',
+      'bg-[#4ade80] text-[#0c051c] hover:bg-[#22c55e] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300',
     ghost:
-      'bg-transparent text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300',
+      'bg-transparent text-white hover:bg-white/10 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300',
   }[variant];
 
   const widthClass = fullWidth ? 'w-full' : '';

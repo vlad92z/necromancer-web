@@ -44,7 +44,7 @@ export function PlayerPanel() {
         </div>
         <div className="h-3 overflow-hidden rounded-full bg-sky-950/80">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-200"
+            className="h-full rounded-full bg-linear-to-r from-sky-400 to-cyan-200"
             style={{ width: `${healthPercent}%` }}
           />
         </div>
