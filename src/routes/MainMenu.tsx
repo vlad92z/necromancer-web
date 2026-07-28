@@ -144,7 +144,7 @@ export function MainMenu() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [activeElement, handleSettings, handleSolo, isMobileViewport, playClickSound, showSettingsOverlay])
 
-  const pixelButtonBase = 'font-pixel w-full border-4 border-[#141313] px-7 py-7 text-left text-base leading-none tracking-[0.1em] text-[#171518] shadow-[7px_7px_0_#141313] transition-none hover:bg-[#fff8d8] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[3px_3px_0_#141313] data-[active=true]:bg-[#fff8d8] data-[active=true]:outline data-[active=true]:outline-4 data-[active=true]:outline-offset-4 data-[active=true]:outline-[#ffdc52]'
+  const pixelButtonBase = 'font-pixel w-full border-4 border-[#141313] px-7 py-7 text-center text-base leading-none tracking-[0.5em] text-[#171518] shadow-[7px_7px_0_#141313] transition-none hover:bg-[#fff8d8] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[3px_3px_0_#141313] data-[active=true]:bg-[#fff8d8] data-[active=true]:outline data-[active=true]:outline-4 data-[active=true]:outline-offset-4 data-[active=true]:outline-[#ffdc52]'
   const soloButtonClasses = `${pixelButtonBase} bg-[#e15f4f] text-[#fff8d8] hover:bg-[#f27661] data-[active=true]:bg-[#f27661]`
   const settingsButtonClasses = `${pixelButtonBase} bg-[#efe7c3]`
 
