@@ -43,6 +43,20 @@ body {
   width: 100%;
 }
 
+@media (pointer: fine) {
+  *,
+  *::before,
+  *::after {
+    cursor: url('./assets/mouse/spell_pointer.png') 0 0, auto !important;
+  }
+
+  *:active,
+  *:active::before,
+  *:active::after {
+    cursor: url('./assets/mouse/spell_pointer_click.png') 0 0, auto !important;
+  }
+}
+
 #root {
   width: 100%;
   min-height: 100vh;

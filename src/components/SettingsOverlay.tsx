@@ -223,7 +223,6 @@ export function SettingsOverlay({ onQuitRun }: SettingsOverlayProps): ReactEleme
 
           <div className="border-b-4 border-[#141313] pb-5 pr-14">
             <h2 id="settings-title" className="font-pixel text-3xl uppercase tracking-[0.15em] text-[#fff8d8] [text-shadow:3px_3px_0_#141313]">Settings</h2>
-            <p className="font-pixel mt-3 text-[10px] uppercase tracking-[0.18em] text-[#b5d3bd]">Tune the spellbook</p>
           </div>
 
           <section className="space-y-3">
