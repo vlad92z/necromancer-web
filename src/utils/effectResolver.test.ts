@@ -1384,7 +1384,6 @@ function createTestEnemy(health: number): Enemy {
     imageSrc: '',
     health,
     maxHealth: 20,
-    intent: { type: 'Attack', amount: 5 },
   };
 }
 

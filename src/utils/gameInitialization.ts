@@ -21,7 +21,6 @@ export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 
 export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 6;
 export const DEFAULT_ENEMY_MAX_HEALTH = 7;
-export const DEFAULT_ENEMY_ATTACK_DAMAGE = 3;
 export const ENEMY_SCALING_MULTIPLIER = 1.35;
 export const ENEMY_HEALTH_ROUNDING_STEP = 1;
 export const STARTING_DECK: Rune[] = [
@@ -251,10 +250,6 @@ export function scaleEnemyMaxHealth(maxHealth: number): number {
   return Math.ceil((maxHealth * ENEMY_SCALING_MULTIPLIER) / ENEMY_HEALTH_ROUNDING_STEP) * ENEMY_HEALTH_ROUNDING_STEP;
 }
 
-export function scaleEnemyAttackDamage(attackDamage: number): number {
-  return Math.ceil(attackDamage * ENEMY_SCALING_MULTIPLIER);
-}
-
 export function getRequiredChargesForRarity(rarity: RuneEffectRarity): number {
   switch (rarity) {
     case 'common':
@@ -268,17 +263,13 @@ export function getRequiredChargesForRarity(rarity: RuneEffectRarity): number {
   }
 }
 
-export function createGoblinEnemy(
-  maxHealth: number,
-  attackDamage: number = DEFAULT_ENEMY_ATTACK_DAMAGE
-): Enemy {
+export function createGoblinEnemy(maxHealth: number): Enemy {
   return {
     id: 'goblin',
     name: 'Goblin',
     imageSrc: goblinImageSrc,
     health: maxHealth,
     maxHealth,
-    intent: { type: 'Attack', amount: attackDamage },
   };
 }
 
@@ -368,7 +359,6 @@ function shuffleRunes(runes: Rune[]): Rune[] {
 export function initializeSoloGame(
   enemyMaxHealth: number = DEFAULT_ENEMY_MAX_HEALTH,
   fullDeck: Rune[] = createStartingDeck(),
-  enemyAttackDamage: number = DEFAULT_ENEMY_ATTACK_DAMAGE
 ): GameState {
   const maxHealth = 100;
   const deckTemplate = [...fullDeck];
@@ -394,7 +384,7 @@ export function initializeSoloGame(
     wallChargeSoundSignal: 0,
     enemyAttackSoundSignal: 0,
     shieldSoundSignal: 0,
-    enemy: createGoblinEnemy(enemyMaxHealth, enemyAttackDamage),
+    enemy: createGoblinEnemy(enemyMaxHealth),
     combatPhase: 'player-turn',
     hand,
     discardPile: [],

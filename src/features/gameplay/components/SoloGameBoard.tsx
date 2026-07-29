@@ -24,14 +24,14 @@ export const SoloGameView = memo(function SoloGameView({
   const { isDefeat, deckDraftState } = useGameplayStatusState();
 
   return (
-    <div className="flex h-full flex-col relative">
+    <div className="relative flex h-full flex-col font-pixel">
       <div>
         <GameMetadataView/>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[min(1.2vmin,16px)] py-[min(1.2vmin,16px)]">
+      <div className="flex min-h-0 flex-1 flex-col gap-3.5 px-[min(1.2vmin,16px)] py-[min(1.2vmin,16px)]">
         <div
-          className="grid min-h-0 flex-1 gap-[14px]"
+          className="grid min-h-0 flex-1 gap-3.5"
           style={{ gridTemplateColumns: '220px minmax(440px, 1fr) minmax(440px, 1fr) 220px' }}
         >
           <PlayerPanel />
@@ -47,7 +47,7 @@ export const SoloGameView = memo(function SoloGameView({
           <EnemyPanel />
         </div>
 
-        <section className="relative flex min-h-[240px] flex-col px-4 py-3">
+        <section className="relative flex min-h-60 flex-col px-4 py-3">
           <div className="flex min-h-0 flex-1 items-center">
             <TooltipView />
           </div>

@@ -3,7 +3,7 @@
 import { useEnemySpellBoardState } from '../../../hooks/useGameState';
 import { WallCell } from './WallCell';
 
-const GAP = 3;
+const GAP = 0;
 
 export function EnemySpellBoard() {
   const { wall, wallCharges } = useEnemySpellBoardState();

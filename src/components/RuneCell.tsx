@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
-import { COLORS, RADIUS, TRANSITIONS, SHADOWS, RUNE_SIZE_CONFIG } from '../styles/tokens';
+import { COLORS, TRANSITIONS, RUNE_SIZE_CONFIG } from '../styles/tokens';
 import type { RuneSize } from '../styles/tokens';
 import fireRune from '../assets/runes/fire_rune.svg';
 import fireRuneUncommon from '../assets/runes/fire_rune_uncommon.svg';
@@ -111,9 +111,9 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   emptyOpacity?: number;
 }> = {
   wall: {
-    border: `1px solid ${COLORS.ui.borderLight}`,
-    background: '#1c0f2e',
-    backgroundOccupied: '#46350dff',
+    border: '3px solid #141313',
+    background: '#293532',
+    backgroundOccupied: '#354542',
     emptyOpacity: 0.35,
   },
   draft: {
@@ -202,8 +202,7 @@ export function RuneCell({
         alignItems: 'center',
         justifyContent: 'center',
         transition: TRANSITIONS.medium,
-        borderRadius: `${RADIUS.md}px`,
-        border: borderStyle,
+        borderRadius: 0,
         backgroundColor: backgroundColor,
         padding: `${config.padding}px`,
         boxSizing: 'border-box',
@@ -261,16 +260,17 @@ export function RuneCell({
           style={{
             position: 'absolute',
             padding: '8px 12px',
-            background: 'rgba(8, 7, 16, 0.95)',
-            borderRadius: '10px',
-            border: `1px solid ${COLORS.ui.borderLight}`,
-            color: COLORS.ui.text,
+            background: '#293532',
+            borderRadius: 0,
+            border: '3px solid #141313',
+            color: '#fff8d8',
+            fontFamily: "'Silkscreen', monospace",
             fontSize: '12px',
             minWidth: '100px',
             textAlign: 'center',
             lineHeight: 1.5,
             whiteSpace: 'pre-line',
-            boxShadow: SHADOWS.md,
+            boxShadow: '4px 4px 0 #141313',
             zIndex: 10,
             pointerEvents: 'none',
             ...tooltipPositionStyles,

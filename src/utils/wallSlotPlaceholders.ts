@@ -1,6 +1,6 @@
-import placeholderFireVoid from '../assets/runes/placeholder_fire_void.svg';
-import placeholderLifeFrost from '../assets/runes/placeholder_life_frost.svg';
-import placeholderLightningWind from '../assets/runes/placeholder_lightning_wind.svg';
+import placeholderFireVoid from '../assets/runes/placeholder_fire_void.png';
+import placeholderLifeFrost from '../assets/runes/placeholder_life_frost.png';
+import placeholderLightningWind from '../assets/runes/placeholder_lightning_wind.png';
 import type { WallSlotFamily } from '../types/game';
 
 export const WALL_SLOT_PLACEHOLDER_ASSETS: Record<WallSlotFamily, string> = {

@@ -14,37 +14,35 @@ export function PlayerPanel() {
   const healthPercent = Math.round(healthRatio * 100);
 
   return (
-    <section className="h-full p-5">
+    <section>
       <div className="flex items-center gap-3">
-        <div>
-          <h2 className="mt-1 text-2xl font-black text-sky-50">Wizard</h2>
-        </div>
+          <h2 className="pixel-section-title mt-1 text-xl">Player</h2>
       </div>
 
       <div className="mt-5 flex justify-center">
         <img
           src={wizardImage}
           alt="Player wizard"
-          className="h-[220px] max-w-full object-contain drop-shadow-[0_20px_32px_rgba(0,0,0,0.55)]"
+          className="h-55 max-w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]"
         />
       </div>
 
       <div className="mt-5">
-        <div className="mb-2 flex items-center justify-between text-sm font-bold text-sky-50">
+        <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
           <span className="flex items-center gap-1.5">
             <span>HP</span>
             {armor > 0 && (
-              <span className="flex items-center gap-1 text-sky-100">
-                <span aria-hidden="true" className="text-sky-200">🛡</span>
+              <span className="flex items-center gap-1 text-[#5dc6b0]">
+                <span aria-hidden="true">🛡</span>
                 <span>{armor}</span>
               </span>
             )}
           </span>
           <span>{health} / {maxHealth}</span>
         </div>
-        <div className="h-3 overflow-hidden rounded-full bg-sky-950/80">
+        <div className="pixel-health-track">
           <div
-            className="h-full rounded-full bg-linear-to-r from-sky-400 to-cyan-200"
+            className="pixel-health-fill pixel-health-fill--player"
             style={{ width: `${healthPercent}%` }}
           />
         </div>
@@ -52,7 +50,7 @@ export function PlayerPanel() {
 
       
         {selectedArtefactIds.length > 0 ? (
-          <div className="mt-4 rounded-lg border border-sky-300/15 bg-sky-950/25 px-3 py-2">
+          <div className="pixel-game-panel-inset mt-4 px-3 py-2">
             <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
           </div>
         ) : null }

@@ -34,14 +34,14 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
         return (
           <div
             key={artefactId}
-            className={`${iconSize} rounded-lg overflow-hidden border border-slate-600/50 bg-slate-900/50 shadow-lg`}
+            className={`${iconSize} overflow-hidden border-[3px] border-[#141313] bg-[#293532] shadow-[4px_4px_0_#141313]`}
             role="img"
             aria-label={tooltipText}
           >
             <img
               src={artefact.image}
               alt={artefact.name}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover [image-rendering:pixelated]"
             />
           </div>
         );

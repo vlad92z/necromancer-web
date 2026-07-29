@@ -13,13 +13,10 @@ export function GameMetadataView() {
   const { openSettingsOverlay } = useUIActions();
   const activeElement = useActiveElement();
   const isSettingsActive = activeElement?.type === 'settings';
-  const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
-  const settingsFocus = 'focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
-  const settingsActive = 'data-[active=true]:shadow-[0_0_28px_rgba(125,211,252,0.95),0_0_56px_rgba(125,211,252,0.55)] data-[active=true]:bg-slate-800/80';
-  const actionButtonBase = `pt-0 pr-2 pb-2 pl-4 items-center justify-center text-slate-200 rounded-2xl border border-slate-600/70 bg-slate-900 text-5xl tracking-[0.18em] text-slate-100 ${settingsHover} ${settingsFocus} ${settingsActive}`;
+  const actionButtonBase = 'pixel-game-button flex h-[62px] w-[62px] items-center justify-center px-0 pb-2 text-4xl';
 
   return (
-    <div className="flex flex-row w-full border-b border-slate-600/70 pb-2 bg-slate-900/80 px-5 pt-3">
+    <div className="pixel-game-header flex w-full flex-row px-5 py-3">
       {/* Left side: Game Title and Arcane Dust Counter */}
       <div className="w-full flex flex-row flex-29 items-center">
         <div className="px-3 py-3 flex items-center gap-3">
@@ -28,7 +25,7 @@ export function GameMetadataView() {
             alt="Arcane Dust"
             className="h-10 w-10 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]"
           />
-          <span className="text-xl font-extrabold text-amber-200">{arcaneDust.toLocaleString()}</span>
+          <span className="font-pixel text-lg text-[#f2c14e]">{arcaneDust.toLocaleString()}</span>
         </div>
       </div>
 

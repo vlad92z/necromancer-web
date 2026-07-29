@@ -100,11 +100,11 @@ export function GameContainer() {
 
   return (
     <div
-      className="min-h-screen w-full bg-[radial-gradient(circle_at_top,#2b184f_0%,#0c041c_65%,#05010d_100%)] text-[#f5f3ff] flex items-center justify-center box-border relative"
+      className="pixel-screen relative box-border flex min-h-screen w-full items-center justify-center"
     >
       <div className="relative" style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px` }}>
         <div
-          className="absolute top-0 left-0 origin-top-left bg-[rgba(9,3,24,0.85)] rounded-[36px] border border-white/12 shadow-[0_40px_120px_rgba(0,0,0,0.75)] flex flex-col overflow-hidden backdrop-blur-[14px]"
+          className="pixel-game-shell absolute left-0 top-0 flex origin-top-left flex-col overflow-hidden"
           style={{
             width: `${SCALING_CONFIG.baseWidth}px`,
             height: `${SCALING_CONFIG.baseHeight}px`,

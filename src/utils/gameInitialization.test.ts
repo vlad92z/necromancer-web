@@ -3,7 +3,6 @@ import {
   createStartingDeck,
   createEmptyWallCharges,
   initializeSoloGame,
-  scaleEnemyAttackDamage,
   scaleEnemyMaxHealth,
   STARTING_DECK,
   getRequiredChargesForRarity,
@@ -11,14 +10,13 @@ import {
 
 describe('gameInitialization combat state', () => {
   it('initializes a goblin encounter using enemy max health', () => {
-    const state = initializeSoloGame(42, undefined, 9);
+    const state = initializeSoloGame(42);
 
     expect(state.enemy).toMatchObject({
       id: 'goblin',
       name: 'Goblin',
       health: 42,
       maxHealth: 42,
-      intent: { type: 'Attack', amount: 9 },
     });
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(6);
@@ -91,10 +89,6 @@ describe('gameInitialization combat state', () => {
 
   it('scales enemy max health by the configured multiplier and rounds up to 1 HP', () => {
     expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([14, 21, 27, 34, 41]);
-  });
-
-  it('scales enemy attack by the configured multiplier and rounds up to 1 damage', () => {
-    expect([5, 6, 8, 10].map(scaleEnemyAttackDamage)).toEqual([7, 9, 11, 14]);
   });
 
   it('maps rune rarity to required charges', () => {

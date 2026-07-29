@@ -38,15 +38,12 @@ export interface Rune {
   passiveEffectRefs: EffectRef[];
 }
 
-export type EnemyIntent = { type: 'Attack'; amount: number };
-
 export interface Enemy {
   id: string;
   name: string;
   imageSrc: string;
   health: number;
   maxHealth: number;
-  intent: EnemyIntent;
 }
 
 export interface EnemyRune extends Rune {

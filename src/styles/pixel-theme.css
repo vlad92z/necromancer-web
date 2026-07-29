@@ -228,4 +228,106 @@
     font-size: 0.875rem;
     letter-spacing: 0.25em;
   }
+
+  .pixel-game-shell {
+    border: 4px solid var(--pixel-ink);
+    background-color: var(--pixel-screen);
+    box-shadow: 12px 12px 0 var(--pixel-ink);
+    color: var(--pixel-text);
+  }
+
+  .pixel-game-header {
+    border-bottom: 4px solid var(--pixel-ink);
+    background-color: var(--pixel-panel);
+    box-shadow: 0 4px 0 var(--pixel-panel-border);
+  }
+
+  .pixel-game-panel {
+    border: 4px solid var(--pixel-ink);
+    background-color: var(--pixel-panel);
+    box-shadow: 6px 6px 0 var(--pixel-ink);
+  }
+
+  .pixel-game-panel-inset {
+    border: 3px solid var(--pixel-panel-border);
+    background-color: var(--pixel-panel-inset);
+  }
+
+  .pixel-game-stat {
+    border: 3px solid var(--pixel-ink);
+    background-color: var(--pixel-panel-inset);
+    box-shadow: 4px 4px 0 var(--pixel-ink);
+  }
+
+  .pixel-game-button {
+    border: 4px solid var(--pixel-ink);
+    background-color: var(--pixel-utility);
+    color: var(--pixel-text-dark);
+    box-shadow: 5px 5px 0 var(--pixel-ink);
+    font-family: 'Silkscreen', monospace;
+    text-transform: uppercase;
+    transition: none;
+  }
+
+  .pixel-game-button:hover,
+  .pixel-game-button[data-active='true'] {
+    background-color: var(--pixel-selected);
+  }
+
+  .pixel-game-button:focus-visible {
+    outline: 4px solid var(--pixel-text);
+    outline-offset: 3px;
+  }
+
+  .pixel-game-button[data-active='true'] {
+    outline: 4px solid var(--pixel-focus);
+    outline-offset: 3px;
+  }
+
+  .pixel-game-button:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--pixel-ink);
+  }
+
+  .pixel-game-button:disabled {
+    filter: grayscale(1);
+    opacity: 0.5;
+  }
+
+  .pixel-game-card {
+    border: 3px solid var(--pixel-ink);
+    border-radius: 0;
+    background-color: var(--pixel-panel);
+    box-shadow: 5px 5px 0 var(--pixel-ink);
+  }
+
+  .pixel-game-card[data-selected='true'] {
+    outline: 4px solid var(--pixel-focus);
+    outline-offset: 3px;
+    box-shadow: 7px 7px 0 var(--pixel-ink);
+  }
+
+  .pixel-health-track {
+    height: 0.875rem;
+    overflow: hidden;
+    border: 3px solid var(--pixel-ink);
+    background-color: var(--pixel-panel-inset);
+  }
+
+  .pixel-health-fill {
+    height: 100%;
+    background-color: var(--pixel-primary);
+  }
+
+  .pixel-health-fill--player {
+    background-color: #5dc6b0;
+  }
+
+  .pixel-section-title {
+    font-family: 'Silkscreen', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--pixel-text);
+    text-shadow: 3px 3px 0 var(--pixel-ink);
+  }
 }

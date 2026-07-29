@@ -7,7 +7,7 @@ import { useGameplayActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
 import { WallCell } from '../WallCell';
 
-const GAP = 4;
+const GAP = 0;
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
 interface ScoringWallProps {

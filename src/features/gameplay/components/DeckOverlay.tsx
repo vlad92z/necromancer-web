@@ -84,31 +84,32 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 z-1000 flex items-center justify-center bg-[rgba(4,2,12,0.78)] px-6 py-6 backdrop-blur-md"
+        className="pixel-modal-backdrop fixed inset-0 z-1000 flex items-center justify-center px-6 py-6"
       >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="flex aspect-3/2 w-[min(1100px,92vw)] max-h-[88vh] flex-col overflow-hidden rounded-[28px] border border-[#9575ff]/35 bg-[radial-gradient(circle_at_20%_20%,rgba(92,40,160,0.22),transparent_40%),linear-gradient(145deg,rgba(20,12,38,0.96),rgba(8,4,18,0.94))] p-7 text-[#e8e5ff] shadow-[0_40px_140px_rgba(0,0,0,0.7)]"
+          className="pixel-modal flex aspect-3/2 w-[min(1100px,92vw)] max-h-[88vh] flex-col overflow-hidden p-2 font-pixel"
         >
+          <div className="pixel-modal__inner flex min-h-0 flex-1 flex-col p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex justify-between w-full">
               <div>                
-              <h2 className="text-2xl font-extrabold text-[#f5f3ff]">{`${zoneCopy.title} (${totalRuneCount})`}</h2>
+              <h2 className="pixel-section-title text-2xl">{`${zoneCopy.title} (${totalRuneCount})`}</h2>
               </div>
               <button
                 onClick={handleCloseButton}
                 type="button"
-                className="rounded-xl border border-white/20 bg-linear-to-r from-purple-500 via-indigo-500 to-cyan-400 px-4 py-2 text-sm font-extrabold uppercase tracking-[0.12em] text-slate-900 shadow-[0_10px_25px_rgba(99,102,241,0.45)] transition hover:from-purple-400 hover:via-indigo-400 hover:to-cyan-300 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                className="pixel-game-button px-4 py-2 text-xs tracking-[0.12em]"
               >
                 Close
               </button>
             </div>
             <div className="flex flex-wrap justify-between w-full items-center gap-3" >
               <RuneTypeTotals runeTypes={RUNE_TYPES} counts={runeTypeCounts}/>
-              <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+              <div className="pixel-game-stat inline-flex items-center gap-2 px-3 py-2 text-xs uppercase tracking-[0.18em] text-[#f2c14e]">
                 <img src={arcaneDustIcon} alt="Arcane Dust" className="h-7 w-7" />
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg text-amber-200">{arcaneDust.toLocaleString()}</span>
@@ -124,7 +125,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 16 }}
-                className="rounded-2xl border border-[#9575ff]/30 bg-[linear-gradient(135deg,rgba(67,31,120,0.35),rgba(21,10,46,0.92))] p-3.5 shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
+                className="pixel-game-panel p-3.5"
               >
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-4">
                   {sortedRunes.map((rune, index) => {
@@ -153,12 +154,12 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
             )}
 
             {sortedRunes.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-400/50 bg-white/5 px-12 py-12 text-center text-slate-200">
-                <p className="text-lg font-extrabold">{zoneCopy.emptyText}</p>
+              <div className="pixel-game-panel-inset border-dashed px-12 py-12 text-center text-[#b5d3bd]">
+                <p className="text-sm uppercase">{zoneCopy.emptyText}</p>
               </div>
             )}
           </div>
-
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

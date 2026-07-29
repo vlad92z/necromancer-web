@@ -22,7 +22,7 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.gameStarted).toBe(true);
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 7, intent: { type: 'Attack', amount: 3 } });
+    expect(state.enemy).toMatchObject({ id: 'goblin', health: 7 });
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(6);
     expect(state.discardPile).toEqual([]);
@@ -37,7 +37,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [fireRune],
       selectedHandRuneId: null,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges: createEmptyWallCharges(),
     }));
 
@@ -79,7 +79,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand,
       player: { ...state.player, deck, armor: 2, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -99,7 +99,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [],
       player: { ...state.player, deck: [], armor: 5, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -118,7 +118,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [],
       player: { ...state.player, deck: [], armor: 3, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -137,7 +137,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [],
       player: { ...state.player, deck: [], armor: 0, health: 4 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -164,7 +164,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [],
       player: { ...state.player, wall, deck: [], armor: 0, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -189,7 +189,7 @@ describe('gameplayStore current combat', () => {
       discardPile: [encounterDiscardRune],
       suppressedRunes: [suppressedRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3 },
       wallCharges: createEmptyWallCharges(),
       fullDeck: [lethalRune, baseDeckRune],
       player: { ...state.player, deck: [encounterDeckRune] },
@@ -234,7 +234,6 @@ describe('gameplayStore current combat', () => {
     expect(nextState.combatPhase).toBe('player-turn');
     expect(nextState.deckDraftState).toBeNull();
     expect(nextState.enemy?.maxHealth).toBe(10);
-    expect(nextState.enemy?.intent.amount).toBe(5);
     expect(nextState.enemyMaxHealth).toBe(10);
     expect(nextState.suppressedRunes).toEqual([]);
     expect(nextState.discardPile).toEqual([]);
@@ -255,7 +254,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [lethalRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3 },
       wallCharges: createEmptyWallCharges(),
       fullDeck: [lethalRune],
       player: { ...state.player, deck: [] },
@@ -284,7 +283,7 @@ describe('gameplayStore current combat', () => {
       activeArtefacts: ['ring', 'robe'],
       hand: [lethalRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3 },
       wallCharges: createEmptyWallCharges(),
       fullDeck: [lethalRune],
       player: { ...state.player, deck: [], health: 4, maxHealth: 10 },
@@ -321,7 +320,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [windRune],
       selectedHandRuneId: windRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       wallCharges: createEmptyWallCharges(),
     }));
 
@@ -345,7 +344,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [rune],
       selectedHandRuneId: rune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges: createEmptyWallCharges(),
     }));
 
@@ -362,7 +361,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [frostRune],
       selectedHandRuneId: frostRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges: createEmptyWallCharges(),
     }));
 
@@ -389,7 +388,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [rune, ...chargeRunes],
       selectedHandRuneId: rune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20 },
       wallCharges: createEmptyWallCharges(),
       discardPile: [],
     }));
@@ -446,7 +445,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [armorRune],
       selectedHandRuneId: armorRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges: createEmptyWallCharges(),
     }));
 
@@ -481,7 +480,7 @@ describe('gameplayStore current combat', () => {
       hand: [fireRune],
       selectedHandRuneId: fireRune.id,
       player: { ...state.player, wall, armor: 0 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges,
     }));
 
@@ -521,7 +520,7 @@ describe('gameplayStore current combat', () => {
       hand: [voidRune],
       selectedHandRuneId: voidRune.id,
       player: { ...state.player, wall },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges,
     }));
 
@@ -556,7 +555,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand,
       player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5 },
       wallCharges: createEmptyWallCharges(),
     }));
 
@@ -591,7 +590,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand,
       player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges: createEmptyWallCharges(),
       discardPile: [],
     }));
@@ -615,7 +614,7 @@ describe('gameplayStore current combat', () => {
       hand: [voidRune, chargeOne, chargeTwo],
       selectedHandRuneId: voidRune.id,
       player: { ...state.player, deck: [], armor: 0, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 0 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       wallCharges: createEmptyWallCharges(),
       discardPile: [],
     }));
@@ -661,7 +660,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [createTestRune('hand-fire', 'Fire', 1)],
       player: { ...state.player, wall, deck, health: 5, maxHealth: 10, armor: 0 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 0 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       discardPile: [],
     }));
 
@@ -697,7 +696,7 @@ describe('gameplayStore current combat', () => {
       hand: [uncommonVoid, chargeVoid],
       selectedHandRuneId: uncommonVoid.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 2, maxHealth: 2, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 2, maxHealth: 2 },
       wallCharges,
       suppressedRunes: [],
     }));
@@ -747,7 +746,7 @@ describe('gameplayStore current combat', () => {
       hand: [epicWind, chargeOne, chargeTwo, chargeThree],
       selectedHandRuneId: epicWind.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       wallCharges,
       suppressedRunes: [],
     }));
@@ -807,7 +806,7 @@ describe('gameplayStore current combat', () => {
       hand: [epicWind, chargeOne, chargeTwo, chargeThree, ...fillerHand],
       selectedHandRuneId: epicWind.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       wallCharges,
       suppressedRunes: [],
       discardPile: [],
@@ -860,7 +859,7 @@ describe('gameplayStore current combat', () => {
       hand: [chargerRune],
       selectedHandRuneId: chargerRune.id,
       player: { ...state.player, deck: [], health: 10, maxHealth: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5 },
       wallCharges,
       discardPile: [],
     }));

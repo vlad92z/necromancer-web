@@ -25,16 +25,16 @@ interface RuneTypeTotalsProps {
 
 export function RuneTypeTotals({ runeTypes, counts }: RuneTypeTotalsProps) {
   return (
-    <div className={`mt-3 flex items-center justify-center gap-3 rounded-[12px]`}>
+    <div className="mt-3 flex items-center justify-center gap-3">
       {runeTypes.map((runeType) => (
         <div
           key={runeType}
-          className="flex items-center justify-center gap-1 rounded-[8px] border border-[rgba(255,255,255,0.12)] bg-white/5 px-2 py-1"
+          className="pixel-game-stat flex items-center justify-center gap-1 px-2 py-1"
         >
           <div className="flex h-[26px] w-[26px] items-center justify-center">
             <img src={RUNE_ICONS[runeType]} alt={`${runeType}`} className="h-full w-full object-contain" />
           </div>
-          <div className="min-w-[16px] text-right text-sm font-bold tracking-wide text-slate-100">
+          <div className="min-w-[16px] text-right font-pixel text-xs text-[#fff8d8]">
             {counts[runeType] ?? 0}
           </div>
         </div>

@@ -90,9 +90,9 @@ export function TooltipView() {
 
   if (handCards.length === 0) {
     return (
-      <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-sky-300/25 bg-sky-950/20 px-5 py-4 text-center">
+      <div className="pixel-game-panel-inset flex h-full w-full items-center justify-center border-dashed px-5 py-4 text-center">
         <div>
-          <div className="text-lg font-bold text-sky-100">No runes in hand</div>
+          <div className="font-pixel text-sm uppercase text-[#b5d3bd]">No runes in hand</div>
         </div>
       </div>
     );

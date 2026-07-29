@@ -25,7 +25,7 @@ export function EndTurnButton({ className = '' }: EndTurnButtonProps) {
         disabled={!isEnabled}
         title={isEnabled ? 'End turn' : 'End Turn is unavailable'}
         onClick={endCombatTurn}
-        className="min-w-[150px] border-amber-300/40 bg-amber-500/15 text-amber-100"
+        className="pixel-game-button min-w-[150px] rounded-none !bg-[#efe7c3] px-5 py-4 text-xs !text-[#171518] tracking-[0.16em]"
       >
         End Turn
       </Button>

@@ -10,7 +10,6 @@ import {
   drawRunesOfType,
   endPlayerTurn,
   resolveCompletedRuneCastEffects,
-  resolveEnemyTurn,
   wallHasRuneType,
 } from './combatResolution';
 
@@ -755,75 +754,6 @@ describe('combatResolution basic combat effects', () => {
     ]);
   });
 
-  it('enemy attack consumes armor before health', () => {
-    const player = {
-      ...createPlayer('player-1', 'Tester', 10, [], 10),
-      health: 10,
-      armor: 3,
-    };
-
-    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
-
-    expect(result.player.armor).toBe(0);
-    expect(result.player.health).toBe(8);
-    expect(result.healthDamage).toBe(2);
-  });
-
-  it('reduces enemy attack damage before armor', () => {
-    const player = {
-      ...createPlayerWithWall([[0, 0, 'Frost']]),
-      health: 10,
-      armor: 3,
-    };
-    player.wall[0][0] = createWallCell('Frost', [createEffectRef('passive.reduceDamage', { amount: 4 })]);
-
-    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 8) });
-
-    expect(result.player.armor).toBe(0);
-    expect(result.player.health).toBe(9);
-    expect(result.healthDamage).toBe(1);
-  });
-
-  it('lethal enemy attack reaches zero health', () => {
-    const player = {
-      ...createPlayer('player-1', 'Tester', 10, [], 10),
-      health: 4,
-      armor: 0,
-    };
-
-    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
-
-    expect(result.player.health).toBe(0);
-    expect(result.healthDamage).toBe(5);
-  });
-
-  it('reports zero health damage when armor fully absorbs enemy attack', () => {
-    const player = {
-      ...createPlayer('player-1', 'Tester', 10, [], 10),
-      health: 10,
-      armor: 6,
-    };
-
-    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
-
-    expect(result.player.armor).toBe(1);
-    expect(result.player.health).toBe(10);
-    expect(result.healthDamage).toBe(0);
-  });
-
-  it('reports zero health damage when passives reduce enemy attack to zero', () => {
-    const player = {
-      ...createPlayerWithWall([[0, 0, 'Frost']]),
-      health: 10,
-      armor: 0,
-    };
-    player.wall[0][0] = createWallCell('Frost', [createEffectRef('passive.reduceDamage', { amount: 5 })]);
-
-    const result = resolveEnemyTurn({ player, enemy: createTestEnemy(10, 5) });
-
-    expect(result.player.health).toBe(10);
-    expect(result.healthDamage).toBe(0);
-  });
 });
 
 describe('combatResolution victory deck collection', () => {
@@ -989,14 +919,13 @@ function createRunes(prefix: string, count: number): Rune[] {
   return Array.from({ length: count }, (_, index) => createTestRune(`${prefix}-${index}`, 'Fire'));
 }
 
-function createTestEnemy(health: number, attack: number = 5): Enemy {
+function createTestEnemy(health: number): Enemy {
   return {
     id: 'test-enemy',
     name: 'Test Enemy',
     imageSrc: '',
     health,
     maxHealth: 10,
-    intent: { type: 'Attack', amount: attack },
   };
 }
 
