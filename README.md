@@ -1,24 +1,25 @@
 # Massive Spell: Arcane Arena
 
-A single-player roguelite rune-drafting game where players cast elemental runes into a spell wall, defeat enemies, and draft deck rewards between encounters.
+A single-player roguelite rune-casting game. Build a deck, complete runes on a spell wall, defeat encounters, and choose a rune pack after each victory.
 
 ## Tech Stack
 
-- **React 19.2** + **TypeScript 5.9** (strict mode)
-- **Vite 7.2** for dev/build
-- **Zustand 5** for split global state stores
-- **Framer Motion 12** for animation
-- **React Router 7** for app screens
-- **Tailwind CSS 3** for styling
-- **Vitest 4** for tests
+- React 19 + TypeScript 5.9 (strict mode)
+- Vite 7
+- Zustand 5 for split global state
+- Framer Motion 12 for animation
+- React Router 7
+- Tailwind CSS 4, integrated through `@tailwindcss/vite`
+- Vitest 4
 
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 20 (see `.node-version`)
 - npm
 
-### Installation & Development
+### Install and run
 
 ```bash
 npm install
@@ -29,79 +30,101 @@ npx vitest run
 npm run preview
 ```
 
-## Gameplay Rules (current build)
+## Gameplay Rules
 
-### Board & Setup
-- Spell wall size is 6x6 with 6 unique rune types.
-- The player draws a hand of up to 6 runes from the draw deck.
-- Rune types: Fire, Life, Wind, Frost, Void, Lightning.
-- Each enemy shows HP and an intent. The current basic intent is Attack 5.
+### Player spell wall
 
-### Cast Runes
-- Select a rune from hand, then click a compatible dual-type wall slot.
-- Charge requirement depends on the staged rune's rarity: Common completes immediately, Uncommon needs 1 charge, Rare needs 2, and Epic needs 3.
-- The first real charge locks an incomplete slot to that rune type until completed.
-- Incomplete charged slots show progress like `1/3`.
-- Invalid casts leave the selected card active.
-- Final charges place the rune on the wall and resolve its effects.
+- The player has a 6×6 spell wall built from six rune types: Fire, Life, Wind, Frost, Void, and Lightning.
+- An encounter starts with up to six runes drawn into hand.
+- Select a rune, then choose an empty compatible wall slot.
+- A rune's rarity determines its charge requirement: Common completes immediately; Uncommon needs one extra charge; Rare needs two; Epic needs three.
+- The first rune locks an incomplete slot to its rune type. Completing the slot places the staged rune and resolves its effects.
+- Armor absorbs damage before health.
 
-### Rune Effects
-- Damage lowers enemy HP.
-- Healing restores player health up to max health.
-- Armor absorbs enemy attacks before health.
-- Fortune grants Arcane Dust.
-- Synergy and ArmorSynergy count matching rune types across the completed wall.
-- Fragile checks for absence across the completed wall.
+### Enemy turn
 
-### Turn End & Deck Cycle
-- End Turn discards the remaining hand.
-- The enemy attacks before the next hand is drawn.
-- The player draws up to 6 cards from the draw deck.
-- If the draw deck runs short, the discard pile is shuffled only when needed.
+- Ending a turn discards the remaining hand, then resolves the enemy turn before the next hand is drawn.
+- The enemy plays three 1-damage Life runes into random open slots on its own persistent 6×6 spellboard.
+- Enemy runes resolve in dealt order; armor can absorb their damage.
+- The run ends if player health reaches zero or the enemy spellboard fills.
 
-### Combat Screen Layout
-- The top status bar shows run metadata and combat counters, but player HP and armor live in the left combat panel.
-- The middle playfield is arranged left-to-right as player panel, spell wall, enemy panel.
-- The bottom tray holds the playable hand and the End Turn action.
+### Deck cycle and victory
 
-### Victory & Run End
-- An encounter is won when the enemy reaches 0 HP.
-- Victory immediately opens deck draft rewards.
-- Deck draft rewards can add upgraded runes, heal, raise max health, or improve rune rarity.
-- Starting the next encounter creates a fresh wall, hand, discard pile, and stronger enemy.
-- A **Run** ends when the player reaches 0 HP.
+- The next hand is drawn up to six cards; the discard pile is shuffled into the deck only when necessary.
+- Reducing enemy health to zero opens deck drafting immediately, before an enemy turn.
+- Choose one of six rune-type packs. Each selected pack adds three runes to the deck; rarity odds improve with wins.
+- The next encounter starts with a fresh player wall and enemy board. Enemy health and damage scale between encounters.
+
+### Combat layout
+
+- The metadata bar shows run and combat information.
+- The combat area is ordered left-to-right: player panel, player spell wall, enemy spellboard, enemy panel.
+- The hand tray spans the bottom of the view with the End Turn action.
 
 ## Project Structure
 
 ```
 src/
-├── assets/                 # Rune art, artefacts, stats, sounds
-├── components/             # Reusable UI (layout primitives, runes, stats)
-├── features/gameplay/      # Gameboard, overlays, Solo UI
-├── hooks/                  # Zustand selector/action hooks
-├── routes/                 # MainMenu and Solo screens
-├── state/stores/           # Zustand stores (run, board, combat, gameplay, UI)
-├── styles/                 # Design tokens and global styles
-├── systems/                # Gameplay orchestration and analytics
-├── types/                  # Domain types (game, rune, controllers)
-├── utils/                  # Pure logic (scoring, init, rune effects)
+├── assets/                 # Art, fonts, sounds, and stat icons
+├── components/             # Reusable UI and overlays
+├── features/gameplay/      # Combat board, panels, hand tray, deck draft
+├── hooks/                  # Zustand selectors, actions, and audio hooks
+├── routes/                 # Main menu and solo start screen
+├── state/stores/           # Run, board, combat, gameplay, UI, artefact stores
+├── styles/                 # Tokens and shared CSS theme primitives
+├── systems/                # Cross-store orchestration and analytics
+├── types/                  # Serializable game and artefact types
+├── utils/                  # Pure combat, initialization, effects, persistence
 ├── App.tsx
 └── main.tsx
 ```
 
-`App.tsx` wires `/` and `/solo`, with unknown paths redirected to `/`.
+`App.tsx` currently exposes `/` for the main menu and `/solo` for solo play. Unknown paths redirect to `/`.
+
+## Styling and Pixel Theme
+
+Tailwind 4 is configured through the Vite plugin. Global styles begin in `src/index.css`, which imports Tailwind and the shared pixel theme:
+
+```css
+@import 'tailwindcss';
+@import './styles/pixel-theme.css';
+```
+
+`src/styles/pixel-theme.css` is the theme foundation for the pixel-art UI. It contains:
+
+- CSS custom properties for the pixel palette, text, panels, focus state, and button variants.
+- Reusable component classes: `.pixel-screen`, `.pixel-panel`, `.pixel-panel-inset`, `.pixel-message-panel`, and `.pixel-button`.
+- Button variants: `.pixel-button--primary` and `.pixel-button--utility`.
+
+Use these stable primitives for shared visual treatment, then add Tailwind utilities locally for each view's layout and responsive behavior:
+
+```tsx
+<main className="pixel-screen min-h-screen px-6 py-10">
+  <section className="pixel-panel p-2">
+    <div className="pixel-panel-inset px-6 py-10">
+      <button className="pixel-button pixel-button--primary">Play</button>
+    </div>
+  </section>
+</main>
+```
+
+The pixel font is defined in `src/index.css` as `.font-pixel`. Use it for display text and labels; do not duplicate the font declaration in individual screens. Keep game-specific layout styles in the component unless a primitive is needed by multiple views.
+
+`src/styles/tokens.ts` remains available for existing TypeScript consumers. New pixel-theme colours and surfaces should normally be added to `pixel-theme.css` so CSS components and future screens share one source of truth.
 
 ## Deployment (Cloudflare Pages)
 
-### Automatic Deployment
-1. Connect repository to Cloudflare Pages
-2. Configure build settings:
+### Automatic deployment
+
+1. Connect the repository to Cloudflare Pages.
+2. Configure:
    - Framework: **Vite**
    - Build command: `npm run build`
    - Output directory: `dist`
    - Node.js version: `20`
 
-### Manual Deployment
+### Manual deployment
+
 ```bash
 npm install -g wrangler
 wrangler login
@@ -109,74 +132,30 @@ npm run build
 wrangler pages deploy dist --project-name=necromancer-web
 ```
 
-## Mixpanel (Analytics)
+Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, and `public/_redirects`.
 
-To avoid committing sensitive tokens, Mixpanel is configured to read the token from an environment variable when the app starts.
+## Analytics
 
-- Create a local environment file at the project root named `.env.local` (this file is ignored by Git by default).
-- Add your Mixpanel token using the `VITE_` prefix so Vite exposes it to the app:
-
-```env
-# .env.local (DO NOT COMMIT)
-VITE_MIXPANEL_TOKEN=your_mixpanel_project_token_here
-```
-
-- The app reads `import.meta.env.VITE_MIXPANEL_TOKEN` and will skip initialization if the value is missing.
-- Use the helper in `src/utils/mixpanel.ts` to track events:
+Mixpanel is initialized in `src/main.tsx` through `src/utils/mixpanel.ts`. Set `VITE_MIXPANEL_TOKEN=skip` in `.env.local` to disable it locally. Use the exported helpers to record product events:
 
 ```ts
-import { trackEvent, identify } from './utils/mixpanel'
+import { identify, trackEvent } from './utils/mixpanel'
 
 trackEvent('game_started', { mode: 'solo' })
 identify('player-1234')
 ```
 
-If you prefer injecting the token programmatically, `initMixpanel(token)` accepts a token argument.
-
-Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, `public/_redirects`
-
----
-
 ## Architecture Notes
 
-- `gameplayStore.ts` owns current encounter actions only: start, cast, end turn, defeat, victory, deck draft, and next encounter.
+- `gameplayStore.ts` orchestrates encounter actions: start, cast, end turn, defeat, victory, deck draft, and next encounter.
 - Read ownership is split across `runStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`.
-- Pure game rules live in `src/utils/`; side-effect orchestration lives in `src/systems/`.
-- `SoloGameBoard.tsx` owns combat-screen composition; `PlayerPanel.tsx`, `EnemyPanel.tsx`, and `TooltipView.tsx` render the left panel, right panel, and bottom hand tray surfaces.
-- See `Agents.md` for detailed AI agent workflows and coding standards.
-
----
-
-## Design System
-
-Centralized design tokens in `src/styles/tokens.ts` provide consistent colors, spacing, typography, shadows, and radii.
-
-**Usage Example:**
-```tsx
-import { COLORS, SPACING, RADIUS } from '../styles/tokens';
-import { Button, Grid } from '../components/layout';
-
-const style = {
-  padding: `${SPACING.lg}px`,
-  borderRadius: `${RADIUS.md}px`,
-  backgroundColor: COLORS.ui.surface,
-};
-
-<Grid columns={2} gap="md" style={style}>
-  <Button variant="primary">Start</Button>
-  <Button variant="secondary">Settings</Button>
-</Grid>
-```
-
----
+- Global state must stay serializable. Pure game rules belong in `src/utils/`; cross-store side effects belong in `src/systems/`.
+- `SoloGameBoard.tsx` composes the combat view. Dedicated components render player and enemy panels, both spellboards, tooltips, and the hand tray.
 
 ## Contributing
 
-This project follows strict TypeScript practices:
-- Strict mode enabled, no `any` types
-- Explicit return types on exported functions
-- Discriminated unions for rune types and effects
-- Functional components with hooks only
-- Tailwind where possible, inline CSS as a fallback
-
-See `Agents.md` for AI-assisted development workflows and agent specializations.
+- Keep TypeScript strict; import types with `import type`.
+- Prefer small focused changes and follow existing component, hook, and store patterns.
+- Keep game rules out of React components and Zustand state serializable.
+- Use Tailwind for local layout and the shared pixel theme for reusable visual primitives.
+- Read `Agents.md` for project-specific implementation and testing guidance.

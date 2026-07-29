@@ -1,0 +1,93 @@
+@layer base {
+  :root {
+    --pixel-ink: #141313;
+    --pixel-text: #fff8d8;
+    --pixel-text-dark: #171518;
+    --pixel-text-muted: #b5d3bd;
+    --pixel-screen: #202827;
+    --pixel-panel: #354542;
+    --pixel-panel-inset: #293532;
+    --pixel-panel-border: #98b6a7;
+    --pixel-primary: #e15f4f;
+    --pixel-primary-hover: #f27661;
+    --pixel-utility: #efe7c3;
+    --pixel-selected: #aff8d8;
+    --pixel-focus: #ffdc52;
+  }
+}
+
+@layer components {
+  .pixel-screen {
+    background-color: var(--pixel-screen);
+    color: var(--pixel-text);
+  }
+
+  .pixel-panel {
+    border: 4px solid var(--pixel-ink);
+    background-color: var(--pixel-panel);
+    box-shadow: 10px 10px 0 var(--pixel-ink);
+  }
+
+  .pixel-panel-inset {
+    border: 4px solid var(--pixel-panel-border);
+    background-color: var(--pixel-panel-inset);
+  }
+
+  .pixel-button {
+    display: flex;
+    width: 100%;
+    min-height: 4rem;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid var(--pixel-ink);
+    padding: 1.5rem 2rem;
+    font-family: 'Silkscreen', monospace;
+    font-size: 1.25rem;
+    line-height: 1;
+    letter-spacing: 0.5em;
+    text-align: center;
+    box-shadow: 8px 8px 0 var(--pixel-ink);
+    transition: none;
+  }
+
+  .pixel-button:hover,
+  .pixel-button[data-active='true'] {
+    background-color: var(--pixel-selected);
+  }
+
+  .pixel-button:focus-visible {
+    outline: 4px solid var(--pixel-text);
+    outline-offset: 4px;
+  }
+
+  .pixel-button[data-active='true'] {
+    outline: 4px solid var(--pixel-focus);
+    outline-offset: 4px;
+  }
+
+  .pixel-button:active {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0 var(--pixel-ink);
+  }
+
+  .pixel-button--primary {
+    background-color: var(--pixel-primary);
+    color: var(--pixel-text);
+  }
+
+  .pixel-button--primary:hover,
+  .pixel-button--primary[data-active='true'] {
+    background-color: var(--pixel-primary-hover);
+  }
+
+  .pixel-button--utility {
+    background-color: var(--pixel-utility);
+    color: var(--pixel-text-dark);
+  }
+
+  .pixel-message-panel {
+    border: 4px solid var(--pixel-ink);
+    background-color: var(--pixel-panel);
+    box-shadow: 6px 6px 0 var(--pixel-ink);
+  }
+}
