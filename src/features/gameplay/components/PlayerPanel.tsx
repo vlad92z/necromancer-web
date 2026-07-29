@@ -15,8 +15,8 @@ export function PlayerPanel() {
 
   return (
     <section>
-      <div className="flex items-center gap-3">
-          <h2 className="pixel-section-title mt-1 text-xl">Player</h2>
+      <div className="flex justify-center">
+          <h2 className="pixel-section-title mt-1 text-center text-xl">Player</h2>
       </div>
 
       <div className="mt-5 flex justify-center">

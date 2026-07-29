@@ -21,8 +21,8 @@ export function EnemyPanel() {
 
   return (
     <section>
-      <div>
-        <h2 className="pixel-section-title mt-1 text-xl">{enemy.name}</h2>
+      <div className="flex justify-center">
+        <h2 className="pixel-section-title mt-1 text-center text-xl">{enemy.name}</h2>
       </div>
 
       <div className="mt-5 flex justify-center">

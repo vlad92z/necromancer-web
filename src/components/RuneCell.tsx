@@ -108,13 +108,11 @@ const VARIANT_STYLES: Record<RuneCellVariant, {
   border: string;
   background: string;
   backgroundOccupied?: string;
-  emptyOpacity?: number;
 }> = {
   wall: {
     border: '3px solid #141313',
     background: '#293532',
     backgroundOccupied: '#354542',
-    emptyOpacity: 0.35,
   },
   draft: {
     border: 'none',
@@ -153,7 +151,6 @@ export function RuneCell({
       : RUNE_ASSETS[runeType]
     : null;
   
-  const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   const tooltipSourceRune = tooltipRune ?? rune;
   const tooltipText = useMemo(() => {
@@ -167,9 +164,6 @@ export function RuneCell({
     ? variantStyle.backgroundOccupied
     : variantStyle.background;
   
-  // Override border for healing runes on the wall
-  const borderStyle = variantStyle.border;
-
   const handleMouseEnter = (e: MouseEvent<HTMLDivElement>) => {
     if (clickable) {
       e.currentTarget.style.transform = 'scale(1.05)';
@@ -204,7 +198,7 @@ export function RuneCell({
         transition: TRANSITIONS.medium,
         borderRadius: 0,
         backgroundColor: backgroundColor,
-        padding: `${config.padding}px`,
+        padding: 0,
         boxSizing: 'border-box',
         cursor: clickable ? 'pointer' : 'default',
         
@@ -226,7 +220,7 @@ export function RuneCell({
             width: '100%', 
             height: '100%', 
             objectFit: 'contain',
-            opacity: ((isWallPlaceholder) ? variantStyle.emptyOpacity ?? 1 : 1) * runeOpacity,
+            opacity: runeOpacity,
           }}
         />
       )}
@@ -249,7 +243,6 @@ export function RuneCell({
             width: variant === 'wall' ? '100%' : '60%',
             height: variant === 'wall' ? '100%' : '60%',
             objectFit: 'contain',
-            opacity: variantStyle.emptyOpacity ?? 1,
             pointerEvents: 'none',
           }}
         />

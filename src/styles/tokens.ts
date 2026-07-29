@@ -92,9 +92,9 @@ export const TRANSITIONS = {
 } as const;
 
 export const RUNE_SIZE_CONFIG = {
-  small: { dimension: 30, fontSize: 10, padding: 2 },
-  medium: { dimension: 35, fontSize: 14, padding: 2 },
-  large: { dimension: 70, fontSize: 20, padding: 4 },
+  small: { dimension: 30, fontSize: 10 },
+  medium: { dimension: 35, fontSize: 14 },
+  large: { dimension: 70, fontSize: 20 },
 } as const;
 
 export type RuneSize = keyof typeof RUNE_SIZE_CONFIG;

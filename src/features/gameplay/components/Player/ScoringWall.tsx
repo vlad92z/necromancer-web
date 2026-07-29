@@ -7,7 +7,6 @@ import { useGameplayActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
 import { WallCell } from '../WallCell';
 
-const GAP = 0;
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
 interface ScoringWallProps {
@@ -28,9 +27,9 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
   const gridSize = wall.length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: `${GAP}px` }}>
+    <div style={{ display: 'flex', flexDirection: 'column'}}>
       {wall.map((row, rowIndex) => (
-        <div key={rowIndex} style={{ display: 'flex', gap: `${GAP}px` }}>
+        <div key={rowIndex} style={{ display: 'flex' }}>
           {row.map((cell, colIndex) => (
             <div
               key={colIndex}
@@ -45,7 +44,7 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                   handleWallCellClick(rowIndex, colIndex);
                 }
               }}
-              style={{ cursor: 'pointer' }}
+              style={{ display: 'flex', cursor: 'pointer' }}
             >
               <WallCell
                 cell={
