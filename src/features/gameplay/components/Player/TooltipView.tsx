@@ -106,6 +106,7 @@ export function TooltipView() {
         return (
           <div
             key={card.id}
+            className="h-full flex-none"
             style={{ //This makes sure the cards overlap and are rotated
               marginLeft: index === 0 ? 0 : overlapOffset,
               zIndex: handCards.length - index,
