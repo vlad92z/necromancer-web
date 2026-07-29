@@ -121,8 +121,8 @@ export function SoloStartScreen() {
     }
 
     const order: SoloStartAction[] = hasSavedSoloRun
-      ? ['back', 'manage', 'continue', 'new']
-      : ['back', 'manage', 'new'];
+      ? ['back', 'continue', 'new', 'manage']
+      : ['back', 'new', 'manage'];
 
     const moveSelection = (direction: 'up' | 'down') => {
       if (activeElement === null) {
@@ -242,11 +242,37 @@ export function SoloStartScreen() {
         <section className="pixel-panel mt-5 p-2">
           <div className="pixel-panel-inset space-y-4 px-6 py-7 text-center md:px-10 md:py-9">
             <h1 className="font-pixel text-4xl uppercase leading-[0.95] text-[#fff8d8] [text-shadow:4px_4px_0_#141313] md:text-5xl">Solo Run</h1>
-            <p className="font-pixel mx-auto max-w-2xl text-[11px] leading-6 text-[#b5d3bd] md:text-xs">
-              Charge your spell wall, survive enemy attacks, and draft rewards between encounters
-            </p>
           </div>
         </section>
+
+        <div className="mt-5">
+          <div className="flex w-full flex-col gap-4">
+            {hasSavedSoloRun && (
+              <ClickSoundButton
+                ref={(element) => { buttonRefs.current.continue = element; }}
+                title="Continue Run"
+                action={handleContinueSolo}
+                className="pixel-button pixel-button--utility"
+                isActive={activeElement === 'continue'}
+                onFocus={(event) => {
+                  if (event.currentTarget.matches(':focus-visible')) setActiveElement('continue');
+                }}
+                onPointerDown={() => setActiveElement(null)}
+              />
+            )}
+            <ClickSoundButton
+              ref={(element) => { buttonRefs.current.new = element; }}
+              title="New Game"
+              action={handleStartSolo}
+              className="pixel-button pixel-button--primary"
+              isActive={activeElement === 'new'}
+              onFocus={(event) => {
+                if (event.currentTarget.matches(':focus-visible')) setActiveElement('new');
+              }}
+              onPointerDown={() => setActiveElement(null)}
+            />
+          </div>
+        </div>
 
         <section className="pixel-control mt-5 space-y-4 p-4 md:p-5">
           <div className="flex items-center justify-between">
@@ -269,34 +295,7 @@ export function SoloStartScreen() {
             </div>
           )}
         </section>
-
-        <div className="mt-5 flex w-full flex-col gap-4">
-          {hasSavedSoloRun && handleContinueSolo && (
-            <ClickSoundButton
-              ref={(element) => { buttonRefs.current.continue = element; }}
-              title="Continue Run"
-              action={handleContinueSolo}
-              className="pixel-button pixel-button--utility pixel-button--compact"
-              isActive={activeElement === 'continue'}
-              onFocus={(event) => {
-                if (event.currentTarget.matches(':focus-visible')) setActiveElement('continue');
-              }}
-              onPointerDown={() => setActiveElement(null)}
-            />
-          )}
-          <ClickSoundButton
-            ref={(element) => { buttonRefs.current.new = element; }}
-            title="New Game"
-            action={() => handleStartSolo()}
-            className="pixel-button pixel-button--primary pixel-button--compact"
-            isActive={activeElement === 'new'}
-            onFocus={(event) => {
-              if (event.currentTarget.matches(':focus-visible')) setActiveElement('new');
-            }}
-            onPointerDown={() => setActiveElement(null)}
-          />
-        </div>
-        <p className="font-pixel mt-5 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select</p>
+        <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select</p>
       </div>
 
       {/* Artefacts Modal */}
