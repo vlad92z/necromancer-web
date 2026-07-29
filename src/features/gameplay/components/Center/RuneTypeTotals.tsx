@@ -2,12 +2,12 @@
  * RuneTypeTotals - displays rune icons with their total counts on the drafting table
  */
 import type { RuneType } from '../../../../types/game';
-import fireRune from '../../../../assets/runes/fire_rune.svg';
-import frostRune from '../../../../assets/runes/frost_rune.svg';
-import lifeRune from '../../../../assets/runes/life_rune.svg';
-import voidRune from '../../../../assets/runes/void_rune.svg';
-import windRune from '../../../../assets/runes/wind_rune.svg';
-import lightningRune from '../../../../assets/runes/lightning_rune.svg';
+import fireRune from '../../../../assets/runes/fire_rune.png';
+import frostRune from '../../../../assets/runes/frost_rune.png';
+import lifeRune from '../../../../assets/runes/life_rune.png';
+import voidRune from '../../../../assets/runes/void_rune.png';
+import windRune from '../../../../assets/runes/wind_rune.png';
+import lightningRune from '../../../../assets/runes/lightning_rune.png';
 
 const RUNE_ICONS: Record<RuneType, string> = {
   Fire: fireRune,
