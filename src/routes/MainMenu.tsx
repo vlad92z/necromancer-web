@@ -216,7 +216,12 @@ export function MainMenu() {
                   className={className}
                   action={menuActions[id]}
                   isActive={activeElement === id}
-                  onFocus={() => setActiveElement(id)}
+                  onFocus={(event) => {
+                    if (event.currentTarget.matches(':focus-visible')) {
+                      setActiveElement(id)
+                    }
+                  }}
+                  onPointerDown={() => setActiveElement(null)}
                 />
               ))}
             <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select </p>
