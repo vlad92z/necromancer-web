@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { EnemyRune } from '../types/game';
 import {
   createEmptyWall,
-  createEnemyWallCharges,
   createEnemyTurnRunes,
   createPlayer,
   initializeSoloGame,
@@ -21,12 +20,12 @@ function createEnemyRune(id: string, damage: number): EnemyRune {
 }
 
 describe('enemy spellboard combat', () => {
-  it('initializes a hidden enemy queue and an all-Life/Frost board', () => {
+  it('initializes a hidden enemy queue and empty board', () => {
     const state = initializeSoloGame();
 
     expect(state.enemyBoard).toHaveLength(6);
     expect(state.enemyBoard.flat()).toHaveLength(36);
-    expect(state.enemyBoardCharges.flat().every((charge) => charge.slotFamily === 'lifeFrost')).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => cell.id === null)).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
     expect(createEnemyTurnRunes(4).map((rune) => rune.runeType)).toEqual(['Life', 'Life', 'Life']);
     expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([1, 1, 1]);
@@ -39,7 +38,6 @@ describe('enemy spellboard combat', () => {
       player,
       enemy: initializeSoloGame().enemy,
       enemyBoard: createEmptyWall(),
-      enemyBoardCharges: createEnemyWallCharges(),
       enemyQueuedRunes: queuedRunes,
       random: () => 0,
     });
@@ -67,7 +65,6 @@ describe('enemy spellboard combat', () => {
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: initializeSoloGame().enemy,
       enemyBoard: board,
-      enemyBoardCharges: createEnemyWallCharges(),
       enemyQueuedRunes: [createEnemyRune('last', 1)],
       random: () => 0,
     });

@@ -59,3 +59,9 @@ Compiled from PRDs; ordered by implementation.
 - Connected-segment scoring.
 - Row-based wall charge costs.
 - Old victory draft row bonuses.
+
+## 7. Immediate Rune Placement
+
+- Removed rune charging, staged runes, charge progress, and charge-only audio/UI.
+- Made every rune rarity fill a compatible empty wall slot and resolve effects immediately.
+- Removed the obsolete adjacent-charge effect and invalidated charge-based solo saves.

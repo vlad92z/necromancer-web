@@ -2,7 +2,7 @@
  * WallCell component - displays a single cell in the scoring wall
  */
 
-import type { SpellWallCharge, WallCell as WallCellType } from '../../../types/game';
+import type { WallCell as WallCellType, WallSlotFamily } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
 import { getWallSlotFamily, getWallSlotFamilyLabel } from '../../../utils/scoring';
 import { WALL_SLOT_PLACEHOLDER_ASSETS } from '../../../utils/wallSlotPlaceholders';
@@ -11,23 +11,19 @@ import type { RuneSize } from '../../../styles/tokens';
 
 interface WallCellProps {
   cell: WallCellType;
-  charge: SpellWallCharge | null;
   row: number;
   col: number;
   // Number of columns/rows of the scoring wall.
   wallSize: number;
+  slotFamily?: WallSlotFamily;
   pulseKey?: number;
   size?: RuneSize;
 }
 
-export function WallCell({ cell, charge, row, col, wallSize, pulseKey, size = 'large' }: WallCellProps) {
-  const slotFamily = charge?.slotFamily ?? getWallSlotFamily(row, col);
-  const lockedRuneType = !cell.runeType ? charge?.lockedRuneType ?? null : null;
-  const placeholderLabel = lockedRuneType ?? getWallSlotFamilyLabel(slotFamily);
-  const showChargeText = !cell.runeType && charge !== null && charge.stagedRune !== null;
-  
+export function WallCell({ cell, row, col, wallSize, slotFamily, pulseKey, size = 'large' }: WallCellProps) {
+  const resolvedSlotFamily = slotFamily ?? getWallSlotFamily(row, col);
+  const placeholderLabel = getWallSlotFamilyLabel(resolvedSlotFamily);
   const rune = wallCellToRune(cell, row, col);
-  const tooltipRune = rune ?? charge?.stagedRune ?? null;
   const tooltipPlacement = row < wallSize / 2 ? 'bottom' : 'top';
   
   return (
@@ -39,38 +35,16 @@ export function WallCell({ cell, charge, row, col, wallSize, pulseKey, size = 'l
         rune={rune}
         variant="wall"
         size={size}
-        emptyIcon={lockedRuneType ? undefined : WALL_SLOT_PLACEHOLDER_ASSETS[slotFamily]}
+        emptyIcon={WALL_SLOT_PLACEHOLDER_ASSETS[resolvedSlotFamily]}
         placeholder={{
           type: 'rune',
-          runeType: lockedRuneType ?? undefined,
-          runeRarity: charge?.stagedRune?.rarity,
         }}
         showEffect
-        showTooltip={tooltipRune !== null}
-        tooltipRune={tooltipRune}
-        tooltipIncludeChargeRequirement={false}
+        showTooltip={rune !== null}
+        tooltipRune={rune}
         tooltipPlacement={tooltipPlacement}
         runePulseKey={pulseKey}
       />
-      {showChargeText && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-            color: '#f8fafc',
-            fontSize: 16,
-            fontWeight: 900,
-            textShadow: '0 2px 8px rgba(2, 6, 23, 0.95)',
-          }}
-          aria-hidden="true"
-        >
-          {charge.currentCount}/{charge.requiredCount}
-        </div>
-      )}
     </div>
   );
 }

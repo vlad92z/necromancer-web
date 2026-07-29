@@ -97,7 +97,6 @@ export interface RuneCellProps {
   showEffect?: boolean;
   showTooltip?: boolean;
   tooltipRune?: Rune | null;
-  tooltipIncludeChargeRequirement?: boolean;
   tooltipPlacement?: 'top' | 'bottom';
   runeOpacity?: number;
   runePulseKey?: number;
@@ -131,7 +130,6 @@ export function RuneCell({
   showEffect = true,
   showTooltip = false,
   tooltipRune,
-  tooltipIncludeChargeRequirement = true,
   tooltipPlacement = 'top',
   runeOpacity = 1,
   runePulseKey,
@@ -157,8 +155,8 @@ export function RuneCell({
     if (!showTooltip || !tooltipSourceRune) {
       return null;
     }
-    return getRuneEffectDescription(tooltipSourceRune, { includeChargeRequirement: tooltipIncludeChargeRequirement });
-  }, [showTooltip, tooltipIncludeChargeRequirement, tooltipSourceRune]);
+    return getRuneEffectDescription(tooltipSourceRune);
+  }, [showTooltip, tooltipSourceRune]);
   
   const backgroundColor = (variant === 'wall' && rune && variantStyle.backgroundOccupied)
     ? variantStyle.backgroundOccupied

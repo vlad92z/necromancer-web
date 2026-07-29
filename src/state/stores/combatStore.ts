@@ -1,9 +1,9 @@
 /**
- * Combat Store - enemy encounter, hand, discard, and spell-wall charge state.
+ * Combat Store - enemy encounter, hand, discard, and enemy spellboard state.
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { CombatPhase, Enemy, GameState, Rune, SpellWallCharge } from '../../types/game';
+import type { CombatPhase, Enemy, GameState, Rune } from '../../types/game';
 import { initializeSoloGame } from '../../utils/gameInitialization';
 
 export interface CombatState {
@@ -12,10 +12,8 @@ export interface CombatState {
   hand: Rune[];
   discardPile: Rune[];
   suppressedRunes: Rune[];
-  wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   enemyBoard: GameState['enemyBoard'];
-  enemyBoardCharges: SpellWallCharge[][];
   enemyQueuedRunes: GameState['enemyQueuedRunes'];
   enemyTurnNumber: number;
 }
@@ -31,10 +29,8 @@ export function pickCombatState(state: GameState): CombatState {
     hand: state.hand,
     discardPile: state.discardPile,
     suppressedRunes: state.suppressedRunes,
-    wallCharges: state.wallCharges,
     selectedHandRuneId: state.selectedHandRuneId,
     enemyBoard: state.enemyBoard,
-    enemyBoardCharges: state.enemyBoardCharges,
     enemyQueuedRunes: state.enemyQueuedRunes,
     enemyTurnNumber: state.enemyTurnNumber,
   };

@@ -2,12 +2,12 @@
 
 ## Project Overview
 
-**Massive Spell: Arcane Arena** is a single-player roguelite rune-casting game. Players draw rune cards, cast them into matching charged spell-wall slots, defeat an enemy encounter, then draft deck rewards before the next encounter.
+**Massive Spell: Arcane Arena** is a single-player roguelite rune-casting game. Players draw rune cards, cast them into matching spell-wall slots, defeat an enemy encounter, then draft deck rewards before the next encounter.
 
 Current scope:
 - Solo combat only.
 - One active route flow: main menu to solo.
-- Core combat objects: hand, draw deck, discard pile, 6x6 spell wall, wall charges, enemy, player health/armor, active artefacts.
+- Core combat objects: hand, draw deck, discard pile, 6x6 spell wall, enemy, player health/armor, active artefacts.
 - Removed legacy systems must not be reintroduced: runeforges, pattern lines, overload, RuneScore, connected-segment scoring, round scoring, and Channel effects.
 
 ## Tech Stack
@@ -39,9 +39,8 @@ Current scope:
 - At encounter start, deal up to 6 runes into hand from the player deck.
 - Player selects a hand rune and clicks a matching wall slot.
 - A slot accepts only its expected rune type and only while unfilled.
-- Row 1 needs 1 charge; row 2 needs 2; through row 6 needs 6.
-- Non-final charges store spent runes and resolve no effects.
-- Final charge fills the slot with the completing rune and resolves cast effects immediately.
+- Every rarity is placed immediately in a compatible empty wall slot.
+- Placing a rune fills the slot and resolves cast effects immediately.
 - End Turn discards remaining hand, enemy attacks, then the next hand is drawn.
 - Armor absorbs enemy attack before health.
 - Enemy HP 0 opens deck draft immediately; enemy does not attack.
@@ -86,9 +85,9 @@ Current scope:
 ## Testing
 
 Keep tests focused on current systems:
-- Game initialization: enemy, hand, deck, discard, wall charges.
-- Combat resolution: valid/invalid casts, charge completion, enemy damage, healing, armor, fortune, synergy, fragile.
+- Game initialization: enemy, hand, deck, discard, spell wall.
+- Combat resolution: valid/invalid placements, enemy damage, healing, armor, fortune, synergy, fragile.
 - Turn flow: discard, draw, discard reshuffle, partial/empty hands.
-- Victory: return hand/discard/wall/spent charge runes to deck and open draft offers.
+- Victory: clear encounter card zones and open draft offers.
 - Deck drafting: offer generation, offer selection, artefact passives, rarity.
 - Persistence: old schema invalidation and current schema load/save.

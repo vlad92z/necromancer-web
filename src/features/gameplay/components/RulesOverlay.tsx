@@ -41,17 +41,17 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             <h3 className="text-sm text-[#f2c14e]">🎲 Your Turn</h3>
             <p className="space-y-2">
               <span className="block">1. Select a rune from your hand</span>
-              <span className="block">2. Click a matching dual-type wall slot to charge it</span>
-              <span className="block">3. Final charges place the rune and resolve its effect</span>
+              <span className="block">2. Click a matching dual-type wall slot to place it</span>
+              <span className="block">3. Placed runes resolve their effects immediately</span>
             </p>
           </section>
 
           <section className="space-y-2">
-            <h3 className="text-sm text-[#f2c14e]">📊 Wall Charges</h3>
+            <h3 className="text-sm text-[#f2c14e]">📊 Wall Slots</h3>
             <p className="space-y-1">
-              <span className="block">• Each wall row needs one more charge than the row above it</span>
-              <span className="block">• First real charge locks a slot to that rune type</span>
-              <span className="block">• A charged slot shows progress like 1/3 until complete</span>
+              <span className="block">• Every rune takes one action to place, regardless of rarity or row</span>
+              <span className="block">• Empty slots accept either rune type shown by their icon</span>
+              <span className="block">• Filled slots cannot accept another rune</span>
               <span className="block">• Wrong rune types are rejected and stay selected</span>
             </p>
           </section>

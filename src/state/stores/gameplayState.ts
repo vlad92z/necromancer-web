@@ -37,7 +37,6 @@ export function getGameplayState(): GameState {
     deckDraftReadyForNextGame: run.deckDraftReadyForNextGame,
     activeArtefacts: run.activeArtefacts,
     runeSoundSignals: run.runeSoundSignals,
-    wallChargeSoundSignal: run.wallChargeSoundSignal,
     enemyAttackSoundSignal: run.enemyAttackSoundSignal,
     shieldSoundSignal: run.shieldSoundSignal,
     enemy: combat.enemy,
@@ -45,10 +44,8 @@ export function getGameplayState(): GameState {
     hand: combat.hand,
     discardPile: combat.discardPile,
     suppressedRunes: combat.suppressedRunes,
-    wallCharges: combat.wallCharges,
     selectedHandRuneId: combat.selectedHandRuneId,
     enemyBoard: combat.enemyBoard,
-    enemyBoardCharges: combat.enemyBoardCharges,
     enemyQueuedRunes: combat.enemyQueuedRunes,
     enemyTurnNumber: combat.enemyTurnNumber,
   };

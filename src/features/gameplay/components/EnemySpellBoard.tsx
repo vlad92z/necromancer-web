@@ -6,7 +6,7 @@ import { WallCell } from './WallCell';
 const GAP = 0;
 
 export function EnemySpellBoard() {
-  const { wall, wallCharges } = useEnemySpellBoardState();
+  const { wall } = useEnemySpellBoardState();
 
   return (
     <div className="flex flex-col items-center" aria-label="Enemy spellboard">
@@ -17,10 +17,10 @@ export function EnemySpellBoard() {
               <WallCell
                 key={colIndex}
                 cell={cell}
-                charge={wallCharges[rowIndex]?.[colIndex] ?? null}
                 row={rowIndex}
                 col={colIndex}
                 wallSize={wall.length}
+                slotFamily="lifeFrost"
               />
             ))}
           </div>

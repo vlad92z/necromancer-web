@@ -37,7 +37,7 @@ npm run preview
 - The player has a 6×6 spell wall built from six rune types: Fire, Life, Wind, Frost, Void, and Lightning.
 - An encounter starts with up to six runes drawn into hand.
 - Select a rune, then choose an empty compatible wall slot.
-- A rune's rarity determines its charge requirement: Common completes immediately; Uncommon needs one extra charge; Rare needs two; Epic needs three.
+- Every rune is placed immediately in a compatible empty wall slot, regardless of rarity.
 - The first rune locks an incomplete slot to its rune type. Completing the slot places the staged rune and resolves its effects.
 - Armor absorbs damage before health.
 

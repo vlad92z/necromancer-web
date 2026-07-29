@@ -1,5 +1,5 @@
 /**
- * ScoringWall component - displays the charged spell wall.
+ * ScoringWall component - displays the player's spell wall.
  */
 
 import { useCallback } from 'react';
@@ -14,7 +14,7 @@ interface ScoringWallProps {
 }
 
 export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
-  const { wall, wallCharges } = useGameplayWallState();
+  const { wall } = useGameplayWallState();
   const { castRuneToWall } = useGameplayActions();
 
   const handleWallCellClick = useCallback(
@@ -52,7 +52,6 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                     ? { id: null, runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }
                     : cell
                 }
-                charge={wallCharges[rowIndex]?.[colIndex] ?? null}
                 row={rowIndex}
                 col={colIndex}
                 wallSize={gridSize}

@@ -8,13 +8,10 @@ import type {
   GameState,
   Player,
   Rune,
-  RuneEffectRarity,
   RuneType,
   ScoringWall,
-  SpellWallCharge,
 } from '../types/game';
 import { copyEffectRefs } from './runeEffects';
-import { getWallSlotFamily } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
@@ -250,19 +247,6 @@ export function scaleEnemyMaxHealth(maxHealth: number): number {
   return Math.ceil((maxHealth * ENEMY_SCALING_MULTIPLIER) / ENEMY_HEALTH_ROUNDING_STEP) * ENEMY_HEALTH_ROUNDING_STEP;
 }
 
-export function getRequiredChargesForRarity(rarity: RuneEffectRarity): number {
-  switch (rarity) {
-    case 'common':
-      return 0;
-    case 'uncommon':
-      return 1;
-    case 'rare':
-      return 2;
-    case 'epic':
-      return 3;
-  }
-}
-
 export function createGoblinEnemy(maxHealth: number): Enemy {
   return {
     id: 'goblin',
@@ -271,33 +255,6 @@ export function createGoblinEnemy(maxHealth: number): Enemy {
     health: maxHealth,
     maxHealth,
   };
-}
-
-export function createEmptyWallCharges(size: number = WALL_SIZE): SpellWallCharge[][] {
-  return Array(size)
-    .fill(null)
-    .map((_, row) =>
-      Array(size)
-        .fill(null)
-        .map((_, col) => ({
-          row,
-          col,
-          slotFamily: getWallSlotFamily(row, col),
-          lockedRuneType: null,
-          requiredCount: 0,
-          currentCount: 0,
-          stagedRune: null,
-          spentRunes: [],
-          completedRuneId: null,
-        }))
-    );
-}
-
-export function createEnemyWallCharges(size: number = WALL_SIZE): SpellWallCharge[][] {
-  return createEmptyWallCharges(size).map((row) => row.map((charge) => ({
-    ...charge,
-    slotFamily: 'lifeFrost',
-  })));
 }
 
 export function createEnemyLifeRune(id: string): EnemyRune {
@@ -381,7 +338,6 @@ export function initializeSoloGame(
     deckDraftReadyForNextGame: false,
     activeArtefacts: [],
     runeSoundSignals: createRuneSoundSignals(),
-    wallChargeSoundSignal: 0,
     enemyAttackSoundSignal: 0,
     shieldSoundSignal: 0,
     enemy: createGoblinEnemy(enemyMaxHealth),
@@ -389,10 +345,8 @@ export function initializeSoloGame(
     hand,
     discardPile: [],
     suppressedRunes: [],
-    wallCharges: createEmptyWallCharges(WALL_SIZE),
     selectedHandRuneId: null,
     enemyBoard: createEmptyWall(WALL_SIZE),
-    enemyBoardCharges: createEnemyWallCharges(WALL_SIZE),
     enemyQueuedRunes: [],
     enemyTurnNumber: 0,
   };

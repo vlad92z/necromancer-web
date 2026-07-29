@@ -3,11 +3,9 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { EffectResolutionLog, GameState, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../../types/game';
+import type { EffectResolutionLog, GameState, Player, Rune, RuneType, ScoringWall } from '../../types/game';
 import {
   createEmptyWall,
-  createEmptyWallCharges,
-  createEnemyWallCharges,
   createGoblinEnemy,
   createRuneSoundSignals,
   initializeSoloGame,
@@ -84,16 +82,11 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
     suppressedRunes: nextState.suppressedRunes ?? [],
-    wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
     enemyBoard: nextState.enemyBoard ?? createEmptyWall(),
-    enemyBoardCharges: nextState.enemyBoardCharges ?? createEnemyWallCharges(),
     enemyQueuedRunes: nextState.enemyQueuedRunes ?? [],
     enemyTurnNumber: typeof nextState.enemyTurnNumber === 'number' ? nextState.enemyTurnNumber : 0,
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
     runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
-    wallChargeSoundSignal: typeof nextState.wallChargeSoundSignal === 'number'
-      ? nextState.wallChargeSoundSignal
-      : currentState.wallChargeSoundSignal,
     enemyAttackSoundSignal: typeof nextState.enemyAttackSoundSignal === 'number'
       ? nextState.enemyAttackSoundSignal
       : currentState.enemyAttackSoundSignal,
@@ -116,22 +109,6 @@ function trackDefeat(state: GameState, player: Player): void {
     health: player.health,
     enemyMaxHealth: state.enemyMaxHealth,
   });
-}
-
-function getCompletedRuneTypesById(wall: ScoringWall, wallCharges: SpellWallCharge[][]): Map<string, RuneType> {
-  return wallCharges.reduce<Map<string, RuneType>>((runeTypesById, chargeRow) => {
-    chargeRow.forEach((charge) => {
-      if (!charge.completedRuneId) {
-        return;
-      }
-
-      const runeType = wall[charge.row]?.[charge.col]?.runeType;
-      if (runeType) {
-        runeTypesById.set(charge.completedRuneId, runeType);
-      }
-    });
-    return runeTypesById;
-  }, new Map<string, RuneType>());
 }
 
 function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType>, wall: ScoringWall): Map<string, RuneType> {
@@ -176,15 +153,13 @@ function countRuneSoundEvents({
   completedRune = null,
   logs,
   wall,
-  wallCharges,
 }: {
   completedRune?: Rune | null;
   logs: EffectResolutionLog[];
   wall: ScoringWall;
-  wallCharges: SpellWallCharge[][];
 }): Record<RuneType, number> {
   const events = createEmptyRuneSoundEvents();
-  const completedRuneTypesById = addCompletedWallRuneTypesById(getCompletedRuneTypesById(wall, wallCharges), wall);
+  const completedRuneTypesById = addCompletedWallRuneTypesById(new Map<string, RuneType>(), wall);
   const retriggeredRuneIdsByType = new Map<RuneType, Set<string>>();
 
   if (completedRune) {
@@ -322,7 +297,6 @@ export const gameplayStoreConfig = (
         player: state.player,
         hand: state.hand,
         discardPile: state.discardPile,
-        wallCharges: state.wallCharges,
         selectedHandRuneId: state.selectedHandRuneId,
         row,
         col,
@@ -339,7 +313,6 @@ export const gameplayStoreConfig = (
           rune: result.completedRune,
           activeArtefacts: state.activeArtefacts,
           sourcePosition: result.completedPosition,
-          wallCharges: result.wallCharges,
           suppressedRunes: state.suppressedRunes,
           handSize: result.hand.length,
         });
@@ -349,12 +322,10 @@ export const gameplayStoreConfig = (
           completedRune: result.completedRune,
           logs: resolvedEffects.logs,
           wall: resolvedEffects.player.wall,
-          wallCharges: resolvedEffects.wallCharges,
         });
         const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
         const discardWithResolvedRunes = [
           ...result.discardPile,
-          ...resolvedEffects.discardedRunes,
           ...resolvedEffects.returnedOverflowRunes,
         ];
 
@@ -365,7 +336,6 @@ export const gameplayStoreConfig = (
             hand: handWithReturnedRunes,
             discardPile: discardWithResolvedRunes,
             suppressedRunes: resolvedEffects.suppressedRunes,
-            wallCharges: resolvedEffects.wallCharges,
           });
 
           return enterDeckDraftMode({
@@ -378,7 +348,6 @@ export const gameplayStoreConfig = (
             hand: victoryDeck.hand,
             discardPile: victoryDeck.discardPile,
             suppressedRunes: [],
-            wallCharges: createEmptyWallCharges(),
             selectedHandRuneId: null,
             runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, resolvedRuneSoundEvents),
           });
@@ -414,21 +383,12 @@ export const gameplayStoreConfig = (
           hand: drawResult.hand,
           discardPile: drawResult.discardPile,
           suppressedRunes: resolvedEffects.suppressedRunes,
-          wallCharges: resolvedEffects.wallCharges,
           selectedHandRuneId: result.selectedHandRuneId,
           runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, resolvedRuneSoundEvents),
         };
       }
 
-      return {
-        ...state,
-        player: result.player,
-        hand: result.hand,
-        discardPile: result.discardPile,
-        wallCharges: result.wallCharges,
-        selectedHandRuneId: result.selectedHandRuneId,
-        wallChargeSoundSignal: state.wallChargeSoundSignal + 1,
-      };
+      return state;
     });
 
     if (arcaneDustGain > 0) {
@@ -455,7 +415,6 @@ export const gameplayStoreConfig = (
       let runeSoundEvents = countRuneSoundEvents({
         logs: endTurnEffects.logs,
         wall: endTurnEffects.player.wall,
-        wallCharges: state.wallCharges,
       });
 
       if ((endTurnEffects.enemy?.health ?? 1) <= 0) {
@@ -465,7 +424,6 @@ export const gameplayStoreConfig = (
           hand: state.hand,
           discardPile: state.discardPile,
           suppressedRunes: state.suppressedRunes,
-          wallCharges: state.wallCharges,
         });
 
         return enterDeckDraftMode({
@@ -478,7 +436,6 @@ export const gameplayStoreConfig = (
           hand: victoryDeck.hand,
           discardPile: victoryDeck.discardPile,
           suppressedRunes: [],
-          wallCharges: createEmptyWallCharges(),
           selectedHandRuneId: null,
           runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
         });
@@ -488,7 +445,6 @@ export const gameplayStoreConfig = (
         player: endTurnEffects.player,
         enemy: endTurnEffects.enemy,
         enemyBoard: state.enemyBoard,
-        enemyBoardCharges: state.enemyBoardCharges,
         enemyQueuedRunes: state.enemyQueuedRunes,
         turnNumber: state.enemyTurnNumber,
       });
@@ -499,7 +455,6 @@ export const gameplayStoreConfig = (
         countRuneSoundEvents({
           logs: enemyTurnResult.logs,
           wall: enemyTurnResult.player.wall,
-          wallCharges: state.wallCharges,
         })
       );
       const discardPile = [...state.discardPile, ...state.hand];
@@ -513,7 +468,6 @@ export const gameplayStoreConfig = (
           hand: [],
           discardPile,
           enemyBoard: enemyTurnResult.enemyBoard,
-          enemyBoardCharges: enemyTurnResult.enemyBoardCharges,
           enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
           enemyTurnNumber: state.enemyTurnNumber + 1,
           selectedHandRuneId: null,
@@ -540,7 +494,6 @@ export const gameplayStoreConfig = (
         countRuneSoundEvents({
           logs: startTurnEffects.logs,
           wall: startTurnEffects.player.wall,
-          wallCharges: state.wallCharges,
         })
       );
       const startTurnDrawResult = startTurnEffects.drawCount > 0
@@ -564,7 +517,6 @@ export const gameplayStoreConfig = (
         hand: startTurnDrawResult.hand,
         discardPile: startTurnDrawResult.discardPile,
         enemyBoard: enemyTurnResult.enemyBoard,
-        enemyBoardCharges: enemyTurnResult.enemyBoardCharges,
         enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
         enemyTurnNumber: state.enemyTurnNumber + 1,
         selectedHandRuneId: null,

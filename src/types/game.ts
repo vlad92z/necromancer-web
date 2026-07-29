@@ -52,18 +52,6 @@ export interface EnemyRune extends Rune {
 
 export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
 
-export interface SpellWallCharge {
-  row: number;
-  col: number;
-  slotFamily: WallSlotFamily;
-  lockedRuneType: RuneType | null;
-  requiredCount: number;
-  currentCount: number;
-  stagedRune: Rune | null;
-  spentRunes: Rune[];
-  completedRuneId: string | null;
-}
-
 export interface DeckDraftOffer {
   id: string;
   ownerId: Player['id'];
@@ -117,10 +105,8 @@ export interface CombatZoneState {
   hand: Rune[];
   discardPile: Rune[];
   suppressedRunes: Rune[];
-  wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   enemyBoard: ScoringWall;
-  enemyBoardCharges: SpellWallCharge[][];
   enemyQueuedRunes: EnemyRune[];
   enemyTurnNumber: number;
 }
@@ -139,7 +125,6 @@ export interface GameState extends CombatZoneState {
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
-  wallChargeSoundSignal: number;
   enemyAttackSoundSignal: number;
   shieldSoundSignal: number;
 }

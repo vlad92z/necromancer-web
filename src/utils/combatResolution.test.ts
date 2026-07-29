@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Enemy, Rune, RuneType, WallCell } from '../types/game';
 import { createEffectRef } from './effectCatalog';
-import { createEmptyWallCharges, createPlayer } from './gameInitialization';
+import { createPlayer } from './gameInitialization';
 import {
   castRuneToWallSlot,
   collectVictoryDeck,
@@ -14,19 +14,20 @@ import {
 } from './combatResolution';
 
 describe('combatResolution wall casting', () => {
-  it('completes a common rune immediately in the bottom row', () => {
-    const fireRune = createTestRune('fire-common', 'Fire', 'common');
+  it.each(['common', 'uncommon', 'rare', 'epic'] as const)(
+    'places a %s rune immediately and resolves it as completed',
+    (rarity) => {
+    const fireRune = createTestRune(`fire-${rarity}`, 'Fire', rarity);
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
 
     const result = castRuneToWallSlot({
       player,
       hand: [fireRune],
       discardPile: [],
-      wallCharges: createEmptyWallCharges(6),
       selectedHandRuneId: fireRune.id,
       row: 5,
       col: 4,
-      createCompletedRuneId: () => 'wall-copy-common',
+      createCompletedRuneId: () => `wall-copy-${rarity}`,
     });
 
     expect(result.status).toBe('completed');
@@ -34,184 +35,23 @@ describe('combatResolution wall casting', () => {
     expect(result.discardPile).toEqual([fireRune]);
     expect(result.selectedHandRuneId).toBeNull();
     expect(result.player.wall[5][4]).toEqual({
-      id: 'wall-copy-common',
+      id: `wall-copy-${rarity}`,
       runeType: 'Fire',
-      rarity: 'common',
+      rarity,
       castEffectRefs: fireRune.castEffectRefs,
       passiveEffectRefs: fireRune.passiveEffectRefs,
     });
-    expect(result.wallCharges[5][4]).toMatchObject({
-      lockedRuneType: 'Fire',
-      requiredCount: 0,
-      currentCount: 0,
-      stagedRune: null,
-      spentRunes: [],
-      completedRuneId: 'wall-copy-common',
-    });
-    expect(result.completedRune?.id).toBe('wall-copy-common');
-  });
-
-  it('stages uncommon at zero progress and completes with one matching charge', () => {
-    const stagedRune = createTestRune('fire-staged', 'Fire', 'uncommon');
-    const chargeRune = createTestRune('fire-charge', 'Fire', 'common');
-    const player = createPlayer('player-1', 'Tester', 10, [], 10);
-
-    const stagedResult = castRuneToWallSlot({
-      player,
-      hand: [stagedRune],
-      discardPile: [],
-      wallCharges: createEmptyWallCharges(6),
-      selectedHandRuneId: stagedRune.id,
-      row: 1,
-      col: 2,
-    });
-
-    expect(stagedResult.status).toBe('charged');
-    expect(stagedResult.player.wall[1][2].runeType).toBeNull();
-    expect(stagedResult.discardPile).toEqual([]);
-    expect(stagedResult.wallCharges[1][2]).toMatchObject({
-      lockedRuneType: 'Fire',
-      requiredCount: 1,
-      currentCount: 0,
-      stagedRune,
-      spentRunes: [],
-      completedRuneId: null,
-    });
-
-    const result = castRuneToWallSlot({
-      player: stagedResult.player,
-      hand: [chargeRune],
-      discardPile: stagedResult.discardPile,
-      wallCharges: stagedResult.wallCharges,
-      selectedHandRuneId: chargeRune.id,
-      row: 1,
-      col: 2,
-      createCompletedRuneId: () => 'wall-copy-uncommon',
-    });
-
-    expect(result.status).toBe('completed');
-    expect(result.hand).toEqual([]);
-    expect(result.discardPile).toEqual([stagedRune, chargeRune]);
-    expect(result.player.wall[1][2]).toEqual({
-      id: 'wall-copy-uncommon',
-      runeType: 'Fire',
-      rarity: stagedRune.rarity,
-      castEffectRefs: stagedRune.castEffectRefs,
-      passiveEffectRefs: stagedRune.passiveEffectRefs,
-    });
-    expect(result.wallCharges[1][2]).toMatchObject({
-      lockedRuneType: 'Fire',
-      requiredCount: 1,
-      currentCount: 1,
-      stagedRune: null,
-      completedRuneId: 'wall-copy-uncommon',
-    });
-    expect(result.wallCharges[1][2].spentRunes).toEqual([]);
-    expect(result.completedPosition).toEqual({ row: 1, col: 2 });
-    expect(result.completedRune).toMatchObject({ id: 'wall-copy-uncommon', rarity: 'uncommon' });
-  });
-
-  it('stages rare and epic runes with rarity-based requirements', () => {
-    const rareRune = createTestRune('rare-fire', 'Fire', 'rare');
-    const epicRune = createTestRune('epic-wind', 'Wind', 'epic');
-    const player = createPlayer('player-1', 'Tester', 10, [], 10);
-
-    const rareResult = castRuneToWallSlot({
-      player,
-      hand: [rareRune],
-      discardPile: [],
-      wallCharges: createEmptyWallCharges(6),
-      selectedHandRuneId: rareRune.id,
-      row: 5,
-      col: 4,
-    });
-    const epicResult = castRuneToWallSlot({
-      player,
-      hand: [epicRune],
-      discardPile: [],
-      wallCharges: createEmptyWallCharges(6),
-      selectedHandRuneId: epicRune.id,
-      row: 5,
-      col: 5,
-    });
-
-    expect(rareResult.status).toBe('charged');
-    expect(rareResult.wallCharges[5][4]).toMatchObject({ currentCount: 0, requiredCount: 2 });
-    expect(epicResult.status).toBe('charged');
-    expect(epicResult.wallCharges[5][5]).toMatchObject({ currentCount: 0, requiredCount: 3 });
-  });
-
-  it('adds one charge per matching fuel rune regardless of fuel rarity', () => {
-    const stagedRune = createTestRune('rare-fire', 'Fire', 'rare');
-    const rareFuel = createTestRune('rare-fuel', 'Fire', 'rare');
-    const player = createPlayer('player-1', 'Tester', 10, [], 10);
-    const wallCharges = createEmptyWallCharges(6);
-    wallCharges[1][2] = {
-      ...wallCharges[1][2],
-      lockedRuneType: 'Fire',
-      requiredCount: 2,
-      currentCount: 0,
-      stagedRune,
-    };
-
-    const result = castRuneToWallSlot({
-      player,
-      hand: [rareFuel],
-      discardPile: [],
-      wallCharges,
-      selectedHandRuneId: rareFuel.id,
-      row: 1,
-      col: 2,
-    });
-
-    expect(result.status).toBe('charged');
-    expect(result.wallCharges[1][2]).toMatchObject({
-      currentCount: 1,
-      requiredCount: 2,
-      stagedRune,
-      completedRuneId: null,
-    });
-    expect(result.wallCharges[1][2].spentRunes).toEqual([rareFuel]);
-  });
-
-  it('does not resolve charge rune effects before completion', () => {
-    const stagedRune = createTestRune('rare-fire', 'Fire', 'rare');
-    const damageFuel = createTestRuneWithEffects('damage-fuel', 'Fire', [{ type: 'Damage', amount: 9, rarity: 'epic' }], 'epic');
-    const player = createPlayer('player-1', 'Tester', 10, [], 10);
-    const wallCharges = createEmptyWallCharges(6);
-    wallCharges[1][2] = {
-      ...wallCharges[1][2],
-      lockedRuneType: 'Fire',
-      requiredCount: 2,
-      currentCount: 0,
-      stagedRune,
-    };
-
-    const castResult = castRuneToWallSlot({
-      player,
-      hand: [damageFuel],
-      discardPile: [],
-      wallCharges,
-      selectedHandRuneId: damageFuel.id,
-      row: 1,
-      col: 2,
-    });
-
-    expect(castResult.status).toBe('charged');
-    expect(castResult.completedRune).toBeNull();
-    expect(castResult.player).toBe(player);
+    expect(result.completedRune?.id).toBe(`wall-copy-${rarity}`);
+    expect(result.completedPosition).toEqual({ row: 5, col: 4 });
   });
 
   it('rejects wrong-family casts on empty slots without clearing selection', () => {
     const lifeRune = createTestRune('life-wrong-type', 'Life');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
-    const wallCharges = createEmptyWallCharges(6);
-
     const result = castRuneToWallSlot({
       player,
       hand: [lifeRune],
       discardPile: [],
-      wallCharges,
       selectedHandRuneId: lifeRune.id,
       row: 0,
       col: 0,
@@ -220,49 +60,42 @@ describe('combatResolution wall casting', () => {
     expect(result.status).toBe('invalid');
     expect(result.hand).toEqual([lifeRune]);
     expect(result.discardPile).toEqual([]);
-    expect(result.wallCharges).toBe(wallCharges);
     expect(result.selectedHandRuneId).toBe(lifeRune.id);
   });
 
-  it('rejects wrong exact type after staging', () => {
-    const stagedRune = createTestRune('fire-staged', 'Fire', 'uncommon');
-    const voidRune = createTestRune('void-rejected', 'Void');
+  it('rejects casts into filled slots without clearing selection', () => {
+    const fireRune = createTestRune('fire-filled', 'Fire');
+    const secondRune = createTestRune('fire-rejected', 'Fire');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
-    const wallCharges = createEmptyWallCharges(6);
-    wallCharges[1][2] = {
-      ...wallCharges[1][2],
-      lockedRuneType: 'Fire',
-      requiredCount: 1,
-      currentCount: 0,
-      stagedRune,
+    player.wall[0][0] = {
+      id: fireRune.id,
+      runeType: fireRune.runeType,
+      rarity: fireRune.rarity,
+      castEffectRefs: fireRune.castEffectRefs,
+      passiveEffectRefs: fireRune.passiveEffectRefs,
     };
 
     const result = castRuneToWallSlot({
       player,
-      hand: [voidRune],
+      hand: [secondRune],
       discardPile: [],
-      wallCharges,
-      selectedHandRuneId: voidRune.id,
-      row: 1,
-      col: 2,
+      selectedHandRuneId: secondRune.id,
+      row: 0,
+      col: 0,
     });
 
     expect(result.status).toBe('invalid');
-    expect(result.wallCharges).toBe(wallCharges);
-    expect(result.selectedHandRuneId).toBe(voidRune.id);
+    expect(result.selectedHandRuneId).toBe(secondRune.id);
   });
 
   it('creates distinct wall-copy ids for repeated completions of the same rune concept', () => {
     const firstRune = createTestRune('shared-concept', 'Fire', 'common');
     const secondRune = createTestRune('shared-concept', 'Fire', 'common');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
-    const wallCharges = createEmptyWallCharges(6);
-
     const firstResult = castRuneToWallSlot({
       player,
       hand: [firstRune],
       discardPile: [],
-      wallCharges,
       selectedHandRuneId: firstRune.id,
       row: 0,
       col: 0,
@@ -272,7 +105,6 @@ describe('combatResolution wall casting', () => {
       player: firstResult.player,
       hand: [secondRune],
       discardPile: firstResult.discardPile,
-      wallCharges: firstResult.wallCharges,
       selectedHandRuneId: secondRune.id,
       row: 0,
       col: 3,
@@ -280,9 +112,7 @@ describe('combatResolution wall casting', () => {
     });
 
     expect(firstResult.player.wall[0][0].id).toBe('wall-copy-first');
-    expect(firstResult.wallCharges[0][0].completedRuneId).toBe('wall-copy-first');
     expect(secondResult.player.wall[0][3].id).toBe('wall-copy-second');
-    expect(secondResult.wallCharges[0][3].completedRuneId).toBe('wall-copy-second');
     expect(firstResult.player.wall[0][0].id).not.toBe(secondResult.player.wall[0][3].id);
   });
 });
@@ -761,12 +591,10 @@ describe('combatResolution victory deck collection', () => {
     const drawRune = createTestRune('victory-draw', 'Fire');
     const handRune = createTestRune('victory-hand', 'Life');
     const discardRune = createTestRune('victory-discard', 'Void');
-    const incompleteSpentRune = createTestRune('victory-incomplete-spent', 'Frost');
     const completedRune = createTestRuneWithEffects('victory-completed', 'Fire', [
       { type: 'Damage', amount: 3, rarity: 'common' },
     ]);
     const player = createPlayer('player-1', 'Tester', 10, [drawRune], 10);
-    const wallCharges = createEmptyWallCharges(6);
     const wall = player.wall.map((row) => [...row]);
     wall[1][1] = {
       id: completedRune.id,
@@ -775,18 +603,6 @@ describe('combatResolution victory deck collection', () => {
       castEffectRefs: completedRune.castEffectRefs,
       passiveEffectRefs: completedRune.passiveEffectRefs,
     };
-    wallCharges[1][1] = {
-      ...wallCharges[1][1],
-      currentCount: 2,
-      spentRunes: [],
-      completedRuneId: completedRune.id,
-    };
-    wallCharges[2][2] = {
-      ...wallCharges[2][2],
-      currentCount: 1,
-      spentRunes: [incompleteSpentRune],
-    };
-
     const result = collectVictoryDeck({
       player: {
         ...player,
@@ -794,7 +610,6 @@ describe('combatResolution victory deck collection', () => {
       },
       hand: [handRune],
       discardPile: [discardRune],
-      wallCharges,
     });
 
     expect(result.player.deck).toEqual([drawRune]);
@@ -811,7 +626,6 @@ describe('combatResolution victory deck collection', () => {
       hand: [],
       discardPile: [],
       suppressedRunes: [suppressedRune],
-      wallCharges: createEmptyWallCharges(6),
     });
 
     expect(result.player.deck).toEqual([]);
@@ -824,7 +638,6 @@ describe('combatResolution victory deck collection', () => {
     };
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const wall = player.wall.map((row) => [...row]);
-    const wallCharges = createEmptyWallCharges(6);
     wall[0][0] = {
       id: originalRune.id,
       runeType: 'Frost',
@@ -832,18 +645,11 @@ describe('combatResolution victory deck collection', () => {
       castEffectRefs: [],
       passiveEffectRefs: [],
     };
-    wallCharges[0][0] = {
-      ...wallCharges[0][0],
-      currentCount: 1,
-      completedRuneId: originalRune.id,
-    };
-
     const result = collectVictoryDeck({
       player: { ...player, wall },
       hand: [],
       discardPile: [],
       suppressedRunes: [originalRune],
-      wallCharges,
     });
 
     expect(result.player.deck).toEqual([]);
@@ -857,7 +663,6 @@ describe('combatResolution victory deck collection', () => {
       player,
       hand: [duplicateRune],
       discardPile: [duplicateRune],
-      wallCharges: createEmptyWallCharges(6),
     });
 
     expect(result.player.deck.map((rune) => rune.id)).toEqual(['duplicate-rune']);

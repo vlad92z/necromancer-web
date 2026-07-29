@@ -106,16 +106,14 @@ export function useCombatZoneState() {
 
 export function useGameplayWallState() {
   const wall = useBoardStore((state) => state.player.wall);
-  const wallCharges = useCombatStore((state) => state.wallCharges);
 
-  return { wall, wallCharges };
+  return { wall };
 }
 
 export function useEnemySpellBoardState() {
   return useCombatStore(
     useShallow((state) => ({
       wall: state.enemyBoard,
-      wallCharges: state.enemyBoardCharges,
     })),
   );
 }
@@ -149,10 +147,6 @@ export function useGameplayStatusState() {
 
 export function useRuneSoundSignals() {
   return useRunStore((state) => state.runeSoundSignals);
-}
-
-export function useWallChargeSoundSignal() {
-  return useRunStore((state) => state.wallChargeSoundSignal);
 }
 
 export function useEnemyAttackSoundSignal() {
