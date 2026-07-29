@@ -1,7 +1,7 @@
 /**
  * ClickSoundButton - plays the click sound before running its action.
  */
-import type { ReactElement } from 'react';
+import { forwardRef, type FocusEventHandler, type ReactElement } from 'react';
 import { useClickSound } from '../hooks/useClickSound';
 
 interface ClickSoundButtonProps {
@@ -9,9 +9,13 @@ interface ClickSoundButtonProps {
   className?: string;
   action: () => void;
   isActive?: boolean;
+  onFocus?: FocusEventHandler<HTMLButtonElement>;
 }
 
-export function ClickSoundButton({ title, className, action, isActive = false }: ClickSoundButtonProps): ReactElement {
+export const ClickSoundButton = forwardRef<HTMLButtonElement, ClickSoundButtonProps>(function ClickSoundButton(
+  { title, className, action, isActive = false, onFocus },
+  ref,
+): ReactElement {
   const playClickSound = useClickSound();
 
   const handleClick = () => {
@@ -21,12 +25,14 @@ export function ClickSoundButton({ title, className, action, isActive = false }:
 
   return (
     <button
+      ref={ref}
       type="button"
       className={className}
       data-active={isActive ? 'true' : undefined}
       onClick={handleClick}
+      onFocus={onFocus}
     >
       {title}
     </button>
   );
-}
+});

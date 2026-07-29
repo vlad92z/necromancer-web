@@ -16,7 +16,7 @@ Current scope:
 - Vite 7.
 - Zustand 5 for global state.
 - Framer Motion 12 for animation.
-- Tailwind CSS where practical; inline style objects are acceptable for existing local patterns.
+- Tailwind CSS 4 where practical; inline style objects are acceptable for existing local patterns.
 
 ## File Placement
 
@@ -74,6 +74,14 @@ Current scope:
 - Add abstractions only when they remove real duplication or match existing architecture.
 - Do not add new libraries without explicit approval.
 - Do not add routes for future modes unless explicitly requested.
+
+## Keyboard and Overlay Rules
+
+- Keyboard selection state belongs to the owning component. It must mirror DOM focus: arrow-key navigation both updates visual active state and calls `.focus()` on the selected control.
+- Do not store DOM refs or previous-focus targets in Zustand. Keep them in component refs.
+- A modal overlay owns keyboard input while open. Use `role="dialog"`, `aria-modal="true"`, initial focus, Tab trapping, and focus restoration to its invoking control on close.
+- Use explicit open/close UI-store actions when the intended visibility is known; do not use a toggle for close or navigation flows.
+- Close transient overlays before leaving a view. This prevents global overlay state leaking into a later route or remounted screen.
 
 ## Testing
 

@@ -10,7 +10,7 @@ import { RuneZoneButton } from '../../../../components/DeckButton';
 
 export function GameMetadataView() {
   const arcaneDust = useArcaneDust();
-  const { toggleSettingsOverlay: openSettings } = useUIActions();
+  const { openSettingsOverlay } = useUIActions();
   const activeElement = useActiveElement();
   const isSettingsActive = activeElement?.type === 'settings';
   const settingsHover = 'hover:border-slate-300 hover:text-white hover:bg-slate-800';
@@ -39,7 +39,7 @@ export function GameMetadataView() {
         <RuneZoneButton zone="deck" />
         <ClickSoundButton
           title="⚙"
-          action={openSettings}
+          action={openSettingsOverlay}
           isActive={isSettingsActive}
           className={actionButtonBase}
         />

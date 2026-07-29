@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClickSoundButton } from '../components/ClickSoundButton'
 import { useUIActions } from '../hooks/useGameActions'
@@ -23,7 +23,7 @@ export function MainMenu() {
   const navigate = useNavigate()
   const playClickSound = useClickSound()
   const showSettingsOverlay = useShowSettingsOverlay()
-  const { toggleSettingsOverlay } = useUIActions()
+  const { closeSettingsOverlay, openSettingsOverlay } = useUIActions()
   const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false
@@ -31,6 +31,11 @@ export function MainMenu() {
     return window.innerWidth < BREAKPOINTS.tablet
   })
   const [activeElement, setActiveElement] = useState<MenuAction | null>(null)
+  const buttonRefs = useRef<Record<MenuAction, HTMLButtonElement | null>>({
+    solo: null,
+    arena: null,
+    settings: null,
+  })
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -46,16 +51,23 @@ export function MainMenu() {
   }, [])
 
   const handleSolo = useCallback(() => {
+    closeSettingsOverlay()
     navigate('/solo')
-  }, [navigate])
+  }, [closeSettingsOverlay, navigate])
 
   const handleArena = useCallback(() => {
+    closeSettingsOverlay()
     navigate('/arena')
-  }, [navigate])
+  }, [closeSettingsOverlay, navigate])
 
   const handleSettings = useCallback(() => {
-    toggleSettingsOverlay()
-  }, [toggleSettingsOverlay])
+    openSettingsOverlay()
+  }, [openSettingsOverlay])
+
+  const selectMenuItem = useCallback((item: MenuAction) => {
+    setActiveElement(item)
+    buttonRefs.current[item]?.focus()
+  }, [])
 
   const menuActions = useMemo<Record<MenuAction, () => void>>(
     () => ({
@@ -71,6 +83,8 @@ export function MainMenu() {
       setActiveElement(null)
     }
   }, [showSettingsOverlay])
+
+  useEffect(() => closeSettingsOverlay, [closeSettingsOverlay])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -93,25 +107,21 @@ export function MainMenu() {
     const menuOrder = menuItems.map(({ id }) => id)
 
     const moveSelection = (direction: 'up' | 'down') => {
-      setActiveElement((current) => {
-        const next = (() => {
-          if (current === null) {
-            return menuOrder[0]
-          }
+      if (activeElement === null) {
+        selectMenuItem(menuOrder[0])
+        playClickSound()
+        return
+      }
 
-          const currentIndex = menuOrder.indexOf(current)
-          const offset = direction === 'down' ? 1 : -1
-          const nextIndex = (currentIndex + offset + menuOrder.length) % menuOrder.length
+      const currentIndex = menuOrder.indexOf(activeElement)
+      const offset = direction === 'down' ? 1 : -1
+      const nextIndex = (currentIndex + offset + menuOrder.length) % menuOrder.length
+      const next = menuOrder[nextIndex]
 
-          return menuOrder[nextIndex]
-        })()
-
-        if (next !== current) {
-          playClickSound()
-        }
-
-        return next
-      })
+      if (next !== activeElement) {
+        selectMenuItem(next)
+        playClickSound()
+      }
     }
 
     const triggerActiveAction = (element: MenuAction) => {
@@ -138,15 +148,18 @@ export function MainMenu() {
         case 'Enter':
         case ' ': // Space
         case 'Spacebar': {
-          if (activeElement !== null) {
-            event.preventDefault()
+          event.preventDefault()
+          if (activeElement === null) {
+            selectMenuItem(menuOrder[0])
+            playClickSound()
+          } else {
             triggerActiveAction(activeElement)
           }
           break
         }
         case 'Escape': {
           event.preventDefault()
-          setActiveElement('settings')
+          selectMenuItem('settings')
           playClickSound()
           handleSettings()
           break
@@ -158,7 +171,7 @@ export function MainMenu() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeElement, handleSettings, isMobileViewport, menuActions, playClickSound, showSettingsOverlay])
+  }, [activeElement, handleSettings, isMobileViewport, menuActions, playClickSound, selectMenuItem, showSettingsOverlay])
 
   return (
     <main className="pixel-screen relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-10">
@@ -176,8 +189,8 @@ export function MainMenu() {
               <span className="h-5 w-5 bg-[#e15f4f]" />
               <span className="h-5 w-5 bg-[#5dc6b0]" />
               <span className="h-5 w-5 bg-[#f2c14e]" />
-              <span className="h-5 w-5 bg-[#2692ff]" />
-              <span className="h-5 w-5 bg-[#5b02ff]" />
+              <span className="h-5 w-5 bg-[#1cb5cd]" />
+              <span className="h-5 w-5 bg-[#623ba8]" />
               <span className="h-5 w-5 bg-[#ffffff]" />
             </div>
             <p className="font-pixel text-xs uppercase tracking-[0.3em] text-[#b5d3bd]">Arcane Arena</p>
@@ -196,10 +209,14 @@ export function MainMenu() {
               {menuItems.map(({ id, title, className }) => (
                 <ClickSoundButton
                   key={id}
+                  ref={(element) => {
+                    buttonRefs.current[id] = element
+                  }}
                   title={title}
                   className={className}
                   action={menuActions[id]}
                   isActive={activeElement === id}
+                  onFocus={() => setActiveElement(id)}
                 />
               ))}
             <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select </p>

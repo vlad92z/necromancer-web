@@ -112,6 +112,13 @@ The pixel font is defined in `src/index.css` as `.font-pixel`. Use it for displa
 
 `src/styles/tokens.ts` remains available for existing TypeScript consumers. New pixel-theme colours and surfaces should normally be added to `pixel-theme.css` so CSS components and future screens share one source of truth.
 
+## Keyboard and Overlay Behaviour
+
+- Keyboard selection must drive real DOM focus as well as any visual active state. Arrow-key navigation should focus the newly selected control.
+- Modal overlays own their keyboard handling while open. They must use dialog semantics, move focus inside on open, trap Tab navigation, and restore focus to the invoking control on close.
+- Overlay visibility is global UI state, but DOM refs and previous-focus targets stay local to React components. Use explicit `openSettingsOverlay()` and `closeSettingsOverlay()` actions instead of toggling visibility when the intended state is known.
+- Route transitions must close transient overlays so an overlay cannot appear unexpectedly on a later screen.
+
 ## Deployment (Cloudflare Pages)
 
 ### Automatic deployment
@@ -158,4 +165,5 @@ identify('player-1234')
 - Prefer small focused changes and follow existing component, hook, and store patterns.
 - Keep game rules out of React components and Zustand state serializable.
 - Use Tailwind for local layout and the shared pixel theme for reusable visual primitives.
+- Preserve keyboard focus and modal ownership when changing menus, buttons, or overlays.
 - Read `Agents.md` for project-specific implementation and testing guidance.

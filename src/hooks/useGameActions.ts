@@ -31,7 +31,8 @@ export function useUIActions() {
       openRuneZoneOverlay: state.openRuneZoneOverlay,
       closeRuneZoneOverlay: state.closeRuneZoneOverlay,
       toggleMusicMuted: state.toggleMusicMuted,
-      toggleSettingsOverlay: state.toggleSettingsOverlay,
+      openSettingsOverlay: state.openSettingsOverlay,
+      closeSettingsOverlay: state.closeSettingsOverlay,
     })),
   );
 }

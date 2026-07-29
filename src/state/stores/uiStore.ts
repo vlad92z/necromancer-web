@@ -22,7 +22,8 @@ interface UIStore {
   toggleRulesOverlay: () => void;
   openRuneZoneOverlay: (zone: RuneZoneOverlay) => void;
   closeRuneZoneOverlay: () => void;
-  toggleSettingsOverlay: () => void;
+  openSettingsOverlay: () => void;
+  closeSettingsOverlay: () => void;
   closeAllOverlays: () => void;
   setSoundVolume: (volume: number) => void;
   setMusicMuted: (muted: boolean) => void;
@@ -69,9 +70,13 @@ export const useUIStore = create<UIStore>((set) => ({
   closeRuneZoneOverlay: () => {
     set({ activeRuneZoneOverlay: null });
   },
-  
-  toggleSettingsOverlay: () => {
-    set((state) => ({ showSettingsOverlay: !state.showSettingsOverlay }));
+
+  openSettingsOverlay: () => {
+    set({ showSettingsOverlay: true });
+  },
+
+  closeSettingsOverlay: () => {
+    set({ showSettingsOverlay: false });
   },
   
   closeAllOverlays: () => {
