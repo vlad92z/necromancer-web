@@ -8,6 +8,8 @@ import {
   initializeSoloGame,
 } from './gameInitialization';
 import { resolveEnemyTurn } from './combatResolution';
+import { resolveCastEffects } from './effectResolver';
+import { createRuneFromPool } from './runeEffects';
 
 function createEnemyRune(id: string, damage: number): EnemyRune {
   return {
@@ -34,9 +36,11 @@ describe('enemy spellboard combat', () => {
       cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
     ))).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Tornado', 'Tornado', 'Barricade']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Wind', 'Wind', 'Life']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Barricade']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life']);
     expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([5, 5, 0]);
+    expect(createEnemyTurnRunes(4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
+    expect(createEnemyTurnRunes(4)[0]?.tokenImageSrc).toContain('token_life.png');
   });
 
   it('plays queued runes in order into random open slots and applies each damage', () => {
@@ -55,6 +59,30 @@ describe('enemy spellboard combat', () => {
     expect(result.player.armor).toBe(0);
     expect(result.player.health).toBe(15);
     expect(result.healthDamage).toBe(5);
+  });
+
+  it('gives the Goblin armor when Barricade is placed', () => {
+    const result = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy: initializeSoloGame().enemy,
+      enemyBoard: createEnemySpellBoard(),
+      enemyQueuedRunes: [createEnemyTurnRunes(0)[2]!],
+      random: () => 0,
+    });
+
+    expect(result.enemy?.armor).toBe(5);
+  });
+
+  it('has Goblin armor absorb player damage before health', () => {
+    const goblin = { ...initializeSoloGame().enemy!, armor: 5 };
+    const result = resolveCastEffects({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy: goblin,
+      castRune: createRuneFromPool({ id: 'firebolt', runeType: 'Fire', rarity: 'common', random: () => 0 }),
+      wall: createEmptyWall(),
+    });
+
+    expect(result.enemy).toMatchObject({ health: 25, armor: 0 });
   });
 
   it('reduces total incoming enemy-turn damage before armor', () => {

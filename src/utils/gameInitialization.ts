@@ -12,6 +12,7 @@ import type {
   ScoringWall,
 } from '../types/game';
 import { copyEffectRefs, createRuneFromPool } from './runeEffects';
+import { BARRICADE_RUNE_IMAGE_SOURCES, THROW_ROCK_RUNE_IMAGE_SOURCES } from './runeImages';
 import { getWallSlotRuneTypes } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
@@ -131,24 +132,26 @@ export function createGoblinEnemy(maxHealth: number): Enemy {
     imageSrc: goblinImageSrc,
     health: maxHealth,
     maxHealth,
+    armor: 0,
   };
 }
 
 function createEnemyRune(
   id: string,
+  name: string,
   runeType: RuneType,
   rarity: Rune['rarity'],
   damage: number,
+  imageSources: Pick<Rune, 'cardImageSrc' | 'tokenImageSrc'>,
+  castEffectRefs: Rune['castEffectRefs'] = [],
 ): EnemyRune {
-  const displayRune = createRuneFromPool({
-    id,
-    runeType,
-    rarity,
-    random: () => 0,
-  });
   return {
-    ...displayRune,
-    castEffectRefs: [],
+    id,
+    name,
+    runeTypes: [runeType],
+    rarity,
+    ...imageSources,
+    castEffectRefs: copyEffectRefs(castEffectRefs),
     passiveEffectRefs: [],
     damage,
   };
@@ -156,9 +159,17 @@ function createEnemyRune(
 
 export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
   return [
-    createEnemyRune(`enemy-${turnNumber}-tornado-0`, 'Wind', 'common', 5),
-    createEnemyRune(`enemy-${turnNumber}-tornado-1`, 'Wind', 'common', 5),
-    createEnemyRune(`enemy-${turnNumber}-barricade`, 'Life', 'common', 0),
+    createEnemyRune(`enemy-${turnNumber}-throw-rock-0`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
+    createEnemyRune(`enemy-${turnNumber}-throw-rock-1`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
+    createEnemyRune(
+      `enemy-${turnNumber}-barricade`,
+      'Barricade',
+      'Life',
+      'common',
+      0,
+      BARRICADE_RUNE_IMAGE_SOURCES,
+      [{ effectId: 'cast.armor', params: { amount: 5 } }],
+    ),
   ];
 }
 

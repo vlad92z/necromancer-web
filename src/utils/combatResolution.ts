@@ -136,6 +136,7 @@ export interface EnemyTurnInput {
 
 export interface EnemyTurnResult {
   player: Player;
+  enemy: Enemy | null;
   enemyBoard: ScoringWall;
   enemyQueuedRunes: EnemyRune[];
   boardFull: boolean;
@@ -379,13 +380,14 @@ export function resolveEnemyTurn({
   random = Math.random,
 }: EnemyTurnInput): EnemyTurnResult {
   if (!enemy) {
-    return { player, enemyBoard, enemyQueuedRunes: [], boardFull: false, logs: [], healthDamage: 0 };
+    return { player, enemy, enemyBoard, enemyQueuedRunes: [], boardFull: false, logs: [], healthDamage: 0 };
   }
 
   const runesToPlay = enemyQueuedRunes.length > 0
     ? [...enemyQueuedRunes]
     : createEnemyTurnRunes(turnNumber);
   let nextPlayer = player;
+  let nextEnemy = enemy;
   const nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
   let totalIncomingDamage = 0;
 
@@ -411,6 +413,14 @@ export function resolveEnemyTurn({
       passiveEffectRefs: rune.passiveEffectRefs,
     };
     totalIncomingDamage += Math.max(0, rune.damage);
+    const armorGain = rune.castEffectRefs.reduce((total, effectRef) => (
+      effectRef.effectId === 'cast.armor' && typeof effectRef.params?.amount === 'number'
+        ? total + Math.max(0, effectRef.params.amount)
+        : total
+    ), 0);
+    if (armorGain > 0) {
+      nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + armorGain };
+    }
   }
 
   const passiveResult = resolvePassiveEffects({
@@ -430,6 +440,7 @@ export function resolveEnemyTurn({
 
   return {
     player: nextPlayer,
+    enemy: nextEnemy,
     enemyBoard: nextBoard,
     enemyQueuedRunes: [],
     boardFull: nextBoard.every((row) => row.every((cell) => cell.id !== null)),

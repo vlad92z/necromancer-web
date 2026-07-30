@@ -46,6 +46,7 @@ export interface Enemy {
   imageSrc: string;
   health: number;
   maxHealth: number;
+  armor?: number;
 }
 
 export interface EnemyRune extends Rune {

@@ -16,8 +16,8 @@ Headwind is the deck's only uncommon card. All other starting cards are common.
 
 - The Goblin starts at 25 health.
 - Its 6x6 board contains only Life slots.
-- Each turn it places two Tornado cards and one Barricade card.
-- Each Tornado deals 5 damage; Barricade is placed without damage because the Goblin has no armor state.
+- Each turn it places two Throw Rock cards and one Barricade card.
+- Throw Rock is common Life, uses the Life token, and deals 5 damage. Barricade grants the Goblin 5 armor.
 
 ## Unresolved Questions
 

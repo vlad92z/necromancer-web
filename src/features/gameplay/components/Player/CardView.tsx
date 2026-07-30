@@ -46,7 +46,7 @@ export function CardView({
     ? 'cursor-pointer focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] hover:translate-y-[-6px]'
     : '';
   const sizeClassName = size === 'hand'
-    ? 'h-full max-h-72 w-auto min-w-0 aspect-2/3 p-1.5 gap-1.5'
+    ? 'h-72 w-48 flex-none p-1.5 gap-1.5'
     : 'w-[clamp(14em,22vmin,24em)] aspect-2/3 p-2 gap-2';
   const descriptionClassName = size === 'hand'
     ? `relative flex-4 ${border} bg-[#293532] px-2 pb-7 pt-2 font-pixel text-[10px] leading-snug text-[#fff8d8] whitespace-pre-line`

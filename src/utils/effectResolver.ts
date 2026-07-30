@@ -1389,18 +1389,15 @@ export function resolveCastEffects({
   const finalArmor = passiveResult.values.armor ?? 0;
   const arcaneDustDelta = passiveResult.values.arcaneDustDelta ?? baseArcaneDustDelta;
   const baseEnemyHealth = enemy?.health ?? null;
-  const nextEnemy = enemy && finalDamage > 0
+  const totalEnemyDamage = finalDamage + explosiveDamage;
+  const enemyArmorAbsorbed = enemy ? Math.min(enemy.armor ?? 0, totalEnemyDamage) : 0;
+  const enemyAfterExplosive = enemy && totalEnemyDamage > 0
     ? {
       ...enemy,
-      health: Math.max(0, enemy.health - finalDamage),
+      armor: (enemy.armor ?? 0) - enemyArmorAbsorbed,
+      health: Math.max(0, enemy.health - (totalEnemyDamage - enemyArmorAbsorbed)),
     }
     : enemy;
-  const enemyAfterExplosive = nextEnemy && explosiveDamage > 0
-    ? {
-      ...nextEnemy,
-      health: Math.max(0, nextEnemy.health - explosiveDamage),
-    }
-    : nextEnemy;
   const actualEnemyHpLoss = baseEnemyHealth !== null && enemyAfterExplosive
     ? Math.max(0, baseEnemyHealth - enemyAfterExplosive.health)
     : 0;
