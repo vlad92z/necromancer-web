@@ -30,6 +30,7 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
     return {
       id: `rune-tooltip-${rune.id}-${index}`,
       runeType,
+      runeTypes: [...rune.runeTypes],
       title: rune.name,
       description: getRuneEffectDescription(rune),
       runeRarity: rune.rarity,

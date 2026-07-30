@@ -74,6 +74,7 @@ export type TooltipCardVariant = 'default' | 'nonPrimary';
 export interface TooltipCard {
   id: string;
   runeType: RuneType;
+  runeTypes: RuneType[];
   title: string;
   description: string;
   runeRarity?: RuneEffectRarity | null;

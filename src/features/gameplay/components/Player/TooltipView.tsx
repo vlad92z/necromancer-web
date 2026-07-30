@@ -118,6 +118,7 @@ export function TooltipView() {
               title={card.title}
               imageSrc={card.imageSrc}
               description={card.description}
+              runeTypes={card.runeTypes}
               variant={card.variant}
               size="hand"
               isSelected={isSelected}
