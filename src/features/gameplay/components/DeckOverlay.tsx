@@ -125,9 +125,8 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 16 }}
-                className="pixel-game-panel p-3.5"
               >
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-4">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1">
                   {sortedRunes.map((rune, index) => {
                     const card = runeCards[index];
 
@@ -136,14 +135,14 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
                     }
 
                     return (
-                      <div key={rune.id} className="flex min-h-54 items-center justify-center">
+                      <div key={rune.id} className="flex h-54 items-center justify-center">
                         <CardView
                           title={card.title}
                           imageSrc={card.imageSrc}
                           description={card.description}
                           runeTypes={card.runeTypes}
                           variant={card.variant}
-                          size="hand"
+                          size="compact"
                         />
                       </div>
                     );

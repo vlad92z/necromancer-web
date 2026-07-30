@@ -11,7 +11,7 @@ interface CardViewProps {
   imageSrc: string;
   runeTypes: RuneType[];
   variant?: TooltipCardVariant;
-  size?: 'default' | 'hand';
+  size?: 'default' | 'hand' | 'compact';
   isSelected?: boolean;
   onClick?: () => void;
 }
@@ -45,13 +45,16 @@ export function CardView({
   const interactiveClassName = onClick
     ? 'cursor-pointer focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] hover:translate-y-[-6px]'
     : '';
+  const isSmallCard = size === 'hand' || size === 'compact';
   const sizeClassName = size === 'hand'
     ? 'h-72 w-48 flex-none p-1.5 gap-1.5'
-    : 'w-[clamp(14em,22vmin,24em)] aspect-2/3 p-2 gap-2';
-  const descriptionClassName = size === 'hand'
+    : size === 'compact'
+      ? 'h-54 w-36 flex-none p-1 gap-1'
+      : 'w-[clamp(14em,22vmin,24em)] aspect-2/3 p-2 gap-2';
+  const descriptionClassName = isSmallCard
     ? `relative flex-4 ${border} bg-[#293532] px-2 pb-7 pt-2 font-pixel text-[10px] leading-snug text-[#fff8d8] whitespace-pre-line`
     : `relative flex-4 ${border} bg-[#293532] px-3 pb-9 pt-3 font-pixel text-xs leading-relaxed text-[#fff8d8] whitespace-pre-line`;
-  const titleClassName = size === 'hand'
+  const titleClassName = isSmallCard
     ? `px-2 py-1 font-pixel text-[10px] leading-tight ${titleTextColor}`
     : `px-3 py-2 font-pixel text-sm leading-tight ${titleTextColor}`;
   const className = `pixel-game-card flex flex-col ${sizeClassName} ${selectedClassName} ${interactiveClassName}`;
@@ -86,7 +89,7 @@ export function CardView({
           {runeTypes.map((runeType) => (
             <img
               key={runeType}
-              className={size === 'hand' ? 'h-5 w-5 object-contain [image-rendering:pixelated]' : 'h-7 w-7 object-contain [image-rendering:pixelated]'}
+              className={isSmallCard ? 'h-5 w-5 object-contain [image-rendering:pixelated]' : 'h-7 w-7 object-contain [image-rendering:pixelated]'}
               src={WALL_SLOT_PLACEHOLDER_ASSETS[runeType]}
               alt=""
             />
