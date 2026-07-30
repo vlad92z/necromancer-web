@@ -38,8 +38,8 @@ export function CardView({
     ? `flex-4 ${border} bg-[#293532] px-2 py-2 font-pixel text-[10px] leading-snug text-[#fff8d8] whitespace-pre-line`
     : `flex-4 ${border} bg-[#293532] px-3 py-3 font-pixel text-xs leading-relaxed text-[#fff8d8] whitespace-pre-line`;
   const titleClassName = size === 'hand'
-    ? `${border} bg-[#293532] px-2 py-1 font-pixel text-[10px] leading-tight text-[#fff8d8]`
-    : `${border} bg-[#293532] px-3 py-2 font-pixel text-sm leading-tight text-[#fff8d8]`;
+    ? `px-2 py-1 font-pixel text-[10px] leading-tight text-[#fff8d8]`
+    : `px-3 py-2 font-pixel text-sm leading-tight text-[#fff8d8]`;
   const className = `pixel-game-card flex flex-col ${sizeClassName} ${selectedClassName} ${interactiveClassName}`;
 
   const content = (

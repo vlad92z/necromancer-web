@@ -254,6 +254,17 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
   },
 };
 
+export function getDefaultRuneName(
+  runeType: RuneType,
+  rarity: RuneEffectRarity = 'common',
+): string {
+  const template = PREDEFINED_RUNE_VARIANTS[runeType][rarity][0];
+  if (!template) {
+    throw new Error(`No predefined rune variants for ${rarity} ${runeType}`);
+  }
+  return template.name;
+}
+
 export function createRuneFromPool({
   id,
   runeType,

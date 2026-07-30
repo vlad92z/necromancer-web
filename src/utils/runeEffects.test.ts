@@ -175,9 +175,9 @@ describe('runeEffects', () => {
     expect(first.castEffectRefs).not.toBe(second.castEffectRefs);
   });
 
-  it('assigns numbered names to predefined rune variants', () => {
-    expect(createRune('fire-common', 'Fire', 'common').name).toBe('Fire 1');
-    expect(createRune('fire-epic', 'Fire', 'epic').name).toBe('Fire 4');
+  it('assigns configured names to predefined rune variants', () => {
+    expect(createRune('fire-common', 'Fire', 'common').name).toBe('Firebolt');
+    expect(createRune('fire-epic', 'Fire', 'epic').name).toBe('Burn');
   });
 
   it('throws when a predefined rune variant pool is empty', () => {

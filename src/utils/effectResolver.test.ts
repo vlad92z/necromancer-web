@@ -648,7 +648,7 @@ describe('effectResolver resolveCastEffects', () => {
 
     expect(randomResult.wall[0][1]).toEqual({
       id: 'completed-0-1',
-      name: 'Frost 1',
+      name: 'Frost Shield',
       acceptedRuneTypes: ['Fire'],
       runeTypes: ['Frost'],
       rarity: 'common',

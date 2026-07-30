@@ -11,7 +11,7 @@ import type {
   RuneType,
   ScoringWall,
 } from '../types/game';
-import { copyEffectRefs } from './runeEffects';
+import { copyEffectRefs, getDefaultRuneName } from './runeEffects';
 import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
 import { getWallSlotRuneTypes } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
@@ -237,7 +237,7 @@ const STARTING_DECK_DEFINITIONS: Array<Omit<Rune, 'name' | 'cardImageSrc' | 'tok
 
 export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map((rune) => ({
   ...rune,
-  name: `${rune.runeTypes[0]} ${Number.parseInt(rune.id.split('-').at(-1) ?? '0', 10) + 1}`,
+  name: getDefaultRuneName(rune.runeTypes[0], rune.rarity),
   ...CURRENT_RUNE_IMAGE_SOURCES[rune.runeTypes[0]],
 }));
 
@@ -278,7 +278,7 @@ export function createGoblinEnemy(maxHealth: number): Enemy {
 export function createEnemyLifeRune(id: string): EnemyRune {
   return {
     id,
-    name: 'Life 1',
+    name: getDefaultRuneName('Life'),
     runeTypes: ['Life'],
     rarity: 'common',
     ...CURRENT_RUNE_IMAGE_SOURCES.Life,
