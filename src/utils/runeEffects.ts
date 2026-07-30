@@ -1,6 +1,10 @@
 import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import { createEffectRef, getEffectRefDescriptions } from './effectCatalog';
-import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
+import {
+  BARRICADE_RUNE_IMAGE_SOURCES,
+  CURRENT_RUNE_IMAGE_SOURCES,
+  HEADWIND_RUNE_IMAGE_SOURCES,
+} from './runeImages';
 
 type RuneTemplate = Omit<Rune, 'id'> & {
   templateId: string;
@@ -31,7 +35,7 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
       runeTypes: ['Fire'],
       rarity: 'common',
       ...CURRENT_RUNE_IMAGE_SOURCES.Fire,
-      castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 5 })],
       passiveEffectRefs: [],
     }],
     uncommon: [{
@@ -69,7 +73,7 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
       runeTypes: ['Frost'],
       rarity: 'common',
       ...CURRENT_RUNE_IMAGE_SOURCES.Frost,
-      castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
+      castEffectRefs: [createEffectRef('cast.armor', { amount: 5 })],
       passiveEffectRefs: [],
     }],
     uncommon: [{
@@ -103,11 +107,11 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
   Life: {
     common: [{
       templateId: 'life-common-healing',
-      name: 'Mend',
+      name: 'Barricade',
       runeTypes: ['Life'],
       rarity: 'common',
-      ...CURRENT_RUNE_IMAGE_SOURCES.Life,
-      castEffectRefs: [createEffectRef('cast.healing', { amount: 2 })],
+      ...BARRICADE_RUNE_IMAGE_SOURCES,
+      castEffectRefs: [createEffectRef('cast.armor', { amount: 5 })],
       passiveEffectRefs: [],
     }],
     uncommon: [{
@@ -145,7 +149,7 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
       runeTypes: ['Void'],
       rarity: 'common',
       ...CURRENT_RUNE_IMAGE_SOURCES.Void,
-      castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 5 })],
       passiveEffectRefs: [],
     }],
     uncommon: [{
@@ -179,21 +183,21 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
   Wind: {
     common: [{
       templateId: 'wind-common-draw',
-      name: 'Lucky Draw',
+      name: 'Tornado',
       runeTypes: ['Wind'],
       rarity: 'common',
       ...CURRENT_RUNE_IMAGE_SOURCES.Wind,
-      castEffectRefs: [createEffectRef('cast.draw', { amount: 1 })],
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 5 })],
       passiveEffectRefs: [],
     }],
     uncommon: [{
       templateId: 'wind-uncommon-draw-adjacent',
-      name: 'Gust of Wind',
+      name: 'Headwind',
       runeTypes: ['Wind'],
       rarity: 'uncommon',
-      ...CURRENT_RUNE_IMAGE_SOURCES.Wind,
+      ...HEADWIND_RUNE_IMAGE_SOURCES,
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.drawingStartTurn', { amount: 1 })],
+      passiveEffectRefs: [createEffectRef('passive.reduceDamage', { amount: 1 })],
     }],
     rare: [{
       templateId: 'wind-rare-drawing-start-turn',
@@ -221,7 +225,7 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
       runeTypes: ['Lightning'],
       rarity: 'common',
       ...CURRENT_RUNE_IMAGE_SOURCES.Lightning,
-      castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
+      castEffectRefs: [createEffectRef('cast.damage', { amount: 5 })],
       passiveEffectRefs: [],
     }],
     uncommon: [{

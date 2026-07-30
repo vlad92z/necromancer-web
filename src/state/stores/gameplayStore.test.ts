@@ -22,7 +22,7 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.gameStarted).toBe(true);
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 7 });
+    expect(state.enemy).toMatchObject({ id: 'goblin', health: 25 });
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(6);
     expect(state.discardPile).toEqual([]);
@@ -83,7 +83,7 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(7);
+    expect(state.player.health).toBe(2);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.hand.map((rune) => rune.id)).toEqual(['deck-fire', 'deck-life', 'hand-fire']);
@@ -96,7 +96,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 5, health: 10 },
+      player: { ...state.player, deck: [], armor: 10, health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -122,7 +122,7 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(8);
+    expect(state.player.health).toBe(3);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.shieldSoundSignal).toBe(0);
@@ -156,7 +156,7 @@ describe('gameplayStore current combat', () => {
       runeTypes: ['Frost'],
       rarity: 'common',
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.reduceDamage', { amount: 5 })],
+      passiveEffectRefs: [createEffectRef('passive.reduceDamage', { amount: 10 })],
     };
 
     store.setState((state) => ({
@@ -231,8 +231,8 @@ describe('gameplayStore current combat', () => {
     const nextState = store.getState();
     expect(nextState.combatPhase).toBe('player-turn');
     expect(nextState.deckDraftState).toBeNull();
-    expect(nextState.enemy?.maxHealth).toBe(10);
-    expect(nextState.enemyMaxHealth).toBe(10);
+    expect(nextState.enemy?.maxHealth).toBe(34);
+    expect(nextState.enemyMaxHealth).toBe(34);
     expect(nextState.suppressedRunes).toEqual([]);
     expect(nextState.discardPile).toEqual([]);
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id).sort()).toEqual(
@@ -537,7 +537,7 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(9);
+    expect(state.player.health).toBe(4);
     expect(state.player.armor).toBe(0);
     expect(state.combatPhase).toBe('player-turn');
   });
@@ -552,7 +552,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [voidRune],
       selectedHandRuneId: voidRune.id,
-      player: { ...state.player, wall, deck: [], armor: 0, health: 10 },
+      player: { ...state.player, wall, deck: [], armor: 10, health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       discardPile: [],
     }));
@@ -592,7 +592,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [createTestRune('hand-fire', 'Fire', 1)],
-      player: { ...state.player, wall, deck, health: 5, maxHealth: 10, armor: 0 },
+      player: { ...state.player, wall, deck, health: 5, maxHealth: 10, armor: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       discardPile: [],
     }));

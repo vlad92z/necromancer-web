@@ -6,6 +6,7 @@ import { create, type StoreApi } from 'zustand';
 import type { EffectResolutionLog, GameState, Player, Rune, RuneType, ScoringWall } from '../../types/game';
 import {
   createEmptyWall,
+  createEnemySpellBoard,
   createGoblinEnemy,
   createRuneSoundSignals,
   initializeSoloGame,
@@ -82,7 +83,7 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
     suppressedRunes: nextState.suppressedRunes ?? [],
-    enemyBoard: nextState.enemyBoard ?? createEmptyWall(),
+    enemyBoard: nextState.enemyBoard ?? createEnemySpellBoard(),
     enemyQueuedRunes: nextState.enemyQueuedRunes ?? [],
     enemyTurnNumber: typeof nextState.enemyTurnNumber === 'number' ? nextState.enemyTurnNumber : 0,
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
@@ -447,9 +448,18 @@ export const gameplayStoreConfig = (
         enemyBoard: state.enemyBoard,
         enemyQueuedRunes: state.enemyQueuedRunes,
         turnNumber: state.enemyTurnNumber,
+        activeArtefacts: state.activeArtefacts,
       });
       const enemyAttackSoundSignal = state.enemyAttackSoundSignal + (enemyTurnResult.healthDamage > 0 ? 1 : 0);
-      const shieldSoundSignal = state.shieldSoundSignal + (enemyTurnResult.healthDamage === 0 && enemyTurnResult.player.armor < endTurnEffects.player.armor ? 1 : 0);
+      const passivePreventedDamage = enemyTurnResult.logs.some((log) => (
+        log.effectId === 'passive.reduceDamage'
+        && log.output.previousValue !== log.output.nextValue
+      ));
+      const shieldedAttack = enemyTurnResult.healthDamage === 0 && (
+        enemyTurnResult.player.armor < endTurnEffects.player.armor
+        || passivePreventedDamage
+      );
+      const shieldSoundSignal = state.shieldSoundSignal + (shieldedAttack ? 1 : 0);
       runeSoundEvents = mergeRuneSoundEvents(
         runeSoundEvents,
         countRuneSoundEvents({

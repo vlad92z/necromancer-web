@@ -13,7 +13,7 @@ export function SoloGameOverModal() {
   const subline = 'Your health reached zero.';
 
   return (
-    <div className="pixel-modal absolute left-1/2 top-1/2 z-100 min-w-[420px] -translate-x-1/2 -translate-y-1/2 p-2 text-center font-pixel">
+    <div className="pixel-modal absolute left-1/2 top-1/2 z-100 min-w-105 -translate-x-1/2 -translate-y-1/2 p-2 text-center font-pixel">
       <div className="pixel-modal__inner px-7 py-8">
       <div
         className="pixel-game-stat mb-4 bg-[#e15f4f] px-3.5 py-2 text-xs uppercase tracking-[0.12em] text-[#fff8d8]"

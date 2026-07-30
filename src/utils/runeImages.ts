@@ -1,5 +1,7 @@
 import fireCard from '../assets/runes/cards/card_fireball.png';
 import frostCard from '../assets/runes/cards/card_frost_shield.png';
+import barricadeCard from '../assets/runes/cards/card_barricade.png';
+import headwindCard from '../assets/runes/cards/card_headwind.png';
 import lifeCard from '../assets/runes/cards/card_heal.png';
 import lightningCard from '../assets/runes/cards/card_lightning_bolt.png';
 import windCard from '../assets/runes/cards/card_tornado.png';
@@ -28,4 +30,14 @@ export const CURRENT_RUNE_IMAGE_SOURCES: Record<RuneType, RuneImageSources> = {
   Void: { cardImageSrc: voidCard, tokenImageSrc: voidToken },
   Wind: { cardImageSrc: windCard, tokenImageSrc: windToken },
   Lightning: { cardImageSrc: lightningCard, tokenImageSrc: lightningToken },
+};
+
+export const BARRICADE_RUNE_IMAGE_SOURCES: RuneImageSources = {
+  cardImageSrc: barricadeCard,
+  tokenImageSrc: lifeToken,
+};
+
+export const HEADWIND_RUNE_IMAGE_SOURCES: RuneImageSources = {
+  cardImageSrc: headwindCard,
+  tokenImageSrc: windToken,
 };

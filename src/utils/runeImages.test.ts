@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { RuneEffectRarity, RuneType } from '../types/game';
+import type { RuneType } from '../types/game';
 import { createRuneFromPool } from './runeEffects';
 import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
 
 const RUNE_TYPES: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind', 'Lightning'];
-const RARITIES: RuneEffectRarity[] = ['common', 'uncommon', 'rare', 'epic'];
 const EXPECTED_CARD_FILENAMES: Record<RuneType, string> = {
   Fire: 'card_fireball.png',
   Frost: 'card_frost_shield.png',
@@ -22,12 +21,17 @@ describe('runeImages', () => {
     expect(sources.tokenImageSrc).toContain(`token_${runeType.toLowerCase()}.png`);
   });
 
-  it.each(RUNE_TYPES)('uses the same current %s card image across all rarities', (runeType) => {
-    const cardImages = RARITIES.map((rarity) => (
-      createRuneFromPool({ id: `${runeType}-${rarity}`, runeType, rarity }).cardImageSrc
-    ));
-
-    expect(new Set(cardImages).size).toBe(1);
+  it('uses card-specific artwork for Barricade and Headwind', () => {
+    expect(createRuneFromPool({
+      id: 'life-common',
+      runeType: 'Life',
+      rarity: 'common',
+    }).cardImageSrc).toContain('card_barricade.png');
+    expect(createRuneFromPool({
+      id: 'wind-uncommon',
+      runeType: 'Wind',
+      rarity: 'uncommon',
+    }).cardImageSrc).toContain('card_headwind.png');
   });
 
   it('stores both resolved image values on created cards', () => {

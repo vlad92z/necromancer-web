@@ -4,9 +4,14 @@
 
 import type { ArtefactId } from '../types/artefacts';
 import type { EffectResolutionLog, Enemy, EnemyRune, Player, Rune, RuneType, ScoringWall } from '../types/game';
-import { resolveCastEffects, resolveEndTurnEffects, resolveStartTurnEffects } from './effectResolver';
+import {
+  resolveCastEffects,
+  resolveEndTurnEffects,
+  resolvePassiveEffects,
+  resolveStartTurnEffects,
+} from './effectResolver';
 import type { DrawTypeRequest, WallPosition } from './effectResolver';
-import { createEmptyWall, createEnemyTurnRunes } from './gameInitialization';
+import { createEnemySpellBoard, createEnemyTurnRunes } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
 import { runeHasType } from './runeHelpers';
 import { canRuneSatisfySlot } from './scoring';
@@ -125,6 +130,7 @@ export interface EnemyTurnInput {
   enemyBoard?: ScoringWall;
   enemyQueuedRunes?: EnemyRune[];
   turnNumber?: number;
+  activeArtefacts?: ArtefactId[];
   random?: () => number;
 }
 
@@ -366,9 +372,10 @@ export function resolveCompletedRuneCastEffects({
 export function resolveEnemyTurn({
   player,
   enemy,
-  enemyBoard = createEmptyWall(),
+  enemyBoard = createEnemySpellBoard(),
   enemyQueuedRunes = [],
   turnNumber = 0,
+  activeArtefacts = [],
   random = Math.random,
 }: EnemyTurnInput): EnemyTurnResult {
   if (!enemy) {
@@ -380,7 +387,7 @@ export function resolveEnemyTurn({
     : createEnemyTurnRunes(turnNumber);
   let nextPlayer = player;
   const nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
-  let healthDamage = 0;
+  let totalIncomingDamage = 0;
 
   for (const rune of runesToPlay) {
     const openSlots: Array<{ row: number; col: number }> = [];
@@ -403,23 +410,30 @@ export function resolveEnemyTurn({
       castEffectRefs: rune.castEffectRefs,
       passiveEffectRefs: rune.passiveEffectRefs,
     };
-    const incomingDamage = Math.max(0, rune.damage);
-    const armorAbsorbed = Math.min(nextPlayer.armor, incomingDamage);
-    const runeHealthDamage = incomingDamage - armorAbsorbed;
-    healthDamage += runeHealthDamage;
-    nextPlayer = {
-      ...nextPlayer,
-      armor: nextPlayer.armor - armorAbsorbed,
-      health: Math.max(0, nextPlayer.health - runeHealthDamage),
-    };
+    totalIncomingDamage += Math.max(0, rune.damage);
   }
+
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'onEnemyAttack',
+    wall: nextPlayer.wall,
+    activeArtefacts,
+    baseValues: { incomingDamage: totalIncomingDamage },
+  });
+  const incomingDamage = Math.max(0, passiveResult.values.incomingDamage ?? totalIncomingDamage);
+  const armorAbsorbed = Math.min(nextPlayer.armor, incomingDamage);
+  const healthDamage = incomingDamage - armorAbsorbed;
+  nextPlayer = {
+    ...nextPlayer,
+    armor: nextPlayer.armor - armorAbsorbed,
+    health: Math.max(0, nextPlayer.health - healthDamage),
+  };
 
   return {
     player: nextPlayer,
     enemyBoard: nextBoard,
     enemyQueuedRunes: [],
     boardFull: nextBoard.every((row) => row.every((cell) => cell.id !== null)),
-    logs: [],
+    logs: passiveResult.logs,
     healthDamage,
   };
 }

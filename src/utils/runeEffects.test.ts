@@ -12,27 +12,27 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
 }>> = {
   common: {
     Fire: {
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
     Frost: {
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
     Life: {
-      castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
     Void: {
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
     Wind: {
-      castEffectRefs: [{ effectId: 'cast.draw', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
     Lightning: {
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
   },
@@ -54,8 +54,8 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [],
     },
     Wind: {
-      castEffectRefs: [{ effectId: 'cast.drawAdjacent' }],
-      passiveEffectRefs: [],
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
     },
     Lightning: {
       castEffectRefs: [],
@@ -132,26 +132,26 @@ describe('runeEffects', () => {
       id: 'fire-common',
       runeTypes: ['Fire'],
       rarity: 'common',
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
       passiveEffectRefs: [],
     });
   });
 
   it('maps all common rune identities to Stage 1 refs', () => {
     expect(createRune('frost-common', 'Frost', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.armor', params: { amount: 3 } },
+      { effectId: 'cast.armor', params: { amount: 5 } },
     ]);
     expect(createRune('life-common', 'Life', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.healing', params: { amount: 2 } },
+      { effectId: 'cast.armor', params: { amount: 5 } },
     ]);
     expect(createRune('void-common', 'Void', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.damage', params: { amount: 1 } },
+      { effectId: 'cast.damage', params: { amount: 5 } },
     ]);
     expect(createRune('wind-common', 'Wind', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.draw', params: { amount: 1 } },
+      { effectId: 'cast.damage', params: { amount: 5 } },
     ]);
     expect(createRune('lightning-common', 'Lightning', 'common')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
       passiveEffectRefs: [],
     });
   });
@@ -171,7 +171,7 @@ describe('runeEffects', () => {
 
     first.castEffectRefs[0].params = { amount: 99 };
 
-    expect(second.castEffectRefs).toEqual([{ effectId: 'cast.damage', params: { amount: 1 } }]);
+    expect(second.castEffectRefs).toEqual([{ effectId: 'cast.damage', params: { amount: 5 } }]);
     expect(first.castEffectRefs).not.toBe(second.castEffectRefs);
   });
 
@@ -205,8 +205,8 @@ describe('runeEffects', () => {
       passiveEffectRefs: [],
     });
     expect(createRune('wind-uncommon', 'Wind', 'uncommon')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.drawAdjacent' }],
-      passiveEffectRefs: [],
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
     });
     expect(createRune('lightning-uncommon', 'Lightning', 'uncommon')).toMatchObject({
       castEffectRefs: [],
@@ -290,7 +290,7 @@ describe('runeEffects', () => {
   });
 
   it('describes effects without rarity placement requirements', () => {
-    expect(getRuneEffectDescription(createRune('fire-common', 'Fire', 'common'))).toBe('• Deal 1 damage');
+    expect(getRuneEffectDescription(createRune('fire-common', 'Fire', 'common'))).toBe('• Deal 5 damage');
     expect(getRuneEffectDescription(createRune('fire-uncommon', 'Fire', 'uncommon'))).toBe(
       '• Deal 1 damage for every adjacent rune'
     );

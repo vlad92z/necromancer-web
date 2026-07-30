@@ -11,235 +11,87 @@ import type {
   RuneType,
   ScoringWall,
 } from '../types/game';
-import { copyEffectRefs, getDefaultRuneName } from './runeEffects';
-import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
+import { copyEffectRefs, createRuneFromPool } from './runeEffects';
 import { getWallSlotRuneTypes } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 6;
-export const DEFAULT_ENEMY_MAX_HEALTH = 7;
+export const DEFAULT_ENEMY_MAX_HEALTH = 25;
 export const ENEMY_SCALING_MULTIPLIER = 1.35;
 export const ENEMY_HEALTH_ROUNDING_STEP = 1;
-const STARTING_DECK_DEFINITIONS: Array<Omit<Rune, 'name' | 'cardImageSrc' | 'tokenImageSrc'>> = [
+const STARTING_DECK_DEFINITIONS: Array<Pick<Rune, 'id' | 'runeTypes' | 'rarity'>> = [
   {
     id: 'player-1-Fire-0',
     runeTypes: ['Fire'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Fire-1',
     runeTypes: ['Fire'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Fire-2',
-    runeTypes: ['Fire'],
-    rarity: 'uncommon',
-    castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Fire-3',
-    runeTypes: ['Fire'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Fire-4',
-    runeTypes: ['Fire'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Life-0',
     runeTypes: ['Life'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Life-1',
     runeTypes: ['Life'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Life-2',
-    runeTypes: ['Life'],
-    rarity: 'uncommon',
-    castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 4 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Life-3',
-    runeTypes: ['Life'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Life-4',
-    runeTypes: ['Life'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.healing', params: { amount: 2 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Wind-0',
     runeTypes: ['Wind'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Fire' } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Wind-1',
     runeTypes: ['Wind'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Frost' } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Wind-2',
-    runeTypes: ['Wind'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Lightning' } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Wind-3',
-    runeTypes: ['Wind'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Void' } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Wind-4',
-    runeTypes: ['Wind'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Life' } }],
-    passiveEffectRefs: [],
+    rarity: 'uncommon',
   },
   {
     id: 'player-1-Frost-0',
     runeTypes: ['Frost'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Frost-1',
     runeTypes: ['Frost'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Frost-2',
-    runeTypes: ['Frost'],
-    rarity: 'uncommon',
-    castEffectRefs: [{ effectId: 'cast.armorAdjacent', params: { amount: 3 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Frost-3',
-    runeTypes: ['Frost'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Frost-4',
-    runeTypes: ['Frost'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Void-0',
     runeTypes: ['Void'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Void-1',
     runeTypes: ['Void'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Void-2',
-    runeTypes: ['Void'],
-    rarity: 'uncommon',
-    castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 2 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Void-3',
-    runeTypes: ['Void'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Void-4',
-    runeTypes: ['Void'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Lightning-0',
     runeTypes: ['Lightning'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
   },
   {
     id: 'player-1-Lightning-1',
     runeTypes: ['Lightning'],
     rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Lightning-2',
-    runeTypes: ['Lightning'],
-    rarity: 'uncommon',
-    castEffectRefs: [],
-    passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 2 } }],
-  },
-  {
-    id: 'player-1-Lightning-3',
-    runeTypes: ['Lightning'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
-  },
-  {
-    id: 'player-1-Lightning-4',
-    runeTypes: ['Lightning'],
-    rarity: 'common',
-    castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
-    passiveEffectRefs: [],
   },
 ];
 
-export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map((rune) => ({
-  ...rune,
-  name: getDefaultRuneName(rune.runeTypes[0], rune.rarity),
-  ...CURRENT_RUNE_IMAGE_SOURCES[rune.runeTypes[0]],
-}));
+export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map((rune) => (
+  createRuneFromPool({
+    id: rune.id,
+    runeType: rune.runeTypes[0],
+    rarity: rune.rarity,
+    random: () => 0,
+  })
+));
 
 export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
   return Array(size)
@@ -261,6 +113,13 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
     );
 }
 
+export function createEnemySpellBoard(size: number = WALL_SIZE): ScoringWall {
+  return createEmptyWall(size).map((row) => row.map((cell) => ({
+    ...cell,
+    acceptedRuneTypes: ['Life'],
+  })));
+}
+
 export function scaleEnemyMaxHealth(maxHealth: number): number {
   return Math.ceil((maxHealth * ENEMY_SCALING_MULTIPLIER) / ENEMY_HEALTH_ROUNDING_STEP) * ENEMY_HEALTH_ROUNDING_STEP;
 }
@@ -275,21 +134,32 @@ export function createGoblinEnemy(maxHealth: number): Enemy {
   };
 }
 
-export function createEnemyLifeRune(id: string): EnemyRune {
-  return {
+function createEnemyRune(
+  id: string,
+  runeType: RuneType,
+  rarity: Rune['rarity'],
+  damage: number,
+): EnemyRune {
+  const displayRune = createRuneFromPool({
     id,
-    name: getDefaultRuneName('Life'),
-    runeTypes: ['Life'],
-    rarity: 'common',
-    ...CURRENT_RUNE_IMAGE_SOURCES.Life,
+    runeType,
+    rarity,
+    random: () => 0,
+  });
+  return {
+    ...displayRune,
     castEffectRefs: [],
     passiveEffectRefs: [],
-    damage: 1,
+    damage,
   };
 }
 
 export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
-  return [0, 1, 2].map((index) => createEnemyLifeRune(`enemy-${turnNumber}-${index}`));
+  return [
+    createEnemyRune(`enemy-${turnNumber}-tornado-0`, 'Wind', 'common', 5),
+    createEnemyRune(`enemy-${turnNumber}-tornado-1`, 'Wind', 'common', 5),
+    createEnemyRune(`enemy-${turnNumber}-barricade`, 'Life', 'common', 0),
+  ];
 }
 
 export function getRuneTypes(): RuneType[] {
@@ -367,7 +237,7 @@ export function initializeSoloGame(
     discardPile: [],
     suppressedRunes: [],
     selectedHandRuneId: null,
-    enemyBoard: createEmptyWall(WALL_SIZE),
+    enemyBoard: createEnemySpellBoard(WALL_SIZE),
     enemyQueuedRunes: [],
     enemyTurnNumber: 0,
   };

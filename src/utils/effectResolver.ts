@@ -19,8 +19,7 @@ import type {
 import { EFFECT_CATALOG } from './effectCatalog';
 import type { CastEffectId, CatalogEffectId } from './effectCatalog';
 import { getPrimaryRuneType } from './runeHelpers';
-import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
-import { getDefaultRuneName } from './runeEffects';
+import { createRuneFromPool } from './runeEffects';
 
 export interface WallPosition {
   row: number;
@@ -376,13 +375,19 @@ function convertCompletedCell(
   }
 
   const nextWall = cloneWall(wall);
+  const convertedRune = createRuneFromPool({
+    id: suppressedRune.id,
+    runeType: targetType,
+    random: () => 0,
+  });
   nextWall[position.row][position.col] = {
     id: suppressedRune.id,
-    name: getDefaultRuneName(targetType),
+    name: convertedRune.name,
     acceptedRuneTypes: [...nextWall[position.row][position.col].acceptedRuneTypes],
     runeTypes: [targetType],
     rarity: 'common',
-    ...CURRENT_RUNE_IMAGE_SOURCES[targetType],
+    cardImageSrc: convertedRune.cardImageSrc,
+    tokenImageSrc: convertedRune.tokenImageSrc,
     castEffectRefs: [],
     passiveEffectRefs: [],
   };

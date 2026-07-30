@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EnemyRune } from '../types/game';
 import {
   createEmptyWall,
+  createEnemySpellBoard,
   createEnemyTurnRunes,
   createPlayer,
   initializeSoloGame,
@@ -23,15 +24,19 @@ function createEnemyRune(id: string, damage: number): EnemyRune {
 }
 
 describe('enemy spellboard combat', () => {
-  it('initializes a hidden enemy queue and empty board', () => {
+  it('initializes a hidden enemy queue and Life-slot board', () => {
     const state = initializeSoloGame();
 
     expect(state.enemyBoard).toHaveLength(6);
     expect(state.enemyBoard.flat()).toHaveLength(36);
     expect(state.enemyBoard.flat().every((cell) => cell.id === null)).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => (
+      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
+    ))).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([1, 1, 1]);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Tornado', 'Tornado', 'Barricade']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Wind', 'Wind', 'Life']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([5, 5, 0]);
   });
 
   it('plays queued runes in order into random open slots and applies each damage', () => {
@@ -40,7 +45,7 @@ describe('enemy spellboard combat', () => {
     const result = resolveEnemyTurn({
       player,
       enemy: initializeSoloGame().enemy,
-      enemyBoard: createEmptyWall(),
+      enemyBoard: createEnemySpellBoard(),
       enemyQueuedRunes: queuedRunes,
       random: () => 0,
     });
@@ -52,8 +57,37 @@ describe('enemy spellboard combat', () => {
     expect(result.healthDamage).toBe(5);
   });
 
+  it('reduces total incoming enemy-turn damage before armor', () => {
+    const wall = createEmptyWall();
+    wall[0][0] = {
+      ...wall[0][0],
+      id: 'headwind-wall-copy',
+      name: 'Headwind',
+      runeTypes: ['Wind'],
+      rarity: 'uncommon',
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
+    };
+    const player = {
+      ...createPlayer('player-1', 'Tester', 20, [], 20),
+      wall,
+    };
+
+    const result = resolveEnemyTurn({
+      player,
+      enemy: initializeSoloGame().enemy,
+      enemyBoard: createEnemySpellBoard(),
+      enemyQueuedRunes: [createEnemyRune('attacker', 3)],
+      random: () => 0,
+    });
+
+    expect(result.player.health).toBe(18);
+    expect(result.healthDamage).toBe(2);
+    expect(result.logs.map((log) => log.effectId)).toContain('passive.reduceDamage');
+  });
+
   it('fills the last slot and reports an enemy board win condition', () => {
-    const board = createEmptyWall();
+    const board = createEnemySpellBoard();
     board.flat().forEach((cell, index) => {
       if (index < 35) {
         cell.id = `filled-${index}`;

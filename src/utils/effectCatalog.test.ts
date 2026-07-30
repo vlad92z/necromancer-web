@@ -107,7 +107,7 @@ describe('effectCatalog', () => {
       'Heal 50% of damage dealt'
     );
     expect(getEffectDescription(createEffectRef('passive.reduceDamage', { amount: 3 }))).toBe(
-      'Reduce incoming damage by 3'
+      'All damage taken by you is reduced by 3'
     );
   });
 

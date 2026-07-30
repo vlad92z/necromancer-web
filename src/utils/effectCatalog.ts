@@ -475,7 +475,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Reduce incoming damage by ${numberParam(params, 'amount')}`,
+    describe: (params) => `All damage taken by you is reduced by ${numberParam(params, 'amount')}`,
   },
 };
 

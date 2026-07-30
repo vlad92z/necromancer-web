@@ -23,78 +23,69 @@ describe('gameInitialization combat state', () => {
     expect(state.selectedHandRuneId).toBeNull();
   });
 
+  it('starts the default Goblin encounter at 25 health', () => {
+    const state = initializeSoloGame();
+
+    expect(state.enemy).toMatchObject({ health: 25, maxHealth: 25 });
+    expect(state.enemyBoard.flat().every((cell) => (
+      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
+    ))).toBe(true);
+  });
+
   it('creates the fixed literal starting deck', () => {
     const deck = createStartingDeck();
 
-    expect(deck).toHaveLength(30);
+    expect(deck).toHaveLength(12);
     expect(deck.map((rune) => rune.id)).toEqual(STARTING_DECK.map((rune) => rune.id));
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Fire')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Life')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Wind')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Frost')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Void')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Lightning')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.rarity === 'common')).toHaveLength(25);
-    expect(deck.filter((rune) => rune.rarity === 'uncommon')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeTypes[0] !== 'Wind').flatMap((rune) => rune.castEffectRefs)).not.toContainEqual(
-      expect.objectContaining({ effectId: 'cast.drawType' })
-    );
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Wind').map((rune) => rune.castEffectRefs)).toEqual([
-      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Fire' } }],
-      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Frost' } }],
-      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Lightning' } }],
-      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Void' } }],
-      [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Life' } }],
-    ]);
-    expect(deck.find((rune) => rune.id === 'player-1-Fire-2')).toMatchObject({
-      rarity: 'uncommon',
-      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
-      passiveEffectRefs: [],
-    });
-    expect(deck.find((rune) => rune.id === 'player-1-Life-2')).toMatchObject({
-      rarity: 'uncommon',
-      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 2 } }],
-      passiveEffectRefs: [],
-    });
-    expect(deck.find((rune) => rune.id === 'player-1-Frost-2')).toMatchObject({
-      rarity: 'uncommon',
-      castEffectRefs: [{ effectId: 'cast.armorAdjacent', params: { amount: 3 } }],
-      passiveEffectRefs: [],
-    });
-    expect(deck.find((rune) => rune.id === 'player-1-Void-2')).toMatchObject({
-      rarity: 'uncommon',
-      castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 2 } }],
-      passiveEffectRefs: [],
-    });
-    expect(deck.find((rune) => rune.id === 'player-1-Lightning-2')).toMatchObject({
+    expect(deck.filter((rune) => rune.rarity === 'common')).toHaveLength(11);
+    expect(deck.filter((rune) => rune.rarity === 'uncommon')).toHaveLength(1);
+    expect(deck.map((rune) => rune.name).sort()).toEqual([
+      'Barricade',
+      'Barricade',
+      'Firebolt',
+      'Firebolt',
+      'Frost Shield',
+      'Frost Shield',
+      'Headwind',
+      'Lightning Bolt',
+      'Lightning Bolt',
+      'Tornado',
+      'Void Tendrils',
+      'Void Tendrils',
+    ].sort());
+    expect(deck.find((rune) => rune.name === 'Headwind')).toMatchObject({
       rarity: 'uncommon',
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.adjacentDamageBoost', params: { amount: 1 } }],
+      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
     });
   });
 
-  it('assigns predefined variant names to starting cards', () => {
+  it('assigns the requested art and effects to starting cards', () => {
     const deck = createStartingDeck();
 
-    expect(deck.filter((rune) => rune.runeTypes[0] === 'Fire').map((rune) => rune.name)).toEqual([
-      'Firebolt',
-      'Firebolt',
-      'Fire Blast',
-      'Firebolt',
-      'Firebolt',
-    ]);
+    expect(deck.find((rune) => rune.name === 'Barricade')).toMatchObject({
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 5 } }],
+    });
+    expect(deck.find((rune) => rune.name === 'Barricade')?.cardImageSrc).toContain('card_barricade.png');
+    expect(deck.find((rune) => rune.name === 'Headwind')?.cardImageSrc).toContain('card_headwind.png');
+    expect(
+      deck
+        .filter((rune) => ['Firebolt', 'Lightning Bolt', 'Tornado', 'Void Tendrils'].includes(rune.name))
+        .every((rune) => rune.castEffectRefs[0]?.effectId === 'cast.damage'
+          && rune.castEffectRefs[0]?.params?.amount === 5)
+    ).toBe(true);
   });
 
   it('clones the fixed starting deck refs', () => {
     const firstDeck = createStartingDeck();
     const secondDeck = createStartingDeck();
 
-    firstDeck[10].castEffectRefs[0].params = { amount: 99 };
+    firstDeck[0].castEffectRefs[0].params = { amount: 99 };
 
-    expect(secondDeck[10].castEffectRefs).toEqual([
-      { effectId: 'cast.drawType', params: { amount: 1, targetType: 'Fire' } },
+    expect(secondDeck[0].castEffectRefs).toEqual([
+      { effectId: 'cast.damage', params: { amount: 5 } },
     ]);
-    expect(firstDeck[10].castEffectRefs).not.toBe(secondDeck[10].castEffectRefs);
+    expect(firstDeck[0].castEffectRefs).not.toBe(secondDeck[0].castEffectRefs);
   });
 
   it('assigns current type card and token art to every starting rune', () => {
