@@ -86,13 +86,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
         onClick={onClose}
         className="pixel-modal-backdrop fixed inset-0 z-1000 flex items-center justify-center px-6 py-6"
       >
-        <motion.div
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          className="pixel-modal flex aspect-3/2 w-[min(1100px,92vw)] max-h-[88vh] flex-col overflow-hidden p-2 font-pixel"
-        >
+        <div className="pixel-modal flex aspect-3/2 w-[min(1100px,92vw)] max-h-[88vh] flex-col overflow-hidden p-2 font-pixel">
           <div className="pixel-modal__inner flex min-h-0 flex-1 flex-col p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex justify-between w-full">
@@ -121,11 +115,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
 
           <div className="flex-1 overflow-y-auto pr-1.5">
             {sortedRunes.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 16 }}
-              >
+              <div>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1">
                   {sortedRunes.map((rune, index) => {
                     const card = runeCards[index];
@@ -148,7 +138,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
                     );
                   })}
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {sortedRunes.length === 0 && (
@@ -158,7 +148,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
             )}
           </div>
           </div>
-        </motion.div>
+        </div>
       </motion.div>
     </AnimatePresence>
   );
