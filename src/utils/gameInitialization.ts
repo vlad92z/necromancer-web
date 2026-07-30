@@ -12,6 +12,7 @@ import type {
   ScoringWall,
 } from '../types/game';
 import { copyEffectRefs, createRuneFromPool } from './runeEffects';
+import { createEffectRef } from './effectCatalog';
 import { BARRICADE_RUNE_IMAGE_SOURCES, THROW_ROCK_RUNE_IMAGE_SOURCES } from './runeImages';
 import { getWallSlotRuneTypes } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
@@ -145,13 +146,19 @@ function createEnemyRune(
   imageSources: Pick<Rune, 'cardImageSrc' | 'tokenImageSrc'>,
   castEffectRefs: Rune['castEffectRefs'] = [],
 ): EnemyRune {
+  const effectiveCastEffectRefs = castEffectRefs.length > 0
+    ? castEffectRefs
+    : damage > 0
+      ? [createEffectRef('cast.damage', { amount: damage })]
+      : [];
+
   return {
     id,
     name,
     runeTypes: [runeType],
     rarity,
     ...imageSources,
-    castEffectRefs: copyEffectRefs(castEffectRefs),
+    castEffectRefs: copyEffectRefs(effectiveCastEffectRefs),
     passiveEffectRefs: [],
     damage,
   };

@@ -3,6 +3,7 @@
  */
 
 import { useCallback } from 'react';
+import type { Rune } from '../../../../types/game';
 import { useGameplayActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
 import { WallCell } from '../WallCell';
@@ -11,9 +12,11 @@ const cellKey = (row: number, col: number) => `${row}-${col}`;
 
 interface ScoringWallProps {
   hiddenWallSlots: Set<string>;
+  onRuneHover: (rune: Rune) => void;
+  onRuneLeave: () => void;
 }
 
-export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
+export function ScoringWall({ hiddenWallSlots, onRuneHover, onRuneLeave }: ScoringWallProps) {
   const { wall } = useGameplayWallState();
   const { castRuneToWall } = useGameplayActions();
 
@@ -23,8 +26,6 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
     },
     [castRuneToWall]
   );
-
-  const gridSize = wall.length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column'}}>
@@ -64,7 +65,8 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                 }
                 row={rowIndex}
                 col={colIndex}
-                wallSize={gridSize}
+                onRuneHover={onRuneHover}
+                onRuneLeave={onRuneLeave}
               />
             </div>
           ))}

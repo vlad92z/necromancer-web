@@ -3,8 +3,14 @@
  */
 
 import { useCombatEnemyState } from '../../../hooks/useGameState';
+import type { Rune } from '../../../types/game';
+import { WallRuneCardPreview } from './WallRuneCardPreview';
 
-export function EnemyPanel() {
+interface EnemyPanelProps {
+  hoveredRune: Rune | null;
+}
+
+export function EnemyPanel({ hoveredRune }: EnemyPanelProps) {
   const { enemy } = useCombatEnemyState();
 
   if (!enemy) {
@@ -53,6 +59,8 @@ export function EnemyPanel() {
           />
         </div>
       </div>
+
+      <WallRuneCardPreview rune={hoveredRune} />
     </section>
   );
 }

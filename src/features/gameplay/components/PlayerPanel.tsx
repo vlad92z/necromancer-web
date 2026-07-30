@@ -5,8 +5,14 @@
 import wizardImage from '../../../assets/enemies/wizard.png';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
 import { useGameplayHealthState, useSelectedArtefactIds } from '../../../hooks/useGameState';
+import type { Rune } from '../../../types/game';
+import { WallRuneCardPreview } from './WallRuneCardPreview';
 
-export function PlayerPanel() {
+interface PlayerPanelProps {
+  hoveredRune: Rune | null;
+}
+
+export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
   const { health, maxHealth, armor } = useGameplayHealthState();
   const selectedArtefactIds = useSelectedArtefactIds();
 
@@ -48,6 +54,7 @@ export function PlayerPanel() {
         </div>
       </div>
 
+      <WallRuneCardPreview rune={hoveredRune} />
       
         {selectedArtefactIds.length > 0 ? (
           <div className="pixel-game-panel-inset mt-4 px-3 py-2">

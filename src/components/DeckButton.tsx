@@ -2,9 +2,9 @@ import { useUIActions } from '../hooks/useGameActions';
 import { useClickSound } from '../hooks/useClickSound';
 import { useActiveElement, useCombatZoneState, useGameplayDeckState, useUIOverlayState } from '../hooks/useGameState';
 import type { RuneZoneOverlay } from '../state/stores/uiStore';
-import deckSvg from '../assets/stats/deck.svg';
-import drawSvg from '../assets/stats/draw.svg';
-import discardSvg from '../assets/stats/discard.svg';
+import deckSvg from '../assets/stats/deck.png';
+import drawSvg from '../assets/stats/draw.png';
+import discardSvg from '../assets/stats/discard.png';
 
 const ZONE_COPY: Record<RuneZoneOverlay, { label: string; title: string; tooltip: (count: number) => string }> = {
     draw: {

@@ -41,6 +41,9 @@ describe('enemy spellboard combat', () => {
     expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([5, 5, 0]);
     expect(createEnemyTurnRunes(4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
     expect(createEnemyTurnRunes(4)[0]?.tokenImageSrc).toContain('token_life.png');
+    expect(createEnemyTurnRunes(4)[0]?.castEffectRefs).toEqual([
+      { effectId: 'cast.damage', params: { amount: 5 } },
+    ]);
   });
 
   it('plays queued runes in order into random open slots and applies each damage', () => {
