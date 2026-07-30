@@ -88,16 +88,6 @@ export function TooltipView() {
     : 0;
   const overlapOffset = -overlapAmount;
 
-  if (handCards.length === 0) {
-    return (
-      <div className="pixel-game-panel-inset flex h-full w-full items-center justify-center border-dashed px-5 py-4 text-center">
-        <div>
-          <div className="font-pixel text-sm uppercase text-[#b5d3bd]">No runes in hand</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-visible px-1 py-4">
       {handCards.map(({ rune, card }, index) => {

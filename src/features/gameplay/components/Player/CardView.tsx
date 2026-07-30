@@ -57,7 +57,7 @@ export function CardView({
   const titleClassName = isSmallCard
     ? `px-2 py-1 font-pixel text-[10px] leading-tight ${titleTextColor}`
     : `px-3 py-2 font-pixel text-sm leading-tight ${titleTextColor}`;
-  const className = `pixel-game-card flex flex-col ${sizeClassName} ${selectedClassName} ${interactiveClassName}`;
+  const className = `pixel-game-card flex flex-col rounded-[2px] ${sizeClassName} ${selectedClassName} ${interactiveClassName}`;
 
   const content = (
     <>
