@@ -5,7 +5,6 @@
 import type { ArtefactId } from './artefacts';
 
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
-export type WallSlotFamily = 'fireVoid' | 'lightningWind' | 'lifeFrost';
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 export type RuneSoundSignals = Record<RuneType, number>;
 
@@ -32,7 +31,7 @@ export interface EffectResolutionLog {
 
 export interface Rune {
   id: string;
-  runeType: RuneType;
+  runeTypes: RuneType[];
   rarity: RuneEffectRarity;
   castEffectRefs: EffectRef[];
   passiveEffectRefs: EffectRef[];
@@ -81,7 +80,8 @@ export interface TooltipCard {
 
 export interface WallCell {
   id: string | null;
-  runeType: RuneType | null;
+  acceptedRuneTypes: RuneType[];
+  runeTypes: RuneType[];
   rarity: RuneEffectRarity | null;
   castEffectRefs: EffectRef[] | null;
   passiveEffectRefs: EffectRef[] | null;

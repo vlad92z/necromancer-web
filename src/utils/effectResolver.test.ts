@@ -432,12 +432,12 @@ describe('effectResolver resolveCastEffects', () => {
     });
 
     expect(result.enemy?.health).toBe(42);
-    expect(result.wall[0][0].runeType).toBeNull();
-    expect(result.wall[0][1].runeType).toBeNull();
-    expect(result.wall[1][0].runeType).toBeNull();
-    expect(result.wall[1][1].runeType).toBe('Void');
-    expect(result.wall[2][2].runeType).toBeNull();
-    expect(result.wall[3][3].runeType).toBe('Void');
+    expect(result.wall[0][0].runeTypes).toEqual([]);
+    expect(result.wall[0][1].runeTypes).toEqual([]);
+    expect(result.wall[1][0].runeTypes).toEqual([]);
+    expect(result.wall[1][1].runeTypes[0]).toBe('Void');
+    expect(result.wall[2][2].runeTypes).toEqual([]);
+    expect(result.wall[3][3].runeTypes[0]).toBe('Void');
     expect(result.suppressedRunes.map((rune) => rune.id)).toEqual([
       'completed-0-0',
       'completed-0-1',
@@ -575,15 +575,15 @@ describe('effectResolver resolveCastEffects', () => {
     });
 
     expect(result.returnedRunes).toHaveLength(2);
-    expect(result.returnedRunes.map((rune) => rune.runeType)).toEqual(['Fire', 'Frost']);
+    expect(result.returnedRunes.map((rune) => rune.runeTypes[0])).toEqual(['Fire', 'Frost']);
     expect(result.returnedRunes.every((rune) => !['completed-0-0', 'completed-0-1'].includes(rune.id))).toBe(true);
     expect(result.returnedOverflowRunes).toHaveLength(1);
-    expect(result.returnedOverflowRunes[0]?.runeType).toBe('Life');
+    expect(result.returnedOverflowRunes[0]?.runeTypes[0]).toBe('Life');
     expect(result.returnedOverflowRunes[0]?.id).not.toBe('completed-1-0');
     expect(result.suppressedRunes).toEqual([]);
-    expect(result.wall[0][0].runeType).toBeNull();
-    expect(result.wall[0][1].runeType).toBeNull();
-    expect(result.wall[1][0].runeType).toBeNull();
+    expect(result.wall[0][0].runeTypes).toEqual([]);
+    expect(result.wall[0][1].runeTypes).toEqual([]);
+    expect(result.wall[1][0].runeTypes).toEqual([]);
   });
 
   it('destroys a deterministic random type target while excluding the source', () => {
@@ -603,9 +603,9 @@ describe('effectResolver resolveCastEffects', () => {
       rng: () => 0.75,
     });
 
-    expect(result.wall[0][0].runeType).toBe('Fire');
-    expect(result.wall[0][1].runeType).toBe('Fire');
-    expect(result.wall[0][2].runeType).toBeNull();
+    expect(result.wall[0][0].runeTypes[0]).toBe('Fire');
+    expect(result.wall[0][1].runeTypes[0]).toBe('Fire');
+    expect(result.wall[0][2].runeTypes).toEqual([]);
     expect(result.suppressedRunes.map((rune) => rune.id)).toEqual(['completed-0-2']);
   });
 
@@ -624,7 +624,7 @@ describe('effectResolver resolveCastEffects', () => {
       rng: () => 0,
     });
 
-    expect(result.wall[0][0].runeType).toBe('Fire');
+    expect(result.wall[0][0].runeTypes[0]).toBe('Fire');
     expect(result.suppressedRunes).toEqual([]);
     expect(result.logs[0]).toMatchObject({ effectId: 'cast.destroyType', output: { noTarget: true } });
   });
@@ -647,7 +647,8 @@ describe('effectResolver resolveCastEffects', () => {
 
     expect(randomResult.wall[0][1]).toEqual({
       id: 'completed-0-1',
-      runeType: 'Frost',
+      acceptedRuneTypes: ['Fire'],
+      runeTypes: ['Frost'],
       rarity: 'common',
       castEffectRefs: [],
       passiveEffectRefs: [],
@@ -667,9 +668,9 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(adjacentResult.wall[0][0].runeType).toBe('Void');
-    expect(adjacentResult.wall[0][1].runeType).toBe('Void');
-    expect(adjacentResult.wall[2][2].runeType).toBe('Void');
+    expect(adjacentResult.wall[0][0].runeTypes[0]).toBe('Void');
+    expect(adjacentResult.wall[0][1].runeTypes[0]).toBe('Void');
+    expect(adjacentResult.wall[2][2].runeTypes[0]).toBe('Void');
     expect(adjacentResult.suppressedRunes.map((rune) => rune.id)).toEqual([
       'completed-0-0',
       'completed-0-1',
@@ -1179,7 +1180,7 @@ function createTestPlayer(cells: Array<[number, number, RuneType]> = []): Player
 function createTestRune(id: string, runeType: RuneType, castEffectRefs: Rune['castEffectRefs']): Rune {
   return {
     id,
-    runeType,
+    runeTypes: [runeType],
     rarity: 'common',
     castEffectRefs,
     passiveEffectRefs: [],
@@ -1204,7 +1205,8 @@ function createWallCell(
 ): WallCell {
   return {
     id,
-    runeType,
+    acceptedRuneTypes: [runeType],
+    runeTypes: [runeType],
     rarity: 'common',
     castEffectRefs,
     passiveEffectRefs,

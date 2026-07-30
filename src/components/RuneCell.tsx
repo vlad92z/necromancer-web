@@ -34,6 +34,7 @@ import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.png';
 import lightningRuneRare from '../assets/runes/lightning_rune_rare.png';
 import lightningRuneEpic from '../assets/runes/lightning_rune_epic.png';
 import { getRuneEffectDescription } from '../utils/runeEffects';
+import { getPrimaryRuneType } from '../utils/runeHelpers';
 
 const RUNE_ASSETS = {
   Fire: fireRune,
@@ -103,22 +104,6 @@ export interface RuneCellProps {
   runePulseScale?: number;
 }
 
-const VARIANT_STYLES: Record<RuneCellVariant, {
-  border: string;
-  background: string;
-  backgroundOccupied?: string;
-}> = {
-  wall: {
-    border: '3px solid #141313',
-    background: '#293532',
-    backgroundOccupied: '#354542',
-  },
-  draft: {
-    border: 'none',
-    background: 'transparent',
-  },
-};
-
 export function RuneCell({
   rune,
   variant,
@@ -137,9 +122,7 @@ export function RuneCell({
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = RUNE_SIZE_CONFIG[size];
-  const variantStyle = VARIANT_STYLES[variant];
-  
-  const runeType = rune?.runeType || placeholder?.runeType;
+  const runeType = rune ? getPrimaryRuneType(rune) : placeholder?.runeType;
   const runeRarity = showEffect && rune
     ? rune.rarity
     : placeholder?.runeRarity ?? null;
@@ -157,10 +140,6 @@ export function RuneCell({
     }
     return getRuneEffectDescription(tooltipSourceRune);
   }, [showTooltip, tooltipSourceRune]);
-  
-  const backgroundColor = (variant === 'wall' && rune && variantStyle.backgroundOccupied)
-    ? variantStyle.backgroundOccupied
-    : variantStyle.background;
   
   const handleMouseEnter = (e: MouseEvent<HTMLDivElement>) => {
     if (clickable) {

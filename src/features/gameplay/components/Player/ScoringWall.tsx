@@ -49,7 +49,7 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
               <WallCell
                 cell={
                   hiddenWallSlots.has(cellKey(rowIndex, colIndex))
-                    ? { id: null, runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }
+                    ? { ...cell, id: null, runeTypes: [], rarity: null, castEffectRefs: null, passiveEffectRefs: null }
                     : cell
                 }
                 row={rowIndex}

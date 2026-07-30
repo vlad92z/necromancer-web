@@ -8,7 +8,8 @@ import { resolveCastEffects, resolveEndTurnEffects, resolveStartTurnEffects } fr
 import type { DrawTypeRequest, WallPosition } from './effectResolver';
 import { createEmptyWall, createEnemyTurnRunes } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
-import { getWallSlotFamily, isRuneTypeAcceptedBySlotFamily } from './scoring';
+import { runeHasType } from './runeHelpers';
+import { canRuneSatisfySlot } from './scoring';
 
 const DEFAULT_HAND_SIZE = 6;
 export const EXTRA_DRAW_HAND_LIMIT = 10;
@@ -156,6 +157,7 @@ function shuffleRunes(runes: Rune[]): Rune[] {
 function cloneRune(rune: Rune): Rune {
   return {
     ...rune,
+    runeTypes: [...rune.runeTypes],
     castEffectRefs: copyEffectRefs(rune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(rune.passiveEffectRefs),
   };
@@ -173,8 +175,10 @@ function createDefaultCompletedRuneId(rune: Rune, position: WallPosition): strin
 export function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
   return wall.reduce<Map<RuneType, number>>((counts, row) => {
     row.forEach((cell) => {
-      if (cell.runeType && cell.id) {
-        counts.set(cell.runeType, (counts.get(cell.runeType) ?? 0) + 1);
+      if (cell.id) {
+        cell.runeTypes.forEach((runeType) => {
+          counts.set(runeType, (counts.get(runeType) ?? 0) + 1);
+        });
       }
     });
     return counts;
@@ -182,7 +186,7 @@ export function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, num
 }
 
 export function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
-  return wall.some((row) => row.some((cell) => cell.runeType === runeType && cell.id !== null));
+  return wall.some((row) => row.some((cell) => cell.id !== null && cell.runeTypes.includes(runeType)));
 }
 
 export function drawRunes({
@@ -246,7 +250,7 @@ export function drawRunesOfType({
     const drawnRunes: Rune[] = [];
 
     drawDeck.forEach((rune) => {
-      if (rune.runeType === targetType && remaining > 0 && nextHand.length + drawnRunes.length < handLimit) {
+      if (runeHasType(rune, targetType) && remaining > 0 && nextHand.length + drawnRunes.length < handLimit) {
         drawnRunes.push(rune);
         remaining -= 1;
         return;
@@ -286,8 +290,8 @@ export function castRuneToWallSlot({
   if (
     !selectedRune ||
     !targetCell ||
-    targetCell.runeType !== null ||
-    !isRuneTypeAcceptedBySlotFamily(selectedRune.runeType, getWallSlotFamily(row, col))
+    targetCell.id !== null ||
+    !canRuneSatisfySlot(selectedRune.runeTypes, targetCell.acceptedRuneTypes)
   ) {
     return {
       status: 'invalid',
@@ -306,7 +310,8 @@ export function castRuneToWallSlot({
   const nextWall = player.wall.map((wallRow) => [...wallRow]);
   nextWall[row][col] = {
     id: completedRune.id,
-    runeType: completedRune.runeType,
+    acceptedRuneTypes: [...targetCell.acceptedRuneTypes],
+    runeTypes: [...completedRune.runeTypes],
     rarity: completedRune.rarity,
     castEffectRefs: copyEffectRefs(completedRune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(completedRune.passiveEffectRefs),
@@ -386,7 +391,8 @@ export function resolveEnemyTurn({
 
     nextBoard[slot.row][slot.col] = {
       id: rune.id,
-      runeType: rune.runeType,
+      acceptedRuneTypes: [...nextBoard[slot.row][slot.col].acceptedRuneTypes],
+      runeTypes: [...rune.runeTypes],
       rarity: rune.rarity,
       castEffectRefs: rune.castEffectRefs,
       passiveEffectRefs: rune.passiveEffectRefs,

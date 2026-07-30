@@ -20,7 +20,6 @@ export function EnemySpellBoard() {
                 row={rowIndex}
                 col={colIndex}
                 wallSize={wall.length}
-                slotFamily="lifeFrost"
               />
             ))}
           </div>

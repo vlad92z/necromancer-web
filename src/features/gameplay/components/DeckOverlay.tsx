@@ -51,15 +51,15 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
         : [...deck, ...discardPile, ...hand];
 
   const runesByType = zoneRunes.reduce((acc, rune) => {
-    if (!acc[rune.runeType]) {
-      acc[rune.runeType] = [];
-    }
-    acc[rune.runeType].push(rune);
+    rune.runeTypes.forEach((runeType) => {
+      acc[runeType] ??= [];
+      acc[runeType].push(rune);
+    });
     return acc;
   }, {} as Record<RuneType, Rune[]>);
 
   const sortedRunes = RUNE_TYPES.flatMap((runeType) => {
-    const runes = zoneRunes.filter((rune) => rune.runeType === runeType);
+    const runes = zoneRunes.filter((rune) => rune.runeTypes[0] === runeType);
     return [...runes].sort(compareRunesByRarityThenId);
   });
   const runeCards = buildRuneTooltipCards(sortedRunes);

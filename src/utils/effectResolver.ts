@@ -18,6 +18,7 @@ import type {
 } from '../types/game';
 import { EFFECT_CATALOG } from './effectCatalog';
 import type { CastEffectId, CatalogEffectId } from './effectCatalog';
+import { getPrimaryRuneType } from './runeHelpers';
 
 export interface WallPosition {
   row: number;
@@ -130,15 +131,17 @@ function runeTypeParam(effectRef: EffectRef, key: string): RuneType | null {
   return typeof value === 'string' ? value as RuneType : null;
 }
 
-function isCompletedWallCell(cell: WallCell | null | undefined): cell is WallCell & { id: string; runeType: RuneType } {
-  return Boolean(cell?.id && cell.runeType);
+function isCompletedWallCell(cell: WallCell | null | undefined): cell is WallCell & { id: string } {
+  return Boolean(cell?.id && cell.runeTypes.length > 0);
 }
 
 function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
   return wall.reduce<Map<RuneType, number>>((counts, row) => {
     row.forEach((cell) => {
       if (isCompletedWallCell(cell)) {
-        counts.set(cell.runeType, (counts.get(cell.runeType) ?? 0) + 1);
+        cell.runeTypes.forEach((runeType) => {
+          counts.set(runeType, (counts.get(runeType) ?? 0) + 1);
+        });
       }
     });
     return counts;
@@ -164,13 +167,13 @@ function countWallRunesByTypeIncludingTrigger({
 
   const wallCount = counts.get(runeType) ?? 0;
   const sourceCell = sourcePosition ? wall[sourcePosition.row]?.[sourcePosition.col] : null;
-  const sourceAlreadyCounted = isCompletedWallCell(sourceCell) && sourceCell.runeType === runeType;
+  const sourceAlreadyCounted = isCompletedWallCell(sourceCell) && sourceCell.runeTypes.includes(runeType);
 
   return wallCount + (!sourceAlreadyCounted && castRuneType === runeType ? 1 : 0);
 }
 
 function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
-  return wall.some((row) => row.some((cell) => isCompletedWallCell(cell) && cell.runeType === runeType));
+  return wall.some((row) => row.some((cell) => isCompletedWallCell(cell) && cell.runeTypes.includes(runeType)));
 }
 
 function countAdjacentCompletedRunes(wall: ScoringWall, sourcePosition: WallPosition | null | undefined): number {
@@ -252,7 +255,7 @@ function getCompletedPositionsByType(
   return wall.flatMap((row, rowIndex) =>
     row.flatMap((cell, colIndex) => {
       const position = { row: rowIndex, col: colIndex };
-      return isCompletedWallCell(cell) && cell.runeType === runeType && !samePosition(sourcePosition, position) ? [position] : [];
+      return isCompletedWallCell(cell) && cell.runeTypes.includes(runeType) && !samePosition(sourcePosition, position) ? [position] : [];
     })
   );
 }
@@ -290,6 +293,7 @@ function createFreshRuneCopy(rune: Rune): Rune {
   return {
     ...rune,
     id: createRuntimeRuneId(rune.id),
+    runeTypes: [...rune.runeTypes],
     castEffectRefs: copyEffectRefs(rune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(rune.passiveEffectRefs),
   };
@@ -298,17 +302,19 @@ function createFreshRuneCopy(rune: Rune): Rune {
 function cloneWall(wall: ScoringWall): ScoringWall {
   return wall.map((row) => row.map((cell) => ({
     id: cell.id,
-    runeType: cell.runeType,
+    acceptedRuneTypes: [...cell.acceptedRuneTypes],
+    runeTypes: [...cell.runeTypes],
     rarity: cell.rarity,
     castEffectRefs: cell.castEffectRefs ? copyEffectRefs(cell.castEffectRefs) : null,
     passiveEffectRefs: cell.passiveEffectRefs ? copyEffectRefs(cell.passiveEffectRefs) : null,
   })));
 }
 
-function createEmptyWallCell(): WallCell {
+function createEmptyWallCell(acceptedRuneTypes: RuneType[]): WallCell {
   return {
     id: null,
-    runeType: null,
+    acceptedRuneTypes: [...acceptedRuneTypes],
+    runeTypes: [],
     rarity: null,
     castEffectRefs: null,
     passiveEffectRefs: null,
@@ -326,7 +332,7 @@ function runeFromCompletedCell(
 
   return {
     id: cell.id,
-    runeType: cell.runeType,
+    runeTypes: [...cell.runeTypes],
     rarity: cell.rarity ?? 'common',
     castEffectRefs: copyEffectRefs(cell.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(cell.passiveEffectRefs),
@@ -343,7 +349,7 @@ function clearCompletedCell(
   }
 
   const nextWall = cloneWall(wall);
-  nextWall[position.row][position.col] = createEmptyWallCell();
+  nextWall[position.row][position.col] = createEmptyWallCell(nextWall[position.row][position.col].acceptedRuneTypes);
 
   return { wall: nextWall, suppressedRune };
 }
@@ -361,7 +367,8 @@ function convertCompletedCell(
   const nextWall = cloneWall(wall);
   nextWall[position.row][position.col] = {
     id: suppressedRune.id,
-    runeType: targetType,
+    acceptedRuneTypes: [...nextWall[position.row][position.col].acceptedRuneTypes],
+    runeTypes: [targetType],
     rarity: 'common',
     castEffectRefs: [],
     passiveEffectRefs: [],
@@ -813,7 +820,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.damageAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, getPrimaryRuneType(castRune));
         const damage = numberParam(effectRef, 'amount') * adjacentCount;
         baseDamage += damage;
         if (projectedEnemyHealth !== null) {
@@ -981,7 +988,7 @@ export function resolveCastEffects({
           wall: nextWall,
           counts: wallRuneCounts,
           sourcePosition,
-          castRuneType: castRune.runeType,
+          castRuneType: getPrimaryRuneType(castRune),
           runeType: synergyType,
         });
         const healing = numberParam(effectRef, 'amount') * synergyCount;
@@ -1003,7 +1010,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.armorAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, getPrimaryRuneType(castRune));
         const armor = numberParam(effectRef, 'amount') * adjacentCount;
         baseArmor += armor;
         projectedPlayerArmor += armor;
@@ -1063,7 +1070,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.drawAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, getPrimaryRuneType(castRune));
         baseDrawCount += adjacentCount;
         logs.push(createCastLog(castRune, effectRef, baseInput, {
           drawCount: adjacentCount,
@@ -1101,7 +1108,7 @@ export function resolveCastEffects({
         break;
       }
       case 'cast.arcaneDustAdjacent': {
-        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, castRune.runeType);
+        const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, getPrimaryRuneType(castRune));
         const arcaneDust = numberParam(effectRef, 'amount') * adjacentCount;
         baseArcaneDustDelta += arcaneDust;
         logs.push(createCastLog(castRune, effectRef, baseInput, {
@@ -1282,7 +1289,7 @@ export function resolveCastEffects({
           wall: nextWall,
           counts: wallRuneCounts,
           sourcePosition,
-          castRuneType: castRune.runeType,
+          castRuneType: getPrimaryRuneType(castRune),
           runeType: synergyType,
         });
         const damage = numberParam(effectRef, 'amount') * synergyCount;
@@ -1304,7 +1311,7 @@ export function resolveCastEffects({
           wall: nextWall,
           counts: wallRuneCounts,
           sourcePosition,
-          castRuneType: castRune.runeType,
+          castRuneType: getPrimaryRuneType(castRune),
           runeType: synergyType,
         });
         const armor = numberParam(effectRef, 'amount') * synergyCount;
@@ -1347,7 +1354,7 @@ export function resolveCastEffects({
       armor: baseArmor,
       arcaneDustDelta: baseArcaneDustDelta,
     },
-    castRuneType: castRune.runeType,
+    castRuneType: getPrimaryRuneType(castRune),
     sourcePosition,
   });
 
@@ -1356,7 +1363,7 @@ export function resolveCastEffects({
     baseDamage: passiveResult.values.damage ?? 0,
     wall: nextWall,
     activeArtefacts,
-    castRuneType: castRune.runeType,
+    castRuneType: getPrimaryRuneType(castRune),
     sourcePosition,
   });
   const finalDamage = damageResult.damage;

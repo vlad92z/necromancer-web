@@ -130,7 +130,7 @@ describe('runeEffects', () => {
 
     expect(rune).toMatchObject({
       id: 'fire-common',
-      runeType: 'Fire',
+      runeTypes: ['Fire'],
       rarity: 'common',
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 1 } }],
       passiveEffectRefs: [],

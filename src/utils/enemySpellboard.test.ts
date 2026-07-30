@@ -11,7 +11,7 @@ import { resolveEnemyTurn } from './combatResolution';
 function createEnemyRune(id: string, damage: number): EnemyRune {
   return {
     id,
-    runeType: 'Life',
+    runeTypes: ['Life'],
     rarity: 'common',
     castEffectRefs: [],
     passiveEffectRefs: [],
@@ -27,7 +27,7 @@ describe('enemy spellboard combat', () => {
     expect(state.enemyBoard.flat()).toHaveLength(36);
     expect(state.enemyBoard.flat().every((cell) => cell.id === null)).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.runeType)).toEqual(['Life', 'Life', 'Life']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life']);
     expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([1, 1, 1]);
   });
 
@@ -54,7 +54,7 @@ describe('enemy spellboard combat', () => {
     board.flat().forEach((cell, index) => {
       if (index < 35) {
         cell.id = `filled-${index}`;
-        cell.runeType = 'Life';
+        cell.runeTypes[0] = 'Life';
         cell.rarity = 'common';
         cell.castEffectRefs = [];
         cell.passiveEffectRefs = [];

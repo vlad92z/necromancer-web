@@ -25,8 +25,8 @@ describe('combatResolution wall casting', () => {
       hand: [fireRune],
       discardPile: [],
       selectedHandRuneId: fireRune.id,
-      row: 5,
-      col: 4,
+      row: 0,
+      col: 0,
       createCompletedRuneId: () => `wall-copy-${rarity}`,
     });
 
@@ -34,18 +34,19 @@ describe('combatResolution wall casting', () => {
     expect(result.hand).toEqual([]);
     expect(result.discardPile).toEqual([fireRune]);
     expect(result.selectedHandRuneId).toBeNull();
-    expect(result.player.wall[5][4]).toEqual({
+    expect(result.player.wall[0][0]).toEqual({
       id: `wall-copy-${rarity}`,
-      runeType: 'Fire',
+      acceptedRuneTypes: ['Fire'],
+      runeTypes: ['Fire'],
       rarity,
       castEffectRefs: fireRune.castEffectRefs,
       passiveEffectRefs: fireRune.passiveEffectRefs,
     });
     expect(result.completedRune?.id).toBe(`wall-copy-${rarity}`);
-    expect(result.completedPosition).toEqual({ row: 5, col: 4 });
+    expect(result.completedPosition).toEqual({ row: 0, col: 0 });
   });
 
-  it('rejects wrong-family casts on empty slots without clearing selection', () => {
+  it('rejects casts whose rune types do not satisfy the slot', () => {
     const lifeRune = createTestRune('life-wrong-type', 'Life');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const result = castRuneToWallSlot({
@@ -68,8 +69,9 @@ describe('combatResolution wall casting', () => {
     const secondRune = createTestRune('fire-rejected', 'Fire');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     player.wall[0][0] = {
+      ...player.wall[0][0],
       id: fireRune.id,
-      runeType: fireRune.runeType,
+      runeTypes: [...fireRune.runeTypes],
       rarity: fireRune.rarity,
       castEffectRefs: fireRune.castEffectRefs,
       passiveEffectRefs: fireRune.passiveEffectRefs,
@@ -106,14 +108,32 @@ describe('combatResolution wall casting', () => {
       hand: [secondRune],
       discardPile: firstResult.discardPile,
       selectedHandRuneId: secondRune.id,
-      row: 0,
-      col: 3,
+      row: 1,
+      col: 5,
       createCompletedRuneId: () => 'wall-copy-second',
     });
 
     expect(firstResult.player.wall[0][0].id).toBe('wall-copy-first');
-    expect(secondResult.player.wall[0][3].id).toBe('wall-copy-second');
-    expect(firstResult.player.wall[0][0].id).not.toBe(secondResult.player.wall[0][3].id);
+    expect(secondResult.player.wall[1][5].id).toBe('wall-copy-second');
+    expect(firstResult.player.wall[0][0].id).not.toBe(secondResult.player.wall[1][5].id);
+  });
+
+  it('accepts a multi-type rune when any type matches a multi-type slot', () => {
+    const rune = { ...createTestRune('hybrid', 'Fire'), runeTypes: ['Fire', 'Wind'] as RuneType[] };
+    const player = createPlayer('player-1', 'Tester', 10, [], 10);
+    player.wall[0][0].acceptedRuneTypes = ['Life', 'Wind'];
+
+    const result = castRuneToWallSlot({
+      player,
+      hand: [rune],
+      discardPile: [],
+      selectedHandRuneId: rune.id,
+      row: 0,
+      col: 0,
+    });
+
+    expect(result.status).toBe('completed');
+    expect(result.player.wall[0][0].runeTypes).toEqual(['Fire', 'Wind']);
   });
 });
 
@@ -597,8 +617,9 @@ describe('combatResolution victory deck collection', () => {
     const player = createPlayer('player-1', 'Tester', 10, [drawRune], 10);
     const wall = player.wall.map((row) => [...row]);
     wall[1][1] = {
+      ...wall[1][1],
       id: completedRune.id,
-      runeType: completedRune.runeType,
+      runeTypes: [...completedRune.runeTypes],
       rarity: completedRune.rarity,
       castEffectRefs: completedRune.castEffectRefs,
       passiveEffectRefs: completedRune.passiveEffectRefs,
@@ -639,8 +660,9 @@ describe('combatResolution victory deck collection', () => {
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const wall = player.wall.map((row) => [...row]);
     wall[0][0] = {
+    ...wall[0][0],
       id: originalRune.id,
-      runeType: 'Frost',
+      runeTypes: ['Frost'],
       rarity: 'common',
       castEffectRefs: [],
       passiveEffectRefs: [],
@@ -669,19 +691,19 @@ describe('combatResolution victory deck collection', () => {
   });
 });
 
-function createTestRune(id: string, runeType: Rune['runeType'], rarity: Rune['rarity'] = 'common'): Rune {
+function createTestRune(id: string, runeType: RuneType, rarity: Rune['rarity'] = 'common'): Rune {
   return createTestRuneWithEffects(id, runeType, [{ type: 'Damage', amount: 1, rarity }], rarity);
 }
 
 function createTestRuneWithEffects(
   id: string,
-  runeType: Rune['runeType'],
+  runeType: RuneType,
   effects: unknown[],
   rarity: Rune['rarity'] = 'common'
 ): Rune {
   return {
     id,
-    runeType,
+    runeTypes: [runeType],
     rarity,
     castEffectRefs: effects.map(toCatalogEffectRef),
     passiveEffectRefs: [],
@@ -734,7 +756,7 @@ function createTestEnemy(health: number): Enemy {
   };
 }
 
-function createPlayerWithWall(cells: Array<[number, number, Rune['runeType']]>): ReturnType<typeof createPlayer> {
+function createPlayerWithWall(cells: Array<[number, number, RuneType]>): ReturnType<typeof createPlayer> {
   const player = createPlayer('player-1', 'Tester', 10, [], 10);
   const wall = player.wall.map((row) => row.map((cell) => ({ ...cell })));
   cells.forEach(([row, col, runeType]) => {
@@ -749,7 +771,8 @@ function createPlayerWithWall(cells: Array<[number, number, Rune['runeType']]>):
 function createWallCell(runeType: RuneType, passiveEffectRefs: Rune['passiveEffectRefs'] = []): WallCell {
   return {
     id: `completed-${runeType}`,
-    runeType,
+    acceptedRuneTypes: [runeType],
+    runeTypes: [runeType],
     rarity: 'common',
     castEffectRefs: [],
     passiveEffectRefs,

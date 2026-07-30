@@ -18,7 +18,7 @@ interface DeckDraftingModalProps {
 function createPackFaceRune(offer: DeckDraftOffer): Rune {
   return {
     id: `${offer.id}-face`,
-    runeType: offer.runeType,
+    runeTypes: [offer.runeType],
     rarity: offer.displayRarity,
     castEffectRefs: [],
     passiveEffectRefs: [],

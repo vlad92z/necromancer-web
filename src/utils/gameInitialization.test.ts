@@ -28,18 +28,18 @@ describe('gameInitialization combat state', () => {
 
     expect(deck).toHaveLength(30);
     expect(deck.map((rune) => rune.id)).toEqual(STARTING_DECK.map((rune) => rune.id));
-    expect(deck.filter((rune) => rune.runeType === 'Fire')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeType === 'Life')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeType === 'Wind')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeType === 'Frost')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeType === 'Void')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeType === 'Lightning')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Fire')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Life')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Wind')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Frost')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Void')).toHaveLength(5);
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Lightning')).toHaveLength(5);
     expect(deck.filter((rune) => rune.rarity === 'common')).toHaveLength(25);
     expect(deck.filter((rune) => rune.rarity === 'uncommon')).toHaveLength(5);
-    expect(deck.filter((rune) => rune.runeType !== 'Wind').flatMap((rune) => rune.castEffectRefs)).not.toContainEqual(
+    expect(deck.filter((rune) => rune.runeTypes[0] !== 'Wind').flatMap((rune) => rune.castEffectRefs)).not.toContainEqual(
       expect.objectContaining({ effectId: 'cast.drawType' })
     );
-    expect(deck.filter((rune) => rune.runeType === 'Wind').map((rune) => rune.castEffectRefs)).toEqual([
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Wind').map((rune) => rune.castEffectRefs)).toEqual([
       [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Fire' } }],
       [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Frost' } }],
       [{ effectId: 'cast.drawType', params: { amount: 1, targetType: 'Lightning' } }],

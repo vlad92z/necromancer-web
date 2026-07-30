@@ -111,11 +111,11 @@ function trackDefeat(state: GameState, player: Player): void {
   });
 }
 
-function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType>, wall: ScoringWall): Map<string, RuneType> {
+function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType[]>, wall: ScoringWall): Map<string, RuneType[]> {
   wall.forEach((row) => {
     row.forEach((cell) => {
-      if (cell.id && cell.runeType) {
-        runeTypesById.set(cell.id, cell.runeType);
+      if (cell.id && cell.runeTypes.length > 0) {
+        runeTypesById.set(cell.id, cell.runeTypes);
       }
     });
   });
@@ -159,11 +159,11 @@ function countRuneSoundEvents({
   wall: ScoringWall;
 }): Record<RuneType, number> {
   const events = createEmptyRuneSoundEvents();
-  const completedRuneTypesById = addCompletedWallRuneTypesById(new Map<string, RuneType>(), wall);
+  const completedRuneTypesById = addCompletedWallRuneTypesById(new Map<string, RuneType[]>(), wall);
   const retriggeredRuneIdsByType = new Map<RuneType, Set<string>>();
 
   if (completedRune) {
-    addRuneSoundEvent(events, completedRune.runeType);
+    completedRune.runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
   }
 
   logs.forEach((log) => {
@@ -172,22 +172,22 @@ function countRuneSoundEvents({
     }
 
     if (log.effectId.startsWith('passive.')) {
-      const runeType = completedRuneTypesById.get(log.sourceId) ?? null;
-      if (runeType) {
-        addRuneSoundEvent(events, runeType);
-      }
+      const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
+      runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
       return;
     }
 
-    const runeType = completedRuneTypesById.get(log.sourceId);
+    const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
     if (
       log.effectId.startsWith('cast.') &&
       log.sourceId !== completedRune?.id &&
-      runeType
+      runeTypes.length > 0
     ) {
-      const retriggeredRuneIds = retriggeredRuneIdsByType.get(runeType) ?? new Set<string>();
-      retriggeredRuneIds.add(log.sourceId);
-      retriggeredRuneIdsByType.set(runeType, retriggeredRuneIds);
+      runeTypes.forEach((runeType) => {
+        const retriggeredRuneIds = retriggeredRuneIdsByType.get(runeType) ?? new Set<string>();
+        retriggeredRuneIds.add(log.sourceId);
+        retriggeredRuneIdsByType.set(runeType, retriggeredRuneIds);
+      });
     }
   });
 
