@@ -85,6 +85,7 @@ describe('deckDrafting', () => {
       ...variants,
       {
         templateId: 'fire-epic-test-variant',
+        name: 'Fire Future',
         runeTypes: ['Fire'],
         rarity: 'epic',
         cardImageSrc: 'future-fire-card.png',
@@ -137,6 +138,7 @@ describe('deckDrafting', () => {
 function createRune(id: string): Rune {
   return {
     id,
+    name: 'Fire Test',
     runeTypes: ['Fire'],
     rarity: 'common',
     cardImageSrc: 'fire-card.png',

@@ -7,7 +7,7 @@ import { copyEffectRefs } from './runeEffects';
 
 type WallCellRuneSource = Pick<
   WallCell,
-  'id' | 'runeTypes' | 'rarity' | 'cardImageSrc' | 'tokenImageSrc' | 'castEffectRefs' | 'passiveEffectRefs'
+  'id' | 'name' | 'runeTypes' | 'rarity' | 'cardImageSrc' | 'tokenImageSrc' | 'castEffectRefs' | 'passiveEffectRefs'
 >;
 
 export function wallCellToRune(cell: WallCellRuneSource, row: number, col: number): Rune | null {
@@ -17,6 +17,7 @@ export function wallCellToRune(cell: WallCellRuneSource, row: number, col: numbe
 
   return {
     id: cell.id ?? `wall-${row}-${col}`,
+    name: cell.name ?? `${cell.runeTypes[0]} Rune`,
     runeTypes: [...cell.runeTypes],
     rarity: cell.rarity ?? 'common',
     cardImageSrc: cell.cardImageSrc ?? '',

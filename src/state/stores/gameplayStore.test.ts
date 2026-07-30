@@ -305,6 +305,7 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const windRune: Rune = {
       id: 'wind-fortune',
+      name: 'Wind Test',
       runeTypes: ['Wind'],
       rarity: 'common',
       cardImageSrc: 'wind-card.png',
@@ -377,6 +378,7 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const armorRune: Rune = {
       id: 'fire-armor',
+      name: 'Fire Test',
       runeTypes: ['Fire'],
       rarity: 'common',
       cardImageSrc: 'fire-card.png',
@@ -442,6 +444,7 @@ describe('gameplayStore current combat', () => {
     };
     const voidRune: Rune = {
       id: 'void-retrigger',
+      name: 'Void Test',
       runeTypes: ['Void'],
       rarity: 'common',
       cardImageSrc: 'void-card.png',
@@ -718,6 +721,7 @@ describe('gameplayStore current combat', () => {
 function createTestRune(id: string, runeType: RuneType, damage: number, rarity: Rune['rarity'] = 'common'): Rune {
   return {
     id,
+    name: `${runeType} Test`,
     runeTypes: [runeType],
     rarity,
     cardImageSrc: `${runeType.toLowerCase()}-card.png`,

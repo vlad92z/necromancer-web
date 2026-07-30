@@ -52,6 +52,7 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                     ? {
                       ...cell,
                       id: null,
+                      name: null,
                       runeTypes: [],
                       rarity: null,
                       cardImageSrc: null,

@@ -73,6 +73,18 @@ describe('gameInitialization combat state', () => {
     });
   });
 
+  it('assigns numbered names to starting cards', () => {
+    const deck = createStartingDeck();
+
+    expect(deck.filter((rune) => rune.runeTypes[0] === 'Fire').map((rune) => rune.name)).toEqual([
+      'Fire 1',
+      'Fire 2',
+      'Fire 3',
+      'Fire 4',
+      'Fire 5',
+    ]);
+  });
+
   it('clones the fixed starting deck refs', () => {
     const firstDeck = createStartingDeck();
     const secondDeck = createStartingDeck();

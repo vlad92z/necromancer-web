@@ -36,6 +36,7 @@ describe('combatResolution wall casting', () => {
     expect(result.selectedHandRuneId).toBeNull();
     expect(result.player.wall[0][0]).toEqual({
       id: `wall-copy-${rarity}`,
+      name: fireRune.name,
       acceptedRuneTypes: ['Fire'],
       runeTypes: ['Fire'],
       rarity,
@@ -705,6 +706,7 @@ function createTestRuneWithEffects(
 ): Rune {
   return {
     id,
+    name: `${runeType} Test`,
     runeTypes: [runeType],
     rarity,
     cardImageSrc: `${runeType.toLowerCase()}-card.png`,
@@ -775,6 +777,7 @@ function createPlayerWithWall(cells: Array<[number, number, RuneType]>): ReturnT
 function createWallCell(runeType: RuneType, passiveEffectRefs: Rune['passiveEffectRefs'] = []): WallCell {
   return {
     id: `completed-${runeType}`,
+    name: `${runeType} Test`,
     acceptedRuneTypes: [runeType],
     runeTypes: [runeType],
     rarity: 'common',

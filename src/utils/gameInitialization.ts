@@ -22,7 +22,7 @@ export const DEFAULT_HAND_SIZE = 6;
 export const DEFAULT_ENEMY_MAX_HEALTH = 7;
 export const ENEMY_SCALING_MULTIPLIER = 1.35;
 export const ENEMY_HEALTH_ROUNDING_STEP = 1;
-const STARTING_DECK_DEFINITIONS: Array<Omit<Rune, 'cardImageSrc' | 'tokenImageSrc'>> = [
+const STARTING_DECK_DEFINITIONS: Array<Omit<Rune, 'name' | 'cardImageSrc' | 'tokenImageSrc'>> = [
   {
     id: 'player-1-Fire-0',
     runeTypes: ['Fire'],
@@ -237,6 +237,7 @@ const STARTING_DECK_DEFINITIONS: Array<Omit<Rune, 'cardImageSrc' | 'tokenImageSr
 
 export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map((rune) => ({
   ...rune,
+  name: `${rune.runeTypes[0]} ${Number.parseInt(rune.id.split('-').at(-1) ?? '0', 10) + 1}`,
   ...CURRENT_RUNE_IMAGE_SOURCES[rune.runeTypes[0]],
 }));
 
@@ -248,6 +249,7 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
         .fill(null)
         .map((_, col) => ({
           id: null,
+          name: null,
           acceptedRuneTypes: getWallSlotRuneTypes(row, col),
           runeTypes: [],
           rarity: null,
@@ -276,6 +278,7 @@ export function createGoblinEnemy(maxHealth: number): Enemy {
 export function createEnemyLifeRune(id: string): EnemyRune {
   return {
     id,
+    name: 'Life 1',
     runeTypes: ['Life'],
     rarity: 'common',
     ...CURRENT_RUNE_IMAGE_SOURCES.Life,

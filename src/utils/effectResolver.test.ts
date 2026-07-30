@@ -648,6 +648,7 @@ describe('effectResolver resolveCastEffects', () => {
 
     expect(randomResult.wall[0][1]).toEqual({
       id: 'completed-0-1',
+      name: 'Frost 1',
       acceptedRuneTypes: ['Fire'],
       runeTypes: ['Frost'],
       rarity: 'common',
@@ -1182,6 +1183,7 @@ function createTestPlayer(cells: Array<[number, number, RuneType]> = []): Player
 function createTestRune(id: string, runeType: RuneType, castEffectRefs: Rune['castEffectRefs']): Rune {
   return {
     id,
+    name: `${runeType} Test`,
     runeTypes: [runeType],
     rarity: 'common',
     cardImageSrc: `${runeType.toLowerCase()}-card.png`,
@@ -1209,6 +1211,7 @@ function createWallCell(
 ): WallCell {
   return {
     id,
+    name: `${runeType} Test`,
     acceptedRuneTypes: [runeType],
     runeTypes: [runeType],
     rarity: 'common',

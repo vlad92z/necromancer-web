@@ -31,6 +31,7 @@ export interface EffectResolutionLog {
 
 export interface Rune {
   id: string;
+  name: string;
   runeTypes: RuneType[];
   rarity: RuneEffectRarity;
   cardImageSrc: string;
@@ -82,6 +83,7 @@ export interface TooltipCard {
 
 export interface WallCell {
   id: string | null;
+  name: string | null;
   acceptedRuneTypes: RuneType[];
   runeTypes: RuneType[];
   rarity: RuneEffectRarity | null;

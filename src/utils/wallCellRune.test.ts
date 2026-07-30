@@ -10,6 +10,7 @@ describe('wallCellRune', () => {
   it('preserves wall cell rarity and effect refs for tooltip display runes', () => {
     const cell: WallCell = {
       id: 'wall-copy-void',
+      name: 'Void 3',
       acceptedRuneTypes: ['Void'],
       runeTypes: ['Void'],
       rarity: 'rare',
@@ -23,6 +24,7 @@ describe('wallCellRune', () => {
 
     expect(rune).toEqual({
       id: 'wall-copy-void',
+      name: 'Void 3',
       runeTypes: ['Void'],
       rarity: 'rare',
       cardImageSrc: 'void-card.png',
@@ -39,6 +41,7 @@ describe('wallCellRune', () => {
       wallCellToRune(
         {
           id: null,
+          name: null,
           runeTypes: [],
           rarity: null,
           cardImageSrc: null,

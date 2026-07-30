@@ -11,6 +11,7 @@ import { resolveEnemyTurn } from './combatResolution';
 function createEnemyRune(id: string, damage: number): EnemyRune {
   return {
     id,
+    name: 'Life Test',
     runeTypes: ['Life'],
     rarity: 'common',
     cardImageSrc: 'life-card.png',

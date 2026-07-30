@@ -310,6 +310,7 @@ export function castRuneToWallSlot({
   const nextWall = player.wall.map((wallRow) => [...wallRow]);
   nextWall[row][col] = {
     id: completedRune.id,
+    name: completedRune.name,
     acceptedRuneTypes: [...targetCell.acceptedRuneTypes],
     runeTypes: [...completedRune.runeTypes],
     rarity: completedRune.rarity,
@@ -393,6 +394,7 @@ export function resolveEnemyTurn({
 
     nextBoard[slot.row][slot.col] = {
       id: rune.id,
+      name: rune.name,
       acceptedRuneTypes: [...nextBoard[slot.row][slot.col].acceptedRuneTypes],
       runeTypes: [...rune.runeTypes],
       rarity: rune.rarity,
