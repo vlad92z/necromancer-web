@@ -11,6 +11,8 @@ function createRune(id: string, rarity: RuneEffectRarity, castRefCount = 0): Run
     id,
     runeTypes: ['Fire' as RuneType],
     rarity,
+    cardImageSrc: 'fire-card.png',
+    tokenImageSrc: 'fire-token.png',
     castEffectRefs: Array.from({ length: castRefCount }, (_, index) => ({
       effectId: `test.effect.${index}`,
     })),

@@ -307,6 +307,8 @@ describe('gameplayStore current combat', () => {
       id: 'wind-fortune',
       runeTypes: ['Wind'],
       rarity: 'common',
+      cardImageSrc: 'wind-card.png',
+      tokenImageSrc: 'wind-token.png',
       castEffectRefs: [createEffectRef('cast.fortune', { amount: 10 })],
       passiveEffectRefs: [],
     };
@@ -377,6 +379,8 @@ describe('gameplayStore current combat', () => {
       id: 'fire-armor',
       runeTypes: ['Fire'],
       rarity: 'common',
+      cardImageSrc: 'fire-card.png',
+      tokenImageSrc: 'fire-token.png',
       castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
       passiveEffectRefs: [],
     };
@@ -440,6 +444,8 @@ describe('gameplayStore current combat', () => {
       id: 'void-retrigger',
       runeTypes: ['Void'],
       rarity: 'common',
+      cardImageSrc: 'void-card.png',
+      tokenImageSrc: 'void-token.png',
       castEffectRefs: [createEffectRef('cast.retriggerAdjacent')],
       passiveEffectRefs: [],
     };
@@ -714,6 +720,8 @@ function createTestRune(id: string, runeType: RuneType, damage: number, rarity: 
     id,
     runeTypes: [runeType],
     rarity,
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs: [createEffectRef('cast.damage', { amount: damage })],
     passiveEffectRefs: [],
   };

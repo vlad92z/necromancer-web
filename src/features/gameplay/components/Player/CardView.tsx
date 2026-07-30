@@ -1,28 +1,4 @@
-import type { RuneEffectRarity, RuneType, TooltipCardVariant } from '../../../../types/game';
-import fireRune from '../../../../assets/runes/fire_rune.png';
-import fireRuneUncommon from '../../../../assets/runes/fire_rune_uncommon.png';
-import fireRuneRare from '../../../../assets/runes/fire_rune_rare.png';
-import fireRuneEpic from '../../../../assets/runes/fire_rune_epic.png';
-import frostRune from '../../../../assets/runes/frost_rune.png';
-import frostRuneUncommon from '../../../../assets/runes/frost_rune_uncommon.png';
-import frostRuneRare from '../../../../assets/runes/frost_rune_rare.png';
-import frostRuneEpic from '../../../../assets/runes/frost_rune_epic.png';
-import lifeRune from '../../../../assets/runes/life_rune.png';
-import lifeRuneUncommon from '../../../../assets/runes/life_rune_uncommon.png';
-import lifeRuneRare from '../../../../assets/runes/life_rune_rare.png';
-import lifeRuneEpic from '../../../../assets/runes/life_rune_epic.png';
-import voidRune from '../../../../assets/runes/void_rune.png';
-import voidRuneUncommon from '../../../../assets/runes/void_rune_uncommon.png';
-import voidRuneRare from '../../../../assets/runes/void_rune_rare.png';
-import voidRuneEpic from '../../../../assets/runes/void_rune_epic.png';
-import windRune from '../../../../assets/runes/wind_rune.png';
-import windRuneUncommon from '../../../../assets/runes/wind_rune_uncommon.png';
-import windRuneRare from '../../../../assets/runes/wind_rune_rare.png';
-import windRuneEpic from '../../../../assets/runes/wind_rune_epic.png';
-import lightningRune from '../../../../assets/runes/lightning_rune.png';
-import lightningRuneUncommon from '../../../../assets/runes/lightning_rune_uncommon.png';
-import lightningRuneRare from '../../../../assets/runes/lightning_rune_rare.png';
-import lightningRuneEpic from '../../../../assets/runes/lightning_rune_epic.png';
+import type { TooltipCardVariant } from '../../../../types/game';
 
 /**
  * CardView - displays a trading card style preview
@@ -31,70 +7,17 @@ import lightningRuneEpic from '../../../../assets/runes/lightning_rune_epic.png'
 interface CardViewProps {
   title: string;
   description: string;
-  runeType: RuneType;
-  imageSrc?: string;
-  runeRarity?: RuneEffectRarity | null;
+  imageSrc: string;
   variant?: TooltipCardVariant;
   size?: 'default' | 'hand';
   isSelected?: boolean;
   onClick?: () => void;
 }
 
-const RUNE_CARD_IMAGES: Record<RuneType, Record<RuneEffectRarity, string>> = {
-  Fire: {
-    common: fireRune,
-    uncommon: fireRuneUncommon,
-    rare: fireRuneRare,
-    epic: fireRuneEpic,
-  },
-  Frost: {
-    common: frostRune,
-    uncommon: frostRuneUncommon,
-    rare: frostRuneRare,
-    epic: frostRuneEpic,
-  },
-  Life: {
-    common: lifeRune,
-    uncommon: lifeRuneUncommon,
-    rare: lifeRuneRare,
-    epic: lifeRuneEpic,
-  },
-  Void: {
-    common: voidRune,
-    uncommon: voidRuneUncommon,
-    rare: voidRuneRare,
-    epic: voidRuneEpic,
-  },
-  Wind: {
-    common: windRune,
-    uncommon: windRuneUncommon,
-    rare: windRuneRare,
-    epic: windRuneEpic,
-  },
-  Lightning: {
-    common: lightningRune,
-    uncommon: lightningRuneUncommon,
-    rare: lightningRuneRare,
-    epic: lightningRuneEpic,
-  },
-};
-
-function resolveRuneImage(runeType: RuneType, runeRarity: RuneEffectRarity | null | undefined, override?: string): string {
-  if (override) {
-    return override;
-  }
-
-  const rarityKey = runeRarity ?? 'common';
-  const runeImages = RUNE_CARD_IMAGES[runeType];
-  return runeImages?.[rarityKey] ?? RUNE_CARD_IMAGES[runeType].common;
-}
-
 export function CardView({
   title,
   imageSrc,
   description,
-  runeType,
-  runeRarity,
   variant = 'default',
   size = 'default',
   isSelected = false,
@@ -102,7 +25,6 @@ export function CardView({
 }: CardViewProps) {
   const border = 'border-[3px] border-[#141313]';
   const showDestroyedOverlay = variant === 'nonPrimary';
-  const resolvedImageSrc = resolveRuneImage(runeType, runeRarity, imageSrc);
   const selectedClassName = isSelected
     ? 'translate-y-[-10px]'
     : '';
@@ -122,7 +44,7 @@ export function CardView({
       <div className={`relative min-h-0 flex-4 overflow-hidden ${border} bg-[#202827]`}>
         <img
           className="h-full w-full object-cover [image-rendering:pixelated]"
-          src={resolvedImageSrc}
+          src={imageSrc}
           alt={title}
         />
         {showDestroyedOverlay && (

@@ -135,6 +135,8 @@ function createRune(id: string): Rune {
     id,
     runeTypes: ['Fire'],
     rarity: 'common',
+    cardImageSrc: 'fire-card.png',
+    tokenImageSrc: 'fire-token.png',
     castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 3 } }],
     passiveEffectRefs: [],
   };

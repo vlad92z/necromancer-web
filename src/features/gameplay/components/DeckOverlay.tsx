@@ -141,8 +141,6 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
                           title={card.title}
                           imageSrc={card.imageSrc}
                           description={card.description}
-                          runeType={card.runeType}
-                          runeRarity={card.runeRarity}
                           variant={card.variant}
                           size="hand"
                         />

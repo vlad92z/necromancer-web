@@ -13,6 +13,8 @@ describe('wallCellRune', () => {
       acceptedRuneTypes: ['Void'],
       runeTypes: ['Void'],
       rarity: 'rare',
+      cardImageSrc: 'void-card.png',
+      tokenImageSrc: 'void-token.png',
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
     };
@@ -23,6 +25,8 @@ describe('wallCellRune', () => {
       id: 'wall-copy-void',
       runeTypes: ['Void'],
       rarity: 'rare',
+      cardImageSrc: 'void-card.png',
+      tokenImageSrc: 'void-token.png',
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
     });
@@ -37,6 +41,8 @@ describe('wallCellRune', () => {
           id: null,
           runeTypes: [],
           rarity: null,
+          cardImageSrc: null,
+          tokenImageSrc: null,
           castEffectRefs: null,
           passiveEffectRefs: null,
         },

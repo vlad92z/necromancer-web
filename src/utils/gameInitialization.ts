@@ -12,6 +12,7 @@ import type {
   ScoringWall,
 } from '../types/game';
 import { copyEffectRefs } from './runeEffects';
+import { getRuneImageSources } from './runeImages';
 import { getWallSlotRuneTypes } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
@@ -21,7 +22,7 @@ export const DEFAULT_HAND_SIZE = 6;
 export const DEFAULT_ENEMY_MAX_HEALTH = 7;
 export const ENEMY_SCALING_MULTIPLIER = 1.35;
 export const ENEMY_HEALTH_ROUNDING_STEP = 1;
-export const STARTING_DECK: Rune[] = [
+const STARTING_DECK_DEFINITIONS: Array<Omit<Rune, 'cardImageSrc' | 'tokenImageSrc'>> = [
   {
     id: 'player-1-Fire-0',
     runeTypes: ['Fire'],
@@ -234,6 +235,11 @@ export const STARTING_DECK: Rune[] = [
   },
 ];
 
+export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map((rune) => ({
+  ...rune,
+  ...getRuneImageSources(rune.runeTypes[0], rune.rarity),
+}));
+
 export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
   return Array(size)
     .fill(null)
@@ -245,6 +251,8 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
           acceptedRuneTypes: getWallSlotRuneTypes(row, col),
           runeTypes: [],
           rarity: null,
+          cardImageSrc: null,
+          tokenImageSrc: null,
           castEffectRefs: null,
           passiveEffectRefs: null,
         }))
@@ -270,6 +278,7 @@ export function createEnemyLifeRune(id: string): EnemyRune {
     id,
     runeTypes: ['Life'],
     rarity: 'common',
+    ...getRuneImageSources('Life', 'common'),
     castEffectRefs: [],
     passiveEffectRefs: [],
     damage: 1,

@@ -39,6 +39,8 @@ describe('combatResolution wall casting', () => {
       acceptedRuneTypes: ['Fire'],
       runeTypes: ['Fire'],
       rarity,
+      cardImageSrc: fireRune.cardImageSrc,
+      tokenImageSrc: fireRune.tokenImageSrc,
       castEffectRefs: fireRune.castEffectRefs,
       passiveEffectRefs: fireRune.passiveEffectRefs,
     });
@@ -705,6 +707,8 @@ function createTestRuneWithEffects(
     id,
     runeTypes: [runeType],
     rarity,
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs: effects.map(toCatalogEffectRef),
     passiveEffectRefs: [],
   };
@@ -774,6 +778,8 @@ function createWallCell(runeType: RuneType, passiveEffectRefs: Rune['passiveEffe
     acceptedRuneTypes: [runeType],
     runeTypes: [runeType],
     rarity: 'common',
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs: [],
     passiveEffectRefs,
   };

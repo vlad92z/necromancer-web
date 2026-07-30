@@ -7,6 +7,7 @@ import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, WallCell } 
 import { createEffectRef, EFFECT_CATALOG } from './effectCatalog';
 import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import { createEmptyWall, createPlayer } from './gameInitialization';
+import { getRuneImageSources } from './runeImages';
 
 describe('effectResolver resolveCastEffects', () => {
   it('resolves damage, healing, armor, and fortune in ref order', () => {
@@ -650,6 +651,7 @@ describe('effectResolver resolveCastEffects', () => {
       acceptedRuneTypes: ['Fire'],
       runeTypes: ['Frost'],
       rarity: 'common',
+      ...getRuneImageSources('Frost', 'common'),
       castEffectRefs: [],
       passiveEffectRefs: [],
     });
@@ -1182,6 +1184,8 @@ function createTestRune(id: string, runeType: RuneType, castEffectRefs: Rune['ca
     id,
     runeTypes: [runeType],
     rarity: 'common',
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs,
     passiveEffectRefs: [],
   };
@@ -1208,6 +1212,8 @@ function createWallCell(
     acceptedRuneTypes: [runeType],
     runeTypes: [runeType],
     rarity: 'common',
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs,
     passiveEffectRefs,
   };

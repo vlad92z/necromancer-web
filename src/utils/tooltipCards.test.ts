@@ -16,6 +16,7 @@ describe('tooltipCards', () => {
     expect(cards[0]).toMatchObject({
       runeType: 'Void',
       runeRarity: 'rare',
+      imageSrc: rareRune.cardImageSrc,
     });
     expect(cards[0]?.description).not.toContain('Requires');
     expect(cards[1]?.description).not.toContain('Requires');

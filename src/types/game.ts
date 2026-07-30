@@ -33,6 +33,8 @@ export interface Rune {
   id: string;
   runeTypes: RuneType[];
   rarity: RuneEffectRarity;
+  cardImageSrc: string;
+  tokenImageSrc: string;
   castEffectRefs: EffectRef[];
   passiveEffectRefs: EffectRef[];
 }
@@ -74,7 +76,7 @@ export interface TooltipCard {
   title: string;
   description: string;
   runeRarity?: RuneEffectRarity | null;
-  imageSrc?: string;
+  imageSrc: string;
   variant?: TooltipCardVariant;
 }
 
@@ -83,6 +85,8 @@ export interface WallCell {
   acceptedRuneTypes: RuneType[];
   runeTypes: RuneType[];
   rarity: RuneEffectRarity | null;
+  cardImageSrc: string | null;
+  tokenImageSrc: string | null;
   castEffectRefs: EffectRef[] | null;
   passiveEffectRefs: EffectRef[] | null;
 }

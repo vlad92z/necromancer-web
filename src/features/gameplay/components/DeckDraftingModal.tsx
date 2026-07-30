@@ -10,6 +10,7 @@ import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions'
 import { useClickSound } from '../../../hooks/useClickSound';
 import { useGameplayDeckState } from '../../../hooks/useGameState';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
+import { getRuneImageSources } from '../../../utils/runeImages';
 
 interface DeckDraftingModalProps {
   draftState: DeckDraftState;
@@ -20,6 +21,7 @@ function createPackFaceRune(offer: DeckDraftOffer): Rune {
     id: `${offer.id}-face`,
     runeTypes: [offer.runeType],
     rarity: offer.displayRarity,
+    ...getRuneImageSources(offer.runeType, offer.displayRarity),
     castEffectRefs: [],
     passiveEffectRefs: [],
   };
@@ -131,7 +133,7 @@ export function DeckDraftingModal({
               >
                 <div className="flex flex-col items-center gap-3">
                   {faceRune && (
-                    <RuneCell rune={faceRune} variant="draft" size="large" showEffect showTooltip={false} />
+                    <RuneCell rune={faceRune} variant="draft" size="large" showTooltip={false} />
                   )}
                   <div className="text-xs text-[#171518]">{getPackText(offer.runeType)}</div>
                 </div>
@@ -152,7 +154,6 @@ export function DeckDraftingModal({
                   rune={rune}
                   variant="draft"
                   size="large"
-                  showEffect
                   showTooltip
                   tooltipPlacement="top"
                 />

@@ -1,7 +1,8 @@
 import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game';
 import { createEffectRef, getEffectRefDescriptions } from './effectCatalog';
+import { getRuneImageSources } from './runeImages';
 
-type RuneTemplate = Omit<Rune, 'id'> & {
+type RuneTemplate = Omit<Rune, 'id' | 'cardImageSrc' | 'tokenImageSrc'> & {
   templateId: string;
 };
 
@@ -221,6 +222,7 @@ export function createRuneFromPool({
     id,
     runeTypes: [...template.runeTypes],
     rarity: template.rarity,
+    ...getRuneImageSources(runeType, template.rarity),
     castEffectRefs: copyEffectRefs(template.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(template.passiveEffectRefs),
   };

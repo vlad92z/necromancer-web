@@ -33,6 +33,7 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
       title: `${rune.runeTypes.join('/')} Rune`,
       description: getRuneEffectDescription(rune),
       runeRarity: rune.rarity,
+      imageSrc: rune.cardImageSrc,
     };
   });
 }

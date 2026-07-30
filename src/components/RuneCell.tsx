@@ -6,78 +6,11 @@
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
-import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { Rune, RuneType } from '../types/game';
 import { COLORS, TRANSITIONS, RUNE_SIZE_CONFIG } from '../styles/tokens';
 import type { RuneSize } from '../styles/tokens';
-import fireRune from '../assets/runes/fire_rune.png';
-import fireRuneUncommon from '../assets/runes/fire_rune_uncommon.png';
-import fireRuneRare from '../assets/runes/fire_rune_rare.png';
-import fireRuneEpic from '../assets/runes/fire_rune_epic.png';
-import frostRune from '../assets/runes/frost_rune.png';
-import frostRuneUncommon from '../assets/runes/frost_rune_uncommon.png';
-import frostRuneRare from '../assets/runes/frost_rune_rare.png';
-import frostRuneEpic from '../assets/runes/frost_rune_epic.png';
-import lifeRune from '../assets/runes/life_rune.png';
-import lifeRuneUncommon from '../assets/runes/life_rune_uncommon.png';
-import lifeRuneRare from '../assets/runes/life_rune_rare.png';
-import lifeRuneEpic from '../assets/runes/life_rune_epic.png';
-import voidRune from '../assets/runes/void_rune.png';
-import voidRuneUncommon from '../assets/runes/void_rune_uncommon.png';
-import voidRuneRare from '../assets/runes/void_rune_rare.png';
-import voidRuneEpic from '../assets/runes/void_rune_epic.png';
-import windRune from '../assets/runes/wind_rune.png';
-import windRuneUncommon from '../assets/runes/wind_rune_uncommon.png';
-import windRuneRare from '../assets/runes/wind_rune_rare.png';
-import windRuneEpic from '../assets/runes/wind_rune_epic.png';
-import lightningRune from '../assets/runes/lightning_rune.png';
-import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.png';
-import lightningRuneRare from '../assets/runes/lightning_rune_rare.png';
-import lightningRuneEpic from '../assets/runes/lightning_rune_epic.png';
 import { getRuneEffectDescription } from '../utils/runeEffects';
 import { getPrimaryRuneType } from '../utils/runeHelpers';
-
-const RUNE_ASSETS = {
-  Fire: fireRune,
-  Frost: frostRune,
-  Life: lifeRune,
-  Void: voidRune,
-  Wind: windRune,
-  Lightning: lightningRune,
-};
-
-const RUNE_UNCOMMON_ASSETS = {
-  Fire: fireRuneUncommon,
-  Frost: frostRuneUncommon,
-  Life: lifeRuneUncommon,
-  Void: voidRuneUncommon,
-  Wind: windRuneUncommon,
-  Lightning: lightningRuneUncommon,
-};
-
-const RUNE_RARE_ASSETS = {
-  Fire: fireRuneRare,
-  Frost: frostRuneRare,
-  Life: lifeRuneRare,
-  Void: voidRuneRare,
-  Wind: windRuneRare,
-  Lightning: lightningRuneRare,
-};
-
-const RUNE_EPIC_ASSETS = {
-  Fire: fireRuneEpic,
-  Frost: frostRuneEpic,
-  Life: lifeRuneEpic,
-  Void: voidRuneEpic,
-  Wind: windRuneEpic,
-  Lightning: lightningRuneEpic,
-};
-
-const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> = {
-  common: RUNE_ASSETS,
-  uncommon: RUNE_UNCOMMON_ASSETS,
-  rare: RUNE_RARE_ASSETS,
-  epic: RUNE_EPIC_ASSETS,
-};
 
 export type RuneCellVariant = 'wall' | 'draft';
 
@@ -90,12 +23,10 @@ export interface RuneCellProps {
   placeholder?: {
     type: 'rune' | 'text';
     runeType?: RuneType; // For wall cells
-    runeRarity?: RuneEffectRarity;
     text?: string;
   };
   clickable?: boolean;
   onClick?: () => void;
-  showEffect?: boolean;
   showTooltip?: boolean;
   tooltipRune?: Rune | null;
   tooltipPlacement?: 'top' | 'bottom';
@@ -112,7 +43,6 @@ export function RuneCell({
   placeholder,
   clickable = false,
   onClick,
-  showEffect = true,
   showTooltip = false,
   tooltipRune,
   tooltipPlacement = 'top',
@@ -123,14 +53,7 @@ export function RuneCell({
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = RUNE_SIZE_CONFIG[size];
   const runeType = rune ? getPrimaryRuneType(rune) : placeholder?.runeType;
-  const runeRarity = showEffect && rune
-    ? rune.rarity
-    : placeholder?.runeRarity ?? null;
-  const runeImage = runeType
-    ? runeRarity
-      ? RUNE_ASSETS_BY_RARITY[runeRarity][runeType]
-      : RUNE_ASSETS[runeType]
-    : null;
+  const runeImage = rune?.tokenImageSrc ?? null;
   
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   const tooltipSourceRune = tooltipRune ?? rune;

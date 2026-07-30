@@ -37,7 +37,6 @@ export function WallCell({ cell, row, col, wallSize, pulseKey, size = 'large' }:
         placeholder={{
           type: 'rune',
         }}
-        showEffect
         showTooltip={rune !== null}
         tooltipRune={rune}
         tooltipPlacement={tooltipPlacement}

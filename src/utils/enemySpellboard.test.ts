@@ -13,6 +13,8 @@ function createEnemyRune(id: string, damage: number): EnemyRune {
     id,
     runeTypes: ['Life'],
     rarity: 'common',
+    cardImageSrc: 'life-card.png',
+    tokenImageSrc: 'life-token.png',
     castEffectRefs: [],
     passiveEffectRefs: [],
     damage,

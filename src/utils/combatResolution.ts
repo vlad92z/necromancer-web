@@ -313,6 +313,8 @@ export function castRuneToWallSlot({
     acceptedRuneTypes: [...targetCell.acceptedRuneTypes],
     runeTypes: [...completedRune.runeTypes],
     rarity: completedRune.rarity,
+    cardImageSrc: completedRune.cardImageSrc,
+    tokenImageSrc: completedRune.tokenImageSrc,
     castEffectRefs: copyEffectRefs(completedRune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(completedRune.passiveEffectRefs),
   };
@@ -394,6 +396,8 @@ export function resolveEnemyTurn({
       acceptedRuneTypes: [...nextBoard[slot.row][slot.col].acceptedRuneTypes],
       runeTypes: [...rune.runeTypes],
       rarity: rune.rarity,
+      cardImageSrc: rune.cardImageSrc,
+      tokenImageSrc: rune.tokenImageSrc,
       castEffectRefs: rune.castEffectRefs,
       passiveEffectRefs: rune.passiveEffectRefs,
     };

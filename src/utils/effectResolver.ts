@@ -19,6 +19,7 @@ import type {
 import { EFFECT_CATALOG } from './effectCatalog';
 import type { CastEffectId, CatalogEffectId } from './effectCatalog';
 import { getPrimaryRuneType } from './runeHelpers';
+import { getRuneImageSources } from './runeImages';
 
 export interface WallPosition {
   row: number;
@@ -305,6 +306,8 @@ function cloneWall(wall: ScoringWall): ScoringWall {
     acceptedRuneTypes: [...cell.acceptedRuneTypes],
     runeTypes: [...cell.runeTypes],
     rarity: cell.rarity,
+    cardImageSrc: cell.cardImageSrc,
+    tokenImageSrc: cell.tokenImageSrc,
     castEffectRefs: cell.castEffectRefs ? copyEffectRefs(cell.castEffectRefs) : null,
     passiveEffectRefs: cell.passiveEffectRefs ? copyEffectRefs(cell.passiveEffectRefs) : null,
   })));
@@ -316,6 +319,8 @@ function createEmptyWallCell(acceptedRuneTypes: RuneType[]): WallCell {
     acceptedRuneTypes: [...acceptedRuneTypes],
     runeTypes: [],
     rarity: null,
+    cardImageSrc: null,
+    tokenImageSrc: null,
     castEffectRefs: null,
     passiveEffectRefs: null,
   };
@@ -334,6 +339,8 @@ function runeFromCompletedCell(
     id: cell.id,
     runeTypes: [...cell.runeTypes],
     rarity: cell.rarity ?? 'common',
+    cardImageSrc: cell.cardImageSrc ?? '',
+    tokenImageSrc: cell.tokenImageSrc ?? '',
     castEffectRefs: copyEffectRefs(cell.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(cell.passiveEffectRefs),
   };
@@ -370,6 +377,7 @@ function convertCompletedCell(
     acceptedRuneTypes: [...nextWall[position.row][position.col].acceptedRuneTypes],
     runeTypes: [targetType],
     rarity: 'common',
+    ...getRuneImageSources(targetType, 'common'),
     castEffectRefs: [],
     passiveEffectRefs: [],
   };
