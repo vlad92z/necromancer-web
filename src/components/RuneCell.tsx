@@ -195,7 +195,6 @@ export function RuneCell({
         justifyContent: 'center',
         transition: TRANSITIONS.medium,
         borderRadius: 0,
-        backgroundColor: backgroundColor,
         padding: 0,
         boxSizing: 'border-box',
         cursor: clickable ? 'pointer' : 'default',
