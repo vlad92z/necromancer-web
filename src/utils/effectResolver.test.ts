@@ -7,7 +7,7 @@ import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, WallCell } 
 import { createEffectRef, EFFECT_CATALOG } from './effectCatalog';
 import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import { createEmptyWall, createPlayer } from './gameInitialization';
-import { getRuneImageSources } from './runeImages';
+import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
 
 describe('effectResolver resolveCastEffects', () => {
   it('resolves damage, healing, armor, and fortune in ref order', () => {
@@ -651,7 +651,7 @@ describe('effectResolver resolveCastEffects', () => {
       acceptedRuneTypes: ['Fire'],
       runeTypes: ['Frost'],
       rarity: 'common',
-      ...getRuneImageSources('Frost', 'common'),
+      ...CURRENT_RUNE_IMAGE_SOURCES.Frost,
       castEffectRefs: [],
       passiveEffectRefs: [],
     });

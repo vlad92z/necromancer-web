@@ -87,6 +87,8 @@ describe('deckDrafting', () => {
         templateId: 'fire-epic-test-variant',
         runeTypes: ['Fire'],
         rarity: 'epic',
+        cardImageSrc: 'future-fire-card.png',
+        tokenImageSrc: 'future-fire-token.png',
         castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
         passiveEffectRefs: [],
       },
@@ -107,6 +109,8 @@ describe('deckDrafting', () => {
         id: 'draft-player-1-Fire-2-4fxc',
         runeTypes: ['Fire'],
         rarity: 'epic',
+        cardImageSrc: 'future-fire-card.png',
+        tokenImageSrc: 'future-fire-token.png',
         castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
         passiveEffectRefs: [],
       });

@@ -19,7 +19,7 @@ import type {
 import { EFFECT_CATALOG } from './effectCatalog';
 import type { CastEffectId, CatalogEffectId } from './effectCatalog';
 import { getPrimaryRuneType } from './runeHelpers';
-import { getRuneImageSources } from './runeImages';
+import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
 
 export interface WallPosition {
   row: number;
@@ -377,7 +377,7 @@ function convertCompletedCell(
     acceptedRuneTypes: [...nextWall[position.row][position.col].acceptedRuneTypes],
     runeTypes: [targetType],
     rarity: 'common',
-    ...getRuneImageSources(targetType, 'common'),
+    ...CURRENT_RUNE_IMAGE_SOURCES[targetType],
     castEffectRefs: [],
     passiveEffectRefs: [],
   };

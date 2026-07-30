@@ -10,7 +10,7 @@ import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions'
 import { useClickSound } from '../../../hooks/useClickSound';
 import { useGameplayDeckState } from '../../../hooks/useGameState';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
-import { getRuneImageSources } from '../../../utils/runeImages';
+import { CURRENT_RUNE_IMAGE_SOURCES } from '../../../utils/runeImages';
 
 interface DeckDraftingModalProps {
   draftState: DeckDraftState;
@@ -21,7 +21,7 @@ function createPackFaceRune(offer: DeckDraftOffer): Rune {
     id: `${offer.id}-face`,
     runeTypes: [offer.runeType],
     rarity: offer.displayRarity,
-    ...getRuneImageSources(offer.runeType, offer.displayRarity),
+    ...CURRENT_RUNE_IMAGE_SOURCES[offer.runeType],
     castEffectRefs: [],
     passiveEffectRefs: [],
   };

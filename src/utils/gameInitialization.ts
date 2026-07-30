@@ -12,7 +12,7 @@ import type {
   ScoringWall,
 } from '../types/game';
 import { copyEffectRefs } from './runeEffects';
-import { getRuneImageSources } from './runeImages';
+import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
 import { getWallSlotRuneTypes } from './scoring';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
@@ -237,7 +237,7 @@ const STARTING_DECK_DEFINITIONS: Array<Omit<Rune, 'cardImageSrc' | 'tokenImageSr
 
 export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map((rune) => ({
   ...rune,
-  ...getRuneImageSources(rune.runeTypes[0], rune.rarity),
+  ...CURRENT_RUNE_IMAGE_SOURCES[rune.runeTypes[0]],
 }));
 
 export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
@@ -278,7 +278,7 @@ export function createEnemyLifeRune(id: string): EnemyRune {
     id,
     runeTypes: ['Life'],
     rarity: 'common',
-    ...getRuneImageSources('Life', 'common'),
+    ...CURRENT_RUNE_IMAGE_SOURCES.Life,
     castEffectRefs: [],
     passiveEffectRefs: [],
     damage: 1,

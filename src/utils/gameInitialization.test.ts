@@ -85,13 +85,13 @@ describe('gameInitialization combat state', () => {
     expect(firstDeck[10].castEffectRefs).not.toBe(secondDeck[10].castEffectRefs);
   });
 
-  it('assigns rarity card art and type token art to every starting rune', () => {
+  it('assigns current type card and token art to every starting rune', () => {
     const deck = createStartingDeck();
     const fireRunes = deck.filter((rune) => rune.runeTypes[0] === 'Fire');
 
     expect(deck.every((rune) => rune.cardImageSrc && rune.tokenImageSrc)).toBe(true);
     expect(new Set(fireRunes.map((rune) => rune.tokenImageSrc)).size).toBe(1);
-    expect(new Set(fireRunes.map((rune) => rune.cardImageSrc)).size).toBe(2);
+    expect(new Set(fireRunes.map((rune) => rune.cardImageSrc)).size).toBe(1);
   });
 
   it('scales enemy max health by the configured multiplier and rounds up to 1 HP', () => {
