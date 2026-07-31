@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
-import { useSoloMapState } from '../../../../hooks/useGameState';
+import { useArcaneDust, useSoloMapState } from '../../../../hooks/useGameState';
 import { useClickSound } from '../../../../hooks/useClickSound';
 import type { MapTravelTarget } from '../../../../types/game';
 import { RuneZoneButton } from '../../../../components/DeckButton';
+import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import {
   createMapTravelTargetKey,
   getMapLocationPoint,
@@ -17,6 +18,7 @@ const MAP_SCALE = 1.5;
 
 export function SoloMapView(): ReactElement {
   const map = useSoloMapState();
+  const arcaneDust = useArcaneDust();
   const { travelToMapTarget } = useGameplayActions();
   const { openSettingsOverlay } = useUIActions();
   const playClickSound = useClickSound();
@@ -77,11 +79,17 @@ export function SoloMapView(): ReactElement {
   return (
     <div className="relative flex h-full min-h-0 flex-col font-pixel">
       <header className="pixel-game-header z-30 flex min-h-22 items-center justify-between px-6 py-3">
-        <div>
+        <div className="flex items-center gap-6">
           <h1 className="pixel-section-title text-2xl">Greenwood</h1>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-[#b5d3bd]">
-            {tiles.length} {tiles.length === 1 ? 'tile' : 'tiles'} explored
-          </p>
+          <div className="flex items-center gap-2 text-[#f2c14e]" aria-label={`Arcane Dust: ${arcaneDust.toLocaleString()}`}>
+              <img
+                src={arcaneDustIcon}
+                alt=""
+                aria-hidden="true"
+                className="h-7 w-7 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]"
+              />
+              <span className="text-lg">{arcaneDust.toLocaleString()}</span>
+            </div>
         </div>
         <div className="flex items-center gap-3">
           <RuneZoneButton zone="deck" />
