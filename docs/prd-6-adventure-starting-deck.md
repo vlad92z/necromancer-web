@@ -3,12 +3,14 @@
 ## Cards
 
 - 2 Frost Shield, common Frost: gain 5 armor.
-- 2 Firebolt, common Fire: deal 5 damage.
-- 2 Lightning Bolt, common Lightning: deal 5 damage.
+- 2 Firebolt, common Fire, 2 mana: deal 5 damage.
+- 2 Lightning Bolt, common Lightning, 1 mana: deal 2 damage.
 - 2 Barricade, common Life: gain 5 armor.
-- 2 Void Tendrils, common Void: deal 5 damage.
+- 2 Void Tendrils, common Void, 5 mana: deal 10 damage.
 - 1 Tornado, common Wind: deal 5 damage.
-- 1 Headwind, uncommon Wind: reduce total incoming enemy-turn damage by 1 before armor.
+- 1 Headwind, uncommon Wind, 4 mana: reduce total incoming enemy-turn damage by 1 before armor.
+
+All other cards cost 2 mana. The player starts each turn with 7 mana and draws 5 cards.
 
 Headwind is the deck's only uncommon card. All other starting cards are common.
 

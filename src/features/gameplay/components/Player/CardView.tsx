@@ -1,5 +1,4 @@
 import type { RuneType, TooltipCardVariant } from '../../../../types/game';
-import { WALL_SLOT_PLACEHOLDER_ASSETS } from '../../../../utils/wallSlotPlaceholders';
 
 /**
  * CardView - displays a trading card style preview
@@ -9,6 +8,7 @@ interface CardViewProps {
   title: string;
   description: string;
   imageSrc: string;
+  manaCost: number;
   runeTypes: RuneType[];
   variant?: TooltipCardVariant;
   size?: 'default' | 'hand' | 'compact';
@@ -19,6 +19,7 @@ interface CardViewProps {
 export function CardView({
   title,
   imageSrc,
+  manaCost,
   description,
   runeTypes,
   variant = 'default',
@@ -37,6 +38,9 @@ export function CardView({
     Lightning: '#bd7720',
   };
   const cardBackgroundColor = singleRuneType ? typeBackgroundColor[singleRuneType] : undefined;
+  const manaType = runeTypes[0] ?? null;
+  const manaBackgroundColor = manaType ? typeBackgroundColor[manaType] : '#9ed9f5';
+  const manaTextColor = manaType === 'Wind' ? '#141313' : '#fff8d8';
   const titleTextColor = singleRuneType === 'Wind' ? 'text-[#141313]' : 'text-[#fff8d8]';
   const showDestroyedOverlay = variant === 'nonPrimary';
   const selectedClassName = isSelected
@@ -85,16 +89,15 @@ export function CardView({
 
       <div className={descriptionClassName}>
         {description}
-        <div className="absolute bottom-1 right-1 flex items-end gap-1" role="group" aria-label={`Rune types: ${runeTypes.join(', ')}`}>
-          {runeTypes.map((runeType) => (
-            <img
-              key={runeType}
-              className={isSmallCard ? 'h-5 w-5 object-contain [image-rendering:pixelated]' : 'h-7 w-7 object-contain [image-rendering:pixelated]'}
-              src={WALL_SLOT_PLACEHOLDER_ASSETS[runeType]}
-              alt=""
-            />
-          ))}
-        </div>
+        <span
+          className={isSmallCard
+            ? 'absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#141313] font-pixel text-[10px]'
+            : 'absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#141313] font-pixel text-xs'}
+          style={{ backgroundColor: manaBackgroundColor, color: manaTextColor }}
+          aria-label={`${manaCost} mana, ${runeTypes.join(' / ')} rune type`}
+        >
+          {manaCost}
+        </span>
       </div>
     </>
   );

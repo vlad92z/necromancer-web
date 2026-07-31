@@ -16,6 +16,7 @@ describe('wallCellRune', () => {
       rarity: 'rare',
       cardImageSrc: 'void-card.png',
       tokenImageSrc: 'void-token.png',
+      manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
     };
@@ -29,6 +30,7 @@ describe('wallCellRune', () => {
       rarity: 'rare',
       cardImageSrc: 'void-card.png',
       tokenImageSrc: 'void-token.png',
+      manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
     });

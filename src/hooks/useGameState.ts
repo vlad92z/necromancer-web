@@ -6,11 +6,20 @@ import { useShallow } from 'zustand/react/shallow';
 import { useArtefactStore } from '../state/stores/artefactStore';
 import { useBoardStore } from '../state/stores/boardStore';
 import { useCombatStore } from '../state/stores/combatStore';
+import { useMapStore } from '../state/stores/mapStore';
 import { useRunStore } from '../state/stores/runStore';
 import { useUIStore } from '../state/stores/uiStore';
 
 export function useGameStarted() {
   return useRunStore((state) => state.gameStarted);
+}
+
+export function useSoloPhase() {
+  return useRunStore((state) => state.soloPhase);
+}
+
+export function useSoloMapState() {
+  return useMapStore((state) => state.soloMap);
 }
 
 export function useGameIndex() {
@@ -132,6 +141,8 @@ export function useGameplayHealthState() {
       health: state.player.health,
       maxHealth: state.player.maxHealth,
       armor: state.player.armor,
+      mana: state.player.mana,
+      maxMana: state.player.maxMana,
     })),
   );
 }

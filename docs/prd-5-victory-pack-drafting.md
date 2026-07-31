@@ -63,7 +63,7 @@ Rules:
 - Hover highlight matches current selected-card highlight.
 - On pick, reveal awarded runes.
 - On pick, update deck count.
-- Keep View Deck / Next Game flow after pick.
+- Keep View Deck / Return to Map flow after pick.
 - Allow skip to next encounter with no added runes.
 
 ## File-Level Changes For Future Implementation

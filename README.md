@@ -1,6 +1,6 @@
 # Massive Spell: Arcane Arena
 
-A single-player roguelite rune-casting game. Build a deck, complete runes on a spell wall, defeat encounters, and choose a rune pack after each victory.
+A single-player roguelite rune-casting game. Explore a persistent tile map, build a deck, complete runes on a spell wall, defeat encounters, and choose a rune pack after each victory.
 
 ## Tech Stack
 
@@ -32,6 +32,16 @@ npm run preview
 
 ## Gameplay Rules
 
+### Adventure map
+
+- New solo runs begin at the center of a forest tile with eight unexplored road exits.
+- Selecting a reachable road lazily reveals the adjacent tile and moves the player directly to its connected encounter.
+- Standard tiles contain encounter locations A, B, C, and D. Travel is limited to the fixed road graph and supports backtracking through cleared locations.
+- Wind markers indicate unexplored tile edges. Fire marks uncleared encounters, Frost marks cleared encounters, and Life marks the player.
+- Discovered tiles and player position persist through Continue Run.
+- Entering an uncleared location starts a Goblin encounter. Entering a cleared location only moves the player.
+- Victory opens rune-pack rewards. Return to Map clears the location; the next uncleared destination starts the next encounter.
+
 ### Player spell wall
 
 - The player has a 6×6 spell wall built from six rune types: Fire, Life, Wind, Frost, Void, and Lightning.
@@ -53,7 +63,7 @@ npm run preview
 - The next hand is drawn up to six cards; the discard pile is shuffled into the deck only when necessary.
 - Reducing enemy health to zero opens deck drafting immediately, before an enemy turn.
 - Choose one of six rune-type packs. Each selected pack adds three runes to the deck; rarity odds improve with wins.
-- The next encounter starts with a fresh player wall and enemy board. Enemy health and damage scale between encounters.
+- Return to Map after drafting. The next uncleared location starts with a fresh player wall and enemy board; enemy health and damage scale between encounters.
 
 ### Combat layout
 
@@ -67,7 +77,7 @@ npm run preview
 src/
 ├── assets/                 # Art, fonts, sounds, and stat icons
 ├── components/             # Reusable UI and overlays
-├── features/gameplay/      # Combat board, panels, hand tray, deck draft
+├── features/gameplay/      # Adventure map, combat board, hand tray, deck draft
 ├── hooks/                  # Zustand selectors, actions, and audio hooks
 ├── routes/                 # Main menu and solo start screen
 ├── state/stores/           # Run, board, combat, gameplay, UI, artefact stores
@@ -154,9 +164,10 @@ identify('player-1234')
 
 ## Architecture Notes
 
-- `gameplayStore.ts` orchestrates encounter actions: start, cast, end turn, defeat, victory, deck draft, and next encounter.
-- Read ownership is split across `runStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`.
+- `gameplayStore.ts` orchestrates map travel and encounter actions.
+- Read ownership is split across `runStore`, `mapStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`.
 - Global state must stay serializable. Pure game rules belong in `src/utils/`; cross-store side effects belong in `src/systems/`.
+- `SoloMapView.tsx` renders the discovered tile grid and derives reachable markers from the pure map topology.
 - `SoloGameBoard.tsx` composes the combat view. Dedicated components render player and enemy panels, both spellboards, tooltips, and the hand tray.
 
 ## Contributing

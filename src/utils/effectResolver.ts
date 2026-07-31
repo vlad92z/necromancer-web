@@ -309,6 +309,7 @@ function cloneWall(wall: ScoringWall): ScoringWall {
     rarity: cell.rarity,
     cardImageSrc: cell.cardImageSrc,
     tokenImageSrc: cell.tokenImageSrc,
+    manaCost: cell.manaCost,
     castEffectRefs: cell.castEffectRefs ? copyEffectRefs(cell.castEffectRefs) : null,
     passiveEffectRefs: cell.passiveEffectRefs ? copyEffectRefs(cell.passiveEffectRefs) : null,
   })));

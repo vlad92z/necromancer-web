@@ -11,7 +11,7 @@ type DeltaIndicator = { amount: number; key: number; type: 'gain' | 'loss' };
 
 
 export function HealthView() {
-  const { health, maxHealth, armor } = useGameplayHealthState();
+  const { health, maxHealth, armor, mana, maxMana } = useGameplayHealthState();
 
   const clampedHealth = Math.max(0, Math.min(health, maxHealth));
   useHealthChangeSound(clampedHealth);
@@ -167,6 +167,15 @@ export function HealthView() {
           animate={{ width: `${progressPercent}%` }}
           transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
         />
+      </div>
+      <div className="flex items-center gap-1" aria-label={`${mana} of ${maxMana} mana`}>
+        {Array.from({ length: maxMana }, (_, index) => (
+          <span
+            key={index}
+            className={`h-3 w-3 rounded-full border-2 border-[#141313] ${index < mana ? 'bg-[#75c9f0]' : 'bg-transparent'}`}
+            aria-hidden="true"
+          />
+        ))}
       </div>
     </div>
   );

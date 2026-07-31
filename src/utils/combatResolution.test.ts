@@ -42,6 +42,7 @@ describe('combatResolution wall casting', () => {
       rarity,
       cardImageSrc: fireRune.cardImageSrc,
       tokenImageSrc: fireRune.tokenImageSrc,
+      manaCost: fireRune.manaCost ?? 2,
       castEffectRefs: fireRune.castEffectRefs,
       passiveEffectRefs: fireRune.passiveEffectRefs,
     });
@@ -241,10 +242,9 @@ describe('combatResolution turn cycling', () => {
       'deck-2',
       'deck-3',
       'deck-4',
-      'deck-5',
     ]);
     expect(result.discardPile.map((rune) => rune.id)).toEqual(['hand-1']);
-    expect(result.player.deck).toEqual([]);
+    expect(result.player.deck.map((rune) => rune.id)).toEqual(['deck-5']);
   });
 
   it('draws from deck before reshuffling discard when deck is short', () => {
@@ -265,9 +265,8 @@ describe('combatResolution turn cycling', () => {
       'discard-0',
       'discard-1',
       'discard-2',
-      'discard-3',
     ]);
-    expect(result.player.deck.map((rune) => rune.id)).toEqual(['discard-4']);
+    expect(result.player.deck.map((rune) => rune.id)).toEqual(['discard-3', 'discard-4']);
     expect(result.discardPile).toEqual([]);
   });
 
@@ -289,9 +288,8 @@ describe('combatResolution turn cycling', () => {
       'deck-full-2',
       'deck-full-3',
       'deck-full-4',
-      'deck-full-5',
     ]);
-    expect(result.player.deck.map((rune) => rune.id)).toEqual(['deck-full-6', 'deck-full-7']);
+    expect(result.player.deck.map((rune) => rune.id)).toEqual(['deck-full-5', 'deck-full-6', 'deck-full-7']);
     expect(result.discardPile).toEqual(discardRunes);
   });
 

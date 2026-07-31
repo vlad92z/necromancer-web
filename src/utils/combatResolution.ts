@@ -11,12 +11,11 @@ import {
   resolveStartTurnEffects,
 } from './effectResolver';
 import type { DrawTypeRequest, WallPosition } from './effectResolver';
-import { createEnemySpellBoard, createEnemyTurnRunes } from './gameInitialization';
+import { createEnemySpellBoard, createEnemyTurnRunes, DEFAULT_HAND_SIZE } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
 import { runeHasType } from './runeHelpers';
 import { canRuneSatisfySlot } from './scoring';
 
-const DEFAULT_HAND_SIZE = 6;
 export const EXTRA_DRAW_HAND_LIMIT = 10;
 
 export type WallCastStatus = 'invalid' | 'completed';
@@ -323,6 +322,7 @@ export function castRuneToWallSlot({
     rarity: completedRune.rarity,
     cardImageSrc: completedRune.cardImageSrc,
     tokenImageSrc: completedRune.tokenImageSrc,
+    manaCost: completedRune.manaCost ?? 2,
     castEffectRefs: copyEffectRefs(completedRune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(completedRune.passiveEffectRefs),
   };
@@ -409,6 +409,7 @@ export function resolveEnemyTurn({
       rarity: rune.rarity,
       cardImageSrc: rune.cardImageSrc,
       tokenImageSrc: rune.tokenImageSrc,
+      manaCost: rune.manaCost ?? 2,
       castEffectRefs: rune.castEffectRefs,
       passiveEffectRefs: rune.passiveEffectRefs,
     };

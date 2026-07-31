@@ -6,19 +6,27 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useEnemyAttackSoundSignal, useRuneSoundSignals, useShieldSoundSignal, useUIOverlayState } from '../../../hooks/useGameState';
+import {
+  useEnemyAttackSoundSignal,
+  useRuneSoundSignals,
+  useShieldSoundSignal,
+  useSoloPhase,
+  useUIOverlayState,
+} from '../../../hooks/useGameState';
 import { useEnemyAttackSound } from '../../../hooks/useEnemyAttackSound';
 import { useRuneSound } from '../../../hooks/useRuneSound';
 import { useShieldSound } from '../../../hooks/useShieldSound';
 import type { RuneSoundSignals, RuneType } from '../../../types/game';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
+import { SoloMapView } from './map/SoloMapView';
 
 const RUNE_SOUND_TYPES: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind', 'Lightning'];
 
 export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
   const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
+  const soloPhase = useSoloPhase();
   const runeSoundSignals = useRuneSoundSignals();
   const enemyAttackSoundSignal = useEnemyAttackSoundSignal();
   const shieldSoundSignal = useShieldSoundSignal();
@@ -99,13 +107,17 @@ export function GameContainer() {
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <SoloGameView
-            hiddenWallSlots={hiddenWallSlots}
-          />
+          {soloPhase === 'map'
+            ? <SoloMapView />
+            : (
+              <SoloGameView
+                hiddenWallSlots={hiddenWallSlots}
+              />
+            )}
         </div>
       </div>
 
-      {activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
+      {soloPhase !== 'map' && activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
       {showSettingsOverlay && (
         <SettingsOverlay onQuitRun={returnToStartScreen} />
       )}

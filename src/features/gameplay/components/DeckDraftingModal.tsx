@@ -38,7 +38,7 @@ export function DeckDraftingModal({
   const arcaneDustReward = 50; // placeholder
   const { fullDeck } = useGameplayDeckState();
   const totalDeckSize = fullDeck.length;
-  const { selectDeckDraftOffer, startNextSoloGame } = useGameplayActions();
+  const { selectDeckDraftOffer, returnToMapAfterReward } = useGameplayActions();
   const { openRuneZoneOverlay } = useUIActions();
   const playClickSound = useClickSound();
   const selectedOffer = draftState.selectedOffer;
@@ -87,9 +87,9 @@ export function DeckDraftingModal({
     openRuneZoneOverlay('deck');
   };
 
-  const handleStartNextGame = () => {
+  const handleReturnToMap = () => {
     playClickSound();
-    startNextSoloGame();
+    returnToMapAfterReward();
   };
 
   return (
@@ -177,10 +177,10 @@ export function DeckDraftingModal({
           <div className="flex w-full justify-end gap-2 sm:w-auto">
             <button
               type="button"
-              onClick={handleStartNextGame}
+              onClick={handleReturnToMap}
               className="pixel-game-button w-full bg-[#e15f4f] px-4 py-3 text-xs tracking-[0.18em] text-[#fff8d8] sm:w-auto"
             >
-              Next Game
+              Return to Map
             </button>
             <button
               type="button"

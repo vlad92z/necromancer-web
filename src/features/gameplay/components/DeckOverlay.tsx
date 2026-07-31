@@ -129,6 +129,7 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
                         <CardView
                           title={card.title}
                           imageSrc={card.imageSrc}
+                          manaCost={card.manaCost}
                           description={card.description}
                           runeTypes={card.runeTypes}
                           variant={card.variant}

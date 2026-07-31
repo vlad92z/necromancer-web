@@ -19,6 +19,7 @@ export function WallRuneCardPreview({ rune }: WallRuneCardPreviewProps) {
       <CardView
         title={card.title}
         imageSrc={card.imageSrc}
+        manaCost={card.manaCost}
         description={card.description}
         runeTypes={card.runeTypes}
         variant={card.variant}

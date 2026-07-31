@@ -24,7 +24,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [],
     },
     Void: {
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 10 } }],
       passiveEffectRefs: [],
     },
     Wind: {
@@ -32,7 +32,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [],
     },
     Lightning: {
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 2 } }],
       passiveEffectRefs: [],
     },
   },
@@ -145,13 +145,13 @@ describe('runeEffects', () => {
       { effectId: 'cast.armor', params: { amount: 5 } },
     ]);
     expect(createRune('void-common', 'Void', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.damage', params: { amount: 5 } },
+      { effectId: 'cast.damage', params: { amount: 10 } },
     ]);
     expect(createRune('wind-common', 'Wind', 'common').castEffectRefs).toEqual([
       { effectId: 'cast.damage', params: { amount: 5 } },
     ]);
     expect(createRune('lightning-common', 'Lightning', 'common')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 2 } }],
       passiveEffectRefs: [],
     });
   });

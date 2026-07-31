@@ -5,6 +5,7 @@
 import type { GameState } from '../../types/game';
 import { pickBoardState, useBoardStore } from './boardStore';
 import { pickCombatState, useCombatStore } from './combatStore';
+import { pickMapState, useMapStore } from './mapStore';
 import { pickRunState, useRunStore } from './runStore';
 
 const gameplayListeners = new Set<(state: GameState) => void>();
@@ -22,9 +23,12 @@ export function getGameplayState(): GameState {
   const run = useRunStore.getState();
   const board = useBoardStore.getState();
   const combat = useCombatStore.getState();
+  const map = useMapStore.getState();
 
   return {
     gameStarted: run.gameStarted,
+    soloPhase: run.soloPhase,
+    soloMap: map.soloMap,
     startingHealth: run.startingHealth,
     player: board.player,
     fullDeck: run.fullDeck,
@@ -57,6 +61,7 @@ export function replaceGameplayState(next: GameState): void {
     useRunStore.getState().replaceRunState(pickRunState(next));
     useBoardStore.getState().replaceBoardState(pickBoardState(next));
     useCombatStore.getState().replaceCombatState(pickCombatState(next));
+    useMapStore.getState().replaceMapState(pickMapState(next));
   } finally {
     isReplacingGameplayState = false;
   }
@@ -77,6 +82,7 @@ function attachStoreSubscriptions(): void {
   useRunStore.subscribe(notifyIfDirectStoreChange);
   useBoardStore.subscribe(notifyIfDirectStoreChange);
   useCombatStore.subscribe(notifyIfDirectStoreChange);
+  useMapStore.subscribe(notifyIfDirectStoreChange);
   areStoreSubscriptionsAttached = true;
 }
 

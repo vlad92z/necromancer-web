@@ -3,7 +3,16 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { EffectResolutionLog, GameState, Player, Rune, RuneType, ScoringWall } from '../../types/game';
+import type {
+  EffectResolutionLog,
+  GameState,
+  MapTravelTarget,
+  Player,
+  Rune,
+  RuneType,
+  ScoringWall,
+  SoloMapState,
+} from '../../types/game';
 import {
   createEmptyWall,
   createEnemySpellBoard,
@@ -29,6 +38,7 @@ import {
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { getArcaneDustReward } from '../../utils/arcaneDust';
+import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import {
   addGameplayArcaneDust,
   clearPersistedSoloRun,
@@ -48,6 +58,7 @@ function enterDeckDraftMode(state: GameState): GameState {
 
   return {
     ...state,
+    soloPhase: 'reward',
     deckDraftState,
     deckDraftReadyForNextGame: false,
     combatPhase: 'victory',
@@ -70,6 +81,8 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
   return {
     ...currentState,
     ...nextState,
+    soloPhase: nextState.soloPhase ?? 'map',
+    soloMap: nextState.soloMap ?? currentState.soloMap,
     deckDraftState: nextState.deckDraftState ?? null,
     deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
     enemyMaxHealth: typeof nextState.enemyMaxHealth === 'number' ? nextState.enemyMaxHealth : currentState.enemyMaxHealth,
@@ -95,6 +108,49 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
       ? nextState.shieldSoundSignal
       : currentState.shieldSoundSignal,
   };
+}
+
+function initializeEncounterForMapLocation(
+  state: GameState,
+  soloMap: SoloMapState,
+): GameState {
+  const encounterState = initializeSoloGame(state.enemyMaxHealth, state.fullDeck);
+  const maxHealth = state.player.maxHealth ?? state.startingHealth;
+  const health = Math.min(maxHealth, Math.max(0, state.player.health));
+  const nextState: GameState = {
+    ...encounterState,
+    gameStarted: true,
+    soloPhase: 'encounter',
+    soloMap,
+    startingHealth: state.startingHealth,
+    player: {
+      ...encounterState.player,
+      health,
+      maxHealth,
+    },
+    fullDeck: state.fullDeck,
+    gameIndex: state.gameIndex,
+    enemyMaxHealth: state.enemyMaxHealth,
+    baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
+    isDefeat: false,
+    longestRun: state.longestRun,
+    deckDraftState: null,
+    deckDraftReadyForNextGame: false,
+    activeArtefacts: state.activeArtefacts,
+    runeSoundSignals: state.runeSoundSignals,
+    enemyAttackSoundSignal: state.enemyAttackSoundSignal,
+    shieldSoundSignal: state.shieldSoundSignal,
+  };
+
+  trackGameplayNewGame({
+    gameNumber: nextState.gameIndex,
+    activeArtefacts: nextState.activeArtefacts,
+    deck: nextState.player.deck,
+    enemyMaxHealth: nextState.enemyMaxHealth,
+    startingHealth: nextState.startingHealth,
+  });
+
+  return nextState;
 }
 
 function isWallFull(wall: ScoringWall): boolean {
@@ -204,7 +260,8 @@ export interface GameplayStore extends GameState {
   prepareSoloMode: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
-  startNextSoloGame: () => void;
+  returnToMapAfterReward: () => void;
+  travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
   endCombatTurn: () => void;
@@ -224,16 +281,9 @@ export const gameplayStoreConfig = (
       const nextState = {
         ...baseState,
         gameStarted: true,
+        soloPhase: 'map' as const,
         activeArtefacts: selectedArtefacts,
       };
-
-      trackGameplayNewGame({
-        gameNumber: nextState.gameIndex,
-        activeArtefacts: nextState.activeArtefacts,
-        deck: nextState.player.deck,
-        enemyMaxHealth: nextState.enemyMaxHealth,
-        startingHealth: nextState.startingHealth,
-      });
 
       return nextState;
     });
@@ -268,6 +318,29 @@ export const gameplayStoreConfig = (
     set(() => initializeSoloGame());
   },
 
+  travelToMapTarget: (target: MapTravelTarget) => {
+    set((state) => {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat) {
+        return state;
+      }
+
+      const result = travelOnSoloMap(state.soloMap, target);
+      if (result.map === state.soloMap) {
+        return state;
+      }
+
+      if (result.enteredEncounter) {
+        return initializeEncounterForMapLocation(state, result.map);
+      }
+
+      return {
+        ...state,
+        soloPhase: 'map',
+        soloMap: result.map,
+      };
+    });
+  },
+
   selectHandRune: (runeId: string) => {
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.deckDraftState) {
@@ -291,6 +364,12 @@ export const gameplayStoreConfig = (
 
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.deckDraftState) {
+        return state;
+      }
+
+      const selectedRune = state.hand.find((rune) => rune.id === state.selectedHandRuneId);
+      const manaCost = selectedRune?.manaCost ?? 2;
+      if (!selectedRune || manaCost > state.player.mana) {
         return state;
       }
 
@@ -379,7 +458,10 @@ export const gameplayStoreConfig = (
 
         return {
           ...state,
-          player: drawResult.player,
+          player: {
+            ...drawResult.player,
+            mana: state.player.mana - manaCost,
+          },
           enemy: resolvedEffects.enemy,
           hand: drawResult.hand,
           discardPile: drawResult.discardPile,
@@ -522,7 +604,10 @@ export const gameplayStoreConfig = (
 
       return {
         ...state,
-        player: startTurnDrawResult.player,
+        player: {
+          ...startTurnDrawResult.player,
+          mana: startTurnDrawResult.player.maxMana,
+        },
         enemy: enemyTurnResult.enemy,
         hand: startTurnDrawResult.hand,
         discardPile: startTurnDrawResult.discardPile,
@@ -573,39 +658,25 @@ export const gameplayStoreConfig = (
     });
   },
 
-  startNextSoloGame: () => {
+  returnToMapAfterReward: () => {
     set((state) => {
-      const nextEnemyMaxHealth = state.enemyMaxHealth;
-      const nextGameIndex = state.gameIndex + 1;
-      const previousHealth = Math.max(0, state.player.health);
-      const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
-      const clampedHealth = Math.min(nextMaxHealth, previousHealth);
-      const nextGameState = initializeSoloGame(nextEnemyMaxHealth, state.fullDeck);
-      const nextState = {
-        ...nextGameState,
-        player: {
-          ...nextGameState.player,
-          health: clampedHealth,
-          maxHealth: nextMaxHealth,
-        },
-        gameIndex: nextGameIndex,
-        gameStarted: true,
-        fullDeck: state.fullDeck,
-        baseEnemyMaxHealth: state.baseEnemyMaxHealth || nextEnemyMaxHealth,
+      if (
+        state.soloPhase !== 'reward'
+        || !state.deckDraftState
+        || !state.soloMap.activeEncounter
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        soloPhase: 'map',
+        soloMap: completeActiveMapEncounter(state.soloMap),
+        gameIndex: state.gameIndex + 1,
         deckDraftState: null,
         deckDraftReadyForNextGame: false,
-        activeArtefacts: state.activeArtefacts,
+        selectedHandRuneId: null,
       };
-
-      trackGameplayNewGame({
-        gameNumber: nextState.gameIndex,
-        activeArtefacts: nextState.activeArtefacts,
-        deck: nextState.player.deck,
-        enemyMaxHealth: nextState.enemyMaxHealth,
-        startingHealth: nextState.startingHealth,
-      });
-
-      return nextState;
     });
   },
 });

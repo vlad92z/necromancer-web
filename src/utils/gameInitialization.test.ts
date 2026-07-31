@@ -17,8 +17,9 @@ describe('gameInitialization combat state', () => {
       maxHealth: 42,
     });
     expect(state.combatPhase).toBe('player-turn');
-    expect(state.hand).toHaveLength(6);
-    expect(state.player.deck).toHaveLength(state.fullDeck.length - 6);
+    expect(state.hand).toHaveLength(5);
+    expect(state.player.deck).toHaveLength(state.fullDeck.length - 5);
+    expect(state.player).toMatchObject({ mana: 7, maxMana: 7 });
     expect(state.discardPile).toEqual([]);
     expect(state.selectedHandRuneId).toBeNull();
   });
@@ -55,9 +56,13 @@ describe('gameInitialization combat state', () => {
     ].sort());
     expect(deck.find((rune) => rune.name === 'Headwind')).toMatchObject({
       rarity: 'uncommon',
+      manaCost: 4,
       castEffectRefs: [],
       passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
     });
+    expect(deck.find((rune) => rune.name === 'Lightning Bolt')).toMatchObject({ manaCost: 1 });
+    expect(deck.find((rune) => rune.name === 'Firebolt')).toMatchObject({ manaCost: 2 });
+    expect(deck.find((rune) => rune.name === 'Void Tendrils')).toMatchObject({ manaCost: 5 });
   });
 
   it('assigns the requested art and effects to starting cards', () => {
@@ -72,7 +77,7 @@ describe('gameInitialization combat state', () => {
       deck
         .filter((rune) => ['Firebolt', 'Lightning Bolt', 'Tornado', 'Void Tendrils'].includes(rune.name))
         .every((rune) => rune.castEffectRefs[0]?.effectId === 'cast.damage'
-          && rune.castEffectRefs[0]?.params?.amount === 5)
+          && rune.castEffectRefs[0]?.params?.amount === (rune.name === 'Lightning Bolt' ? 2 : rune.name === 'Void Tendrils' ? 10 : 5))
     ).toBe(true);
   });
 

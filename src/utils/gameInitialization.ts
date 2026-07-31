@@ -15,11 +15,13 @@ import { copyEffectRefs, createRuneFromPool } from './runeEffects';
 import { createEffectRef } from './effectCatalog';
 import { BARRICADE_RUNE_IMAGE_SOURCES, THROW_ROCK_RUNE_IMAGE_SOURCES } from './runeImages';
 import { getWallSlotRuneTypes } from './scoring';
+import { initializeSoloMap } from './soloMap';
 import goblinImageSrc from '../assets/enemies/goblin.png';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 export const WALL_SIZE = RUNE_TYPES.length;
-export const DEFAULT_HAND_SIZE = 6;
+export const DEFAULT_HAND_SIZE = 5;
+export const DEFAULT_PLAYER_MANA = 7;
 export const DEFAULT_ENEMY_MAX_HEALTH = 25;
 export const ENEMY_SCALING_MULTIPLIER = 1.35;
 export const ENEMY_HEALTH_ROUNDING_STEP = 1;
@@ -109,6 +111,7 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
           rarity: null,
           cardImageSrc: null,
           tokenImageSrc: null,
+          manaCost: null,
           castEffectRefs: null,
           passiveEffectRefs: null,
         }))
@@ -158,6 +161,7 @@ function createEnemyRune(
     runeTypes: [runeType],
     rarity,
     ...imageSources,
+    manaCost: 2,
     castEffectRefs: copyEffectRefs(effectiveCastEffectRefs),
     passiveEffectRefs: [],
     damage,
@@ -214,6 +218,8 @@ export function createPlayer(
     health: startingHealth,
     maxHealth,
     armor: 0,
+    mana: DEFAULT_PLAYER_MANA,
+    maxMana: DEFAULT_PLAYER_MANA,
     deck,
   };
 }
@@ -235,6 +241,8 @@ export function initializeSoloGame(
 
   return {
     gameStarted: false,
+    soloPhase: 'map',
+    soloMap: initializeSoloMap(),
     startingHealth: player.maxHealth,
     player,
     fullDeck: deckTemplate,

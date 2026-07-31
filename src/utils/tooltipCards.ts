@@ -35,6 +35,7 @@ export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | nu
       description: getRuneEffectDescription(rune),
       runeRarity: rune.rarity,
       imageSrc: rune.cardImageSrc,
+      manaCost: rune.manaCost ?? 2,
     };
   });
 }
