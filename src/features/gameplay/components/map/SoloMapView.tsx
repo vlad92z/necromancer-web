@@ -12,6 +12,8 @@ import {
 } from '../../../../utils/soloMap';
 import { MapTile } from './MapTile';
 
+const MAP_SCALE = 1.5;
+
 export function SoloMapView(): ReactElement {
   const map = useSoloMapState();
   const { travelToMapTarget } = useGameplayActions();
@@ -94,7 +96,8 @@ export function SoloMapView(): ReactElement {
         <div
           className="absolute left-1/2 top-1/2"
           style={{
-            transform: `translate(${-playerWorldX}px, ${-playerWorldY}px)`,
+            transformOrigin: 'top left',
+            transform: `translate(${-playerWorldX * MAP_SCALE}px, ${-playerWorldY * MAP_SCALE}px) scale(${MAP_SCALE})`,
           }}
         >
           {tiles.map((tile) => (
