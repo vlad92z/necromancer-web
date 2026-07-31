@@ -1,4 +1,5 @@
 import fireCard from '../assets/runes/cards/card_fireball.png';
+import scorchCard from '../assets/runes/cards/card_scorch.png';
 import frostCard from '../assets/runes/cards/card_frost_shield.png';
 import barricadeCard from '../assets/runes/cards/card_barricade.png';
 import throwRockCard from '../assets/runes/cards/card_throw_rock.png';
@@ -7,6 +8,7 @@ import lifeCard from '../assets/runes/cards/card_heal.png';
 import lightningCard from '../assets/runes/cards/card_lightning_bolt.png';
 import windCard from '../assets/runes/cards/card_tornado.png';
 import voidCard from '../assets/runes/cards/card_void_tendrils.png';
+import hideCard from '../assets/runes/cards/card_hide.png';
 import fireToken from '../assets/runes/tokens/token_fire.png';
 import frostToken from '../assets/runes/tokens/token_frost.png';
 import lifeToken from '../assets/runes/tokens/token_life.png';
@@ -38,7 +40,15 @@ export const BARRICADE_RUNE_IMAGE_SOURCES: RuneImageSources = {
   tokenImageSrc: lifeToken,
 };
 
-export const HIDE_RUNE_IMAGE_SOURCES: RuneImageSources = BARRICADE_RUNE_IMAGE_SOURCES;
+export const SCORCH_IMAGE_SOURCES: RuneImageSources = {
+  cardImageSrc: scorchCard,
+  tokenImageSrc: fireToken,
+};
+
+export const HIDE_RUNE_IMAGE_SOURCES: RuneImageSources = {
+  cardImageSrc: hideCard,
+  tokenImageSrc: lifeToken,
+};
 
 export const THROW_ROCK_RUNE_IMAGE_SOURCES: RuneImageSources = {
   cardImageSrc: throwRockCard,

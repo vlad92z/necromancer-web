@@ -44,7 +44,7 @@ export function CardView({
   const titleTextColor = singleRuneType === 'Wind' ? 'text-[#141313]' : 'text-[#fff8d8]';
   const showDestroyedOverlay = variant === 'nonPrimary';
   const selectedClassName = isSelected
-    ? 'translate-y-[-10px]'
+    ? 'translate-y-[-10px] ring-4 ring-[#f2c14e] ring-offset-2 ring-offset-[#141313]'
     : '';
   const interactiveClassName = onClick
     ? 'cursor-pointer focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] hover:translate-y-[-6px]'

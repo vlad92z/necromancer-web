@@ -38,7 +38,6 @@ export function getGameplayState(): GameState {
     isDefeat: run.isDefeat,
     longestRun: run.longestRun,
     deckDraftState: run.deckDraftState,
-    deckDraftReadyForNextGame: run.deckDraftReadyForNextGame,
     activeArtefacts: run.activeArtefacts,
     runeSoundSignals: run.runeSoundSignals,
     enemyAttackSoundSignal: run.enemyAttackSoundSignal,

@@ -1,137 +1,45 @@
-/**
- * Unit tests for post-victory rune pack drafting helpers.
- */
-
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Rune } from '../types/game';
-import {
-  createDeckDraftState,
-  createDraftRuneForRarity,
-  mergeDeckWithOffer,
-  rollDraftRarity,
-} from './deckDrafting';
-import { PREDEFINED_RUNE_VARIANTS } from './runeEffects';
+import { createGoblinEnemy } from './gameInitialization';
+import { createDeckDraftState, mergeDeckWithOffer } from './deckDrafting';
 
 describe('deckDrafting', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
+  it('creates three unique Goblin-drop cards from the Goblin reward pool', () => {
+    const state = createDeckDraftState('player-1', createGoblinEnemy(20), () => 0);
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('creates six one-pick rune packs in rune type order', () => {
-    const state = createDeckDraftState('player-1', 3, () => 0.99);
-
-    expect(state.totalPicks).toBe(1);
-    expect(state.picksRemaining).toBe(1);
+    expect(state.offers).toHaveLength(3);
     expect(state.selectedOffer).toBeNull();
-    expect(state.offers.map((offer) => offer.runeType)).toEqual([
-      'Fire',
-      'Life',
-      'Wind',
-      'Frost',
-      'Void',
-      'Lightning',
-    ]);
+    expect(state.offers.map((offer) => offer.rune.name)).toEqual(['Throw Rock', 'Hide', 'Torch']);
+    expect(new Set(state.offers.map((offer) => offer.rune.name)).size).toBe(3);
   });
 
-  it('creates three same-type runes per pack with unique ids and valid effect refs', () => {
-    const state = createDeckDraftState('player-1', 0, () => 0.99);
-    const runes = state.offers.flatMap((offer) => offer.runes);
-    const ids = new Set(runes.map((rune) => rune.id));
+  it('creates reward cards with their specified effects, costs, and artwork', () => {
+    const state = createDeckDraftState('player-1', createGoblinEnemy(20), () => 0.99);
+    const cards = new Map(state.offers.map((offer) => [offer.rune.name, offer.rune]));
 
-    expect(ids.size).toBe(runes.length);
-    state.offers.forEach((offer) => {
-      expect(offer.runes).toHaveLength(3);
-      expect(offer.runes.every((rune) => rune.runeTypes[0] === offer.runeType)).toBe(true);
-      expect(['uncommon', 'rare', 'epic']).toContain(offer.displayRarity);
+    expect(cards.get('Lifeline')).toMatchObject({
+      manaCost: 5,
+      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 5 } }],
     });
-
-    runes.forEach((rune) => {
-      expect(['common', 'uncommon', 'rare', 'epic']).toContain(rune.rarity);
-      expect(rune.castEffectRefs.length + rune.passiveEffectRefs.length).toBeGreaterThan(0);
-      rune.castEffectRefs.forEach((effectRef) => {
-        expect(effectRef.params ?? {}).not.toHaveProperty('rarity');
-      });
-      rune.passiveEffectRefs.forEach((effectRef) => {
-        expect(effectRef.params ?? {}).not.toHaveProperty('rarity');
-      });
+    expect(cards.get('Torch')).toMatchObject({
+      manaCost: 3,
+      cardImageSrc: expect.stringContaining('card_fireball.png'),
+      passiveEffectRefs: [{ effectId: 'passive.damageEndTurn', params: { amount: 3 } }],
     });
   });
 
-  it('allows common rewards while guaranteeing each pack has one uncommon-or-better rune', () => {
-    const state = createDeckDraftState('player-1', 0, () => 0.99);
-
-    state.offers.forEach((offer) => {
-      expect(offer.runes[0].rarity).toBe('uncommon');
-      expect(offer.runes.some((rune) => rune.rarity !== 'common')).toBe(true);
-      expect(offer.runes.some((rune) => rune.rarity === 'common')).toBe(true);
-      expect(offer.displayRarity).toBe('uncommon');
-    });
+  it('does not create offers for an enemy without a reward pool', () => {
+    expect(createDeckDraftState('player-1', null).offers).toEqual([]);
   });
 
-  it('rolls rarity with current rare and epic scaling plus uncommon fallback odds', () => {
-    expect(rollDraftRarity({ winStreak: 10, random: () => 0.11 })).toBe('rare');
-    expect(rollDraftRarity({ winStreak: 10, random: () => 0.65 })).toBe('uncommon');
-    expect(rollDraftRarity({ winStreak: 0, random: () => 0.95 })).toBe('common');
-    expect(rollDraftRarity({ winStreak: 100, random: () => 0.01 })).toBe('epic');
-  });
-
-  it('creates a draft rune for an explicit type and rarity', () => {
-    const variants = PREDEFINED_RUNE_VARIANTS.Fire.epic;
-    PREDEFINED_RUNE_VARIANTS.Fire.epic = [
-      ...variants,
-      {
-        templateId: 'fire-epic-test-variant',
-        name: 'Fire Future',
-        runeTypes: ['Fire'],
-        rarity: 'epic',
-        cardImageSrc: 'future-fire-card.png',
-        tokenImageSrc: 'future-fire-token.png',
-        castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
-        passiveEffectRefs: [],
-      },
-    ];
-    const randomValues = [0.1234, 0.75];
-    let callIndex = 0;
-
-    try {
-      const rune = createDraftRuneForRarity({
-        ownerId: 'player-1',
-        index: 2,
-        rarity: 'epic',
-        runeType: 'Fire',
-        random: () => randomValues[callIndex++] ?? 0,
-      });
-
-      expect(rune).toMatchObject({
-        id: 'draft-player-1-Fire-2-4fxc',
-        runeTypes: ['Fire'],
-        rarity: 'epic',
-        cardImageSrc: 'future-fire-card.png',
-        tokenImageSrc: 'future-fire-token.png',
-        castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
-        passiveEffectRefs: [],
-      });
-    } finally {
-      PREDEFINED_RUNE_VARIANTS.Fire.epic = variants;
-    }
-  });
-
-  it('merges selected pack runes onto the deck', () => {
+  it('merges only the selected card onto the deck', () => {
     const deckRune = createRune('deck-rune');
-    const rewardRune = createRune('reward-rune');
-    const merged = mergeDeckWithOffer([deckRune], {
-      id: 'reward-pack',
-      ownerId: 'player-1',
-      runeType: 'Fire',
-      displayRarity: 'common',
-      runes: [rewardRune],
-    });
+    const rewardOffer = createDeckDraftState('player-1', createGoblinEnemy(20), () => 0).offers[0]!;
 
-    expect(merged.map((rune) => rune.id)).toEqual(['deck-rune', 'reward-rune']);
+    expect(mergeDeckWithOffer([deckRune], rewardOffer).map((rune) => rune.id)).toEqual([
+      'deck-rune',
+      rewardOffer.rune.id,
+    ]);
   });
 });
 

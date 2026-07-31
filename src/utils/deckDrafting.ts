@@ -1,148 +1,102 @@
-/**
- * Deck drafting utilities for post-victory rune packs.
- */
+/** Post-victory, enemy-specific single-rune reward helpers. */
 
-import type { DeckDraftOffer, DeckDraftState, Rune, RuneEffectRarity, RuneType } from '../types/game';
-import { createRuneFromPool } from './runeEffects';
-import { getRuneTypes } from './gameInitialization';
+import type { DeckDraftOffer, DeckDraftState, Enemy, Rune } from '../types/game';
+import { createEffectRef } from './effectCatalog';
+import {
+  CURRENT_RUNE_IMAGE_SOURCES,
+  HIDE_RUNE_IMAGE_SOURCES,
+  SCORCH_IMAGE_SOURCES,
+  THROW_ROCK_RUNE_IMAGE_SOURCES,
+} from './runeImages';
 
-const BASE_EPIC_CHANCE = 0;
-const BASE_RARE_CHANCE = 0;
-const BASE_UNCOMMON_CHANCE = 10;
-const EPIC_INCREMENT_PER_WIN = 1;
-const RARE_INCREMENT_PER_WIN = 5;
-const UNCOMMON_INCREMENT_PER_WIN = 3;
-const RUNES_PER_PACK = 3;
+type RewardRuneTemplate = Omit<Rune, 'id'> & { templateId: string };
 
-const RARITY_VALUE: Record<RuneEffectRarity, number> = {
-  common: 0,
-  uncommon: 1,
-  rare: 2,
-  epic: 3,
-};
+const GOBLIN_REWARD_RUNES: RewardRuneTemplate[] = [
+  {
+    templateId: 'goblin-throw-rock',
+    name: 'Throw Rock',
+    runeTypes: ['Life'],
+    rarity: 'common',
+    ...THROW_ROCK_RUNE_IMAGE_SOURCES,
+    manaCost: 1,
+    castEffectRefs: [createEffectRef('cast.damage', { amount: 3 })],
+    passiveEffectRefs: [],
+  },
+  {
+    templateId: 'goblin-hide',
+    name: 'Hide',
+    runeTypes: ['Life'],
+    rarity: 'common',
+    ...HIDE_RUNE_IMAGE_SOURCES,
+    manaCost: 1,
+    castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
+    passiveEffectRefs: [],
+  },
+  {
+    templateId: 'goblin-scorch',
+    name: 'Scorch',
+    runeTypes: ['Fire'],
+    rarity: 'common',
+    ...SCORCH_IMAGE_SOURCES,
+    manaCost: 3,
+    castEffectRefs: [],
+    passiveEffectRefs: [createEffectRef('passive.damageEndTurn', { amount: 3 })],
+  },
+  {
+    templateId: 'goblin-lifeline',
+    name: 'Lifeline',
+    runeTypes: ['Life'],
+    rarity: 'uncommon',
+    ...CURRENT_RUNE_IMAGE_SOURCES.Life,
+    manaCost: 5,
+    castEffectRefs: [createEffectRef('cast.healthIncrease', { amount: 5 })],
+    passiveEffectRefs: [],
+  },
+];
 
-interface RollDraftRarityInput {
-  winStreak: number;
-  random?: () => number;
-}
-
-interface CreateDraftRuneForRarityInput {
-  ownerId: string;
-  index: number;
-  rarity: RuneEffectRarity;
-  runeType: RuneType;
-  random?: () => number;
-}
-
-function clampPercentage(value: number): number {
-  return Math.max(0, Math.min(100, value));
-}
-
-function getPackDisplayRarity(runes: Rune[]): RuneEffectRarity {
-  return runes.reduce<RuneEffectRarity>((best, rune) => (
-    RARITY_VALUE[rune.rarity] > RARITY_VALUE[best] ? rune.rarity : best
-  ), 'common');
-}
-
-export function rollDraftRarity({
-  winStreak,
-  random = Math.random,
-}: RollDraftRarityInput): RuneEffectRarity {
-  const safeWinStreak = Math.max(0, winStreak);
-  const epicChance = clampPercentage(BASE_EPIC_CHANCE + safeWinStreak * EPIC_INCREMENT_PER_WIN);
-  const rareChance = clampPercentage(Math.min(
-    BASE_RARE_CHANCE + safeWinStreak * RARE_INCREMENT_PER_WIN,
-    100 - epicChance
-  ));
-  const uncommonChance = clampPercentage(Math.min(
-    BASE_UNCOMMON_CHANCE + safeWinStreak * UNCOMMON_INCREMENT_PER_WIN,
-    100 - epicChance - rareChance
-  ));
-  const roll = random() * 100;
-
-  if (roll < epicChance) return 'epic';
-  if (roll < epicChance + rareChance) return 'rare';
-  if (roll < epicChance + rareChance + uncommonChance) return 'uncommon';
-  return 'common';
-}
-
-export function createDraftRuneForRarity({
-  ownerId,
-  index,
-  rarity,
-  runeType,
-  random = Math.random,
-}: CreateDraftRuneForRarityInput): Rune {
-  const id = `draft-${ownerId}-${runeType}-${index}-${random().toString(36).slice(2, 6)}`;
-  return createRuneFromPool({ id, runeType, rarity, random });
-}
-
-function createDraftPack(
-  ownerId: string,
-  runeType: RuneType,
-  offerIndex: number,
-  winStreak: number = 0,
-  random: () => number = Math.random
-): DeckDraftOffer {
-  const runes = Array.from({ length: RUNES_PER_PACK }, (_, runeIndex) => {
-    const rarity = rollDraftRarity({ winStreak: winStreak - 1, random });
-    return createDraftRuneForRarity({
-      ownerId,
-      index: offerIndex * RUNES_PER_PACK + runeIndex,
-      rarity,
-      runeType,
-      random,
-    });
-  });
-
-  if (runes.every((rune) => rune.rarity === 'common')) {
-    runes[0] = createDraftRuneForRarity({
-      ownerId,
-      index: offerIndex * RUNES_PER_PACK,
-      rarity: 'uncommon',
-      runeType,
-      random,
-    });
-  }
-
+function copyRune(template: RewardRuneTemplate, id: string): Rune {
   return {
-    id: `${ownerId}-draft-pack-${runeType}`,
-    ownerId,
-    runeType,
-    displayRarity: getPackDisplayRarity(runes),
-    runes,
+    ...template,
+    id,
+    runeTypes: [...template.runeTypes],
+    castEffectRefs: template.castEffectRefs.map((effectRef) => ({
+      ...effectRef,
+      ...(effectRef.params ? { params: { ...effectRef.params } } : {}),
+    })),
+    passiveEffectRefs: template.passiveEffectRefs.map((effectRef) => ({
+      ...effectRef,
+      ...(effectRef.params ? { params: { ...effectRef.params } } : {}),
+    })),
   };
 }
 
-function createDraftOffers(
-  ownerId: string,
-  winStreak: number = 0,
-  random: () => number = Math.random
-): DeckDraftOffer[] {
-  return getRuneTypes().map((runeType, offerIndex) => createDraftPack(
-    ownerId,
-    runeType,
-    offerIndex,
-    winStreak,
-    random
-  ));
+function randomUniqueTemplates(templates: RewardRuneTemplate[], count: number, random: () => number): RewardRuneTemplate[] {
+  const pool = [...templates];
+  const selected: RewardRuneTemplate[] = [];
+  while (pool.length > 0 && selected.length < count) {
+    selected.push(pool.splice(Math.floor(random() * pool.length), 1)[0]!);
+  }
+  return selected;
 }
 
 export function createDeckDraftState(
   ownerId: string,
-  winStreak: number = 0,
+  enemy: Enemy | null,
   random: () => number = Math.random,
   arcaneDustReward: number = 0,
 ): DeckDraftState {
-  return {
-    offers: createDraftOffers(ownerId, winStreak, random),
-    picksRemaining: 1,
-    totalPicks: 1,
-    selectedOffer: null,
-    arcaneDustReward,
-  };
+  const templates = enemy?.rewardRunePoolId === 'goblin' || enemy?.id === 'goblin'
+    ? GOBLIN_REWARD_RUNES
+    : [];
+  const offers = randomUniqueTemplates(templates, 3, random).map((template, index) => ({
+    id: `${ownerId}-reward-${template.templateId}-${index}`,
+    ownerId,
+    rune: copyRune(template, `${ownerId}-reward-rune-${template.templateId}-${index}`),
+  }));
+
+  return { offers, selectedOffer: null, arcaneDustReward };
 }
 
 export function mergeDeckWithOffer(deck: Rune[], selectedOffer: DeckDraftOffer): Rune[] {
-  return [...deck, ...selectedOffer.runes];
+  return [...deck, selectedOffer.rune];
 }

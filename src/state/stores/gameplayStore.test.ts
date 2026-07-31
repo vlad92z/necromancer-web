@@ -178,7 +178,7 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(2);
+    expect(state.player.health).toBe(3);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.hand.map((rune) => rune.id)).toEqual(['deck-fire', 'deck-life', 'hand-fire']);
@@ -199,7 +199,7 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.player.health).toBe(10);
-    expect(state.player.armor).toBe(0);
+    expect(state.player.armor).toBe(1);
     expect(state.enemyAttackSoundSignal).toBe(0);
     expect(state.shieldSoundSignal).toBe(1);
   });
@@ -217,7 +217,7 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(3);
+    expect(state.player.health).toBe(4);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.shieldSoundSignal).toBe(0);
@@ -296,15 +296,8 @@ describe('gameplayStore current combat', () => {
     expect(victoryState.combatPhase).toBe('victory');
     expect(victoryState.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'A' });
     expect(victoryState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(false);
-    expect(victoryState.deckDraftState?.offers).toHaveLength(6);
-    expect(victoryState.deckDraftState?.offers.map((offer) => offer.runeType)).toEqual([
-      'Fire',
-      'Life',
-      'Wind',
-      'Frost',
-      'Void',
-      'Lightning',
-    ]);
+    expect(victoryState.deckDraftState?.offers).toHaveLength(3);
+    expect(new Set(victoryState.deckDraftState?.offers.map((offer) => offer.rune.name)).size).toBe(3);
     expect(victoryState.player.wall.flat().every((cell) => cell.runeTypes.length === 0)).toBe(true);
     expect(victoryState.hand).toEqual([]);
     expect(victoryState.discardPile).toEqual([]);
@@ -312,19 +305,19 @@ describe('gameplayStore current combat', () => {
     expect(victoryState.player.deck).toEqual([encounterDeckRune]);
     expect(victoryState.fullDeck.map((rune) => rune.id)).toEqual([lethalRune.id, baseDeckRune.id]);
 
-    const fireOffer = victoryState.deckDraftState?.offers[0];
-    expect(fireOffer?.runeType).toBe('Fire');
+    const rewardOffer = victoryState.deckDraftState?.offers[0];
     const encounterDeckBeforeSelection = victoryState.player.deck;
     const fullDeckBeforeSelection = victoryState.fullDeck;
-    store.getState().selectDeckDraftOffer(fireOffer?.id as string);
+    store.getState().selectDeckDraftOffer(rewardOffer?.id as string);
+    store.getState().selectDeckDraftOffer(rewardOffer?.id as string);
+    expect(store.getState().deckDraftState?.selectedOffer).toBeNull();
+    store.getState().selectDeckDraftOffer(rewardOffer?.id as string);
 
     const selectedState = store.getState();
-    expect(selectedState.deckDraftReadyForNextGame).toBe(true);
-    expect(selectedState.deckDraftState?.selectedOffer?.id).toBe(fireOffer?.id);
+    expect(selectedState.deckDraftState?.selectedOffer?.id).toBe(rewardOffer?.id);
     expect(selectedState.player.deck).toEqual(encounterDeckBeforeSelection);
     expect(selectedState.player.deck).toHaveLength(1);
-    expect(selectedState.fullDeck).toHaveLength(fullDeckBeforeSelection.length + 3);
-    expect(selectedState.fullDeck.slice(-3).every((rune) => rune.runeTypes[0] === 'Fire')).toBe(true);
+    expect(selectedState.fullDeck).toHaveLength(fullDeckBeforeSelection.length);
 
     store.getState().returnToMapAfterReward();
     const mapState = store.getState();
@@ -333,7 +326,7 @@ describe('gameplayStore current combat', () => {
     expect(mapState.deckDraftState).toBeNull();
     expect(mapState.soloMap.activeEncounter).toBeNull();
     expect(mapState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(true);
-    expect(mapState.fullDeck).toEqual(selectedState.fullDeck);
+    expect(mapState.fullDeck).toEqual([...selectedState.fullDeck, rewardOffer?.rune]);
 
     store.getState().travelToMapTarget({
       kind: 'location',
@@ -350,7 +343,7 @@ describe('gameplayStore current combat', () => {
     expect(nextState.suppressedRunes).toEqual([]);
     expect(nextState.discardPile).toEqual([]);
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id).sort()).toEqual(
-      selectedState.fullDeck.map((rune) => rune.id).sort()
+      mapState.fullDeck.map((rune) => rune.id).sort()
     );
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id)).not.toContain(encounterDeckRune.id);
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id)).not.toContain(encounterDiscardRune.id);
@@ -403,8 +396,7 @@ describe('gameplayStore current combat', () => {
     store.getState().castRuneToWall(0, 0);
 
     const victoryState = store.getState();
-    expect(victoryState.deckDraftState?.offers).toHaveLength(6);
-    expect(victoryState.deckDraftState?.picksRemaining).toBe(1);
+    expect(victoryState.deckDraftState?.offers).toHaveLength(3);
 
     const offerId = victoryState.deckDraftState?.offers[0]?.id;
     store.getState().selectDeckDraftOffer(offerId as string);
@@ -413,8 +405,8 @@ describe('gameplayStore current combat', () => {
     expect(selectedState.player.health).toBe(4);
     expect(selectedState.player.maxHealth).toBe(10);
     expect(selectedState.player.deck).toEqual(victoryState.player.deck);
-    expect(selectedState.fullDeck).toHaveLength(victoryState.fullDeck.length + 3);
-    expect(selectedState.deckDraftState?.picksRemaining).toBe(0);
+    expect(selectedState.fullDeck).toHaveLength(victoryState.fullDeck.length);
+    expect(selectedState.deckDraftState?.selectedOffer?.id).toBe(offerId);
   });
 
   it('adds fortune arcane dust through gameplay store casting', () => {
@@ -617,7 +609,7 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.combatPhase).toBe('victory');
-    expect(state.deckDraftState?.offers).toHaveLength(6);
+    expect(state.deckDraftState?.offers).toHaveLength(3);
     expect(state.player.health).toBe(10);
   });
 
@@ -653,7 +645,7 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(4);
+    expect(state.player.health).toBe(5);
     expect(state.player.armor).toBe(0);
     expect(state.combatPhase).toBe('player-turn');
   });

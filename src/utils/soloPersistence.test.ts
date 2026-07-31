@@ -30,7 +30,7 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 23,
+      version: 24,
       state: {
         gameStarted: true,
         enemyMaxHealth: 17,
@@ -87,7 +87,7 @@ describe('soloPersistence', () => {
     state.soloMap = arrival.map;
     if (soloPhase === 'reward') {
       state.combatPhase = 'victory';
-      state.deckDraftState = createDeckDraftState(state.player.id, state.gameIndex);
+      state.deckDraftState = createDeckDraftState(state.player.id, state.enemy);
     }
 
     saveSoloState(state);

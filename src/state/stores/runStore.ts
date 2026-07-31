@@ -18,7 +18,6 @@ export interface RunState {
   isDefeat: boolean;
   longestRun: number;
   deckDraftState: DeckDraftState | null;
-  deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
   enemyAttackSoundSignal: number;
@@ -41,7 +40,6 @@ export function pickRunState(state: GameState): RunState {
     isDefeat: state.isDefeat,
     longestRun: state.longestRun,
     deckDraftState: state.deckDraftState,
-    deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
     enemyAttackSoundSignal: state.enemyAttackSoundSignal,

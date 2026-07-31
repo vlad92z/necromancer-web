@@ -133,6 +133,7 @@ export function createGoblinEnemy(maxHealth: number): Enemy {
     maxHealth,
     armor: 0,
     arcaneDustRewardRange: GOBLIN_ARCANE_DUST_REWARD_RANGE,
+    rewardRunePoolId: 'goblin',
   };
 }
 
@@ -175,8 +176,9 @@ function createEnemyRune(
 
 export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
   return [
-    createEnemyRune(`enemy-${turnNumber}-throw-rock-0`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
-    createEnemyRune(`enemy-${turnNumber}-throw-rock-1`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
+    createEnemyRune(`enemy-${turnNumber}-throw-rock-0`, 'Throw Rock', 'Life', 'common', 3, THROW_ROCK_RUNE_IMAGE_SOURCES, [], 1),
+    createEnemyRune(`enemy-${turnNumber}-throw-rock-1`, 'Throw Rock', 'Life', 'common', 3, THROW_ROCK_RUNE_IMAGE_SOURCES, [], 1),
+    createEnemyRune(`enemy-${turnNumber}-throw-rock-2`, 'Throw Rock', 'Life', 'common', 3, THROW_ROCK_RUNE_IMAGE_SOURCES, [], 1),
     createEnemyRune(
       `enemy-${turnNumber}-hide`,
       'Hide',
@@ -184,7 +186,7 @@ export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
       'common',
       0,
       HIDE_RUNE_IMAGE_SOURCES,
-      [{ effectId: 'cast.armor', params: { amount: 2 } }],
+      [{ effectId: 'cast.armor', params: { amount: 3 } }],
       1,
     ),
   ];
@@ -258,7 +260,6 @@ export function initializeSoloGame(
     isDefeat: false,
     longestRun: 0,
     deckDraftState: null,
-    deckDraftReadyForNextGame: false,
     activeArtefacts: [],
     runeSoundSignals: createRuneSoundSignals(),
     enemyAttackSoundSignal: 0,

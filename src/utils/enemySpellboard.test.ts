@@ -36,19 +36,19 @@ describe('enemy spellboard combat', () => {
       cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
     ))).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Hide']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([5, 5, 0]);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Throw Rock', 'Hide']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life', 'Life']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([3, 3, 3, 0]);
     expect(createEnemyTurnRunes(4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
     expect(createEnemyTurnRunes(4)[0]?.tokenImageSrc).toContain('token_life.png');
     expect(createEnemyTurnRunes(4)[0]?.castEffectRefs).toEqual([
-      { effectId: 'cast.damage', params: { amount: 5 } },
+      { effectId: 'cast.damage', params: { amount: 3 } },
     ]);
-    expect(createEnemyTurnRunes(4)[2]).toMatchObject({
+    expect(createEnemyTurnRunes(4)[3]).toMatchObject({
       name: 'Hide',
       manaCost: 1,
       cardImageSrc: expect.stringContaining('card_barricade.png'),
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 2 } }],
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
     });
   });
 
@@ -75,11 +75,11 @@ describe('enemy spellboard combat', () => {
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: initializeSoloGame().enemy,
       enemyBoard: createEnemySpellBoard(),
-      enemyQueuedRunes: [createEnemyTurnRunes(0)[2]!],
+      enemyQueuedRunes: [createEnemyTurnRunes(0)[3]!],
       random: () => 0,
     });
 
-    expect(result.enemy?.armor).toBe(2);
+    expect(result.enemy?.armor).toBe(3);
   });
 
   it('has Goblin armor absorb player damage before health', () => {

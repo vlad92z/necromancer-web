@@ -49,6 +49,7 @@ export interface Enemy {
   maxHealth: number;
   armor?: number;
   arcaneDustRewardRange?: readonly [minimum: number, maximum: number];
+  rewardRunePoolId?: 'goblin';
 }
 
 export interface EnemyRune extends Rune {
@@ -60,15 +61,11 @@ export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
 export interface DeckDraftOffer {
   id: string;
   ownerId: Player['id'];
-  runeType: RuneType;
-  displayRarity: RuneEffectRarity;
-  runes: Rune[];
+  rune: Rune;
 }
 
 export interface DeckDraftState {
   offers: DeckDraftOffer[];
-  picksRemaining: number;
-  totalPicks: number;
   selectedOffer: DeckDraftOffer | null;
   arcaneDustReward: number;
 }
@@ -204,7 +201,6 @@ export interface GameState extends CombatZoneState {
   isDefeat: boolean;
   longestRun: number;
   deckDraftState: DeckDraftState | null;
-  deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
   enemyAttackSoundSignal: number;

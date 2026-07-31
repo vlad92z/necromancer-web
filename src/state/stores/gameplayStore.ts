@@ -52,7 +52,7 @@ function enterDeckDraftMode(state: GameState): GameState {
   const arcaneDustReward = rollEnemyArcaneDustReward(state.enemy);
   const deckDraftState = createDeckDraftState(
     state.player.id,
-    nextLongestRun,
+    state.enemy,
     Math.random,
     arcaneDustReward,
   );
@@ -61,7 +61,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     ...state,
     soloPhase: 'reward',
     deckDraftState,
-    deckDraftReadyForNextGame: false,
     combatPhase: 'victory',
     isDefeat: false,
     longestRun: nextLongestRun,
@@ -77,7 +76,6 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     soloPhase: nextState.soloPhase ?? 'map',
     soloMap: nextState.soloMap ?? currentState.soloMap,
     deckDraftState: nextState.deckDraftState ?? null,
-    deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
     enemyMaxHealth: typeof nextState.enemyMaxHealth === 'number' ? nextState.enemyMaxHealth : currentState.enemyMaxHealth,
     arcaneDust: typeof nextState.arcaneDust === 'number' ? nextState.arcaneDust : currentState.arcaneDust,
     enemy: nextState.enemy ?? createGoblinEnemy(
@@ -126,7 +124,6 @@ function initializeEncounterForMapLocation(
     isDefeat: false,
     longestRun: state.longestRun,
     deckDraftState: null,
-    deckDraftReadyForNextGame: false,
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
     enemyAttackSoundSignal: state.enemyAttackSoundSignal,
@@ -609,26 +606,17 @@ export const gameplayStoreConfig = (
         return state;
       }
 
-      if (state.deckDraftState.selectedOffer || state.deckDraftReadyForNextGame) {
-        return state;
-      }
-
       const selectedOffer = state.deckDraftState.offers.find((offer) => offer.id === offerId);
       if (!selectedOffer) {
         return state;
       }
 
-      const updatedDeckTemplate = mergeDeckWithOffer(state.fullDeck, selectedOffer);
-
       return {
         ...state,
-        fullDeck: updatedDeckTemplate,
         deckDraftState: {
           ...state.deckDraftState,
-          picksRemaining: 0,
-          selectedOffer,
+          selectedOffer: state.deckDraftState.selectedOffer?.id === offerId ? null : selectedOffer,
         },
-        deckDraftReadyForNextGame: true,
       };
     });
   },
@@ -643,13 +631,15 @@ export const gameplayStoreConfig = (
         return state;
       }
 
+      const selectedOffer = state.deckDraftState.selectedOffer;
+
       return {
         ...state,
+        fullDeck: selectedOffer ? mergeDeckWithOffer(state.fullDeck, selectedOffer) : state.fullDeck,
         soloPhase: 'map',
         soloMap: completeActiveMapEncounter(state.soloMap),
         gameIndex: state.gameIndex + 1,
         deckDraftState: null,
-        deckDraftReadyForNextGame: false,
         selectedHandRuneId: null,
       };
     });
