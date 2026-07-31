@@ -4,6 +4,7 @@ import {
   createEmptyWall,
   createEnemySpellBoard,
   createEnemyTurnRunes,
+  createMonsterEnemy,
   createPlayer,
   initializeSoloGame,
 } from './gameInitialization';
@@ -36,18 +37,18 @@ describe('enemy spellboard combat', () => {
       cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
     ))).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Throw Rock', 'Hide']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life', 'Life']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([3, 3, 3, 0]);
-    expect(createEnemyTurnRunes(4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
-    expect(createEnemyTurnRunes(4)[0]?.tokenImageSrc).toContain('token_life.png');
-    expect(createEnemyTurnRunes(4)[0]?.castEffectRefs).toEqual([
+    expect(createEnemyTurnRunes('goblin', 4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Throw Rock', 'Hide']);
+    expect(createEnemyTurnRunes('goblin', 4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life', 'Life']);
+    expect(createEnemyTurnRunes('goblin', 4).map((rune) => rune.damage)).toEqual([3, 3, 3, 0]);
+    expect(createEnemyTurnRunes('goblin', 4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
+    expect(createEnemyTurnRunes('goblin', 4)[0]?.tokenImageSrc).toContain('token_life.png');
+    expect(createEnemyTurnRunes('goblin', 4)[0]?.castEffectRefs).toEqual([
       { effectId: 'cast.damage', params: { amount: 3 } },
     ]);
-    expect(createEnemyTurnRunes(4)[3]).toMatchObject({
+    expect(createEnemyTurnRunes('goblin', 4)[3]).toMatchObject({
       name: 'Hide',
       manaCost: 1,
-      cardImageSrc: expect.stringContaining('card_barricade.png'),
+      cardImageSrc: expect.stringContaining('card_hide.png'),
       castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
     });
   });
@@ -75,7 +76,7 @@ describe('enemy spellboard combat', () => {
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: initializeSoloGame().enemy,
       enemyBoard: createEnemySpellBoard(),
-      enemyQueuedRunes: [createEnemyTurnRunes(0)[3]!],
+      enemyQueuedRunes: [createEnemyTurnRunes('goblin', 0)[3]!],
       random: () => 0,
     });
 
@@ -178,5 +179,80 @@ describe('enemy spellboard combat', () => {
 
     expect(result.boardFull).toBe(true);
     expect(result.enemyBoard.flat().map((cell) => cell.id)).toContain('last');
+  });
+
+  it('clears only wall copies in the topmost fullest row when Avalanche is played', () => {
+    const player = createPlayer('player-1', 'Tester', 100, [createEnemyRune('deck-rune', 0)], 100);
+    const originalDeck = player.deck;
+    [0, 1].forEach((rowIndex) => {
+      [0, 1].forEach((colIndex) => {
+        player.wall[rowIndex][colIndex] = {
+          ...player.wall[rowIndex][colIndex],
+          id: `wall-${rowIndex}-${colIndex}`,
+          name: 'Barricade',
+          runeTypes: ['Life'],
+          rarity: 'common',
+          cardImageSrc: 'card.png',
+          tokenImageSrc: 'token.png',
+          manaCost: 3,
+          castEffectRefs: [],
+          passiveEffectRefs: [],
+        };
+      });
+    });
+
+    const result = resolveEnemyTurn({
+      player,
+      enemy: initializeSoloGame().enemy,
+      enemyQueuedRunes: [createEnemyTurnRunes('golem-lord', 2)[0]!],
+      random: () => 0,
+    });
+
+    expect(result.player.wall[0].every((cell) => cell.id === null)).toBe(true);
+    expect(result.player.wall[1].filter((cell) => cell.id !== null)).toHaveLength(2);
+    expect(result.player.deck).toBe(originalDeck);
+    expect(result.logs).toContainEqual(expect.objectContaining({
+      effectId: 'enemy.destroyMostFilledRow',
+      output: expect.objectContaining({ destroyedRowIndex: 0, destroyedRuneCount: 2 }),
+    }));
+  });
+
+  it('does not change an empty player wall when Avalanche is played', () => {
+    const player = createPlayer('player-1', 'Tester', 100, [], 100);
+    const result = resolveEnemyTurn({
+      player,
+      enemy: initializeSoloGame().enemy,
+      enemyQueuedRunes: [createEnemyTurnRunes('golem-lord', 2)[0]!],
+      random: () => 0,
+    });
+
+    expect(result.player.wall).toEqual(player.wall);
+    expect(result.logs).toContainEqual(expect.objectContaining({
+      effectId: 'enemy.destroyMostFilledRow',
+      output: expect.objectContaining({ destroyedRowIndex: null, destroyedRuneCount: 0 }),
+    }));
+  });
+
+  it('alternates Golem Lord turns between armor, rocks, and Avalanche', () => {
+    const golem = createMonsterEnemy('golem-lord');
+    const armorTurn = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 100, [], 100),
+      enemy: golem,
+      turnNumber: 0,
+      random: () => 0,
+    });
+    expect(armorTurn.enemy?.armor).toBe(20);
+    expect(armorTurn.enemyBoard.flat().filter((cell) => cell.name === 'Barricade')).toHaveLength(4);
+
+    const rockTurn = resolveEnemyTurn({
+      player: armorTurn.player,
+      enemy: armorTurn.enemy,
+      enemyBoard: armorTurn.enemyBoard,
+      turnNumber: 1,
+      random: () => 0,
+    });
+    expect(rockTurn.player.health).toBe(76);
+    expect(rockTurn.healthDamage).toBe(24);
+    expect(rockTurn.enemyBoard.flat().filter((cell) => cell.name === 'Hurl Rock')).toHaveLength(3);
   });
 });

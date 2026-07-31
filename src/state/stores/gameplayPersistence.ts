@@ -8,7 +8,7 @@ import { subscribeGameplayState } from './gameplayState';
 
 export function attachGameplayPersistence(): () => void {
   return subscribeGameplayState((state: GameState) => {
-    if (state.isDefeat) {
+    if (state.isDefeat || state.isVictory) {
       clearSoloState();
       return;
     }

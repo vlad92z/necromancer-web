@@ -149,6 +149,7 @@ export function useGameplayStatusState() {
   return useRunStore(
     useShallow((state) => ({
       isDefeat: state.isDefeat,
+      isVictory: state.isVictory,
       deckDraftState: state.deckDraftState,
     })),
   );

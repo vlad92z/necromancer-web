@@ -22,6 +22,7 @@ import tokenVisited from '../../../../assets/map/token_visited.png';
 import playerToken from '../../../../assets/enemies/wizard.png';
 import tokenPath from '../../../../assets/map/token_path.png';
 import { getRegionEventToken } from '../../../../utils/regionCatalog';
+import { getMonsterDefinition } from '../../../../utils/monsterCatalog';
 
 interface MapTileProps {
   map: SoloMapState;
@@ -39,6 +40,7 @@ interface MapMarkerProps {
   reachable: boolean;
   current: boolean;
   markerKind: MapLocationMarkerKind | 'frontier';
+  isBoss?: boolean;
   onTravel: MapTileProps['onTravel'];
   onCurrentMarker: MapTileProps['onCurrentMarker'];
 }
@@ -54,10 +56,17 @@ function MapMarker({
   reachable,
   current,
   markerKind,
+  isBoss = false,
   onTravel,
   onCurrentMarker,
 }: MapMarkerProps): ReactElement {
   const style = { left: `${point.x}px`, top: `${point.y}px` };
+  const positionClassName = isBoss
+    ? 'absolute z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center'
+    : markerPositionClassName;
+  const imageClassName = isBoss
+    ? 'h-12 w-12 object-contain [image-rendering:pixelated] drop-shadow-[3px_3px_0_#141313]'
+    : markerImageClassName;
 
   if (current) {
     return (
@@ -68,10 +77,11 @@ function MapMarker({
         aria-label={label}
         data-map-current="true"
         data-map-marker={markerKind}
-        className={`${markerPositionClassName} focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fff8d8]`}
+        data-map-boss={isBoss || undefined}
+        className={`${positionClassName} focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fff8d8]`}
         style={style}
       >
-        <img src={imageSrc} alt="" aria-hidden="true" className={markerImageClassName} />
+        <img src={imageSrc} alt="" aria-hidden="true" className={imageClassName} />
       </div>
     );
   }
@@ -93,12 +103,13 @@ function MapMarker({
         type="button"
         aria-label={label}
         data-map-marker={markerKind}
-        className={`${markerPositionClassName} hover:bg-[#fff8d8]/20 focus-visible:bg-[#fff8d8]/20 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fff8d8]`}
+        data-map-boss={isBoss || undefined}
+        className={`${positionClassName} hover:bg-[#fff8d8]/20 focus-visible:bg-[#fff8d8]/20 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fff8d8]`}
         style={style}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
       >
-        <img src={imageSrc} alt="" aria-hidden="true" className={markerImageClassName} />
+        <img src={imageSrc} alt="" aria-hidden="true" className={imageClassName} />
       </button>
     );
   }
@@ -107,10 +118,11 @@ function MapMarker({
     <div
       aria-hidden="true"
       data-map-marker={markerKind}
-      className={`${markerPositionClassName} pointer-events-none`}
+      data-map-boss={isBoss || undefined}
+      className={`${positionClassName} pointer-events-none`}
       style={style}
     >
-      <img src={imageSrc} alt="" className={markerImageClassName} />
+      <img src={imageSrc} alt="" className={imageClassName} />
     </div>
   );
 }
@@ -149,22 +161,27 @@ export function MapTile({
     const current = markerKind === 'player';
     const event = locationId === 'start' ? null : tile.events[locationId];
     const eventToken = getRegionEventToken(event?.tokenId ?? null);
+    const monster = event?.monsterId ? getMonsterDefinition(event.monsterId) : null;
+    const isBoss = event?.kind === 'boss' && monster?.isBoss === true;
     const imageSrc = current
       ? playerToken
       : markerKind === 'cleared'
         ? eventToken?.visitedImageSrc ?? tokenVisited
-        : eventToken?.unvisitedImageSrc ?? tokenVisited;
+        : monster?.imageSrc ?? eventToken?.unvisitedImageSrc ?? tokenVisited;
 
     return (
       <MapMarker
         key={locationId}
         point={point}
         imageSrc={imageSrc}
-        label={getLocationLabel(tile, locationId, markerKind)}
+        label={isBoss && markerKind !== 'player'
+          ? `Travel to ${monster?.name ?? 'boss'} at location ${locationId} on tile ${tile.x}, ${tile.y}`
+          : getLocationLabel(tile, locationId, markerKind)}
         target={target}
         reachable={reachable}
         current={current}
         markerKind={markerKind}
+        isBoss={isBoss && !current && markerKind !== 'cleared'}
         onTravel={onTravel}
         onCurrentMarker={onCurrentMarker}
       />

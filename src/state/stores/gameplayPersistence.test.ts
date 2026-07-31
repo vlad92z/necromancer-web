@@ -33,4 +33,19 @@ describe('gameplayPersistence', () => {
     expect(clearSoloState).toHaveBeenCalledTimes(1);
     expect(saveSoloState).not.toHaveBeenCalled();
   });
+
+  it('clears persisted solo state when gameplay state enters final victory', async () => {
+    const subscribeGameplayState = vi.fn((listener: (state: { isDefeat: boolean; isVictory: boolean; gameStarted: boolean }) => void) => {
+      listener({ isDefeat: false, isVictory: true, gameStarted: true });
+      return () => {};
+    });
+
+    vi.doMock('./gameplayState', () => ({ subscribeGameplayState }));
+    const { attachGameplayPersistence } = await import('./gameplayPersistence');
+
+    attachGameplayPersistence();
+
+    expect(clearSoloState).toHaveBeenCalledTimes(1);
+    expect(saveSoloState).not.toHaveBeenCalled();
+  });
 });

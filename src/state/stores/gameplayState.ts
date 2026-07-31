@@ -36,6 +36,7 @@ export function getGameplayState(): GameState {
     arcaneDust: run.arcaneDust,
     enemyMaxHealth: run.enemyMaxHealth,
     isDefeat: run.isDefeat,
+    isVictory: run.isVictory,
     longestRun: run.longestRun,
     deckDraftState: run.deckDraftState,
     activeArtefacts: run.activeArtefacts,

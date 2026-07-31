@@ -6,7 +6,7 @@ import type { GameState, SoloMapState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 26;
+export const SOLO_STATE_VERSION = 27;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -47,7 +47,9 @@ function isSoloMapState(value: unknown): value is SoloMapState {
       && events.every((event) => event === null || (
         isRecord(event)
         && (typeof event.tokenId === 'string' || event.tokenId === null)
-        && ['combat', 'healing', 'empty'].includes(String(event.kind))
+        && ['combat', 'boss', 'healing', 'empty'].includes(String(event.kind))
+        && (event.monsterId === undefined || ['goblin', 'golem-lord'].includes(String(event.monsterId)))
+        && (event.kind !== 'boss' || event.monsterId === 'golem-lord')
         && typeof event.cleared === 'boolean'
       ));
   });
@@ -71,6 +73,7 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
     && Array.isArray(state.enemyQueuedRunes)
     && typeof state.enemyMaxHealth === 'number'
     && typeof state.arcaneDust === 'number'
+    && typeof state.isVictory === 'boolean'
     && isRecord(state.player)
     && typeof state.player.mana === 'number'
     && typeof state.player.maxMana === 'number'

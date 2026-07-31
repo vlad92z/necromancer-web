@@ -3,7 +3,7 @@
  */
 
 import type { ArtefactId } from '../types/artefacts';
-import type { EffectResolutionLog, Enemy, EnemyRune, Player, Rune, RuneType, ScoringWall } from '../types/game';
+import type { EffectResolutionLog, Enemy, EnemyRune, MonsterId, Player, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
 import {
   resolveCastEffects,
   resolveEndTurnEffects,
@@ -466,12 +466,54 @@ function resolveEnemyCardEffects({
     baseDamage: rune.damage,
     activeArtefacts,
   });
+  const destroysMostFilledRow = rune.castEffectRefs.some((effectRef) => (
+    effectRef.effectId === 'enemy.destroyMostFilledRow'
+  ));
+  const rowCounts = player.wall.map((row) => row.filter((cell) => cell.id !== null).length);
+  const fullestCount = Math.max(0, ...rowCounts);
+  const destroyedRowIndex = destroysMostFilledRow && fullestCount > 0
+    ? rowCounts.findIndex((count) => count === fullestCount)
+    : -1;
+  const emptyWallCell = (cell: WallCell): WallCell => ({
+    ...cell,
+    id: null,
+    name: null,
+    runeTypes: [],
+    rarity: null,
+    cardImageSrc: null,
+    tokenImageSrc: null,
+    manaCost: null,
+    castEffectRefs: null,
+    passiveEffectRefs: null,
+  });
+  const playerAfterEnemyEffect = destroyedRowIndex >= 0
+    ? {
+      ...incomingDamageResult.player,
+      wall: incomingDamageResult.player.wall.map((row, rowIndex) => (
+        rowIndex === destroyedRowIndex ? row.map(emptyWallCell) : row
+      )),
+    }
+    : incomingDamageResult.player;
+  const enemyEffectLogs: EffectResolutionLog[] = destroysMostFilledRow
+    ? [{
+      sourceType: 'rune',
+      sourceId: rune.id,
+      effectId: 'enemy.destroyMostFilledRow',
+      trigger: 'onCast',
+      input: { rowCounts },
+      output: {
+        destroyedRowIndex: destroyedRowIndex >= 0 ? destroyedRowIndex : null,
+        destroyedRuneCount: destroyedRowIndex >= 0 ? fullestCount : 0,
+      },
+      displayHint: 'damage',
+    }]
+    : [];
 
   return {
-    player: incomingDamageResult.player,
+    player: playerAfterEnemyEffect,
     enemy: armorGain > 0 ? { ...enemy, armor: (enemy.armor ?? 0) + armorGain } : enemy,
     healthDamage: incomingDamageResult.healthDamage,
-    logs: incomingDamageResult.logs,
+    logs: [...incomingDamageResult.logs, ...enemyEffectLogs],
   };
 }
 
@@ -522,7 +564,7 @@ export function resolveEnemyTurn({
 
   const runesToPlay = enemyQueuedRunes.length > 0
     ? [...enemyQueuedRunes]
-    : createEnemyTurnRunes(turnNumber);
+    : createEnemyTurnRunes(enemy.id as MonsterId, turnNumber);
   let nextPlayer = player;
   let nextEnemy = enemy;
   const nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));

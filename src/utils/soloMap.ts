@@ -11,6 +11,7 @@ import type {
   MapTileState,
   MapTravelTarget,
   SoloMapState,
+  MonsterId,
 } from '../types/game';
 import { getRegionDefinition, getRegionEventToken } from './regionCatalog';
 
@@ -79,6 +80,12 @@ interface MapTileCoordinate {
   y: number;
 }
 
+interface ForestTileBossRoll {
+  bossMonsterIds: readonly MonsterId[];
+  chance: number;
+  excludedLocationId: MapEncounterLocationId;
+}
+
 export interface MapTravelResult {
   map: SoloMapState;
   enteredEncounter: boolean;
@@ -106,10 +113,37 @@ export function createForestMapTile(
   y: number,
   availableEventTokenIds = getRegionDefinition('greenwood').eventTokens.map((token) => token.id),
   random = Math.random,
+  bossRoll?: ForestTileBossRoll,
 ): MapTileState {
   const key = createMapTileKey(x, y);
   const selectedTokenIds = [...availableEventTokenIds];
+  const shouldPlaceBoss = Boolean(
+    bossRoll
+    && bossRoll.bossMonsterIds.length > 0
+    && random() < bossRoll.chance
+  );
+  const bossMonsterId = shouldPlaceBoss && bossRoll
+    ? bossRoll.bossMonsterIds[Math.floor(random() * bossRoll.bossMonsterIds.length)] ?? null
+    : null;
+  const bossLocations = bossRoll
+    ? MAP_ENCOUNTER_LOCATION_IDS.filter((locationId) => locationId !== bossRoll.excludedLocationId)
+    : [];
+  const bossLocationId = bossMonsterId
+    ? bossLocations[Math.floor(random() * bossLocations.length)] ?? null
+    : null;
   const events = MAP_ENCOUNTER_LOCATION_IDS.reduce<MapTileState['events']>((result, locationId) => {
+    if (locationId === bossLocationId && bossMonsterId) {
+      result[locationId] = {
+        id: `${key}:${locationId}`,
+        locationId,
+        tokenId: null,
+        kind: 'boss',
+        monsterId: bossMonsterId,
+        cleared: false,
+      };
+      return result;
+    }
+
     const selectedIndex = selectedTokenIds.length === 0 ? -1 : Math.floor(random() * selectedTokenIds.length);
     const tokenId = selectedIndex === -1 ? null : selectedTokenIds.splice(selectedIndex, 1)[0] ?? null;
     const token = getRegionEventToken(tokenId);
@@ -131,6 +165,16 @@ export function createForestMapTile(
     kind: 'forest',
     events,
   };
+}
+
+export function hasDiscoveredBoss(map: SoloMapState): boolean {
+  return Object.values(map.tiles).some((tile) => (
+    Object.values(tile.events).some((event) => event?.kind === 'boss')
+  ));
+}
+
+function canDiscoverNewTile(map: SoloMapState): boolean {
+  return map.availableEventTokenIds.length > 0 || !hasDiscoveredBoss(map);
 }
 
 export function initializeSoloMap(): SoloMapState {
@@ -229,7 +273,9 @@ export function getReachableMapTargets(map: SoloMapState): MapTravelTarget[] {
   }
 
   if (currentTile.kind === 'start') {
-    return MAP_ROAD_IDS.map((roadId) => getTargetAcrossRoad(map, currentTile, roadId));
+    return MAP_ROAD_IDS
+      .map((roadId) => getTargetAcrossRoad(map, currentTile, roadId))
+      .filter((target) => target.kind === 'location' || canDiscoverNewTile(map));
   }
 
   const locationId = map.playerPosition.locationId;
@@ -237,12 +283,13 @@ export function getReachableMapTargets(map: SoloMapState): MapTravelTarget[] {
     return [];
   }
 
-  return [
+  const targets = [
     ...INTERNAL_CONNECTIONS[locationId].map((connectedLocationId) => (
       createLocationTarget(currentTile.key, connectedLocationId)
     )),
     ...LOCATION_ROADS[locationId].map((roadId) => getTargetAcrossRoad(map, currentTile, roadId)),
   ];
+  return targets.filter((target) => target.kind === 'location' || canDiscoverNewTile(map));
 }
 
 export function createMapTravelTargetKey(target: MapTravelTarget): string {
@@ -252,6 +299,10 @@ export function createMapTravelTargetKey(target: MapTravelTarget): string {
 }
 
 export function getFrontierRoadIds(map: SoloMapState, tile: MapTileState): MapRoadId[] {
+  if (!canDiscoverNewTile(map)) {
+    return [];
+  }
+
   return MAP_ROAD_IDS.filter((roadId) => {
     const neighborCoordinate = getNeighborCoordinate(tile, roadId);
     return !map.tiles[createMapTileKey(neighborCoordinate.x, neighborCoordinate.y)];
@@ -285,7 +336,8 @@ function arriveAtLocation(
     return { map, enteredEncounter: false, triggeredEvent: null };
   }
 
-  const shouldClearImmediately = event.kind !== 'combat' && !event.cleared;
+  const isCombatEvent = event.kind === 'combat' || event.kind === 'boss';
+  const shouldClearImmediately = !isCombatEvent && !event.cleared;
   const nextEvent = shouldClearImmediately ? { ...event, cleared: true } : event;
 
   return {
@@ -298,7 +350,7 @@ function arriveAtLocation(
         }
         : map.tiles,
       playerPosition: { tileKey, locationId },
-      activeEncounter: event.kind !== 'combat' || event.cleared || !event.monsterId
+      activeEncounter: !isCombatEvent || event.cleared || !event.monsterId
         ? null
         : {
           id: event.id,
@@ -307,7 +359,7 @@ function arriveAtLocation(
           monsterId: event.monsterId,
         },
     },
-    enteredEncounter: event.kind === 'combat' && !event.cleared,
+    enteredEncounter: isCombatEvent && !event.cleared,
     triggeredEvent: shouldClearImmediately ? event : null,
   };
 }
@@ -346,6 +398,7 @@ export function completeActiveMapEncounter(map: SoloMapState): SoloMapState {
 export function travelOnSoloMap(
   map: SoloMapState,
   target: MapTravelTarget,
+  random = Math.random,
 ): MapTravelResult {
   const reachableTarget = getReachableMapTargets(map).find((candidate) => (
     createMapTravelTargetKey(candidate) === createMapTravelTargetKey(target)
@@ -365,10 +418,21 @@ export function travelOnSoloMap(
 
   const neighborCoordinate = getNeighborCoordinate(sourceTile, reachableTarget.roadId);
   const neighborKey = createMapTileKey(neighborCoordinate.x, neighborCoordinate.y);
+  const destinationLocation = getLocationForRoad(getOppositeRoad(reachableTarget.roadId));
+  const discoveredForestTileCount = Object.values(map.tiles).filter((tile) => tile.kind === 'forest').length;
+  const region = getRegionDefinition(map.regionId);
   const neighbor = map.tiles[neighborKey] ?? createForestMapTile(
     neighborCoordinate.x,
     neighborCoordinate.y,
     map.availableEventTokenIds,
+    random,
+    hasDiscoveredBoss(map)
+      ? undefined
+      : {
+        bossMonsterIds: region.bossMonsterIds,
+        chance: Math.min(1, (discoveredForestTileCount + 1) * 0.05),
+        excludedLocationId: destinationLocation,
+      },
   );
   const mapWithNeighbor = map.tiles[neighborKey]
     ? map
@@ -382,7 +446,5 @@ export function travelOnSoloMap(
         [neighbor.key]: neighbor,
       },
     };
-  const destinationLocation = getLocationForRoad(getOppositeRoad(reachableTarget.roadId));
-
   return arriveAtLocation(mapWithNeighbor, neighbor.key, destinationLocation);
 }

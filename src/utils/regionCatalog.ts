@@ -18,6 +18,7 @@ export interface RegionDefinition {
   id: RegionId;
   name: string;
   eventTokens: readonly RegionEventTokenDefinition[];
+  bossMonsterIds: readonly MonsterId[];
 }
 
 const goblinTokens = Array.from({ length: 12 }, (_, index) => ({
@@ -43,6 +44,7 @@ export const REGION_CATALOG = {
     id: 'greenwood',
     name: 'Greenwood',
     eventTokens: [...goblinTokens, ...healingShrineTokens],
+    bossMonsterIds: ['golem-lord'],
   },
 } satisfies Record<RegionId, RegionDefinition>;
 

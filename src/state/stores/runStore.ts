@@ -16,6 +16,7 @@ export interface RunState {
   arcaneDust: number;
   enemyMaxHealth: number;
   isDefeat: boolean;
+  isVictory: boolean;
   longestRun: number;
   deckDraftState: DeckDraftState | null;
   activeArtefacts: ArtefactId[];
@@ -38,6 +39,7 @@ export function pickRunState(state: GameState): RunState {
     arcaneDust: state.arcaneDust,
     enemyMaxHealth: state.enemyMaxHealth,
     isDefeat: state.isDefeat,
+    isVictory: state.isVictory,
     longestRun: state.longestRun,
     deckDraftState: state.deckDraftState,
     activeArtefacts: state.activeArtefacts,

@@ -30,7 +30,7 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 26,
+      version: 27,
       state: {
         gameStarted: true,
         enemyMaxHealth: 17,
@@ -73,6 +73,36 @@ describe('soloPersistence', () => {
           },
         },
       },
+    });
+  });
+
+  it('restores a discovered Greenwood boss event', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true };
+    state.soloMap.tiles['1,0'] = {
+      key: '1,0',
+      x: 1,
+      y: 0,
+      kind: 'forest',
+      events: {
+        B: {
+          id: '1,0:B',
+          locationId: 'B',
+          tokenId: null,
+          kind: 'boss',
+          monsterId: 'golem-lord',
+          cleared: false,
+        },
+      },
+    };
+
+    saveSoloState(state);
+
+    expect(loadSoloState()?.soloMap.tiles['1,0'].events.B).toMatchObject({
+      kind: 'boss',
+      monsterId: 'golem-lord',
+      cleared: false,
     });
   });
 

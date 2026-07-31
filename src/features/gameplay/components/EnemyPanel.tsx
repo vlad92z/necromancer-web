@@ -35,7 +35,9 @@ export function EnemyPanel({ hoveredRune }: EnemyPanelProps) {
         <img
           src={enemy.imageSrc}
           alt={enemy.name}
-          className="h-55 max-w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]"
+          className={enemy.isBoss
+            ? 'h-[280px] w-[280px] max-w-none object-contain [image-rendering:pixelated] drop-shadow-[8px_8px_0_#141313]'
+            : 'h-55 max-w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]'}
         />
       </div>
 

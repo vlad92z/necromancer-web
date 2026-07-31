@@ -34,6 +34,10 @@ function roadTarget(roadId: MapRoadId): MapTravelTarget {
   };
 }
 
+function travelWithoutBoss(map: ReturnType<typeof initializeSoloMap>, target: MapTravelTarget) {
+  return travelOnSoloMap(map, target, () => 0.99);
+}
+
 describe('soloMap', () => {
   it('initializes the start tile with Greenwood events and eight frontier roads', () => {
     const map = initializeSoloMap();
@@ -75,6 +79,85 @@ describe('soloMap', () => {
     ]));
   });
 
+  it('removes frontier roads only after Greenwood is out of events and its boss is discovered', () => {
+    const map = initializeSoloMap();
+    map.availableEventTokenIds = [];
+    map.tiles['boss-tile'] = {
+      key: 'boss-tile',
+      x: 20,
+      y: 20,
+      kind: 'forest',
+      events: {
+        B: {
+          id: 'boss-tile:B',
+          locationId: 'B',
+          tokenId: null,
+          kind: 'boss',
+          monsterId: 'golem-lord',
+          cleared: false,
+        },
+      },
+    };
+    const startTile = map.tiles['0,0'];
+
+    expect(getFrontierRoadIds(map, startTile)).toEqual([]);
+    expect(getReachableMapTargets(map)).toEqual([]);
+    expect(travelOnSoloMap(map, roadTarget('right-75')).map).toBe(map);
+  });
+
+  it('places the first-tile boss at 5% and never on the blind arrival location', () => {
+    const result = travelOnSoloMap(initializeSoloMap(), roadTarget('right-75'), () => 0);
+    const tile = result.map.tiles['1,0'];
+    const bossEvents = Object.values(tile.events).filter((event) => event?.kind === 'boss');
+
+    expect(result.map.playerPosition.locationId).toBe('A');
+    expect(tile.events.A?.kind).not.toBe('boss');
+    expect(bossEvents).toEqual([
+      expect.objectContaining({ kind: 'boss', monsterId: 'golem-lord', locationId: 'B' }),
+    ]);
+
+    const completedEntry = completeActiveMapEncounter(result.map);
+    const nextTile = travelOnSoloMap(completedEntry, {
+      kind: 'road',
+      tileKey: '1,0',
+      roadId: 'top-75',
+    }, () => 0);
+    const allBosses = Object.values(nextTile.map.tiles).flatMap((candidate) => (
+      Object.values(candidate.events).filter((event) => event?.kind === 'boss')
+    ));
+    expect(allBosses).toHaveLength(1);
+  });
+
+  it('raises boss chance by five points per tile and explores empty tiles until discovery', () => {
+    const first = travelOnSoloMap(
+      { ...initializeSoloMap(), availableEventTokenIds: [] },
+      roadTarget('right-75'),
+      () => 0.99,
+    );
+    expect(Object.values(first.map.tiles['1,0'].events).some((event) => event?.kind === 'boss')).toBe(false);
+    expect(getFrontierRoadIds(first.map, first.map.tiles['1,0']).length).toBeGreaterThan(0);
+
+    const second = travelOnSoloMap(first.map, {
+      kind: 'road',
+      tileKey: '1,0',
+      roadId: 'top-75',
+    }, () => 0.099);
+    expect(Object.values(second.map.tiles['1,-1'].events).some((event) => event?.kind === 'boss')).toBe(true);
+    expect(getFrontierRoadIds(second.map, second.map.tiles['1,-1'])).toEqual([]);
+  });
+
+  it('caps boss chance at 100%', () => {
+    const map = { ...initializeSoloMap(), tiles: { ...initializeSoloMap().tiles } };
+    for (let index = 0; index < 20; index += 1) {
+      const tile = createForestMapTile(index + 10, 10, [], () => 0.99);
+      map.tiles[tile.key] = tile;
+    }
+    map.availableEventTokenIds = [];
+
+    const result = travelOnSoloMap(map, roadTarget('right-75'), () => 0.9999);
+    expect(Object.values(result.map.tiles['1,0'].events).some((event) => event?.kind === 'boss')).toBe(true);
+  });
+
   it.each<{
     roadId: MapRoadId;
     tileKey: string;
@@ -89,7 +172,7 @@ describe('soloMap', () => {
     { roadId: 'bottom-75', tileKey: '0,1', locationId: 'A' },
     { roadId: 'bottom-195', tileKey: '0,1', locationId: 'B' },
   ])('maps start road $roadId to $tileKey location $locationId', ({ roadId, tileKey, locationId }) => {
-    const result = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget(roadId));
+    const result = travelWithoutBoss(initializeCombatOnlyMap(), roadTarget(roadId));
 
     expect(result.enteredEncounter).toBe(true);
     expect(result.map.playerPosition).toEqual({ tileKey, locationId });
@@ -97,7 +180,7 @@ describe('soloMap', () => {
   });
 
   it('allows only graph-adjacent internal movement and immediate encounter completion', () => {
-    const arrivedAtA = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget('right-75'));
+    const arrivedAtA = travelWithoutBoss(initializeCombatOnlyMap(), roadTarget('right-75'));
     const mapAtA = completeActiveMapEncounter(arrivedAtA.map);
 
     expect(mapAtA.tiles['1,0'].events.A?.cleared).toBe(true);
@@ -134,7 +217,7 @@ describe('soloMap', () => {
   });
 
   it('follows the right-75 to A, A to B, and A top-75 to C regression path', () => {
-    const arrivedAtA = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget('right-75'));
+    const arrivedAtA = travelWithoutBoss(initializeCombatOnlyMap(), roadTarget('right-75'));
     const mapAtA = completeActiveMapEncounter(arrivedAtA.map);
     const reachableFromA = getReachableMapTargets(mapAtA).map(createMapTravelTargetKey);
 
@@ -145,7 +228,7 @@ describe('soloMap', () => {
       'road:1,0:top-75',
     ]);
 
-    const arrivedAtC = travelOnSoloMap(mapAtA, {
+    const arrivedAtC = travelWithoutBoss(mapAtA, {
       kind: 'road',
       tileKey: '1,0',
       roadId: 'top-75',
@@ -155,7 +238,7 @@ describe('soloMap', () => {
   });
 
   it('removes both frontier markers on a discovered edge and backtracks across it', () => {
-    const arrivedAtA = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget('right-75'));
+    const arrivedAtA = travelWithoutBoss(initializeCombatOnlyMap(), roadTarget('right-75'));
     const mapAtA = completeActiveMapEncounter(arrivedAtA.map);
     const startTile = mapAtA.tiles['0,0'];
     const eastTile = mapAtA.tiles['1,0'];

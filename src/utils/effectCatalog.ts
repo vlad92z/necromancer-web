@@ -50,7 +50,8 @@ export type PassiveEffectId =
   | 'passive.vampire'
   | 'passive.reduceDamage';
 
-export type CatalogEffectId = CastEffectId | PassiveEffectId;
+export type EnemyEffectId = 'enemy.destroyMostFilledRow';
+export type CatalogEffectId = CastEffectId | PassiveEffectId | EnemyEffectId;
 export type PassiveStackingKind = 'flat' | 'multiplier';
 
 export interface PassiveEffectMetadata {
@@ -64,7 +65,7 @@ export interface PassiveEffectMetadata {
 
 export interface EffectCatalogEntry {
   id: CatalogEffectId;
-  kind: 'cast' | 'passive';
+  kind: 'cast' | 'passive' | 'enemy';
   title: string;
   displayHint: string;
   passive?: PassiveEffectMetadata;
@@ -263,6 +264,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage if your completed wall has no ${runeTypeParam(params, 'fragileType')} runes`,
+  },
+  'enemy.destroyMostFilledRow': {
+    id: 'enemy.destroyMostFilledRow',
+    kind: 'enemy',
+    title: 'Avalanche',
+    displayHint: 'damage',
+    describe: () => 'Destroy the row with the most runes',
   },
   'passive.rodHealing': {
     id: 'passive.rodHealing',

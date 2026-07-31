@@ -62,9 +62,14 @@ export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
 }
 
 export function createEnemySpellBoard(size: number = WALL_SIZE): ScoringWall {
+  return createMonsterSpellBoard('goblin', size);
+}
+
+export function createMonsterSpellBoard(monsterId: MonsterId, size: number = WALL_SIZE): ScoringWall {
+  const acceptedRuneTypes = MONSTER_CATALOG[monsterId].acceptedRuneTypes;
   return createEmptyWall(size).map((row) => row.map((cell) => ({
     ...cell,
-    acceptedRuneTypes: ['Life'],
+    acceptedRuneTypes: [...acceptedRuneTypes],
   })));
 }
 
@@ -79,6 +84,7 @@ export function createMonsterEnemy(monsterId: MonsterId, maxHealth?: number): En
     id: monster.id,
     name: monster.name,
     imageSrc: monster.imageSrc,
+    isBoss: monster.isBoss,
     health: resolvedMaxHealth,
     maxHealth: resolvedMaxHealth,
     armor: monster.armor,
@@ -105,8 +111,10 @@ function createEnemyRune(
   };
 }
 
-export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
-  return MONSTER_CATALOG.goblin.turnCards.map(({ idSuffix, cardName, damage }) => (
+export function createEnemyTurnRunes(monsterId: MonsterId, turnNumber: number): EnemyRune[] {
+  const monster = MONSTER_CATALOG[monsterId];
+  const turnCards = monster.turnCycle[turnNumber % monster.turnCycle.length] ?? [];
+  return turnCards.map(({ idSuffix, cardName, damage }) => (
     createEnemyRune(`enemy-${turnNumber}-${idSuffix}`, cardName, damage)
   ));
 }
@@ -177,6 +185,7 @@ export function initializeSoloGame(
     arcaneDust: 0,
     enemyMaxHealth,
     isDefeat: false,
+    isVictory: false,
     longestRun: 0,
     deckDraftState: null,
     activeArtefacts: [],
