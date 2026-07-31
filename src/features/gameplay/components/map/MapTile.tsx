@@ -18,10 +18,10 @@ import {
   type MapLocationMarkerKind,
 } from '../../../../utils/soloMap';
 import forestTileImage from '../../../../assets/map/tile_1.png';
-import fireRuneImage from '../../../../assets/runes/fire_rune.png';
-import frostRuneImage from '../../../../assets/runes/frost_rune.png';
-import lifeRuneImage from '../../../../assets/runes/life_rune.png';
-import windRuneImage from '../../../../assets/runes/wind_rune.png';
+import tokenCombat from '../../../../assets/map/token_combat.png';
+import tokenVisited from '../../../../assets/map/token_visited.png';
+import playerToken from '../../../../assets/enemies/wizard.png';
+import tokenPath from '../../../../assets/map/token_path.png';
 
 interface MapTileProps {
   map: SoloMapState;
@@ -148,10 +148,10 @@ export function MapTile({
     const reachable = reachableTargetKeys.has(createMapTravelTargetKey(target));
     const current = markerKind === 'player';
     const imageSrc = current
-      ? lifeRuneImage
+      ? playerToken
       : markerKind === 'cleared'
-        ? frostRuneImage
-        : fireRuneImage;
+        ? tokenVisited
+        : tokenCombat;
 
     return (
       <MapMarker
@@ -200,7 +200,7 @@ export function MapTile({
           <MapMarker
             key={roadId}
             point={MAP_ROAD_POINTS[roadId]}
-            imageSrc={windRuneImage}
+            imageSrc={tokenPath}
             label={`Explore ${roadId.replace('-', ' ')} road from tile ${tile.x}, ${tile.y}`}
             target={target}
             reachable={reachableTargetKeys.has(createMapTravelTargetKey(target))}

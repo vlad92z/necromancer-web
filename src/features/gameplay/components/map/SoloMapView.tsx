@@ -75,7 +75,7 @@ export function SoloMapView(): ReactElement {
     <div className="relative flex h-full min-h-0 flex-col font-pixel">
       <header className="pixel-game-header z-30 flex min-h-22 items-center justify-between px-6 py-3">
         <div>
-          <h1 className="pixel-section-title text-2xl">Adventure Map</h1>
+          <h1 className="pixel-section-title text-2xl">Greenwood</h1>
           <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-[#b5d3bd]">
             {tiles.length} {tiles.length === 1 ? 'tile' : 'tiles'} explored
           </p>
