@@ -114,7 +114,8 @@ export type SoloPhase = 'map' | 'encounter' | 'reward';
 export type MapTileKind = 'start' | 'forest';
 export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
-export type MapEncounterKind = 'fire';
+export type RegionId = 'greenwood';
+export type MapEventKind = 'combat' | 'healing' | 'empty';
 export type MonsterId = 'goblin';
 export type MapRoadId =
   | 'left-75'
@@ -131,11 +132,12 @@ export interface MapPoint {
   y: number;
 }
 
-export interface MapEncounter {
+export interface MapLocationEvent {
   id: string;
   locationId: MapEncounterLocationId;
-  kind: MapEncounterKind;
-  monsterId: MonsterId;
+  tokenId: string | null;
+  kind: MapEventKind;
+  monsterId?: MonsterId;
   cleared: boolean;
 }
 
@@ -144,7 +146,7 @@ export interface MapTileState {
   x: number;
   y: number;
   kind: MapTileKind;
-  encounters: Partial<Record<MapEncounterLocationId, MapEncounter>>;
+  events: Partial<Record<MapEncounterLocationId, MapLocationEvent>>;
 }
 
 export interface MapPlayerPosition {
@@ -156,11 +158,12 @@ export interface ActiveMapEncounter {
   id: string;
   tileKey: string;
   locationId: MapEncounterLocationId;
-  kind: MapEncounterKind;
   monsterId: MonsterId;
 }
 
 export interface SoloMapState {
+  regionId: RegionId;
+  availableEventTokenIds: string[];
   tiles: Record<string, MapTileState>;
   playerPosition: MapPlayerPosition;
   activeEncounter: ActiveMapEncounter | null;

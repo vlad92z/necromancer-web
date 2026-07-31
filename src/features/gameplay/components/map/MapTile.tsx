@@ -21,7 +21,7 @@ import forestTileImage from '../../../../assets/map/tile_1.png';
 import tokenVisited from '../../../../assets/map/token_visited.png';
 import playerToken from '../../../../assets/enemies/wizard.png';
 import tokenPath from '../../../../assets/map/token_path.png';
-import { getMonsterDefinition } from '../../../../utils/monsterCatalog';
+import { getRegionEventToken } from '../../../../utils/regionCatalog';
 
 interface MapTileProps {
   map: SoloMapState;
@@ -132,7 +132,7 @@ function getLocationLabel(
   if (markerKind === 'cleared') {
     return `Travel to cleared location ${locationId} on tile ${tile.x}, ${tile.y}`;
   }
-  return `Travel to encounter ${locationId} on tile ${tile.x}, ${tile.y}`;
+  return `Travel to unvisited location ${locationId} on tile ${tile.x}, ${tile.y}`;
 }
 
 export function MapTile({
@@ -147,14 +147,13 @@ export function MapTile({
     const target: MapTravelTarget = { kind: 'location', tileKey: tile.key, locationId };
     const reachable = reachableTargetKeys.has(createMapTravelTargetKey(target));
     const current = markerKind === 'player';
-    const encounter = locationId === 'start' ? null : tile.encounters[locationId];
+    const event = locationId === 'start' ? null : tile.events[locationId];
+    const eventToken = getRegionEventToken(event?.tokenId ?? null);
     const imageSrc = current
       ? playerToken
       : markerKind === 'cleared'
-        ? tokenVisited
-        : encounter
-          ? getMonsterDefinition(encounter.monsterId)?.imageSrc ?? tokenVisited
-          : tokenVisited;
+        ? eventToken?.visitedImageSrc ?? tokenVisited
+        : eventToken?.unvisitedImageSrc ?? tokenVisited;
 
     return (
       <MapMarker

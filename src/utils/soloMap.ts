@@ -4,6 +4,7 @@
 
 import type {
   MapEncounterLocationId,
+  MapLocationEvent,
   MapLocationId,
   MapPoint,
   MapRoadId,
@@ -11,6 +12,7 @@ import type {
   MapTravelTarget,
   SoloMapState,
 } from '../types/game';
+import { getRegionDefinition, getRegionEventToken } from './regionCatalog';
 
 export const MAP_TILE_SIZE = 256;
 export const START_MAP_LOCATION: MapPoint = { x: 128, y: 128 };
@@ -80,6 +82,7 @@ interface MapTileCoordinate {
 export interface MapTravelResult {
   map: SoloMapState;
   enteredEncounter: boolean;
+  triggeredEvent: MapLocationEvent | null;
 }
 
 export type MapLocationMarkerKind = 'player' | 'encounter' | 'cleared';
@@ -94,18 +97,28 @@ export function createStartMapTile(): MapTileState {
     x: 0,
     y: 0,
     kind: 'start',
-    encounters: {},
+    events: {},
   };
 }
 
-export function createForestMapTile(x: number, y: number): MapTileState {
+export function createForestMapTile(
+  x: number,
+  y: number,
+  availableEventTokenIds = getRegionDefinition('greenwood').eventTokens.map((token) => token.id),
+  random = Math.random,
+): MapTileState {
   const key = createMapTileKey(x, y);
-  const encounters = MAP_ENCOUNTER_LOCATION_IDS.reduce<MapTileState['encounters']>((result, locationId) => {
+  const selectedTokenIds = [...availableEventTokenIds];
+  const events = MAP_ENCOUNTER_LOCATION_IDS.reduce<MapTileState['events']>((result, locationId) => {
+    const selectedIndex = selectedTokenIds.length === 0 ? -1 : Math.floor(random() * selectedTokenIds.length);
+    const tokenId = selectedIndex === -1 ? null : selectedTokenIds.splice(selectedIndex, 1)[0] ?? null;
+    const token = getRegionEventToken(tokenId);
     result[locationId] = {
       id: `${key}:${locationId}`,
       locationId,
-      kind: 'fire',
-      monsterId: 'goblin',
+      tokenId,
+      kind: token?.kind ?? 'empty',
+      ...(token?.monsterId ? { monsterId: token.monsterId } : {}),
       cleared: false,
     };
     return result;
@@ -116,13 +129,15 @@ export function createForestMapTile(x: number, y: number): MapTileState {
     x,
     y,
     kind: 'forest',
-    encounters,
+    events,
   };
 }
 
 export function initializeSoloMap(): SoloMapState {
   const startTile = createStartMapTile();
   return {
+    regionId: 'greenwood',
+    availableEventTokenIds: getRegionDefinition('greenwood').eventTokens.map((token) => token.id),
     tiles: {
       [startTile.key]: startTile,
     },
@@ -154,7 +169,7 @@ export function getMapLocationMarkerKind(
     return 'cleared';
   }
 
-  return map.tiles[tileKey]?.encounters[locationId]?.cleared
+  return map.tiles[tileKey]?.events[locationId]?.cleared
     ? 'cleared'
     : 'encounter';
 }
@@ -250,7 +265,7 @@ function arriveAtLocation(
 ): MapTravelResult {
   const tile = map.tiles[tileKey];
   if (!tile) {
-    return { map, enteredEncounter: false };
+    return { map, enteredEncounter: false, triggeredEvent: null };
   }
 
   if (locationId === 'start' || tile.kind === 'start') {
@@ -261,29 +276,39 @@ function arriveAtLocation(
         activeEncounter: null,
       },
       enteredEncounter: false,
+      triggeredEvent: null,
     };
   }
 
-  const encounter = tile.encounters[locationId];
-  if (!encounter) {
-    return { map, enteredEncounter: false };
+  const event = tile.events[locationId];
+  if (!event) {
+    return { map, enteredEncounter: false, triggeredEvent: null };
   }
+
+  const shouldClearImmediately = event.kind !== 'combat' && !event.cleared;
+  const nextEvent = shouldClearImmediately ? { ...event, cleared: true } : event;
 
   return {
     map: {
       ...map,
+      tiles: shouldClearImmediately
+        ? {
+          ...map.tiles,
+          [tile.key]: { ...tile, events: { ...tile.events, [locationId]: nextEvent } },
+        }
+        : map.tiles,
       playerPosition: { tileKey, locationId },
-      activeEncounter: encounter.cleared
+      activeEncounter: event.kind !== 'combat' || event.cleared || !event.monsterId
         ? null
         : {
-          id: encounter.id,
+          id: event.id,
           tileKey,
           locationId,
-          kind: encounter.kind,
-          monsterId: encounter.monsterId,
+          monsterId: event.monsterId,
         },
     },
-    enteredEncounter: !encounter.cleared,
+    enteredEncounter: event.kind === 'combat' && !event.cleared,
+    triggeredEvent: shouldClearImmediately ? event : null,
   };
 }
 
@@ -294,8 +319,8 @@ export function completeActiveMapEncounter(map: SoloMapState): SoloMapState {
   }
 
   const tile = map.tiles[activeEncounter.tileKey];
-  const encounter = tile?.encounters[activeEncounter.locationId];
-  if (!tile || !encounter) {
+  const event = tile?.events[activeEncounter.locationId];
+  if (!tile || !event) {
     return { ...map, activeEncounter: null };
   }
 
@@ -305,10 +330,10 @@ export function completeActiveMapEncounter(map: SoloMapState): SoloMapState {
       ...map.tiles,
       [tile.key]: {
         ...tile,
-        encounters: {
-          ...tile.encounters,
-          [encounter.locationId]: {
-            ...encounter,
+        events: {
+          ...tile.events,
+          [event.locationId]: {
+            ...event,
             cleared: true,
           },
         },
@@ -326,7 +351,7 @@ export function travelOnSoloMap(
     createMapTravelTargetKey(candidate) === createMapTravelTargetKey(target)
   ));
   if (!reachableTarget) {
-    return { map, enteredEncounter: false };
+    return { map, enteredEncounter: false, triggeredEvent: null };
   }
 
   if (reachableTarget.kind === 'location') {
@@ -335,16 +360,23 @@ export function travelOnSoloMap(
 
   const sourceTile = map.tiles[reachableTarget.tileKey];
   if (!sourceTile) {
-    return { map, enteredEncounter: false };
+    return { map, enteredEncounter: false, triggeredEvent: null };
   }
 
   const neighborCoordinate = getNeighborCoordinate(sourceTile, reachableTarget.roadId);
   const neighborKey = createMapTileKey(neighborCoordinate.x, neighborCoordinate.y);
-  const neighbor = map.tiles[neighborKey] ?? createForestMapTile(neighborCoordinate.x, neighborCoordinate.y);
+  const neighbor = map.tiles[neighborKey] ?? createForestMapTile(
+    neighborCoordinate.x,
+    neighborCoordinate.y,
+    map.availableEventTokenIds,
+  );
   const mapWithNeighbor = map.tiles[neighborKey]
     ? map
     : {
       ...map,
+      availableEventTokenIds: map.availableEventTokenIds.filter((tokenId) => !Object.values(neighbor.events).some(
+        (event) => event?.tokenId === tokenId,
+      )),
       tiles: {
         ...map.tiles,
         [neighbor.key]: neighbor,

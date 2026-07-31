@@ -39,6 +39,7 @@ import {
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
+import { getRegionEventToken } from '../../utils/regionCatalog';
 import {
   clearPersistedSoloRun,
   getSelectedArtefactIds,
@@ -330,10 +331,18 @@ export const gameplayStoreConfig = (
         return initializeEncounterForMapLocation(state, result.map);
       }
 
+      const eventToken = getRegionEventToken(result.triggeredEvent?.tokenId ?? null);
+      const healingAmount = eventToken?.kind === 'healing'
+        ? state.player.maxHealth * ((eventToken.healingPercent ?? 0) / 100)
+        : 0;
+
       return {
         ...state,
         soloPhase: 'map',
         soloMap: result.map,
+        player: healingAmount > 0
+          ? { ...state.player, health: Math.min(state.player.maxHealth, state.player.health + healingAmount) }
+          : state.player,
       };
     });
   },

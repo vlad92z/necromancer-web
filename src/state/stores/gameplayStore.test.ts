@@ -8,12 +8,22 @@ import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall } from '../../utils/gameInitialization';
 import { createRuneFromPool } from '../../utils/runeEffects';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
+import { getRegionDefinition } from '../../utils/regionCatalog';
 import { createGameplayStoreInstance } from './gameplayStore';
 
 type GameplayStoreInstance = ReturnType<typeof createGameplayStoreInstance>;
 
 function startEncounterAtA(store: GameplayStoreInstance): void {
   store.getState().startSoloRun();
+  store.setState((state) => ({
+    ...state,
+    soloMap: {
+      ...state.soloMap,
+      availableEventTokenIds: getRegionDefinition('greenwood').eventTokens
+        .filter((token) => token.kind === 'combat')
+        .map((token) => token.id),
+    },
+  }));
   store.getState().travelToMapTarget({
     kind: 'road',
     tileKey: '0,0',
@@ -54,6 +64,12 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       player: { ...state.player, health: 73, armor: 12 },
+      soloMap: {
+        ...state.soloMap,
+        availableEventTokenIds: getRegionDefinition('greenwood').eventTokens
+          .filter((token) => token.kind === 'combat')
+          .map((token) => token.id),
+      },
     }));
 
     store.getState().travelToMapTarget({
@@ -65,12 +81,30 @@ describe('gameplayStore current combat', () => {
     const state = store.getState();
     expect(state.soloPhase).toBe('encounter');
     expect(state.soloMap.playerPosition).toEqual({ tileKey: '1,0', locationId: 'A' });
-    expect(state.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(false);
+    expect(state.soloMap.tiles['1,0'].events.A?.cleared).toBe(false);
     expect(state.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'A' });
     expect(state.enemy).toMatchObject({ id: 'goblin', health: 20, maxHealth: 20 });
     expect(state.hand).toHaveLength(5);
     expect(state.player.health).toBe(73);
     expect(state.player.armor).toBe(0);
+  });
+
+  it('heals 25% of max health and visits a Healing Shrine immediately', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const shrineToken = getRegionDefinition('greenwood').eventTokens.find((token) => token.kind === 'healing');
+    store.setState((state) => ({
+      ...state,
+      player: { ...state.player, health: 50, maxHealth: 100 },
+      soloMap: { ...state.soloMap, availableEventTokenIds: [shrineToken!.id] },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+
+    const state = store.getState();
+    expect(state.soloPhase).toBe('map');
+    expect(state.player.health).toBe(75);
+    expect(state.soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: true });
   });
 
   it('moves between cleared locations without resetting combat state', () => {
@@ -295,7 +329,7 @@ describe('gameplayStore current combat', () => {
     expect(victoryState.soloPhase).toBe('reward');
     expect(victoryState.combatPhase).toBe('victory');
     expect(victoryState.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'A' });
-    expect(victoryState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(false);
+    expect(victoryState.soloMap.tiles['1,0'].events.A?.cleared).toBe(false);
     expect(victoryState.deckDraftState?.offers).toHaveLength(3);
     expect(new Set(victoryState.deckDraftState?.offers.map((offer) => offer.rune.name)).size).toBe(3);
     expect(victoryState.player.wall.flat().every((cell) => cell.runeTypes.length === 0)).toBe(true);
@@ -325,7 +359,7 @@ describe('gameplayStore current combat', () => {
     expect(mapState.gameIndex).toBe(2);
     expect(mapState.deckDraftState).toBeNull();
     expect(mapState.soloMap.activeEncounter).toBeNull();
-    expect(mapState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(true);
+    expect(mapState.soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
     expect(mapState.fullDeck).toEqual([...selectedState.fullDeck, rewardOffer?.rune]);
 
     store.getState().travelToMapTarget({
@@ -336,7 +370,7 @@ describe('gameplayStore current combat', () => {
     const nextState = store.getState();
     expect(nextState.soloPhase).toBe('encounter');
     expect(nextState.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'B' });
-    expect(nextState.soloMap.tiles['1,0'].encounters.B?.cleared).toBe(false);
+    expect(nextState.soloMap.tiles['1,0'].events.B?.cleared).toBe(false);
     expect(nextState.combatPhase).toBe('player-turn');
     expect(nextState.enemy?.maxHealth).toBe(20);
     expect(nextState.enemyMaxHealth).toBe(20);
@@ -376,7 +410,7 @@ describe('gameplayStore current combat', () => {
     expect(nextState.soloPhase).toBe('map');
     expect(nextState.deckDraftState).toBeNull();
     expect(nextState.fullDeck).toHaveLength(deckSizeBeforeSkip);
-    expect(nextState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(true);
+    expect(nextState.soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
   });
 
   it('does not apply old draft bonuses or Ring/Robe draft passives to packs', () => {
