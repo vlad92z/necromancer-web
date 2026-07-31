@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createGoblinEnemy, createEnemyTurnRunes } from './gameInitialization';
+import { createGoblinEnemy, createEnemyTurnRunes, createMonsterEnemy, createMonsterSpellBoard } from './gameInitialization';
 import { MONSTER_CATALOG } from './monsterCatalog';
+import { getRuneEffectDescription } from './runeEffects';
 
 describe('monsterCatalog', () => {
   it('is the source for Goblin encounter and reward metadata', () => {
@@ -18,8 +19,49 @@ describe('monsterCatalog', () => {
   });
 
   it('uses the catalogue turn cards to create Goblin actions', () => {
-    expect(createEnemyTurnRunes(1).map(({ name, damage }) => ({ name, damage }))).toEqual(
-      MONSTER_CATALOG.goblin.turnCards.map(({ cardName, damage }) => ({ name: cardName, damage })),
+    expect(createEnemyTurnRunes('goblin', 1).map(({ name, damage }) => ({ name, damage }))).toEqual(
+      MONSTER_CATALOG.goblin.turnCycle[0].map(({ cardName, damage }) => ({ name: cardName, damage })),
     );
+  });
+
+  it('defines Golem Lord and its repeating three-turn card cycle', () => {
+    const golem = createMonsterEnemy('golem-lord');
+
+    expect(golem).toMatchObject({
+      id: 'golem-lord',
+      name: 'Golem Lord',
+      isBoss: true,
+      health: 50,
+      maxHealth: 50,
+      imageSrc: expect.stringContaining('golem.png'),
+    });
+    expect(createMonsterSpellBoard('golem-lord').flat().every((cell) => (
+      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
+    ))).toBe(true);
+    expect(createEnemyTurnRunes('golem-lord', 0).map((rune) => rune.name)).toEqual([
+      'Barricade', 'Barricade', 'Barricade', 'Barricade',
+    ]);
+    expect(createEnemyTurnRunes('golem-lord', 1)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: 'Hurl Rock',
+        manaCost: 2,
+        damage: 8,
+        cardImageSrc: expect.stringContaining('card_throw_rock.png'),
+        castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 8 } }],
+      }),
+    ]));
+    expect(createEnemyTurnRunes('golem-lord', 1)).toHaveLength(3);
+    const avalanche = createEnemyTurnRunes('golem-lord', 2)[0]!;
+    expect(avalanche).toMatchObject({
+      name: 'Avalanche',
+      manaCost: 5,
+      damage: 0,
+      cardImageSrc: expect.stringContaining('card_avalanche.png'),
+      castEffectRefs: [{ effectId: 'enemy.destroyMostFilledRow' }],
+    });
+    expect(getRuneEffectDescription(avalanche)).toBe('• Destroy the row with the most runes');
+    expect(createEnemyTurnRunes('golem-lord', 3).map((rune) => rune.name)).toEqual([
+      'Barricade', 'Barricade', 'Barricade', 'Barricade',
+    ]);
   });
 });

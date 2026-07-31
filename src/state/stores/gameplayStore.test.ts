@@ -2,10 +2,10 @@
  * Tests for the current solo encounter gameplay store.
  */
 
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Rune, RuneType } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
-import { createEmptyWall } from '../../utils/gameInitialization';
+import { createEmptyWall, createMonsterEnemy } from '../../utils/gameInitialization';
 import { createRuneFromPool } from '../../utils/runeEffects';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import { getRegionDefinition } from '../../utils/regionCatalog';
@@ -32,6 +32,10 @@ function startEncounterAtA(store: GameplayStoreInstance): void {
 }
 
 describe('gameplayStore current combat', () => {
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+  });
+
   it('starts a solo run on the map with the combat state ready for a future encounter', () => {
     const store = createGameplayStoreInstance();
 
@@ -87,6 +91,55 @@ describe('gameplayStore current combat', () => {
     expect(state.hand).toHaveLength(5);
     expect(state.player.health).toBe(73);
     expect(state.player.armor).toBe(0);
+  });
+
+  it('launches Golem Lord with its boss metadata and Life-only board', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const tile = {
+      key: '1,0',
+      x: 1,
+      y: 0,
+      kind: 'forest' as const,
+      events: {
+        A: {
+          id: '1,0:A',
+          locationId: 'A' as const,
+          tokenId: null,
+          kind: 'empty' as const,
+          cleared: true,
+        },
+        B: {
+          id: '1,0:B',
+          locationId: 'B' as const,
+          tokenId: null,
+          kind: 'boss' as const,
+          monsterId: 'golem-lord' as const,
+          cleared: false,
+        },
+      },
+    };
+    store.setState((state) => ({
+      ...state,
+      soloMap: {
+        ...state.soloMap,
+        tiles: { ...state.soloMap.tiles, [tile.key]: tile },
+        playerPosition: { tileKey: tile.key, locationId: 'A' },
+      },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'location', tileKey: tile.key, locationId: 'B' });
+
+    const state = store.getState();
+    expect(state.enemy).toMatchObject({
+      id: 'golem-lord',
+      name: 'Golem Lord',
+      isBoss: true,
+      health: 50,
+      maxHealth: 50,
+      imageSrc: expect.stringContaining('golem.png'),
+    });
+    expect(state.enemyBoard.flat().every((cell) => cell.acceptedRuneTypes.join(',') === 'Life')).toBe(true);
   });
 
   it('heals 25% of max health and visits a Healing Shrine immediately', () => {
@@ -411,6 +464,104 @@ describe('gameplayStore current combat', () => {
     expect(nextState.deckDraftState).toBeNull();
     expect(nextState.fullDeck).toHaveLength(deckSizeBeforeSkip);
     expect(nextState.soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
+  });
+
+  it('ends the run without loot when Golem Lord reaches zero health', () => {
+    const store = createGameplayStoreInstance();
+    const lethalRune = createTestRune('boss-lethal', 'Fire', 60);
+    const bossTile = {
+      key: '1,0',
+      x: 1,
+      y: 0,
+      kind: 'forest' as const,
+      events: {
+        A: {
+          id: '1,0:A',
+          locationId: 'A' as const,
+          tokenId: null,
+          kind: 'boss' as const,
+          monsterId: 'golem-lord' as const,
+          cleared: false,
+        },
+      },
+    };
+
+    store.setState((state) => ({
+      ...state,
+      gameStarted: true,
+      soloPhase: 'encounter',
+      arcaneDust: 7,
+      hand: [lethalRune],
+      selectedHandRuneId: lethalRune.id,
+      player: { ...state.player, deck: [] },
+      enemy: createMonsterEnemy('golem-lord'),
+      soloMap: {
+        ...state.soloMap,
+        tiles: { ...state.soloMap.tiles, [bossTile.key]: bossTile },
+        playerPosition: { tileKey: bossTile.key, locationId: 'A' },
+        activeEncounter: {
+          id: '1,0:A',
+          tileKey: bossTile.key,
+          locationId: 'A',
+          monsterId: 'golem-lord',
+        },
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    const state = store.getState();
+    expect(state.isVictory).toBe(true);
+    expect(state.combatPhase).toBe('victory');
+    expect(state.soloPhase).toBe('encounter');
+    expect(state.deckDraftState).toBeNull();
+    expect(state.arcaneDust).toBe(7);
+    expect(state.soloMap.activeEncounter).toBeNull();
+    expect(state.soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
+  });
+
+  it('ends the run when the player fills their wall against Golem Lord', () => {
+    const store = createGameplayStoreInstance();
+    const wall = createEmptyWall();
+    wall.flat().forEach((cell, index) => {
+      if (index === 0) return;
+      cell.id = `filled-${index}`;
+      cell.name = 'Filled';
+      cell.runeTypes = [...cell.acceptedRuneTypes];
+      cell.rarity = 'common';
+      cell.cardImageSrc = 'card.png';
+      cell.tokenImageSrc = 'token.png';
+      cell.castEffectRefs = [];
+      cell.passiveEffectRefs = [];
+    });
+    const finalRune = createTestRune('boss-wall-final', wall[0][0].acceptedRuneTypes[0], 0);
+
+    store.setState((state) => ({
+      ...state,
+      gameStarted: true,
+      soloPhase: 'encounter',
+      hand: [finalRune],
+      selectedHandRuneId: finalRune.id,
+      player: { ...state.player, wall, deck: [] },
+      enemy: createMonsterEnemy('golem-lord'),
+      soloMap: {
+        ...state.soloMap,
+        activeEncounter: {
+          id: 'missing-event-is-safe',
+          tileKey: '0,0',
+          locationId: 'A',
+          monsterId: 'golem-lord',
+        },
+      },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState()).toMatchObject({
+      isVictory: true,
+      combatPhase: 'victory',
+      deckDraftState: null,
+    });
   });
 
   it('does not apply old draft bonuses or Ring/Robe draft passives to packs', () => {

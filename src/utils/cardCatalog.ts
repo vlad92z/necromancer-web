@@ -10,6 +10,7 @@ import lightningCard from '../assets/runes/cards/card_lightning_bolt.png';
 import windCard from '../assets/runes/cards/card_tornado.png';
 import voidCard from '../assets/runes/cards/card_void_tendrils.png';
 import hideCard from '../assets/runes/cards/card_hide.png';
+import avalancheCard from '../assets/runes/cards/card_avalanche.png';
 import fireToken from '../assets/runes/tokens/token_fire.png';
 import frostToken from '../assets/runes/tokens/token_frost.png';
 import lifeToken from '../assets/runes/tokens/token_life.png';
@@ -21,11 +22,12 @@ import { createEffectRef } from './effectCatalog';
 
 export type CardDefinition = Omit<Rune, 'id'> & {
   templateId: string;
-  pool: 'standard' | 'goblin';
+  pool: 'standard' | 'goblin' | 'golem';
 };
 
 const standard = (templateId: string, name: string, runeType: RuneType, rarity: RuneEffectRarity, cardImageSrc: string, tokenImageSrc: string, manaCost: number, castEffectRefs: EffectRef[] = [], passiveEffectRefs: EffectRef[] = []): CardDefinition => ({ templateId, name, runeTypes: [runeType], rarity, cardImageSrc, tokenImageSrc, manaCost, castEffectRefs, passiveEffectRefs, pool: 'standard' });
 const goblin = (templateId: string, name: string, runeType: RuneType, cardImageSrc: string, tokenImageSrc: string, manaCost: number, castEffectRefs: EffectRef[] = [], passiveEffectRefs: EffectRef[] = []): CardDefinition => ({ templateId, name, runeTypes: [runeType], rarity: 'common', cardImageSrc, tokenImageSrc, manaCost, castEffectRefs, passiveEffectRefs, pool: 'goblin' });
+const golem = (templateId: string, name: string, runeType: RuneType, cardImageSrc: string, tokenImageSrc: string, manaCost: number, castEffectRefs: EffectRef[] = []): CardDefinition => ({ templateId, name, runeTypes: [runeType], rarity: 'common', cardImageSrc, tokenImageSrc, manaCost, castEffectRefs, passiveEffectRefs: [], pool: 'golem' });
 
 /** Keys are the canonical card names; each entry deliberately owns its card and token art. */
 export const CARD_DEFINITIONS = {
@@ -56,6 +58,8 @@ export const CARD_DEFINITIONS = {
   'Throw Rock': goblin('goblin-throw-rock', 'Throw Rock', 'Life', throwRockCard, lifeToken, 1, [createEffectRef('cast.damage', { amount: 3 })]),
   Hide: goblin('goblin-hide', 'Hide', 'Life', hideCard, lifeToken, 1, [createEffectRef('cast.armor', { amount: 3 })]),
   Scorch: goblin('goblin-scorch', 'Scorch', 'Fire', scorchCard, fireToken, 3, [], [createEffectRef('passive.damageEndTurn', { amount: 3 })]),
+  'Hurl Rock': golem('golem-hurl-rock', 'Hurl Rock', 'Life', throwRockCard, lifeToken, 2, [createEffectRef('cast.damage', { amount: 8 })]),
+  Avalanche: golem('golem-avalanche', 'Avalanche', 'Life', avalancheCard, lifeToken, 5, [createEffectRef('enemy.destroyMostFilledRow')]),
 } satisfies Record<string, CardDefinition>;
 
 export type CardName = keyof typeof CARD_DEFINITIONS;

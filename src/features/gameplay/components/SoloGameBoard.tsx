@@ -7,13 +7,14 @@ import type { Rune } from '../../../types/game';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
-import { useGameplayStatusState } from '../../../hooks/useGameState';
+import { useCombatEnemyState, useGameplayStatusState } from '../../../hooks/useGameState';
 import { EnemyPanel } from './EnemyPanel';
 import { ScoringWall } from './Player/ScoringWall';
 import { EndTurnButton } from './EndTurnButton';
 import { TooltipView } from './Player/TooltipView';
 import { PlayerPanel } from './PlayerPanel';
 import { EnemySpellBoard } from './EnemySpellBoard';
+import { SoloVictoryModal } from './SoloVictoryModal';
 
 interface SoloGameViewProps {
   hiddenWallSlots: Set<string>;
@@ -22,7 +23,8 @@ interface SoloGameViewProps {
 export const SoloGameView = memo(function SoloGameView({
   hiddenWallSlots,
 }: SoloGameViewProps) {
-  const { isDefeat, deckDraftState } = useGameplayStatusState();
+  const { isDefeat, isVictory, deckDraftState } = useGameplayStatusState();
+  const { enemy } = useCombatEnemyState();
   const [hoveredPlayerRune, setHoveredPlayerRune] = useState<Rune | null>(null);
   const [hoveredEnemyRune, setHoveredEnemyRune] = useState<Rune | null>(null);
   const clearHoveredPlayerRune = useCallback(() => setHoveredPlayerRune(null), []);
@@ -37,7 +39,11 @@ export const SoloGameView = memo(function SoloGameView({
       <div className="flex min-h-0 flex-1 flex-col gap-3.5 px-[min(1.2vmin,16px)] py-[min(1.2vmin,16px)]">
         <div
           className="grid min-h-0 flex-1 gap-3.5"
-          style={{ gridTemplateColumns: '220px minmax(440px, 1fr) minmax(440px, 1fr) 220px' }}
+          style={{
+            gridTemplateColumns: enemy?.isBoss
+              ? '220px minmax(410px, 1fr) minmax(410px, 1fr) 280px'
+              : '220px minmax(440px, 1fr) minmax(440px, 1fr) 220px',
+          }}
         >
           <PlayerPanel hoveredRune={hoveredPlayerRune} />
 
@@ -68,6 +74,7 @@ export const SoloGameView = memo(function SoloGameView({
       </div>
       { deckDraftState && (<DeckDraftingModal draftState={deckDraftState}/>)}
       { isDefeat && (<SoloGameOverModal/>)}
+      { isVictory && (<SoloVictoryModal/>)}
     </div>
   );
 });

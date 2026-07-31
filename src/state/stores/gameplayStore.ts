@@ -18,6 +18,7 @@ import {
   createEnemySpellBoard,
   createGoblinEnemy,
   createMonsterEnemy,
+  createMonsterSpellBoard,
   createRuneSoundSignals,
   initializeSoloGame,
   rollEnemyArcaneDustReward,
@@ -50,6 +51,20 @@ import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
 
 function enterDeckDraftMode(state: GameState): GameState {
+  if (state.enemy?.isBoss) {
+    return {
+      ...state,
+      soloMap: completeActiveMapEncounter(state.soloMap),
+      soloPhase: 'encounter',
+      deckDraftState: null,
+      combatPhase: 'victory',
+      isDefeat: false,
+      isVictory: true,
+      longestRun: Math.max(state.longestRun, state.gameIndex),
+      selectedHandRuneId: null,
+    };
+  }
+
   const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
   const arcaneDustReward = rollEnemyArcaneDustReward(state.enemy);
   const deckDraftState = createDeckDraftState(
@@ -65,6 +80,7 @@ function enterDeckDraftMode(state: GameState): GameState {
     deckDraftState,
     combatPhase: 'victory',
     isDefeat: false,
+    isVictory: false,
     longestRun: nextLongestRun,
     arcaneDust: state.arcaneDust + arcaneDustReward,
     selectedHandRuneId: null,
@@ -90,6 +106,7 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     enemyBoard: nextState.enemyBoard ?? createEnemySpellBoard(),
     enemyQueuedRunes: nextState.enemyQueuedRunes ?? [],
     enemyTurnNumber: typeof nextState.enemyTurnNumber === 'number' ? nextState.enemyTurnNumber : 0,
+    isVictory: nextState.isVictory ?? false,
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
     runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
     enemyAttackSoundSignal: typeof nextState.enemyAttackSoundSignal === 'number'
@@ -113,6 +130,7 @@ function initializeEncounterForMapLocation(
   const encounterState = {
     ...initializeSoloGame(state.enemyMaxHealth, state.fullDeck),
     enemy: createMonsterEnemy(monsterId),
+    enemyBoard: createMonsterSpellBoard(monsterId),
   };
   const maxHealth = state.player.maxHealth ?? state.startingHealth;
   const health = Math.min(maxHealth, Math.max(0, state.player.health));
@@ -132,6 +150,7 @@ function initializeEncounterForMapLocation(
     arcaneDust: state.arcaneDust,
     enemyMaxHealth: state.enemyMaxHealth,
     isDefeat: false,
+    isVictory: false,
     longestRun: state.longestRun,
     deckDraftState: null,
     activeArtefacts: state.activeArtefacts,
@@ -300,7 +319,7 @@ export const gameplayStoreConfig = (
 
   returnToStartScreen: () => {
     set((state) => {
-      if (state.isDefeat) {
+      if (state.isDefeat || state.isVictory) {
         clearPersistedSoloRun();
       }
 
@@ -318,7 +337,7 @@ export const gameplayStoreConfig = (
 
   travelToMapTarget: (target: MapTravelTarget) => {
     set((state) => {
-      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat) {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat || state.isVictory) {
         return state;
       }
 

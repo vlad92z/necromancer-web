@@ -45,6 +45,7 @@ export interface Enemy {
   id: string;
   name: string;
   imageSrc: string;
+  isBoss?: boolean;
   health: number;
   maxHealth: number;
   armor?: number;
@@ -115,8 +116,8 @@ export type MapTileKind = 'start' | 'forest';
 export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
 export type RegionId = 'greenwood';
-export type MapEventKind = 'combat' | 'healing' | 'empty';
-export type MonsterId = 'goblin';
+export type MapEventKind = 'combat' | 'boss' | 'healing' | 'empty';
+export type MonsterId = 'goblin' | 'golem-lord';
 export type MapRoadId =
   | 'left-75'
   | 'left-155'
@@ -204,6 +205,7 @@ export interface GameState extends CombatZoneState {
   arcaneDust: number;
   enemyMaxHealth: number;
   isDefeat: boolean;
+  isVictory: boolean;
   longestRun: number;
   deckDraftState: DeckDraftState | null;
   activeArtefacts: ArtefactId[];

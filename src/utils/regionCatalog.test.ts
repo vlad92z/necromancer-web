@@ -11,6 +11,7 @@ describe('regionCatalog', () => {
     expect(shrines).toHaveLength(2);
     expect(goblins.every((token) => token.monsterId === 'goblin')).toBe(true);
     expect(shrines.every((token) => token.healingPercent === 25)).toBe(true);
+    expect(greenwood.bossMonsterIds).toEqual(['golem-lord']);
     expect([...goblins, ...shrines].every((token) => token.visitedImageSrc.includes('token_visited.png'))).toBe(true);
   });
 
