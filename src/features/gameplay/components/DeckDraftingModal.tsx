@@ -3,7 +3,6 @@
 import type { DeckDraftOffer, DeckDraftState } from '../../../types/game';
 import { useGameplayActions, useUIActions } from '../../../hooks/useGameActions';
 import { useClickSound } from '../../../hooks/useClickSound';
-import { useGameplayDeckState } from '../../../hooks/useGameState';
 import { getRuneEffectDescription } from '../../../utils/runeEffects';
 import { CardView } from './Player/CardView';
 import arcaneDustIcon from '../../../assets/stats/arcane_dust.png';
@@ -13,7 +12,6 @@ interface DeckDraftingModalProps {
 }
 
 export function DeckDraftingModal({ draftState }: DeckDraftingModalProps) {
-  const { fullDeck } = useGameplayDeckState();
   const { selectDeckDraftOffer, returnToMapAfterReward } = useGameplayActions();
   const { openRuneZoneOverlay } = useUIActions();
   const playClickSound = useClickSound();
@@ -65,7 +63,6 @@ export function DeckDraftingModal({ draftState }: DeckDraftingModalProps) {
               <button type="button" onClick={() => { playClickSound(); returnToMapAfterReward(); }} className="pixel-game-button w-full bg-[#e15f4f] px-4 py-3 text-xs tracking-[0.18em] text-[#fff8d8] sm:w-auto">
                 Continue
             </button>
-              
             </div>
           </div>
         </div>

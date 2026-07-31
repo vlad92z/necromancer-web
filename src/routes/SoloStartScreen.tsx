@@ -11,7 +11,6 @@ import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions'
 import { useGameStarted, useSoloStartArtefactState } from '../hooks/useGameState';
 import { hasSavedSoloState, loadSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
-import { ArtefactsRow } from '../components/ArtefactsRow';
 import { ClickSoundButton } from '../components/ClickSoundButton';
 import { useClickSound } from '../hooks/useClickSound';
 
