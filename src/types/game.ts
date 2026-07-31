@@ -49,7 +49,6 @@ export interface Enemy {
   maxHealth: number;
   armor?: number;
   arcaneDustRewardRange?: readonly [minimum: number, maximum: number];
-  rewardRunePoolId?: 'goblin';
 }
 
 export interface EnemyRune extends Rune {
