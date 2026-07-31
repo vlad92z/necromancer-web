@@ -4,6 +4,7 @@ import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActio
 import { useSoloMapState } from '../../../../hooks/useGameState';
 import { useClickSound } from '../../../../hooks/useClickSound';
 import type { MapTravelTarget } from '../../../../types/game';
+import { RuneZoneButton } from '../../../../components/DeckButton';
 import {
   createMapTravelTargetKey,
   getMapLocationPoint,
@@ -82,11 +83,14 @@ export function SoloMapView(): ReactElement {
             {tiles.length} {tiles.length === 1 ? 'tile' : 'tiles'} explored
           </p>
         </div>
-        <ClickSoundButton
-          title="⚙"
-          action={openSettingsOverlay}
-          className="pixel-game-button flex h-15 w-15 items-center justify-center px-0 pb-2 text-4xl"
-        />
+        <div className="flex items-center gap-3">
+          <RuneZoneButton zone="deck" />
+          <ClickSoundButton
+            title="⚙"
+            action={openSettingsOverlay}
+            className="pixel-game-button flex h-15 w-15 items-center justify-center px-0 pb-2 text-4xl"
+          />
+        </div>
       </header>
 
       <section
