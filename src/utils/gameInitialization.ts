@@ -6,6 +6,7 @@ import type {
   Enemy,
   EnemyRune,
   GameState,
+  MonsterId,
   Player,
   Rune,
   RuneType,
@@ -68,13 +69,18 @@ export function createEnemySpellBoard(size: number = WALL_SIZE): ScoringWall {
 }
 
 export function createGoblinEnemy(maxHealth: number = MONSTER_CATALOG.goblin.maxHealth): Enemy {
-  const monster = MONSTER_CATALOG.goblin;
+  return createMonsterEnemy('goblin', maxHealth);
+}
+
+export function createMonsterEnemy(monsterId: MonsterId, maxHealth?: number): Enemy {
+  const monster = MONSTER_CATALOG[monsterId];
+  const resolvedMaxHealth = maxHealth ?? monster.maxHealth;
   return {
     id: monster.id,
     name: monster.name,
     imageSrc: monster.imageSrc,
-    health: maxHealth,
-    maxHealth,
+    health: resolvedMaxHealth,
+    maxHealth: resolvedMaxHealth,
     armor: monster.armor,
     arcaneDustRewardRange: monster.arcaneDustRewardRange,
   };

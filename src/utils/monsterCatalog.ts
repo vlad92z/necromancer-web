@@ -1,5 +1,6 @@
 /** The canonical catalogue for encounter monsters and their rewards. */
 import goblinImageSrc from '../assets/enemies/goblin.png';
+import type { MonsterId } from '../types/game';
 import type { CardName } from './cardCatalog';
 
 export interface MonsterTurnCard {
@@ -36,8 +37,6 @@ export const MONSTER_CATALOG = {
     ],
   },
 } satisfies Record<string, MonsterDefinition>;
-
-export type MonsterId = keyof typeof MONSTER_CATALOG;
 
 export function getMonsterDefinition(monsterId: string): MonsterDefinition | null {
   return MONSTER_CATALOG[monsterId as MonsterId] ?? null;

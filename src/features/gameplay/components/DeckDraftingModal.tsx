@@ -58,13 +58,14 @@ export function DeckDraftingModal({ draftState }: DeckDraftingModalProps) {
           </div>
 
           <div className="mt-6 flex flex-col gap-2 px-4 py-3 text-sm text-[#fff8d8] sm:flex-row sm:items-center sm:justify-between">
-            <button type="button" onClick={() => { playClickSound(); returnToMapAfterReward(); }} className="pixel-game-button w-full bg-[#e15f4f] px-4 py-3 text-xs tracking-[0.18em] text-[#fff8d8] sm:w-auto">
-                Continue
-            </button>
-            <div className="flex w-full justify-end gap-2 sm:w-auto">
-              <button type="button" onClick={() => { playClickSound(); openRuneZoneOverlay('deck'); }} className="pixel-game-button w-full px-4 py-3 text-xs tracking-[0.18em] sm:w-auto">
+            <button type="button" onClick={() => { playClickSound(); openRuneZoneOverlay('deck'); }} className="pixel-game-button w-full px-4 py-3 text-xs tracking-[0.18em] sm:w-auto">
                 View Deck
               </button>
+            <div className="flex w-full justify-end gap-2 sm:w-auto">
+              <button type="button" onClick={() => { playClickSound(); returnToMapAfterReward(); }} className="pixel-game-button w-full bg-[#e15f4f] px-4 py-3 text-xs tracking-[0.18em] text-[#fff8d8] sm:w-auto">
+                Continue
+            </button>
+              
             </div>
           </div>
         </div>

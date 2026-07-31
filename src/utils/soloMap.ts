@@ -105,6 +105,7 @@ export function createForestMapTile(x: number, y: number): MapTileState {
       id: `${key}:${locationId}`,
       locationId,
       kind: 'fire',
+      monsterId: 'goblin',
       cleared: false,
     };
     return result;
@@ -279,6 +280,7 @@ function arriveAtLocation(
           tileKey,
           locationId,
           kind: encounter.kind,
+          monsterId: encounter.monsterId,
         },
     },
     enteredEncounter: !encounter.cleared,

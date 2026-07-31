@@ -18,10 +18,10 @@ import {
   type MapLocationMarkerKind,
 } from '../../../../utils/soloMap';
 import forestTileImage from '../../../../assets/map/tile_1.png';
-import tokenCombat from '../../../../assets/map/token_combat.png';
 import tokenVisited from '../../../../assets/map/token_visited.png';
 import playerToken from '../../../../assets/enemies/wizard.png';
 import tokenPath from '../../../../assets/map/token_path.png';
+import { getMonsterDefinition } from '../../../../utils/monsterCatalog';
 
 interface MapTileProps {
   map: SoloMapState;
@@ -147,11 +147,14 @@ export function MapTile({
     const target: MapTravelTarget = { kind: 'location', tileKey: tile.key, locationId };
     const reachable = reachableTargetKeys.has(createMapTravelTargetKey(target));
     const current = markerKind === 'player';
+    const encounter = locationId === 'start' ? null : tile.encounters[locationId];
     const imageSrc = current
       ? playerToken
       : markerKind === 'cleared'
         ? tokenVisited
-        : tokenCombat;
+        : encounter
+          ? getMonsterDefinition(encounter.monsterId)?.imageSrc ?? tokenVisited
+          : tokenVisited;
 
     return (
       <MapMarker

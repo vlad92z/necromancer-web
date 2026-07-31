@@ -6,7 +6,7 @@ import type { GameState, SoloMapState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 24;
+export const SOLO_STATE_VERSION = 25;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -38,10 +38,12 @@ function isSoloMapState(value: unknown): value is SoloMapState {
       return false;
     }
 
+    const encounters = Object.values(tileValue.encounters);
     return tileValue.key === key
       && typeof tileValue.x === 'number'
       && typeof tileValue.y === 'number'
-      && (tileValue.kind === 'start' || tileValue.kind === 'forest');
+      && (tileValue.kind === 'start' || tileValue.kind === 'forest')
+      && encounters.every((encounter) => isRecord(encounter) && encounter.monsterId === 'goblin');
   });
 }
 

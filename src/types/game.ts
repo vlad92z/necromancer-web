@@ -115,6 +115,7 @@ export type MapTileKind = 'start' | 'forest';
 export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
 export type MapEncounterKind = 'fire';
+export type MonsterId = 'goblin';
 export type MapRoadId =
   | 'left-75'
   | 'left-155'
@@ -134,6 +135,7 @@ export interface MapEncounter {
   id: string;
   locationId: MapEncounterLocationId;
   kind: MapEncounterKind;
+  monsterId: MonsterId;
   cleared: boolean;
 }
 
@@ -155,6 +157,7 @@ export interface ActiveMapEncounter {
   tileKey: string;
   locationId: MapEncounterLocationId;
   kind: MapEncounterKind;
+  monsterId: MonsterId;
 }
 
 export interface SoloMapState {

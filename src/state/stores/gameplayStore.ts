@@ -17,6 +17,7 @@ import {
   createEmptyWall,
   createEnemySpellBoard,
   createGoblinEnemy,
+  createMonsterEnemy,
   createRuneSoundSignals,
   initializeSoloGame,
   rollEnemyArcaneDustReward,
@@ -103,7 +104,15 @@ function initializeEncounterForMapLocation(
   state: GameState,
   soloMap: SoloMapState,
 ): GameState {
-  const encounterState = initializeSoloGame(state.enemyMaxHealth, state.fullDeck);
+  const monsterId = soloMap.activeEncounter?.monsterId;
+  if (!monsterId) {
+    return state;
+  }
+
+  const encounterState = {
+    ...initializeSoloGame(state.enemyMaxHealth, state.fullDeck),
+    enemy: createMonsterEnemy(monsterId),
+  };
   const maxHealth = state.player.maxHealth ?? state.startingHealth;
   const health = Math.min(maxHealth, Math.max(0, state.player.health));
   const nextState: GameState = {

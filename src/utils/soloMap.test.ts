@@ -52,7 +52,7 @@ describe('soloMap', () => {
     });
     expect(Object.keys(tile.encounters)).toEqual(MAP_ENCOUNTER_LOCATION_IDS);
     expect(Object.values(tile.encounters).every((encounter) => (
-      encounter?.kind === 'fire' && encounter.cleared === false
+      encounter?.kind === 'fire' && encounter.monsterId === 'goblin' && encounter.cleared === false
     ))).toBe(true);
   });
 
@@ -74,7 +74,7 @@ describe('soloMap', () => {
 
     expect(result.enteredEncounter).toBe(true);
     expect(result.map.playerPosition).toEqual({ tileKey, locationId });
-    expect(result.map.activeEncounter).toMatchObject({ tileKey, locationId, kind: 'fire' });
+    expect(result.map.activeEncounter).toMatchObject({ tileKey, locationId, kind: 'fire', monsterId: 'goblin' });
   });
 
   it('allows only graph-adjacent internal movement and immediate encounter completion', () => {

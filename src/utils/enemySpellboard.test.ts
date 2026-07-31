@@ -94,7 +94,7 @@ describe('enemy spellboard combat', () => {
     expect(result.enemy).toMatchObject({ health: 20, armor: 0 });
   });
 
-  it('reduces total incoming enemy-turn damage before armor', () => {
+  it('applies damage reduction independently to each enemy card', () => {
     const wall = createEmptyWall();
     wall[0][0] = {
       ...wall[0][0],
@@ -114,13 +114,46 @@ describe('enemy spellboard combat', () => {
       player,
       enemy: initializeSoloGame().enemy,
       enemyBoard: createEnemySpellBoard(),
-      enemyQueuedRunes: [createEnemyRune('attacker', 3)],
+      enemyQueuedRunes: [createEnemyRune('attacker-1', 3), createEnemyRune('attacker-2', 3)],
       random: () => 0,
     });
 
-    expect(result.player.health).toBe(18);
-    expect(result.healthDamage).toBe(2);
-    expect(result.logs.map((log) => log.effectId)).toContain('passive.reduceDamage');
+    expect(result.player.health).toBe(16);
+    expect(result.healthDamage).toBe(4);
+    expect(result.logs.filter((log) => log.effectId === 'passive.reduceDamage')).toHaveLength(2);
+  });
+
+  it('resolves enemy board start and end turn effects around card plays', () => {
+    const board = createEnemySpellBoard();
+    board[0][0] = {
+      ...board[0][0],
+      id: 'enemy-regeneration',
+      name: 'Regeneration',
+      runeTypes: ['Life'],
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [
+        { effectId: 'passive.healingStartTurn', params: { amount: 3 } },
+        { effectId: 'passive.damageEndTurn', params: { amount: 2 } },
+      ],
+    };
+    const enemy = { ...initializeSoloGame().enemy!, health: 10, armor: 0 };
+
+    const result = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy,
+      enemyBoard: board,
+      enemyQueuedRunes: [createEnemyRune('enemy-card', 1)],
+      random: () => 0,
+    });
+
+    expect(result.enemy?.health).toBe(13);
+    expect(result.player.health).toBe(17);
+    expect(result.healthDamage).toBe(3);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'passive.healingStartTurn',
+      'passive.damageEndTurn',
+    ]);
   });
 
   it('fills the last slot and reports an enemy board win condition', () => {
