@@ -239,7 +239,6 @@
   .pixel-game-header {
     border-bottom: 4px solid var(--pixel-ink);
     background-color: var(--pixel-panel);
-    box-shadow: 0 4px 0 var(--pixel-panel-border);
   }
 
   .pixel-game-panel {
