@@ -15,7 +15,6 @@ export interface RunState {
   gameIndex: number;
   arcaneDust: number;
   enemyMaxHealth: number;
-  baseEnemyMaxHealth: number;
   isDefeat: boolean;
   longestRun: number;
   deckDraftState: DeckDraftState | null;
@@ -39,7 +38,6 @@ export function pickRunState(state: GameState): RunState {
     gameIndex: state.gameIndex,
     arcaneDust: state.arcaneDust,
     enemyMaxHealth: state.enemyMaxHealth,
-    baseEnemyMaxHealth: state.baseEnemyMaxHealth,
     isDefeat: state.isDefeat,
     longestRun: state.longestRun,
     deckDraftState: state.deckDraftState,

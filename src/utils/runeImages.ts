@@ -38,6 +38,8 @@ export const BARRICADE_RUNE_IMAGE_SOURCES: RuneImageSources = {
   tokenImageSrc: lifeToken,
 };
 
+export const HIDE_RUNE_IMAGE_SOURCES: RuneImageSources = BARRICADE_RUNE_IMAGE_SOURCES;
+
 export const THROW_ROCK_RUNE_IMAGE_SOURCES: RuneImageSources = {
   cardImageSrc: throwRockCard,
   tokenImageSrc: lifeToken,

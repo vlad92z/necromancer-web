@@ -13,7 +13,7 @@ import type {
 } from '../types/game';
 import { copyEffectRefs, createRuneFromPool } from './runeEffects';
 import { createEffectRef } from './effectCatalog';
-import { BARRICADE_RUNE_IMAGE_SOURCES, THROW_ROCK_RUNE_IMAGE_SOURCES } from './runeImages';
+import { HIDE_RUNE_IMAGE_SOURCES, THROW_ROCK_RUNE_IMAGE_SOURCES } from './runeImages';
 import { getWallSlotRuneTypes } from './scoring';
 import { initializeSoloMap } from './soloMap';
 import goblinImageSrc from '../assets/enemies/goblin.png';
@@ -22,10 +22,8 @@ export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 
 export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 5;
 export const DEFAULT_PLAYER_MANA = 7;
-export const DEFAULT_ENEMY_MAX_HEALTH = 25;
+export const DEFAULT_ENEMY_MAX_HEALTH = 20;
 export const GOBLIN_ARCANE_DUST_REWARD_RANGE = [4, 7] as const;
-export const ENEMY_SCALING_MULTIPLIER = 1.35;
-export const ENEMY_HEALTH_ROUNDING_STEP = 1;
 const STARTING_DECK_DEFINITIONS: Array<Pick<Rune, 'id' | 'runeTypes' | 'rarity'>> = [
   {
     id: 'player-1-Fire-0',
@@ -126,10 +124,6 @@ export function createEnemySpellBoard(size: number = WALL_SIZE): ScoringWall {
   })));
 }
 
-export function scaleEnemyMaxHealth(maxHealth: number): number {
-  return Math.ceil((maxHealth * ENEMY_SCALING_MULTIPLIER) / ENEMY_HEALTH_ROUNDING_STEP) * ENEMY_HEALTH_ROUNDING_STEP;
-}
-
 export function createGoblinEnemy(maxHealth: number): Enemy {
   return {
     id: 'goblin',
@@ -158,6 +152,7 @@ function createEnemyRune(
   damage: number,
   imageSources: Pick<Rune, 'cardImageSrc' | 'tokenImageSrc'>,
   castEffectRefs: Rune['castEffectRefs'] = [],
+  manaCost: number = 2,
 ): EnemyRune {
   const effectiveCastEffectRefs = castEffectRefs.length > 0
     ? castEffectRefs
@@ -171,7 +166,7 @@ function createEnemyRune(
     runeTypes: [runeType],
     rarity,
     ...imageSources,
-    manaCost: 2,
+    manaCost,
     castEffectRefs: copyEffectRefs(effectiveCastEffectRefs),
     passiveEffectRefs: [],
     damage,
@@ -183,13 +178,14 @@ export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
     createEnemyRune(`enemy-${turnNumber}-throw-rock-0`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
     createEnemyRune(`enemy-${turnNumber}-throw-rock-1`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
     createEnemyRune(
-      `enemy-${turnNumber}-barricade`,
-      'Barricade',
+      `enemy-${turnNumber}-hide`,
+      'Hide',
       'Life',
       'common',
       0,
-      BARRICADE_RUNE_IMAGE_SOURCES,
-      [{ effectId: 'cast.armor', params: { amount: 5 } }],
+      HIDE_RUNE_IMAGE_SOURCES,
+      [{ effectId: 'cast.armor', params: { amount: 2 } }],
+      1,
     ),
   ];
 }
@@ -259,7 +255,6 @@ export function initializeSoloGame(
     gameIndex: 1,
     arcaneDust: 0,
     enemyMaxHealth,
-    baseEnemyMaxHealth: DEFAULT_ENEMY_MAX_HEALTH,
     isDefeat: false,
     longestRun: 0,
     deckDraftState: null,

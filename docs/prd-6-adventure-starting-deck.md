@@ -16,10 +16,10 @@ Headwind is the deck's only uncommon card. All other starting cards are common.
 
 ## Goblin Encounter
 
-- The Goblin starts at 25 health.
+- The Goblin starts at 20 health.
 - Its 6x6 board contains only Life slots.
-- Each turn it places two Throw Rock cards and one Barricade card.
-- Throw Rock is common Life, uses the Life token, and deals 5 damage. Barricade grants the Goblin 5 armor.
+- Each turn it places two Throw Rock cards and one Hide card.
+- Throw Rock is common Life, uses the Life token, and deals 5 damage. Hide uses the Barricade image, costs 1 mana, and grants the Goblin 2 armor.
 
 ## Unresolved Questions
 

@@ -20,7 +20,6 @@ import {
   createRuneSoundSignals,
   initializeSoloGame,
   rollEnemyArcaneDustReward,
-  scaleEnemyMaxHealth,
 } from '../../utils/gameInitialization';
 import {
   createDeckDraftState,
@@ -67,8 +66,6 @@ function enterDeckDraftMode(state: GameState): GameState {
     isDefeat: false,
     longestRun: nextLongestRun,
     arcaneDust: state.arcaneDust + arcaneDustReward,
-    enemyMaxHealth: scaleEnemyMaxHealth(state.enemyMaxHealth),
-    baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
     selectedHandRuneId: null,
   };
 }
@@ -82,9 +79,6 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     deckDraftState: nextState.deckDraftState ?? null,
     deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
     enemyMaxHealth: typeof nextState.enemyMaxHealth === 'number' ? nextState.enemyMaxHealth : currentState.enemyMaxHealth,
-    baseEnemyMaxHealth: typeof nextState.baseEnemyMaxHealth === 'number'
-      ? nextState.baseEnemyMaxHealth
-      : currentState.baseEnemyMaxHealth,
     arcaneDust: typeof nextState.arcaneDust === 'number' ? nextState.arcaneDust : currentState.arcaneDust,
     enemy: nextState.enemy ?? createGoblinEnemy(
       nextState.enemyMaxHealth ?? currentState.enemyMaxHealth
@@ -129,7 +123,6 @@ function initializeEncounterForMapLocation(
     gameIndex: state.gameIndex,
     arcaneDust: state.arcaneDust,
     enemyMaxHealth: state.enemyMaxHealth,
-    baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
     isDefeat: false,
     longestRun: state.longestRun,
     deckDraftState: null,
@@ -635,7 +628,6 @@ export const gameplayStoreConfig = (
           picksRemaining: 0,
           selectedOffer,
         },
-        baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
         deckDraftReadyForNextGame: true,
       };
     });

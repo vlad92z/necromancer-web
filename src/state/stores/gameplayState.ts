@@ -35,7 +35,6 @@ export function getGameplayState(): GameState {
     gameIndex: run.gameIndex,
     arcaneDust: run.arcaneDust,
     enemyMaxHealth: run.enemyMaxHealth,
-    baseEnemyMaxHealth: run.baseEnemyMaxHealth,
     isDefeat: run.isDefeat,
     longestRun: run.longestRun,
     deckDraftState: run.deckDraftState,

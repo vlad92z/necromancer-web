@@ -36,7 +36,7 @@ describe('enemy spellboard combat', () => {
       cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
     ))).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Barricade']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Hide']);
     expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life']);
     expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([5, 5, 0]);
     expect(createEnemyTurnRunes(4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
@@ -44,6 +44,12 @@ describe('enemy spellboard combat', () => {
     expect(createEnemyTurnRunes(4)[0]?.castEffectRefs).toEqual([
       { effectId: 'cast.damage', params: { amount: 5 } },
     ]);
+    expect(createEnemyTurnRunes(4)[2]).toMatchObject({
+      name: 'Hide',
+      manaCost: 1,
+      cardImageSrc: expect.stringContaining('card_barricade.png'),
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 2 } }],
+    });
   });
 
   it('plays queued runes in order into random open slots and applies each damage', () => {
@@ -64,7 +70,7 @@ describe('enemy spellboard combat', () => {
     expect(result.healthDamage).toBe(5);
   });
 
-  it('gives the Goblin armor when Barricade is placed', () => {
+  it('gives the Goblin armor when Hide is placed', () => {
     const result = resolveEnemyTurn({
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: initializeSoloGame().enemy,
@@ -73,7 +79,7 @@ describe('enemy spellboard combat', () => {
       random: () => 0,
     });
 
-    expect(result.enemy?.armor).toBe(5);
+    expect(result.enemy?.armor).toBe(2);
   });
 
   it('has Goblin armor absorb player damage before health', () => {
@@ -85,7 +91,7 @@ describe('enemy spellboard combat', () => {
       wall: createEmptyWall(),
     });
 
-    expect(result.enemy).toMatchObject({ health: 25, armor: 0 });
+    expect(result.enemy).toMatchObject({ health: 20, armor: 0 });
   });
 
   it('reduces total incoming enemy-turn damage before armor', () => {

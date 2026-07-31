@@ -201,7 +201,6 @@ export interface GameState extends CombatZoneState {
   gameIndex: number;
   arcaneDust: number;
   enemyMaxHealth: number;
-  baseEnemyMaxHealth: number;
   isDefeat: boolean;
   longestRun: number;
   deckDraftState: DeckDraftState | null;
