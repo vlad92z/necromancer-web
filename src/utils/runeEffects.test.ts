@@ -46,7 +46,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       passiveEffectRefs: [],
     },
     Life: {
-      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 2 } }],
+      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
     Void: {
@@ -201,7 +201,7 @@ describe('runeEffects', () => {
       passiveEffectRefs: [],
     });
     expect(createRune('life-uncommon', 'Life', 'uncommon')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 2 } }],
+      castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 5 } }],
       passiveEffectRefs: [],
     });
     expect(createRune('wind-uncommon', 'Wind', 'uncommon')).toMatchObject({

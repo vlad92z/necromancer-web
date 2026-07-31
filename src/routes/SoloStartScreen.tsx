@@ -8,10 +8,9 @@ import { setNavigationCallback } from '../systems/gameplayOrchestrator';
 import { subscribeGameplayState } from '../state/stores/gameplayState';
 import { GameContainer } from '../features/gameplay/components/GameContainer';
 import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions';
-import { useGameStarted, useSoloStartArtefactState } from '../hooks/useGameState';
+import { useGameStarted } from '../hooks/useGameState';
 import { hasSavedSoloState, loadSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
-import { ArtefactsRow } from '../components/ArtefactsRow';
 import { ClickSoundButton } from '../components/ClickSoundButton';
 import { useClickSound } from '../hooks/useClickSound';
 
@@ -29,7 +28,6 @@ export function SoloStartScreen() {
     return Math.max(storedBest, savedGame);
   });
   const { loadArtefactState } = useArtefactActions();
-  const { selectedArtefactIds } = useSoloStartArtefactState();
   const playClickSound = useClickSound();
 
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
@@ -274,7 +272,7 @@ export function SoloStartScreen() {
           </div>
         </div>
 
-        <section className="pixel-control mt-5 space-y-4 p-4 md:p-5">
+        {/* <section className="pixel-control mt-5 space-y-4 p-4 md:p-5">
           <div className="flex items-center justify-between">
             <div className="font-pixel text-xs uppercase tracking-[0.18em] text-[#fff8d8]">Artefacts</div>
             <ClickSoundButton
@@ -294,7 +292,7 @@ export function SoloStartScreen() {
               <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
             </div>
           )}
-        </section>
+        </section> */}
         <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select</p>
       </div>
 

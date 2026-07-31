@@ -36,7 +36,6 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
           <span className="flex items-center gap-1.5">
-            <span>HP</span>
             {armor > 0 && (
               <span className="flex items-center gap-1 text-[#5dc6b0]">
                 <span aria-hidden="true">🛡</span>

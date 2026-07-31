@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
-import { useSoloMapState } from '../../../../hooks/useGameState';
+import { useArcaneDust, useGameplayHealthState, useSoloMapState } from '../../../../hooks/useGameState';
 import { useClickSound } from '../../../../hooks/useClickSound';
 import type { MapTravelTarget } from '../../../../types/game';
+import { RuneZoneButton } from '../../../../components/DeckButton';
+import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
 import {
   createMapTravelTargetKey,
   getMapLocationPoint,
@@ -12,8 +14,12 @@ import {
 } from '../../../../utils/soloMap';
 import { MapTile } from './MapTile';
 
+const MAP_SCALE = 1.5;
+
 export function SoloMapView(): ReactElement {
   const map = useSoloMapState();
+  const arcaneDust = useArcaneDust();
+  const { health, maxHealth } = useGameplayHealthState();
   const { travelToMapTarget } = useGameplayActions();
   const { openSettingsOverlay } = useUIActions();
   const playClickSound = useClickSound();
@@ -33,6 +39,9 @@ export function SoloMapView(): ReactElement {
   const playerPoint = getMapLocationPoint(map.playerPosition.locationId);
   const playerWorldX = (playerTile?.x ?? 0) * MAP_TILE_SIZE + playerPoint.x;
   const playerWorldY = (playerTile?.y ?? 0) * MAP_TILE_SIZE + playerPoint.y;
+  const healthPercent = maxHealth > 0
+    ? Math.round(Math.max(0, Math.min(1, health / maxHealth)) * 100)
+    : 0;
 
   const handleCurrentMarker = useCallback((element: HTMLDivElement | null) => {
     currentMarkerRef.current = element;
@@ -73,18 +82,39 @@ export function SoloMapView(): ReactElement {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col font-pixel">
-      <header className="pixel-game-header z-30 flex min-h-22 items-center justify-between px-6 py-3">
-        <div>
-          <h1 className="pixel-section-title text-2xl">Adventure Map</h1>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-[#b5d3bd]">
-            {tiles.length} {tiles.length === 1 ? 'tile' : 'tiles'} explored
-          </p>
+      <header className="pixel-game-header z-30 grid min-h-22 grid-cols-[1fr_auto_1fr] items-center px-6 py-3">
+        <div className="flex items-center gap-6 justify-self-start">
+          <div className="w-44">
+            <div className="mb-1 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
+              <span>Health</span>
+              <span>{health} / {maxHealth}</span>
+            </div>
+            <div className="pixel-health-track" aria-label={`Health: ${health} of ${maxHealth}`}>
+              <div
+                className="pixel-health-fill pixel-health-fill--player"
+                style={{ width: `${healthPercent}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-[#f2c14e]" aria-label={`Arcane Dust: ${arcaneDust.toLocaleString()}`}>
+            <img
+              src={arcaneDustIcon}
+              alt=""
+              aria-hidden="true"
+              className="h-7 w-7 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)]"
+            />
+            <span className="text-lg">{arcaneDust.toLocaleString()}</span>
+          </div>
         </div>
-        <ClickSoundButton
-          title="⚙"
-          action={openSettingsOverlay}
-          className="pixel-game-button flex h-15 w-15 items-center justify-center px-0 pb-2 text-4xl"
-        />
+        <h1 className="pixel-section-title text-2xl justify-self-center">Greenwood</h1>
+        <div className="flex items-center gap-3 justify-self-end">
+          <RuneZoneButton zone="deck" />
+          <ClickSoundButton
+            title="⚙"
+            action={openSettingsOverlay}
+            className="pixel-game-button flex h-15 w-15 items-center justify-center px-0 pb-2 text-4xl"
+          />
+        </div>
       </header>
 
       <section
@@ -94,7 +124,8 @@ export function SoloMapView(): ReactElement {
         <div
           className="absolute left-1/2 top-1/2"
           style={{
-            transform: `translate(${-playerWorldX}px, ${-playerWorldY}px)`,
+            transformOrigin: 'top left',
+            transform: `translate(${-playerWorldX * MAP_SCALE}px, ${-playerWorldY * MAP_SCALE}px) scale(${MAP_SCALE})`,
           }}
         >
           {tiles.map((tile) => (

@@ -1,24 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { RuneType } from '../types/game';
+import { CARD_DEFINITIONS } from './cardCatalog';
 import { createRuneFromPool } from './runeEffects';
-import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
 
-const RUNE_TYPES: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind', 'Lightning'];
-const EXPECTED_CARD_FILENAMES: Record<RuneType, string> = {
-  Fire: 'card_fireball.png',
-  Frost: 'card_frost_shield.png',
-  Life: 'card_heal.png',
-  Void: 'card_void_tendrils.png',
-  Wind: 'card_tornado.png',
-  Lightning: 'card_lightning_bolt.png',
-};
-
-describe('runeImages', () => {
-  it.each(RUNE_TYPES)('assigns the requested card and token images to current %s cards', (runeType) => {
-    const sources = CURRENT_RUNE_IMAGE_SOURCES[runeType];
-
-    expect(sources.cardImageSrc).toContain(EXPECTED_CARD_FILENAMES[runeType]);
-    expect(sources.tokenImageSrc).toContain(`token_${runeType.toLowerCase()}.png`);
+describe('cardCatalog artwork', () => {
+  it('defines card and token artwork on every card entry', () => {
+    Object.values(CARD_DEFINITIONS).forEach((card) => {
+      expect(card.cardImageSrc).toContain('card_');
+      expect(card.tokenImageSrc).toContain('token_');
+    });
   });
 
   it('uses card-specific artwork for Barricade and Headwind', () => {
@@ -37,6 +26,9 @@ describe('runeImages', () => {
   it('stores both resolved image values on created cards', () => {
     const rune = createRuneFromPool({ id: 'frost-rare', runeType: 'Frost', rarity: 'rare' });
 
-    expect(rune).toMatchObject(CURRENT_RUNE_IMAGE_SOURCES.Frost);
+    expect(rune).toMatchObject({
+      cardImageSrc: CARD_DEFINITIONS['Freezing Cold'].cardImageSrc,
+      tokenImageSrc: CARD_DEFINITIONS['Freezing Cold'].tokenImageSrc,
+    });
   });
 });

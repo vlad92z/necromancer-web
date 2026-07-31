@@ -6,96 +6,39 @@ import type {
   Enemy,
   EnemyRune,
   GameState,
+  MonsterId,
   Player,
   Rune,
   RuneType,
   ScoringWall,
 } from '../types/game';
-import { copyEffectRefs, createRuneFromPool } from './runeEffects';
-import { createEffectRef } from './effectCatalog';
-import { BARRICADE_RUNE_IMAGE_SOURCES, THROW_ROCK_RUNE_IMAGE_SOURCES } from './runeImages';
+import { copyEffectRefs, createRuneFromCardName } from './runeEffects';
+import type { CardName } from './cardCatalog';
+import { MONSTER_CATALOG } from './monsterCatalog';
 import { getWallSlotRuneTypes } from './scoring';
 import { initializeSoloMap } from './soloMap';
-import goblinImageSrc from '../assets/enemies/goblin.png';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 5;
 export const DEFAULT_PLAYER_MANA = 7;
-export const DEFAULT_ENEMY_MAX_HEALTH = 25;
-export const ENEMY_SCALING_MULTIPLIER = 1.35;
-export const ENEMY_HEALTH_ROUNDING_STEP = 1;
-const STARTING_DECK_DEFINITIONS: Array<Pick<Rune, 'id' | 'runeTypes' | 'rarity'>> = [
-  {
-    id: 'player-1-Fire-0',
-    runeTypes: ['Fire'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Fire-1',
-    runeTypes: ['Fire'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Life-0',
-    runeTypes: ['Life'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Life-1',
-    runeTypes: ['Life'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Wind-0',
-    runeTypes: ['Wind'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Wind-1',
-    runeTypes: ['Wind'],
-    rarity: 'uncommon',
-  },
-  {
-    id: 'player-1-Frost-0',
-    runeTypes: ['Frost'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Frost-1',
-    runeTypes: ['Frost'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Void-0',
-    runeTypes: ['Void'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Void-1',
-    runeTypes: ['Void'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Lightning-0',
-    runeTypes: ['Lightning'],
-    rarity: 'common',
-  },
-  {
-    id: 'player-1-Lightning-1',
-    runeTypes: ['Lightning'],
-    rarity: 'common',
-  },
+export const DEFAULT_ENEMY_MAX_HEALTH = MONSTER_CATALOG.goblin.maxHealth;
+const STARTING_DECK_DEFINITIONS: Array<{ id: string; cardName: CardName }> = [
+  { id: 'player-1-Fire-0', cardName: 'Firebolt' },
+  { id: 'player-1-Fire-1', cardName: 'Firebolt' },
+  { id: 'player-1-Life-0', cardName: 'Barricade' },
+  { id: 'player-1-Life-1', cardName: 'Barricade' },
+  { id: 'player-1-Wind-0', cardName: 'Tornado' },
+  { id: 'player-1-Wind-1', cardName: 'Headwind' },
+  { id: 'player-1-Frost-0', cardName: 'Frost Shield' },
+  { id: 'player-1-Frost-1', cardName: 'Frost Shield' },
+  { id: 'player-1-Void-0', cardName: 'Void Tendrils' },
+  { id: 'player-1-Void-1', cardName: 'Void Tendrils' },
+  { id: 'player-1-Lightning-0', cardName: 'Lightning Bolt' },
+  { id: 'player-1-Lightning-1', cardName: 'Lightning Bolt' },
 ];
 
-export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map((rune) => (
-  createRuneFromPool({
-    id: rune.id,
-    runeType: rune.runeTypes[0],
-    rarity: rune.rarity,
-    random: () => 0,
-  })
-));
+export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map(({ id, cardName }) => createRuneFromCardName({ id, cardName }));
 
 export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
   return Array(size)
@@ -125,63 +68,47 @@ export function createEnemySpellBoard(size: number = WALL_SIZE): ScoringWall {
   })));
 }
 
-export function scaleEnemyMaxHealth(maxHealth: number): number {
-  return Math.ceil((maxHealth * ENEMY_SCALING_MULTIPLIER) / ENEMY_HEALTH_ROUNDING_STEP) * ENEMY_HEALTH_ROUNDING_STEP;
+export function createGoblinEnemy(maxHealth: number = MONSTER_CATALOG.goblin.maxHealth): Enemy {
+  return createMonsterEnemy('goblin', maxHealth);
 }
 
-export function createGoblinEnemy(maxHealth: number): Enemy {
+export function createMonsterEnemy(monsterId: MonsterId, maxHealth?: number): Enemy {
+  const monster = MONSTER_CATALOG[monsterId];
+  const resolvedMaxHealth = maxHealth ?? monster.maxHealth;
   return {
-    id: 'goblin',
-    name: 'Goblin',
-    imageSrc: goblinImageSrc,
-    health: maxHealth,
-    maxHealth,
-    armor: 0,
+    id: monster.id,
+    name: monster.name,
+    imageSrc: monster.imageSrc,
+    health: resolvedMaxHealth,
+    maxHealth: resolvedMaxHealth,
+    armor: monster.armor,
+    arcaneDustRewardRange: monster.arcaneDustRewardRange,
   };
+}
+
+export function rollEnemyArcaneDustReward(enemy: Enemy | null, random: () => number = Math.random): number {
+  const range = enemy?.arcaneDustRewardRange;
+  if (!range) return 0;
+
+  const [minimum, maximum] = range;
+  return minimum + Math.floor(random() * (maximum - minimum + 1));
 }
 
 function createEnemyRune(
   id: string,
-  name: string,
-  runeType: RuneType,
-  rarity: Rune['rarity'],
+  cardName: CardName,
   damage: number,
-  imageSources: Pick<Rune, 'cardImageSrc' | 'tokenImageSrc'>,
-  castEffectRefs: Rune['castEffectRefs'] = [],
 ): EnemyRune {
-  const effectiveCastEffectRefs = castEffectRefs.length > 0
-    ? castEffectRefs
-    : damage > 0
-      ? [createEffectRef('cast.damage', { amount: damage })]
-      : [];
-
   return {
-    id,
-    name,
-    runeTypes: [runeType],
-    rarity,
-    ...imageSources,
-    manaCost: 2,
-    castEffectRefs: copyEffectRefs(effectiveCastEffectRefs),
-    passiveEffectRefs: [],
+    ...createRuneFromCardName({ id, cardName }),
     damage,
   };
 }
 
 export function createEnemyTurnRunes(turnNumber: number): EnemyRune[] {
-  return [
-    createEnemyRune(`enemy-${turnNumber}-throw-rock-0`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
-    createEnemyRune(`enemy-${turnNumber}-throw-rock-1`, 'Throw Rock', 'Life', 'common', 5, THROW_ROCK_RUNE_IMAGE_SOURCES),
-    createEnemyRune(
-      `enemy-${turnNumber}-barricade`,
-      'Barricade',
-      'Life',
-      'common',
-      0,
-      BARRICADE_RUNE_IMAGE_SOURCES,
-      [{ effectId: 'cast.armor', params: { amount: 5 } }],
-    ),
-  ];
+  return MONSTER_CATALOG.goblin.turnCards.map(({ idSuffix, cardName, damage }) => (
+    createEnemyRune(`enemy-${turnNumber}-${idSuffix}`, cardName, damage)
+  ));
 }
 
 export function getRuneTypes(): RuneType[] {
@@ -247,12 +174,11 @@ export function initializeSoloGame(
     player,
     fullDeck: deckTemplate,
     gameIndex: 1,
+    arcaneDust: 0,
     enemyMaxHealth,
-    baseEnemyMaxHealth: DEFAULT_ENEMY_MAX_HEALTH,
     isDefeat: false,
     longestRun: 0,
     deckDraftState: null,
-    deckDraftReadyForNextGame: false,
     activeArtefacts: [],
     runeSoundSignals: createRuneSoundSignals(),
     enemyAttackSoundSignal: 0,

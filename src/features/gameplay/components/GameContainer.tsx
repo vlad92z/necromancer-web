@@ -117,7 +117,7 @@ export function GameContainer() {
         </div>
       </div>
 
-      {soloPhase !== 'map' && activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
+      {activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
       {showSettingsOverlay && (
         <SettingsOverlay onQuitRun={returnToStartScreen} />
       )}

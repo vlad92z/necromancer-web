@@ -36,14 +36,20 @@ describe('enemy spellboard combat', () => {
       cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
     ))).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Barricade']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([5, 5, 0]);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Throw Rock', 'Hide']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life', 'Life']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([3, 3, 3, 0]);
     expect(createEnemyTurnRunes(4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
     expect(createEnemyTurnRunes(4)[0]?.tokenImageSrc).toContain('token_life.png');
     expect(createEnemyTurnRunes(4)[0]?.castEffectRefs).toEqual([
-      { effectId: 'cast.damage', params: { amount: 5 } },
+      { effectId: 'cast.damage', params: { amount: 3 } },
     ]);
+    expect(createEnemyTurnRunes(4)[3]).toMatchObject({
+      name: 'Hide',
+      manaCost: 1,
+      cardImageSrc: expect.stringContaining('card_barricade.png'),
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+    });
   });
 
   it('plays queued runes in order into random open slots and applies each damage', () => {
@@ -64,16 +70,16 @@ describe('enemy spellboard combat', () => {
     expect(result.healthDamage).toBe(5);
   });
 
-  it('gives the Goblin armor when Barricade is placed', () => {
+  it('gives the Goblin armor when Hide is placed', () => {
     const result = resolveEnemyTurn({
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: initializeSoloGame().enemy,
       enemyBoard: createEnemySpellBoard(),
-      enemyQueuedRunes: [createEnemyTurnRunes(0)[2]!],
+      enemyQueuedRunes: [createEnemyTurnRunes(0)[3]!],
       random: () => 0,
     });
 
-    expect(result.enemy?.armor).toBe(5);
+    expect(result.enemy?.armor).toBe(3);
   });
 
   it('has Goblin armor absorb player damage before health', () => {
@@ -85,10 +91,10 @@ describe('enemy spellboard combat', () => {
       wall: createEmptyWall(),
     });
 
-    expect(result.enemy).toMatchObject({ health: 25, armor: 0 });
+    expect(result.enemy).toMatchObject({ health: 20, armor: 0 });
   });
 
-  it('reduces total incoming enemy-turn damage before armor', () => {
+  it('applies damage reduction independently to each enemy card', () => {
     const wall = createEmptyWall();
     wall[0][0] = {
       ...wall[0][0],
@@ -108,13 +114,46 @@ describe('enemy spellboard combat', () => {
       player,
       enemy: initializeSoloGame().enemy,
       enemyBoard: createEnemySpellBoard(),
-      enemyQueuedRunes: [createEnemyRune('attacker', 3)],
+      enemyQueuedRunes: [createEnemyRune('attacker-1', 3), createEnemyRune('attacker-2', 3)],
       random: () => 0,
     });
 
-    expect(result.player.health).toBe(18);
-    expect(result.healthDamage).toBe(2);
-    expect(result.logs.map((log) => log.effectId)).toContain('passive.reduceDamage');
+    expect(result.player.health).toBe(16);
+    expect(result.healthDamage).toBe(4);
+    expect(result.logs.filter((log) => log.effectId === 'passive.reduceDamage')).toHaveLength(2);
+  });
+
+  it('resolves enemy board start and end turn effects around card plays', () => {
+    const board = createEnemySpellBoard();
+    board[0][0] = {
+      ...board[0][0],
+      id: 'enemy-regeneration',
+      name: 'Regeneration',
+      runeTypes: ['Life'],
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [
+        { effectId: 'passive.healingStartTurn', params: { amount: 3 } },
+        { effectId: 'passive.damageEndTurn', params: { amount: 2 } },
+      ],
+    };
+    const enemy = { ...initializeSoloGame().enemy!, health: 10, armor: 0 };
+
+    const result = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy,
+      enemyBoard: board,
+      enemyQueuedRunes: [createEnemyRune('enemy-card', 1)],
+      random: () => 0,
+    });
+
+    expect(result.enemy?.health).toBe(13);
+    expect(result.player.health).toBe(17);
+    expect(result.healthDamage).toBe(3);
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'passive.healingStartTurn',
+      'passive.damageEndTurn',
+    ]);
   });
 
   it('fills the last slot and reports an enemy board win condition', () => {

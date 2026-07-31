@@ -143,6 +143,19 @@ export interface EnemyTurnResult {
   healthDamage: number;
 }
 
+interface EnemyIncomingDamageResult {
+  player: Player;
+  healthDamage: number;
+  logs: EffectResolutionLog[];
+}
+
+interface EnemyTurnEffectsResult {
+  player: Player;
+  enemy: Enemy;
+  healthDamage: number;
+  logs: EffectResolutionLog[];
+}
+
 export interface VictoryDeckInput {
   player: Player;
   hand: Rune[];
@@ -370,6 +383,130 @@ export function resolveCompletedRuneCastEffects({
   };
 }
 
+function resolveEnemyIncomingDamage({
+  player,
+  baseDamage,
+  activeArtefacts,
+}: {
+  player: Player;
+  baseDamage: number;
+  activeArtefacts: ArtefactId[];
+}): EnemyIncomingDamageResult {
+  const normalizedBaseDamage = Math.max(0, baseDamage);
+  if (normalizedBaseDamage === 0) {
+    return { player, healthDamage: 0, logs: [] };
+  }
+
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'onEnemyAttack',
+    wall: player.wall,
+    activeArtefacts,
+    baseValues: { incomingDamage: normalizedBaseDamage },
+  });
+  const incomingDamage = Math.max(0, passiveResult.values.incomingDamage ?? 0);
+  const armorAbsorbed = Math.min(player.armor, incomingDamage);
+  const healthDamage = incomingDamage - armorAbsorbed;
+
+  return {
+    player: {
+      ...player,
+      armor: player.armor - armorAbsorbed,
+      health: Math.max(0, player.health - healthDamage),
+    },
+    healthDamage,
+    logs: passiveResult.logs,
+  };
+}
+
+function resolveEnemyStartTurnEffects({
+  player,
+  enemy,
+  enemyBoard,
+}: {
+  player: Player;
+  enemy: Enemy;
+  enemyBoard: ScoringWall;
+}): EnemyTurnEffectsResult {
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'startTurn',
+    wall: enemyBoard,
+    activeArtefacts: [],
+    baseValues: { healing: 0 },
+  });
+  const healing = Math.max(0, passiveResult.values.healing ?? 0);
+
+  return {
+    player,
+    enemy: healing > 0
+      ? { ...enemy, health: Math.min(enemy.maxHealth, enemy.health + healing) }
+      : enemy,
+    healthDamage: 0,
+    logs: passiveResult.logs,
+  };
+}
+
+function resolveEnemyCardEffects({
+  player,
+  enemy,
+  rune,
+  activeArtefacts,
+}: {
+  player: Player;
+  enemy: Enemy;
+  rune: EnemyRune;
+  activeArtefacts: ArtefactId[];
+}): EnemyTurnEffectsResult {
+  const armorGain = rune.castEffectRefs.reduce((total, effectRef) => (
+    effectRef.effectId === 'cast.armor' && typeof effectRef.params?.amount === 'number'
+      ? total + Math.max(0, effectRef.params.amount)
+      : total
+  ), 0);
+  const incomingDamageResult = resolveEnemyIncomingDamage({
+    player,
+    baseDamage: rune.damage,
+    activeArtefacts,
+  });
+
+  return {
+    player: incomingDamageResult.player,
+    enemy: armorGain > 0 ? { ...enemy, armor: (enemy.armor ?? 0) + armorGain } : enemy,
+    healthDamage: incomingDamageResult.healthDamage,
+    logs: incomingDamageResult.logs,
+  };
+}
+
+function resolveEnemyEndTurnEffects({
+  player,
+  enemy,
+  enemyBoard,
+  activeArtefacts,
+}: {
+  player: Player;
+  enemy: Enemy;
+  enemyBoard: ScoringWall;
+  activeArtefacts: ArtefactId[];
+}): EnemyTurnEffectsResult {
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'endTurn',
+    wall: enemyBoard,
+    activeArtefacts: [],
+    baseValues: { armor: 0, damage: 0 },
+  });
+  const armorGain = Math.max(0, passiveResult.values.armor ?? 0);
+  const incomingDamageResult = resolveEnemyIncomingDamage({
+    player,
+    baseDamage: passiveResult.values.damage ?? 0,
+    activeArtefacts,
+  });
+
+  return {
+    player: incomingDamageResult.player,
+    enemy: armorGain > 0 ? { ...enemy, armor: (enemy.armor ?? 0) + armorGain } : enemy,
+    healthDamage: incomingDamageResult.healthDamage,
+    logs: [...passiveResult.logs, ...incomingDamageResult.logs],
+  };
+}
+
 export function resolveEnemyTurn({
   player,
   enemy,
@@ -389,7 +526,15 @@ export function resolveEnemyTurn({
   let nextPlayer = player;
   let nextEnemy = enemy;
   const nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
-  let totalIncomingDamage = 0;
+  let healthDamage = 0;
+  const startTurnResult = resolveEnemyStartTurnEffects({
+    player: nextPlayer,
+    enemy: nextEnemy,
+    enemyBoard: nextBoard,
+  });
+  nextPlayer = startTurnResult.player;
+  nextEnemy = startTurnResult.enemy;
+  let logs = [...startTurnResult.logs];
 
   for (const rune of runesToPlay) {
     const openSlots: Array<{ row: number; col: number }> = [];
@@ -413,31 +558,28 @@ export function resolveEnemyTurn({
       castEffectRefs: rune.castEffectRefs,
       passiveEffectRefs: rune.passiveEffectRefs,
     };
-    totalIncomingDamage += Math.max(0, rune.damage);
-    const armorGain = rune.castEffectRefs.reduce((total, effectRef) => (
-      effectRef.effectId === 'cast.armor' && typeof effectRef.params?.amount === 'number'
-        ? total + Math.max(0, effectRef.params.amount)
-        : total
-    ), 0);
-    if (armorGain > 0) {
-      nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + armorGain };
-    }
+    const cardResult = resolveEnemyCardEffects({
+      player: nextPlayer,
+      enemy: nextEnemy,
+      rune,
+      activeArtefacts,
+    });
+    nextPlayer = cardResult.player;
+    nextEnemy = cardResult.enemy;
+    healthDamage += cardResult.healthDamage;
+    logs = [...logs, ...cardResult.logs];
   }
 
-  const passiveResult = resolvePassiveEffects({
-    trigger: 'onEnemyAttack',
-    wall: nextPlayer.wall,
+  const endTurnResult = resolveEnemyEndTurnEffects({
+    player: nextPlayer,
+    enemy: nextEnemy,
+    enemyBoard: nextBoard,
     activeArtefacts,
-    baseValues: { incomingDamage: totalIncomingDamage },
   });
-  const incomingDamage = Math.max(0, passiveResult.values.incomingDamage ?? totalIncomingDamage);
-  const armorAbsorbed = Math.min(nextPlayer.armor, incomingDamage);
-  const healthDamage = incomingDamage - armorAbsorbed;
-  nextPlayer = {
-    ...nextPlayer,
-    armor: nextPlayer.armor - armorAbsorbed,
-    health: Math.max(0, nextPlayer.health - healthDamage),
-  };
+  nextPlayer = endTurnResult.player;
+  nextEnemy = endTurnResult.enemy;
+  healthDamage += endTurnResult.healthDamage;
+  logs = [...logs, ...endTurnResult.logs];
 
   return {
     player: nextPlayer,
@@ -445,7 +587,7 @@ export function resolveEnemyTurn({
     enemyBoard: nextBoard,
     enemyQueuedRunes: [],
     boardFull: nextBoard.every((row) => row.every((cell) => cell.id !== null)),
-    logs: passiveResult.logs,
+    logs,
     healthDamage,
   };
 }

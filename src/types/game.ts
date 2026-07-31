@@ -48,6 +48,7 @@ export interface Enemy {
   health: number;
   maxHealth: number;
   armor?: number;
+  arcaneDustRewardRange?: readonly [minimum: number, maximum: number];
 }
 
 export interface EnemyRune extends Rune {
@@ -59,16 +60,13 @@ export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
 export interface DeckDraftOffer {
   id: string;
   ownerId: Player['id'];
-  runeType: RuneType;
-  displayRarity: RuneEffectRarity;
-  runes: Rune[];
+  rune: Rune;
 }
 
 export interface DeckDraftState {
   offers: DeckDraftOffer[];
-  picksRemaining: number;
-  totalPicks: number;
   selectedOffer: DeckDraftOffer | null;
+  arcaneDustReward: number;
 }
 
 export type TooltipCardVariant = 'default' | 'nonPrimary';
@@ -116,7 +114,9 @@ export type SoloPhase = 'map' | 'encounter' | 'reward';
 export type MapTileKind = 'start' | 'forest';
 export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
-export type MapEncounterKind = 'fire';
+export type RegionId = 'greenwood';
+export type MapEventKind = 'combat' | 'healing' | 'empty';
+export type MonsterId = 'goblin';
 export type MapRoadId =
   | 'left-75'
   | 'left-155'
@@ -132,10 +132,12 @@ export interface MapPoint {
   y: number;
 }
 
-export interface MapEncounter {
+export interface MapLocationEvent {
   id: string;
   locationId: MapEncounterLocationId;
-  kind: MapEncounterKind;
+  tokenId: string | null;
+  kind: MapEventKind;
+  monsterId?: MonsterId;
   cleared: boolean;
 }
 
@@ -144,7 +146,7 @@ export interface MapTileState {
   x: number;
   y: number;
   kind: MapTileKind;
-  encounters: Partial<Record<MapEncounterLocationId, MapEncounter>>;
+  events: Partial<Record<MapEncounterLocationId, MapLocationEvent>>;
 }
 
 export interface MapPlayerPosition {
@@ -156,10 +158,12 @@ export interface ActiveMapEncounter {
   id: string;
   tileKey: string;
   locationId: MapEncounterLocationId;
-  kind: MapEncounterKind;
+  monsterId: MonsterId;
 }
 
 export interface SoloMapState {
+  regionId: RegionId;
+  availableEventTokenIds: string[];
   tiles: Record<string, MapTileState>;
   playerPosition: MapPlayerPosition;
   activeEncounter: ActiveMapEncounter | null;
@@ -197,12 +201,11 @@ export interface GameState extends CombatZoneState {
   player: Player;
   fullDeck: Rune[];
   gameIndex: number;
+  arcaneDust: number;
   enemyMaxHealth: number;
-  baseEnemyMaxHealth: number;
   isDefeat: boolean;
   longestRun: number;
   deckDraftState: DeckDraftState | null;
-  deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
   enemyAttackSoundSignal: number;

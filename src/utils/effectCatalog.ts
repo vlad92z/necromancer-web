@@ -38,6 +38,7 @@ export type PassiveEffectId =
   | 'passive.damageBoost'
   | 'passive.adjacentDamageBoost'
   | 'passive.damageBoostSynergy'
+  | 'passive.damageEndTurn'
   | 'passive.pulseSynergy'
   | 'passive.armorEndTurnSynergy'
   | 'passive.healingStartTurn'
@@ -349,6 +350,20 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     describe: (params) =>
       `At end of turn, deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
+  'passive.damageEndTurn': {
+    id: 'passive.damageEndTurn',
+    kind: 'passive',
+    title: 'End Turn Damage',
+    displayHint: 'damage',
+    passive: {
+      trigger: 'endTurn',
+      target: 'damage',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `At the end of your turn, deal ${numberParam(params, 'amount')} damage`,
+  },
   'passive.armorEndTurnSynergy': {
     id: 'passive.armorEndTurnSynergy',
     kind: 'passive',
@@ -475,7 +490,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `All damage taken by you is reduced by ${numberParam(params, 'amount')}`,
+    describe: (params) => `Reduce damage taken by ${numberParam(params, 'amount')}`,
   },
 };
 

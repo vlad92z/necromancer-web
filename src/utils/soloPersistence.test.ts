@@ -30,7 +30,7 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 21,
+      version: 26,
       state: {
         gameStarted: true,
         enemyMaxHealth: 17,
@@ -49,8 +49,11 @@ describe('soloPersistence', () => {
   it('restores generated tiles, cleared encounters, and player position', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { completeActiveMapEncounter, travelOnSoloMap } = await import('./soloMap');
+    const { getRegionDefinition } = await import('./regionCatalog');
     const { loadSoloState, saveSoloState } = await import('./soloPersistence');
     const state = { ...initializeSoloGame(), gameStarted: true };
+    state.soloMap.availableEventTokenIds = getRegionDefinition('greenwood').eventTokens
+      .filter((token) => token.kind === 'combat').map((token) => token.id);
     const arrival = travelOnSoloMap(state.soloMap, {
       kind: 'road',
       tileKey: '0,0',
@@ -65,7 +68,7 @@ describe('soloPersistence', () => {
       activeEncounter: null,
       tiles: {
         '1,0': {
-          encounters: {
+          events: {
             A: { cleared: true },
           },
         },
@@ -77,8 +80,11 @@ describe('soloPersistence', () => {
     const { createDeckDraftState } = await import('./deckDrafting');
     const { initializeSoloGame } = await import('./gameInitialization');
     const { travelOnSoloMap } = await import('./soloMap');
+    const { getRegionDefinition } = await import('./regionCatalog');
     const { loadSoloState, saveSoloState } = await import('./soloPersistence');
     const state = { ...initializeSoloGame(), gameStarted: true, soloPhase };
+    state.soloMap.availableEventTokenIds = getRegionDefinition('greenwood').eventTokens
+      .filter((token) => token.kind === 'combat').map((token) => token.id);
     const arrival = travelOnSoloMap(state.soloMap, {
       kind: 'road',
       tileKey: '0,0',
@@ -87,7 +93,7 @@ describe('soloPersistence', () => {
     state.soloMap = arrival.map;
     if (soloPhase === 'reward') {
       state.combatPhase = 'victory';
-      state.deckDraftState = createDeckDraftState(state.player.id, state.gameIndex);
+      state.deckDraftState = createDeckDraftState(state.player.id, state.enemy);
     }
 
     saveSoloState(state);
@@ -101,7 +107,7 @@ describe('soloPersistence', () => {
         },
         tiles: {
           '1,0': {
-            encounters: {
+            events: {
               A: { cleared: false },
             },
           },

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createStartingDeck,
   initializeSoloGame,
-  scaleEnemyMaxHealth,
+  rollEnemyArcaneDustReward,
   STARTING_DECK,
 } from './gameInitialization';
 
@@ -24,13 +24,22 @@ describe('gameInitialization combat state', () => {
     expect(state.selectedHandRuneId).toBeNull();
   });
 
-  it('starts the default Goblin encounter at 25 health', () => {
+  it('starts the default Goblin encounter at 20 health', () => {
     const state = initializeSoloGame();
 
-    expect(state.enemy).toMatchObject({ health: 25, maxHealth: 25 });
+    expect(state.enemy).toMatchObject({ health: 20, maxHealth: 20 });
     expect(state.enemyBoard.flat().every((cell) => (
       cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
     ))).toBe(true);
+    expect(state.arcaneDust).toBe(0);
+  });
+
+  it('rolls the Goblin encounter reward within its configured Arcane Dust range', () => {
+    const enemy = initializeSoloGame().enemy;
+
+    expect(enemy?.arcaneDustRewardRange).toEqual([4, 7]);
+    expect(rollEnemyArcaneDustReward(enemy, () => 0)).toBe(4);
+    expect(rollEnemyArcaneDustReward(enemy, () => 0.9999)).toBe(7);
   });
 
   it('creates the fixed literal starting deck', () => {
@@ -100,10 +109,6 @@ describe('gameInitialization combat state', () => {
     expect(deck.every((rune) => rune.cardImageSrc && rune.tokenImageSrc)).toBe(true);
     expect(new Set(fireRunes.map((rune) => rune.tokenImageSrc)).size).toBe(1);
     expect(new Set(fireRunes.map((rune) => rune.cardImageSrc)).size).toBe(1);
-  });
-
-  it('scales enemy max health by the configured multiplier and rounds up to 1 HP', () => {
-    expect([10, 15, 20, 25, 30].map(scaleEnemyMaxHealth)).toEqual([14, 21, 27, 34, 41]);
   });
 
 });

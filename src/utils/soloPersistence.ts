@@ -6,7 +6,7 @@ import type { GameState, SoloMapState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 21;
+export const SOLO_STATE_VERSION = 26;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -20,7 +20,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isSoloMapState(value: unknown): value is SoloMapState {
-  if (!isRecord(value) || !isRecord(value.tiles) || !isRecord(value.playerPosition)) {
+  if (!isRecord(value) || !isRecord(value.tiles) || !isRecord(value.playerPosition)
+    || value.regionId !== 'greenwood' || !Array.isArray(value.availableEventTokenIds)) {
     return false;
   }
 
@@ -34,14 +35,21 @@ function isSoloMapState(value: unknown): value is SoloMapState {
   }
 
   return Object.entries(value.tiles).every(([key, tileValue]) => {
-    if (!isRecord(tileValue) || !isRecord(tileValue.encounters)) {
+    if (!isRecord(tileValue) || !isRecord(tileValue.events)) {
       return false;
     }
 
+    const events = Object.values(tileValue.events);
     return tileValue.key === key
       && typeof tileValue.x === 'number'
       && typeof tileValue.y === 'number'
-      && (tileValue.kind === 'start' || tileValue.kind === 'forest');
+      && (tileValue.kind === 'start' || tileValue.kind === 'forest')
+      && events.every((event) => event === null || (
+        isRecord(event)
+        && (typeof event.tokenId === 'string' || event.tokenId === null)
+        && ['combat', 'healing', 'empty'].includes(String(event.kind))
+        && typeof event.cleared === 'boolean'
+      ));
   });
 }
 
@@ -62,6 +70,7 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
     && Array.isArray(state.enemyBoard)
     && Array.isArray(state.enemyQueuedRunes)
     && typeof state.enemyMaxHealth === 'number'
+    && typeof state.arcaneDust === 'number'
     && isRecord(state.player)
     && typeof state.player.mana === 'number'
     && typeof state.player.maxMana === 'number'

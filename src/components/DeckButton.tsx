@@ -1,6 +1,6 @@
 import { useUIActions } from '../hooks/useGameActions';
 import { useClickSound } from '../hooks/useClickSound';
-import { useActiveElement, useCombatZoneState, useGameplayDeckState, useUIOverlayState } from '../hooks/useGameState';
+import { useActiveElement, useCombatZoneState, useGameplayDeckState, useSoloPhase, useUIOverlayState } from '../hooks/useGameState';
 import type { RuneZoneOverlay } from '../state/stores/uiStore';
 import deckSvg from '../assets/stats/deck.png';
 import drawSvg from '../assets/stats/draw.png';
@@ -29,8 +29,9 @@ interface RuneZoneButtonProps {
 }
 
 export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
-    const { deck } = useGameplayDeckState();
+    const { deck, fullDeck } = useGameplayDeckState();
     const { hand, discardPile } = useCombatZoneState();
+    const soloPhase = useSoloPhase();
     const { activeRuneZoneOverlay } = useUIOverlayState();
     const { openRuneZoneOverlay } = useUIActions();
     const playClickSound = useClickSound();
@@ -39,6 +40,8 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
         ? deck.length
         : zone === 'discard'
             ? discardPile.length
+        : soloPhase === 'map'
+            ? fullDeck.length
             : deck.length + discardPile.length + hand.length;
     const copy = ZONE_COPY[zone];
     const isActive = (activeElement?.type === 'rune-zone' && activeElement.zone === zone)

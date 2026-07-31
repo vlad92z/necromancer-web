@@ -8,7 +8,7 @@ import type { RuneZoneOverlay as RuneZoneOverlayType } from '../../../state/stor
 import { RuneTypeTotals } from './Center/RuneTypeTotals';
 import { useUIActions } from '../../../hooks/useGameActions';
 import { useClickSound } from '../../../hooks/useClickSound';
-import { useArcaneDust, useCombatZoneState, useGameplayDeckState } from '../../../hooks/useGameState';
+import { useArcaneDust, useCombatZoneState, useGameplayDeckState, useSoloPhase } from '../../../hooks/useGameState';
 import { compareRunesByRarityThenId } from '../../../utils/runeRarity';
 import { buildRuneTooltipCards } from '../../../utils/tooltipCards';
 import { CardView } from './Player/CardView';
@@ -38,6 +38,7 @@ const ZONE_COPY: Record<RuneZoneOverlayType, { title: string; emptyText: string 
 export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
   const { deck, fullDeck, isDrafting } = useGameplayDeckState();
   const { hand, discardPile } = useCombatZoneState();
+  const soloPhase = useSoloPhase();
   const { closeRuneZoneOverlay: onClose } = useUIActions();
   const playClickSound = useClickSound();
   const arcaneDust = useArcaneDust();
@@ -46,9 +47,9 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
     ? deck
     : zone === 'discard'
       ? discardPile
-      : isDrafting
-        ? fullDeck
-        : [...deck, ...discardPile, ...hand];
+        : isDrafting || soloPhase === 'map'
+          ? fullDeck
+          : [...deck, ...discardPile, ...hand];
 
   const runesByType = zoneRunes.reduce((acc, rune) => {
     rune.runeTypes.forEach((runeType) => {

@@ -14,6 +14,17 @@ import {
   MAP_ROAD_IDS,
   travelOnSoloMap,
 } from './soloMap';
+import { getRegionDefinition } from './regionCatalog';
+
+function initializeCombatOnlyMap() {
+  const map = initializeSoloMap();
+  return {
+    ...map,
+    availableEventTokenIds: getRegionDefinition('greenwood').eventTokens
+      .filter((token) => token.kind === 'combat')
+      .map((token) => token.id),
+  };
+}
 
 function roadTarget(roadId: MapRoadId): MapTravelTarget {
   return {
@@ -24,7 +35,7 @@ function roadTarget(roadId: MapRoadId): MapTravelTarget {
 }
 
 describe('soloMap', () => {
-  it('initializes the start tile with a center player, no encounters, and eight frontier roads', () => {
+  it('initializes the start tile with Greenwood events and eight frontier roads', () => {
     const map = initializeSoloMap();
     const startTile = map.tiles['0,0'];
 
@@ -33,7 +44,7 @@ describe('soloMap', () => {
       x: 0,
       y: 0,
       kind: 'start',
-      encounters: {},
+      events: {},
     });
     expect(map.playerPosition).toEqual({ tileKey: '0,0', locationId: 'start' });
     expect(getReachableMapTargets(map).map(createMapTravelTargetKey)).toEqual(
@@ -41,8 +52,9 @@ describe('soloMap', () => {
     );
   });
 
-  it('creates standard tiles with the four requested encounter locations', () => {
-    const tile = createForestMapTile(2, -3);
+  it('creates standard tiles by consuming unique Greenwood event tokens', () => {
+    const availableTokenIds = getRegionDefinition('greenwood').eventTokens.map((token) => token.id);
+    const tile = createForestMapTile(2, -3, availableTokenIds, () => 0);
 
     expect(MAP_LOCATION_POINTS).toEqual({
       A: { x: 91, y: 73 },
@@ -50,10 +62,17 @@ describe('soloMap', () => {
       C: { x: 95, y: 160 },
       D: { x: 156, y: 190 },
     });
-    expect(Object.keys(tile.encounters)).toEqual(MAP_ENCOUNTER_LOCATION_IDS);
-    expect(Object.values(tile.encounters).every((encounter) => (
-      encounter?.kind === 'fire' && encounter.cleared === false
-    ))).toBe(true);
+    expect(Object.keys(tile.events)).toEqual(MAP_ENCOUNTER_LOCATION_IDS);
+    expect(Object.values(tile.events).map((event) => event?.tokenId)).toEqual(availableTokenIds.slice(0, 4));
+    expect(Object.values(tile.events).every((event) => event?.cleared === false)).toBe(true);
+  });
+
+  it('uses empty, already-visited tokens after Greenwood has no event tokens left', () => {
+    const tile = createForestMapTile(2, -3, [], () => 0);
+
+    expect(Object.values(tile.events)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tokenId: null, kind: 'empty', cleared: false }),
+    ]));
   });
 
   it.each<{
@@ -70,18 +89,18 @@ describe('soloMap', () => {
     { roadId: 'bottom-75', tileKey: '0,1', locationId: 'A' },
     { roadId: 'bottom-195', tileKey: '0,1', locationId: 'B' },
   ])('maps start road $roadId to $tileKey location $locationId', ({ roadId, tileKey, locationId }) => {
-    const result = travelOnSoloMap(initializeSoloMap(), roadTarget(roadId));
+    const result = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget(roadId));
 
     expect(result.enteredEncounter).toBe(true);
     expect(result.map.playerPosition).toEqual({ tileKey, locationId });
-    expect(result.map.activeEncounter).toMatchObject({ tileKey, locationId, kind: 'fire' });
+    expect(result.map.activeEncounter).toMatchObject({ tileKey, locationId, monsterId: 'goblin' });
   });
 
   it('allows only graph-adjacent internal movement and immediate encounter completion', () => {
-    const arrivedAtA = travelOnSoloMap(initializeSoloMap(), roadTarget('right-75'));
+    const arrivedAtA = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget('right-75'));
     const mapAtA = completeActiveMapEncounter(arrivedAtA.map);
 
-    expect(mapAtA.tiles['1,0'].encounters.A?.cleared).toBe(true);
+    expect(mapAtA.tiles['1,0'].events.A?.cleared).toBe(true);
     expect(getMapLocationMarkerKind(mapAtA, '1,0', 'A')).toBe('player');
     expect(getReachableMapTargets(mapAtA).map(createMapTravelTargetKey)).toEqual([
       'location:1,0:B',
@@ -103,7 +122,7 @@ describe('soloMap', () => {
     });
     const mapAtB = completeActiveMapEncounter(arrivedAtB.map);
 
-    expect(mapAtB.tiles['1,0'].encounters.B?.cleared).toBe(true);
+    expect(mapAtB.tiles['1,0'].events.B?.cleared).toBe(true);
     expect(getMapLocationMarkerKind(mapAtB, '1,0', 'A')).toBe('cleared');
     expect(getMapLocationMarkerKind(mapAtB, '1,0', 'B')).toBe('player');
     expect(getReachableMapTargets(mapAtB).map(createMapTravelTargetKey)).toEqual([
@@ -115,7 +134,7 @@ describe('soloMap', () => {
   });
 
   it('follows the right-75 to A, A to B, and A top-75 to C regression path', () => {
-    const arrivedAtA = travelOnSoloMap(initializeSoloMap(), roadTarget('right-75'));
+    const arrivedAtA = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget('right-75'));
     const mapAtA = completeActiveMapEncounter(arrivedAtA.map);
     const reachableFromA = getReachableMapTargets(mapAtA).map(createMapTravelTargetKey);
 
@@ -136,7 +155,7 @@ describe('soloMap', () => {
   });
 
   it('removes both frontier markers on a discovered edge and backtracks across it', () => {
-    const arrivedAtA = travelOnSoloMap(initializeSoloMap(), roadTarget('right-75'));
+    const arrivedAtA = travelOnSoloMap(initializeCombatOnlyMap(), roadTarget('right-75'));
     const mapAtA = completeActiveMapEncounter(arrivedAtA.map);
     const startTile = mapAtA.tiles['0,0'];
     const eastTile = mapAtA.tiles['1,0'];

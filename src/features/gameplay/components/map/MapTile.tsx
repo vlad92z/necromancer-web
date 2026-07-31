@@ -18,10 +18,10 @@ import {
   type MapLocationMarkerKind,
 } from '../../../../utils/soloMap';
 import forestTileImage from '../../../../assets/map/tile_1.png';
-import fireRuneImage from '../../../../assets/runes/fire_rune.png';
-import frostRuneImage from '../../../../assets/runes/frost_rune.png';
-import lifeRuneImage from '../../../../assets/runes/life_rune.png';
-import windRuneImage from '../../../../assets/runes/wind_rune.png';
+import tokenVisited from '../../../../assets/map/token_visited.png';
+import playerToken from '../../../../assets/enemies/wizard.png';
+import tokenPath from '../../../../assets/map/token_path.png';
+import { getRegionEventToken } from '../../../../utils/regionCatalog';
 
 interface MapTileProps {
   map: SoloMapState;
@@ -132,7 +132,7 @@ function getLocationLabel(
   if (markerKind === 'cleared') {
     return `Travel to cleared location ${locationId} on tile ${tile.x}, ${tile.y}`;
   }
-  return `Travel to encounter ${locationId} on tile ${tile.x}, ${tile.y}`;
+  return `Travel to unvisited location ${locationId} on tile ${tile.x}, ${tile.y}`;
 }
 
 export function MapTile({
@@ -147,11 +147,13 @@ export function MapTile({
     const target: MapTravelTarget = { kind: 'location', tileKey: tile.key, locationId };
     const reachable = reachableTargetKeys.has(createMapTravelTargetKey(target));
     const current = markerKind === 'player';
+    const event = locationId === 'start' ? null : tile.events[locationId];
+    const eventToken = getRegionEventToken(event?.tokenId ?? null);
     const imageSrc = current
-      ? lifeRuneImage
+      ? playerToken
       : markerKind === 'cleared'
-        ? frostRuneImage
-        : fireRuneImage;
+        ? eventToken?.visitedImageSrc ?? tokenVisited
+        : eventToken?.unvisitedImageSrc ?? tokenVisited;
 
     return (
       <MapMarker
@@ -200,7 +202,7 @@ export function MapTile({
           <MapMarker
             key={roadId}
             point={MAP_ROAD_POINTS[roadId]}
-            imageSrc={windRuneImage}
+            imageSrc={tokenPath}
             label={`Explore ${roadId.replace('-', ' ')} road from tile ${tile.x}, ${tile.y}`}
             target={target}
             reachable={reachableTargetKeys.has(createMapTravelTargetKey(target))}
