@@ -2,13 +2,12 @@
  * Tests for the current solo encounter gameplay store.
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Rune, RuneType } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall } from '../../utils/gameInitialization';
 import { createRuneFromPool } from '../../utils/runeEffects';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
-import { useArtefactStore } from './artefactStore';
 import { createGameplayStoreInstance } from './gameplayStore';
 
 type GameplayStoreInstance = ReturnType<typeof createGameplayStoreInstance>;
@@ -23,10 +22,6 @@ function startEncounterAtA(store: GameplayStoreInstance): void {
 }
 
 describe('gameplayStore current combat', () => {
-  beforeEach(() => {
-    useArtefactStore.setState({ arcaneDust: 0 });
-  });
-
   it('starts a solo run on the map with the combat state ready for a future encounter', () => {
     const store = createGameplayStoreInstance();
 
@@ -42,6 +37,15 @@ describe('gameplayStore current combat', () => {
     expect(state.hand).toHaveLength(5);
     expect(state.discardPile).toEqual([]);
     expect(state.deckDraftState).toBeNull();
+  });
+
+  it('resets Arcane Dust when a new adventure starts', () => {
+    const store = createGameplayStoreInstance();
+    store.setState((state) => ({ ...state, arcaneDust: 19 }));
+
+    store.getState().startSoloRun();
+
+    expect(store.getState().arcaneDust).toBe(0);
   });
 
   it('travels to an uncleared location and launches a fresh Goblin encounter', () => {
@@ -435,7 +439,7 @@ describe('gameplayStore current combat', () => {
 
     store.getState().castRuneToWall(0, 2);
 
-    expect(useArtefactStore.getState().arcaneDust).toBe(10);
+    expect(store.getState().arcaneDust).toBe(10);
   });
 
   it.each<[RuneType, number]>([

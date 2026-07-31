@@ -274,7 +274,7 @@ export function SoloStartScreen() {
           </div>
         </div>
 
-        <section className="pixel-control mt-5 space-y-4 p-4 md:p-5">
+        {/* <section className="pixel-control mt-5 space-y-4 p-4 md:p-5">
           <div className="flex items-center justify-between">
             <div className="font-pixel text-xs uppercase tracking-[0.18em] text-[#fff8d8]">Artefacts</div>
             <ClickSoundButton
@@ -294,7 +294,7 @@ export function SoloStartScreen() {
               <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
             </div>
           )}
-        </section>
+        </section> */}
         <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select</p>
       </div>
 

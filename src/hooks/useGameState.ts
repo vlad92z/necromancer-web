@@ -27,7 +27,7 @@ export function useGameIndex() {
 }
 
 export function useArcaneDust() {
-  return useArtefactStore((state) => state.arcaneDust);
+  return useRunStore((state) => state.arcaneDust);
 }
 
 export function useSelectedArtefactIds() {
@@ -51,7 +51,6 @@ export function useArtefactInventoryState() {
     useShallow((state) => ({
       selectedArtefactIds: state.selectedArtefactIds,
       ownedArtefactIds: state.ownedArtefactIds,
-      arcaneDust: state.arcaneDust,
     })),
   );
 }
@@ -59,7 +58,6 @@ export function useArtefactInventoryState() {
 export function useSoloStartArtefactState() {
   return useArtefactStore(
     useShallow((state) => ({
-      arcaneDust: state.arcaneDust,
       selectedArtefactIds: state.selectedArtefactIds,
     })),
   );

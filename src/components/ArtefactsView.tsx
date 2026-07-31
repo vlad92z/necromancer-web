@@ -1,13 +1,12 @@
-/** Artefact selection and purchase overlay. */
+/** Artefact selection overlay. */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import type { FocusEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent, PointerEvent } from 'react';
+import type { FocusEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent } from 'react';
 import { TooltipBubble, type TooltipAnchorRect } from './TooltipBubble';
 import { useArtefactActions } from '../hooks/useGameActions';
 import { useArtefactInventoryState } from '../hooks/useGameState';
 import type { ArtefactId } from '../types/artefacts';
-import { ARTEFACTS, getAllArtefacts, MAX_SELECTED_ARTEFACTS } from '../types/artefacts';
+import { ARTEFACTS, MAX_SELECTED_ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from '../utils/artefactDescriptions';
-import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { useClickSound } from '../hooks/useClickSound';
 
 type ArtefactSection = 'close' | 'selected' | 'all';
@@ -27,10 +26,10 @@ const toAnchorRect = (element: HTMLElement): TooltipAnchorRect => {
 };
 
 export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>(function ArtefactsView({ isOpen, onClose }, ref) {
-  const { selectedArtefactIds, ownedArtefactIds, arcaneDust } = useArtefactInventoryState();
-  const { selectArtefact, unselectArtefact, buyArtefact } = useArtefactActions();
+  const { selectedArtefactIds, ownedArtefactIds } = useArtefactInventoryState();
+  const { selectArtefact, unselectArtefact } = useArtefactActions();
   const playClick = useClickSound();
-  const allArtefacts = useMemo(() => getAllArtefacts(), []);
+  const ownedArtefacts = useMemo(() => ownedArtefactIds.map((id) => ARTEFACTS[id]).filter(Boolean), [ownedArtefactIds]);
   const [activeTooltip, setActiveTooltip] = useState<{ id: ArtefactId; rect: TooltipAnchorRect } | null>(null);
   const [touchHideTimer, setTouchHideTimer] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState<ArtefactSection | null>(null);
@@ -61,15 +60,6 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
     }
   }, [ownedArtefactIds, playClick, selectArtefact, selectedArtefactIds, unselectArtefact]);
 
-  const handleBuy = useCallback((artefactId: ArtefactId) => {
-    const artefact = ARTEFACTS[artefactId];
-    if (!artefact || arcaneDust < artefact.cost) {
-      return;
-    }
-    playClick();
-    buyArtefact(artefactId);
-  }, [arcaneDust, buyArtefact, playClick]);
-
   const focusSection = useCallback((section: ArtefactSection) => {
     setActiveSection(section);
     if (section === 'close') {
@@ -83,21 +73,23 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
       return;
     }
     setActiveAllIndex(0);
-    const firstArtefact = allArtefacts[0];
+    const firstArtefact = ownedArtefacts[0];
     if (firstArtefact) allButtonRefs.current[firstArtefact.id]?.focus();
-  }, [allArtefacts, selectedArtefactIds]);
+  }, [ownedArtefacts, selectedArtefactIds]);
 
   const moveSection = useCallback((direction: 'up' | 'down') => {
-    const sections: ArtefactSection[] = selectedArtefactIds.length > 0
-      ? ['close', 'selected', 'all']
-      : ['close', 'all'];
+    const sections: ArtefactSection[] = [
+      'close',
+      ...(selectedArtefactIds.length > 0 ? ['selected' as const] : []),
+      ...(ownedArtefacts.length > 0 ? ['all' as const] : []),
+    ];
     const currentIndex = activeSection === null ? -1 : sections.indexOf(activeSection);
     const safeIndex = currentIndex === -1 ? 0 : currentIndex;
     const offset = direction === 'down' ? 1 : -1;
     const next = sections[(safeIndex + offset + sections.length) % sections.length];
     focusSection(next);
     playClick();
-  }, [activeSection, focusSection, playClick, selectedArtefactIds.length]);
+  }, [activeSection, focusSection, ownedArtefacts.length, playClick, selectedArtefactIds.length]);
 
   const moveSelected = useCallback((direction: 'left' | 'right') => {
     if (selectedArtefactIds.length === 0) return;
@@ -109,13 +101,13 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
   }, [activeSelectedIndex, playClick, selectedArtefactIds]);
 
   const moveAll = useCallback((direction: 'left' | 'right') => {
-    if (allArtefacts.length === 0) return;
+    if (ownedArtefacts.length === 0) return;
     const offset = direction === 'right' ? 1 : -1;
-    const nextIndex = (activeAllIndex + offset + allArtefacts.length) % allArtefacts.length;
+    const nextIndex = (activeAllIndex + offset + ownedArtefacts.length) % ownedArtefacts.length;
     setActiveAllIndex(nextIndex);
-    allButtonRefs.current[allArtefacts[nextIndex].id]?.focus();
+    allButtonRefs.current[ownedArtefacts[nextIndex].id]?.focus();
     playClick();
-  }, [activeAllIndex, allArtefacts, playClick]);
+  }, [activeAllIndex, ownedArtefacts, playClick]);
 
   const handleKeyboardEvent = useCallback((event: KeyboardEvent) => {
     if (!isOpen) return false;
@@ -166,13 +158,9 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
           const artefactId = selectedArtefactIds[activeSelectedIndex];
           if (artefactId) handleArtefactClick(artefactId);
         } else {
-          const artefact = allArtefacts[activeAllIndex];
+          const artefact = ownedArtefacts[activeAllIndex];
           if (!artefact) return true;
-          if (ownedArtefactIds.includes(artefact.id)) {
-            handleArtefactClick(artefact.id);
-          } else {
-            handleBuy(artefact.id);
-          }
+          handleArtefactClick(artefact.id);
         }
         return true;
       }
@@ -183,7 +171,7 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
       default:
         return false;
     }
-  }, [activeAllIndex, activeSection, activeSelectedIndex, allArtefacts, focusSection, handleArtefactClick, handleBuy, handleClose, isOpen, moveAll, moveSection, moveSelected, ownedArtefactIds, playClick, selectedArtefactIds]);
+  }, [activeAllIndex, activeSection, activeSelectedIndex, focusSection, handleArtefactClick, handleClose, isOpen, moveAll, moveSection, moveSelected, ownedArtefacts, playClick, selectedArtefactIds]);
 
   useImperativeHandle(ref, () => ({ handleKeyDown: handleKeyboardEvent }), [handleKeyboardEvent]);
 
@@ -220,8 +208,8 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
   }, [activeSelectedIndex, selectedArtefactIds.length]);
 
   useEffect(() => {
-    if (activeAllIndex >= allArtefacts.length) setActiveAllIndex(0);
-  }, [activeAllIndex, allArtefacts.length]);
+    if (ownedArtefacts.length > 0 && activeAllIndex >= ownedArtefacts.length) setActiveAllIndex(0);
+  }, [activeAllIndex, ownedArtefacts.length]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -328,11 +316,6 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
             <h2 id="artefacts-title" className="font-pixel text-3xl uppercase tracking-[0.15em] text-[#fff8d8] [text-shadow:3px_3px_0_#141313]">Artefacts</h2>
           </div>
 
-          <div className="pixel-control flex items-center gap-3 px-4 py-3">
-            <img src={arcaneDustIcon} alt="Arcane Dust" className="h-8 w-8" />
-            <span className="font-pixel text-lg text-[#f2c14e]">{arcaneDust.toLocaleString()}</span>
-          </div>
-
           <section>
             <h3 className="font-pixel mb-3 text-xs uppercase tracking-[0.18em] text-[#fff8d8]">Selected Artefacts ({selectedArtefactIds.length}/{MAX_SELECTED_ARTEFACTS})</h3>
             <div className="pixel-control min-h-24 p-4">
@@ -370,47 +353,34 @@ export const ArtefactsView = forwardRef<ArtefactsViewHandle, ArtefactsViewProps>
           </section>
 
           <section>
-            <h3 className="font-pixel mb-3 text-xs uppercase tracking-[0.18em] text-[#fff8d8]">All Artefacts</h3>
+            <h3 className="font-pixel mb-3 text-xs uppercase tracking-[0.18em] text-[#fff8d8]">Owned Artefacts</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-              {allArtefacts.map((artefact, index) => {
-                const isOwned = ownedArtefactIds.includes(artefact.id);
+              {ownedArtefacts.length === 0 ? (
+                <p className="font-pixel col-span-full pixel-control p-4 text-center text-[10px] uppercase text-[#b5d3bd]">No artefacts owned</p>
+              ) : ownedArtefacts.map((artefact, index) => {
                 const isSelected = selectedArtefactIds.includes(artefact.id);
-                const canAfford = arcaneDust >= artefact.cost;
                 const tooltipText = `${artefact.name}\n${getArtefactEffectDescription(artefact.id)}`;
                 return (
                   <div key={artefact.id} className="pixel-control relative min-w-0 p-2">
                     <button
                       ref={(element) => { allButtonRefs.current[artefact.id] = element; }}
                       type="button"
-                      className={`block w-full border-4 border-[#141313] bg-[#293532] data-[active=true]:outline-4 data-[active=true]:outline-[#ffdc52] data-[active=true]:outline-offset-4 focus-visible:outline-4 focus-visible:outline-[#fff8d8] focus-visible:outline-offset-4 ${!isOwned ? 'opacity-50' : ''}`}
+                      className="block w-full border-4 border-[#141313] bg-[#293532] data-[active=true]:outline-4 data-[active=true]:outline-[#ffdc52] data-[active=true]:outline-offset-4 focus-visible:outline-4 focus-visible:outline-[#fff8d8] focus-visible:outline-offset-4"
                       data-active={activeSection === 'all' && activeAllIndex === index ? 'true' : undefined}
                       onClick={() => {
-                        if (isOwned) handleArtefactClick(artefact.id);
+                        handleArtefactClick(artefact.id);
                       }}
                       onPointerEnter={(event) => handlePointerEnterTooltip(artefact.id, event)}
                       onPointerLeave={hideTooltip}
                       onPointerDown={(event) => handlePointerDownTooltip(artefact.id, event)}
                       onFocus={(event) => handleFocusTooltip(artefact.id, event, 'all', index)}
                       onBlur={hideTooltip}
-                      aria-label={`${tooltipText}. ${isOwned ? (isSelected ? 'Selected.' : 'Owned.') : `Costs ${artefact.cost} Arcane Dust.`}`}
+                      aria-label={`${tooltipText}. ${isSelected ? 'Selected.' : 'Owned.'}`}
                     >
                       <img src={artefact.image} alt="" className="aspect-square w-full object-cover" />
                       <span className="font-pixel block border-t-4 border-[#141313] px-1 py-2 text-center text-[9px] uppercase text-[#fff8d8]">{artefact.name}</span>
                       <TooltipBubble text={tooltipText} anchorRect={activeTooltip?.id === artefact.id ? activeTooltip.rect : null} />
                     </button>
-                    {!isOwned && (
-                      <button
-                        type="button"
-                        className="pixel-button pixel-button--compact mt-2 min-h-0 px-2 py-2 text-[9px] tracking-[0.1em] disabled:cursor-not-allowed disabled:opacity-50"
-                        onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                          event.stopPropagation();
-                          handleBuy(artefact.id);
-                        }}
-                        disabled={!canAfford}
-                      >
-                        Buy {artefact.cost}
-                      </button>
-                    )}
                   </div>
                 );
               })}

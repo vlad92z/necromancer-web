@@ -15,7 +15,6 @@ export type ArtefactId = 'rod' | 'robe' | 'tome' | 'ring' | 'potion';
 export interface Artefact {
   id: ArtefactId;
   name: string;
-  cost: number; // Arcane Dust
   image: string; // path to png
   passiveEffectRefs: EffectRef[];
 }
@@ -32,35 +31,30 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
   potion: {
     id: 'potion',
     name: 'Frost Potion',
-    cost: 500,
     image: potionPng,
     passiveEffectRefs: [createEffectRef('passive.potionArmor', { armorMultiplier: 2 })],
   },
   rod: {
     id: 'rod',
     name: 'Rod of Healing',
-    cost: 1000,
     image: rodPng,
     passiveEffectRefs: [createEffectRef('passive.rodHealing', { healingMultiplier: 2 })],
   },
   tome: {
     id: 'tome',
     name: 'Primer of Solitude',
-    cost: 2000,
     image: tomePng,
     passiveEffectRefs: [createEffectRef('passive.tomeCastDamage', { damageBonus: 1 })],
   },
   ring: {
     id: 'ring',
     name: 'Signet of Fortune',
-    cost: 5000,
     image: ringPng,
     passiveEffectRefs: [],
   },
   robe: {
     id: 'robe',
     name: 'Weaver\'s Mantle',
-    cost: 10000,
     image: robePng,
     passiveEffectRefs: [],
   },

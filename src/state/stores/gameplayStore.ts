@@ -19,6 +19,7 @@ import {
   createGoblinEnemy,
   createRuneSoundSignals,
   initializeSoloGame,
+  rollEnemyArcaneDustReward,
   scaleEnemyMaxHealth,
 } from '../../utils/gameInitialization';
 import {
@@ -37,10 +38,8 @@ import {
   resolveCompletedStartTurnEffects,
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
-import { getArcaneDustReward } from '../../utils/arcaneDust';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import {
-  addGameplayArcaneDust,
   clearPersistedSoloRun,
   getSelectedArtefactIds,
   navigateToSoloRun,
@@ -51,9 +50,12 @@ import { replaceGameplayState } from './gameplayState';
 
 function enterDeckDraftMode(state: GameState): GameState {
   const nextLongestRun = Math.max(state.longestRun, state.gameIndex);
+  const arcaneDustReward = rollEnemyArcaneDustReward(state.enemy);
   const deckDraftState = createDeckDraftState(
     state.player.id,
-    nextLongestRun
+    nextLongestRun,
+    Math.random,
+    arcaneDustReward,
   );
 
   return {
@@ -64,17 +66,11 @@ function enterDeckDraftMode(state: GameState): GameState {
     combatPhase: 'victory',
     isDefeat: false,
     longestRun: nextLongestRun,
+    arcaneDust: state.arcaneDust + arcaneDustReward,
     enemyMaxHealth: scaleEnemyMaxHealth(state.enemyMaxHealth),
     baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
     selectedHandRuneId: null,
   };
-}
-
-function awardDeckDraftEntryArcaneDust(gameIndex: number): void {
-  const arcaneDustReward = getArcaneDustReward(gameIndex);
-  if (arcaneDustReward > 0) {
-    addGameplayArcaneDust(arcaneDustReward);
-  }
 }
 
 function normalizeHydratedGameState(currentState: GameState, nextState: GameState): GameState {
@@ -89,6 +85,7 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     baseEnemyMaxHealth: typeof nextState.baseEnemyMaxHealth === 'number'
       ? nextState.baseEnemyMaxHealth
       : currentState.baseEnemyMaxHealth,
+    arcaneDust: typeof nextState.arcaneDust === 'number' ? nextState.arcaneDust : currentState.arcaneDust,
     enemy: nextState.enemy ?? createGoblinEnemy(
       nextState.enemyMaxHealth ?? currentState.enemyMaxHealth
     ),
@@ -130,6 +127,7 @@ function initializeEncounterForMapLocation(
     },
     fullDeck: state.fullDeck,
     gameIndex: state.gameIndex,
+    arcaneDust: state.arcaneDust,
     enemyMaxHealth: state.enemyMaxHealth,
     baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
     isDefeat: false,
@@ -359,9 +357,6 @@ export const gameplayStoreConfig = (
   },
 
   castRuneToWall: (row: number, col: number) => {
-    let arcaneDustGain = 0;
-    let deckDraftRewardGameIndex: number | null = null;
-
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.deckDraftState) {
         return state;
@@ -397,7 +392,6 @@ export const gameplayStoreConfig = (
           handSize: result.hand.length,
         });
 
-        arcaneDustGain += resolvedEffects.arcaneDustDelta;
         const resolvedRuneSoundEvents = countRuneSoundEvents({
           completedRune: result.completedRune,
           logs: resolvedEffects.logs,
@@ -410,7 +404,6 @@ export const gameplayStoreConfig = (
         ];
 
         if ((resolvedEffects.enemy?.health ?? 1) <= 0 || isWallFull(resolvedEffects.player.wall)) {
-          deckDraftRewardGameIndex = state.gameIndex;
           const victoryDeck = collectVictoryDeck({
             player: resolvedEffects.player,
             hand: handWithReturnedRunes,
@@ -425,6 +418,7 @@ export const gameplayStoreConfig = (
               wall: createEmptyWall(),
             },
             enemy: resolvedEffects.enemy,
+            arcaneDust: state.arcaneDust + resolvedEffects.arcaneDustDelta,
             hand: victoryDeck.hand,
             discardPile: victoryDeck.discardPile,
             suppressedRunes: [],
@@ -463,6 +457,7 @@ export const gameplayStoreConfig = (
             mana: state.player.mana - manaCost,
           },
           enemy: resolvedEffects.enemy,
+          arcaneDust: state.arcaneDust + resolvedEffects.arcaneDustDelta,
           hand: drawResult.hand,
           discardPile: drawResult.discardPile,
           suppressedRunes: resolvedEffects.suppressedRunes,
@@ -474,17 +469,9 @@ export const gameplayStoreConfig = (
       return state;
     });
 
-    if (arcaneDustGain > 0) {
-      addGameplayArcaneDust(arcaneDustGain);
-    }
-    if (deckDraftRewardGameIndex !== null) {
-      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
-    }
   },
 
   endCombatTurn: () => {
-    let deckDraftRewardGameIndex: number | null = null;
-
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.deckDraftState) {
         return state;
@@ -501,7 +488,6 @@ export const gameplayStoreConfig = (
       });
 
       if ((endTurnEffects.enemy?.health ?? 1) <= 0) {
-        deckDraftRewardGameIndex = state.gameIndex;
         const victoryDeck = collectVictoryDeck({
           player: endTurnEffects.player,
           hand: state.hand,
@@ -622,9 +608,6 @@ export const gameplayStoreConfig = (
       };
     });
 
-    if (deckDraftRewardGameIndex !== null) {
-      awardDeckDraftEntryArcaneDust(deckDraftRewardGameIndex);
-    }
   },
 
   selectDeckDraftOffer: (offerId: string) => {

@@ -35,7 +35,7 @@ function getPackText(runeType: RuneType): string {
 export function DeckDraftingModal({
   draftState,
 }: DeckDraftingModalProps) {
-  const arcaneDustReward = 50; // placeholder
+  const { arcaneDustReward } = draftState;
   const { fullDeck } = useGameplayDeckState();
   const totalDeckSize = fullDeck.length;
   const { selectDeckDraftOffer, returnToMapAfterReward } = useGameplayActions();

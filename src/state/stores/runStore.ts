@@ -13,6 +13,7 @@ export interface RunState {
   startingHealth: number;
   fullDeck: Rune[];
   gameIndex: number;
+  arcaneDust: number;
   enemyMaxHealth: number;
   baseEnemyMaxHealth: number;
   isDefeat: boolean;
@@ -36,6 +37,7 @@ export function pickRunState(state: GameState): RunState {
     startingHealth: state.startingHealth,
     fullDeck: state.fullDeck,
     gameIndex: state.gameIndex,
+    arcaneDust: state.arcaneDust,
     enemyMaxHealth: state.enemyMaxHealth,
     baseEnemyMaxHealth: state.baseEnemyMaxHealth,
     isDefeat: state.isDefeat,

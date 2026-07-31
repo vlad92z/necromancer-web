@@ -33,6 +33,7 @@ export function getGameplayState(): GameState {
     player: board.player,
     fullDeck: run.fullDeck,
     gameIndex: run.gameIndex,
+    arcaneDust: run.arcaneDust,
     enemyMaxHealth: run.enemyMaxHealth,
     baseEnemyMaxHealth: run.baseEnemyMaxHealth,
     isDefeat: run.isDefeat,

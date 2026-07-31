@@ -48,6 +48,7 @@ export interface Enemy {
   health: number;
   maxHealth: number;
   armor?: number;
+  arcaneDustRewardRange?: readonly [minimum: number, maximum: number];
 }
 
 export interface EnemyRune extends Rune {
@@ -69,6 +70,7 @@ export interface DeckDraftState {
   picksRemaining: number;
   totalPicks: number;
   selectedOffer: DeckDraftOffer | null;
+  arcaneDustReward: number;
 }
 
 export type TooltipCardVariant = 'default' | 'nonPrimary';
@@ -197,6 +199,7 @@ export interface GameState extends CombatZoneState {
   player: Player;
   fullDeck: Rune[];
   gameIndex: number;
+  arcaneDust: number;
   enemyMaxHealth: number;
   baseEnemyMaxHealth: number;
   isDefeat: boolean;

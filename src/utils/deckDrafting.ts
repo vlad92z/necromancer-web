@@ -131,13 +131,15 @@ function createDraftOffers(
 export function createDeckDraftState(
   ownerId: string,
   winStreak: number = 0,
-  random: () => number = Math.random
+  random: () => number = Math.random,
+  arcaneDustReward: number = 0,
 ): DeckDraftState {
   return {
     offers: createDraftOffers(ownerId, winStreak, random),
     picksRemaining: 1,
     totalPicks: 1,
     selectedOffer: null,
+    arcaneDustReward,
   };
 }
 

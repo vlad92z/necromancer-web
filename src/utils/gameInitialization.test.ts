@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createStartingDeck,
   initializeSoloGame,
+  rollEnemyArcaneDustReward,
   scaleEnemyMaxHealth,
   STARTING_DECK,
 } from './gameInitialization';
@@ -31,6 +32,15 @@ describe('gameInitialization combat state', () => {
     expect(state.enemyBoard.flat().every((cell) => (
       cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
     ))).toBe(true);
+    expect(state.arcaneDust).toBe(0);
+  });
+
+  it('rolls the Goblin encounter reward within its configured Arcane Dust range', () => {
+    const enemy = initializeSoloGame().enemy;
+
+    expect(enemy?.arcaneDustRewardRange).toEqual([4, 7]);
+    expect(rollEnemyArcaneDustReward(enemy, () => 0)).toBe(4);
+    expect(rollEnemyArcaneDustReward(enemy, () => 0.9999)).toBe(7);
   });
 
   it('creates the fixed literal starting deck', () => {

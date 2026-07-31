@@ -105,13 +105,6 @@ export function trackDefeatEvent(params: {
   })
 }
 
-export function trackArtefactPurchaseEvent(params: { artefactId: ArtefactId; remainingDust: number }) {
-  trackEvent('Artefact Purchase', {
-    artefact: params.artefactId,
-    remainingDust: params.remainingDust,
-  })
-}
-
 /**
  * Identify a user.
  */

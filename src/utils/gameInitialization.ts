@@ -23,6 +23,7 @@ export const WALL_SIZE = RUNE_TYPES.length;
 export const DEFAULT_HAND_SIZE = 5;
 export const DEFAULT_PLAYER_MANA = 7;
 export const DEFAULT_ENEMY_MAX_HEALTH = 25;
+export const GOBLIN_ARCANE_DUST_REWARD_RANGE = [4, 7] as const;
 export const ENEMY_SCALING_MULTIPLIER = 1.35;
 export const ENEMY_HEALTH_ROUNDING_STEP = 1;
 const STARTING_DECK_DEFINITIONS: Array<Pick<Rune, 'id' | 'runeTypes' | 'rarity'>> = [
@@ -137,7 +138,16 @@ export function createGoblinEnemy(maxHealth: number): Enemy {
     health: maxHealth,
     maxHealth,
     armor: 0,
+    arcaneDustRewardRange: GOBLIN_ARCANE_DUST_REWARD_RANGE,
   };
+}
+
+export function rollEnemyArcaneDustReward(enemy: Enemy | null, random: () => number = Math.random): number {
+  const range = enemy?.arcaneDustRewardRange;
+  if (!range) return 0;
+
+  const [minimum, maximum] = range;
+  return minimum + Math.floor(random() * (maximum - minimum + 1));
 }
 
 function createEnemyRune(
@@ -247,6 +257,7 @@ export function initializeSoloGame(
     player,
     fullDeck: deckTemplate,
     gameIndex: 1,
+    arcaneDust: 0,
     enemyMaxHealth,
     baseEnemyMaxHealth: DEFAULT_ENEMY_MAX_HEALTH,
     isDefeat: false,
