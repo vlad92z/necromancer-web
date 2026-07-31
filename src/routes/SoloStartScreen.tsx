@@ -8,7 +8,7 @@ import { setNavigationCallback } from '../systems/gameplayOrchestrator';
 import { subscribeGameplayState } from '../state/stores/gameplayState';
 import { GameContainer } from '../features/gameplay/components/GameContainer';
 import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions';
-import { useGameStarted, useSoloStartArtefactState } from '../hooks/useGameState';
+import { useGameStarted } from '../hooks/useGameState';
 import { hasSavedSoloState, loadSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ClickSoundButton } from '../components/ClickSoundButton';
@@ -28,7 +28,6 @@ export function SoloStartScreen() {
     return Math.max(storedBest, savedGame);
   });
   const { loadArtefactState } = useArtefactActions();
-  const { selectedArtefactIds } = useSoloStartArtefactState();
   const playClickSound = useClickSound();
 
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
