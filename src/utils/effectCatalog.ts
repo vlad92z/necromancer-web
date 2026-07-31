@@ -26,7 +26,6 @@ export type CastEffectId =
   | 'cast.drawAdjacent'
   | 'cast.returnAdjacent'
   | 'cast.arcaneDustAdjacent'
-  | 'cast.chargeAdjacent'
   | 'cast.fortune'
   | 'cast.synergy'
   | 'cast.armorSynergy'
@@ -232,13 +231,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Adjacent Arcane Dust',
     displayHint: 'arcaneDust',
     describe: (params) => `Gain ${numberParam(params, 'amount')} arcane dust for every adjacent rune`,
-  },
-  'cast.chargeAdjacent': {
-    id: 'cast.chargeAdjacent',
-    kind: 'cast',
-    title: 'Adjacent Charge',
-    displayHint: 'deck',
-    describe: () => 'Charge adjacent rune slots by 1',
   },
   'cast.fortune': {
     id: 'cast.fortune',
@@ -483,7 +475,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Reduce incoming damage by ${numberParam(params, 'amount')}`,
+    describe: (params) => `All damage taken by you is reduced by ${numberParam(params, 'amount')}`,
   },
 };
 

@@ -1,28 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getWallSlotFamily,
-  getWallSlotFamilyLabel,
-  getWallSlotFamilyRuneTypes,
-  isRuneTypeAcceptedBySlotFamily,
-} from './scoring';
+import { canRuneSatisfySlot, getWallSlotRuneTypes } from './scoring';
 
-describe('scoring wall slot families', () => {
-  it('uses the row-offset Fire/Void, Lightning/Wind, Life/Frost loop', () => {
+describe('scoring wall slot rune types', () => {
+  it('assigns one rune type to each slot in a row-offset loop', () => {
     expect([
-      [getWallSlotFamily(0, 0), getWallSlotFamily(0, 1), getWallSlotFamily(0, 2)],
-      [getWallSlotFamily(1, 0), getWallSlotFamily(1, 1), getWallSlotFamily(1, 2)],
-      [getWallSlotFamily(2, 0), getWallSlotFamily(2, 1), getWallSlotFamily(2, 2)],
+      [getWallSlotRuneTypes(0, 0), getWallSlotRuneTypes(0, 1), getWallSlotRuneTypes(0, 2)],
+      [getWallSlotRuneTypes(1, 0), getWallSlotRuneTypes(1, 1), getWallSlotRuneTypes(1, 2)],
     ]).toEqual([
-      ['fireVoid', 'lightningWind', 'lifeFrost'],
-      ['lightningWind', 'lifeFrost', 'fireVoid'],
-      ['lifeFrost', 'fireVoid', 'lightningWind'],
+      [['Fire'], ['Life'], ['Wind']],
+      [['Life'], ['Wind'], ['Frost']],
     ]);
   });
 
-  it('defines labels and accepted rune types for each family', () => {
-    expect(getWallSlotFamilyLabel('fireVoid')).toBe('Fire/Void');
-    expect(getWallSlotFamilyRuneTypes('lightningWind')).toEqual(['Lightning', 'Wind']);
-    expect(isRuneTypeAcceptedBySlotFamily('Life', 'lifeFrost')).toBe(true);
-    expect(isRuneTypeAcceptedBySlotFamily('Void', 'lifeFrost')).toBe(false);
+  it('accepts a rune when any card type satisfies any slot type', () => {
+    expect(canRuneSatisfySlot(['Fire'], ['Fire'])).toBe(true);
+    expect(canRuneSatisfySlot(['Fire', 'Wind'], ['Wind', 'Life'])).toBe(true);
+    expect(canRuneSatisfySlot(['Void'], ['Life'])).toBe(false);
   });
 });

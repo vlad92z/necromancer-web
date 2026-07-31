@@ -60,7 +60,6 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.arcaneDustAdjacent', { amount: 5 }))).toBe(
       'Gain 5 arcane dust for every adjacent rune'
     );
-    expect(getEffectDescription(createEffectRef('cast.chargeAdjacent'))).toBe('Charge adjacent rune slots by 1');
     expect(getEffectDescription(createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }))).toBe(
       'Deal 2 damage for every Void rune in your completed wall'
     );
@@ -108,7 +107,7 @@ describe('effectCatalog', () => {
       'Heal 50% of damage dealt'
     );
     expect(getEffectDescription(createEffectRef('passive.reduceDamage', { amount: 3 }))).toBe(
-      'Reduce incoming damage by 3'
+      'All damage taken by you is reduced by 3'
     );
   });
 

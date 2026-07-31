@@ -1,21 +1,23 @@
 /**
- * ScoringWall component - displays the charged spell wall.
+ * ScoringWall component - displays the player's spell wall.
  */
 
 import { useCallback } from 'react';
+import type { Rune } from '../../../../types/game';
 import { useGameplayActions } from '../../../../hooks/useGameActions';
 import { useGameplayWallState } from '../../../../hooks/useGameState';
 import { WallCell } from '../WallCell';
 
-const GAP = 4;
 const cellKey = (row: number, col: number) => `${row}-${col}`;
 
 interface ScoringWallProps {
   hiddenWallSlots: Set<string>;
+  onRuneHover: (rune: Rune) => void;
+  onRuneLeave: () => void;
 }
 
-export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
-  const { wall, wallCharges } = useGameplayWallState();
+export function ScoringWall({ hiddenWallSlots, onRuneHover, onRuneLeave }: ScoringWallProps) {
+  const { wall } = useGameplayWallState();
   const { castRuneToWall } = useGameplayActions();
 
   const handleWallCellClick = useCallback(
@@ -25,12 +27,10 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
     [castRuneToWall]
   );
 
-  const gridSize = wall.length;
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: `${GAP}px` }}>
+    <div style={{ display: 'flex', flexDirection: 'column'}}>
       {wall.map((row, rowIndex) => (
-        <div key={rowIndex} style={{ display: 'flex', gap: `${GAP}px` }}>
+        <div key={rowIndex} style={{ display: 'flex' }}>
           {row.map((cell, colIndex) => (
             <div
               key={colIndex}
@@ -45,18 +45,28 @@ export function ScoringWall({ hiddenWallSlots }: ScoringWallProps) {
                   handleWallCellClick(rowIndex, colIndex);
                 }
               }}
-              style={{ cursor: 'pointer' }}
+              style={{ display: 'flex', cursor: 'pointer' }}
             >
               <WallCell
                 cell={
                   hiddenWallSlots.has(cellKey(rowIndex, colIndex))
-                    ? { id: null, runeType: null, rarity: null, castEffectRefs: null, passiveEffectRefs: null }
+                    ? {
+                      ...cell,
+                      id: null,
+                      name: null,
+                      runeTypes: [],
+                      rarity: null,
+                      cardImageSrc: null,
+                      tokenImageSrc: null,
+                      castEffectRefs: null,
+                      passiveEffectRefs: null,
+                    }
                     : cell
                 }
-                charge={wallCharges[rowIndex]?.[colIndex] ?? null}
                 row={rowIndex}
                 col={colIndex}
-                wallSize={gridSize}
+                onRuneHover={onRuneHover}
+                onRuneLeave={onRuneLeave}
               />
             </div>
           ))}

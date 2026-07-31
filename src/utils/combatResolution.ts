@@ -3,24 +3,27 @@
  */
 
 import type { ArtefactId } from '../types/artefacts';
-import type { EffectResolutionLog, Enemy, EnemyRune, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../types/game';
-import { resolveCastEffects, resolveEndTurnEffects, resolveStartTurnEffects } from './effectResolver';
+import type { EffectResolutionLog, Enemy, EnemyRune, Player, Rune, RuneType, ScoringWall } from '../types/game';
+import {
+  resolveCastEffects,
+  resolveEndTurnEffects,
+  resolvePassiveEffects,
+  resolveStartTurnEffects,
+} from './effectResolver';
 import type { DrawTypeRequest, WallPosition } from './effectResolver';
-import { createEmptyWall, createEnemyTurnRunes, createEnemyWallCharges, getRequiredChargesForRarity } from './gameInitialization';
+import { createEnemySpellBoard, createEnemyTurnRunes, DEFAULT_HAND_SIZE } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
-import { isRuneTypeAcceptedBySlotFamily } from './scoring';
-import { createCompletedRuneId as createDefaultCompletedRuneId } from './wallChargeCompletion';
+import { runeHasType } from './runeHelpers';
+import { canRuneSatisfySlot } from './scoring';
 
-const DEFAULT_HAND_SIZE = 6;
 export const EXTRA_DRAW_HAND_LIMIT = 10;
 
-export type WallCastStatus = 'invalid' | 'charged' | 'completed';
+export type WallCastStatus = 'invalid' | 'completed';
 
 export interface WallCastInput {
   player: Player;
   hand: Rune[];
   discardPile: Rune[];
-  wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   row: number;
   col: number;
@@ -32,7 +35,6 @@ export interface WallCastResult {
   player: Player;
   hand: Rune[];
   discardPile: Rune[];
-  wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   completedRune: Rune | null;
   completedPosition: WallPosition | null;
@@ -81,7 +83,6 @@ export interface CompletedRuneCastEffectsInput {
   rune: Rune;
   activeArtefacts?: ArtefactId[];
   sourcePosition?: WallPosition | null;
-  wallCharges?: SpellWallCharge[][];
   suppressedRunes?: Rune[];
   handSize?: number;
 }
@@ -89,11 +90,9 @@ export interface CompletedRuneCastEffectsInput {
 export interface CompletedRuneCastEffectsResult {
   player: Player;
   enemy: Enemy | null;
-  wallCharges: SpellWallCharge[][];
   suppressedRunes: Rune[];
   returnedRunes: Rune[];
   returnedOverflowRunes: Rune[];
-  discardedRunes: Rune[];
   wallChanged: boolean;
   arcaneDustDelta: number;
   drawCount: number;
@@ -128,16 +127,16 @@ export interface EnemyTurnInput {
   player: Player;
   enemy: Enemy | null;
   enemyBoard?: ScoringWall;
-  enemyBoardCharges?: SpellWallCharge[][];
   enemyQueuedRunes?: EnemyRune[];
   turnNumber?: number;
+  activeArtefacts?: ArtefactId[];
   random?: () => number;
 }
 
 export interface EnemyTurnResult {
   player: Player;
+  enemy: Enemy | null;
   enemyBoard: ScoringWall;
-  enemyBoardCharges: SpellWallCharge[][];
   enemyQueuedRunes: EnemyRune[];
   boardFull: boolean;
   logs: EffectResolutionLog[];
@@ -149,7 +148,6 @@ export interface VictoryDeckInput {
   hand: Rune[];
   discardPile: Rune[];
   suppressedRunes?: Rune[];
-  wallCharges: SpellWallCharge[][];
 }
 
 export interface VictoryDeckResult {
@@ -162,29 +160,31 @@ function shuffleRunes(runes: Rune[]): Rune[] {
   return [...runes].sort(() => Math.random() - 0.5);
 }
 
-function cloneWallCharges(wallCharges: SpellWallCharge[][]): SpellWallCharge[][] {
-  return wallCharges.map((chargeRow) =>
-    chargeRow.map((charge) => ({
-      ...charge,
-      stagedRune: charge.stagedRune ? cloneRune(charge.stagedRune) : null,
-      spentRunes: [...charge.spentRunes],
-    }))
-  );
-}
-
 function cloneRune(rune: Rune): Rune {
   return {
     ...rune,
+    runeTypes: [...rune.runeTypes],
     castEffectRefs: copyEffectRefs(rune.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(rune.passiveEffectRefs),
   };
 }
 
+function createDefaultCompletedRuneId(rune: Rune, position: WallPosition): string {
+  const randomId = globalThis.crypto?.randomUUID?.();
+  if (randomId) {
+    return randomId;
+  }
+
+  return `${rune.id}-wall-${position.row}-${position.col}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
   return wall.reduce<Map<RuneType, number>>((counts, row) => {
     row.forEach((cell) => {
-      if (cell.runeType && cell.id) {
-        counts.set(cell.runeType, (counts.get(cell.runeType) ?? 0) + 1);
+      if (cell.id) {
+        cell.runeTypes.forEach((runeType) => {
+          counts.set(runeType, (counts.get(runeType) ?? 0) + 1);
+        });
       }
     });
     return counts;
@@ -192,7 +192,7 @@ export function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, num
 }
 
 export function wallHasRuneType(wall: ScoringWall, runeType: RuneType): boolean {
-  return wall.some((row) => row.some((cell) => cell.runeType === runeType && cell.id !== null));
+  return wall.some((row) => row.some((cell) => cell.id !== null && cell.runeTypes.includes(runeType)));
 }
 
 export function drawRunes({
@@ -256,7 +256,7 @@ export function drawRunesOfType({
     const drawnRunes: Rune[] = [];
 
     drawDeck.forEach((rune) => {
-      if (rune.runeType === targetType && remaining > 0 && nextHand.length + drawnRunes.length < handLimit) {
+      if (runeHasType(rune, targetType) && remaining > 0 && nextHand.length + drawnRunes.length < handLimit) {
         drawnRunes.push(rune);
         remaining -= 1;
         return;
@@ -283,7 +283,6 @@ export function castRuneToWallSlot({
   player,
   hand,
   discardPile,
-  wallCharges,
   selectedHandRuneId,
   row,
   col,
@@ -292,26 +291,19 @@ export function castRuneToWallSlot({
   const selectedRune = selectedHandRuneId
     ? hand.find((rune) => rune.id === selectedHandRuneId) ?? null
     : null;
-  const targetCharge = wallCharges[row]?.[col] ?? null;
   const targetCell = player.wall[row]?.[col] ?? null;
 
   if (
     !selectedRune ||
-    !targetCharge ||
     !targetCell ||
-    targetCell.runeType !== null ||
-    targetCharge.completedRuneId !== null ||
-    (targetCharge.stagedRune && targetCharge.currentCount >= targetCharge.requiredCount) ||
-    (targetCharge.lockedRuneType
-      ? selectedRune.runeType !== targetCharge.lockedRuneType
-      : !isRuneTypeAcceptedBySlotFamily(selectedRune.runeType, targetCharge.slotFamily))
+    targetCell.id !== null ||
+    !canRuneSatisfySlot(selectedRune.runeTypes, targetCell.acceptedRuneTypes)
   ) {
     return {
       status: 'invalid',
       player,
       hand,
       discardPile,
-      wallCharges,
       selectedHandRuneId,
       completedRune: null,
       completedPosition: null,
@@ -319,59 +311,20 @@ export function castRuneToWallSlot({
   }
 
   const nextHand = hand.filter((rune) => rune.id !== selectedRune.id);
-  const nextWallCharges = cloneWallCharges(wallCharges);
-  const nextCharge = nextWallCharges[row][col];
-  const wasStaged = nextCharge.stagedRune !== null;
-  const stagedRune = nextCharge.stagedRune ?? selectedRune;
-  const requiredCount = wasStaged
-    ? nextCharge.requiredCount
-    : getRequiredChargesForRarity(selectedRune.rarity);
-  const nextCurrentCount = wasStaged
-    ? Math.min(requiredCount, nextCharge.currentCount + 1)
-    : 0;
-  const isCompleted = requiredCount === 0 || nextCurrentCount >= requiredCount;
-  const spentRunes = wasStaged && !isCompleted ? [...nextCharge.spentRunes, selectedRune] : [];
-  const completedRuneId = isCompleted ? createCompletedRuneId(stagedRune, { row, col }) : null;
-  const completedRune = isCompleted ? { ...cloneRune(stagedRune), id: completedRuneId ?? stagedRune.id } : null;
-  const nextDiscardPile = isCompleted
-    ? [
-      ...discardPile,
-      stagedRune,
-      ...nextCharge.spentRunes,
-      ...(wasStaged ? [selectedRune] : []),
-    ]
-    : discardPile;
-
-  nextWallCharges[row][col] = {
-    ...nextCharge,
-    lockedRuneType: nextCharge.lockedRuneType ?? stagedRune.runeType,
-    requiredCount,
-    currentCount: nextCurrentCount,
-    stagedRune: isCompleted ? null : stagedRune,
-    spentRunes,
-    completedRuneId,
-  };
-
-  if (!isCompleted) {
-    return {
-      status: 'charged',
-      player,
-      hand: nextHand,
-      discardPile: nextDiscardPile,
-      wallCharges: nextWallCharges,
-      selectedHandRuneId: null,
-      completedRune: null,
-      completedPosition: null,
-    };
-  }
-
+  const completedRuneId = createCompletedRuneId(selectedRune, { row, col });
+  const completedRune = { ...cloneRune(selectedRune), id: completedRuneId };
   const nextWall = player.wall.map((wallRow) => [...wallRow]);
   nextWall[row][col] = {
-    id: completedRune?.id ?? completedRuneId,
-    runeType: completedRune?.runeType ?? stagedRune.runeType,
-    rarity: completedRune?.rarity ?? stagedRune.rarity,
-    castEffectRefs: copyEffectRefs(completedRune?.castEffectRefs ?? stagedRune.castEffectRefs),
-    passiveEffectRefs: copyEffectRefs(completedRune?.passiveEffectRefs ?? stagedRune.passiveEffectRefs),
+    id: completedRune.id,
+    name: completedRune.name,
+    acceptedRuneTypes: [...targetCell.acceptedRuneTypes],
+    runeTypes: [...completedRune.runeTypes],
+    rarity: completedRune.rarity,
+    cardImageSrc: completedRune.cardImageSrc,
+    tokenImageSrc: completedRune.tokenImageSrc,
+    manaCost: completedRune.manaCost ?? 2,
+    castEffectRefs: copyEffectRefs(completedRune.castEffectRefs),
+    passiveEffectRefs: copyEffectRefs(completedRune.passiveEffectRefs),
   };
 
   return {
@@ -381,8 +334,7 @@ export function castRuneToWallSlot({
       wall: nextWall,
     },
     hand: nextHand,
-    discardPile: nextDiscardPile,
-    wallCharges: nextWallCharges,
+    discardPile: [...discardPile, selectedRune],
     selectedHandRuneId: null,
     completedRune,
     completedPosition: { row, col },
@@ -395,7 +347,6 @@ export function resolveCompletedRuneCastEffects({
   rune,
   activeArtefacts = [],
   sourcePosition = null,
-  wallCharges = [],
   suppressedRunes = [],
   handSize = 0,
 }: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
@@ -406,7 +357,6 @@ export function resolveCompletedRuneCastEffects({
     wall: player.wall,
     activeArtefacts,
     sourcePosition,
-    wallCharges,
     suppressedRunes,
     handSize,
   });
@@ -423,23 +373,23 @@ export function resolveCompletedRuneCastEffects({
 export function resolveEnemyTurn({
   player,
   enemy,
-  enemyBoard = createEmptyWall(),
-  enemyBoardCharges = createEnemyWallCharges(),
+  enemyBoard = createEnemySpellBoard(),
   enemyQueuedRunes = [],
   turnNumber = 0,
+  activeArtefacts = [],
   random = Math.random,
 }: EnemyTurnInput): EnemyTurnResult {
   if (!enemy) {
-    return { player, enemyBoard, enemyBoardCharges, enemyQueuedRunes: [], boardFull: false, logs: [], healthDamage: 0 };
+    return { player, enemy, enemyBoard, enemyQueuedRunes: [], boardFull: false, logs: [], healthDamage: 0 };
   }
 
   const runesToPlay = enemyQueuedRunes.length > 0
     ? [...enemyQueuedRunes]
     : createEnemyTurnRunes(turnNumber);
   let nextPlayer = player;
+  let nextEnemy = enemy;
   const nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
-  const nextCharges = enemyBoardCharges.map((row) => row.map((charge) => ({ ...charge })));
-  let healthDamage = 0;
+  let totalIncomingDamage = 0;
 
   for (const rune of runesToPlay) {
     const openSlots: Array<{ row: number; col: number }> = [];
@@ -453,35 +403,49 @@ export function resolveEnemyTurn({
 
     nextBoard[slot.row][slot.col] = {
       id: rune.id,
-      runeType: rune.runeType,
+      name: rune.name,
+      acceptedRuneTypes: [...nextBoard[slot.row][slot.col].acceptedRuneTypes],
+      runeTypes: [...rune.runeTypes],
       rarity: rune.rarity,
+      cardImageSrc: rune.cardImageSrc,
+      tokenImageSrc: rune.tokenImageSrc,
+      manaCost: rune.manaCost ?? 2,
       castEffectRefs: rune.castEffectRefs,
       passiveEffectRefs: rune.passiveEffectRefs,
     };
-    nextCharges[slot.row][slot.col] = {
-      ...nextCharges[slot.row][slot.col],
-      completedRuneId: rune.id,
-      lockedRuneType: rune.runeType,
-    };
-
-    const incomingDamage = Math.max(0, rune.damage);
-    const armorAbsorbed = Math.min(nextPlayer.armor, incomingDamage);
-    const runeHealthDamage = incomingDamage - armorAbsorbed;
-    healthDamage += runeHealthDamage;
-    nextPlayer = {
-      ...nextPlayer,
-      armor: nextPlayer.armor - armorAbsorbed,
-      health: Math.max(0, nextPlayer.health - runeHealthDamage),
-    };
+    totalIncomingDamage += Math.max(0, rune.damage);
+    const armorGain = rune.castEffectRefs.reduce((total, effectRef) => (
+      effectRef.effectId === 'cast.armor' && typeof effectRef.params?.amount === 'number'
+        ? total + Math.max(0, effectRef.params.amount)
+        : total
+    ), 0);
+    if (armorGain > 0) {
+      nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + armorGain };
+    }
   }
+
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'onEnemyAttack',
+    wall: nextPlayer.wall,
+    activeArtefacts,
+    baseValues: { incomingDamage: totalIncomingDamage },
+  });
+  const incomingDamage = Math.max(0, passiveResult.values.incomingDamage ?? totalIncomingDamage);
+  const armorAbsorbed = Math.min(nextPlayer.armor, incomingDamage);
+  const healthDamage = incomingDamage - armorAbsorbed;
+  nextPlayer = {
+    ...nextPlayer,
+    armor: nextPlayer.armor - armorAbsorbed,
+    health: Math.max(0, nextPlayer.health - healthDamage),
+  };
 
   return {
     player: nextPlayer,
+    enemy: nextEnemy,
     enemyBoard: nextBoard,
-    enemyBoardCharges: nextCharges,
     enemyQueuedRunes: [],
     boardFull: nextBoard.every((row) => row.every((cell) => cell.id !== null)),
-    logs: [],
+    logs: passiveResult.logs,
     healthDamage,
   };
 }

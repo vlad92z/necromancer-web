@@ -1,5 +1,7 @@
 # Rarity-Based Rune Resourcing PRD
 
+> Superseded by `prd-5-immediate-rune-placement.md`; retained as implementation history.
+
 ## Summary
 
 Replace row-scaling wall charge costs with rarity-based charge costs.

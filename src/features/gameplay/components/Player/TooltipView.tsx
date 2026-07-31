@@ -88,16 +88,6 @@ export function TooltipView() {
     : 0;
   const overlapOffset = -overlapAmount;
 
-  if (handCards.length === 0) {
-    return (
-      <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-sky-300/25 bg-sky-950/20 px-5 py-4 text-center">
-        <div>
-          <div className="text-lg font-bold text-sky-100">No runes in hand</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-visible px-1 py-4">
       {handCards.map(({ rune, card }, index) => {
@@ -106,6 +96,7 @@ export function TooltipView() {
         return (
           <div
             key={card.id}
+            className="h-full flex-none"
             style={{ //This makes sure the cards overlap and are rotated
               marginLeft: index === 0 ? 0 : overlapOffset,
               zIndex: handCards.length - index,
@@ -116,9 +107,9 @@ export function TooltipView() {
             <CardView
               title={card.title}
               imageSrc={card.imageSrc}
+              manaCost={card.manaCost}
               description={card.description}
-              runeType={card.runeType}
-              runeRarity={card.runeRarity}
+              runeTypes={card.runeTypes}
               variant={card.variant}
               size="hand"
               isSelected={isSelected}

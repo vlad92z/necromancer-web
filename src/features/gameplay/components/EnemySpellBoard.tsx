@@ -1,12 +1,18 @@
 /** Read-only spellboard for the enemy's completed runes. */
 
 import { useEnemySpellBoardState } from '../../../hooks/useGameState';
+import type { Rune } from '../../../types/game';
 import { WallCell } from './WallCell';
 
-const GAP = 3;
+const GAP = 0;
 
-export function EnemySpellBoard() {
-  const { wall, wallCharges } = useEnemySpellBoardState();
+interface EnemySpellBoardProps {
+  onRuneHover: (rune: Rune) => void;
+  onRuneLeave: () => void;
+}
+
+export function EnemySpellBoard({ onRuneHover, onRuneLeave }: EnemySpellBoardProps) {
+  const { wall } = useEnemySpellBoardState();
 
   return (
     <div className="flex flex-col items-center" aria-label="Enemy spellboard">
@@ -17,10 +23,10 @@ export function EnemySpellBoard() {
               <WallCell
                 key={colIndex}
                 cell={cell}
-                charge={wallCharges[rowIndex]?.[colIndex] ?? null}
                 row={rowIndex}
                 col={colIndex}
-                wallSize={wall.length}
+                onRuneHover={onRuneHover}
+                onRuneLeave={onRuneLeave}
               />
             ))}
           </div>

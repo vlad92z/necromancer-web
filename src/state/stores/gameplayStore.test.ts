@@ -5,28 +5,118 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Rune, RuneType } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
-import { createEmptyWall, createEmptyWallCharges } from '../../utils/gameInitialization';
+import { createEmptyWall } from '../../utils/gameInitialization';
 import { createRuneFromPool } from '../../utils/runeEffects';
+import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import { useArtefactStore } from './artefactStore';
 import { createGameplayStoreInstance } from './gameplayStore';
+
+type GameplayStoreInstance = ReturnType<typeof createGameplayStoreInstance>;
+
+function startEncounterAtA(store: GameplayStoreInstance): void {
+  store.getState().startSoloRun();
+  store.getState().travelToMapTarget({
+    kind: 'road',
+    tileKey: '0,0',
+    roadId: 'right-75',
+  });
+}
 
 describe('gameplayStore current combat', () => {
   beforeEach(() => {
     useArtefactStore.setState({ arcaneDust: 0 });
   });
 
-  it('starts a solo run with enemy, hand, draw deck, and no draft offers', () => {
+  it('starts a solo run on the map with the combat state ready for a future encounter', () => {
     const store = createGameplayStoreInstance();
 
     store.getState().startSoloRun();
 
     const state = store.getState();
     expect(state.gameStarted).toBe(true);
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 7, intent: { type: 'Attack', amount: 3 } });
+    expect(state.soloPhase).toBe('map');
+    expect(state.soloMap.playerPosition).toEqual({ tileKey: '0,0', locationId: 'start' });
+    expect(Object.keys(state.soloMap.tiles)).toEqual(['0,0']);
+    expect(state.enemy).toMatchObject({ id: 'goblin', health: 25 });
     expect(state.combatPhase).toBe('player-turn');
-    expect(state.hand).toHaveLength(6);
+    expect(state.hand).toHaveLength(5);
     expect(state.discardPile).toEqual([]);
     expect(state.deckDraftState).toBeNull();
+  });
+
+  it('travels to an uncleared location and launches a fresh Goblin encounter', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      player: { ...state.player, health: 73, armor: 12 },
+    }));
+
+    store.getState().travelToMapTarget({
+      kind: 'road',
+      tileKey: '0,0',
+      roadId: 'right-75',
+    });
+
+    const state = store.getState();
+    expect(state.soloPhase).toBe('encounter');
+    expect(state.soloMap.playerPosition).toEqual({ tileKey: '1,0', locationId: 'A' });
+    expect(state.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(false);
+    expect(state.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'A' });
+    expect(state.enemy).toMatchObject({ id: 'goblin', health: 25, maxHealth: 25 });
+    expect(state.hand).toHaveLength(5);
+    expect(state.player.health).toBe(73);
+    expect(state.player.armor).toBe(0);
+  });
+
+  it('moves between cleared locations without resetting combat state', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const mapAtA = completeActiveMapEncounter(store.getState().soloMap);
+    const arrivalAtB = travelOnSoloMap(mapAtA, {
+      kind: 'location',
+      tileKey: '1,0',
+      locationId: 'B',
+    });
+    const mapAtB = completeActiveMapEncounter(arrivalAtB.map);
+    store.setState((state) => ({
+      ...state,
+      soloPhase: 'map',
+      soloMap: mapAtB,
+      enemy: state.enemy ? { ...state.enemy, health: 7 } : null,
+    }));
+
+    store.getState().travelToMapTarget({
+      kind: 'location',
+      tileKey: '1,0',
+      locationId: 'A',
+    });
+
+    const state = store.getState();
+    expect(state.soloPhase).toBe('map');
+    expect(state.soloMap.playerPosition).toEqual({ tileKey: '1,0', locationId: 'A' });
+    expect(state.soloMap.activeEncounter).toBeNull();
+    expect(state.enemy?.health).toBe(7);
+  });
+
+  it('prevents unaffordable casts and refills mana at the start of the next player turn', () => {
+    const store = createGameplayStoreInstance();
+    const expensiveFireRune = createTestRune('expensive-fire', 'Fire', 3, 'common', 5);
+
+    store.setState((state) => ({
+      ...state,
+      hand: [expensiveFireRune],
+      selectedHandRuneId: expensiveFireRune.id,
+      player: { ...state.player, mana: 4, maxMana: 7 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20 },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+    expect(store.getState().hand).toEqual([expensiveFireRune]);
+    expect(store.getState().player.mana).toBe(4);
+
+    store.getState().endCombatTurn();
+    expect(store.getState().player.mana).toBe(7);
   });
 
   it('selects a hand rune and completes a row-one wall slot', () => {
@@ -37,8 +127,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [fireRune],
       selectedHandRuneId: null,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().selectHandRune(fireRune.id);
@@ -47,8 +136,9 @@ describe('gameplayStore current combat', () => {
     const state = store.getState();
     expect(state.hand).toEqual([]);
     expect(state.selectedHandRuneId).toBeNull();
-    expect(state.player.wall[0][0]).toMatchObject({ runeType: 'Fire', rarity: 'common' });
+    expect(state.player.wall[0][0]).toMatchObject({ runeTypes: ['Fire'], rarity: 'common' });
     expect(state.enemy?.health).toBe(7);
+    expect(state.player.mana).toBe(5);
   });
 
   it('keeps selection active for invalid wall casts', () => {
@@ -59,7 +149,6 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [lifeRune],
       selectedHandRuneId: lifeRune.id,
-      wallCharges: createEmptyWallCharges(),
     }));
 
     store.getState().castRuneToWall(0, 0);
@@ -67,7 +156,7 @@ describe('gameplayStore current combat', () => {
     const state = store.getState();
     expect(state.hand).toEqual([lifeRune]);
     expect(state.selectedHandRuneId).toBe(lifeRune.id);
-    expect(state.player.wall[0][0].runeType).toBeNull();
+    expect(state.player.wall[0][0].runeTypes).toEqual([]);
   });
 
   it('discards hand, applies enemy attack, and draws next hand on end turn', () => {
@@ -79,13 +168,13 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand,
       player: { ...state.player, deck, armor: 2, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(7);
+    expect(state.player.health).toBe(2);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.hand.map((rune) => rune.id)).toEqual(['deck-fire', 'deck-life', 'hand-fire']);
@@ -98,8 +187,8 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 5, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      player: { ...state.player, deck: [], armor: 10, health: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -118,13 +207,13 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [],
       player: { ...state.player, deck: [], armor: 3, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(8);
+    expect(state.player.health).toBe(3);
     expect(state.player.armor).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.shieldSoundSignal).toBe(0);
@@ -137,7 +226,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [],
       player: { ...state.player, deck: [], armor: 0, health: 4 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -153,18 +242,19 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
     wall[0][3] = {
+    ...wall[0][3],
       id: 'completed-frost',
-      runeType: 'Frost',
+      runeTypes: ['Frost'],
       rarity: 'common',
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.reduceDamage', { amount: 5 })],
+      passiveEffectRefs: [createEffectRef('passive.reduceDamage', { amount: 10 })],
     };
 
     store.setState((state) => ({
       ...state,
       hand: [],
       player: { ...state.player, wall, deck: [], armor: 0, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
@@ -175,8 +265,9 @@ describe('gameplayStore current combat', () => {
     expect(state.shieldSoundSignal).toBe(1);
   });
 
-  it('opens rune pack offers after lethal cast, selects a pack, and starts the next encounter', () => {
+  it('opens rune pack offers, returns to the map, and launches the next location', () => {
     const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
     const lethalRune = createTestRune('lethal-fire', 'Fire', 20);
     const baseDeckRune = createTestRune('base-life', 'Life', 2);
     const encounterDeckRune = createTestRune('encounter-wind', 'Wind', 2);
@@ -189,8 +280,7 @@ describe('gameplayStore current combat', () => {
       discardPile: [encounterDiscardRune],
       suppressedRunes: [suppressedRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3 },
       fullDeck: [lethalRune, baseDeckRune],
       player: { ...state.player, deck: [encounterDeckRune] },
     }));
@@ -198,7 +288,10 @@ describe('gameplayStore current combat', () => {
     store.getState().castRuneToWall(0, 0);
 
     const victoryState = store.getState();
+    expect(victoryState.soloPhase).toBe('reward');
     expect(victoryState.combatPhase).toBe('victory');
+    expect(victoryState.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'A' });
+    expect(victoryState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(false);
     expect(victoryState.deckDraftState?.offers).toHaveLength(6);
     expect(victoryState.deckDraftState?.offers.map((offer) => offer.runeType)).toEqual([
       'Fire',
@@ -208,7 +301,7 @@ describe('gameplayStore current combat', () => {
       'Void',
       'Lightning',
     ]);
-    expect(victoryState.player.wall.flat().every((cell) => cell.runeType === null)).toBe(true);
+    expect(victoryState.player.wall.flat().every((cell) => cell.runeTypes.length === 0)).toBe(true);
     expect(victoryState.hand).toEqual([]);
     expect(victoryState.discardPile).toEqual([]);
     expect(victoryState.suppressedRunes).toEqual([]);
@@ -227,18 +320,31 @@ describe('gameplayStore current combat', () => {
     expect(selectedState.player.deck).toEqual(encounterDeckBeforeSelection);
     expect(selectedState.player.deck).toHaveLength(1);
     expect(selectedState.fullDeck).toHaveLength(fullDeckBeforeSelection.length + 3);
-    expect(selectedState.fullDeck.slice(-3).every((rune) => rune.runeType === 'Fire')).toBe(true);
+    expect(selectedState.fullDeck.slice(-3).every((rune) => rune.runeTypes[0] === 'Fire')).toBe(true);
 
-    store.getState().startNextSoloGame();
+    store.getState().returnToMapAfterReward();
+    const mapState = store.getState();
+    expect(mapState.soloPhase).toBe('map');
+    expect(mapState.gameIndex).toBe(2);
+    expect(mapState.deckDraftState).toBeNull();
+    expect(mapState.soloMap.activeEncounter).toBeNull();
+    expect(mapState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(true);
+    expect(mapState.fullDeck).toEqual(selectedState.fullDeck);
+
+    store.getState().travelToMapTarget({
+      kind: 'location',
+      tileKey: '1,0',
+      locationId: 'B',
+    });
     const nextState = store.getState();
+    expect(nextState.soloPhase).toBe('encounter');
+    expect(nextState.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'B' });
+    expect(nextState.soloMap.tiles['1,0'].encounters.B?.cleared).toBe(false);
     expect(nextState.combatPhase).toBe('player-turn');
-    expect(nextState.deckDraftState).toBeNull();
-    expect(nextState.enemy?.maxHealth).toBe(10);
-    expect(nextState.enemy?.intent.amount).toBe(5);
-    expect(nextState.enemyMaxHealth).toBe(10);
+    expect(nextState.enemy?.maxHealth).toBe(34);
+    expect(nextState.enemyMaxHealth).toBe(34);
     expect(nextState.suppressedRunes).toEqual([]);
     expect(nextState.discardPile).toEqual([]);
-    expect(nextState.wallCharges.flat().every((charge) => charge.stagedRune === null && charge.spentRunes.length === 0)).toBe(true);
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id).sort()).toEqual(
       selectedState.fullDeck.map((rune) => rune.id).sort()
     );
@@ -247,16 +353,16 @@ describe('gameplayStore current combat', () => {
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id)).not.toContain(suppressedRune.id);
   });
 
-  it('starts the next encounter from victory without selecting a pack', () => {
+  it('returns to the map from rewards without selecting a pack', () => {
     const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
     const lethalRune = createTestRune('lethal-fire', 'Fire', 20);
 
     store.setState((state) => ({
       ...state,
       hand: [lethalRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3 },
       fullDeck: [lethalRune],
       player: { ...state.player, deck: [] },
     }));
@@ -267,12 +373,13 @@ describe('gameplayStore current combat', () => {
     const deckSizeBeforeSkip = victoryState.fullDeck.length;
     expect(victoryState.deckDraftState?.selectedOffer).toBeNull();
 
-    store.getState().startNextSoloGame();
+    store.getState().returnToMapAfterReward();
 
     const nextState = store.getState();
-    expect(nextState.combatPhase).toBe('player-turn');
+    expect(nextState.soloPhase).toBe('map');
     expect(nextState.deckDraftState).toBeNull();
     expect(nextState.fullDeck).toHaveLength(deckSizeBeforeSkip);
+    expect(nextState.soloMap.tiles['1,0'].encounters.A?.cleared).toBe(true);
   });
 
   it('does not apply old draft bonuses or Ring/Robe draft passives to packs', () => {
@@ -284,8 +391,7 @@ describe('gameplayStore current combat', () => {
       activeArtefacts: ['ring', 'robe'],
       hand: [lethalRune],
       selectedHandRuneId: lethalRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 3, maxHealth: 3 },
       fullDeck: [lethalRune],
       player: { ...state.player, deck: [], health: 4, maxHealth: 10 },
     }));
@@ -311,8 +417,11 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const windRune: Rune = {
       id: 'wind-fortune',
-      runeType: 'Wind',
+      name: 'Wind Test',
+      runeTypes: ['Wind'],
       rarity: 'common',
+      cardImageSrc: 'wind-card.png',
+      tokenImageSrc: 'wind-token.png',
       castEffectRefs: [createEffectRef('cast.fortune', { amount: 10 })],
       passiveEffectRefs: [],
     };
@@ -321,22 +430,21 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [windRune],
       selectedHandRuneId: windRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
     }));
 
-    store.getState().castRuneToWall(0, 1);
+    store.getState().castRuneToWall(0, 2);
 
     expect(useArtefactStore.getState().arcaneDust).toBe(10);
   });
 
   it.each<[RuneType, number]>([
     ['Fire', 0],
-    ['Life', 2],
-    ['Wind', 1],
-    ['Frost', 2],
-    ['Void', 0],
-    ['Lightning', 1],
+    ['Life', 1],
+    ['Wind', 2],
+    ['Frost', 3],
+    ['Void', 4],
+    ['Lightning', 5],
   ])('increments %s rune sound signal after completing a matching row-one slot', (runeType, col) => {
     const store = createGameplayStoreInstance();
     const rune = createTestRune(`${runeType.toLowerCase()}-1`, runeType, 0);
@@ -345,8 +453,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [rune],
       selectedHandRuneId: rune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().castRuneToWall(0, col);
@@ -354,90 +461,40 @@ describe('gameplayStore current combat', () => {
     expect(store.getState().runeSoundSignals[runeType]).toBe(1);
   });
 
-  it('does not increment rune sound signal for non-final charges', () => {
-    const store = createGameplayStoreInstance();
-    const frostRune = createTestRune('frost-1', 'Frost', 0, 'uncommon');
-
-    store.setState((state) => ({
-      ...state,
-      hand: [frostRune],
-      selectedHandRuneId: frostRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
-    }));
-
-    store.getState().castRuneToWall(1, 4);
-
-    expect(store.getState().runeSoundSignals.Frost).toBe(0);
-    expect(store.getState().wallChargeSoundSignal).toBe(1);
-  });
-
-  it.each<[{ rarity: Rune['rarity']; runeType: RuneType; row: number; col: number; requiredCharges: number }]>([
-    [{ rarity: 'common', runeType: 'Fire', row: 0, col: 0, requiredCharges: 0 }],
-    [{ rarity: 'uncommon', runeType: 'Frost', row: 0, col: 2, requiredCharges: 1 }],
-    [{ rarity: 'rare', runeType: 'Void', row: 0, col: 0, requiredCharges: 2 }],
-    [{ rarity: 'epic', runeType: 'Wind', row: 0, col: 1, requiredCharges: 3 }],
-  ])('applies $rarity charge requirements during casting flow', ({ rarity, runeType, row, col, requiredCharges }) => {
+  it.each<[{ rarity: Rune['rarity']; runeType: RuneType; row: number; col: number }]>([
+    [{ rarity: 'common', runeType: 'Fire', row: 0, col: 0 }],
+    [{ rarity: 'uncommon', runeType: 'Frost', row: 0, col: 3 }],
+    [{ rarity: 'rare', runeType: 'Void', row: 0, col: 4 }],
+    [{ rarity: 'epic', runeType: 'Wind', row: 0, col: 2 }],
+  ])('places a $rarity rune immediately during casting flow', ({ rarity, runeType, row, col }) => {
     const store = createGameplayStoreInstance();
     const rune = createTestRune(`${rarity}-${runeType.toLowerCase()}`, runeType, 0, rarity);
-    const chargeRunes = Array.from(
-      { length: requiredCharges },
-      (_, index) => createTestRune(`${rarity}-${runeType.toLowerCase()}-charge-${index}`, runeType, 0)
-    );
 
     store.setState((state) => ({
       ...state,
-      hand: [rune, ...chargeRunes],
+      hand: [rune],
       selectedHandRuneId: rune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20 },
       discardPile: [],
     }));
 
     store.getState().castRuneToWall(row, col);
 
-    if (requiredCharges === 0) {
-      const state = store.getState();
-      expect(state.player.wall[row][col]).toMatchObject({ runeType, rarity });
-      expect(state.discardPile).toHaveLength(1);
-      return;
-    }
-
-    expect(store.getState().player.wall[row][col].runeType).toBeNull();
-    expect(store.getState().wallCharges[row][col]).toMatchObject({
-      currentCount: 0,
-      requiredCount: requiredCharges,
-      lockedRuneType: runeType,
-    });
-
-    chargeRunes.forEach((chargeRune, index) => {
-      store.getState().selectHandRune(chargeRune.id);
-      store.getState().castRuneToWall(row, col);
-
-      const state = store.getState();
-      if (index < requiredCharges - 1) {
-        expect(state.player.wall[row][col].runeType).toBeNull();
-        expect(state.wallCharges[row][col].currentCount).toBe(index + 1);
-        return;
-      }
-
-      expect(state.player.wall[row][col]).toMatchObject({ runeType, rarity });
-      expect(state.wallCharges[row][col]).toMatchObject({
-        currentCount: requiredCharges,
-        requiredCount: requiredCharges,
-        completedRuneId: expect.any(String),
-        stagedRune: null,
-      });
-      expect(state.discardPile).toHaveLength(requiredCharges + 1);
-    });
+    const state = store.getState();
+    expect(state.player.wall[row][col]).toMatchObject({ runeTypes: [runeType], rarity });
+    expect(state.discardPile).toEqual([rune]);
+    expect(state.runeSoundSignals[runeType]).toBe(1);
   });
 
   it('increments the casting rune sound signal for non-Frost armor gain', () => {
     const store = createGameplayStoreInstance();
     const armorRune: Rune = {
       id: 'fire-armor',
-      runeType: 'Fire',
+      name: 'Fire Test',
+      runeTypes: ['Fire'],
       rarity: 'common',
+      cardImageSrc: 'fire-card.png',
+      tokenImageSrc: 'fire-token.png',
       castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
       passiveEffectRefs: [],
     };
@@ -446,8 +503,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [armorRune],
       selectedHandRuneId: armorRune.id,
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().castRuneToWall(0, 0);
@@ -462,17 +518,12 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
     wall[0][3] = {
+    ...wall[0][3],
       id: 'completed-frost',
-      runeType: 'Frost',
+      runeTypes: ['Frost'],
       rarity: 'epic',
       castEffectRefs: [],
       passiveEffectRefs: [createEffectRef('passive.armorBoost', { amount: 5 })],
-    };
-    const wallCharges = createEmptyWallCharges();
-    wallCharges[0][3] = {
-      ...wallCharges[0][3],
-      currentCount: 1,
-      completedRuneId: 'completed-frost',
     };
     const fireRune = createTestRune('fire-1', 'Fire', 0);
 
@@ -481,8 +532,7 @@ describe('gameplayStore current combat', () => {
       hand: [fireRune],
       selectedHandRuneId: fireRune.id,
       player: { ...state.player, wall, armor: 0 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
-      wallCharges,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().castRuneToWall(0, 0);
@@ -495,23 +545,22 @@ describe('gameplayStore current combat', () => {
   it('increments rune sound signal when a completed rune is retriggered', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
+    wall[0][0].acceptedRuneTypes = ['Void'];
     wall[0][1] = {
+    ...wall[0][1],
       id: 'completed-frost',
-      runeType: 'Frost',
+      runeTypes: ['Frost'],
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.damage', { amount: 2 })],
       passiveEffectRefs: [],
     };
-    const wallCharges = createEmptyWallCharges();
-    wallCharges[0][1] = {
-      ...wallCharges[0][1],
-      currentCount: 1,
-      completedRuneId: 'completed-frost',
-    };
     const voidRune: Rune = {
       id: 'void-retrigger',
-      runeType: 'Void',
+      name: 'Void Test',
+      runeTypes: ['Void'],
       rarity: 'common',
+      cardImageSrc: 'void-card.png',
+      tokenImageSrc: 'void-token.png',
       castEffectRefs: [createEffectRef('cast.retriggerAdjacent')],
       passiveEffectRefs: [],
     };
@@ -521,8 +570,7 @@ describe('gameplayStore current combat', () => {
       hand: [voidRune],
       selectedHandRuneId: voidRune.id,
       player: { ...state.player, wall },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
-      wallCharges,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().castRuneToWall(0, 0);
@@ -538,15 +586,17 @@ describe('gameplayStore current combat', () => {
     const hand = [createTestRune('hand-fire', 'Fire', 3)];
     const wall = createEmptyWall();
     wall[0][0] = {
+    ...wall[0][0],
       id: 'completed-void-pulse',
-      runeType: 'Void',
+      runeTypes: ['Void'],
       rarity: 'uncommon',
       castEffectRefs: [],
       passiveEffectRefs: [createEffectRef('passive.pulseSynergy', { amount: 5, synergyType: 'Void' })],
     };
     wall[0][4] = {
+    ...wall[0][4],
       id: 'completed-void-support',
-      runeType: 'Void',
+      runeTypes: ['Void'],
       rarity: 'common',
       castEffectRefs: [],
       passiveEffectRefs: [],
@@ -556,8 +606,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand,
       player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5 },
     }));
 
     store.getState().endCombatTurn();
@@ -573,15 +622,17 @@ describe('gameplayStore current combat', () => {
     const hand = [createTestRune('hand-fire', 'Fire', 0)];
     const wall = createEmptyWall();
     wall[0][0] = {
+    ...wall[0][0],
       id: 'completed-frost-rare',
-      runeType: 'Frost',
+      runeTypes: ['Frost'],
       rarity: 'rare',
       castEffectRefs: [],
       passiveEffectRefs: [createEffectRef('passive.armorEndTurnSynergy', { amount: 2, synergyType: 'Frost' })],
     };
     wall[0][1] = {
+    ...wall[0][1],
       id: 'completed-frost-support',
-      runeType: 'Frost',
+      runeTypes: ['Frost'],
       rarity: 'common',
       castEffectRefs: [],
       passiveEffectRefs: [],
@@ -591,15 +642,14 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand,
       player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 5 } },
-      wallCharges: createEmptyWallCharges(),
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       discardPile: [],
     }));
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(9);
+    expect(state.player.health).toBe(4);
     expect(state.player.armor).toBe(0);
     expect(state.combatPhase).toBe('player-turn');
   });
@@ -607,28 +657,20 @@ describe('gameplayStore current combat', () => {
   it('deals rare Void pulse damage after completing a top-row slot', () => {
     const store = createGameplayStoreInstance();
     const voidRune = createRuneFromPool({ id: 'void-pulse', runeType: 'Void', rarity: 'rare' });
-    const chargeOne = createTestRune('void-charge-1', 'Void', 0);
-    const chargeTwo = createTestRune('void-charge-2', 'Void', 0);
+    const wall = createEmptyWall();
+    wall[0][0].acceptedRuneTypes = ['Void'];
 
     store.setState((state) => ({
       ...state,
-      hand: [voidRune, chargeOne, chargeTwo],
+      hand: [voidRune],
       selectedHandRuneId: voidRune.id,
-      player: { ...state.player, deck: [], armor: 0, health: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10, intent: { type: 'Attack', amount: 0 } },
-      wallCharges: createEmptyWallCharges(),
+      player: { ...state.player, wall, deck: [], armor: 10, health: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       discardPile: [],
     }));
 
     store.getState().castRuneToWall(0, 0);
-    expect(store.getState().player.wall[0][0].runeType).toBeNull();
-    store.getState().selectHandRune(chargeOne.id);
-    store.getState().castRuneToWall(0, 0);
-    expect(store.getState().player.wall[0][0].runeType).toBeNull();
-    store.getState().selectHandRune(chargeTwo.id);
-    store.getState().castRuneToWall(0, 0);
-
-    expect(store.getState().player.wall[0][0]).toMatchObject({ runeType: 'Void', rarity: 'rare' });
+    expect(store.getState().player.wall[0][0]).toMatchObject({ runeTypes: ['Void'], rarity: 'rare' });
     expect(store.getState().enemy?.health).toBe(10);
 
     store.getState().endCombatTurn();
@@ -642,15 +684,17 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
     wall[0][0] = {
+    ...wall[0][0],
       id: 'completed-life-start',
-      runeType: 'Life',
+      runeTypes: ['Life'],
       rarity: 'rare',
       castEffectRefs: [],
       passiveEffectRefs: [createEffectRef('passive.healingStartTurn', { amount: 2 })],
     };
-    wall[0][2] = {
+    wall[0][1] = {
+    ...wall[0][1],
       id: 'completed-wind-start',
-      runeType: 'Wind',
+      runeTypes: ['Wind'],
       rarity: 'rare',
       castEffectRefs: [],
       passiveEffectRefs: [createEffectRef('passive.drawingStartTurn', { amount: 1 })],
@@ -660,8 +704,8 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [createTestRune('hand-fire', 'Fire', 1)],
-      player: { ...state.player, wall, deck, health: 5, maxHealth: 10, armor: 0 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 0 } },
+      player: { ...state.player, wall, deck, health: 5, maxHealth: 10, armor: 10 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       discardPile: [],
     }));
 
@@ -669,41 +713,33 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.player.health).toBe(7);
-    expect(state.hand).toHaveLength(7);
-    expect(state.player.deck).toEqual([]);
+    expect(state.hand).toHaveLength(6);
+    expect(state.player.deck).toHaveLength(1);
   });
 
   it('does not persist consumed adjacent runes across victory', () => {
     const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
     const uncommonVoid = createRuneFromPool({ id: 'uncommon-void', runeType: 'Void', rarity: 'uncommon' });
-    const chargeVoid = createTestRune('charge-void', 'Void', 0);
     const wall = createEmptyWall();
+    wall[0][0].acceptedRuneTypes = ['Void'];
     wall[0][1] = {
+    ...wall[0][1],
       id: 'adjacent-fire',
-      runeType: 'Fire',
+      runeTypes: ['Fire'],
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
       passiveEffectRefs: [],
     };
-    const wallCharges = createEmptyWallCharges();
-    wallCharges[0][1] = {
-      ...wallCharges[0][1],
-      currentCount: 1,
-      completedRuneId: 'adjacent-fire',
-    };
-
     store.setState((state) => ({
       ...state,
-      hand: [uncommonVoid, chargeVoid],
+      hand: [uncommonVoid],
       selectedHandRuneId: uncommonVoid.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 2, maxHealth: 2, intent: { type: 'Attack', amount: 5 } },
-      wallCharges,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 2, maxHealth: 2 },
       suppressedRunes: [],
     }));
 
-    store.getState().castRuneToWall(0, 0);
-    store.getState().selectHandRune(chargeVoid.id);
     store.getState().castRuneToWall(0, 0);
 
     const state = store.getState();
@@ -713,7 +749,12 @@ describe('gameplayStore current combat', () => {
     expect(state.player.deck.map((rune) => rune.id)).not.toContain('adjacent-fire');
     expect(state.player.deck.map((rune) => rune.id)).not.toContain('uncommon-void');
 
-    store.getState().startNextSoloGame();
+    store.getState().returnToMapAfterReward();
+    store.getState().travelToMapTarget({
+      kind: 'location',
+      tileKey: '1,0',
+      locationId: 'B',
+    });
 
     const nextState = store.getState();
     const nextEncounterRuneIds = [...nextState.hand, ...nextState.player.deck].map((rune) => rune.id);
@@ -724,164 +765,92 @@ describe('gameplayStore current combat', () => {
   it('returns adjacent completed runes to hand with epic Wind', () => {
     const store = createGameplayStoreInstance();
     const epicWind = createRuneFromPool({ id: 'epic-wind', runeType: 'Wind', rarity: 'epic' });
-    const chargeOne = createTestRune('wind-charge-1', 'Wind', 0);
-    const chargeTwo = createTestRune('wind-charge-2', 'Wind', 0);
-    const chargeThree = createTestRune('wind-charge-3', 'Wind', 0);
     const wall = createEmptyWall();
-    wall[0][2] = {
+    wall[0][1] = {
+    ...wall[0][1],
       id: 'adjacent-life',
-      runeType: 'Life',
+      runeTypes: ['Life'],
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.healing', { amount: 2 })],
       passiveEffectRefs: [],
     };
-    const wallCharges = createEmptyWallCharges();
-    wallCharges[0][2] = {
-      ...wallCharges[0][2],
-      currentCount: 1,
-      completedRuneId: 'adjacent-life',
-    };
-
     store.setState((state) => ({
       ...state,
-      hand: [epicWind, chargeOne, chargeTwo, chargeThree],
+      hand: [epicWind],
       selectedHandRuneId: epicWind.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
-      wallCharges,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       suppressedRunes: [],
     }));
 
-    store.getState().castRuneToWall(0, 1);
-    store.getState().selectHandRune(chargeOne.id);
-    store.getState().castRuneToWall(0, 1);
-    store.getState().selectHandRune(chargeTwo.id);
-    store.getState().castRuneToWall(0, 1);
-    store.getState().selectHandRune(chargeThree.id);
-    store.getState().castRuneToWall(0, 1);
+    store.getState().castRuneToWall(0, 2);
 
     const state = store.getState();
     expect(state.hand).toHaveLength(1);
-    expect(state.hand[0]?.runeType).toBe('Life');
+    expect(state.hand[0]?.runeTypes[0]).toBe('Life');
     expect(state.hand[0]?.id).not.toBe('adjacent-life');
-    expect(state.player.wall[0][2].runeType).toBeNull();
+    expect(state.player.wall[0][1].runeTypes).toEqual([]);
     expect(state.suppressedRunes).toEqual([]);
   });
 
   it('sends returned overflow to discard when hand is already at cap after cast completion', () => {
     const store = createGameplayStoreInstance();
     const epicWind = createRuneFromPool({ id: 'epic-wind-overflow', runeType: 'Wind', rarity: 'epic' });
-    const chargeOne = createTestRune('wind-overflow-charge-1', 'Wind', 0);
-    const chargeTwo = createTestRune('wind-overflow-charge-2', 'Wind', 0);
-    const chargeThree = createTestRune('wind-overflow-charge-3', 'Wind', 0);
     const fillerHand = Array.from({ length: 9 }, (_, index) => createTestRune(`filler-${index}`, 'Fire', 0));
     const wall = createEmptyWall();
-    wall[0][2] = {
+    wall[0][1] = {
+    ...wall[0][1],
       id: 'adjacent-life-overflow',
-      runeType: 'Life',
+      runeTypes: ['Life'],
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.healing', { amount: 2 })],
       passiveEffectRefs: [],
     };
-    wall[1][2] = {
+    wall[1][1] = {
+    ...wall[1][1],
       id: 'adjacent-fire-overflow',
-      runeType: 'Fire',
+      runeTypes: ['Fire'],
       rarity: 'common',
       castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
       passiveEffectRefs: [],
     };
-    const wallCharges = createEmptyWallCharges();
-    wallCharges[0][2] = {
-      ...wallCharges[0][2],
-      currentCount: 1,
-      completedRuneId: 'adjacent-life-overflow',
-    };
-    wallCharges[1][2] = {
-      ...wallCharges[1][2],
-      currentCount: 1,
-      completedRuneId: 'adjacent-fire-overflow',
-    };
-
     store.setState((state) => ({
       ...state,
-      hand: [epicWind, chargeOne, chargeTwo, chargeThree, ...fillerHand],
+      hand: [epicWind, ...fillerHand],
       selectedHandRuneId: epicWind.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30, intent: { type: 'Attack', amount: 5 } },
-      wallCharges,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       suppressedRunes: [],
       discardPile: [],
     }));
 
-    store.getState().castRuneToWall(0, 1);
-    store.getState().selectHandRune(chargeOne.id);
-    store.getState().castRuneToWall(0, 1);
-    store.getState().selectHandRune(chargeTwo.id);
-    store.getState().castRuneToWall(0, 1);
-    store.getState().selectHandRune(chargeThree.id);
-    store.getState().castRuneToWall(0, 1);
+    store.getState().castRuneToWall(0, 2);
 
     const state = store.getState();
     expect(state.hand).toHaveLength(10);
-    expect(state.hand.some((rune) => rune.runeType === 'Life' || rune.runeType === 'Fire')).toBe(true);
-    expect(state.discardPile.some((rune) => rune.runeType === 'Life' || rune.runeType === 'Fire')).toBe(true);
-    expect(state.player.wall[0][2].runeType).toBeNull();
-    expect(state.player.wall[1][2].runeType).toBeNull();
+    expect(state.hand.some((rune) => rune.runeTypes[0] === 'Life' || rune.runeTypes[0] === 'Fire')).toBe(true);
+    expect(state.discardPile.some((rune) => rune.runeTypes[0] === 'Life' || rune.runeTypes[0] === 'Fire')).toBe(true);
+    expect(state.player.wall[0][1].runeTypes).toEqual([]);
+    expect(state.player.wall[1][1].runeTypes).toEqual([]);
   });
 
-  it('opens victory immediately when virtual charge completion deals lethal damage', () => {
-    const store = createGameplayStoreInstance();
-    const chargerRune: Rune = {
-      id: 'charger-rune',
-      runeType: 'Wind',
-      rarity: 'common',
-      castEffectRefs: [createEffectRef('cast.chargeAdjacent')],
-      passiveEffectRefs: [],
-    };
-    const wallCharges = createEmptyWallCharges();
-    wallCharges[0][0] = {
-      ...wallCharges[0][0],
-      currentCount: 1,
-      requiredCount: 2,
-      stagedRune: {
-        id: 'staged-fire-lethal',
-        runeType: 'Fire',
-        rarity: 'uncommon',
-        castEffectRefs: [createEffectRef('cast.damage', { amount: 5 })],
-        passiveEffectRefs: [],
-      },
-      spentRunes: [createTestRune('spent-fire-lethal', 'Fire', 0)],
-      lockedRuneType: 'Fire',
-      completedRuneId: null,
-    };
-
-    store.setState((state) => ({
-      ...state,
-      hand: [chargerRune],
-      selectedHandRuneId: chargerRune.id,
-      player: { ...state.player, deck: [], health: 10, maxHealth: 10 },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5, intent: { type: 'Attack', amount: 5 } },
-      wallCharges,
-      discardPile: [],
-    }));
-
-    store.getState().castRuneToWall(0, 1);
-
-    const state = store.getState();
-    expect(state.combatPhase).toBe('victory');
-    expect(state.enemy?.health).toBe(0);
-    expect(state.player.health).toBe(10);
-    expect(state.enemyAttackSoundSignal).toBe(0);
-    expect(state.discardPile).toEqual([]);
-    expect(state.deckDraftState?.offers).toHaveLength(6);
-  });
 });
 
-function createTestRune(id: string, runeType: RuneType, damage: number, rarity: Rune['rarity'] = 'common'): Rune {
+function createTestRune(
+  id: string,
+  runeType: RuneType,
+  damage: number,
+  rarity: Rune['rarity'] = 'common',
+  manaCost?: number,
+): Rune {
   return {
     id,
-    runeType,
+    name: `${runeType} Test`,
+    runeTypes: [runeType],
     rarity,
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
+    manaCost,
     castEffectRefs: [createEffectRef('cast.damage', { amount: damage })],
     passiveEffectRefs: [],
   };

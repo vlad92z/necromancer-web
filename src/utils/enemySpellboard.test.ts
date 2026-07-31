@@ -2,18 +2,23 @@ import { describe, expect, it } from 'vitest';
 import type { EnemyRune } from '../types/game';
 import {
   createEmptyWall,
-  createEnemyWallCharges,
+  createEnemySpellBoard,
   createEnemyTurnRunes,
   createPlayer,
   initializeSoloGame,
 } from './gameInitialization';
 import { resolveEnemyTurn } from './combatResolution';
+import { resolveCastEffects } from './effectResolver';
+import { createRuneFromPool } from './runeEffects';
 
 function createEnemyRune(id: string, damage: number): EnemyRune {
   return {
     id,
-    runeType: 'Life',
+    name: 'Life Test',
+    runeTypes: ['Life'],
     rarity: 'common',
+    cardImageSrc: 'life-card.png',
+    tokenImageSrc: 'life-token.png',
     castEffectRefs: [],
     passiveEffectRefs: [],
     damage,
@@ -21,15 +26,24 @@ function createEnemyRune(id: string, damage: number): EnemyRune {
 }
 
 describe('enemy spellboard combat', () => {
-  it('initializes a hidden enemy queue and an all-Life/Frost board', () => {
+  it('initializes a hidden enemy queue and Life-slot board', () => {
     const state = initializeSoloGame();
 
     expect(state.enemyBoard).toHaveLength(6);
     expect(state.enemyBoard.flat()).toHaveLength(36);
-    expect(state.enemyBoardCharges.flat().every((charge) => charge.slotFamily === 'lifeFrost')).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => cell.id === null)).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => (
+      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
+    ))).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.runeType)).toEqual(['Life', 'Life', 'Life']);
-    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([1, 1, 1]);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Barricade']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life']);
+    expect(createEnemyTurnRunes(4).map((rune) => rune.damage)).toEqual([5, 5, 0]);
+    expect(createEnemyTurnRunes(4)[0]?.cardImageSrc).toContain('card_throw_rock.png');
+    expect(createEnemyTurnRunes(4)[0]?.tokenImageSrc).toContain('token_life.png');
+    expect(createEnemyTurnRunes(4)[0]?.castEffectRefs).toEqual([
+      { effectId: 'cast.damage', params: { amount: 5 } },
+    ]);
   });
 
   it('plays queued runes in order into random open slots and applies each damage', () => {
@@ -38,8 +52,7 @@ describe('enemy spellboard combat', () => {
     const result = resolveEnemyTurn({
       player,
       enemy: initializeSoloGame().enemy,
-      enemyBoard: createEmptyWall(),
-      enemyBoardCharges: createEnemyWallCharges(),
+      enemyBoard: createEnemySpellBoard(),
       enemyQueuedRunes: queuedRunes,
       random: () => 0,
     });
@@ -51,12 +64,65 @@ describe('enemy spellboard combat', () => {
     expect(result.healthDamage).toBe(5);
   });
 
+  it('gives the Goblin armor when Barricade is placed', () => {
+    const result = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy: initializeSoloGame().enemy,
+      enemyBoard: createEnemySpellBoard(),
+      enemyQueuedRunes: [createEnemyTurnRunes(0)[2]!],
+      random: () => 0,
+    });
+
+    expect(result.enemy?.armor).toBe(5);
+  });
+
+  it('has Goblin armor absorb player damage before health', () => {
+    const goblin = { ...initializeSoloGame().enemy!, armor: 5 };
+    const result = resolveCastEffects({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy: goblin,
+      castRune: createRuneFromPool({ id: 'firebolt', runeType: 'Fire', rarity: 'common', random: () => 0 }),
+      wall: createEmptyWall(),
+    });
+
+    expect(result.enemy).toMatchObject({ health: 25, armor: 0 });
+  });
+
+  it('reduces total incoming enemy-turn damage before armor', () => {
+    const wall = createEmptyWall();
+    wall[0][0] = {
+      ...wall[0][0],
+      id: 'headwind-wall-copy',
+      name: 'Headwind',
+      runeTypes: ['Wind'],
+      rarity: 'uncommon',
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
+    };
+    const player = {
+      ...createPlayer('player-1', 'Tester', 20, [], 20),
+      wall,
+    };
+
+    const result = resolveEnemyTurn({
+      player,
+      enemy: initializeSoloGame().enemy,
+      enemyBoard: createEnemySpellBoard(),
+      enemyQueuedRunes: [createEnemyRune('attacker', 3)],
+      random: () => 0,
+    });
+
+    expect(result.player.health).toBe(18);
+    expect(result.healthDamage).toBe(2);
+    expect(result.logs.map((log) => log.effectId)).toContain('passive.reduceDamage');
+  });
+
   it('fills the last slot and reports an enemy board win condition', () => {
-    const board = createEmptyWall();
+    const board = createEnemySpellBoard();
     board.flat().forEach((cell, index) => {
       if (index < 35) {
         cell.id = `filled-${index}`;
-        cell.runeType = 'Life';
+        cell.runeTypes[0] = 'Life';
         cell.rarity = 'common';
         cell.castEffectRefs = [];
         cell.passiveEffectRefs = [];
@@ -67,7 +133,6 @@ describe('enemy spellboard combat', () => {
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: initializeSoloGame().enemy,
       enemyBoard: board,
-      enemyBoardCharges: createEnemyWallCharges(),
       enemyQueuedRunes: [createEnemyRune('last', 1)],
       random: () => 0,
     });

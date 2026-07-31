@@ -38,7 +38,7 @@ This is already more modular than a single global store, but the boundaries are 
 
 It also owns the largest action surface:
 
-- run lifecycle: `startSoloRun`, `prepareSoloMode`, `hydrateGameState`, `returnToStartScreen`, `startNextSoloGame`, `resetGame`
+- run lifecycle: `startSoloRun`, `prepareSoloMode`, `hydrateGameState`, `returnToStartScreen`, `travelToMapTarget`, `returnToMapAfterReward`, `resetGame`
 - drafting/placement: `draftRune`, `placeRunes`, `placeRunesInFloor`, `cancelSelection`, `autoPlaceSelection`
 - resolution: `moveRunesToWall`, `endRound`
 - deck drafting: `selectDeckDraftOffer`

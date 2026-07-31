@@ -2,7 +2,8 @@
  * SoloGameBoard - solo mode game board layout
  */
 
-import { memo } from 'react';
+import { memo, useCallback, useState } from 'react';
+import type { Rune } from '../../../types/game';
 import { SoloGameOverModal } from './SoloGameOverModal';
 import { DeckDraftingModal } from './DeckDraftingModal';
 import { GameMetadataView } from './Center/GameMetadataView';
@@ -22,32 +23,43 @@ export const SoloGameView = memo(function SoloGameView({
   hiddenWallSlots,
 }: SoloGameViewProps) {
   const { isDefeat, deckDraftState } = useGameplayStatusState();
+  const [hoveredPlayerRune, setHoveredPlayerRune] = useState<Rune | null>(null);
+  const [hoveredEnemyRune, setHoveredEnemyRune] = useState<Rune | null>(null);
+  const clearHoveredPlayerRune = useCallback(() => setHoveredPlayerRune(null), []);
+  const clearHoveredEnemyRune = useCallback(() => setHoveredEnemyRune(null), []);
 
   return (
-    <div className="flex h-full flex-col relative">
+    <div className="relative flex h-full flex-col font-pixel">
       <div>
         <GameMetadataView/>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[min(1.2vmin,16px)] py-[min(1.2vmin,16px)]">
+      <div className="flex min-h-0 flex-1 flex-col gap-3.5 px-[min(1.2vmin,16px)] py-[min(1.2vmin,16px)]">
         <div
-          className="grid min-h-0 flex-1 gap-[14px]"
+          className="grid min-h-0 flex-1 gap-3.5"
           style={{ gridTemplateColumns: '220px minmax(440px, 1fr) minmax(440px, 1fr) 220px' }}
         >
-          <PlayerPanel />
+          <PlayerPanel hoveredRune={hoveredPlayerRune} />
 
           <section className="flex h-full min-h-0 items-start justify-center overflow-visible p-5">
-            <ScoringWall hiddenWallSlots={hiddenWallSlots} />
+            <ScoringWall
+              hiddenWallSlots={hiddenWallSlots}
+              onRuneHover={setHoveredPlayerRune}
+              onRuneLeave={clearHoveredPlayerRune}
+            />
           </section>
 
           <section className="flex h-full min-h-0 items-start justify-center overflow-visible p-5">
-            <EnemySpellBoard />
+            <EnemySpellBoard
+              onRuneHover={setHoveredEnemyRune}
+              onRuneLeave={clearHoveredEnemyRune}
+            />
           </section>
 
-          <EnemyPanel />
+          <EnemyPanel hoveredRune={hoveredEnemyRune} />
         </div>
 
-        <section className="relative flex min-h-[240px] flex-col px-4 py-3">
+        <section className="relative flex min-h-60 flex-col px-4 py-3">
           <div className="flex min-h-0 flex-1 items-center">
             <TooltipView />
           </div>

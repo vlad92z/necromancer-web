@@ -5,7 +5,6 @@
 import type { ArtefactId } from './artefacts';
 
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
-export type WallSlotFamily = 'fireVoid' | 'lightningWind' | 'lifeFrost';
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 export type RuneSoundSignals = Record<RuneType, number>;
 
@@ -32,13 +31,15 @@ export interface EffectResolutionLog {
 
 export interface Rune {
   id: string;
-  runeType: RuneType;
+  name: string;
+  runeTypes: RuneType[];
   rarity: RuneEffectRarity;
+  cardImageSrc: string;
+  tokenImageSrc: string;
+  manaCost?: number;
   castEffectRefs: EffectRef[];
   passiveEffectRefs: EffectRef[];
 }
-
-export type EnemyIntent = { type: 'Attack'; amount: number };
 
 export interface Enemy {
   id: string;
@@ -46,7 +47,7 @@ export interface Enemy {
   imageSrc: string;
   health: number;
   maxHealth: number;
-  intent: EnemyIntent;
+  armor?: number;
 }
 
 export interface EnemyRune extends Rune {
@@ -54,18 +55,6 @@ export interface EnemyRune extends Rune {
 }
 
 export type CombatPhase = 'player-turn' | 'enemy-turn' | 'victory' | 'defeat';
-
-export interface SpellWallCharge {
-  row: number;
-  col: number;
-  slotFamily: WallSlotFamily;
-  lockedRuneType: RuneType | null;
-  requiredCount: number;
-  currentCount: number;
-  stagedRune: Rune | null;
-  spentRunes: Rune[];
-  completedRuneId: string | null;
-}
 
 export interface DeckDraftOffer {
   id: string;
@@ -87,17 +76,24 @@ export type TooltipCardVariant = 'default' | 'nonPrimary';
 export interface TooltipCard {
   id: string;
   runeType: RuneType;
+  runeTypes: RuneType[];
   title: string;
   description: string;
   runeRarity?: RuneEffectRarity | null;
-  imageSrc?: string;
+  imageSrc: string;
+  manaCost: number;
   variant?: TooltipCardVariant;
 }
 
 export interface WallCell {
   id: string | null;
-  runeType: RuneType | null;
+  name: string | null;
+  acceptedRuneTypes: RuneType[];
+  runeTypes: RuneType[];
   rarity: RuneEffectRarity | null;
+  cardImageSrc: string | null;
+  tokenImageSrc: string | null;
+  manaCost?: number | null;
   castEffectRefs: EffectRef[] | null;
   passiveEffectRefs: EffectRef[] | null;
 }
@@ -111,8 +107,75 @@ export interface Player {
   health: number;
   maxHealth: number;
   armor: number;
+  mana: number;
+  maxMana: number;
   deck: Rune[];
 }
+
+export type SoloPhase = 'map' | 'encounter' | 'reward';
+export type MapTileKind = 'start' | 'forest';
+export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
+export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
+export type MapEncounterKind = 'fire';
+export type MapRoadId =
+  | 'left-75'
+  | 'left-155'
+  | 'top-75'
+  | 'top-195'
+  | 'right-75'
+  | 'right-155'
+  | 'bottom-75'
+  | 'bottom-195';
+
+export interface MapPoint {
+  x: number;
+  y: number;
+}
+
+export interface MapEncounter {
+  id: string;
+  locationId: MapEncounterLocationId;
+  kind: MapEncounterKind;
+  cleared: boolean;
+}
+
+export interface MapTileState {
+  key: string;
+  x: number;
+  y: number;
+  kind: MapTileKind;
+  encounters: Partial<Record<MapEncounterLocationId, MapEncounter>>;
+}
+
+export interface MapPlayerPosition {
+  tileKey: string;
+  locationId: MapLocationId;
+}
+
+export interface ActiveMapEncounter {
+  id: string;
+  tileKey: string;
+  locationId: MapEncounterLocationId;
+  kind: MapEncounterKind;
+}
+
+export interface SoloMapState {
+  tiles: Record<string, MapTileState>;
+  playerPosition: MapPlayerPosition;
+  activeEncounter: ActiveMapEncounter | null;
+}
+
+export type MapTravelTarget =
+  | {
+    kind: 'location';
+    tileKey: string;
+    locationId: MapLocationId;
+  }
+  | {
+    kind: 'road';
+    tileKey: string;
+    roadId: MapRoadId;
+  };
 
 export interface CombatZoneState {
   enemy: Enemy | null;
@@ -120,16 +183,16 @@ export interface CombatZoneState {
   hand: Rune[];
   discardPile: Rune[];
   suppressedRunes: Rune[];
-  wallCharges: SpellWallCharge[][];
   selectedHandRuneId: string | null;
   enemyBoard: ScoringWall;
-  enemyBoardCharges: SpellWallCharge[][];
   enemyQueuedRunes: EnemyRune[];
   enemyTurnNumber: number;
 }
 
 export interface GameState extends CombatZoneState {
   gameStarted: boolean;
+  soloPhase: SoloPhase;
+  soloMap: SoloMapState;
   startingHealth: number;
   player: Player;
   fullDeck: Rune[];
@@ -142,7 +205,6 @@ export interface GameState extends CombatZoneState {
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
-  wallChargeSoundSignal: number;
   enemyAttackSoundSignal: number;
   shieldSoundSignal: number;
 }

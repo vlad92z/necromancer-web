@@ -45,7 +45,7 @@ describe('deckDrafting', () => {
     expect(ids.size).toBe(runes.length);
     state.offers.forEach((offer) => {
       expect(offer.runes).toHaveLength(3);
-      expect(offer.runes.every((rune) => rune.runeType === offer.runeType)).toBe(true);
+      expect(offer.runes.every((rune) => rune.runeTypes[0] === offer.runeType)).toBe(true);
       expect(['uncommon', 'rare', 'epic']).toContain(offer.displayRarity);
     });
 
@@ -85,8 +85,11 @@ describe('deckDrafting', () => {
       ...variants,
       {
         templateId: 'fire-epic-test-variant',
-        runeType: 'Fire',
+        name: 'Fire Future',
+        runeTypes: ['Fire'],
         rarity: 'epic',
+        cardImageSrc: 'future-fire-card.png',
+        tokenImageSrc: 'future-fire-token.png',
         castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
         passiveEffectRefs: [],
       },
@@ -105,8 +108,10 @@ describe('deckDrafting', () => {
 
       expect(rune).toMatchObject({
         id: 'draft-player-1-Fire-2-4fxc',
-        runeType: 'Fire',
+        runeTypes: ['Fire'],
         rarity: 'epic',
+        cardImageSrc: 'future-fire-card.png',
+        tokenImageSrc: 'future-fire-token.png',
         castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 7 } }],
         passiveEffectRefs: [],
       });
@@ -133,8 +138,11 @@ describe('deckDrafting', () => {
 function createRune(id: string): Rune {
   return {
     id,
-    runeType: 'Fire',
+    name: 'Fire Test',
+    runeTypes: ['Fire'],
     rarity: 'common',
+    cardImageSrc: 'fire-card.png',
+    tokenImageSrc: 'fire-token.png',
     castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 3 } }],
     passiveEffectRefs: [],
   };

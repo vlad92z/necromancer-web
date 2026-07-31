@@ -59,3 +59,24 @@ Compiled from PRDs; ordered by implementation.
 - Connected-segment scoring.
 - Row-based wall charge costs.
 - Old victory draft row bonuses.
+
+## 7. Immediate Rune Placement
+
+- Removed rune charging, staged runes, charge progress, and charge-only audio/UI.
+- Made every rune rarity fill a compatible empty wall slot and resolve effects immediately.
+- Removed the obsolete adjacent-charge effect and invalidated charge-based solo saves.
+
+## 8. Solo Map Navigation
+
+- Added a persistent, lazily generated forest tile grid before solo encounters.
+- Added graph-adjacent encounter and road travel with cleared-location backtracking.
+- Added Fire, Frost, Life, and Wind map markers with keyboard-accessible movement.
+- Temporarily auto-cleared map encounters while preserving an explicit future combat handoff.
+- Invalidated combat-only solo saves for the map-state schema.
+
+## 9. Map Combat Loop
+
+- Made uncleared map locations launch the existing Goblin encounter.
+- Kept cleared locations available for movement without replaying combat.
+- Returned to the map after rune-pack rewards and cleared the completed location.
+- Preserved health, deck rewards, enemy scaling, and map progress between encounters.

@@ -6,30 +6,34 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RuneZoneOverlay } from './DeckOverlay';
 import { SettingsOverlay } from '../../../components/SettingsOverlay';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useEnemyAttackSoundSignal, useRuneSoundSignals, useShieldSoundSignal, useUIOverlayState, useWallChargeSoundSignal } from '../../../hooks/useGameState';
-import { useChargeSound } from '../../../hooks/useChargeSound';
+import {
+  useEnemyAttackSoundSignal,
+  useRuneSoundSignals,
+  useShieldSoundSignal,
+  useSoloPhase,
+  useUIOverlayState,
+} from '../../../hooks/useGameState';
 import { useEnemyAttackSound } from '../../../hooks/useEnemyAttackSound';
 import { useRuneSound } from '../../../hooks/useRuneSound';
 import { useShieldSound } from '../../../hooks/useShieldSound';
 import type { RuneSoundSignals, RuneType } from '../../../types/game';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
+import { SoloMapView } from './map/SoloMapView';
 
 const RUNE_SOUND_TYPES: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind', 'Lightning'];
 
 export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
   const { showSettingsOverlay, activeRuneZoneOverlay } = useUIOverlayState();
+  const soloPhase = useSoloPhase();
   const runeSoundSignals = useRuneSoundSignals();
-  const wallChargeSoundSignal = useWallChargeSoundSignal();
   const enemyAttackSoundSignal = useEnemyAttackSoundSignal();
   const shieldSoundSignal = useShieldSoundSignal();
-  const playChargeSound = useChargeSound();
   const playRuneSound = useRuneSound();
   const playEnemyAttackSound = useEnemyAttackSound();
   const playShieldSound = useShieldSound();
   const previousRuneSoundSignalsRef = useRef<RuneSoundSignals>(runeSoundSignals);
-  const previousWallChargeSoundSignalRef = useRef(wallChargeSoundSignal);
   const previousEnemyAttackSoundSignalRef = useRef(enemyAttackSoundSignal);
   const previousShieldSoundSignalRef = useRef(shieldSoundSignal);
   const hiddenWallSlots = useMemo(() => new Set<string>(), []);
@@ -66,16 +70,6 @@ export function GameContainer() {
   }, [playRuneSound, runeSoundSignals]);
 
   useEffect(() => {
-    if (wallChargeSoundSignal <= previousWallChargeSoundSignalRef.current) {
-      previousWallChargeSoundSignalRef.current = wallChargeSoundSignal;
-      return;
-    }
-
-    playChargeSound();
-    previousWallChargeSoundSignalRef.current = wallChargeSoundSignal;
-  }, [playChargeSound, wallChargeSoundSignal]);
-
-  useEffect(() => {
     if (enemyAttackSoundSignal <= previousEnemyAttackSoundSignalRef.current) {
       previousEnemyAttackSoundSignalRef.current = enemyAttackSoundSignal;
       return;
@@ -100,11 +94,11 @@ export function GameContainer() {
 
   return (
     <div
-      className="min-h-screen w-full bg-[radial-gradient(circle_at_top,#2b184f_0%,#0c041c_65%,#05010d_100%)] text-[#f5f3ff] flex items-center justify-center box-border relative"
+      className="pixel-screen relative box-border flex min-h-screen w-full items-center justify-center"
     >
       <div className="relative" style={{ width: `${scaledBoardWidth}px`, height: `${scaledBoardHeight}px` }}>
         <div
-          className="absolute top-0 left-0 origin-top-left bg-[rgba(9,3,24,0.85)] rounded-[36px] border border-white/12 shadow-[0_40px_120px_rgba(0,0,0,0.75)] flex flex-col overflow-hidden backdrop-blur-[14px]"
+          className="pixel-game-shell absolute left-0 top-0 flex origin-top-left flex-col overflow-hidden"
           style={{
             width: `${SCALING_CONFIG.baseWidth}px`,
             height: `${SCALING_CONFIG.baseHeight}px`,
@@ -113,13 +107,17 @@ export function GameContainer() {
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <SoloGameView
-            hiddenWallSlots={hiddenWallSlots}
-          />
+          {soloPhase === 'map'
+            ? <SoloMapView />
+            : (
+              <SoloGameView
+                hiddenWallSlots={hiddenWallSlots}
+              />
+            )}
         </div>
       </div>
 
-      {activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
+      {soloPhase !== 'map' && activeRuneZoneOverlay && (<RuneZoneOverlay zone={activeRuneZoneOverlay} />)}
       {showSettingsOverlay && (
         <SettingsOverlay onQuitRun={returnToStartScreen} />
       )}

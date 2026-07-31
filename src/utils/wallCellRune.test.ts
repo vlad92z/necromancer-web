@@ -10,8 +10,13 @@ describe('wallCellRune', () => {
   it('preserves wall cell rarity and effect refs for tooltip display runes', () => {
     const cell: WallCell = {
       id: 'wall-copy-void',
-      runeType: 'Void',
+      name: 'Void 3',
+      acceptedRuneTypes: ['Void'],
+      runeTypes: ['Void'],
       rarity: 'rare',
+      cardImageSrc: 'void-card.png',
+      tokenImageSrc: 'void-token.png',
+      manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
     };
@@ -20,8 +25,12 @@ describe('wallCellRune', () => {
 
     expect(rune).toEqual({
       id: 'wall-copy-void',
-      runeType: 'Void',
+      name: 'Void 3',
+      runeTypes: ['Void'],
       rarity: 'rare',
+      cardImageSrc: 'void-card.png',
+      tokenImageSrc: 'void-token.png',
+      manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
     });
@@ -34,8 +43,11 @@ describe('wallCellRune', () => {
       wallCellToRune(
         {
           id: null,
-          runeType: null,
+          name: null,
+          runeTypes: [],
           rarity: null,
+          cardImageSrc: null,
+          tokenImageSrc: null,
           castEffectRefs: null,
           passiveEffectRefs: null,
         },

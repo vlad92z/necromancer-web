@@ -10,12 +10,12 @@ import { GameContainer } from '../features/gameplay/components/GameContainer';
 import { useArtefactActions, useGameplayActions } from '../hooks/useGameActions';
 import { useGameStarted, useSoloStartArtefactState } from '../hooks/useGameState';
 import { hasSavedSoloState, loadSoloState, clearSoloState, getLongestSoloRun, updateLongestSoloRun } from '../utils/soloPersistence';
-import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses';
 import { ArtefactsView, type ArtefactsViewHandle } from '../components/ArtefactsView';
 import { ArtefactsRow } from '../components/ArtefactsRow';
-import arcaneDustIcon from '../assets/stats/arcane_dust.png';
 import { ClickSoundButton } from '../components/ClickSoundButton';
 import { useClickSound } from '../hooks/useClickSound';
+
+type SoloStartAction = 'back' | 'manage' | 'continue' | 'new';
 
 export function SoloStartScreen() {
   const navigate = useNavigate();
@@ -29,13 +29,18 @@ export function SoloStartScreen() {
     return Math.max(storedBest, savedGame);
   });
   const { loadArtefactState } = useArtefactActions();
-  const { arcaneDust, selectedArtefactIds } = useSoloStartArtefactState();
+  const { selectedArtefactIds } = useSoloStartArtefactState();
   const playClickSound = useClickSound();
 
   const [showArtefactsModal, setShowArtefactsModal] = useState(false);
-  const formattedDust = arcaneDust.toLocaleString();
-  const [activeElement, setActiveElement] = useState<'back' | 'manage' | 'continue' | 'new'>('back');
+  const [activeElement, setActiveElement] = useState<SoloStartAction | null>(null);
   const artefactsRef = useRef<ArtefactsViewHandle | null>(null);
+  const buttonRefs = useRef<Record<SoloStartAction, HTMLButtonElement | null>>({
+    back: null,
+    manage: null,
+    continue: null,
+    new: null,
+  });
 
   useEffect(() => {
     setNavigationCallback(() => navigate('/solo'));
@@ -101,33 +106,42 @@ export function SoloStartScreen() {
       if (current === 'continue' && !hasSavedSoloRun) {
         return 'new';
       }
-      return current ?? 'back';
+      return current;
     });
   }, [hasSavedSoloRun]);
+
+  const selectAction = useCallback((action: SoloStartAction) => {
+    setActiveElement(action);
+    buttonRefs.current[action]?.focus();
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
 
-    const order: Array<'back' | 'manage' | 'continue' | 'new'> = hasSavedSoloRun
-      ? ['back', 'manage', 'continue', 'new']
-      : ['back', 'manage', 'new'];
+    const order: SoloStartAction[] = hasSavedSoloRun
+      ? ['back', 'continue', 'new', 'manage']
+      : ['back', 'new', 'manage'];
 
     const moveSelection = (direction: 'up' | 'down') => {
-      setActiveElement((current) => {
-        const currentIndex = order.indexOf(current);
-        const offset = direction === 'down' ? 1 : -1;
-        const nextIndex = (currentIndex + offset + order.length) % order.length;
-        const next = order[nextIndex];
-        if (next !== current) {
-          playClickSound();
-        }
-        return next;
-      });
+      if (activeElement === null) {
+        selectAction(order[0]);
+        playClickSound();
+        return;
+      }
+
+      const currentIndex = order.indexOf(activeElement);
+      const offset = direction === 'down' ? 1 : -1;
+      const nextIndex = (currentIndex + offset + order.length) % order.length;
+      const next = order[nextIndex];
+      if (next !== activeElement) {
+        selectAction(next);
+        playClickSound();
+      }
     };
 
-    const triggerAction = (target: 'back' | 'manage' | 'continue' | 'new') => {
+    const triggerAction = (target: SoloStartAction) => {
       switch (target) {
         case 'back':
           handleBack();
@@ -150,11 +164,9 @@ export function SoloStartScreen() {
       if (showArtefactsModal) {
         artefactsRef.current?.handleKeyDown(event);
         return;
-      } else if (gameStarted) {
-        return;
       }
 
-      if (showArtefactsModal || gameStarted) {
+      if (gameStarted) {
         return;
       }
       
@@ -169,40 +181,20 @@ export function SoloStartScreen() {
           moveSelection('down');
           break;
         }
-        case 'ArrowRight': {
-          if (activeElement === 'continue' && hasSavedSoloRun) {
-            event.preventDefault();
-            setActiveElement((current) => {
-              if (current !== 'new') {
-                playClickSound();
-              }
-              return 'new';
-            });
-          }
-          break;
-        }
-        case 'ArrowLeft': {
-          if (activeElement === 'new' && hasSavedSoloRun) {
-            event.preventDefault();
-            setActiveElement((current) => {
-              if (current !== 'continue') {
-                playClickSound();
-              }
-              return 'continue';
-            });
-          }
-          break;
-        }
         case 'Enter':
         case ' ': // Space
         case 'Spacebar': {
           event.preventDefault();
-          playClickSound();
-          triggerAction(activeElement);
+          if (activeElement === null) {
+            selectAction(order[0]);
+            playClickSound();
+          } else {
+            playClickSound();
+            triggerAction(activeElement);
+          }
           break;
         }
         case 'Escape': {
-          console.log('Solo Start Escape pressed');
           event.preventDefault();
           playClickSound();
           handleBack();
@@ -215,93 +207,99 @@ export function SoloStartScreen() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeElement, artefactsRef, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, showArtefactsModal]);
-
-  const gradientActive = 'data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5';
-  const simpleActive = 'data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800';
-  const backButtonClasses = 'rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-sky-300 transition-colors hover:text-sky-200 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 data-[active=true]:text-sky-100 data-[active=true]:underline';
-  const manageButtonClasses = 'rounded-xl border border-purple-500/30 bg-purple-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-purple-300 transition hover:border-purple-400 hover:bg-purple-900/30 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 data-[active=true]:border-purple-300 data-[active=true]:bg-purple-900/40 data-[active=true]:shadow-[0_0_0_2px_rgba(168,85,247,0.35)]';
-  const continueButtonClasses = `${gradientButtonClasses} ${gradientActive} data-[active=true]:border data-[active=true]:border-slate-300`;
-  const newGameButtonClasses = hasSavedSoloRun
-    ? `${simpleButtonClasses} ${simpleActive}`
-    : `${gradientButtonClasses} ${gradientActive}`;
+  }, [activeElement, gameStarted, handleBack, handleContinueSolo, handleManage, handleStartSolo, hasSavedSoloRun, playClickSound, selectAction, showArtefactsModal]);
 
   if (gameStarted) {
     return <GameContainer/>;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0b1024] px-6 py-6 text-slate-100">
-      <div className="w-[min(1100px,94vw)] min-h-[calc(min(1100px,94vw)*2/3)] space-y-4 rounded-2xl border border-slate-700/40 bg-[linear-gradient(145deg,rgba(17,24,39,0.95),rgba(30,41,59,0.85))] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+    <main className="pixel-screen relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-10">
+      <div aria-hidden="true" className="absolute left-[6%] top-[12%] h-4 w-4 bg-[#e15f4f] shadow-[16px_0_0_#e15f4f,0_16px_0_#e15f4f]" />
+      <div aria-hidden="true" className="absolute bottom-[16%] right-[8%] h-4 w-4 bg-[#5dc6b0] shadow-[-16px_0_0_#5dc6b0,0_-16px_0_#5dc6b0]" />
+
+      <div className="relative w-full max-w-140">
         <div className="flex items-center justify-between gap-4">
           <ClickSoundButton
+            ref={(element) => { buttonRefs.current.back = element; }}
             title="← Back"
             action={handleBack}
-            className={backButtonClasses}
+            className="pixel-button pixel-button--utility pixel-button--compact w-auto"
             isActive={activeElement === 'back'}
+            onFocus={(event) => {
+              if (event.currentTarget.matches(':focus-visible')) setActiveElement('back');
+            }}
+            onPointerDown={() => setActiveElement(null)}
           />
+          {longestSoloRun > 2 && (
+            <div className="font-pixel flex items-center gap-3 text-[10px] uppercase text-[#b5d3bd]">
+              <span>Longest Run</span>
+              <span className="text-lg text-[#f2c14e]">{longestSoloRun - 1}</span>
+            </div>
+          )}
         </div>
 
-        <div className="space-y-1">
-          <h1 className="text-4xl font-bold uppercase tracking-tight text-slate-50">Solo Run</h1>
-          <p className="text-base text-slate-300">
-            Charge your spell wall, survive enemy attacks, and draft rewards between encounters
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {longestSoloRun > 2 && (
-              <div className="inline-flex items-center gap-2 rounded-xl border border-sky-400/25 bg-slate-900/70 px-3 py-2 text-[13px] font-semibold uppercase tracking-[0.18em] text-sky-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
-                <span className="text-[11px] text-sky-300">Longest Run</span>
-                <span className="text-lg font-extrabold text-slate-50">{longestSoloRun - 1}</span>
-              </div>
-            )}
+        <section className="pixel-panel mt-5 p-2">
+          <div className="pixel-panel-inset space-y-4 px-6 py-7 text-center md:px-10 md:py-9">
+            <h1 className="font-pixel text-4xl uppercase leading-[0.95] text-[#fff8d8] [text-shadow:4px_4px_0_#141313] md:text-5xl">Solo Run</h1>
+          </div>
+        </section>
 
-            {arcaneDust > 0 && (
-              <div className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 bg-amber-100/5 px-3 py-2 text-[13px] font-extrabold uppercase tracking-[0.18em] text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
-                <img src={arcaneDustIcon} alt="Arcane Dust" className="h-8 w-8" />
-                <span className="text-lg text-amber-200">{formattedDust}</span>
-              </div>
+        <div className="mt-5">
+          <div className="flex w-full flex-col gap-4">
+            {hasSavedSoloRun && (
+              <ClickSoundButton
+                ref={(element) => { buttonRefs.current.continue = element; }}
+                title="Continue Run"
+                action={handleContinueSolo}
+                className="pixel-button pixel-button--utility"
+                isActive={activeElement === 'continue'}
+                onFocus={(event) => {
+                  if (event.currentTarget.matches(':focus-visible')) setActiveElement('continue');
+                }}
+                onPointerDown={() => setActiveElement(null)}
+              />
             )}
+            <ClickSoundButton
+              ref={(element) => { buttonRefs.current.new = element; }}
+              title="New Game"
+              action={handleStartSolo}
+              className="pixel-button pixel-button--primary"
+              isActive={activeElement === 'new'}
+              onFocus={(event) => {
+                if (event.currentTarget.matches(':focus-visible')) setActiveElement('new');
+              }}
+              onPointerDown={() => setActiveElement(null)}
+            />
           </div>
         </div>
 
-        {/* Artefacts Section */}
-        <section className="space-y-2">
+        <section className="pixel-control mt-5 space-y-4 p-4 md:p-5">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold uppercase tracking-wider text-slate-200">Artefacts</div>
+            <div className="font-pixel text-xs uppercase tracking-[0.18em] text-[#fff8d8]">Artefacts</div>
             <ClickSoundButton
+              ref={(element) => { buttonRefs.current.manage = element; }}
               title="Manage"
               action={handleManage}
-              className={manageButtonClasses}
+              className="pixel-button pixel-button--utility pixel-button--compact w-auto"
               isActive={activeElement === 'manage'}
+              onFocus={(event) => {
+                if (event.currentTarget.matches(':focus-visible')) setActiveElement('manage');
+              }}
+              onPointerDown={() => setActiveElement(null)}
             />
           </div>
           {selectedArtefactIds.length > 0 && (
-            <div className="rounded-xl border border-slate-600/40 bg-slate-900/50 p-4">
+            <div className="border-4 border-[#141313] bg-[#293532] p-4">
               <ArtefactsRow selectedArtefactIds={selectedArtefactIds} />
             </div>
           )}
         </section>
-
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-          {hasSavedSoloRun && handleContinueSolo && (
-            <ClickSoundButton
-              title="Continue Run"
-              action={handleContinueSolo}
-              className={continueButtonClasses}
-              isActive={activeElement === 'continue'}
-            />
-          )}
-          <ClickSoundButton
-            title="New Game"
-            action={() => handleStartSolo()}
-            className={newGameButtonClasses}
-            isActive={activeElement === 'new'}
-          />
-        </div>
+        <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select</p>
       </div>
 
       {/* Artefacts Modal */}
       <ArtefactsView ref={artefactsRef} isOpen={showArtefactsModal} onClose={() => setShowArtefactsModal(false)} />
-    </div>
+    </main>
   );
 }

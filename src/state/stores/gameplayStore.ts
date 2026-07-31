@@ -3,11 +3,19 @@
  */
 
 import { create, type StoreApi } from 'zustand';
-import type { EffectResolutionLog, GameState, Player, Rune, RuneType, ScoringWall, SpellWallCharge } from '../../types/game';
+import type {
+  EffectResolutionLog,
+  GameState,
+  MapTravelTarget,
+  Player,
+  Rune,
+  RuneType,
+  ScoringWall,
+  SoloMapState,
+} from '../../types/game';
 import {
   createEmptyWall,
-  createEmptyWallCharges,
-  createEnemyWallCharges,
+  createEnemySpellBoard,
   createGoblinEnemy,
   createRuneSoundSignals,
   initializeSoloGame,
@@ -30,6 +38,7 @@ import {
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { getArcaneDustReward } from '../../utils/arcaneDust';
+import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import {
   addGameplayArcaneDust,
   clearPersistedSoloRun,
@@ -49,6 +58,7 @@ function enterDeckDraftMode(state: GameState): GameState {
 
   return {
     ...state,
+    soloPhase: 'reward',
     deckDraftState,
     deckDraftReadyForNextGame: false,
     combatPhase: 'victory',
@@ -71,6 +81,8 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
   return {
     ...currentState,
     ...nextState,
+    soloPhase: nextState.soloPhase ?? 'map',
+    soloMap: nextState.soloMap ?? currentState.soloMap,
     deckDraftState: nextState.deckDraftState ?? null,
     deckDraftReadyForNextGame: nextState.deckDraftReadyForNextGame ?? false,
     enemyMaxHealth: typeof nextState.enemyMaxHealth === 'number' ? nextState.enemyMaxHealth : currentState.enemyMaxHealth,
@@ -84,16 +96,11 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
     suppressedRunes: nextState.suppressedRunes ?? [],
-    wallCharges: nextState.wallCharges ?? createEmptyWallCharges(),
-    enemyBoard: nextState.enemyBoard ?? createEmptyWall(),
-    enemyBoardCharges: nextState.enemyBoardCharges ?? createEnemyWallCharges(),
+    enemyBoard: nextState.enemyBoard ?? createEnemySpellBoard(),
     enemyQueuedRunes: nextState.enemyQueuedRunes ?? [],
     enemyTurnNumber: typeof nextState.enemyTurnNumber === 'number' ? nextState.enemyTurnNumber : 0,
     selectedHandRuneId: nextState.selectedHandRuneId ?? null,
     runeSoundSignals: nextState.runeSoundSignals ?? currentState.runeSoundSignals,
-    wallChargeSoundSignal: typeof nextState.wallChargeSoundSignal === 'number'
-      ? nextState.wallChargeSoundSignal
-      : currentState.wallChargeSoundSignal,
     enemyAttackSoundSignal: typeof nextState.enemyAttackSoundSignal === 'number'
       ? nextState.enemyAttackSoundSignal
       : currentState.enemyAttackSoundSignal,
@@ -101,6 +108,49 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
       ? nextState.shieldSoundSignal
       : currentState.shieldSoundSignal,
   };
+}
+
+function initializeEncounterForMapLocation(
+  state: GameState,
+  soloMap: SoloMapState,
+): GameState {
+  const encounterState = initializeSoloGame(state.enemyMaxHealth, state.fullDeck);
+  const maxHealth = state.player.maxHealth ?? state.startingHealth;
+  const health = Math.min(maxHealth, Math.max(0, state.player.health));
+  const nextState: GameState = {
+    ...encounterState,
+    gameStarted: true,
+    soloPhase: 'encounter',
+    soloMap,
+    startingHealth: state.startingHealth,
+    player: {
+      ...encounterState.player,
+      health,
+      maxHealth,
+    },
+    fullDeck: state.fullDeck,
+    gameIndex: state.gameIndex,
+    enemyMaxHealth: state.enemyMaxHealth,
+    baseEnemyMaxHealth: state.baseEnemyMaxHealth || state.enemyMaxHealth,
+    isDefeat: false,
+    longestRun: state.longestRun,
+    deckDraftState: null,
+    deckDraftReadyForNextGame: false,
+    activeArtefacts: state.activeArtefacts,
+    runeSoundSignals: state.runeSoundSignals,
+    enemyAttackSoundSignal: state.enemyAttackSoundSignal,
+    shieldSoundSignal: state.shieldSoundSignal,
+  };
+
+  trackGameplayNewGame({
+    gameNumber: nextState.gameIndex,
+    activeArtefacts: nextState.activeArtefacts,
+    deck: nextState.player.deck,
+    enemyMaxHealth: nextState.enemyMaxHealth,
+    startingHealth: nextState.startingHealth,
+  });
+
+  return nextState;
 }
 
 function isWallFull(wall: ScoringWall): boolean {
@@ -118,27 +168,11 @@ function trackDefeat(state: GameState, player: Player): void {
   });
 }
 
-function getCompletedRuneTypesById(wall: ScoringWall, wallCharges: SpellWallCharge[][]): Map<string, RuneType> {
-  return wallCharges.reduce<Map<string, RuneType>>((runeTypesById, chargeRow) => {
-    chargeRow.forEach((charge) => {
-      if (!charge.completedRuneId) {
-        return;
-      }
-
-      const runeType = wall[charge.row]?.[charge.col]?.runeType;
-      if (runeType) {
-        runeTypesById.set(charge.completedRuneId, runeType);
-      }
-    });
-    return runeTypesById;
-  }, new Map<string, RuneType>());
-}
-
-function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType>, wall: ScoringWall): Map<string, RuneType> {
+function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType[]>, wall: ScoringWall): Map<string, RuneType[]> {
   wall.forEach((row) => {
     row.forEach((cell) => {
-      if (cell.id && cell.runeType) {
-        runeTypesById.set(cell.id, cell.runeType);
+      if (cell.id && cell.runeTypes.length > 0) {
+        runeTypesById.set(cell.id, cell.runeTypes);
       }
     });
   });
@@ -176,19 +210,17 @@ function countRuneSoundEvents({
   completedRune = null,
   logs,
   wall,
-  wallCharges,
 }: {
   completedRune?: Rune | null;
   logs: EffectResolutionLog[];
   wall: ScoringWall;
-  wallCharges: SpellWallCharge[][];
 }): Record<RuneType, number> {
   const events = createEmptyRuneSoundEvents();
-  const completedRuneTypesById = addCompletedWallRuneTypesById(getCompletedRuneTypesById(wall, wallCharges), wall);
+  const completedRuneTypesById = addCompletedWallRuneTypesById(new Map<string, RuneType[]>(), wall);
   const retriggeredRuneIdsByType = new Map<RuneType, Set<string>>();
 
   if (completedRune) {
-    addRuneSoundEvent(events, completedRune.runeType);
+    completedRune.runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
   }
 
   logs.forEach((log) => {
@@ -197,22 +229,22 @@ function countRuneSoundEvents({
     }
 
     if (log.effectId.startsWith('passive.')) {
-      const runeType = completedRuneTypesById.get(log.sourceId) ?? null;
-      if (runeType) {
-        addRuneSoundEvent(events, runeType);
-      }
+      const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
+      runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
       return;
     }
 
-    const runeType = completedRuneTypesById.get(log.sourceId);
+    const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
     if (
       log.effectId.startsWith('cast.') &&
       log.sourceId !== completedRune?.id &&
-      runeType
+      runeTypes.length > 0
     ) {
-      const retriggeredRuneIds = retriggeredRuneIdsByType.get(runeType) ?? new Set<string>();
-      retriggeredRuneIds.add(log.sourceId);
-      retriggeredRuneIdsByType.set(runeType, retriggeredRuneIds);
+      runeTypes.forEach((runeType) => {
+        const retriggeredRuneIds = retriggeredRuneIdsByType.get(runeType) ?? new Set<string>();
+        retriggeredRuneIds.add(log.sourceId);
+        retriggeredRuneIdsByType.set(runeType, retriggeredRuneIds);
+      });
     }
   });
 
@@ -228,7 +260,8 @@ export interface GameplayStore extends GameState {
   prepareSoloMode: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
-  startNextSoloGame: () => void;
+  returnToMapAfterReward: () => void;
+  travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
   endCombatTurn: () => void;
@@ -248,16 +281,9 @@ export const gameplayStoreConfig = (
       const nextState = {
         ...baseState,
         gameStarted: true,
+        soloPhase: 'map' as const,
         activeArtefacts: selectedArtefacts,
       };
-
-      trackGameplayNewGame({
-        gameNumber: nextState.gameIndex,
-        activeArtefacts: nextState.activeArtefacts,
-        deck: nextState.player.deck,
-        enemyMaxHealth: nextState.enemyMaxHealth,
-        startingHealth: nextState.startingHealth,
-      });
 
       return nextState;
     });
@@ -292,6 +318,29 @@ export const gameplayStoreConfig = (
     set(() => initializeSoloGame());
   },
 
+  travelToMapTarget: (target: MapTravelTarget) => {
+    set((state) => {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat) {
+        return state;
+      }
+
+      const result = travelOnSoloMap(state.soloMap, target);
+      if (result.map === state.soloMap) {
+        return state;
+      }
+
+      if (result.enteredEncounter) {
+        return initializeEncounterForMapLocation(state, result.map);
+      }
+
+      return {
+        ...state,
+        soloPhase: 'map',
+        soloMap: result.map,
+      };
+    });
+  },
+
   selectHandRune: (runeId: string) => {
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.deckDraftState) {
@@ -318,11 +367,16 @@ export const gameplayStoreConfig = (
         return state;
       }
 
+      const selectedRune = state.hand.find((rune) => rune.id === state.selectedHandRuneId);
+      const manaCost = selectedRune?.manaCost ?? 2;
+      if (!selectedRune || manaCost > state.player.mana) {
+        return state;
+      }
+
       const result = castRuneToWallSlot({
         player: state.player,
         hand: state.hand,
         discardPile: state.discardPile,
-        wallCharges: state.wallCharges,
         selectedHandRuneId: state.selectedHandRuneId,
         row,
         col,
@@ -339,7 +393,6 @@ export const gameplayStoreConfig = (
           rune: result.completedRune,
           activeArtefacts: state.activeArtefacts,
           sourcePosition: result.completedPosition,
-          wallCharges: result.wallCharges,
           suppressedRunes: state.suppressedRunes,
           handSize: result.hand.length,
         });
@@ -349,12 +402,10 @@ export const gameplayStoreConfig = (
           completedRune: result.completedRune,
           logs: resolvedEffects.logs,
           wall: resolvedEffects.player.wall,
-          wallCharges: resolvedEffects.wallCharges,
         });
         const handWithReturnedRunes = [...result.hand, ...resolvedEffects.returnedRunes];
         const discardWithResolvedRunes = [
           ...result.discardPile,
-          ...resolvedEffects.discardedRunes,
           ...resolvedEffects.returnedOverflowRunes,
         ];
 
@@ -365,7 +416,6 @@ export const gameplayStoreConfig = (
             hand: handWithReturnedRunes,
             discardPile: discardWithResolvedRunes,
             suppressedRunes: resolvedEffects.suppressedRunes,
-            wallCharges: resolvedEffects.wallCharges,
           });
 
           return enterDeckDraftMode({
@@ -378,7 +428,6 @@ export const gameplayStoreConfig = (
             hand: victoryDeck.hand,
             discardPile: victoryDeck.discardPile,
             suppressedRunes: [],
-            wallCharges: createEmptyWallCharges(),
             selectedHandRuneId: null,
             runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, resolvedRuneSoundEvents),
           });
@@ -409,26 +458,20 @@ export const gameplayStoreConfig = (
 
         return {
           ...state,
-          player: drawResult.player,
+          player: {
+            ...drawResult.player,
+            mana: state.player.mana - manaCost,
+          },
           enemy: resolvedEffects.enemy,
           hand: drawResult.hand,
           discardPile: drawResult.discardPile,
           suppressedRunes: resolvedEffects.suppressedRunes,
-          wallCharges: resolvedEffects.wallCharges,
           selectedHandRuneId: result.selectedHandRuneId,
           runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, resolvedRuneSoundEvents),
         };
       }
 
-      return {
-        ...state,
-        player: result.player,
-        hand: result.hand,
-        discardPile: result.discardPile,
-        wallCharges: result.wallCharges,
-        selectedHandRuneId: result.selectedHandRuneId,
-        wallChargeSoundSignal: state.wallChargeSoundSignal + 1,
-      };
+      return state;
     });
 
     if (arcaneDustGain > 0) {
@@ -455,7 +498,6 @@ export const gameplayStoreConfig = (
       let runeSoundEvents = countRuneSoundEvents({
         logs: endTurnEffects.logs,
         wall: endTurnEffects.player.wall,
-        wallCharges: state.wallCharges,
       });
 
       if ((endTurnEffects.enemy?.health ?? 1) <= 0) {
@@ -465,7 +507,6 @@ export const gameplayStoreConfig = (
           hand: state.hand,
           discardPile: state.discardPile,
           suppressedRunes: state.suppressedRunes,
-          wallCharges: state.wallCharges,
         });
 
         return enterDeckDraftMode({
@@ -478,7 +519,6 @@ export const gameplayStoreConfig = (
           hand: victoryDeck.hand,
           discardPile: victoryDeck.discardPile,
           suppressedRunes: [],
-          wallCharges: createEmptyWallCharges(),
           selectedHandRuneId: null,
           runeSoundSignals: applyRuneSoundEvents(state.runeSoundSignals, runeSoundEvents),
         });
@@ -488,18 +528,25 @@ export const gameplayStoreConfig = (
         player: endTurnEffects.player,
         enemy: endTurnEffects.enemy,
         enemyBoard: state.enemyBoard,
-        enemyBoardCharges: state.enemyBoardCharges,
         enemyQueuedRunes: state.enemyQueuedRunes,
         turnNumber: state.enemyTurnNumber,
+        activeArtefacts: state.activeArtefacts,
       });
       const enemyAttackSoundSignal = state.enemyAttackSoundSignal + (enemyTurnResult.healthDamage > 0 ? 1 : 0);
-      const shieldSoundSignal = state.shieldSoundSignal + (enemyTurnResult.healthDamage === 0 && enemyTurnResult.player.armor < endTurnEffects.player.armor ? 1 : 0);
+      const passivePreventedDamage = enemyTurnResult.logs.some((log) => (
+        log.effectId === 'passive.reduceDamage'
+        && log.output.previousValue !== log.output.nextValue
+      ));
+      const shieldedAttack = enemyTurnResult.healthDamage === 0 && (
+        enemyTurnResult.player.armor < endTurnEffects.player.armor
+        || passivePreventedDamage
+      );
+      const shieldSoundSignal = state.shieldSoundSignal + (shieldedAttack ? 1 : 0);
       runeSoundEvents = mergeRuneSoundEvents(
         runeSoundEvents,
         countRuneSoundEvents({
           logs: enemyTurnResult.logs,
           wall: enemyTurnResult.player.wall,
-          wallCharges: state.wallCharges,
         })
       );
       const discardPile = [...state.discardPile, ...state.hand];
@@ -509,11 +556,10 @@ export const gameplayStoreConfig = (
         return {
           ...state,
           player: enemyTurnResult.player,
-          enemy: endTurnEffects.enemy,
+          enemy: enemyTurnResult.enemy,
           hand: [],
           discardPile,
           enemyBoard: enemyTurnResult.enemyBoard,
-          enemyBoardCharges: enemyTurnResult.enemyBoardCharges,
           enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
           enemyTurnNumber: state.enemyTurnNumber + 1,
           selectedHandRuneId: null,
@@ -540,7 +586,6 @@ export const gameplayStoreConfig = (
         countRuneSoundEvents({
           logs: startTurnEffects.logs,
           wall: startTurnEffects.player.wall,
-          wallCharges: state.wallCharges,
         })
       );
       const startTurnDrawResult = startTurnEffects.drawCount > 0
@@ -559,12 +604,14 @@ export const gameplayStoreConfig = (
 
       return {
         ...state,
-        player: startTurnDrawResult.player,
-        enemy: endTurnEffects.enemy,
+        player: {
+          ...startTurnDrawResult.player,
+          mana: startTurnDrawResult.player.maxMana,
+        },
+        enemy: enemyTurnResult.enemy,
         hand: startTurnDrawResult.hand,
         discardPile: startTurnDrawResult.discardPile,
         enemyBoard: enemyTurnResult.enemyBoard,
-        enemyBoardCharges: enemyTurnResult.enemyBoardCharges,
         enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
         enemyTurnNumber: state.enemyTurnNumber + 1,
         selectedHandRuneId: null,
@@ -611,39 +658,25 @@ export const gameplayStoreConfig = (
     });
   },
 
-  startNextSoloGame: () => {
+  returnToMapAfterReward: () => {
     set((state) => {
-      const nextEnemyMaxHealth = state.enemyMaxHealth;
-      const nextGameIndex = state.gameIndex + 1;
-      const previousHealth = Math.max(0, state.player.health);
-      const nextMaxHealth = state.player.maxHealth ?? state.startingHealth;
-      const clampedHealth = Math.min(nextMaxHealth, previousHealth);
-      const nextGameState = initializeSoloGame(nextEnemyMaxHealth, state.fullDeck);
-      const nextState = {
-        ...nextGameState,
-        player: {
-          ...nextGameState.player,
-          health: clampedHealth,
-          maxHealth: nextMaxHealth,
-        },
-        gameIndex: nextGameIndex,
-        gameStarted: true,
-        fullDeck: state.fullDeck,
-        baseEnemyMaxHealth: state.baseEnemyMaxHealth || nextEnemyMaxHealth,
+      if (
+        state.soloPhase !== 'reward'
+        || !state.deckDraftState
+        || !state.soloMap.activeEncounter
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        soloPhase: 'map',
+        soloMap: completeActiveMapEncounter(state.soloMap),
+        gameIndex: state.gameIndex + 1,
         deckDraftState: null,
         deckDraftReadyForNextGame: false,
-        activeArtefacts: state.activeArtefacts,
+        selectedHandRuneId: null,
       };
-
-      trackGameplayNewGame({
-        gameNumber: nextState.gameIndex,
-        activeArtefacts: nextState.activeArtefacts,
-        deck: nextState.player.deck,
-        enemyMaxHealth: nextState.enemyMaxHealth,
-        startingHealth: nextState.startingHealth,
-      });
-
-      return nextState;
     });
   },
 });

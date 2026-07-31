@@ -59,7 +59,9 @@ const emptyRuneTypeCounts = (): Record<RuneType, number> => ({
 
 function summarizeDeck(runes: Rune[]) {
   const counts = runes.reduce<Record<RuneType, number>>((acc, rune) => {
-    acc[rune.runeType] += 1
+    rune.runeTypes.forEach((runeType) => {
+      acc[runeType] += 1
+    })
     return acc
   }, emptyRuneTypeCounts())
 

@@ -4,6 +4,7 @@
 
 import type { Rune, TooltipCard } from '../types/game';
 import { getRuneEffectDescription } from './runeEffects';
+import { getPrimaryRuneType } from './runeHelpers';
 
 function orderPrimaryFirst<T extends { id: string }>(items: T[], primaryId?: string | null): T[] {
   if (!primaryId) {
@@ -24,11 +25,17 @@ function orderPrimaryFirst<T extends { id: string }>(items: T[], primaryId?: str
  */
 export function buildRuneTooltipCards(runes: Rune[], primaryRuneId?: string | null): TooltipCard[] {
   const orderedRunes = orderPrimaryFirst(runes, primaryRuneId);
-  return orderedRunes.map((rune, index) => ({
-    id: `rune-tooltip-${rune.id}-${index}`,
-    runeType: rune.runeType,
-    title: `${rune.runeType} Rune`,
-    description: getRuneEffectDescription(rune),
-    runeRarity: rune.rarity,
-  }));
+  return orderedRunes.map((rune, index) => {
+    const runeType = getPrimaryRuneType(rune);
+    return {
+      id: `rune-tooltip-${rune.id}-${index}`,
+      runeType,
+      runeTypes: [...rune.runeTypes],
+      title: rune.name,
+      description: getRuneEffectDescription(rune),
+      runeRarity: rune.rarity,
+      imageSrc: rune.cardImageSrc,
+      manaCost: rune.manaCost ?? 2,
+    };
+  });
 }

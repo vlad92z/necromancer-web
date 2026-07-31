@@ -32,6 +32,7 @@ Core model:
 
 Rune:
 - `id`
+- `name`
 - `runeType`
 - `rarity: common | uncommon | rare | epic`
 - `castEffectRefs`

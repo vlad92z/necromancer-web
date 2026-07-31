@@ -4,11 +4,12 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { ArtefactId } from '../../types/artefacts';
-import type { DeckDraftState, GameState, Rune, RuneSoundSignals } from '../../types/game';
+import type { DeckDraftState, GameState, Rune, RuneSoundSignals, SoloPhase } from '../../types/game';
 import { initializeSoloGame } from '../../utils/gameInitialization';
 
 export interface RunState {
   gameStarted: boolean;
+  soloPhase: SoloPhase;
   startingHealth: number;
   fullDeck: Rune[];
   gameIndex: number;
@@ -20,7 +21,6 @@ export interface RunState {
   deckDraftReadyForNextGame: boolean;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
-  wallChargeSoundSignal: number;
   enemyAttackSoundSignal: number;
   shieldSoundSignal: number;
 }
@@ -32,6 +32,7 @@ export interface RunStore extends RunState {
 export function pickRunState(state: GameState): RunState {
   return {
     gameStarted: state.gameStarted,
+    soloPhase: state.soloPhase,
     startingHealth: state.startingHealth,
     fullDeck: state.fullDeck,
     gameIndex: state.gameIndex,
@@ -43,7 +44,6 @@ export function pickRunState(state: GameState): RunState {
     deckDraftReadyForNextGame: state.deckDraftReadyForNextGame,
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
-    wallChargeSoundSignal: state.wallChargeSoundSignal,
     enemyAttackSoundSignal: state.enemyAttackSoundSignal,
     shieldSoundSignal: state.shieldSoundSignal,
   };

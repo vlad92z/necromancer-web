@@ -2,7 +2,7 @@
  * Gameplay Actions - stable orchestration entry points for current combat.
  */
 
-import type { GameState } from '../../types/game';
+import type { GameState, MapTravelTarget } from '../../types/game';
 import { useGameplayStore } from './gameplayStore';
 
 export interface GameplayActions {
@@ -10,7 +10,8 @@ export interface GameplayActions {
   prepareSoloMode: () => void;
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
-  startNextSoloGame: () => void;
+  returnToMapAfterReward: () => void;
+  travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
   endCombatTurn: () => void;
@@ -23,7 +24,8 @@ export const gameplayActions: GameplayActions = {
   prepareSoloMode: () => useGameplayStore.getState().prepareSoloMode(),
   hydrateGameState: (nextState) => useGameplayStore.getState().hydrateGameState(nextState),
   returnToStartScreen: () => useGameplayStore.getState().returnToStartScreen(),
-  startNextSoloGame: () => useGameplayStore.getState().startNextSoloGame(),
+  returnToMapAfterReward: () => useGameplayStore.getState().returnToMapAfterReward(),
+  travelToMapTarget: (target) => useGameplayStore.getState().travelToMapTarget(target),
   selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),
   castRuneToWall: (row, col) => useGameplayStore.getState().castRuneToWall(row, col),
   endCombatTurn: () => useGameplayStore.getState().endCombatTurn(),

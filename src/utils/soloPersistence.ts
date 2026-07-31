@@ -2,11 +2,11 @@
  * Solo persistence helpers - manages saving and loading solo runs.
  */
 
-import type { GameState } from '../types/game';
+import type { GameState, SoloMapState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 11;
+export const SOLO_STATE_VERSION = 21;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -14,6 +14,36 @@ interface SoloStatePayload {
 }
 
 const canAccessStorage = (): boolean => typeof window !== 'undefined';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isSoloMapState(value: unknown): value is SoloMapState {
+  if (!isRecord(value) || !isRecord(value.tiles) || !isRecord(value.playerPosition)) {
+    return false;
+  }
+
+  const { tileKey, locationId } = value.playerPosition;
+  if (
+    typeof tileKey !== 'string'
+    || !['start', 'A', 'B', 'C', 'D'].includes(String(locationId))
+    || !isRecord(value.tiles[tileKey])
+  ) {
+    return false;
+  }
+
+  return Object.entries(value.tiles).every(([key, tileValue]) => {
+    if (!isRecord(tileValue) || !isRecord(tileValue.encounters)) {
+      return false;
+    }
+
+    return tileValue.key === key
+      && typeof tileValue.x === 'number'
+      && typeof tileValue.y === 'number'
+      && (tileValue.kind === 'start' || tileValue.kind === 'forest');
+  });
+}
 
 function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   if (!value || typeof value !== 'object') {
@@ -29,11 +59,14 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   return Array.isArray(state.hand)
     && Array.isArray(state.discardPile)
     && Array.isArray(state.suppressedRunes)
-    && Array.isArray(state.wallCharges)
     && Array.isArray(state.enemyBoard)
-    && Array.isArray(state.enemyBoardCharges)
     && Array.isArray(state.enemyQueuedRunes)
-    && typeof state.enemyMaxHealth === 'number';
+    && typeof state.enemyMaxHealth === 'number'
+    && isRecord(state.player)
+    && typeof state.player.mana === 'number'
+    && typeof state.player.maxMana === 'number'
+    && ['map', 'encounter', 'reward'].includes(String(state.soloPhase))
+    && isSoloMapState(state.soloMap);
 }
 
 export function saveSoloState(state: GameState): void {

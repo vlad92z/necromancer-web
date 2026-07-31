@@ -6,77 +6,11 @@
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
-import type { Rune, RuneEffectRarity, RuneType } from '../types/game';
-import { COLORS, RADIUS, TRANSITIONS, SHADOWS, RUNE_SIZE_CONFIG } from '../styles/tokens';
+import type { Rune, RuneType } from '../types/game';
+import { COLORS, TRANSITIONS, RUNE_SIZE_CONFIG } from '../styles/tokens';
 import type { RuneSize } from '../styles/tokens';
-import fireRune from '../assets/runes/fire_rune.svg';
-import fireRuneUncommon from '../assets/runes/fire_rune_uncommon.svg';
-import fireRuneRare from '../assets/runes/fire_rune_rare.svg';
-import fireRuneEpic from '../assets/runes/fire_rune_epic.svg';
-import frostRune from '../assets/runes/frost_rune.svg';
-import frostRuneUncommon from '../assets/runes/frost_rune_uncommon.svg';
-import frostRuneRare from '../assets/runes/frost_rune_rare.svg';
-import frostRuneEpic from '../assets/runes/frost_rune_epic.svg';
-import lifeRune from '../assets/runes/life_rune.svg';
-import lifeRuneUncommon from '../assets/runes/life_rune_uncommon.svg';
-import lifeRuneRare from '../assets/runes/life_rune_rare.svg';
-import lifeRuneEpic from '../assets/runes/life_rune_epic.svg';
-import voidRune from '../assets/runes/void_rune.svg';
-import voidRuneUncommon from '../assets/runes/void_rune_uncommon.svg';
-import voidRuneRare from '../assets/runes/void_rune_rare.svg';
-import voidRuneEpic from '../assets/runes/void_rune_epic.svg';
-import windRune from '../assets/runes/wind_rune.svg';
-import windRuneUncommon from '../assets/runes/wind_rune_uncommon.svg';
-import windRuneRare from '../assets/runes/wind_rune_rare.svg';
-import windRuneEpic from '../assets/runes/wind_rune_epic.svg';
-import lightningRune from '../assets/runes/lightning_rune.svg';
-import lightningRuneUncommon from '../assets/runes/lightning_rune_uncommon.svg';
-import lightningRuneRare from '../assets/runes/lightning_rune_rare.svg';
-import lightningRuneEpic from '../assets/runes/lightning_rune_epic.svg';
 import { getRuneEffectDescription } from '../utils/runeEffects';
-
-const RUNE_ASSETS = {
-  Fire: fireRune,
-  Frost: frostRune,
-  Life: lifeRune,
-  Void: voidRune,
-  Wind: windRune,
-  Lightning: lightningRune,
-};
-
-const RUNE_UNCOMMON_ASSETS = {
-  Fire: fireRuneUncommon,
-  Frost: frostRuneUncommon,
-  Life: lifeRuneUncommon,
-  Void: voidRuneUncommon,
-  Wind: windRuneUncommon,
-  Lightning: lightningRuneUncommon,
-};
-
-const RUNE_RARE_ASSETS = {
-  Fire: fireRuneRare,
-  Frost: frostRuneRare,
-  Life: lifeRuneRare,
-  Void: voidRuneRare,
-  Wind: windRuneRare,
-  Lightning: lightningRuneRare,
-};
-
-const RUNE_EPIC_ASSETS = {
-  Fire: fireRuneEpic,
-  Frost: frostRuneEpic,
-  Life: lifeRuneEpic,
-  Void: voidRuneEpic,
-  Wind: windRuneEpic,
-  Lightning: lightningRuneEpic,
-};
-
-const RUNE_ASSETS_BY_RARITY: Record<RuneEffectRarity, Record<RuneType, string>> = {
-  common: RUNE_ASSETS,
-  uncommon: RUNE_UNCOMMON_ASSETS,
-  rare: RUNE_RARE_ASSETS,
-  epic: RUNE_EPIC_ASSETS,
-};
+import { getPrimaryRuneType } from '../utils/runeHelpers';
 
 export type RuneCellVariant = 'wall' | 'draft';
 
@@ -89,38 +23,17 @@ export interface RuneCellProps {
   placeholder?: {
     type: 'rune' | 'text';
     runeType?: RuneType; // For wall cells
-    runeRarity?: RuneEffectRarity;
     text?: string;
   };
   clickable?: boolean;
   onClick?: () => void;
-  showEffect?: boolean;
   showTooltip?: boolean;
   tooltipRune?: Rune | null;
-  tooltipIncludeChargeRequirement?: boolean;
   tooltipPlacement?: 'top' | 'bottom';
   runeOpacity?: number;
   runePulseKey?: number;
   runePulseScale?: number;
 }
-
-const VARIANT_STYLES: Record<RuneCellVariant, {
-  border: string;
-  background: string;
-  backgroundOccupied?: string;
-  emptyOpacity?: number;
-}> = {
-  wall: {
-    border: `1px solid ${COLORS.ui.borderLight}`,
-    background: '#1c0f2e',
-    backgroundOccupied: '#46350dff',
-    emptyOpacity: 0.35,
-  },
-  draft: {
-    border: 'none',
-    background: 'transparent',
-  },
-};
 
 export function RuneCell({
   rune,
@@ -130,10 +43,8 @@ export function RuneCell({
   placeholder,
   clickable = false,
   onClick,
-  showEffect = true,
   showTooltip = false,
   tooltipRune,
-  tooltipIncludeChargeRequirement = true,
   tooltipPlacement = 'top',
   runeOpacity = 1,
   runePulseKey,
@@ -141,35 +52,18 @@ export function RuneCell({
 }: RuneCellProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const config = RUNE_SIZE_CONFIG[size];
-  const variantStyle = VARIANT_STYLES[variant];
+  const runeType = rune ? getPrimaryRuneType(rune) : placeholder?.runeType;
+  const runeImage = rune?.tokenImageSrc ?? null;
   
-  const runeType = rune?.runeType || placeholder?.runeType;
-  const runeRarity = showEffect && rune
-    ? rune.rarity
-    : placeholder?.runeRarity ?? null;
-  const runeImage = runeType
-    ? runeRarity
-      ? RUNE_ASSETS_BY_RARITY[runeRarity][runeType]
-      : RUNE_ASSETS[runeType]
-    : null;
-  
-  const isWallPlaceholder = variant === 'wall' && !rune && placeholder?.type === 'rune';
   const hasTextPlaceholder = !rune && placeholder?.type === 'text';
   const tooltipSourceRune = tooltipRune ?? rune;
   const tooltipText = useMemo(() => {
     if (!showTooltip || !tooltipSourceRune) {
       return null;
     }
-    return getRuneEffectDescription(tooltipSourceRune, { includeChargeRequirement: tooltipIncludeChargeRequirement });
-  }, [showTooltip, tooltipIncludeChargeRequirement, tooltipSourceRune]);
+    return getRuneEffectDescription(tooltipSourceRune);
+  }, [showTooltip, tooltipSourceRune]);
   
-  const backgroundColor = (variant === 'wall' && rune && variantStyle.backgroundOccupied)
-    ? variantStyle.backgroundOccupied
-    : variantStyle.background;
-  
-  // Override border for healing runes on the wall
-  const borderStyle = variantStyle.border;
-
   const handleMouseEnter = (e: MouseEvent<HTMLDivElement>) => {
     if (clickable) {
       e.currentTarget.style.transform = 'scale(1.05)';
@@ -202,10 +96,8 @@ export function RuneCell({
         alignItems: 'center',
         justifyContent: 'center',
         transition: TRANSITIONS.medium,
-        borderRadius: `${RADIUS.md}px`,
-        border: borderStyle,
-        backgroundColor: backgroundColor,
-        padding: `${config.padding}px`,
+        borderRadius: 0,
+        padding: 0,
         boxSizing: 'border-box',
         cursor: clickable ? 'pointer' : 'default',
         
@@ -227,7 +119,7 @@ export function RuneCell({
             width: '100%', 
             height: '100%', 
             objectFit: 'contain',
-            opacity: ((isWallPlaceholder) ? variantStyle.emptyOpacity ?? 1 : 1) * runeOpacity,
+            opacity: runeOpacity,
           }}
         />
       )}
@@ -250,7 +142,6 @@ export function RuneCell({
             width: variant === 'wall' ? '100%' : '60%',
             height: variant === 'wall' ? '100%' : '60%',
             objectFit: 'contain',
-            opacity: variantStyle.emptyOpacity ?? 1,
             pointerEvents: 'none',
           }}
         />
@@ -261,16 +152,17 @@ export function RuneCell({
           style={{
             position: 'absolute',
             padding: '8px 12px',
-            background: 'rgba(8, 7, 16, 0.95)',
-            borderRadius: '10px',
-            border: `1px solid ${COLORS.ui.borderLight}`,
-            color: COLORS.ui.text,
+            background: '#293532',
+            borderRadius: 0,
+            border: '3px solid #141313',
+            color: '#fff8d8',
+            fontFamily: "'Silkscreen', monospace",
             fontSize: '12px',
             minWidth: '100px',
             textAlign: 'center',
             lineHeight: 1.5,
             whiteSpace: 'pre-line',
-            boxShadow: SHADOWS.md,
+            boxShadow: '4px 4px 0 #141313',
             zIndex: 10,
             pointerEvents: 'none',
             ...tooltipPositionStyles,

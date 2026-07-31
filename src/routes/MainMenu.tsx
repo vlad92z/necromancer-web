@@ -1,25 +1,41 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClickSoundButton } from '../components/ClickSoundButton'
 import { useUIActions } from '../hooks/useGameActions'
 import { useClickSound } from '../hooks/useClickSound'
 import { useShowSettingsOverlay } from '../hooks/useGameState'
-import { gradientButtonClasses, simpleButtonClasses } from '../styles/gradientButtonClasses'
 import { SettingsOverlay } from '../components/SettingsOverlay'
 import { BREAKPOINTS } from '../styles/tokens'
+
+type MenuAction = 'solo' | 'arena' | 'settings'
+
+const menuItems: ReadonlyArray<{
+  id: MenuAction
+  title: string
+  className: string
+}> = [
+  { id: 'solo', title: 'Adventure', className: 'pixel-button pixel-button--primary' },
+  { id: 'arena', title: 'Arena', className: 'pixel-button pixel-button--primary' },
+  { id: 'settings', title: 'Settings', className: 'pixel-button pixel-button--utility' },
+]
 
 export function MainMenu() {
   const navigate = useNavigate()
   const playClickSound = useClickSound()
   const showSettingsOverlay = useShowSettingsOverlay()
-  const { toggleSettingsOverlay } = useUIActions()
+  const { closeSettingsOverlay, openSettingsOverlay } = useUIActions()
   const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false
     }
     return window.innerWidth < BREAKPOINTS.tablet
   })
-  const [activeElement, setActiveElement] = useState<'solo' | 'settings' | null>(null)
+  const [activeElement, setActiveElement] = useState<MenuAction | null>(null)
+  const buttonRefs = useRef<Record<MenuAction, HTMLButtonElement | null>>({
+    solo: null,
+    arena: null,
+    settings: null,
+  })
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -35,18 +51,40 @@ export function MainMenu() {
   }, [])
 
   const handleSolo = useCallback(() => {
+    closeSettingsOverlay()
     navigate('/solo')
-  }, [navigate])
+  }, [closeSettingsOverlay, navigate])
+
+  const handleArena = useCallback(() => {
+    closeSettingsOverlay()
+    navigate('/arena')
+  }, [closeSettingsOverlay, navigate])
 
   const handleSettings = useCallback(() => {
-    toggleSettingsOverlay()
-  }, [toggleSettingsOverlay])
+    openSettingsOverlay()
+  }, [openSettingsOverlay])
+
+  const selectMenuItem = useCallback((item: MenuAction) => {
+    setActiveElement(item)
+    buttonRefs.current[item]?.focus()
+  }, [])
+
+  const menuActions = useMemo<Record<MenuAction, () => void>>(
+    () => ({
+      solo: handleSolo,
+      arena: handleArena,
+      settings: handleSettings,
+    }),
+    [handleArena, handleSettings, handleSolo],
+  )
 
   useEffect(() => {
     if (showSettingsOverlay) {
       setActiveElement(null)
     }
   }, [showSettingsOverlay])
+
+  useEffect(() => closeSettingsOverlay, [closeSettingsOverlay])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -66,41 +104,29 @@ export function MainMenu() {
       return
     }
 
-    const menuOrder: Array<'solo' | 'settings'> = ['solo', 'settings']
+    const menuOrder = menuItems.map(({ id }) => id)
 
     const moveSelection = (direction: 'up' | 'down') => {
-      setActiveElement((current) => {
-        const next = (() => {
-          if (current === null) {
-            return menuOrder[1]
-          }
-
-          const currentIndex = menuOrder.indexOf(current)
-          const offset = direction === 'down' ? 1 : -1
-          const nextIndex = (currentIndex + offset + menuOrder.length) % menuOrder.length
-
-          return menuOrder[nextIndex]
-        })()
-
-        if (next !== current) {
-          playClickSound()
-        }
-
-        return next
-      })
-    }
-
-    const triggerActiveAction = (element: 'solo' | 'settings' | null) => {
-      if (element === 'solo') {
+      if (activeElement === null) {
+        selectMenuItem(menuOrder[0])
         playClickSound()
-        handleSolo()
         return
       }
 
-      if (element === 'settings') {
+      const currentIndex = menuOrder.indexOf(activeElement)
+      const offset = direction === 'down' ? 1 : -1
+      const nextIndex = (currentIndex + offset + menuOrder.length) % menuOrder.length
+      const next = menuOrder[nextIndex]
+
+      if (next !== activeElement) {
+        selectMenuItem(next)
         playClickSound()
-        handleSettings()
       }
+    }
+
+    const triggerActiveAction = (element: MenuAction) => {
+      playClickSound()
+      menuActions[element]()
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -122,16 +148,18 @@ export function MainMenu() {
         case 'Enter':
         case ' ': // Space
         case 'Spacebar': {
-          if (activeElement !== null) {
-            event.preventDefault()
+          event.preventDefault()
+          if (activeElement === null) {
+            selectMenuItem(menuOrder[0])
+            playClickSound()
+          } else {
             triggerActiveAction(activeElement)
           }
           break
         }
         case 'Escape': {
-          console.log('Main Menu Escape pressed')
           event.preventDefault()
-          setActiveElement('settings')
+          selectMenuItem('settings')
           playClickSound()
           handleSettings()
           break
@@ -143,48 +171,67 @@ export function MainMenu() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeElement, handleSettings, handleSolo, isMobileViewport, playClickSound, showSettingsOverlay])
-
-  const soloButtonClasses = `${gradientButtonClasses} data-[active=true]:from-sky-400 data-[active=true]:to-purple-600 data-[active=true]:-translate-y-0.5 data-[active=true]:border data-[active=true]:border-slate-300`
-  const settingsButtonClasses = `${simpleButtonClasses} data-[active=true]:border-slate-300 data-[active=true]:bg-slate-800`
+  }, [activeElement, handleSettings, isMobileViewport, menuActions, playClickSound, selectMenuItem, showSettingsOverlay])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#0b1024] px-6 py-10 text-white">
-      <div className="flex flex-col items-center text-center space-y-2">
-        <h1 className="text-4xl font-bold uppercase tracking-tight text-slate-100 md:text-5xl">
-          Massive Spell: Arcane Arena
-        </h1>
-        <p className="text-lg text-slate-300">A roguelite deck-builder</p>
+    <main className="pixel-screen relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-10">
+      <div aria-hidden="true" className="absolute left-[6%] top-[12%] h-4 w-4 bg-[#e15f4f] shadow-[16px_0_0_#e15f4f,0_16px_0_#e15f4f]" />
+      <div aria-hidden="true" className="absolute bottom-[16%] right-[8%] h-4 w-4 bg-[#5dc6b0] shadow-[-16px_0_0_#5dc6b0,0_-16px_0_#5dc6b0]" />
+      <div aria-hidden="true" className="absolute left-[18%] bottom-[10%] hidden h-3 w-3 bg-[#f2c14e] shadow-[12px_0_0_#f2c14e,0_12px_0_#f2c14e] md:block" />
+
+      <div className="relative w-full max-w-140">
+        <section className="pixel-panel p-2">
+          <div className="pixel-panel-inset px-6 text-center md:px-10 md:py-10">
+            <h1 className="font-pixel text-4xl uppercase leading-[0.95] tracking-tighter text-[#fff8d8] [text-shadow:4px_4px_0_#141313] md:text-6xl">
+              Massive<br /><span className="text-[#f2c14e]">Spell</span>
+            </h1>
+            <div className="mt-7 flex items-center justify-center gap-3" aria-hidden="true">
+              <span className="h-5 w-5 bg-[#e15f4f]" />
+              <span className="h-5 w-5 bg-[#5dc6b0]" />
+              <span className="h-5 w-5 bg-[#f2c14e]" />
+              <span className="h-5 w-5 bg-[#1cb5cd]" />
+              <span className="h-5 w-5 bg-[#623ba8]" />
+              <span className="h-5 w-5 bg-[#ffffff]" />
+            </div>
+            <p className="font-pixel text-xs uppercase tracking-[0.3em] text-[#b5d3bd]">Arcane Arena</p>
+          </div>
+        </section>
+        <div className="mt-5">
+          {isMobileViewport ? (
+          <div className="pixel-message-panel px-6 py-5 text-center">
+            <p className="font-pixel text-sm uppercase text-[#fff8d8]">Desktop spellbook required</p>
+            <p className="font-pixel mt-3 text-[11px] leading-5 text-[#b5d3bd]">
+              Please use a tablet or desktop device to play Massive Spell: Arcane Arena.
+            </p>
+          </div>
+          ) : (
+            <div className="flex w-full flex-col gap-4">
+              {menuItems.map(({ id, title, className }) => (
+                <ClickSoundButton
+                  key={id}
+                  ref={(element) => {
+                    buttonRefs.current[id] = element
+                  }}
+                  title={title}
+                  className={className}
+                  action={menuActions[id]}
+                  isActive={activeElement === id}
+                  onFocus={(event) => {
+                    if (event.currentTarget.matches(':focus-visible')) {
+                      setActiveElement(id)
+                    }
+                  }}
+                  onPointerDown={() => setActiveElement(null)}
+                />
+              ))}
+            <p className="font-pixel mt-2 text-center text-[10px] uppercase tracking-[0.08em] text-[#b5d3bd]">↑ ↓ select </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {isMobileViewport ? (
-        <div className="mt-10 w-full max-w-[360px] rounded-2xl border border-slate-700 bg-slate-900/80 px-6 py-5 text-center text-slate-200 shadow-md">
-          <p className="text-lg font-semibold uppercase tracking-wide">Not available on mobile</p>
-          <p className="mt-2 text-sm text-slate-300">
-            Please use a tablet or desktop device to play Massive Spell: Arcane Arena.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="mt-10 flex w-full max-w-[320px] flex-col gap-4">
-            <ClickSoundButton
-              title="Solo"
-              className={soloButtonClasses}
-              action={handleSolo}
-              isActive={activeElement === 'solo'}
-            />
-            <ClickSoundButton
-              title="Settings"
-              className={settingsButtonClasses}
-              action={handleSettings}
-              isActive={activeElement === 'settings'}
-            />
-          </div>
-
-          {showSettingsOverlay && (
-            <SettingsOverlay />
-          )}
-        </>
+      {showSettingsOverlay && (
+        <SettingsOverlay />
       )}
     </main>
   )

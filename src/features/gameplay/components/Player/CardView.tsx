@@ -1,28 +1,4 @@
-import type { RuneEffectRarity, RuneType, TooltipCardVariant } from '../../../../types/game';
-import fireRune from '../../../../assets/runes/fire_rune.svg';
-import fireRuneUncommon from '../../../../assets/runes/fire_rune_uncommon.svg';
-import fireRuneRare from '../../../../assets/runes/fire_rune_rare.svg';
-import fireRuneEpic from '../../../../assets/runes/fire_rune_epic.svg';
-import frostRune from '../../../../assets/runes/frost_rune.svg';
-import frostRuneUncommon from '../../../../assets/runes/frost_rune_uncommon.svg';
-import frostRuneRare from '../../../../assets/runes/frost_rune_rare.svg';
-import frostRuneEpic from '../../../../assets/runes/frost_rune_epic.svg';
-import lifeRune from '../../../../assets/runes/life_rune.svg';
-import lifeRuneUncommon from '../../../../assets/runes/life_rune_uncommon.svg';
-import lifeRuneRare from '../../../../assets/runes/life_rune_rare.svg';
-import lifeRuneEpic from '../../../../assets/runes/life_rune_epic.svg';
-import voidRune from '../../../../assets/runes/void_rune.svg';
-import voidRuneUncommon from '../../../../assets/runes/void_rune_uncommon.svg';
-import voidRuneRare from '../../../../assets/runes/void_rune_rare.svg';
-import voidRuneEpic from '../../../../assets/runes/void_rune_epic.svg';
-import windRune from '../../../../assets/runes/wind_rune.svg';
-import windRuneUncommon from '../../../../assets/runes/wind_rune_uncommon.svg';
-import windRuneRare from '../../../../assets/runes/wind_rune_rare.svg';
-import windRuneEpic from '../../../../assets/runes/wind_rune_epic.svg';
-import lightningRune from '../../../../assets/runes/lightning_rune.svg';
-import lightningRuneUncommon from '../../../../assets/runes/lightning_rune_uncommon.svg';
-import lightningRuneRare from '../../../../assets/runes/lightning_rune_rare.svg';
-import lightningRuneEpic from '../../../../assets/runes/lightning_rune_epic.svg';
+import type { RuneType, TooltipCardVariant } from '../../../../types/game';
 
 /**
  * CardView - displays a trading card style preview
@@ -31,98 +7,72 @@ import lightningRuneEpic from '../../../../assets/runes/lightning_rune_epic.svg'
 interface CardViewProps {
   title: string;
   description: string;
-  runeType: RuneType;
-  imageSrc?: string;
-  runeRarity?: RuneEffectRarity | null;
+  imageSrc: string;
+  manaCost: number;
+  runeTypes: RuneType[];
   variant?: TooltipCardVariant;
-  size?: 'default' | 'hand';
+  size?: 'default' | 'hand' | 'compact';
   isSelected?: boolean;
   onClick?: () => void;
-}
-
-const RUNE_CARD_IMAGES: Record<RuneType, Record<RuneEffectRarity, string>> = {
-  Fire: {
-    common: fireRune,
-    uncommon: fireRuneUncommon,
-    rare: fireRuneRare,
-    epic: fireRuneEpic,
-  },
-  Frost: {
-    common: frostRune,
-    uncommon: frostRuneUncommon,
-    rare: frostRuneRare,
-    epic: frostRuneEpic,
-  },
-  Life: {
-    common: lifeRune,
-    uncommon: lifeRuneUncommon,
-    rare: lifeRuneRare,
-    epic: lifeRuneEpic,
-  },
-  Void: {
-    common: voidRune,
-    uncommon: voidRuneUncommon,
-    rare: voidRuneRare,
-    epic: voidRuneEpic,
-  },
-  Wind: {
-    common: windRune,
-    uncommon: windRuneUncommon,
-    rare: windRuneRare,
-    epic: windRuneEpic,
-  },
-  Lightning: {
-    common: lightningRune,
-    uncommon: lightningRuneUncommon,
-    rare: lightningRuneRare,
-    epic: lightningRuneEpic,
-  },
-};
-
-function resolveRuneImage(runeType: RuneType, runeRarity: RuneEffectRarity | null | undefined, override?: string): string {
-  if (override) {
-    return override;
-  }
-
-  const rarityKey = runeRarity ?? 'common';
-  const runeImages = RUNE_CARD_IMAGES[runeType];
-  return runeImages?.[rarityKey] ?? RUNE_CARD_IMAGES[runeType].common;
 }
 
 export function CardView({
   title,
   imageSrc,
+  manaCost,
   description,
-  runeType,
-  runeRarity,
+  runeTypes,
   variant = 'default',
   size = 'default',
   isSelected = false,
   onClick,
 }: CardViewProps) {
-  const border = 'border rounded-xl border-slate-400/40';
+  const border = 'border-[3px] border-[#141313]';
+  const singleRuneType = runeTypes.length === 1 ? runeTypes[0] : null;
+  const typeBackgroundColor: Record<RuneType, string> = {
+    Fire: '#8d3030',
+    Life: '#3f7a4b',
+    Wind: '#f5f2df',
+    Frost: '#3d79aa',
+    Void: '#654080',
+    Lightning: '#bd7720',
+  };
+  const cardBackgroundColor = singleRuneType ? typeBackgroundColor[singleRuneType] : undefined;
+  const manaType = runeTypes[0] ?? null;
+  const manaBackgroundColor = manaType ? typeBackgroundColor[manaType] : '#9ed9f5';
+  const manaTextColor = manaType === 'Wind' ? '#141313' : '#fff8d8';
+  const titleTextColor = singleRuneType === 'Wind' ? 'text-[#141313]' : 'text-[#fff8d8]';
   const showDestroyedOverlay = variant === 'nonPrimary';
-  const resolvedImageSrc = resolveRuneImage(runeType, runeRarity, imageSrc);
   const selectedClassName = isSelected
-    ? 'ring-4 ring-sky-300 shadow-[0_0_38px_rgba(125,211,252,0.75)] translate-y-[-10px]'
-    : 'shadow-[0_10px_28px_rgba(0,0,0,0.28)]';
-  const interactiveClassName = onClick
-    ? 'cursor-pointer focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 hover:translate-y-[-6px]'
+    ? 'translate-y-[-10px]'
     : '';
+  const interactiveClassName = onClick
+    ? 'cursor-pointer focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] hover:translate-y-[-6px]'
+    : '';
+  const isSmallCard = size === 'hand' || size === 'compact';
   const sizeClassName = size === 'hand'
-    ? 'h-full max-h-72 w-auto min-w-0 aspect-2/3 p-1.5 gap-1.5'
-    : 'w-[clamp(14em,22vmin,24em)] aspect-2/3 p-2 gap-2';
-  const descriptionClassName = size === 'hand'
-    ? `flex-4 ${border} bg-slate-950/70 px-2 py-2 text-xs tracking-[0.06em] leading-snug text-slate-100/90 whitespace-pre-line`
-    : `flex-4 ${border} bg-slate-950/70 px-3 py-3 tracking-widest leading-relaxed text-slate-100/90 whitespace-pre-line`;
-  const className = `flex flex-col ${sizeClassName} ${border} bg-gray-900 transition duration-150 ease-out ${selectedClassName} ${interactiveClassName}`;
+    ? 'h-72 w-48 flex-none p-1.5 gap-1.5'
+    : size === 'compact'
+      ? 'h-54 w-36 flex-none p-1 gap-1'
+      : 'w-[clamp(14em,22vmin,24em)] aspect-2/3 p-2 gap-2';
+  const descriptionClassName = isSmallCard
+    ? `relative flex-4 ${border} bg-[#293532] px-2 pb-7 pt-2 font-pixel text-[10px] leading-snug text-[#fff8d8] whitespace-pre-line`
+    : `relative flex-4 ${border} bg-[#293532] px-3 pb-9 pt-3 font-pixel text-xs leading-relaxed text-[#fff8d8] whitespace-pre-line`;
+  const titleClassName = isSmallCard
+    ? `px-2 py-1 font-pixel text-[10px] leading-tight ${titleTextColor}`
+    : `px-3 py-2 font-pixel text-sm leading-tight ${titleTextColor}`;
+  const className = `pixel-game-card flex flex-col rounded-[2px] ${sizeClassName} ${selectedClassName} ${interactiveClassName}`;
 
   const content = (
     <>
-      <div className={`flex-4 ${border} bg-linear-to-b from-slate-700/80 to-slate-900 overflow-hidden min-h-0 relative`}>
+      <div className={titleClassName} style={{ backgroundColor: cardBackgroundColor }}>
+        {title}
+      </div>
+
+      <div className={`relative min-h-0 flex-4 overflow-hidden ${border} bg-[#202827]`}>
         <img
-          className="h-full w-full object-cover"
-          src={resolvedImageSrc}
+          className="h-full w-full object-cover [image-rendering:pixelated]"
+          src={imageSrc}
           alt={title}
         />
         {showDestroyedOverlay && (
@@ -139,20 +89,29 @@ export function CardView({
 
       <div className={descriptionClassName}>
         {description}
+        <span
+          className={isSmallCard
+            ? 'absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#141313] font-pixel text-[10px]'
+            : 'absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#141313] font-pixel text-xs'}
+          style={{ backgroundColor: manaBackgroundColor, color: manaTextColor }}
+          aria-label={`${manaCost} mana, ${runeTypes.join(' / ')} rune type`}
+        >
+          {manaCost}
+        </span>
       </div>
     </>
   );
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} aria-pressed={isSelected} className={className}>
+      <button type="button" onClick={onClick} aria-pressed={isSelected} data-selected={isSelected ? 'true' : undefined} className={className} style={{ backgroundColor: cardBackgroundColor }}>
         {content}
       </button>
     );
   }
 
   return (
-    <div className={className}>
+    <div className={className} style={{ backgroundColor: cardBackgroundColor }}>
       {content}
     </div>
   );

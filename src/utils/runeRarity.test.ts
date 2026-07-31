@@ -9,8 +9,11 @@ import { compareRunesByRarityThenId } from './runeRarity';
 function createRune(id: string, rarity: RuneEffectRarity, castRefCount = 0): Rune {
   return {
     id,
-    runeType: 'Fire' as RuneType,
+    name: 'Fire Test',
+    runeTypes: ['Fire' as RuneType],
     rarity,
+    cardImageSrc: 'fire-card.png',
+    tokenImageSrc: 'fire-token.png',
     castEffectRefs: Array.from({ length: castRefCount }, (_, index) => ({
       effectId: `test.effect.${index}`,
     })),

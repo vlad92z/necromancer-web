@@ -3,11 +3,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, SpellWallCharge, WallCell } from '../types/game';
+import type { EffectRef, Enemy, Player, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
 import { createEffectRef, EFFECT_CATALOG } from './effectCatalog';
 import { collectActivePassiveEffects, resolveCastEffects, resolveEndTurnEffects, resolvePassiveEffects, resolveStartTurnEffects } from './effectResolver';
 import { createEmptyWall, createPlayer } from './gameInitialization';
-import { getWallSlotFamily } from './scoring';
+import { CURRENT_RUNE_IMAGE_SOURCES } from './runeImages';
 
 describe('effectResolver resolveCastEffects', () => {
   it('resolves damage, healing, armor, and fortune in ref order', () => {
@@ -102,7 +102,7 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
-  it('does not count partial charge runes for adjacent damage', () => {
+  it('counts only placed wall runes for adjacent damage', () => {
     const player = createTestPlayer([
       [0, 0, 'Frost'],
     ]);
@@ -419,7 +419,6 @@ describe('effectResolver resolveCastEffects', () => {
       [2, 2, 'Wind'],
       [3, 3, 'Void'],
     ]);
-    const wallCharges = createTestWallCharges(player.wall);
     const enemy = createTestEnemy(50);
     const castRune = createTestRune('uncommon-void', 'Void', [
       createEffectRef('cast.damageConsuming', { amount: 2 }),
@@ -430,17 +429,16 @@ describe('effectResolver resolveCastEffects', () => {
       enemy,
       castRune,
       wall: player.wall,
-      wallCharges,
       sourcePosition: { row: 1, col: 1 },
     });
 
     expect(result.enemy?.health).toBe(42);
-    expect(result.wall[0][0].runeType).toBeNull();
-    expect(result.wall[0][1].runeType).toBeNull();
-    expect(result.wall[1][0].runeType).toBeNull();
-    expect(result.wall[1][1].runeType).toBe('Void');
-    expect(result.wall[2][2].runeType).toBeNull();
-    expect(result.wall[3][3].runeType).toBe('Void');
+    expect(result.wall[0][0].runeTypes).toEqual([]);
+    expect(result.wall[0][1].runeTypes).toEqual([]);
+    expect(result.wall[1][0].runeTypes).toEqual([]);
+    expect(result.wall[1][1].runeTypes[0]).toBe('Void');
+    expect(result.wall[2][2].runeTypes).toEqual([]);
+    expect(result.wall[3][3].runeTypes[0]).toBe('Void');
     expect(result.suppressedRunes.map((rune) => rune.id)).toEqual([
       'completed-0-0',
       'completed-0-1',
@@ -456,7 +454,6 @@ describe('effectResolver resolveCastEffects', () => {
     wall[0][1] = createWallCell('Lightning', [], [createEffectRef('cast.retriggerAdjacent')]);
     wall[1][0] = createWallCell('Wind', [], [createEffectRef('cast.fortune', { amount: 4 })]);
     const playerWithWall = { ...player, wall };
-    const wallCharges = createTestWallCharges(wall);
     const castRune = createTestRune('rare-lightning', 'Lightning', [
       createEffectRef('cast.retriggerAdjacent'),
     ]);
@@ -466,7 +463,6 @@ describe('effectResolver resolveCastEffects', () => {
       enemy: createTestEnemy(20),
       castRune,
       wall,
-      wallCharges,
       sourcePosition: { row: 1, col: 1 },
     });
 
@@ -545,7 +541,6 @@ describe('effectResolver resolveCastEffects', () => {
     const wall = createEmptyWall(6);
     wall[0][0] = createWallCell('Lightning', [createEffectRef('passive.explosive', { amount: 50 })]);
     const player = { ...createTestPlayer(), wall };
-    const wallCharges = createTestWallCharges(wall);
     const castRune = createTestRune('consumer', 'Void', [createEffectRef('cast.damageConsuming', { amount: 0 })]);
 
     const result = resolveCastEffects({
@@ -553,7 +548,6 @@ describe('effectResolver resolveCastEffects', () => {
       enemy: createTestEnemy(60),
       castRune,
       wall,
-      wallCharges,
       sourcePosition: { row: 1, col: 1 },
     });
 
@@ -570,7 +564,6 @@ describe('effectResolver resolveCastEffects', () => {
     wall[0][1] = createWallCell('Frost', [], [], 'completed-0-1');
     wall[1][0] = createWallCell('Life', [], [], 'completed-1-0');
     const player = { ...createTestPlayer(), wall };
-    const wallCharges = createTestWallCharges(wall);
     const castRune = createTestRune('wind-return', 'Wind', [createEffectRef('cast.returnAdjacent')]);
 
     const result = resolveCastEffects({
@@ -578,21 +571,20 @@ describe('effectResolver resolveCastEffects', () => {
       enemy: createTestEnemy(20),
       castRune,
       wall,
-      wallCharges,
       sourcePosition: { row: 1, col: 1 },
       handSize: 8,
     });
 
     expect(result.returnedRunes).toHaveLength(2);
-    expect(result.returnedRunes.map((rune) => rune.runeType)).toEqual(['Fire', 'Frost']);
+    expect(result.returnedRunes.map((rune) => rune.runeTypes[0])).toEqual(['Fire', 'Frost']);
     expect(result.returnedRunes.every((rune) => !['completed-0-0', 'completed-0-1'].includes(rune.id))).toBe(true);
     expect(result.returnedOverflowRunes).toHaveLength(1);
-    expect(result.returnedOverflowRunes[0]?.runeType).toBe('Life');
+    expect(result.returnedOverflowRunes[0]?.runeTypes[0]).toBe('Life');
     expect(result.returnedOverflowRunes[0]?.id).not.toBe('completed-1-0');
     expect(result.suppressedRunes).toEqual([]);
-    expect(result.wall[0][0].runeType).toBeNull();
-    expect(result.wall[0][1].runeType).toBeNull();
-    expect(result.wall[1][0].runeType).toBeNull();
+    expect(result.wall[0][0].runeTypes).toEqual([]);
+    expect(result.wall[0][1].runeTypes).toEqual([]);
+    expect(result.wall[1][0].runeTypes).toEqual([]);
   });
 
   it('destroys a deterministic random type target while excluding the source', () => {
@@ -601,7 +593,6 @@ describe('effectResolver resolveCastEffects', () => {
     wall[0][1] = createWallCell('Fire', [], [], 'completed-0-1');
     wall[0][2] = createWallCell('Fire', [], [], 'completed-0-2');
     const player = { ...createTestPlayer(), wall };
-    const wallCharges = createTestWallCharges(wall);
     const castRune = createTestRune('destroyer', 'Void', [createEffectRef('cast.destroyType', { targetType: 'Fire' })]);
 
     const result = resolveCastEffects({
@@ -609,14 +600,13 @@ describe('effectResolver resolveCastEffects', () => {
       enemy: createTestEnemy(20),
       castRune,
       wall,
-      wallCharges,
       sourcePosition: { row: 0, col: 0 },
       rng: () => 0.75,
     });
 
-    expect(result.wall[0][0].runeType).toBe('Fire');
-    expect(result.wall[0][1].runeType).toBe('Fire');
-    expect(result.wall[0][2].runeType).toBeNull();
+    expect(result.wall[0][0].runeTypes[0]).toBe('Fire');
+    expect(result.wall[0][1].runeTypes[0]).toBe('Fire');
+    expect(result.wall[0][2].runeTypes).toEqual([]);
     expect(result.suppressedRunes.map((rune) => rune.id)).toEqual(['completed-0-2']);
   });
 
@@ -631,12 +621,11 @@ describe('effectResolver resolveCastEffects', () => {
       enemy: createTestEnemy(20),
       castRune,
       wall,
-      wallCharges: createTestWallCharges(wall),
       sourcePosition: { row: 0, col: 0 },
       rng: () => 0,
     });
 
-    expect(result.wall[0][0].runeType).toBe('Fire');
+    expect(result.wall[0][0].runeTypes[0]).toBe('Fire');
     expect(result.suppressedRunes).toEqual([]);
     expect(result.logs[0]).toMatchObject({ effectId: 'cast.destroyType', output: { noTarget: true } });
   });
@@ -653,15 +642,17 @@ describe('effectResolver resolveCastEffects', () => {
         createEffectRef('cast.convertRandom', { sourceType: 'Fire', targetType: 'Frost' }),
       ]),
       wall: randomWall,
-      wallCharges: createTestWallCharges(randomWall),
       sourcePosition: { row: 0, col: 0 },
       rng: () => 0,
     });
 
     expect(randomResult.wall[0][1]).toEqual({
       id: 'completed-0-1',
-      runeType: 'Frost',
+      name: 'Frost Shield',
+      acceptedRuneTypes: ['Fire'],
+      runeTypes: ['Frost'],
       rarity: 'common',
+      ...CURRENT_RUNE_IMAGE_SOURCES.Frost,
       castEffectRefs: [],
       passiveEffectRefs: [],
     });
@@ -677,13 +668,12 @@ describe('effectResolver resolveCastEffects', () => {
       enemy: createTestEnemy(20),
       castRune: createTestRune('adjacent-converter', 'Void', [createEffectRef('cast.convertAdjacent', { targetType: 'Void' })]),
       wall: adjacentWall,
-      wallCharges: createTestWallCharges(adjacentWall),
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(adjacentResult.wall[0][0].runeType).toBe('Void');
-    expect(adjacentResult.wall[0][1].runeType).toBe('Void');
-    expect(adjacentResult.wall[2][2].runeType).toBe('Void');
+    expect(adjacentResult.wall[0][0].runeTypes[0]).toBe('Void');
+    expect(adjacentResult.wall[0][1].runeTypes[0]).toBe('Void');
+    expect(adjacentResult.wall[2][2].runeTypes[0]).toBe('Void');
     expect(adjacentResult.suppressedRunes.map((rune) => rune.id)).toEqual([
       'completed-0-0',
       'completed-0-1',
@@ -721,127 +711,6 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.arcaneDustDelta).toBe(20);
   });
 
-  it('charges adjacent incomplete slots without creating spent runes or completing them', () => {
-    const wall = createEmptyWall(6);
-    wall[1][1] = createWallCell('Wind');
-    wall[2][2] = createWallCell('Fire');
-    const wallCharges = createTestWallCharges(wall);
-    wallCharges[1][2] = {
-      ...wallCharges[1][2],
-      currentCount: 0,
-      requiredCount: 2,
-      stagedRune: createTestRune('staged-life', 'Life', []),
-      lockedRuneType: 'Life',
-    };
-    wallCharges[2][1] = {
-      ...wallCharges[2][1],
-      currentCount: 1,
-      requiredCount: 3,
-      stagedRune: createTestRune('staged-void', 'Void', []),
-      lockedRuneType: 'Void',
-    };
-    const castRune = createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]);
-
-    const result = resolveCastEffects({
-      player: { ...createTestPlayer(), wall },
-      enemy: createTestEnemy(20),
-      castRune,
-      wall,
-      wallCharges,
-      sourcePosition: { row: 1, col: 1 },
-    });
-
-    expect(result.wallCharges[1][2]).toMatchObject({ currentCount: 1, spentRunes: [], completedRuneId: null });
-    expect(result.wallCharges[2][1]).toMatchObject({ currentCount: 2, spentRunes: [], completedRuneId: null });
-    expect(result.wallCharges[2][2].currentCount).toBe(1);
-  });
-
-  it('completes a one-away staged rune via virtual charge and resolves its cast effects', () => {
-    const wall = createEmptyWall(6);
-    wall[1][1] = createWallCell('Wind');
-    const wallCharges = createTestWallCharges(wall);
-    wallCharges[1][2] = {
-      ...wallCharges[1][2],
-      currentCount: 1,
-      requiredCount: 2,
-      stagedRune: {
-        id: 'staged-fire',
-        runeType: 'Fire',
-        rarity: 'uncommon',
-        castEffectRefs: [createEffectRef('cast.damage', { amount: 4 })],
-        passiveEffectRefs: [],
-      },
-      spentRunes: [createTestRune('spent-fire', 'Fire', [])],
-      lockedRuneType: 'Fire',
-    };
-
-    const result = resolveCastEffects({
-      player: { ...createTestPlayer(), wall },
-      enemy: createTestEnemy(10),
-      castRune: createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]),
-      wall,
-      wallCharges,
-      sourcePosition: { row: 1, col: 1 },
-    });
-
-    expect(result.enemy?.health).toBe(6);
-    expect(result.wall[1][2]).toMatchObject({ runeType: 'Fire', rarity: 'uncommon' });
-    expect(result.wallCharges[1][2]).toMatchObject({
-      currentCount: 2,
-      stagedRune: null,
-      spentRunes: [],
-      completedRuneId: expect.any(String),
-    });
-    expect(result.discardedRunes.map((rune) => rune.id)).toEqual(['staged-fire', 'spent-fire']);
-    expect(result.logs.filter((log) => log.effectId === 'cast.damage')).toMatchObject([
-      { output: { damage: 4, enemyHealth: 6 } },
-    ]);
-  });
-
-  it('resolves multiple virtual completions in deterministic adjacent order', () => {
-    const wall = createEmptyWall(6);
-    wall[1][1] = createWallCell('Wind');
-    const wallCharges = createTestWallCharges(wall);
-    wallCharges[0][0] = {
-      ...wallCharges[0][0],
-      currentCount: 1,
-      requiredCount: 2,
-      stagedRune: {
-        id: 'staged-fire',
-        runeType: 'Fire',
-        rarity: 'uncommon',
-        castEffectRefs: [createEffectRef('cast.damage', { amount: 2 })],
-        passiveEffectRefs: [],
-      },
-      lockedRuneType: 'Fire',
-    };
-    wallCharges[0][1] = {
-      ...wallCharges[0][1],
-      currentCount: 1,
-      requiredCount: 2,
-      stagedRune: {
-        id: 'staged-frost',
-        runeType: 'Frost',
-        rarity: 'uncommon',
-        castEffectRefs: [createEffectRef('cast.damage', { amount: 3 })],
-        passiveEffectRefs: [],
-      },
-      lockedRuneType: 'Frost',
-    };
-
-    const result = resolveCastEffects({
-      player: { ...createTestPlayer(), wall },
-      enemy: createTestEnemy(10),
-      castRune: createTestRune('charger', 'Wind', [createEffectRef('cast.chargeAdjacent')]),
-      wall,
-      wallCharges,
-      sourcePosition: { row: 1, col: 1 },
-    });
-
-    expect(result.enemy?.health).toBe(5);
-    expect(result.logs.filter((log) => log.effectId === 'cast.damage').map((log) => log.output.damage)).toEqual([2, 3]);
-  });
-
   it('replays type-targeted cast effects while skipping retriggers', () => {
     const wall = createEmptyWall(6);
     wall[0][0] = createWallCell('Fire', [], [createEffectRef('cast.damage', { amount: 3 })]);
@@ -854,7 +723,6 @@ describe('effectResolver resolveCastEffects', () => {
       enemy: createTestEnemy(20),
       castRune,
       wall,
-      wallCharges: createTestWallCharges(wall),
       sourcePosition: { row: 1, col: 1 },
     });
 
@@ -1281,60 +1149,6 @@ describe('effectResolver passive effects', () => {
     ]);
   });
 
-  it('ignores staged incomplete slots for completed-wall effects and targeting', () => {
-    const wall = createEmptyWall(6);
-    const wallCharges = createTestWallCharges(wall);
-    const stagedVoid = createTestRune('staged-void', 'Void', [
-      createEffectRef('cast.damage', { amount: 9 }),
-    ]);
-    stagedVoid.passiveEffectRefs = [createEffectRef('passive.tomeCastDamage', { damageBonus: 99 })];
-    wallCharges[0][0] = {
-      ...wallCharges[0][0],
-      lockedRuneType: 'Void',
-      requiredCount: 2,
-      currentCount: 1,
-      stagedRune: stagedVoid,
-      spentRunes: [createTestRune('void-fuel', 'Void', [])],
-    };
-    wallCharges[0][1] = {
-      ...wallCharges[0][1],
-      lockedRuneType: 'Fire',
-      requiredCount: 1,
-      currentCount: 0,
-      stagedRune: createTestRune('staged-fire', 'Fire', []),
-    };
-    const castRune = createTestRune('stage-check', 'Wind', [
-      createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }),
-      createEffectRef('cast.fragile', { amount: 5, fragileType: 'Fire' }),
-      createEffectRef('cast.damageAdjacent', { amount: 3 }),
-      createEffectRef('cast.destroyType', { targetType: 'Fire' }),
-      createEffectRef('cast.returnAdjacent'),
-    ]);
-
-    const result = resolveCastEffects({
-      player: { ...createTestPlayer(), wall },
-      enemy: createTestEnemy(30),
-      castRune,
-      wall,
-      wallCharges,
-      sourcePosition: { row: 1, col: 1 },
-    });
-
-    expect(collectActivePassiveEffects({ wall, activeArtefacts: [] })).toEqual([]);
-    expect(result.enemy?.health).toBe(22);
-    expect(result.logs).toMatchObject([
-      { effectId: 'cast.synergy', output: { synergyCount: 0, damage: 0 } },
-      { effectId: 'cast.fragile', output: { damage: 5, isBlocked: false } },
-      { effectId: 'cast.damageAdjacent', output: { adjacentCount: 1, damage: 3 } },
-      { effectId: 'cast.destroyType', output: { noTarget: true } },
-      { effectId: 'cast.returnAdjacent', output: { adjacentCount: 0, returnedRuneIds: [] } },
-    ]);
-    expect(result.returnedRunes).toEqual([]);
-    expect(result.suppressedRunes).toEqual([]);
-    expect(result.wallCharges[0][0].stagedRune?.id).toBe('staged-void');
-    expect(result.wallCharges[0][1].stagedRune?.id).toBe('staged-fire');
-  });
-
   it('uses wall-copy ids for retriggered cast logs', () => {
     const wall = createEmptyWall(6);
     wall[0][0] = createWallCell('Fire', [], [createEffectRef('cast.damage', { amount: 3 })], 'wall-copy-fire');
@@ -1345,7 +1159,6 @@ describe('effectResolver passive effects', () => {
       enemy: createTestEnemy(20),
       castRune,
       wall,
-      wallCharges: createTestWallCharges(wall),
       sourcePosition: { row: 1, col: 1 },
     });
 
@@ -1370,8 +1183,11 @@ function createTestPlayer(cells: Array<[number, number, RuneType]> = []): Player
 function createTestRune(id: string, runeType: RuneType, castEffectRefs: Rune['castEffectRefs']): Rune {
   return {
     id,
-    runeType,
+    name: `${runeType} Test`,
+    runeTypes: [runeType],
     rarity: 'common',
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs,
     passiveEffectRefs: [],
   };
@@ -1384,7 +1200,6 @@ function createTestEnemy(health: number): Enemy {
     imageSrc: '',
     health,
     maxHealth: 20,
-    intent: { type: 'Attack', amount: 5 },
   };
 }
 
@@ -1396,23 +1211,13 @@ function createWallCell(
 ): WallCell {
   return {
     id,
-    runeType,
+    name: `${runeType} Test`,
+    acceptedRuneTypes: [runeType],
+    runeTypes: [runeType],
     rarity: 'common',
+    cardImageSrc: `${runeType.toLowerCase()}-card.png`,
+    tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs,
     passiveEffectRefs,
   };
-}
-
-function createTestWallCharges(wall: ScoringWall): SpellWallCharge[][] {
-  return wall.map((row, rowIndex) => row.map((cell, colIndex) => ({
-    row: rowIndex,
-    col: colIndex,
-    slotFamily: getWallSlotFamily(rowIndex, colIndex),
-    lockedRuneType: cell.runeType,
-    requiredCount: cell.runeType ? 1 : 0,
-    currentCount: cell.runeType ? 1 : 0,
-    stagedRune: null,
-    spentRunes: [],
-    completedRuneId: cell.id,
-  })));
 }

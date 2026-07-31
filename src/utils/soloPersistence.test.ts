@@ -30,15 +30,83 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 11,
+      version: 21,
       state: {
         gameStarted: true,
         enemyMaxHealth: 17,
+        soloPhase: 'map',
+        soloMap: {
+          playerPosition: { tileKey: '0,0', locationId: 'start' },
+        },
       },
     });
     expect(loadSoloState()).toMatchObject({
       gameStarted: true,
       enemyMaxHealth: 17,
+    });
+  });
+
+  it('restores generated tiles, cleared encounters, and player position', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { completeActiveMapEncounter, travelOnSoloMap } = await import('./soloMap');
+    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true };
+    const arrival = travelOnSoloMap(state.soloMap, {
+      kind: 'road',
+      tileKey: '0,0',
+      roadId: 'right-75',
+    });
+    state.soloMap = completeActiveMapEncounter(arrival.map);
+
+    saveSoloState(state);
+
+    expect(loadSoloState()?.soloMap).toMatchObject({
+      playerPosition: { tileKey: '1,0', locationId: 'A' },
+      activeEncounter: null,
+      tiles: {
+        '1,0': {
+          encounters: {
+            A: { cleared: true },
+          },
+        },
+      },
+    });
+  });
+
+  it.each(['encounter', 'reward'] as const)('restores an active map encounter during the %s phase', async (soloPhase) => {
+    const { createDeckDraftState } = await import('./deckDrafting');
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { travelOnSoloMap } = await import('./soloMap');
+    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true, soloPhase };
+    const arrival = travelOnSoloMap(state.soloMap, {
+      kind: 'road',
+      tileKey: '0,0',
+      roadId: 'right-75',
+    });
+    state.soloMap = arrival.map;
+    if (soloPhase === 'reward') {
+      state.combatPhase = 'victory';
+      state.deckDraftState = createDeckDraftState(state.player.id, state.gameIndex);
+    }
+
+    saveSoloState(state);
+
+    expect(loadSoloState()).toMatchObject({
+      soloPhase,
+      soloMap: {
+        activeEncounter: {
+          tileKey: '1,0',
+          locationId: 'A',
+        },
+        tiles: {
+          '1,0': {
+            encounters: {
+              A: { cleared: false },
+            },
+          },
+        },
+      },
     });
   });
 
@@ -56,6 +124,18 @@ describe('soloPersistence', () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { loadSoloState } = await import('./soloPersistence');
     storage.set('necromancer-solo-state', JSON.stringify({ version: 9, state: initializeSoloGame() }));
+
+    expect(loadSoloState()).toBeNull();
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
+  });
+
+  it('invalidates schema 19 combat-only saves', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState } = await import('./soloPersistence');
+    const legacyState = { ...initializeSoloGame() } as Record<string, unknown>;
+    delete legacyState.soloMap;
+    delete legacyState.soloPhase;
+    storage.set('necromancer-solo-state', JSON.stringify({ version: 19, state: legacyState }));
 
     expect(loadSoloState()).toBeNull();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
