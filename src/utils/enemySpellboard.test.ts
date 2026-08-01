@@ -47,9 +47,14 @@ describe('enemy spellboard combat', () => {
     ]);
     expect(createEnemyTurnRunes('goblin', 4)[3]).toMatchObject({
       name: 'Hide',
-      manaCost: 1,
+      manaCost: 0,
       cardImageSrc: expect.stringContaining('card_hide.png'),
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+      castEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onCast',
+        selection: 'manual',
+        payload: { effectId: 'cast.armor', params: { amount: 3 } },
+      }],
     });
   });
 
@@ -76,7 +81,7 @@ describe('enemy spellboard combat', () => {
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: initializeSoloGame().enemy,
       enemyBoard: createEnemySpellBoard(),
-      enemyQueuedRunes: [createEnemyTurnRunes('goblin', 0)[3]!],
+      enemyQueuedRunes: [createEnemyTurnRunes('goblin', 0)[0]!, createEnemyTurnRunes('goblin', 0)[3]!],
       random: () => 0,
     });
 

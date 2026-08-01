@@ -9,7 +9,7 @@ describe('deckDrafting', () => {
 
     expect(state.offers).toHaveLength(3);
     expect(state.selectedOffer).toBeNull();
-    expect(state.offers.map((offer) => offer.rune.name)).toEqual(['Throw Rock', 'Hide', 'Torch']);
+    expect(state.offers.map((offer) => offer.rune.name)).toEqual(['Throw Rock', 'Hide', 'Scorch']);
     expect(new Set(state.offers.map((offer) => offer.rune.name)).size).toBe(3);
   });
 
@@ -21,10 +21,25 @@ describe('deckDrafting', () => {
       manaCost: 5,
       castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 5 } }],
     });
-    expect(cards.get('Torch')).toMatchObject({
+    expect(cards.get('Hide')).toMatchObject({
+      manaCost: 0,
+      castEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onCast',
+        selection: 'manual',
+        payload: { effectId: 'cast.armor', params: { amount: 3 } },
+      }],
+    });
+    expect(cards.get('Scorch')).toMatchObject({
       manaCost: 3,
-      cardImageSrc: expect.stringContaining('card_fireball.png'),
-      passiveEffectRefs: [{ effectId: 'passive.damageEndTurn', params: { amount: 3 } }],
+      cardImageSrc: expect.stringContaining('card_scorch.png'),
+      passiveEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'endTurn',
+        selection: 'manual',
+        runeType: 'Life',
+        payload: { effectId: 'cast.damage', params: { amount: 5 } },
+      }],
     });
   });
 

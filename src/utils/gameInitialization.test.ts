@@ -79,6 +79,10 @@ describe('gameInitialization combat state', () => {
     );
     expect(deck.find((rune) => rune.name === 'Lightning Bolt')).toMatchObject({ manaCost: 1 });
     expect(deck.find((rune) => rune.name === 'Firebolt')).toMatchObject({ manaCost: 2 });
+    expect(deck.find((rune) => rune.name === 'Frost Shield')).toMatchObject({
+      manaCost: 2,
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+    });
     expect(deck.find((rune) => rune.name === 'Void Tendrils')).toMatchObject({ manaCost: 5 });
   });
 

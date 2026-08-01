@@ -126,6 +126,32 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
+  it('consumes each adjacent rune and deals damage for each one consumed', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Frost', [], [], 'north-west');
+    wall[0][1] = createWallCell('Life', [], [], 'north');
+    wall[1][0] = createWallCell('Void', [], [], 'west');
+    const player = { ...createTestPlayer(), wall };
+
+    const result = resolveCastEffects({
+      player,
+      enemy: createTestEnemy(20),
+      castRune: createTestRune('fireball', 'Fire', [createEffectRef('cast.consumeAdjacent', { amount: 1 })]),
+      wall,
+      sourcePosition: { row: 1, col: 1 },
+    });
+
+    expect(result.enemy?.health).toBe(17);
+    expect(result.wall[0][0].id).toBeNull();
+    expect(result.wall[0][1].id).toBeNull();
+    expect(result.wall[1][0].id).toBeNull();
+    expect(result.suppressedRunes.map((rune) => rune.id)).toEqual(['north-west', 'north', 'west']);
+    expect(result.logs[0]).toMatchObject({
+      effectId: 'cast.consumeAdjacent',
+      output: { damage: 3, consumedRuneIds: ['north-west', 'north', 'west'] },
+    });
+  });
+
   it('resolves conditional damage from completed wall counts', () => {
     const belowThresholdPlayer = createTestPlayer([[0, 4, 'Void']]);
     const atThresholdPlayer = createTestPlayer([
@@ -701,6 +727,31 @@ describe('effectResolver resolveCastEffects', () => {
 
     expect(resumed.pendingRemoval).toBeNull();
     expect(resumed.enemy?.health).toBe(13);
+    expect(resumed.player.wall[0][1].id).toBeNull();
+  });
+
+  it('has Scorch consume a Life rune at end turn before dealing 5 damage', () => {
+    const wall = createEmptyWall(6);
+    wall[0][0] = createWallCell('Fire', CARD_DEFINITIONS.Scorch.passiveEffectRefs, [], 'scorch');
+    wall[0][1] = createWallCell('Life', [], [], 'life-target');
+    const first = resolveTimedRuneRemovalEffects({
+      trigger: 'endTurn',
+      player: { ...createTestPlayer(), wall },
+      enemy: createTestEnemy(20),
+      opposingWall: createEmptyWall(6),
+    });
+
+    expect(first.pendingRemoval?.effectRef).toMatchObject({ runeType: 'Life' });
+    const resumed = resolveTimedRuneRemovalEffects({
+      trigger: 'endTurn',
+      player: first.player,
+      enemy: first.enemy,
+      opposingWall: first.opposingWall,
+      processedKeys: first.processedKeys,
+      manualRemovalPosition: { row: 0, col: 1 },
+    });
+
+    expect(resumed.enemy?.health).toBe(15);
     expect(resumed.player.wall[0][1].id).toBeNull();
   });
 

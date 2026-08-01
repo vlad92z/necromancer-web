@@ -8,6 +8,7 @@ import { isRuneRemovalEffectRef } from './runeRemoval';
 export type CastEffectId =
   | 'cast.damage'
   | 'cast.damageAdjacent'
+  | 'cast.consumeAdjacent'
   | 'cast.damageConditional'
   | 'cast.damageFragile'
   | 'cast.convertRandom'
@@ -94,6 +95,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Adjacent Damage',
     displayHint: 'damage',
     describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent rune`,
+  },
+  'cast.consumeAdjacent': {
+    id: 'cast.consumeAdjacent',
+    kind: 'cast',
+    title: 'Adjacent Consumption',
+    displayHint: 'damage',
+    describe: (params) => `Consume adjacent runes, deal ${numberParam(params, 'amount')} damage for each rune consumed`,
   },
   'cast.damageConditional': {
     id: 'cast.damageConditional',

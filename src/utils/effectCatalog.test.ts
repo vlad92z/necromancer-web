@@ -7,16 +7,40 @@ import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from './artefactDescriptions';
 import { createEffectRef, EFFECT_CATALOG, getEffectDescription } from './effectCatalog';
 import { createRuneRemovalEffectRef } from './runeRemoval';
+import { CARD_DEFINITIONS } from './cardCatalog';
 
 describe('effectCatalog', () => {
   it('marks Explosive as an on-removal trigger', () => {
     expect(EFFECT_CATALOG['passive.explosive'].passive?.trigger).toBe('onRuneRemoved');
   });
 
+  it('defines the requested Fireball, Hide, and Frost Shield card contracts', () => {
+    expect(CARD_DEFINITIONS.Fireball).toMatchObject({
+      manaCost: 1,
+      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 1 } }],
+    });
+    expect(CARD_DEFINITIONS.Hide).toMatchObject({
+      manaCost: 0,
+      castEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onCast',
+        selection: 'manual',
+        payload: { effectId: 'cast.armor', params: { amount: 3 } },
+      }],
+    });
+    expect(CARD_DEFINITIONS['Frost Shield']).toMatchObject({
+      manaCost: 2,
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+    });
+  });
+
   it('renders cast effect descriptions from refs', () => {
     expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage');
     expect(getEffectDescription(createEffectRef('cast.damageAdjacent', { amount: 1 }))).toBe(
       'Deal 1 damage for every adjacent rune'
+    );
+    expect(getEffectDescription(createEffectRef('cast.consumeAdjacent', { amount: 1 }))).toBe(
+      'Consume adjacent runes, deal 1 damage for each rune consumed'
     );
     expect(getEffectDescription(createEffectRef('cast.damageConditional', {
       amount: 25,

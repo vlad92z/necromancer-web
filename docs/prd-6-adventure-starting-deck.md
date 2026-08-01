@@ -2,7 +2,7 @@
 
 ## Cards
 
-- 2 Frost Shield, common Frost: gain 5 armor.
+- 2 Frost Shield, common Frost, 2 mana: gain 3 armor.
 - 2 Firebolt, common Fire, 2 mana: deal 5 damage.
 - 2 Lightning Bolt, common Lightning, 1 mana: deal 2 damage.
 - 2 Barricade, common Life: gain 5 armor.
@@ -19,7 +19,7 @@ Headwind is the deck's only uncommon card. All other starting cards are common.
 - The Goblin starts at 20 health.
 - Its 6x6 board contains only Life slots.
 - Each turn it places three Throw Rock cards and one Hide card.
-- Throw Rock is common Life, uses the Life token, costs 1 mana, and deals 3 damage. Hide uses the Barricade image, costs 1 mana, and grants the Goblin 3 armor.
+- Throw Rock is common Life, uses the Life token, costs 1 mana, and deals 3 damage. Hide uses its dedicated art, costs 0 mana, consumes a rune, and grants the Goblin 3 armor.
 
 ## Unresolved Questions
 

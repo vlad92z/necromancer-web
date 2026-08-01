@@ -5,15 +5,6 @@ import { copyRuneEffectRef } from './runeRemoval';
 
 type RuneTemplate = CardDefinition;
 
-const PLAYER_CARD_NAMES: readonly CardName[] = [
-  'Firebolt', 'Fire Blast', 'Pyroblast', 'Burn',
-  'Frost Shield', 'Ice Block', 'Freezing Cold', 'Icy Veins',
-  'Barricade', 'Lifeline', 'Healing Rain', 'Immortality',
-  'Void Tendrils', 'Void Pulse', 'Void 4',
-  'Tornado', 'Headwind', 'Tailwind', 'Perfect Storm',
-  'Lightning Bolt', 'Chain Lightning', 'Electric Surge', 'Perfect Synergy',
-];
-
 interface CreateRuneFromPoolInput {
   id: string;
   runeType: RuneType;
@@ -34,11 +25,6 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
   Wind: { common: [], uncommon: [], rare: [], epic: [] },
   Lightning: { common: [], uncommon: [], rare: [], epic: [] },
 };
-
-PLAYER_CARD_NAMES.forEach((cardName) => {
-  const card = CARD_DEFINITIONS[cardName];
-  PREDEFINED_RUNE_VARIANTS[card.runeTypes[0]][card.rarity].push(card);
-});
 
 export function createRuneFromCardName({ id, cardName }: { id: string; cardName: CardName }): Rune {
   const card = CARD_DEFINITIONS[cardName];

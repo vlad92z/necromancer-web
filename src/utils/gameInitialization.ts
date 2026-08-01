@@ -29,12 +29,12 @@ const STARTING_DECK_DEFINITIONS: Array<{ id: string; cardName: CardName }> = [
   { id: 'player-1-3', cardName: 'Barricade' },
   { id: 'player-1-4', cardName: 'Tornado' },
   { id: 'player-1-5', cardName: 'Tornado' },
-  { id: 'player-1-6', cardName: 'Frost Shield' },
-  { id: 'player-1-7', cardName: 'Frost Shield' },
-  { id: 'player-1-8', cardName: 'Void Tendrils' },
-  { id: 'player-1-9', cardName: 'Void Tendrils' },
-  { id: 'player-1-10', cardName: 'Lightning Bolt' },
-  { id: 'player-1-11', cardName: 'Lightning Bolt' },
+  { id: 'player-1-6', cardName: 'FrostShield' },
+  { id: 'player-1-7', cardName: 'FrostShield' },
+  { id: 'player-1-8', cardName: 'VoidTendrils' },
+  { id: 'player-1-9', cardName: 'VoidTendrils' },
+  { id: 'player-1-10', cardName: 'LightningBolt' },
+  { id: 'player-1-11', cardName: 'LightningBolt' },
 ];
 
 export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map(({ id, cardName }) => createRuneFromCardName({ id, cardName }));

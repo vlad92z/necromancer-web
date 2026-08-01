@@ -1164,6 +1164,35 @@ function resolvePlainCastEffects({
         }));
         break;
       }
+      case 'cast.consumeAdjacent': {
+        const adjacentPositions = getAdjacentCompletedPositions(nextWall, sourcePosition);
+        const consumedRunes: Rune[] = [];
+        let consumedExplosiveDamage = 0;
+        adjacentPositions.forEach((position) => {
+          const result = clearCompletedCell(nextWall, position);
+          if (!result.suppressedRune) return;
+          nextWall = result.wall;
+          consumedRunes.push(result.suppressedRune);
+          consumedExplosiveDamage += getExplosiveDamage(result.suppressedRune);
+        });
+        const damage = numberParam(effectRef, 'amount') * consumedRunes.length;
+        const totalDamage = damage + consumedExplosiveDamage;
+        baseDamage += damage;
+        explosiveDamage += consumedExplosiveDamage;
+        if (projectedEnemyHealth !== null) {
+          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - totalDamage);
+        }
+        nextSuppressedRunes = [...nextSuppressedRunes, ...consumedRunes];
+        wallRuneCounts = countFilledWallRunesByType(nextWall);
+        wallChanged = wallChanged || consumedRunes.length > 0;
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          damage,
+          consumedRuneIds: consumedRunes.map((rune) => rune.id),
+          consumedExplosiveDamage,
+          enemyHealth: projectedEnemyHealth,
+        }));
+        break;
+      }
       case 'cast.damageConditional': {
         const conditionType = runeTypeParam(effectRef, 'conditionType');
         const threshold = numberParam(effectRef, 'threshold');

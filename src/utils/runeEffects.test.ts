@@ -16,7 +16,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
       passiveEffectRefs: [],
     },
     Frost: {
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 5 } }],
+      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
       passiveEffectRefs: [],
     },
     Life: {
@@ -38,7 +38,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
   },
   uncommon: {
     Fire: {
-      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 1 } }],
       passiveEffectRefs: [],
     },
     Frost: {
@@ -141,7 +141,7 @@ describe('runeEffects', () => {
 
   it('maps all common rune identities to Stage 1 refs', () => {
     expect(createRune('frost-common', 'Frost', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.armor', params: { amount: 5 } },
+      { effectId: 'cast.armor', params: { amount: 3 } },
     ]);
     expect(createRune('life-common', 'Life', 'common').castEffectRefs).toEqual([
       { effectId: 'cast.armor', params: { amount: 5 } },
@@ -195,7 +195,7 @@ describe('runeEffects', () => {
 
   it('maps all uncommon rune identities to Stage 2 refs', () => {
     expect(createRune('fire-uncommon', 'Fire', 'uncommon')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 1 } }],
       passiveEffectRefs: [],
     });
     expect(createRune('frost-uncommon', 'Frost', 'uncommon')).toMatchObject({
@@ -299,7 +299,7 @@ describe('runeEffects', () => {
   it('describes effects without rarity placement requirements', () => {
     expect(getRuneEffectDescription(createRune('fire-common', 'Fire', 'common'))).toBe('• Deal 5 damage');
     expect(getRuneEffectDescription(createRune('fire-uncommon', 'Fire', 'uncommon'))).toBe(
-      '• Deal 1 damage for every adjacent rune'
+      '• Consume adjacent runes, deal 1 damage for each rune consumed'
     );
   });
 });
