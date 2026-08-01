@@ -23,18 +23,18 @@ export const DEFAULT_HAND_SIZE = 5;
 export const DEFAULT_PLAYER_MANA = 7;
 export const DEFAULT_ENEMY_MAX_HEALTH = MONSTER_CATALOG.goblin.maxHealth;
 const STARTING_DECK_DEFINITIONS: Array<{ id: string; cardName: CardName }> = [
-  { id: 'player-1-Fire-0', cardName: 'Firebolt' },
-  { id: 'player-1-Fire-1', cardName: 'Firebolt' },
-  { id: 'player-1-Life-0', cardName: 'Barricade' },
-  { id: 'player-1-Life-1', cardName: 'Barricade' },
-  { id: 'player-1-Wind-0', cardName: 'Tornado' },
-  { id: 'player-1-Wind-1', cardName: 'Headwind' },
-  { id: 'player-1-Frost-0', cardName: 'Frost Shield' },
-  { id: 'player-1-Frost-1', cardName: 'Frost Shield' },
-  { id: 'player-1-Void-0', cardName: 'Void Tendrils' },
-  { id: 'player-1-Void-1', cardName: 'Void Tendrils' },
-  { id: 'player-1-Lightning-0', cardName: 'Lightning Bolt' },
-  { id: 'player-1-Lightning-1', cardName: 'Lightning Bolt' },
+  { id: 'player-1-0', cardName: 'Firebolt' },
+  { id: 'player-1-1', cardName: 'Firebolt' },
+  { id: 'player-1-2', cardName: 'Barricade' },
+  { id: 'player-1-3', cardName: 'Barricade' },
+  { id: 'player-1-4', cardName: 'Tornado' },
+  { id: 'player-1-5', cardName: 'Tornado' },
+  { id: 'player-1-6', cardName: 'Frost Shield' },
+  { id: 'player-1-7', cardName: 'Frost Shield' },
+  { id: 'player-1-8', cardName: 'Void Tendrils' },
+  { id: 'player-1-9', cardName: 'Void Tendrils' },
+  { id: 'player-1-10', cardName: 'Lightning Bolt' },
+  { id: 'player-1-11', cardName: 'Lightning Bolt' },
 ];
 
 export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map(({ id, cardName }) => createRuneFromCardName({ id, cardName }));
