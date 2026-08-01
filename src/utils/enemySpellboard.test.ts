@@ -88,6 +88,21 @@ describe('enemy spellboard combat', () => {
     expect(result.enemy?.armor).toBe(3);
   });
 
+  it('has Shade resolve each Shadow Bolt from the Void runes already on its spell wall', () => {
+    const result = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy: createMonsterEnemy('shade'),
+      enemyBoard: createEnemySpellBoard(),
+      turnNumber: 0,
+      random: () => 0,
+    });
+
+    expect(result.player.health).toBe(14);
+    expect(result.healthDamage).toBe(6);
+    expect(result.enemyBoard[0].slice(0, 2).map((cell) => cell.name)).toEqual(['Shadow Bolt', 'Shadow Bolt']);
+    expect(result.enemy?.health).toBe(28);
+  });
+
   it('has Goblin armor absorb player damage before health', () => {
     const goblin = { ...initializeSoloGame().enemy!, armor: 5 };
     const result = resolveCastEffects({

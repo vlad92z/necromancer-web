@@ -28,6 +28,49 @@ describe('monsterCatalog', () => {
     );
   });
 
+  it('defines the Witch with its three-turn spell cycle and loot', () => {
+    const witch = createMonsterEnemy('witch');
+
+    expect(witch).toMatchObject({
+      id: 'witch',
+      name: 'Witch',
+      health: 15,
+      maxHealth: 15,
+      imageSrc: expect.stringContaining('witch.png'),
+    });
+    expect(MONSTER_CATALOG.witch.rewardCardNames).toEqual(['LightningBolt', 'AmplifyMagic', 'Heal']);
+    expect(createEnemyTurnRunes('witch', 0).map((rune) => rune.name)).toEqual(['Firebolt', 'Firebolt']);
+    expect(createEnemyTurnRunes('witch', 1).map((rune) => rune.name)).toEqual(['Frost Shield', 'Frost Shield']);
+    expect(createEnemyTurnRunes('witch', 2)[0]).toMatchObject({
+      name: 'Amplify Magic',
+      manaCost: 3,
+      cardImageSrc: expect.stringContaining('card_amplify_magic.png'),
+      passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
+    });
+    expect(createEnemyTurnRunes('witch', 3).map((rune) => rune.name)).toEqual(['Firebolt', 'Firebolt']);
+  });
+
+  it('defines Shade with two Shadow Bolts and Heal every turn', () => {
+    const shade = createMonsterEnemy('shade');
+
+    expect(shade).toMatchObject({
+      id: 'shade',
+      name: 'Shade',
+      health: 28,
+      maxHealth: 28,
+      imageSrc: expect.stringContaining('shade.png'),
+    });
+    expect(MONSTER_CATALOG.shade.rewardCardNames).toEqual(['ShadowBolt', 'VoidTendrils', 'Heal']);
+    expect(createEnemyTurnRunes('shade', 0)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'Shadow Bolt', manaCost: 2, runeTypes: ['Void'] }),
+      expect.objectContaining({ name: 'Heal', manaCost: 3 }),
+    ]));
+    expect(createEnemyTurnRunes('shade', 0).filter((rune) => rune.name === 'Shadow Bolt')).toHaveLength(2);
+    expect(createEnemyTurnRunes('shade', 1).map((rune) => rune.name)).toEqual([
+      'Shadow Bolt', 'Shadow Bolt', 'Heal',
+    ]);
+  });
+
   it('defines Golem Lord and its repeating three-turn card cycle', () => {
     const golem = createMonsterEnemy('golem-lord');
 

@@ -16,6 +16,8 @@ export function ArenaScreen() {
   const [activeMonsterId, setActiveMonsterId] = useState<MonsterId | null>(null);
   const monsterButtonRefs = useRef<Record<MonsterId, HTMLButtonElement | null>>({
     goblin: null,
+    witch: null,
+    shade: null,
     'golem-lord': null,
   });
   const selectedDetails = useMemo(

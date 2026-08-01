@@ -1,6 +1,8 @@
 /** The canonical catalogue for adventure regions and their finite location-event tokens. */
 import goblinImageSrc from '../assets/enemies/goblin.png';
 import healingShrineImageSrc from '../assets/enemies/healing_shrine.png';
+import witchImageSrc from '../assets/enemies/witch.png';
+import shadeImageSrc from '../assets/enemies/shade.png';
 import tokenVisitedImageSrc from '../assets/map/token_visited.png';
 import type { MapEventKind, MonsterId, RegionId } from '../types/game';
 
@@ -21,7 +23,7 @@ export interface RegionDefinition {
   bossMonsterIds: readonly MonsterId[];
 }
 
-const goblinTokens = Array.from({ length: 12 }, (_, index) => ({
+const goblinTokens = Array.from({ length: 6 }, (_, index) => ({
   id: `greenwood-goblin-${index + 1}`,
   name: 'Goblin',
   kind: 'combat' as const,
@@ -30,7 +32,25 @@ const goblinTokens = Array.from({ length: 12 }, (_, index) => ({
   visitedImageSrc: tokenVisitedImageSrc,
 }));
 
-const healingShrineTokens = Array.from({ length: 2 }, (_, index) => ({
+const witchTokens = Array.from({ length: 6 }, (_, index) => ({
+  id: `greenwood-witch-${index + 1}`,
+  name: 'Witch',
+  kind: 'combat' as const,
+  monsterId: 'witch' as const,
+  unvisitedImageSrc: witchImageSrc,
+  visitedImageSrc: tokenVisitedImageSrc,
+}));
+
+const shadeTokens = Array.from({ length: 6 }, (_, index) => ({
+  id: `greenwood-shade-${index + 1}`,
+  name: 'Shade',
+  kind: 'combat' as const,
+  monsterId: 'shade' as const,
+  unvisitedImageSrc: shadeImageSrc,
+  visitedImageSrc: tokenVisitedImageSrc,
+}));
+
+const healingShrineTokens = Array.from({ length: 3 }, (_, index) => ({
   id: `greenwood-healing-shrine-${index + 1}`,
   name: 'Healing Shrine',
   kind: 'healing' as const,
@@ -43,7 +63,7 @@ export const REGION_CATALOG = {
   greenwood: {
     id: 'greenwood',
     name: 'Greenwood',
-    eventTokens: [...goblinTokens, ...healingShrineTokens],
+    eventTokens: [...goblinTokens, ...witchTokens, ...shadeTokens, ...healingShrineTokens],
     bossMonsterIds: ['golem-lord'],
   },
 } satisfies Record<RegionId, RegionDefinition>;

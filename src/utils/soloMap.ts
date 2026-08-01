@@ -121,24 +121,46 @@ export function createForestMapTile(
   random = Math.random,
   bossRoll?: ForestTileBossRoll,
 ): MapTileState {
+  return createForestMapTileWithConsumedTokenIds(
+    x,
+    y,
+    availableEventTokenIds,
+    random,
+    bossRoll,
+  ).tile;
+}
+
+interface ForestTileCreationResult {
+  tile: MapTileState;
+  consumedTokenIds: string[];
+}
+
+function createForestMapTileWithConsumedTokenIds(
+  x: number,
+  y: number,
+  availableEventTokenIds: readonly string[],
+  random: () => number,
+  bossRoll?: ForestTileBossRoll,
+): ForestTileCreationResult {
   const key = createMapTileKey(x, y);
   const selectedTokenIds = [...availableEventTokenIds];
-  const shouldPlaceBoss = Boolean(
+  const shouldPlaceRandomBoss = Boolean(
     bossRoll
     && bossRoll.bossMonsterIds.length > 0
+    && selectedTokenIds.length > 0
     && random() < bossRoll.chance
   );
-  const bossMonsterId = shouldPlaceBoss && bossRoll
+  const bossMonsterId = shouldPlaceRandomBoss && bossRoll
     ? bossRoll.bossMonsterIds[Math.floor(random() * bossRoll.bossMonsterIds.length)] ?? null
     : null;
   const bossLocations = bossRoll
     ? MAP_ENCOUNTER_LOCATION_IDS.filter((locationId) => locationId !== bossRoll.excludedLocationId)
     : [];
-  const bossLocationId = bossMonsterId
+  const randomBossLocationId = bossMonsterId
     ? bossLocations[Math.floor(random() * bossLocations.length)] ?? null
     : null;
   const events = MAP_ENCOUNTER_LOCATION_IDS.reduce<MapTileState['events']>((result, locationId) => {
-    if (locationId === bossLocationId && bossMonsterId) {
+    if (locationId === randomBossLocationId && bossMonsterId) {
       result[locationId] = {
         id: `${key}:${locationId}`,
         locationId,
@@ -164,12 +186,32 @@ export function createForestMapTile(
     return result;
   }, {});
 
+  if (bossRoll && !bossMonsterId && selectedTokenIds.length === 0) {
+    const bossId = bossRoll.bossMonsterIds[Math.floor(random() * bossRoll.bossMonsterIds.length)] ?? null;
+    if (bossId) {
+      const eventLocationIds = MAP_ENCOUNTER_LOCATION_IDS.filter((locationId) => (
+        events[locationId]?.tokenId === null
+      ));
+      const replacementLocationIds = eventLocationIds.length > 0
+        ? eventLocationIds
+        : MAP_ENCOUNTER_LOCATION_IDS;
+      const bossLocationId = replacementLocationIds[Math.floor(random() * replacementLocationIds.length)] ?? null;
+      if (bossLocationId) {
+        events[bossLocationId] = {
+          id: `${key}:${bossLocationId}`,
+          locationId: bossLocationId,
+          tokenId: null,
+          kind: 'boss',
+          monsterId: bossId,
+          cleared: false,
+        };
+      }
+    }
+  }
+
   return {
-    key,
-    x,
-    y,
-    kind: 'forest',
-    events,
+    tile: { key, x, y, kind: 'forest', events },
+    consumedTokenIds: availableEventTokenIds.filter((tokenId) => !selectedTokenIds.includes(tokenId)),
   };
 }
 
@@ -461,7 +503,7 @@ export function discoverSoloMapRoad(
   const destinationLocation = getLocationForRoad(getOppositeRoad(target.roadId));
   const discoveredForestTileCount = Object.values(map.tiles).filter((tile) => tile.kind === 'forest').length;
   const region = getRegionDefinition(map.regionId);
-  const neighbor = createForestMapTile(
+  const neighborResult = createForestMapTileWithConsumedTokenIds(
     neighborCoordinate.x,
     neighborCoordinate.y,
     map.availableEventTokenIds,
@@ -476,18 +518,18 @@ export function discoverSoloMapRoad(
   );
   const mapWithNeighbor: SoloMapState = {
     ...map,
-    availableEventTokenIds: map.availableEventTokenIds.filter((tokenId) => !Object.values(neighbor.events).some(
-      (event) => event?.tokenId === tokenId,
+    availableEventTokenIds: map.availableEventTokenIds.filter((tokenId) => (
+      !neighborResult.consumedTokenIds.includes(tokenId)
     )),
     tiles: {
       ...map.tiles,
-      [neighbor.key]: neighbor,
+      [neighborResult.tile.key]: neighborResult.tile,
     },
   };
 
   return {
     map: mapWithNeighbor,
-    arrivalTarget: createLocationTarget(neighbor.key, destinationLocation),
-    revealedTileKey: neighbor.key,
+    arrivalTarget: createLocationTarget(neighborResult.tile.key, destinationLocation),
+    revealedTileKey: neighborResult.tile.key,
   };
 }

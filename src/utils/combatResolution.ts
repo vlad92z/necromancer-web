@@ -654,6 +654,14 @@ function resolveEnemyCardEffects({
       const amount = typeof effectRef.params?.amount === 'number' ? effectRef.params.amount : 0;
       if (effectRef.effectId === 'cast.damage') {
         applyIncomingPacket(amount);
+      } else if (effectRef.effectId === 'cast.synergy') {
+        const synergyType = typeof effectRef.params?.synergyType === 'string'
+          ? effectRef.params.synergyType as RuneType
+          : null;
+        const synergyCount = synergyType
+          ? countFilledWallRunesByType(nextBoard).get(synergyType) ?? 0
+          : 0;
+        applyIncomingPacket(amount * synergyCount);
       } else if (effectRef.effectId === 'cast.armor') {
         nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + Math.max(0, amount) };
       } else if (effectRef.effectId === 'cast.healing') {

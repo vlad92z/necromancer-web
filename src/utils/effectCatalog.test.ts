@@ -25,8 +25,13 @@ describe('effectCatalog', () => {
       passiveEffectRefs: [{ effectId: 'passive.explosive', params: { amount: 7 } }],
     });
     expect(CARD_DEFINITIONS.VoidTendrils).toMatchObject({
-      manaCost: 3,
-      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 2 } }],
+      manaCost: 2,
+      castEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onCast',
+        selection: 'manual',
+        payload: { effectId: 'cast.damage', params: { amount: 5 } },
+      }],
     });
     expect(CARD_DEFINITIONS.Tornado).toMatchObject({
       manaCost: 5,
@@ -44,6 +49,24 @@ describe('effectCatalog', () => {
     expect(CARD_DEFINITIONS.FrostShield).toMatchObject({
       manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+    });
+  });
+
+  it('defines Shadow Bolt as a two-mana Void-wall synergy spell', () => {
+    expect(CARD_DEFINITIONS.ShadowBolt).toMatchObject({
+      runeTypes: ['Void'],
+      manaCost: 2,
+      cardImageSrc: expect.stringContaining('card_shadow_bolt.png'),
+      castEffectRefs: [{ effectId: 'cast.synergy', params: { amount: 2, synergyType: 'Void' } }],
+    });
+  });
+
+  it('defines Amplify Magic as a three-mana Frost damage boost', () => {
+    expect(CARD_DEFINITIONS.AmplifyMagic).toMatchObject({
+      runeTypes: ['Frost'],
+      manaCost: 3,
+      cardImageSrc: expect.stringContaining('card_amplify_magic.png'),
+      passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
     });
   });
 

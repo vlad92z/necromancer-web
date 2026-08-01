@@ -143,22 +143,32 @@ describe('soloMap', () => {
     expect(allBosses).toHaveLength(1);
   });
 
-  it('raises boss chance by five points per tile and explores empty tiles until discovery', () => {
+  it('always places the boss on the current tile when no event tokens remain', () => {
     const first = travelOnSoloMap(
       { ...initializeSoloMap(), availableEventTokenIds: [] },
       roadTarget('right-75'),
       () => 0.99,
     );
-    expect(Object.values(first.map.tiles['1,0'].events).some((event) => event?.kind === 'boss')).toBe(false);
-    expect(getFrontierRoadIds(first.map, first.map.tiles['1,0']).length).toBeGreaterThan(0);
 
-    const second = travelOnSoloMap(first.map, {
-      kind: 'road',
-      tileKey: '1,0',
-      roadId: 'top-75',
-    }, () => 0.099);
-    expect(Object.values(second.map.tiles['1,-1'].events).some((event) => event?.kind === 'boss')).toBe(true);
-    expect(getFrontierRoadIds(second.map, second.map.tiles['1,-1'])).toEqual([]);
+    expect(Object.values(first.map.tiles['1,0'].events)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'boss', monsterId: 'golem-lord' }),
+    ]));
+    expect(getFrontierRoadIds(first.map, first.map.tiles['1,0'])).toEqual([]);
+  });
+
+  it('randomly replaces a filled slot when the current tile consumes the final tokens', () => {
+    const availableTokenIds = getRegionDefinition('greenwood').eventTokens.slice(0, 4).map((token) => token.id);
+    const result = travelOnSoloMap(
+      { ...initializeSoloMap(), availableEventTokenIds: availableTokenIds },
+      roadTarget('right-75'),
+      () => 0.99,
+    );
+    const events = Object.values(result.map.tiles['1,0'].events);
+
+    expect(events).toHaveLength(4);
+    expect(events.filter((event) => event?.kind === 'boss')).toHaveLength(1);
+    expect(events.filter((event) => event?.kind === 'combat')).toHaveLength(3);
+    expect(result.map.availableEventTokenIds).toEqual([]);
   });
 
   it('caps boss chance at 100%', () => {

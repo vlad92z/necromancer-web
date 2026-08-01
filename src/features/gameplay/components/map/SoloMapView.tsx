@@ -12,6 +12,7 @@ import {
   getReachableMapTargets,
   MAP_TILE_SIZE,
 } from '../../../../utils/soloMap';
+import { getRegionDefinition } from '../../../../utils/regionCatalog';
 import { ANIMATION } from '../../../../styles/tokens';
 import { MapTile } from './MapTile';
 
@@ -46,6 +47,7 @@ export function SoloMapView(): ReactElement {
     [map],
   );
   const playerTile = map.tiles[map.playerPosition.tileKey];
+  const regionName = getRegionDefinition(map.regionId).name;
   const playerPoint = getMapLocationPoint(map.playerPosition.locationId);
   const playerWorldX = (playerTile?.x ?? 0) * MAP_TILE_SIZE + playerPoint.x;
   const playerWorldY = (playerTile?.y ?? 0) * MAP_TILE_SIZE + playerPoint.y;
@@ -168,7 +170,7 @@ export function SoloMapView(): ReactElement {
             <span className="text-lg">{arcaneDust.toLocaleString()}</span>
           </div>
         </div>
-        <h1 className="pixel-section-title text-2xl justify-self-center">Greenwood</h1>
+        <h1 className="pixel-section-title text-2xl justify-self-center">{regionName}</h1>
         <div className="flex items-center gap-3 justify-self-end">
           <RuneZoneButton zone="deck" />
           <ClickSoundButton

@@ -7,7 +7,7 @@ import { SPELL_WALL_SIDE_LENGTH } from './spellWall';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 32;
+export const SOLO_STATE_VERSION = 34;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -49,7 +49,7 @@ function isSoloMapState(value: unknown): value is SoloMapState {
         isRecord(event)
         && (typeof event.tokenId === 'string' || event.tokenId === null)
         && ['combat', 'boss', 'healing', 'empty'].includes(String(event.kind))
-        && (event.monsterId === undefined || ['goblin', 'golem-lord'].includes(String(event.monsterId)))
+        && (event.monsterId === undefined || ['goblin', 'witch', 'shade', 'golem-lord'].includes(String(event.monsterId)))
         && (event.kind !== 'boss' || event.monsterId === 'golem-lord')
         && typeof event.cleared === 'boolean'
       ));

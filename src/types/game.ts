@@ -131,7 +131,7 @@ export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
 export type RegionId = 'greenwood';
 export type MapEventKind = 'combat' | 'boss' | 'healing' | 'empty';
-export type MonsterId = 'goblin' | 'golem-lord';
+export type MonsterId = 'goblin' | 'witch' | 'shade' | 'golem-lord';
 export type MapRoadId =
   | 'left-75'
   | 'left-155'

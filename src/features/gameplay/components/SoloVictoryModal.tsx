@@ -1,11 +1,15 @@
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { useGameplayActions } from '../../../hooks/useGameActions';
+import { useSoloMapState } from '../../../hooks/useGameState';
 import { useClickSound } from '../../../hooks/useClickSound';
+import { getRegionDefinition } from '../../../utils/regionCatalog';
 
 export function SoloVictoryModal() {
   const { returnToStartScreen } = useGameplayActions();
+  const map = useSoloMapState();
   const playClickSound = useClickSound();
   const backButtonRef = useRef<HTMLButtonElement | null>(null);
+  const regionName = getRegionDefinition(map.regionId).name;
 
   useEffect(() => {
     backButtonRef.current?.focus();
@@ -44,7 +48,7 @@ export function SoloVictoryModal() {
           <h2 id="solo-victory-title" className="pixel-section-title mb-5 text-xl">
             Golem Lord defeated
           </h2>
-          <p className="mb-6 text-xs text-[#b5d3bd]">Greenwood is safe.</p>
+          <p className="mb-6 text-xs text-[#b5d3bd]">{regionName} is safe.</p>
           <button
             ref={backButtonRef}
             type="button"

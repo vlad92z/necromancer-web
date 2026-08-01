@@ -11,6 +11,8 @@ import tornadoImg from '../assets/runes/cards/card_tornado.png';
 import voidTendrilsImg from '../assets/runes/cards/card_void_tendrils.png';
 import hideImg from '../assets/runes/cards/card_hide.png';
 import avalancheImg from '../assets/runes/cards/card_avalanche.png';
+import amplifyMagicImg from '../assets/runes/cards/card_amplify_magic.png';
+import shadowBoltImg from '../assets/runes/cards/card_shadow_bolt.png';
 import fireToken from '../assets/runes/tokens/token_fire.png';
 import frostToken from '../assets/runes/tokens/token_frost.png';
 import lifeToken from '../assets/runes/tokens/token_life.png';
@@ -31,7 +33,7 @@ export const CARD_DEFINITIONS = {
   FrostShield: { templateId: 'frost_shield', name: 'Frost Shield', runeTypes: ['Frost'], rarity: 'common', cardImageSrc: frostShieldImg, tokenImageSrc: frostToken, manaCost: 2, castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })], passiveEffectRefs: [] },
   Barricade: { templateId: 'barricade', name: 'Barricade', runeTypes: ['Life'], rarity: 'common', cardImageSrc: barricadeImg, tokenImageSrc: lifeToken, manaCost: 3, castEffectRefs: [createEffectRef('cast.armor', { amount: 5 })], passiveEffectRefs: [] },
   Heal: { templateId: 'heal', name: 'Heal', runeTypes: ['Life'], rarity: 'uncommon', cardImageSrc: healImg, tokenImageSrc: lifeToken, manaCost: 3, castEffectRefs: [createEffectRef('cast.healing', { amount: 3 })], passiveEffectRefs: [] },
-  VoidTendrils: { templateId: 'void_tendrils', name: 'Void Tendrils', runeTypes: ['Void'], rarity: 'common', cardImageSrc: voidTendrilsImg, tokenImageSrc: voidToken, manaCost: 3, castEffectRefs: [createEffectRef('cast.consumeAdjacent', { amount: 2 })], passiveEffectRefs: [] },
+  VoidTendrils: { templateId: 'void_tendrils', name: 'Void Tendrils', runeTypes: ['Void'], rarity: 'common', cardImageSrc: voidTendrilsImg, tokenImageSrc: voidToken, manaCost: 2, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', payload: createEffectRef('cast.damage', { amount: 5 }) })], passiveEffectRefs: [] },
   Tornado: { templateId: 'tornado', name: 'Tornado', runeTypes: ['Wind'], rarity: 'common', cardImageSrc: tornadoImg, tokenImageSrc: windToken, manaCost: 5, castEffectRefs: [createEffectRef('cast.damage', { amount: 15 })], passiveEffectRefs: [] },
   Headwind: { templateId: 'headwind', name: 'Headwind', runeTypes: ['Wind'], rarity: 'uncommon', cardImageSrc: headwindImg, tokenImageSrc: windToken, manaCost: 3, castEffectRefs: [], passiveEffectRefs: [createRuneRemovalEffectRef({
     kind: 'consume',
@@ -50,6 +52,8 @@ export const CARD_DEFINITIONS = {
     trigger: 'onCast',
     selection: 'manual',
   })], passiveEffectRefs: [] },
+  AmplifyMagic: { templateId: 'amplify_magic', name: 'Amplify Magic', runeTypes: ['Frost'], rarity: 'common', cardImageSrc: amplifyMagicImg, tokenImageSrc: frostToken, manaCost: 3, castEffectRefs: [], passiveEffectRefs: [createEffectRef('passive.damageBoost', { amount: 1 })] },
+  ShadowBolt: { templateId: 'shadow_bolt', name: 'Shadow Bolt', runeTypes: ['Void'], rarity: 'common', cardImageSrc: shadowBoltImg, tokenImageSrc: voidToken, manaCost: 2, castEffectRefs: [createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' })], passiveEffectRefs: [] },
 } satisfies Record<string, CardDefinition>;
 
 export type CardName = keyof typeof CARD_DEFINITIONS;
