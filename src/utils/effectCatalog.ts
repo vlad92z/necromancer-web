@@ -455,7 +455,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage if destroyed or transformed`,
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage when consumed, destroyed, or transformed`,
   },
   'passive.vampire': {
     id: 'passive.vampire',

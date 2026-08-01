@@ -4,7 +4,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, SoloMapState } from '../../types/game';
-import { initializeSoloGame } from '../../utils/gameInitialization';
+import { createInitialSoloRunState } from '../../utils/soloRunFactory';
 
 export interface MapState {
   soloMap: SoloMapState;
@@ -20,7 +20,7 @@ export function pickMapState(state: GameState): MapState {
   };
 }
 
-export function createMapStore(initialState: MapState = pickMapState(initializeSoloGame())) {
+export function createMapStore(initialState: MapState = pickMapState(createInitialSoloRunState())) {
   return create<MapStore>((set) => ({
     ...initialState,
     replaceMapState: (next) => set(() => next),

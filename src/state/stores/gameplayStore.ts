@@ -16,15 +16,12 @@ import type {
 } from '../../types/game';
 import type { CompletedRuneCastEffectsResult } from '../../utils/combatResolution';
 import {
-  createEmptyWall,
-  createEnemySpellBoard,
-  createGoblinEnemy,
-  createMonsterEnemy,
-  createMonsterSpellBoard,
   createRuneSoundSignals,
-  initializeSoloGame,
-  rollEnemyArcaneDustReward,
-} from '../../utils/gameInitialization';
+  createEncounterState,
+  createInitialSoloRunState,
+} from '../../utils/soloRunFactory';
+import { rollEnemyArcaneDustReward } from '../../utils/monsterFactory';
+import { createEmptySpellWall } from '../../utils/spellWall';
 import {
   createDeckDraftState,
   mergeDeckWithOffer,
@@ -96,16 +93,13 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     soloPhase: nextState.soloPhase ?? 'map',
     soloMap: nextState.soloMap ?? currentState.soloMap,
     deckDraftState: nextState.deckDraftState ?? null,
-    enemyMaxHealth: typeof nextState.enemyMaxHealth === 'number' ? nextState.enemyMaxHealth : currentState.enemyMaxHealth,
     arcaneDust: typeof nextState.arcaneDust === 'number' ? nextState.arcaneDust : currentState.arcaneDust,
-    enemy: nextState.enemy ?? createGoblinEnemy(
-      nextState.enemyMaxHealth ?? currentState.enemyMaxHealth
-    ),
+    enemy: nextState.enemy ?? null,
     combatPhase: nextState.combatPhase ?? 'player-turn',
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
     suppressedRunes: nextState.suppressedRunes ?? [],
-    enemyBoard: nextState.enemyBoard ?? createEnemySpellBoard(),
+    enemyBoard: nextState.enemyBoard ?? createEmptySpellWall(),
     enemyQueuedRunes: nextState.enemyQueuedRunes ?? [],
     enemyTurnNumber: typeof nextState.enemyTurnNumber === 'number' ? nextState.enemyTurnNumber : 0,
     pendingCombatResolution: nextState.pendingCombatResolution ?? null,
@@ -130,11 +124,7 @@ function initializeEncounterForMapLocation(
     return state;
   }
 
-  const encounterState = {
-    ...initializeSoloGame(state.enemyMaxHealth, state.fullDeck),
-    enemy: createMonsterEnemy(monsterId),
-    enemyBoard: createMonsterSpellBoard(monsterId),
-  };
+  const encounterState = createEncounterState({ monsterId, player: state.player, fullDeck: state.fullDeck });
   const maxHealth = state.player.maxHealth ?? state.startingHealth;
   const health = Math.min(maxHealth, Math.max(0, state.player.health));
   const nextState: GameState = {
@@ -151,7 +141,6 @@ function initializeEncounterForMapLocation(
     fullDeck: state.fullDeck,
     gameIndex: state.gameIndex,
     arcaneDust: state.arcaneDust,
-    enemyMaxHealth: state.enemyMaxHealth,
     isDefeat: false,
     isVictory: false,
     longestRun: state.longestRun,
@@ -166,7 +155,7 @@ function initializeEncounterForMapLocation(
     gameNumber: nextState.gameIndex,
     activeArtefacts: nextState.activeArtefacts,
     deck: nextState.player.deck,
-    enemyMaxHealth: nextState.enemyMaxHealth,
+    enemyMaxHealth: nextState.enemy?.maxHealth ?? 0,
     startingHealth: nextState.startingHealth,
   });
 
@@ -184,7 +173,7 @@ function trackDefeat(state: GameState, player: Player): void {
     activeArtefacts: state.activeArtefacts,
     cause: 'health-zero',
     health: player.health,
-    enemyMaxHealth: state.enemyMaxHealth,
+    enemyMaxHealth: state.enemy?.maxHealth ?? 0,
   });
 }
 
@@ -319,7 +308,7 @@ function applyCompletedCastResolution({
 
     return enterDeckDraftMode({
       ...state,
-      player: { ...victoryDeck.player, wall: createEmptyWall() },
+      player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: resolvedEffects.enemy,
       enemyBoard: resolvedEffects.enemyBoard,
       arcaneDust: state.arcaneDust + resolvedEffects.arcaneDustDelta,
@@ -532,7 +521,7 @@ function finishPlayerStartTurn(
     });
     return enterDeckDraftMode({
       ...state,
-      player: { ...victoryDeck.player, wall: createEmptyWall() },
+      player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: timed.enemy,
       enemyBoard: timed.opposingWall,
       hand: victoryDeck.hand,
@@ -636,7 +625,7 @@ function runCombatTurn(
     });
     return enterDeckDraftMode({
       ...stateAfterTimed,
-      player: { ...victoryDeck.player, wall: createEmptyWall() },
+      player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: endTurnEffects.enemy,
       hand: victoryDeck.hand,
       discardPile: victoryDeck.discardPile,
@@ -692,7 +681,7 @@ function runCombatTurn(
     });
     return enterDeckDraftMode({
       ...stateAfterTimed,
-      player: { ...victoryDeck.player, wall: createEmptyWall() },
+      player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: enemyTurnResult.enemy,
       enemyBoard: enemyTurnResult.enemyBoard,
       hand: victoryDeck.hand,
@@ -785,11 +774,11 @@ export interface GameplayStore extends GameState {
 export const gameplayStoreConfig = (
   set: StoreApi<GameplayStore>['setState']
 ): GameplayStore => ({
-  ...initializeSoloGame(),
+  ...createInitialSoloRunState(),
 
   startSoloRun: () => {
     set(() => {
-      const baseState = initializeSoloGame();
+      const baseState = createInitialSoloRunState();
       const selectedArtefacts = getSelectedArtefactIds();
       const nextState = {
         ...baseState,
@@ -804,7 +793,7 @@ export const gameplayStoreConfig = (
 
   prepareSoloMode: () => {
     set(() => ({
-      ...initializeSoloGame(),
+      ...createInitialSoloRunState(),
       gameStarted: false,
     }));
   },
@@ -820,7 +809,7 @@ export const gameplayStoreConfig = (
       }
 
       return {
-        ...initializeSoloGame(),
+        ...createInitialSoloRunState(),
         gameStarted: false,
       };
     });
@@ -828,7 +817,7 @@ export const gameplayStoreConfig = (
   },
 
   resetGame: () => {
-    set(() => initializeSoloGame());
+    set(() => createInitialSoloRunState());
   },
 
   revealMapRoadTarget: (target) => {

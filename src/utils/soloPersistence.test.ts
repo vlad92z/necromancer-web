@@ -23,7 +23,7 @@ describe('soloPersistence', () => {
   it('saves and loads versioned solo state payloads', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { loadSoloState, saveSoloState, SOLO_STATE_VERSION } = await import('./soloPersistence');
-    const state = { ...initializeSoloGame(17), gameStarted: true };
+    const state = { ...initializeSoloGame(), gameStarted: true };
 
     saveSoloState(state);
 
@@ -33,7 +33,6 @@ describe('soloPersistence', () => {
       version: SOLO_STATE_VERSION,
       state: {
         gameStarted: true,
-        enemyMaxHealth: 17,
         soloPhase: 'map',
         soloMap: {
           playerPosition: { tileKey: '0,0', locationId: 'start' },
@@ -42,8 +41,19 @@ describe('soloPersistence', () => {
     });
     expect(loadSoloState()).toMatchObject({
       gameStarted: true,
-      enemyMaxHealth: 17,
     });
+  });
+
+  it('invalidates current-version saves with a legacy 6 by 6 spell wall', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { createEmptySpellWall } = await import('./spellWall');
+    const { loadSoloState, SOLO_STATE_VERSION } = await import('./soloPersistence');
+    const state = initializeSoloGame();
+    state.player.wall = createEmptySpellWall(6);
+
+    storage.set('necromancer-solo-state', JSON.stringify({ version: SOLO_STATE_VERSION, state }));
+
+    expect(loadSoloState()).toBeNull();
   });
 
   it('persists a serializable pending rune target and continuation', async () => {

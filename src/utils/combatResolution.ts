@@ -11,7 +11,9 @@ import {
   resolveStartTurnEffects,
 } from './effectResolver';
 import type { DrawTypeRequest } from './effectResolver';
-import { createEnemySpellBoard, createEnemyTurnRunes, DEFAULT_HAND_SIZE } from './gameInitialization';
+import { createEnemyTurnRunes } from './monsterFactory';
+import { DEFAULT_HAND_SIZE } from './soloRunFactory';
+import { createEmptySpellWall } from './spellWall';
 import { copyEffectRefs } from './runeEffects';
 import { runeHasType } from './runeHelpers';
 import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef, removeRuneAtPosition, wallHasRuneId } from './runeRemoval';
@@ -522,7 +524,7 @@ export function resolveCompletedRuneCastEffects({
   sourcePosition = null,
   suppressedRunes = [],
   handSize = 0,
-  enemyBoard = createEnemySpellBoard(),
+  enemyBoard = createEmptySpellWall(),
   manualRemovalPosition,
   skipManualRemoval = false,
 }: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
@@ -735,7 +737,7 @@ function resolveEnemyEndTurnEffects({
 export function resolveEnemyTurn({
   player,
   enemy,
-  enemyBoard = createEnemySpellBoard(),
+  enemyBoard = createEmptySpellWall(),
   enemyQueuedRunes = [],
   turnNumber = 0,
   activeArtefacts = [],

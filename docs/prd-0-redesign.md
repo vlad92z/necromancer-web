@@ -14,7 +14,7 @@ Remove from combat:
 Keep:
 - Massive Spell fantasy
 - Rune cards
-- 6x6 spell wall
+- Neutral 5x5 spell wall
 - Deck growth and deck draft rewards
 - Player health, armor, healing, damage, arcane dust
 
@@ -56,7 +56,7 @@ The player sees:
 - Enemy queued intent: Attack 5.
 - Player health and armor.
 - Deck, discard, and hand counts.
-- 6x6 spell wall.
+- Neutral 5x5 spell wall.
 - Hand of rune cards.
 - End Turn button bottom-right.
 
@@ -108,7 +108,7 @@ Runeforge-themed reward language can remain temporarily.
 
 ## Spell Wall Rules
 
-Keep current 6x6 expected-rune wall pattern.
+Use a neutral 5x5 spell wall; every empty slot accepts any rune.
 
 Each wall cell has:
 - Expected rune type.
@@ -332,7 +332,7 @@ End Turn:
 Primary files:
 - `src/types/game.ts`: add enemy, intent, hand, discard, charge types.
 - `src/state/stores/gameplayStore.ts`: replace combat transition logic.
-- `src/utils/gameInitialization.ts`: initialize enemy encounter and combat zones.
+- `src/utils/soloRunFactory.ts`: create map-run and encounter combat state.
 - `src/utils/scoring.ts`: replace segment resolver with whole-wall cast resolver or add new resolver.
 - `src/features/gameplay/components/SoloGameBoard.tsx`: replace combat layout.
 - `src/features/gameplay/components/Player/ScoringWall.tsx`: make wall cells placement targets and charge display.

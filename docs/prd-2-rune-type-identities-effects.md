@@ -68,7 +68,7 @@ Core decisions:
 - Convert clears source identity and writes a common no-effect rune of target type.
 - Converted runes count as completed target-type wall runes.
 - Converted runes do not preserve rarity, cast effects, or passive effects.
-- Destroy/convert trigger `explosive` once.
+- Consume, destroy, or convert trigger `explosive` once.
 - Explosive damage does not chain more mutation or retrigger effects.
 - Victory restores original deck ownership for destroyed, converted, returned, wall, and charge-spent runes.
 - Virtual charge increments adjacent incomplete charge counters by 1 and creates no card.
@@ -116,7 +116,7 @@ Passive effects:
 - `healingStartTurn`: at start of turn heal X.
 - `drawingStartTurn`: at start of turn draw X additional runes, up to hand cap.
 - `damageBoostSynergy`: increase all damage by X% per completed target-type rune.
-- `explosive`: deal X damage if this rune is destroyed or transformed.
+- `explosive`: deal X damage when this rune is consumed, destroyed, or transformed.
 - `pulseSynergy`: at end of turn deal X damage per completed target-type rune.
 - `vampire`: heal X% of actual enemy HP loss.
 
@@ -197,7 +197,7 @@ Unassigned but specced:
 - End-turn pulse runs before enemy attack.
 - Reduce damage applies before armor.
 - Destroy, convert, return, and charge mutate wall/hand/charges as specified.
-- Explosive fires once on destroy/convert and does not chain.
+- Explosive fires once on consume/destroy/convert and does not chain.
 - Retrigger adjacent/type skips retrigger effects.
 - Victory restores encounter-suppressed runes to deck.
 

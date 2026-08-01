@@ -1,6 +1,6 @@
 /** Read-only Arena presentation data derived from the canonical catalogues. */
 import type { EnemyRune, MonsterId, Rune } from '../types/game';
-import { createEnemyTurnRunes } from './gameInitialization';
+import { createEnemyTurnRunes } from './monsterFactory';
 import { MONSTER_CATALOG, type MonsterDefinition } from './monsterCatalog';
 import { createRuneFromCardName } from './runeEffects';
 

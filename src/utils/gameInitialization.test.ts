@@ -5,17 +5,18 @@ import {
   rollEnemyArcaneDustReward,
   STARTING_DECK,
 } from './gameInitialization';
+import { MONSTER_CATALOG } from './monsterCatalog';
 import { getRuneEffectDescription } from './runeEffects';
 
 describe('gameInitialization combat state', () => {
-  it('initializes a goblin encounter using enemy max health', () => {
-    const state = initializeSoloGame(42);
+  it('initializes a Goblin encounter from the monster catalogue', () => {
+    const state = initializeSoloGame();
 
     expect(state.enemy).toMatchObject({
       id: 'goblin',
       name: 'Goblin',
-      health: 42,
-      maxHealth: 42,
+      health: MONSTER_CATALOG.goblin.maxHealth,
+      maxHealth: MONSTER_CATALOG.goblin.maxHealth,
     });
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(5);
@@ -25,10 +26,13 @@ describe('gameInitialization combat state', () => {
     expect(state.selectedHandRuneId).toBeNull();
   });
 
-  it('starts the default Goblin encounter at 20 health with neutral slots', () => {
+  it('starts the default Goblin encounter at its catalogue health with neutral slots', () => {
     const state = initializeSoloGame();
 
-    expect(state.enemy).toMatchObject({ health: 20, maxHealth: 20 });
+    expect(state.enemy).toMatchObject({
+      health: MONSTER_CATALOG.goblin.maxHealth,
+      maxHealth: MONSTER_CATALOG.goblin.maxHealth,
+    });
     expect(state.enemyBoard.flat().every((cell) => cell.id === null && cell.runeTypes.length === 0)).toBe(true);
     expect(state.arcaneDust).toBe(0);
   });

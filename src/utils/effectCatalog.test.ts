@@ -14,10 +14,23 @@ describe('effectCatalog', () => {
     expect(EFFECT_CATALOG['passive.explosive'].passive?.trigger).toBe('onRuneRemoved');
   });
 
-  it('defines the requested Fireball, Hide, and Frost Shield card contracts', () => {
-    expect(CARD_DEFINITIONS.Fireball).toMatchObject({
+  it('defines the current Firebolt, Lightning Bolt, Void Tendrils, and Tornado contracts', () => {
+    expect(CARD_DEFINITIONS.Firebolt).toMatchObject({
       manaCost: 1,
-      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 1 } }],
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 2 } }],
+    });
+    expect(CARD_DEFINITIONS.LightningBolt).toMatchObject({
+      manaCost: 2,
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.explosive', params: { amount: 7 } }],
+    });
+    expect(CARD_DEFINITIONS.VoidTendrils).toMatchObject({
+      manaCost: 3,
+      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 2 } }],
+    });
+    expect(CARD_DEFINITIONS.Tornado).toMatchObject({
+      manaCost: 5,
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 10 } }],
     });
     expect(CARD_DEFINITIONS.Hide).toMatchObject({
       manaCost: 0,
@@ -28,7 +41,7 @@ describe('effectCatalog', () => {
         payload: { effectId: 'cast.armor', params: { amount: 3 } },
       }],
     });
-    expect(CARD_DEFINITIONS['Frost Shield']).toMatchObject({
+    expect(CARD_DEFINITIONS.FrostShield).toMatchObject({
       manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
     });
@@ -136,7 +149,7 @@ describe('effectCatalog', () => {
       'Increase all armor gained by 5'
     );
     expect(getEffectDescription(createEffectRef('passive.explosive', { amount: 50 }))).toBe(
-      'Deal 50 damage if destroyed or transformed'
+      'Deal 50 damage when consumed, destroyed, or transformed'
     );
     expect(getEffectDescription(createEffectRef('passive.vampire', { percent: 50 }))).toBe(
       'Heal 50% of damage dealt'

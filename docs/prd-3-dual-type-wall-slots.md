@@ -18,7 +18,7 @@ Rules:
 
 - `src/types/game.ts`: add slot family + locked rune type to charge state.
 - `src/utils/scoring.ts`: add family loop, labels, acceptance helper.
-- `src/utils/gameInitialization.ts`: initialize family pattern.
+- `src/utils/spellWall.ts`: create the neutral spell wall.
 - `src/utils/combatResolution.ts`: validate family/lock rules.
 - `src/features/gameplay/components/WallCell.tsx`: render family placeholders + locked ghost rune.
 - `src/utils/soloPersistence.ts`: bump save version.

@@ -556,9 +556,9 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.player.health).toBe(7);
   });
 
-  it('fires explosive once when consumed', () => {
+  it('fires Lightning Bolt damage when consumed', () => {
     const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Lightning', [createEffectRef('passive.explosive', { amount: 50 })]);
+    wall[0][0] = createWallCell('Lightning', CARD_DEFINITIONS.LightningBolt.passiveEffectRefs);
     const player = { ...createTestPlayer(), wall };
     const castRune = createTestRune('consumer', 'Void', [createRuneRemovalEffectRef({
       kind: 'consume',
@@ -568,16 +568,16 @@ describe('effectResolver resolveCastEffects', () => {
 
     const result = resolveCastEffects({
       player,
-      enemy: createTestEnemy(60),
+      enemy: createTestEnemy(20),
       castRune,
       wall,
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.enemy?.health).toBe(10);
+    expect(result.enemy?.health).toBe(13);
     expect(result.logs).toContainEqual(expect.objectContaining({
       effectId: 'rune.consume',
-      output: expect.objectContaining({ explosiveDamage: 50 }),
+      output: expect.objectContaining({ explosiveDamage: 7 }),
     }));
   });
 
@@ -638,12 +638,12 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.suppressedRunes).toEqual([]);
   });
 
-  it('resolves a destroyed rune hook before the removal payload', () => {
+  it('fires Lightning Bolt damage when destroyed before the removal payload', () => {
     const wall = createEmptyWall(6);
     const opposingWall = createEmptyWall(6);
     opposingWall[0][0] = createWallCell(
       'Lightning',
-      [createEffectRef('passive.explosive', { amount: 4 })],
+      CARD_DEFINITIONS.LightningBolt.passiveEffectRefs,
       [],
       'enemy-explosive',
     );
@@ -663,7 +663,7 @@ describe('effectResolver resolveCastEffects', () => {
     });
 
     expect(result.opposingWall[0][0].id).toBeNull();
-    expect(result.player.health).toBe(8);
+    expect(result.player.health).toBe(5);
   });
 
   it('no-ops random type destroy when no eligible target exists', () => {
@@ -730,24 +730,27 @@ describe('effectResolver resolveCastEffects', () => {
     expect(resumed.player.wall[0][1].id).toBeNull();
   });
 
-  it('has Scorch consume a Life rune at end turn before dealing 5 damage', () => {
+  it('has Scorch consume any rune on cast before dealing 5 damage', () => {
     const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Fire', CARD_DEFINITIONS.Scorch.passiveEffectRefs, [], 'scorch');
-    wall[0][1] = createWallCell('Life', [], [], 'life-target');
-    const first = resolveTimedRuneRemovalEffects({
-      trigger: 'endTurn',
+    wall[0][0] = createWallCell('Fire', CARD_DEFINITIONS.Scorch.castEffectRefs, [], 'scorch');
+    wall[0][1] = createWallCell('Fire', [], [], 'fire-target');
+    const scorch = createTestRune('scorch', 'Fire', CARD_DEFINITIONS.Scorch.castEffectRefs);
+    const first = resolveCastEffects({
       player: { ...createTestPlayer(), wall },
       enemy: createTestEnemy(20),
-      opposingWall: createEmptyWall(6),
+      castRune: scorch,
+      wall,
+      sourcePosition: { row: 0, col: 0 },
     });
 
-    expect(first.pendingRemoval?.effectRef).toMatchObject({ runeType: 'Life' });
-    const resumed = resolveTimedRuneRemovalEffects({
-      trigger: 'endTurn',
+    expect(first.pendingRemoval?.effectRef).not.toHaveProperty('runeType');
+    const resumed = resolveCastEffects({
       player: first.player,
       enemy: first.enemy,
+      castRune: scorch,
+      wall: first.wall,
       opposingWall: first.opposingWall,
-      processedKeys: first.processedKeys,
+      sourcePosition: { row: 0, col: 0 },
       manualRemovalPosition: { row: 0, col: 1 },
     });
 

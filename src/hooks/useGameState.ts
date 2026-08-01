@@ -175,7 +175,6 @@ export function useGameplaySummaryState() {
   return useRunStore(
     useShallow((state) => ({
       gameIndex: state.gameIndex,
-      enemyMaxHealth: state.enemyMaxHealth,
     })),
   );
 }

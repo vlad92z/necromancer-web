@@ -156,7 +156,7 @@ Non-common rune cards add one line below effect text:
 ## Proposed File-Level Changes Before Implementation
 
 - `src/types/game.ts`: represent staged rune, staged rarity charge requirement, completed wall copy identity, and base deck vs encounter deck semantics if needed.
-- `src/utils/gameInitialization.ts`: initialize slots without row-based charge costs; start each encounter from a fresh base deck copy.
+- `src/utils/soloRunFactory.ts`: start each encounter from the run's current full deck.
 - `src/utils/combatResolution.ts`: implement rarity-based staging, exact-type charging, discard timing, wall-copy completion, and completed-slot rejection.
 - `src/utils/effectResolver.ts`: update wall remove/return semantics, generated copy behavior, hand-cap overflow, and virtual charge completion.
 - UI files: update wall progress display and rune tooltip/card text.

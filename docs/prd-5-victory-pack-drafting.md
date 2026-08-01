@@ -11,8 +11,8 @@
 
 - Throw Rock — Life, common, 1 mana, deal 3 damage.
 - Hide — Life, common, 0 mana, consume a rune to gain 3 armor.
-- Scorch — Fire, common, 3 mana, at end of your turn consume a Life rune to deal 5 damage.
-- Lifeline — Life, uncommon, 5 mana, increase maximum health by 5.
+- Scorch — Fire, common, 3 mana, at end of your turn consume any rune to deal 5 damage.
+- Heal — Life, uncommon, 5 mana, heal 5 health.
 
 ## UI
 

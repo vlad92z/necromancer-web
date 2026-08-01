@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Rune, RuneType } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall, createMonsterEnemy } from '../../utils/gameInitialization';
+import { MONSTER_CATALOG } from '../../utils/monsterCatalog';
 import { createRuneFromPool } from '../../utils/runeEffects';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import { getRegionDefinition } from '../../utils/regionCatalog';
@@ -47,9 +48,10 @@ describe('gameplayStore current combat', () => {
     expect(state.soloPhase).toBe('map');
     expect(state.soloMap.playerPosition).toEqual({ tileKey: '0,0', locationId: 'start' });
     expect(Object.keys(state.soloMap.tiles)).toEqual(['0,0']);
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 20 });
+    expect(state.enemy).toBeNull();
     expect(state.combatPhase).toBe('player-turn');
-    expect(state.hand).toHaveLength(5);
+    expect(state.hand).toEqual([]);
+    expect(state.player.deck).toHaveLength(state.fullDeck.length);
     expect(state.discardPile).toEqual([]);
     expect(state.deckDraftState).toBeNull();
   });
@@ -88,7 +90,11 @@ describe('gameplayStore current combat', () => {
     expect(state.soloMap.playerPosition).toEqual({ tileKey: '1,0', locationId: 'A' });
     expect(state.soloMap.tiles['1,0'].events.A?.cleared).toBe(false);
     expect(state.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'A' });
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 20, maxHealth: 20 });
+    expect(state.enemy).toMatchObject({
+      id: 'goblin',
+      health: MONSTER_CATALOG.goblin.maxHealth,
+      maxHealth: MONSTER_CATALOG.goblin.maxHealth,
+    });
     expect(state.hand).toHaveLength(5);
     expect(state.player.health).toBe(73);
     expect(state.player.armor).toBe(0);
@@ -455,7 +461,6 @@ describe('gameplayStore current combat', () => {
     expect(nextState.soloMap.tiles['1,0'].events.B?.cleared).toBe(false);
     expect(nextState.combatPhase).toBe('player-turn');
     expect(nextState.enemy?.maxHealth).toBe(20);
-    expect(nextState.enemyMaxHealth).toBe(20);
     expect(nextState.suppressedRunes).toEqual([]);
     expect(nextState.discardPile).toEqual([]);
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id).sort()).toEqual(

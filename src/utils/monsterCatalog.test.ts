@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createGoblinEnemy, createEnemyTurnRunes, createMonsterEnemy, createMonsterSpellBoard } from './gameInitialization';
+import { CARD_DEFINITIONS } from './cardCatalog';
 import { MONSTER_CATALOG } from './monsterCatalog';
 import { getRuneEffectDescription } from './runeEffects';
 
@@ -15,12 +16,15 @@ describe('monsterCatalog', () => {
       armor: MONSTER_CATALOG.goblin.armor,
       arcaneDustRewardRange: MONSTER_CATALOG.goblin.arcaneDustRewardRange,
     });
-    expect(MONSTER_CATALOG.goblin.rewardCardNames).toEqual(['Throw Rock', 'Hide', 'Scorch', 'Lifeline']);
+    expect(MONSTER_CATALOG.goblin.rewardCardNames).toEqual(['ThrowRock', 'Hide', 'Scorch', 'Heal']);
   });
 
   it('uses the catalogue turn cards to create Goblin actions', () => {
     expect(createEnemyTurnRunes('goblin', 1).map(({ name, damage }) => ({ name, damage }))).toEqual(
-      MONSTER_CATALOG.goblin.turnCycle[0].map(({ cardName, damage }) => ({ name: cardName, damage })),
+      MONSTER_CATALOG.goblin.turnCycle[0].map(({ cardName, damage }) => ({
+        name: CARD_DEFINITIONS[cardName].name,
+        damage,
+      })),
     );
   });
 

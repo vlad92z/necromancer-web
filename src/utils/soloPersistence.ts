@@ -3,10 +3,11 @@
  */
 
 import type { GameState, SoloMapState } from '../types/game';
+import { SPELL_WALL_SIDE_LENGTH } from './spellWall';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 30;
+export const SOLO_STATE_VERSION = 32;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -80,6 +81,12 @@ function isPendingCombatResolution(value: unknown): boolean {
     && Array.isArray(value.continuation.processedRemovalKeys);
 }
 
+function isCurrentSpellWall(value: unknown): boolean {
+  return Array.isArray(value)
+    && value.length === SPELL_WALL_SIDE_LENGTH
+    && value.every((row) => Array.isArray(row) && row.length === SPELL_WALL_SIDE_LENGTH);
+}
+
 function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   if (!value || typeof value !== 'object') {
     return false;
@@ -94,15 +101,15 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   return Array.isArray(state.hand)
     && Array.isArray(state.discardPile)
     && Array.isArray(state.suppressedRunes)
-    && Array.isArray(state.enemyBoard)
+    && isCurrentSpellWall(state.enemyBoard)
     && Array.isArray(state.enemyQueuedRunes)
     && isPendingCombatResolution(state.pendingCombatResolution)
-    && typeof state.enemyMaxHealth === 'number'
     && typeof state.arcaneDust === 'number'
     && typeof state.isVictory === 'boolean'
     && isRecord(state.player)
     && typeof state.player.mana === 'number'
     && typeof state.player.maxMana === 'number'
+    && isCurrentSpellWall(state.player.wall)
     && ['map', 'encounter', 'reward'].includes(String(state.soloPhase))
     && isSoloMapState(state.soloMap);
 }
