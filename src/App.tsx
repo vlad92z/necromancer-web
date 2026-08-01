@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { MainMenu } from './routes/MainMenu'
 import { SoloStartScreen } from './routes/SoloStartScreen'
+import { ArenaScreen } from './routes/ArenaScreen'
 import { useUIActions } from './hooks/useGameActions'
 import { useAppAudioState, useGameStarted } from './hooks/useGameState'
 import { useBackgroundMusic } from './hooks/useBackgroundMusic'
@@ -53,6 +54,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainMenu />} />
         <Route path="/solo" element={<SoloStartScreen />} />
+        <Route path="/arena" element={<ArenaScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

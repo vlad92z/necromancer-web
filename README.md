@@ -57,6 +57,12 @@ There is intentionally no `npm run test` script; run Vitest with `npx vitest run
 - Goblin: 20 health; repeatedly plays three Throw Rocks and Hide. Victories offer Goblin reward cards.
 - Golem Lord: 50-health boss with a cycling turn sequence of Barricades, Hurl Rocks, and Avalanche.
 
+### Arena catalogue
+
+- Arena is a read-only enemy catalogue available from the main menu.
+- Every catalogue enemy is shown with its maximum health. Selecting one shows each row of its repeating turn cycle and every card in its possible loot pool.
+- Arena does not start combat or change run state, rewards, or saved progress.
+
 ## Combat layout
 
 The combat view is composed in `SoloGameBoard.tsx`: player panel, player spell wall, enemy spellboard, enemy panel, then the hand tray and End Turn control. The metadata bar tracks run and combat state. Hovering a filled wall rune shows its original card preview near its respective health panel.
@@ -67,9 +73,9 @@ The combat view is composed in `SoloGameBoard.tsx`: player panel, player spell w
 src/
 ├── assets/                 # Art, fonts, sounds, and stat icons
 ├── components/             # Reusable UI and overlays
-├── features/gameplay/      # Map, combat board, hand tray, and reward UI
+├── features/               # Arena catalogue plus map, combat, hand, and reward UI
 ├── hooks/                  # Zustand selectors/actions and audio hooks
-├── routes/                 # Main menu and solo entry screen
+├── routes/                 # Main menu, Adventure, and Arena entry screens
 ├── state/stores/           # Run, map, board, combat, UI, artefact, gameplay stores
 ├── styles/                 # Shared pixel theme and TypeScript style tokens
 ├── systems/                # Cross-store orchestration and analytics
@@ -79,7 +85,7 @@ src/
 └── main.tsx
 ```
 
-`App.tsx` exposes `/` for the main menu and `/solo` for solo play. Unknown routes redirect to `/`.
+`App.tsx` exposes `/` for the main menu, `/solo` for Adventure, and `/arena` for the read-only enemy catalogue. Unknown routes redirect to `/`.
 
 ## Architecture
 
