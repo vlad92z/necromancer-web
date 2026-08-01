@@ -3,17 +3,18 @@
  */
 
 import type { ArtefactId } from '../types/artefacts';
-import type { EffectResolutionLog, Enemy, EnemyRune, MonsterId, Player, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
+import type { EffectResolutionLog, Enemy, EnemyRune, MonsterId, Player, Rune, RuneEffectRef, RuneType, ScoringWall, WallPosition } from '../types/game';
 import {
   resolveCastEffects,
   resolveEndTurnEffects,
-  resolvePassiveEffects,
+  resolveIncomingDamageEffects,
   resolveStartTurnEffects,
 } from './effectResolver';
-import type { DrawTypeRequest, WallPosition } from './effectResolver';
+import type { DrawTypeRequest } from './effectResolver';
 import { createEnemySpellBoard, createEnemyTurnRunes, DEFAULT_HAND_SIZE } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
 import { runeHasType } from './runeHelpers';
+import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef, removeRuneAtPosition, wallHasRuneId } from './runeRemoval';
 
 export const EXTRA_DRAW_HAND_LIMIT = 10;
 
@@ -84,6 +85,9 @@ export interface CompletedRuneCastEffectsInput {
   sourcePosition?: WallPosition | null;
   suppressedRunes?: Rune[];
   handSize?: number;
+  enemyBoard?: ScoringWall;
+  manualRemovalPosition?: WallPosition;
+  skipManualRemoval?: boolean;
 }
 
 export interface CompletedRuneCastEffectsResult {
@@ -97,6 +101,8 @@ export interface CompletedRuneCastEffectsResult {
   drawCount: number;
   drawTypeRequests: DrawTypeRequest[];
   logs: EffectResolutionLog[];
+  enemyBoard: ScoringWall;
+  pendingRemoval: ReturnType<typeof resolveCastEffects>['pendingRemoval'];
 }
 
 export interface EndTurnEffectsInput {
@@ -144,6 +150,7 @@ export interface EnemyTurnResult {
 
 interface EnemyIncomingDamageResult {
   player: Player;
+  enemy: Enemy | null;
   healthDamage: number;
   logs: EffectResolutionLog[];
 }
@@ -153,6 +160,162 @@ interface EnemyTurnEffectsResult {
   enemy: Enemy;
   healthDamage: number;
   logs: EffectResolutionLog[];
+  enemyBoard?: ScoringWall;
+}
+
+function explosiveDamageForRune(rune: Rune | null): number {
+  return rune?.passiveEffectRefs.reduce((total, effectRef) => (
+    effectRef.effectId === 'passive.explosive' && typeof effectRef.params?.amount === 'number'
+      ? total + effectRef.params.amount
+      : total
+  ), 0) ?? 0;
+}
+
+function applyDamageToEnemy(enemy: Enemy, damage: number): Enemy {
+  const normalized = Math.max(0, damage);
+  const absorbed = Math.min(enemy.armor ?? 0, normalized);
+  return {
+    ...enemy,
+    armor: (enemy.armor ?? 0) - absorbed,
+    health: Math.max(0, enemy.health - (normalized - absorbed)),
+  };
+}
+
+function resolveEnemyTimedRemovalEffects({
+  trigger,
+  player,
+  enemy,
+  enemyBoard,
+  activeArtefacts,
+  random,
+}: {
+  trigger: 'startTurn' | 'endTurn';
+  player: Player;
+  enemy: Enemy;
+  enemyBoard: ScoringWall;
+  activeArtefacts: ArtefactId[];
+  random: () => number;
+}): EnemyTurnEffectsResult {
+  let nextPlayer = player;
+  let nextEnemy = enemy;
+  let nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
+  let healthDamage = 0;
+  const logs: EffectResolutionLog[] = [];
+  const plainEffectIds = trigger === 'startTurn'
+    ? new Set(['passive.healingStartTurn', 'passive.healingStartTurnSynergy', 'passive.drawingStartTurn'])
+    : new Set(['passive.damageEndTurn', 'passive.pulseSynergy', 'passive.armorEndTurnSynergy']);
+  const queued = nextBoard.flatMap((row, rowIndex) => row.flatMap((cell, colIndex) => (
+    cell.id ? (cell.passiveEffectRefs ?? []).flatMap((effectRef) => (
+      (isRuneRemovalEffectRef(effectRef) ? effectRef.trigger === trigger : plainEffectIds.has(effectRef.effectId))
+        ? [{ sourceId: cell.id!, sourcePosition: { row: rowIndex, col: colIndex }, effectRef }]
+        : []
+    )) : []
+  )));
+
+  queued.forEach(({ sourceId, sourcePosition, effectRef }: {
+    sourceId: string;
+    sourcePosition: WallPosition;
+    effectRef: RuneEffectRef;
+  }) => {
+    if (!wallHasRuneId(nextBoard, sourceId)) return;
+    if (!isRuneRemovalEffectRef(effectRef)) {
+      const amount = typeof effectRef.params?.amount === 'number' ? effectRef.params.amount : 0;
+      const synergyType = typeof effectRef.params?.synergyType === 'string'
+        ? effectRef.params.synergyType as RuneType
+        : null;
+      const synergyCount = synergyType ? countFilledWallRunesByType(nextBoard).get(synergyType) ?? 0 : 0;
+      const modifier = (
+        effectRef.effectId === 'passive.pulseSynergy'
+        || effectRef.effectId === 'passive.armorEndTurnSynergy'
+        || effectRef.effectId === 'passive.healingStartTurnSynergy'
+      ) ? amount * synergyCount : amount;
+      logs.push({
+        sourceType: 'rune', sourceId, effectId: effectRef.effectId, trigger,
+        input: {}, output: { modifier, synergyType, synergyCount, sourcePosition }, displayHint: 'damage',
+      });
+      if (effectRef.effectId === 'passive.damageEndTurn' || effectRef.effectId === 'passive.pulseSynergy') {
+        const damageResult = resolveEnemyIncomingDamage({
+          player: nextPlayer,
+          enemy: nextEnemy,
+          baseDamage: modifier,
+          activeArtefacts,
+          random,
+        });
+        nextPlayer = damageResult.player;
+        nextEnemy = damageResult.enemy ?? nextEnemy;
+        healthDamage += damageResult.healthDamage;
+        logs.push(...damageResult.logs);
+      } else if (effectRef.effectId === 'passive.armorEndTurnSynergy') {
+        nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + Math.max(0, modifier) };
+      } else if (
+        effectRef.effectId === 'passive.healingStartTurn'
+        || effectRef.effectId === 'passive.healingStartTurnSynergy'
+      ) {
+        nextEnemy = { ...nextEnemy, health: Math.min(nextEnemy.maxHealth, nextEnemy.health + Math.max(0, modifier)) };
+      }
+      return;
+    }
+
+    const targetWall = effectRef.effectId === 'rune.consume' ? nextBoard : nextPlayer.wall;
+    const position = chooseRandomRunePosition(getRuneRemovalCandidates({
+      wall: targetWall,
+      runeType: effectRef.runeType,
+      excludedRuneId: effectRef.effectId === 'rune.consume' ? sourceId : null,
+    }), random);
+    if (!position) {
+      logs.push({
+        sourceType: 'rune', sourceId, effectId: effectRef.effectId, trigger,
+        input: { runeType: effectRef.runeType ?? null }, output: { noTarget: true }, displayHint: 'damage',
+      });
+      return;
+    }
+    const removal = removeRuneAtPosition(targetWall, position);
+    if (!removal.removedRune) return;
+    const explosiveDamage = explosiveDamageForRune(removal.removedRune);
+    if (effectRef.effectId === 'rune.consume') {
+      nextBoard = removal.wall;
+      const damageResult = resolveEnemyIncomingDamage({
+        player: nextPlayer,
+        enemy: nextEnemy,
+        baseDamage: explosiveDamage,
+        activeArtefacts,
+        random,
+      });
+      nextPlayer = damageResult.player;
+      nextEnemy = damageResult.enemy ?? nextEnemy;
+      healthDamage += damageResult.healthDamage;
+      logs.push(...damageResult.logs);
+    } else {
+      nextPlayer = { ...nextPlayer, wall: removal.wall };
+      nextEnemy = applyDamageToEnemy(nextEnemy, explosiveDamage);
+    }
+    const amount = typeof effectRef.payload?.params?.amount === 'number' ? effectRef.payload.params.amount : 0;
+    if (effectRef.payload?.effectId === 'cast.damage' || effectRef.payload?.effectId === 'passive.damageEndTurn') {
+      const damageResult = resolveEnemyIncomingDamage({
+        player: nextPlayer,
+        enemy: nextEnemy,
+        baseDamage: amount,
+        activeArtefacts,
+        random,
+      });
+      nextPlayer = damageResult.player;
+      nextEnemy = damageResult.enemy ?? nextEnemy;
+      healthDamage += damageResult.healthDamage;
+      logs.push(...damageResult.logs);
+    } else if (effectRef.payload?.effectId === 'cast.healing' || effectRef.payload?.effectId === 'passive.healingStartTurn') {
+      nextEnemy = { ...nextEnemy, health: Math.min(nextEnemy.maxHealth, nextEnemy.health + amount) };
+    } else if (effectRef.payload?.effectId === 'cast.armor') {
+      nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + amount };
+    }
+    logs.push({
+      sourceType: 'rune', sourceId, effectId: effectRef.effectId, trigger,
+      input: { runeType: effectRef.runeType ?? null },
+      output: { removedRuneId: removal.removedRune.id, row: position.row, col: position.col, explosiveDamage },
+      displayHint: 'damage',
+    });
+  });
+
+  return { player: nextPlayer, enemy: nextEnemy, enemyBoard: nextBoard, healthDamage, logs };
 }
 
 export interface VictoryDeckInput {
@@ -359,6 +522,9 @@ export function resolveCompletedRuneCastEffects({
   sourcePosition = null,
   suppressedRunes = [],
   handSize = 0,
+  enemyBoard = createEnemySpellBoard(),
+  manualRemovalPosition,
+  skipManualRemoval = false,
 }: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
   const result = resolveCastEffects({
     player,
@@ -369,6 +535,9 @@ export function resolveCompletedRuneCastEffects({
     sourcePosition,
     suppressedRunes,
     handSize,
+    opposingWall: enemyBoard,
+    manualRemovalPosition,
+    skipManualRemoval,
   });
 
   return {
@@ -377,41 +546,48 @@ export function resolveCompletedRuneCastEffects({
       ...result.player,
       wall: result.wall,
     } : result.player,
+    enemyBoard: result.opposingWall,
   };
 }
 
 function resolveEnemyIncomingDamage({
   player,
+  enemy,
   baseDamage,
   activeArtefacts,
+  random = Math.random,
 }: {
   player: Player;
+  enemy: Enemy | null;
   baseDamage: number;
   activeArtefacts: ArtefactId[];
+  random?: () => number;
 }): EnemyIncomingDamageResult {
   const normalizedBaseDamage = Math.max(0, baseDamage);
   if (normalizedBaseDamage === 0) {
-    return { player, healthDamage: 0, logs: [] };
+    return { player, enemy, healthDamage: 0, logs: [] };
   }
 
-  const passiveResult = resolvePassiveEffects({
-    trigger: 'onEnemyAttack',
-    wall: player.wall,
+  const damageEffects = resolveIncomingDamageEffects({
+    player,
+    enemy,
+    baseDamage: normalizedBaseDamage,
     activeArtefacts,
-    baseValues: { incomingDamage: normalizedBaseDamage },
+    random,
   });
-  const incomingDamage = Math.max(0, passiveResult.values.incomingDamage ?? 0);
-  const armorAbsorbed = Math.min(player.armor, incomingDamage);
+  const incomingDamage = damageEffects.incomingDamage;
+  const armorAbsorbed = Math.min(damageEffects.player.armor, incomingDamage);
   const healthDamage = incomingDamage - armorAbsorbed;
 
   return {
     player: {
-      ...player,
-      armor: player.armor - armorAbsorbed,
-      health: Math.max(0, player.health - healthDamage),
+      ...damageEffects.player,
+      armor: damageEffects.player.armor - armorAbsorbed,
+      health: Math.max(0, damageEffects.player.health - healthDamage),
     },
+    enemy: damageEffects.enemy,
     healthDamage,
-    logs: passiveResult.logs,
+    logs: damageEffects.logs,
   };
 }
 
@@ -419,99 +595,123 @@ function resolveEnemyStartTurnEffects({
   player,
   enemy,
   enemyBoard,
+  activeArtefacts,
+  random,
 }: {
   player: Player;
   enemy: Enemy;
   enemyBoard: ScoringWall;
+  activeArtefacts: ArtefactId[];
+  random: () => number;
 }): EnemyTurnEffectsResult {
-  const passiveResult = resolvePassiveEffects({
-    trigger: 'startTurn',
-    wall: enemyBoard,
-    activeArtefacts: [],
-    baseValues: { healing: 0 },
+  return resolveEnemyTimedRemovalEffects({
+    trigger: 'startTurn', player, enemy, enemyBoard, activeArtefacts, random,
   });
-  const healing = Math.max(0, passiveResult.values.healing ?? 0);
-
-  return {
-    player,
-    enemy: healing > 0
-      ? { ...enemy, health: Math.min(enemy.maxHealth, enemy.health + healing) }
-      : enemy,
-    healthDamage: 0,
-    logs: passiveResult.logs,
-  };
 }
 
 function resolveEnemyCardEffects({
   player,
   enemy,
+  enemyBoard,
   rune,
   activeArtefacts,
+  random,
 }: {
   player: Player;
   enemy: Enemy;
+  enemyBoard: ScoringWall;
   rune: EnemyRune;
   activeArtefacts: ArtefactId[];
+  random: () => number;
 }): EnemyTurnEffectsResult {
-  const armorGain = rune.castEffectRefs.reduce((total, effectRef) => (
-    effectRef.effectId === 'cast.armor' && typeof effectRef.params?.amount === 'number'
-      ? total + Math.max(0, effectRef.params.amount)
-      : total
-  ), 0);
-  const incomingDamageResult = resolveEnemyIncomingDamage({
-    player,
-    baseDamage: rune.damage,
-    activeArtefacts,
-  });
-  const destroysMostFilledRow = rune.castEffectRefs.some((effectRef) => (
-    effectRef.effectId === 'enemy.destroyMostFilledRow'
-  ));
-  const rowCounts = player.wall.map((row) => row.filter((cell) => cell.id !== null).length);
-  const fullestCount = Math.max(0, ...rowCounts);
-  const destroyedRowIndex = destroysMostFilledRow && fullestCount > 0
-    ? rowCounts.findIndex((count) => count === fullestCount)
-    : -1;
-  const emptyWallCell = (cell: WallCell): WallCell => ({
-    ...cell,
-    id: null,
-    name: null,
-    runeTypes: [],
-    rarity: null,
-    cardImageSrc: null,
-    tokenImageSrc: null,
-    manaCost: null,
-    castEffectRefs: null,
-    passiveEffectRefs: null,
-  });
-  const playerAfterEnemyEffect = destroyedRowIndex >= 0
-    ? {
-      ...incomingDamageResult.player,
-      wall: incomingDamageResult.player.wall.map((row, rowIndex) => (
-        rowIndex === destroyedRowIndex ? row.map(emptyWallCell) : row
-      )),
+  let nextPlayer = player;
+  let nextEnemy = enemy;
+  let nextBoard = enemyBoard;
+  let healthDamage = 0;
+  const logs: EffectResolutionLog[] = [];
+  const hasCatalogDamage = rune.castEffectRefs.some((effectRef) => effectRef.effectId === 'cast.damage');
+
+  const applyIncomingPacket = (amount: number) => {
+    const result = resolveEnemyIncomingDamage({
+      player: nextPlayer,
+      enemy: nextEnemy,
+      baseDamage: amount,
+      activeArtefacts,
+      random,
+    });
+    nextPlayer = result.player;
+    nextEnemy = result.enemy ?? nextEnemy;
+    healthDamage += result.healthDamage;
+    logs.push(...result.logs);
+  };
+
+  if (!hasCatalogDamage && rune.damage > 0) applyIncomingPacket(rune.damage);
+
+  rune.castEffectRefs.forEach((effectRef) => {
+    if (!isRuneRemovalEffectRef(effectRef)) {
+      const amount = typeof effectRef.params?.amount === 'number' ? effectRef.params.amount : 0;
+      if (effectRef.effectId === 'cast.damage') {
+        applyIncomingPacket(amount);
+      } else if (effectRef.effectId === 'cast.armor') {
+        nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + Math.max(0, amount) };
+      } else if (effectRef.effectId === 'cast.healing') {
+        nextEnemy = { ...nextEnemy, health: Math.min(nextEnemy.maxHealth, nextEnemy.health + Math.max(0, amount)) };
+      }
+      return;
     }
-    : incomingDamageResult.player;
-  const enemyEffectLogs: EffectResolutionLog[] = destroysMostFilledRow
-    ? [{
-      sourceType: 'rune',
-      sourceId: rune.id,
-      effectId: 'enemy.destroyMostFilledRow',
-      trigger: 'onCast',
-      input: { rowCounts },
+    if (effectRef.trigger !== 'onCast') return;
+
+    const targetWall = effectRef.effectId === 'rune.consume' ? nextBoard : nextPlayer.wall;
+    const position = chooseRandomRunePosition(getRuneRemovalCandidates({
+      wall: targetWall,
+      runeType: effectRef.runeType,
+      excludedRuneId: effectRef.effectId === 'rune.consume' ? rune.id : null,
+    }), random);
+    if (!position) {
+      logs.push({
+        sourceType: 'rune', sourceId: rune.id, effectId: effectRef.effectId, trigger: 'onCast',
+        input: { runeType: effectRef.runeType ?? null },
+        output: { removedRuneId: null, row: null, col: null, noTarget: true },
+        displayHint: 'damage',
+      });
+      return;
+    }
+
+    const removal = removeRuneAtPosition(targetWall, position);
+    if (!removal.removedRune) return;
+    const explosiveDamage = explosiveDamageForRune(removal.removedRune);
+    if (effectRef.effectId === 'rune.consume') {
+      nextBoard = removal.wall;
+      applyIncomingPacket(explosiveDamage);
+    } else {
+      nextPlayer = { ...nextPlayer, wall: removal.wall };
+      nextEnemy = applyDamageToEnemy(nextEnemy, explosiveDamage);
+    }
+    logs.push({
+      sourceType: 'rune', sourceId: rune.id, effectId: effectRef.effectId, trigger: 'onCast',
+      input: { runeType: effectRef.runeType ?? null },
       output: {
-        destroyedRowIndex: destroyedRowIndex >= 0 ? destroyedRowIndex : null,
-        destroyedRuneCount: destroyedRowIndex >= 0 ? fullestCount : 0,
+        removedRuneId: removal.removedRune.id,
+        row: position.row,
+        col: position.col,
+        explosiveDamage,
       },
       displayHint: 'damage',
-    }]
-    : [];
+    });
 
-  return {
-    player: playerAfterEnemyEffect,
-    enemy: armorGain > 0 ? { ...enemy, armor: (enemy.armor ?? 0) + armorGain } : enemy,
-    healthDamage: incomingDamageResult.healthDamage,
-    logs: [...incomingDamageResult.logs, ...enemyEffectLogs],
-  };
+    const payloadAmount = typeof effectRef.payload?.params?.amount === 'number'
+      ? effectRef.payload.params.amount
+      : 0;
+    if (effectRef.payload?.effectId === 'cast.damage' || effectRef.payload?.effectId === 'passive.damageEndTurn') {
+      applyIncomingPacket(payloadAmount);
+    } else if (effectRef.payload?.effectId === 'cast.healing' || effectRef.payload?.effectId === 'passive.healingStartTurn') {
+      nextEnemy = { ...nextEnemy, health: Math.min(nextEnemy.maxHealth, nextEnemy.health + Math.max(0, payloadAmount)) };
+    } else if (effectRef.payload?.effectId === 'cast.armor') {
+      nextEnemy = { ...nextEnemy, armor: (nextEnemy.armor ?? 0) + Math.max(0, payloadAmount) };
+    }
+  });
+
+  return { player: nextPlayer, enemy: nextEnemy, enemyBoard: nextBoard, healthDamage, logs };
 }
 
 function resolveEnemyEndTurnEffects({
@@ -519,31 +719,17 @@ function resolveEnemyEndTurnEffects({
   enemy,
   enemyBoard,
   activeArtefacts,
+  random,
 }: {
   player: Player;
   enemy: Enemy;
   enemyBoard: ScoringWall;
   activeArtefacts: ArtefactId[];
+  random: () => number;
 }): EnemyTurnEffectsResult {
-  const passiveResult = resolvePassiveEffects({
-    trigger: 'endTurn',
-    wall: enemyBoard,
-    activeArtefacts: [],
-    baseValues: { armor: 0, damage: 0 },
+  return resolveEnemyTimedRemovalEffects({
+    trigger: 'endTurn', player, enemy, enemyBoard, activeArtefacts, random,
   });
-  const armorGain = Math.max(0, passiveResult.values.armor ?? 0);
-  const incomingDamageResult = resolveEnemyIncomingDamage({
-    player,
-    baseDamage: passiveResult.values.damage ?? 0,
-    activeArtefacts,
-  });
-
-  return {
-    player: incomingDamageResult.player,
-    enemy: armorGain > 0 ? { ...enemy, armor: (enemy.armor ?? 0) + armorGain } : enemy,
-    healthDamage: incomingDamageResult.healthDamage,
-    logs: [...passiveResult.logs, ...incomingDamageResult.logs],
-  };
 }
 
 export function resolveEnemyTurn({
@@ -564,15 +750,18 @@ export function resolveEnemyTurn({
     : createEnemyTurnRunes(enemy.id as MonsterId, turnNumber);
   let nextPlayer = player;
   let nextEnemy = enemy;
-  const nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
+  let nextBoard = enemyBoard.map((row) => row.map((cell) => ({ ...cell })));
   let healthDamage = 0;
   const startTurnResult = resolveEnemyStartTurnEffects({
     player: nextPlayer,
     enemy: nextEnemy,
     enemyBoard: nextBoard,
+    activeArtefacts,
+    random,
   });
   nextPlayer = startTurnResult.player;
   nextEnemy = startTurnResult.enemy;
+  nextBoard = startTurnResult.enemyBoard ?? nextBoard;
   let logs = [...startTurnResult.logs];
 
   for (const rune of runesToPlay) {
@@ -599,11 +788,14 @@ export function resolveEnemyTurn({
     const cardResult = resolveEnemyCardEffects({
       player: nextPlayer,
       enemy: nextEnemy,
+      enemyBoard: nextBoard,
       rune,
       activeArtefacts,
+      random,
     });
     nextPlayer = cardResult.player;
     nextEnemy = cardResult.enemy;
+    nextBoard = cardResult.enemyBoard ?? nextBoard;
     healthDamage += cardResult.healthDamage;
     logs = [...logs, ...cardResult.logs];
   }
@@ -613,9 +805,11 @@ export function resolveEnemyTurn({
     enemy: nextEnemy,
     enemyBoard: nextBoard,
     activeArtefacts,
+    random,
   });
   nextPlayer = endTurnResult.player;
   nextEnemy = endTurnResult.enemy;
+  nextBoard = endTurnResult.enemyBoard ?? nextBoard;
   healthDamage += endTurnResult.healthDamage;
   logs = [...logs, ...endTurnResult.logs];
 

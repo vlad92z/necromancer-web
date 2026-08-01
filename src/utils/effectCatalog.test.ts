@@ -5,9 +5,14 @@
 import { describe, expect, it } from 'vitest';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from './artefactDescriptions';
-import { createEffectRef, getEffectDescription } from './effectCatalog';
+import { createEffectRef, EFFECT_CATALOG, getEffectDescription } from './effectCatalog';
+import { createRuneRemovalEffectRef } from './runeRemoval';
 
 describe('effectCatalog', () => {
+  it('marks Explosive as an on-removal trigger', () => {
+    expect(EFFECT_CATALOG['passive.explosive'].passive?.trigger).toBe('onRuneRemoved');
+  });
+
   it('renders cast effect descriptions from refs', () => {
     expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage');
     expect(getEffectDescription(createEffectRef('cast.damageAdjacent', { amount: 1 }))).toBe(
@@ -23,12 +28,18 @@ describe('effectCatalog', () => {
       reduction: 5,
       fragileType: 'Frost',
     }))).toBe('Deal 25 damage, reduced by 5 for every Frost rune in your completed wall');
-    expect(getEffectDescription(createEffectRef('cast.damageConsuming', { amount: 10 }))).toBe(
-      'Deal 10 damage for every adjacent rune, then destroy them'
-    );
-    expect(getEffectDescription(createEffectRef('cast.destroyType', { targetType: 'Fire' }))).toBe(
-      'Destroy a random completed Fire rune'
-    );
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'consume',
+      trigger: 'onCast',
+      selection: 'random',
+      runeType: 'Fire',
+      payload: createEffectRef('cast.damage', { amount: 5 }),
+    }))).toBe('Consume a random Fire Rune to deal 5 damage');
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'destroy',
+      trigger: 'onCast',
+      selection: 'manual',
+    }))).toBe('Destroy 1 Enemy Rune');
     expect(getEffectDescription(createEffectRef('cast.convertRandom', { sourceType: 'Fire', targetType: 'Frost' }))).toBe(
       'Convert a random completed Fire rune into a common Frost rune with no effects'
     );
@@ -107,7 +118,7 @@ describe('effectCatalog', () => {
       'Heal 50% of damage dealt'
     );
     expect(getEffectDescription(createEffectRef('passive.reduceDamage', { amount: 3 }))).toBe(
-      'All damage taken by you is reduced by 3'
+      'Reduce incoming damage by 3'
     );
   });
 

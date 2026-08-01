@@ -16,7 +16,22 @@ export interface EffectRef {
   params?: EffectParams;
 }
 
-export type EffectTrigger = 'onCast' | 'onEnemyAttack' | 'startTurn' | 'endTurn' | 'onDeckDraftOffer';
+export type RuneRemovalKind = 'consume' | 'destroy';
+export type RuneRemovalSelection = 'manual' | 'random';
+export type RuneRemovalTrigger = 'onCast' | 'onIncomingDamage' | 'startTurn' | 'endTurn';
+
+export interface RuneRemovalEffectRef {
+  effectId: 'rune.consume' | 'rune.destroy';
+  params?: never;
+  trigger: RuneRemovalTrigger;
+  selection: RuneRemovalSelection;
+  runeType?: RuneType;
+  payload?: EffectRef;
+}
+
+export type RuneEffectRef = EffectRef | RuneRemovalEffectRef;
+
+export type EffectTrigger = 'onCast' | 'onIncomingDamage' | 'onRuneRemoved' | 'startTurn' | 'endTurn' | 'onDeckDraftOffer';
 export type EffectSourceType = 'rune' | 'artefact';
 
 export interface EffectResolutionLog {
@@ -37,8 +52,8 @@ export interface Rune {
   cardImageSrc: string;
   tokenImageSrc: string;
   manaCost?: number;
-  castEffectRefs: EffectRef[];
-  passiveEffectRefs: EffectRef[];
+  castEffectRefs: RuneEffectRef[];
+  passiveEffectRefs: RuneEffectRef[];
 }
 
 export interface Enemy {
@@ -92,8 +107,8 @@ export interface WallCell {
   cardImageSrc: string | null;
   tokenImageSrc: string | null;
   manaCost?: number | null;
-  castEffectRefs: EffectRef[] | null;
-  passiveEffectRefs: EffectRef[] | null;
+  castEffectRefs: RuneEffectRef[] | null;
+  passiveEffectRefs: RuneEffectRef[] | null;
 }
 
 export type ScoringWall = WallCell[][];
@@ -191,6 +206,40 @@ export interface CombatZoneState {
   enemyBoard: ScoringWall;
   enemyQueuedRunes: EnemyRune[];
   enemyTurnNumber: number;
+  pendingCombatResolution: PendingCombatResolution | null;
+}
+
+export interface WallPosition {
+  row: number;
+  col: number;
+}
+
+export interface PendingRuneTarget {
+  sourceOwner: 'player' | 'enemy';
+  sourceRuneId: string;
+  sourcePosition: WallPosition;
+  effectRef: RuneRemovalEffectRef;
+}
+
+export type PendingCombatContinuation =
+  | {
+    kind: 'cast';
+    castRune: Rune;
+    sourcePosition: WallPosition;
+    remainingEffectRefs: RuneEffectRef[];
+  }
+  | {
+    kind: 'endTurn';
+    processedRemovalKeys: string[];
+  }
+  | {
+    kind: 'startTurn';
+    processedRemovalKeys: string[];
+  };
+
+export interface PendingCombatResolution {
+  target: PendingRuneTarget;
+  continuation: PendingCombatContinuation;
 }
 
 export interface GameState extends CombatZoneState {

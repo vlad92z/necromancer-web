@@ -1,8 +1,18 @@
-import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { Rune, RuneEffectRarity, RuneEffectRef, RuneType } from '../types/game';
 import { CARD_DEFINITIONS, type CardDefinition, type CardName } from './cardCatalog';
 import { getEffectRefDescriptions } from './effectCatalog';
+import { copyRuneEffectRef } from './runeRemoval';
 
 type RuneTemplate = CardDefinition;
+
+const PLAYER_CARD_NAMES: readonly CardName[] = [
+  'Firebolt', 'Fire Blast', 'Pyroblast', 'Burn',
+  'Frost Shield', 'Ice Block', 'Freezing Cold', 'Icy Veins',
+  'Barricade', 'Lifeline', 'Healing Rain', 'Immortality',
+  'Void Tendrils', 'Void Pulse', 'Void 4',
+  'Tornado', 'Headwind', 'Tailwind', 'Perfect Storm',
+  'Lightning Bolt', 'Chain Lightning', 'Electric Surge', 'Perfect Synergy',
+];
 
 interface CreateRuneFromPoolInput {
   id: string;
@@ -11,11 +21,8 @@ interface CreateRuneFromPoolInput {
   random?: () => number;
 }
 
-export function copyEffectRefs(effectRefs: EffectRef[] | null | undefined): EffectRef[] {
-  return effectRefs?.map((effectRef) => ({
-    effectId: effectRef.effectId,
-    ...(effectRef.params ? { params: { ...effectRef.params } } : {}),
-  })) ?? [];
+export function copyEffectRefs(effectRefs: RuneEffectRef[] | null | undefined): RuneEffectRef[] {
+  return effectRefs?.map(copyRuneEffectRef) ?? [];
 }
 
 /** Compatibility index for type/rarity game rules; card data lives in cardCatalog.ts. */
@@ -28,7 +35,8 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
   Lightning: { common: [], uncommon: [], rare: [], epic: [] },
 };
 
-Object.values(CARD_DEFINITIONS).filter((card) => card.pool === 'standard').forEach((card) => {
+PLAYER_CARD_NAMES.forEach((cardName) => {
+  const card = CARD_DEFINITIONS[cardName];
   PREDEFINED_RUNE_VARIANTS[card.runeTypes[0]][card.rarity].push(card);
 });
 

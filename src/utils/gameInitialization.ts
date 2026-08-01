@@ -195,5 +195,6 @@ export function initializeSoloGame(
     enemyBoard: createEnemySpellBoard(WALL_SIZE),
     enemyQueuedRunes: [],
     enemyTurnNumber: 0,
+    pendingCombatResolution: null,
   };
 }

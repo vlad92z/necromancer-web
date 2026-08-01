@@ -8,7 +8,7 @@
 - 2 Barricade, common Life: gain 5 armor.
 - 2 Void Tendrils, common Void, 5 mana: deal 10 damage.
 - 1 Tornado, common Wind: deal 5 damage.
-- 1 Headwind, uncommon Wind, 4 mana: reduce total incoming enemy-turn damage by 1 before armor.
+- 1 Headwind, uncommon Wind, 4 mana: Consume a random Wind Rune to reduce incoming damage by 5.
 
 All other cards cost 2 mana. The player starts each turn with 7 mana and draws 5 cards.
 

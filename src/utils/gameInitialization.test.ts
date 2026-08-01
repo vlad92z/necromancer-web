@@ -5,6 +5,7 @@ import {
   rollEnemyArcaneDustReward,
   STARTING_DECK,
 } from './gameInitialization';
+import { getRuneEffectDescription } from './runeEffects';
 
 describe('gameInitialization combat state', () => {
   it('initializes a goblin encounter using enemy max health', () => {
@@ -65,8 +66,17 @@ describe('gameInitialization combat state', () => {
       rarity: 'uncommon',
       manaCost: 4,
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
+      passiveEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onIncomingDamage',
+        selection: 'random',
+        runeType: 'Wind',
+        payload: { effectId: 'passive.reduceDamage', params: { amount: 5 } },
+      }],
     });
+    expect(getRuneEffectDescription(deck.find((rune) => rune.name === 'Headwind')!)).toBe(
+      '• Consume a random Wind Rune to reduce incoming damage by 5',
+    );
     expect(deck.find((rune) => rune.name === 'Lightning Bolt')).toMatchObject({ manaCost: 1 });
     expect(deck.find((rune) => rune.name === 'Firebolt')).toMatchObject({ manaCost: 2 });
     expect(deck.find((rune) => rune.name === 'Void Tendrils')).toMatchObject({ manaCost: 5 });
@@ -98,6 +108,14 @@ describe('gameInitialization combat state', () => {
       { effectId: 'cast.damage', params: { amount: 5 } },
     ]);
     expect(firstDeck[0].castEffectRefs).not.toBe(secondDeck[0].castEffectRefs);
+    const firstHeadwindEffect = firstDeck.find((rune) => rune.name === 'Headwind')!.passiveEffectRefs[0];
+    const secondHeadwindEffect = secondDeck.find((rune) => rune.name === 'Headwind')!.passiveEffectRefs[0];
+    expect(firstHeadwindEffect).not.toBe(secondHeadwindEffect);
+    expect('payload' in firstHeadwindEffect && 'payload' in secondHeadwindEffect
+      ? firstHeadwindEffect.payload
+      : null).not.toBe(
+      'payload' in secondHeadwindEffect ? secondHeadwindEffect.payload : null,
+    );
   });
 
   it('assigns current type card and token art to every starting rune', () => {

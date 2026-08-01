@@ -52,6 +52,7 @@ export function getGameplayState(): GameState {
     enemyBoard: combat.enemyBoard,
     enemyQueuedRunes: combat.enemyQueuedRunes,
     enemyTurnNumber: combat.enemyTurnNumber,
+    pendingCombatResolution: combat.pendingCombatResolution,
   };
 }
 

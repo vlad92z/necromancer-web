@@ -12,19 +12,25 @@ import type {
   Enemy,
   Player,
   Rune,
+  RuneEffectRef,
+  RuneRemovalEffectRef,
   RuneType,
   ScoringWall,
   WallCell,
+  WallPosition,
 } from '../types/game';
 import { EFFECT_CATALOG } from './effectCatalog';
 import type { CastEffectId, CatalogEffectId } from './effectCatalog';
 import { getPrimaryRuneType } from './runeHelpers';
 import { createRuneFromPool } from './runeEffects';
-
-export interface WallPosition {
-  row: number;
-  col: number;
-}
+import {
+  chooseRandomRunePosition,
+  copyRuneEffectRef,
+  getRuneRemovalCandidates,
+  isRuneRemovalEffectRef,
+  removeRuneAtPosition,
+  wallHasRuneId,
+} from './runeRemoval';
 
 export interface CastEffectResolutionInput {
   player: Player;
@@ -37,6 +43,9 @@ export interface CastEffectResolutionInput {
   allowRetrigger?: boolean;
   handSize?: number;
   rng?: () => number;
+  opposingWall?: ScoringWall;
+  manualRemovalPosition?: WallPosition;
+  skipManualRemoval?: boolean;
 }
 
 export interface DrawTypeRequest {
@@ -48,6 +57,7 @@ export interface CastEffectResolutionResult {
   player: Player;
   enemy: Enemy | null;
   wall: ScoringWall;
+  opposingWall: ScoringWall;
   suppressedRunes: Rune[];
   returnedRunes: Rune[];
   returnedOverflowRunes: Rune[];
@@ -56,6 +66,10 @@ export interface CastEffectResolutionResult {
   drawCount: number;
   drawTypeRequests: DrawTypeRequest[];
   logs: EffectResolutionLog[];
+  pendingRemoval: {
+    effectRef: RuneRemovalEffectRef;
+    remainingEffectRefs: RuneEffectRef[];
+  } | null;
 }
 
 export interface EndTurnEffectResolutionInput {
@@ -86,7 +100,7 @@ export interface StartTurnEffectResolutionResult {
 export interface ActivePassiveEffect {
   sourceType: EffectSourceType;
   sourceId: string;
-  effectRef: EffectRef;
+  effectRef: RuneEffectRef;
   sourceOrder: number;
   refOrder: number;
   sourcePosition: WallPosition | null;
@@ -108,6 +122,29 @@ export interface PassiveEffectResolutionResult {
   values: Record<string, number>;
   logs: EffectResolutionLog[];
   activePassives: ActivePassiveEffect[];
+}
+
+export interface IncomingDamageResolutionResult {
+  player: Player;
+  enemy: Enemy | null;
+  incomingDamage: number;
+  removedRunes: Rune[];
+  logs: EffectResolutionLog[];
+}
+
+export interface TimedRuneRemovalResolutionResult {
+  player: Player;
+  enemy: Enemy | null;
+  opposingWall: ScoringWall;
+  removedRunes: Rune[];
+  drawCount: number;
+  processedKeys: string[];
+  logs: EffectResolutionLog[];
+  pendingRemoval: {
+    sourceId: string;
+    sourcePosition: WallPosition;
+    effectRef: RuneRemovalEffectRef;
+  } | null;
 }
 
 interface DamageResolutionInput extends PassiveCollectionInput {
@@ -270,15 +307,12 @@ function chooseRandomPosition(positions: WallPosition[], rng: () => number): Wal
   return positions[index] ?? null;
 }
 
-function copyEffectRefs(effectRefs: EffectRef[] | null | undefined): EffectRef[] {
+function copyEffectRefs(effectRefs: RuneEffectRef[] | null | undefined): RuneEffectRef[] {
   if (!effectRefs) {
     return [];
   }
 
-  return effectRefs.map((effectRef) => ({
-    effectId: effectRef.effectId,
-    ...(effectRef.params ? { params: { ...effectRef.params } } : {}),
-  }));
+  return effectRefs.map(copyRuneEffectRef);
 }
 
 function createRuntimeRuneId(baseId: string): string {
@@ -411,7 +445,7 @@ function isKnownCastEffectId(effectId: string): effectId is CastEffectId {
 function createEffectLog(
   sourceType: EffectSourceType,
   sourceId: string,
-  effectRef: EffectRef,
+  effectRef: RuneEffectRef,
   trigger: EffectTrigger,
   input: Record<string, unknown>,
   output: Record<string, unknown>
@@ -459,6 +493,281 @@ function sortActivePassiveEffects(passives: ActivePassiveEffect[]): ActivePassiv
     left.sourceOrder - right.sourceOrder ||
     left.refOrder - right.refOrder
   ));
+}
+
+export function resolveIncomingDamageEffects({
+  player,
+  enemy,
+  baseDamage,
+  activeArtefacts = [],
+  random = Math.random,
+}: {
+  player: Player;
+  enemy: Enemy | null;
+  baseDamage: number;
+  activeArtefacts?: ArtefactId[];
+  random?: () => number;
+}): IncomingDamageResolutionResult {
+  let nextWall = cloneWall(player.wall);
+  let nextEnemy = enemy;
+  let incomingDamage = Math.max(0, baseDamage);
+  const removedRunes: Rune[] = [];
+  const logs: EffectResolutionLog[] = [];
+  const queuedRemovals = collectActivePassiveEffects({ wall: nextWall, activeArtefacts: [] })
+    .filter((passive): passive is ActivePassiveEffect & { effectRef: RuneRemovalEffectRef } => (
+      isRuneRemovalEffectRef(passive.effectRef)
+      && passive.effectRef.trigger === 'onIncomingDamage'
+    ));
+
+  for (const queued of queuedRemovals) {
+    if (incomingDamage <= 0 || !queued.sourcePosition || !wallHasRuneId(nextWall, queued.sourceId)) {
+      continue;
+    }
+    const candidates = getRuneRemovalCandidates({
+      wall: nextWall,
+      runeType: queued.effectRef.runeType,
+      excludedRuneId: queued.sourceId,
+    });
+    const position = chooseRandomRunePosition(candidates, random);
+    if (!position) {
+      logs.push(createEffectLog(
+        'rune',
+        queued.sourceId,
+        queued.effectRef,
+        'onIncomingDamage',
+        { incomingDamage, runeType: queued.effectRef.runeType ?? null },
+        { noTarget: true },
+      ));
+      continue;
+    }
+
+    const removal = removeRuneAtPosition(nextWall, position);
+    if (!removal.removedRune) continue;
+    nextWall = removal.wall;
+    removedRunes.push(removal.removedRune);
+    const explosiveDamage = getExplosiveDamage(removal.removedRune);
+    nextEnemy = applyExplosiveDamageToEnemy(nextEnemy, explosiveDamage);
+    const reduction = queued.effectRef.payload?.effectId === 'passive.reduceDamage'
+      ? numberParam(queued.effectRef.payload, 'amount')
+      : 0;
+    const previousDamage = incomingDamage;
+    incomingDamage = Math.max(0, incomingDamage - reduction);
+    logs.push(createEffectLog(
+      'rune',
+      queued.sourceId,
+      queued.effectRef,
+      'onIncomingDamage',
+      { incomingDamage: previousDamage, runeType: queued.effectRef.runeType ?? null },
+      {
+        removedRuneId: removal.removedRune.id,
+        row: position.row,
+        col: position.col,
+        reduction,
+        incomingDamage,
+        explosiveDamage,
+      },
+    ));
+  }
+
+  const passiveResult = resolvePassiveEffects({
+    trigger: 'onIncomingDamage',
+    wall: nextWall,
+    activeArtefacts,
+    baseValues: { incomingDamage },
+  });
+
+  return {
+    player: { ...player, wall: nextWall },
+    enemy: nextEnemy,
+    incomingDamage: Math.max(0, passiveResult.values.incomingDamage ?? incomingDamage),
+    removedRunes,
+    logs: [...logs, ...passiveResult.logs],
+  };
+}
+
+export function resolveTimedRuneRemovalEffects({
+  trigger,
+  player,
+  enemy,
+  opposingWall,
+  processedKeys = [],
+  manualRemovalPosition,
+  skipManualRemoval = false,
+  random = Math.random,
+}: {
+  trigger: 'startTurn' | 'endTurn';
+  player: Player;
+  enemy: Enemy | null;
+  opposingWall: ScoringWall;
+  processedKeys?: string[];
+  manualRemovalPosition?: WallPosition;
+  skipManualRemoval?: boolean;
+  random?: () => number;
+}): TimedRuneRemovalResolutionResult {
+  let nextPlayer = { ...player, wall: cloneWall(player.wall) };
+  let nextEnemy = enemy;
+  let nextOpposingWall = cloneWall(opposingWall);
+  let drawCount = 0;
+  const removedRunes: Rune[] = [];
+  const logs: EffectResolutionLog[] = [];
+  const nextProcessedKeys = [...processedKeys];
+  const queued = collectActivePassiveEffects({ wall: nextPlayer.wall, activeArtefacts: [] })
+    .filter((passive): passive is ActivePassiveEffect & { sourcePosition: WallPosition } => {
+      if (passive.sourcePosition === null) return false;
+      if (isRuneRemovalEffectRef(passive.effectRef)) return passive.effectRef.trigger === trigger;
+      const metadata = EFFECT_CATALOG[passive.effectRef.effectId as CatalogEffectId]?.passive;
+      return metadata?.trigger === trigger;
+    });
+  let pendingManualPosition = manualRemovalPosition;
+  let shouldSkipManual = skipManualRemoval;
+
+  for (const item of queued) {
+    const key = `${item.sourceId}:${item.refOrder}`;
+    if (nextProcessedKeys.includes(key) || !wallHasRuneId(nextPlayer.wall, item.sourceId)) continue;
+    if (!isRuneRemovalEffectRef(item.effectRef)) {
+      nextProcessedKeys.push(key);
+      const amount = numberParam(item.effectRef, 'amount');
+      const synergyType = runeTypeParam(item.effectRef, 'synergyType');
+      const synergyCount = synergyType
+        ? countWallRunesByTypeIncludingTrigger({
+          wall: nextPlayer.wall,
+          counts: countFilledWallRunesByType(nextPlayer.wall),
+          sourcePosition: item.sourcePosition,
+          runeType: synergyType,
+        })
+        : 0;
+      const modifier = (
+        item.effectRef.effectId === 'passive.pulseSynergy'
+        || item.effectRef.effectId === 'passive.armorEndTurnSynergy'
+        || item.effectRef.effectId === 'passive.healingStartTurnSynergy'
+      ) ? amount * synergyCount : amount;
+      if (item.effectRef.effectId === 'passive.damageEndTurn' || item.effectRef.effectId === 'passive.pulseSynergy') {
+        nextEnemy = nextEnemy && modifier > 0
+          ? { ...nextEnemy, health: Math.max(0, nextEnemy.health - modifier) }
+          : nextEnemy;
+      } else if (item.effectRef.effectId === 'passive.armorEndTurnSynergy') {
+        nextPlayer = { ...nextPlayer, armor: nextPlayer.armor + modifier };
+      } else if (
+        item.effectRef.effectId === 'passive.healingStartTurn'
+        || item.effectRef.effectId === 'passive.healingStartTurnSynergy'
+      ) {
+        nextPlayer = { ...nextPlayer, health: Math.min(nextPlayer.maxHealth, nextPlayer.health + modifier) };
+      } else if (item.effectRef.effectId === 'passive.drawingStartTurn') {
+        drawCount += modifier;
+      }
+      logs.push(createEffectLog('rune', item.sourceId, item.effectRef, trigger, {}, {
+        modifier,
+        ...(synergyType ? { synergyType, synergyCount } : {}),
+      }));
+      continue;
+    }
+
+    const targetWall = item.effectRef.effectId === 'rune.consume' ? nextPlayer.wall : nextOpposingWall;
+    const candidates = getRuneRemovalCandidates({
+      wall: targetWall,
+      runeType: item.effectRef.runeType,
+      excludedRuneId: item.effectRef.effectId === 'rune.consume' ? item.sourceId : null,
+    });
+    if (
+      candidates.length > 0
+      && item.effectRef.selection === 'manual'
+      && !pendingManualPosition
+      && !shouldSkipManual
+    ) {
+      return {
+        player: nextPlayer,
+        enemy: nextEnemy,
+        opposingWall: nextOpposingWall,
+        removedRunes,
+        drawCount,
+        processedKeys: nextProcessedKeys,
+        logs,
+        pendingRemoval: {
+          sourceId: item.sourceId,
+          sourcePosition: item.sourcePosition,
+          effectRef: copyRuneEffectRef(item.effectRef) as RuneRemovalEffectRef,
+        },
+      };
+    }
+
+    const manualIsValid = pendingManualPosition
+      ? candidates.some((position) => position.row === pendingManualPosition?.row && position.col === pendingManualPosition?.col)
+      : false;
+    if (pendingManualPosition && !manualIsValid) {
+      return {
+        player: nextPlayer,
+        enemy: nextEnemy,
+        opposingWall: nextOpposingWall,
+        removedRunes,
+        drawCount,
+        processedKeys: nextProcessedKeys,
+        logs,
+        pendingRemoval: {
+          sourceId: item.sourceId,
+          sourcePosition: item.sourcePosition,
+          effectRef: copyRuneEffectRef(item.effectRef) as RuneRemovalEffectRef,
+        },
+      };
+    }
+    const position = shouldSkipManual
+      ? null
+      : pendingManualPosition ?? chooseRandomRunePosition(candidates, random);
+    pendingManualPosition = undefined;
+    shouldSkipManual = false;
+    nextProcessedKeys.push(key);
+    if (!position) {
+      logs.push(createEffectLog('rune', item.sourceId, item.effectRef, trigger, {}, {
+        ...(candidates.length === 0 ? { noTarget: true } : { skipped: true }),
+      }));
+      continue;
+    }
+
+    const removal = removeRuneAtPosition(targetWall, position);
+    if (!removal.removedRune) continue;
+    const explosiveDamage = getExplosiveDamage(removal.removedRune);
+    if (item.effectRef.effectId === 'rune.consume') {
+      nextPlayer = { ...nextPlayer, wall: removal.wall };
+      nextEnemy = applyExplosiveDamageToEnemy(nextEnemy, explosiveDamage);
+      removedRunes.push(removal.removedRune);
+    } else {
+      nextOpposingWall = removal.wall;
+      nextPlayer = applyExplosiveDamageToPlayer(nextPlayer, explosiveDamage);
+    }
+
+    const payload = item.effectRef.payload;
+    let payloadAmount = 0;
+    if (payload) {
+      payloadAmount = numberParam(payload, 'amount');
+      if (payload.effectId === 'cast.damage' || payload.effectId === 'passive.damageEndTurn') {
+        nextEnemy = applyExplosiveDamageToEnemy(nextEnemy, payloadAmount);
+      } else if (payload.effectId === 'cast.healing' || payload.effectId === 'passive.healingStartTurn') {
+        nextPlayer = { ...nextPlayer, health: Math.min(nextPlayer.maxHealth, nextPlayer.health + payloadAmount) };
+      } else if (payload.effectId === 'cast.armor') {
+        nextPlayer = { ...nextPlayer, armor: nextPlayer.armor + payloadAmount };
+      } else if (payload.effectId === 'cast.draw' || payload.effectId === 'passive.drawingStartTurn') {
+        drawCount += payloadAmount;
+      }
+    }
+    logs.push(createEffectLog('rune', item.sourceId, item.effectRef, trigger, {}, {
+      removedRuneId: removal.removedRune.id,
+      row: position.row,
+      col: position.col,
+      explosiveDamage,
+      payloadEffectId: payload?.effectId ?? null,
+      payloadAmount,
+    }));
+  }
+
+  return {
+    player: nextPlayer,
+    enemy: nextEnemy,
+    opposingWall: nextOpposingWall,
+    removedRunes,
+    drawCount,
+    processedKeys: nextProcessedKeys,
+    logs,
+    pendingRemoval: null,
+  };
 }
 
 function isDamageFinalizerPassive(effectId: string): boolean {
@@ -517,6 +826,10 @@ export function resolvePassiveEffects({
   const activePassives = sortActivePassiveEffects(collectActivePassiveEffects({ wall, activeArtefacts }));
 
   activePassives.forEach((passive) => {
+    if (isRuneRemovalEffectRef(passive.effectRef)) {
+      return;
+    }
+
     if (isDamageFinalizerPassive(passive.effectRef.effectId)) {
       return;
     }
@@ -776,7 +1089,7 @@ function resolveDamage({
   };
 }
 
-export function resolveCastEffects({
+function resolvePlainCastEffects({
   player,
   enemy,
   castRune,
@@ -787,6 +1100,7 @@ export function resolveCastEffects({
   allowRetrigger = true,
   handSize = 0,
   rng = Math.random,
+  opposingWall = [],
 }: CastEffectResolutionInput): CastEffectResolutionResult {
   let nextWall = cloneWall(wall);
   let nextSuppressedRunes = [...suppressedRunes];
@@ -885,59 +1199,6 @@ export function resolveCastEffects({
           fragileCount,
           reduction,
           enemyHealth: projectedEnemyHealth,
-        }));
-        break;
-      }
-      case 'cast.damageConsuming': {
-        const adjacentPositions = getAdjacentCompletedPositions(nextWall, sourcePosition);
-        const damage = numberParam(effectRef, 'amount') * adjacentPositions.length;
-        baseDamage += damage;
-        if (projectedEnemyHealth !== null) {
-          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
-        }
-
-        const destroyedRunes: Rune[] = [];
-        adjacentPositions.forEach((position) => {
-          const result = clearCompletedCell(nextWall, position);
-          nextWall = result.wall;
-          if (result.suppressedRune) {
-            wallChanged = true;
-            explosiveDamage += getExplosiveDamage(result.suppressedRune);
-            destroyedRunes.push(result.suppressedRune);
-          }
-        });
-        nextSuppressedRunes = [...nextSuppressedRunes, ...destroyedRunes];
-        wallRuneCounts = countFilledWallRunesByType(nextWall);
-
-        logs.push(createCastLog(castRune, effectRef, baseInput, {
-          damage,
-          adjacentCount: adjacentPositions.length,
-          destroyedRuneIds: destroyedRunes.map((rune) => rune.id),
-          enemyHealth: projectedEnemyHealth,
-        }));
-        break;
-      }
-      case 'cast.destroyType': {
-        const targetType = runeTypeParam(effectRef, 'targetType');
-        const targetPosition = targetType
-          ? chooseRandomPosition(getCompletedPositionsByType(nextWall, targetType, sourcePosition), rng)
-          : null;
-        const destroyedRunes: Rune[] = [];
-        if (targetPosition) {
-          const result = clearCompletedCell(nextWall, targetPosition);
-          nextWall = result.wall;
-          if (result.suppressedRune) {
-            wallChanged = true;
-            explosiveDamage += getExplosiveDamage(result.suppressedRune);
-            destroyedRunes.push(result.suppressedRune);
-          }
-        }
-        nextSuppressedRunes = [...nextSuppressedRunes, ...destroyedRunes];
-        wallRuneCounts = countFilledWallRunesByType(nextWall);
-        logs.push(createCastLog(castRune, effectRef, baseInput, {
-          targetType,
-          destroyedRuneIds: destroyedRunes.map((rune) => rune.id),
-          noTarget: !targetPosition,
         }));
         break;
       }
@@ -1425,6 +1686,7 @@ export function resolveCastEffects({
     player: nextPlayer,
     enemy: enemyAfterExplosive,
     wall: nextWall,
+    opposingWall,
     suppressedRunes: nextSuppressedRunes,
     returnedRunes,
     returnedOverflowRunes,
@@ -1433,7 +1695,182 @@ export function resolveCastEffects({
     drawCount: baseDrawCount,
     drawTypeRequests,
     logs: [...logs, ...passiveResult.logs, ...damageResult.logs, ...explosiveLogs, ...vampireLogs],
+    pendingRemoval: null,
   };
+}
+
+function combineCastResults(
+  before: CastEffectResolutionResult,
+  after: CastEffectResolutionResult,
+): CastEffectResolutionResult {
+  return {
+    ...after,
+    suppressedRunes: after.suppressedRunes,
+    returnedRunes: [...before.returnedRunes, ...after.returnedRunes],
+    returnedOverflowRunes: [...before.returnedOverflowRunes, ...after.returnedOverflowRunes],
+    wallChanged: before.wallChanged || after.wallChanged,
+    arcaneDustDelta: before.arcaneDustDelta + after.arcaneDustDelta,
+    drawCount: before.drawCount + after.drawCount,
+    drawTypeRequests: [...before.drawTypeRequests, ...after.drawTypeRequests],
+    logs: [...before.logs, ...after.logs],
+  };
+}
+
+function applyExplosiveDamageToEnemy(enemy: Enemy | null, damage: number): Enemy | null {
+  if (!enemy || damage <= 0) return enemy;
+  const absorbed = Math.min(enemy.armor ?? 0, damage);
+  return {
+    ...enemy,
+    armor: (enemy.armor ?? 0) - absorbed,
+    health: Math.max(0, enemy.health - (damage - absorbed)),
+  };
+}
+
+function applyExplosiveDamageToPlayer(player: Player, damage: number): Player {
+  if (damage <= 0) return player;
+  const absorbed = Math.min(player.armor, damage);
+  return {
+    ...player,
+    armor: player.armor - absorbed,
+    health: Math.max(0, player.health - (damage - absorbed)),
+  };
+}
+
+export function resolveCastEffects(input: CastEffectResolutionInput): CastEffectResolutionResult {
+  const removalIndex = input.castRune.castEffectRefs.findIndex((effectRef) => (
+    isRuneRemovalEffectRef(effectRef) && effectRef.trigger === 'onCast'
+  ));
+
+  if (removalIndex < 0) {
+    return resolvePlainCastEffects(input);
+  }
+
+  const prefix = input.castRune.castEffectRefs.slice(0, removalIndex);
+  const removalEffect = input.castRune.castEffectRefs[removalIndex];
+  if (!removalEffect || !isRuneRemovalEffectRef(removalEffect)) {
+    return resolvePlainCastEffects(input);
+  }
+  const remainingEffectRefs = input.castRune.castEffectRefs.slice(removalIndex + 1).map(copyRuneEffectRef);
+  const before = resolvePlainCastEffects({
+    ...input,
+    castRune: { ...input.castRune, castEffectRefs: prefix },
+  });
+  const playerWithResolvedWall = { ...before.player, wall: before.wall };
+  const targetWall = removalEffect.effectId === 'rune.consume' ? before.wall : before.opposingWall;
+  const candidates = getRuneRemovalCandidates({
+    wall: targetWall,
+    runeType: removalEffect.runeType,
+    excludedRuneId: removalEffect.effectId === 'rune.consume' ? input.castRune.id : null,
+  });
+
+  if (
+    candidates.length > 0
+    && removalEffect.selection === 'manual'
+    && !input.manualRemovalPosition
+    && !input.skipManualRemoval
+  ) {
+    return {
+      ...before,
+      player: playerWithResolvedWall,
+      pendingRemoval: {
+        effectRef: copyRuneEffectRef(removalEffect) as RuneRemovalEffectRef,
+        remainingEffectRefs,
+      },
+    };
+  }
+
+  const manualPositionIsValid = input.manualRemovalPosition
+    ? candidates.some((position) => (
+      position.row === input.manualRemovalPosition?.row
+      && position.col === input.manualRemovalPosition?.col
+    ))
+    : false;
+  if (input.manualRemovalPosition && !manualPositionIsValid) {
+    return before;
+  }
+  const selectedPosition = input.skipManualRemoval
+    ? null
+    : input.manualRemovalPosition ?? chooseRandomRunePosition(candidates, input.rng ?? Math.random);
+  if (!selectedPosition) {
+    const skipped: CastEffectResolutionResult = {
+      ...before,
+      player: playerWithResolvedWall,
+      logs: [...before.logs, createEffectLog(
+        'rune',
+        input.castRune.id,
+        removalEffect,
+        'onCast',
+        { runeType: removalEffect.runeType ?? null },
+        input.skipManualRemoval ? { skipped: true } : { noTarget: true },
+      )],
+    };
+    if (remainingEffectRefs.length === 0) return skipped;
+    const after = resolveCastEffects({
+      ...input,
+      player: skipped.player,
+      enemy: skipped.enemy,
+      wall: skipped.wall,
+      opposingWall: skipped.opposingWall,
+      suppressedRunes: skipped.suppressedRunes,
+      castRune: { ...input.castRune, castEffectRefs: remainingEffectRefs },
+      manualRemovalPosition: undefined,
+      skipManualRemoval: false,
+    });
+    return combineCastResults(skipped, after);
+  }
+
+  const removal = removeRuneAtPosition(targetWall, selectedPosition);
+  const explosiveDamage = removal.removedRune ? getExplosiveDamage(removal.removedRune) : 0;
+  const nextWall = removalEffect.effectId === 'rune.consume' ? removal.wall : before.wall;
+  const nextOpposingWall = removalEffect.effectId === 'rune.destroy' ? removal.wall : before.opposingWall;
+  const nextPlayer = removalEffect.effectId === 'rune.destroy'
+    ? applyExplosiveDamageToPlayer({ ...playerWithResolvedWall, wall: nextWall }, explosiveDamage)
+    : { ...playerWithResolvedWall, wall: nextWall };
+  const nextEnemy = removalEffect.effectId === 'rune.consume'
+    ? applyExplosiveDamageToEnemy(before.enemy, explosiveDamage)
+    : before.enemy;
+  const removalLog = createEffectLog(
+    'rune',
+    input.castRune.id,
+    removalEffect,
+    'onCast',
+    { runeType: removalEffect.runeType ?? null },
+    {
+      removedRuneId: removal.removedRune?.id ?? null,
+      row: selectedPosition.row,
+      col: selectedPosition.col,
+      explosiveDamage,
+    },
+  );
+  const removed: CastEffectResolutionResult = {
+    ...before,
+    player: nextPlayer,
+    enemy: nextEnemy,
+    wall: nextWall,
+    opposingWall: nextOpposingWall,
+    suppressedRunes: removalEffect.effectId === 'rune.consume' && removal.removedRune
+      ? [...before.suppressedRunes, removal.removedRune]
+      : before.suppressedRunes,
+    wallChanged: true,
+    logs: [...before.logs, removalLog],
+  };
+  const continuationRefs: RuneEffectRef[] = [
+    ...(removalEffect.payload ? [removalEffect.payload] : []),
+    ...remainingEffectRefs,
+  ];
+  if (continuationRefs.length === 0) return removed;
+  const after = resolveCastEffects({
+    ...input,
+    player: removed.player,
+    enemy: removed.enemy,
+    wall: removed.wall,
+    opposingWall: removed.opposingWall,
+    suppressedRunes: removed.suppressedRunes,
+    castRune: { ...input.castRune, castEffectRefs: continuationRefs },
+    manualRemovalPosition: undefined,
+    skipManualRemoval: false,
+  });
+  return combineCastResults(removed, after);
 }
 
 export function resolveStartTurnEffects({

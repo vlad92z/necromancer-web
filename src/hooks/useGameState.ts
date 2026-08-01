@@ -125,6 +125,10 @@ export function useEnemySpellBoardState() {
   );
 }
 
+export function usePendingRuneTargetState() {
+  return useCombatStore((state) => state.pendingCombatResolution?.target ?? null);
+}
+
 export function useGameplayDeckState() {
   const deck = useBoardStore((state) => state.player.deck);
   const fullDeck = useRunStore((state) => state.fullDeck);

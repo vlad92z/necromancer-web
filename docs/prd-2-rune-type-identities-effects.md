@@ -91,7 +91,6 @@ Cast effects:
 - `damageSynergy`: deal X damage per completed target-type rune.
 - `damageFragile`: deal max(0, X - Y per completed target-type rune).
 - `damageConditional`: deal X damage if at least Y completed target-type runes exist.
-- `damageConsuming`: deal X damage per adjacent completed rune, then destroy those adjacent runes.
 - `armor`: gain X armor.
 - `armorAdjacent`: gain X armor per adjacent completed rune.
 - `armorSynergy`: gain X armor per completed target-type rune.
@@ -103,7 +102,6 @@ Cast effects:
 - `arcaneDust`: gain X arcane dust.
 - `arcaneDustAdjacent`: gain X arcane dust per adjacent completed rune.
 - `drawAdjacent`: draw 1 rune per adjacent completed rune, up to hand cap.
-- `destroyType`: destroy one random completed target-type rune, excluding source.
 - `convertRandom`: convert one random completed source-type rune into target type.
 - `convertAdjacent`: convert all adjacent completed runes into target type.
 - `returnAdjacent`: return adjacent completed runes to hand, up to hand cap.
@@ -151,7 +149,7 @@ Lightning:
 Void:
 - Common: `damageConditional` 25 if at least 2 Void.
 - Uncommon: `pulseSynergy` 5 Void.
-- Rare: `damageConsuming` 10.
+- Uncommon: currently unassigned; Void Blast removed.
 - Epic: `vampire` 25%.
 
 Wind:
@@ -161,7 +159,6 @@ Wind:
 - Epic: `returnAdjacent`.
 
 Unassigned but specced:
-- `destroyType`
 - `reduceDamage`
 - `healthDecrease`
 - `convertRandom`

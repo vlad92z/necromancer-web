@@ -9,6 +9,7 @@ import { createEmptyWall, createMonsterEnemy } from '../../utils/gameInitializat
 import { createRuneFromPool } from '../../utils/runeEffects';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import { getRegionDefinition } from '../../utils/regionCatalog';
+import { createRuneRemovalEffectRef } from '../../utils/runeRemoval';
 import { createGameplayStoreInstance } from './gameplayStore';
 
 type GameplayStoreInstance = ReturnType<typeof createGameplayStoreInstance>;
@@ -924,48 +925,206 @@ describe('gameplayStore current combat', () => {
     expect(state.player.deck).toHaveLength(1);
   });
 
-  it('does not persist consumed adjacent runes across victory', () => {
+  it('commits a cast, pauses for manual consumption, and resumes after target selection', () => {
     const store = createGameplayStoreInstance();
     startEncounterAtA(store);
-    const uncommonVoid = createRuneFromPool({ id: 'uncommon-void', runeType: 'Void', rarity: 'uncommon' });
+    const consumer: Rune = {
+      ...createRuneFromPool({ id: 'consumer', runeType: 'Void', rarity: 'common' }),
+      castEffectRefs: [
+        createEffectRef('cast.damage', { amount: 2 }),
+        createRuneRemovalEffectRef({
+          kind: 'consume',
+          trigger: 'onCast',
+          selection: 'manual',
+          runeType: 'Fire',
+          payload: createEffectRef('cast.damage', { amount: 5 }),
+        }),
+      ],
+    };
     const wall = createEmptyWall();
     wall[0][1] = {
-    ...wall[0][1],
+      ...wall[0][1],
       id: 'adjacent-fire',
+      name: 'Fire Target',
       runeTypes: ['Fire'],
       rarity: 'common',
+      cardImageSrc: 'fire-card.png',
+      tokenImageSrc: 'fire-token.png',
       castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
       passiveEffectRefs: [],
     };
     store.setState((state) => ({
       ...state,
-      hand: [uncommonVoid],
-      selectedHandRuneId: uncommonVoid.id,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 2, maxHealth: 2 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       suppressedRunes: [],
     }));
 
     store.getState().castRuneToWall(0, 0);
 
-    const state = store.getState();
-    expect(state.combatPhase).toBe('victory');
+    let state = store.getState();
+    expect(state.enemy?.health).toBe(8);
+    expect(state.pendingCombatResolution?.target.effectRef.effectId).toBe('rune.consume');
     expect(state.hand).toEqual([]);
-    expect(state.suppressedRunes).toEqual([]);
-    expect(state.player.deck.map((rune) => rune.id)).not.toContain('adjacent-fire');
-    expect(state.player.deck.map((rune) => rune.id)).not.toContain('uncommon-void');
+    expect(state.discardPile.map((rune) => rune.id)).toContain('consumer');
+    expect(state.player.wall[0][1].id).toBe('adjacent-fire');
+    store.getState().endCombatTurn();
+    expect(store.getState().enemyTurnNumber).toBe(0);
 
-    store.getState().returnToMapAfterReward();
-    store.getState().travelToMapTarget({
-      kind: 'location',
-      tileKey: '1,0',
-      locationId: 'B',
-    });
+    store.getState().selectPendingRuneTarget('player', 0, 1);
 
-    const nextState = store.getState();
-    const nextEncounterRuneIds = [...nextState.hand, ...nextState.player.deck].map((rune) => rune.id);
-    expect(nextEncounterRuneIds).not.toContain('adjacent-fire');
-    expect(nextEncounterRuneIds).not.toContain('uncommon-void');
+    state = store.getState();
+    expect(state.pendingCombatResolution).toBeNull();
+    expect(state.enemy?.health).toBe(3);
+    expect(state.player.wall[0][1].id).toBeNull();
+    expect(state.suppressedRunes.map((rune) => rune.id)).toContain('adjacent-fire');
+  });
+
+  it('finishes a paused cast chain before evaluating victory', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromPool({ id: 'victory-consumer', runeType: 'Void', rarity: 'common' }),
+      castEffectRefs: [
+        createEffectRef('cast.damage', { amount: 10 }),
+        createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual' }),
+      ],
+    };
+    const wall = createEmptyWall();
+    wall[0][1] = { ...wall[0][1], id: 'victory-target', runeTypes: ['Fire'], rarity: 'common' };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, wall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+    expect(store.getState().pendingCombatResolution).not.toBeNull();
+    expect(store.getState().soloPhase).toBe('encounter');
+
+    store.getState().selectPendingRuneTarget('player', 0, 1);
+    expect(store.getState().pendingCombatResolution).toBeNull();
+    expect(store.getState().soloPhase).toBe('reward');
+  });
+
+  it('pauses and resumes manual end-turn and start-turn consumption', () => {
+    const endStore = createGameplayStoreInstance();
+    startEncounterAtA(endStore);
+    const endWall = createEmptyWall();
+    endWall[0][0] = {
+      ...endWall[0][0],
+      id: 'end-source',
+      runeTypes: ['Wind'],
+      rarity: 'common',
+      passiveEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'consume',
+        trigger: 'endTurn',
+        selection: 'manual',
+        runeType: 'Fire',
+        payload: createEffectRef('cast.damage', { amount: 5 }),
+      })],
+    };
+    endWall[0][1] = { ...endWall[0][1], id: 'end-target', runeTypes: ['Fire'], rarity: 'common' };
+    endStore.setState((state) => ({
+      ...state,
+      hand: [],
+      discardPile: [],
+      player: { ...state.player, wall: endWall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20 },
+    }));
+
+    endStore.getState().endCombatTurn();
+    expect(endStore.getState().pendingCombatResolution?.continuation.kind).toBe('endTurn');
+    expect(endStore.getState().enemyTurnNumber).toBe(0);
+    endStore.getState().selectPendingRuneTarget('player', 0, 1);
+    expect(endStore.getState().pendingCombatResolution).toBeNull();
+    expect(endStore.getState().enemyTurnNumber).toBe(1);
+    expect(endStore.getState().enemy?.health).toBe(15);
+    expect(endStore.getState().player.wall[0][1].id).toBeNull();
+
+    const startStore = createGameplayStoreInstance();
+    startEncounterAtA(startStore);
+    const startWall = createEmptyWall();
+    startWall[0][0] = {
+      ...startWall[0][0],
+      id: 'start-source',
+      runeTypes: ['Wind'],
+      rarity: 'common',
+      passiveEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'consume',
+        trigger: 'startTurn',
+        selection: 'manual',
+        runeType: 'Fire',
+        payload: createEffectRef('cast.armor', { amount: 2 }),
+      })],
+    };
+    startWall[0][1] = { ...startWall[0][1], id: 'start-target', runeTypes: ['Fire'], rarity: 'common' };
+    startStore.setState((state) => ({
+      ...state,
+      hand: [],
+      discardPile: [],
+      player: { ...state.player, wall: startWall, deck: [], health: 20, maxHealth: 20, armor: 0 },
+    }));
+
+    startStore.getState().endCombatTurn();
+    expect(startStore.getState().pendingCombatResolution?.continuation.kind).toBe('startTurn');
+    startStore.getState().selectPendingRuneTarget('player', 0, 1);
+    expect(startStore.getState().pendingCombatResolution).toBeNull();
+    expect(startStore.getState().combatPhase).toBe('player-turn');
+    expect(startStore.getState().player.armor).toBe(2);
+    expect(startStore.getState().player.wall[0][1].id).toBeNull();
+  });
+
+  it('skips only the current manual removal before presenting the next prompt', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromPool({ id: 'double-consumer', runeType: 'Void', rarity: 'common' }),
+      castEffectRefs: [
+        createRuneRemovalEffectRef({
+          kind: 'consume',
+          trigger: 'onCast',
+          selection: 'manual',
+          payload: createEffectRef('cast.damage', { amount: 5 }),
+        }),
+        createRuneRemovalEffectRef({
+          kind: 'consume',
+          trigger: 'onCast',
+          selection: 'manual',
+          payload: createEffectRef('cast.damage', { amount: 3 }),
+        }),
+        createEffectRef('cast.damage', { amount: 1 }),
+      ],
+    };
+    const wall = createEmptyWall();
+    wall[0][1] = { ...wall[0][1], id: 'first-target', runeTypes: ['Fire'], rarity: 'common' };
+    wall[0][2] = { ...wall[0][2], id: 'second-target', runeTypes: ['Life'], rarity: 'common' };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, wall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20 },
+      suppressedRunes: [],
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+    expect(store.getState().pendingCombatResolution?.target.effectRef.effectId).toBe('rune.consume');
+
+    store.getState().skipPendingRuneTarget();
+    expect(store.getState().pendingCombatResolution?.target.effectRef.effectId).toBe('rune.consume');
+    expect(store.getState().enemy?.health).toBe(20);
+
+    store.getState().selectPendingRuneTarget('player', 0, 1);
+    const state = store.getState();
+    expect(state.pendingCombatResolution).toBeNull();
+    expect(state.enemy?.health).toBe(16);
+    expect(state.player.wall[0][1].id).toBeNull();
+    expect(state.player.wall[0][2].id).toBe('second-target');
   });
 
   it('returns adjacent completed runes to hand with epic Wind', () => {

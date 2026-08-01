@@ -76,7 +76,8 @@ Rules:
 
 Passive effects declare explicit triggers:
 - `onCast`
-- `onEnemyAttack`
+- `onIncomingDamage`
+- `onRuneRemoved`
 - `startTurn`
 - `endTurn`
 - `onDeckDraftOffer`

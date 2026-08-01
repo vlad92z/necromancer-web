@@ -38,10 +38,10 @@ There is intentionally no `npm run test` script; run Vitest with `npx vitest run
 ### Player turn
 
 - The player starts with a 12-card deck and draws up to **five** runes at an encounter start and after each completed turn.
-- The spell wall is a 6×6 grid. Each empty slot accepts either of its displayed rune types: Fire, Life, Wind, Frost, Void, or Lightning.
-- Select a rune in hand, then place it in an empty compatible slot. Every rarity places immediately and resolves its cast effects immediately.
+- The spell wall is a neutral 6×6 grid. Select a rune in hand, then place it in any empty slot; every rarity resolves immediately.
 - Casting spends the card's mana cost. Players start each turn with 7 mana; mana refreshes to full after the enemy turn.
 - Filled wall runes provide their passive effects while they remain on the wall. Cards may deal damage, grant armor, heal, draw or return cards, and interact with neighbouring or matching runes.
+- Consumption removes another rune from its owner's wall before resolving an optional payload; Destroy removes an opposing wall rune. Manual effects pause for a valid board target or Skip, while random effects and all enemy choices resolve automatically.
 - Armor absorbs incoming damage before health. A player is defeated at 0 health.
 
 ### Enemy turn and victory
@@ -55,7 +55,7 @@ There is intentionally no `npm run test` script; run Vitest with `npx vitest run
 ### Current encounters
 
 - Goblin: 20 health; repeatedly plays three Throw Rocks and Hide. Victories offer Goblin reward cards.
-- Golem Lord: 50-health boss with a cycling turn sequence of Barricades, Hurl Rocks, and Avalanche.
+- Golem Lord: 50-health boss with a cycling turn sequence of Barricades, Hurl Rocks, and Avalanche; Avalanche destroys one random player-wall rune.
 
 ### Arena catalogue
 
@@ -92,7 +92,7 @@ src/
 - `gameplayStore.ts` orchestrates travel, encounter setup, casting, turns, rewards, and persistence notifications.
 - Read state is split across `runStore`, `mapStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`; `gameplayState.ts` maintains the combined serializable snapshot.
 - Game rules are pure utilities in `src/utils/`. The registry-backed effect resolver is deterministic and independent of React and Zustand.
-- Runes hold rarity, card/token artwork, and cast/passive effect references. Rarity is not an effect parameter.
+- Runes hold rarity, card/token artwork, cast/passive refs, and optional typed Consumption/Destroy wrappers. Pending target resolution remains serializable.
 - `cardCatalog.ts`, `monsterCatalog.ts`, and `regionCatalog.ts` are the canonical gameplay catalogues.
 - Keep global state serializable: no DOM refs, timers, class instances, or closures in Zustand.
 

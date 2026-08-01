@@ -6,7 +6,7 @@ import type { GameState, SoloMapState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 28;
+export const SOLO_STATE_VERSION = 29;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -55,6 +55,31 @@ function isSoloMapState(value: unknown): value is SoloMapState {
   });
 }
 
+function isPosition(value: unknown): boolean {
+  return isRecord(value) && Number.isInteger(value.row) && Number.isInteger(value.col);
+}
+
+function isPendingCombatResolution(value: unknown): boolean {
+  if (value === null) return true;
+  if (!isRecord(value) || !isRecord(value.target) || !isRecord(value.continuation)) return false;
+  const effectRef = value.target.effectRef;
+  if (
+    !isRecord(effectRef)
+    || !['rune.consume', 'rune.destroy'].includes(String(effectRef.effectId))
+    || !['manual', 'random'].includes(String(effectRef.selection))
+    || !['onCast', 'onIncomingDamage', 'startTurn', 'endTurn'].includes(String(effectRef.trigger))
+    || !isPosition(value.target.sourcePosition)
+  ) return false;
+  const kind = value.continuation.kind;
+  if (kind === 'cast') {
+    return isRecord(value.continuation.castRune)
+      && isPosition(value.continuation.sourcePosition)
+      && Array.isArray(value.continuation.remainingEffectRefs);
+  }
+  return (kind === 'startTurn' || kind === 'endTurn')
+    && Array.isArray(value.continuation.processedRemovalKeys);
+}
+
 function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   if (!value || typeof value !== 'object') {
     return false;
@@ -71,6 +96,7 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
     && Array.isArray(state.suppressedRunes)
     && Array.isArray(state.enemyBoard)
     && Array.isArray(state.enemyQueuedRunes)
+    && isPendingCombatResolution(state.pendingCombatResolution)
     && typeof state.enemyMaxHealth === 'number'
     && typeof state.arcaneDust === 'number'
     && typeof state.isVictory === 'boolean'

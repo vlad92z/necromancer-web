@@ -15,6 +15,8 @@ export interface GameplayActions {
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
+  selectPendingRuneTarget: (side: 'player' | 'enemy', row: number, col: number) => void;
+  skipPendingRuneTarget: () => void;
   endCombatTurn: () => void;
   resetGame: () => void;
   selectDeckDraftOffer: (offerId: string) => void;
@@ -30,6 +32,8 @@ export const gameplayActions: GameplayActions = {
   travelToMapTarget: (target) => useGameplayStore.getState().travelToMapTarget(target),
   selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),
   castRuneToWall: (row, col) => useGameplayStore.getState().castRuneToWall(row, col),
+  selectPendingRuneTarget: (side, row, col) => useGameplayStore.getState().selectPendingRuneTarget(side, row, col),
+  skipPendingRuneTarget: () => useGameplayStore.getState().skipPendingRuneTarget(),
   endCombatTurn: () => useGameplayStore.getState().endCombatTurn(),
   resetGame: () => useGameplayStore.getState().resetGame(),
   selectDeckDraftOffer: (offerId) => useGameplayStore.getState().selectDeckDraftOffer(offerId),

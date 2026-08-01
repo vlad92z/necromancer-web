@@ -55,9 +55,9 @@ describe('monsterCatalog', () => {
       manaCost: 5,
       damage: 0,
       cardImageSrc: expect.stringContaining('card_avalanche.png'),
-      castEffectRefs: [{ effectId: 'enemy.destroyMostFilledRow' }],
+      castEffectRefs: [{ effectId: 'rune.destroy', trigger: 'onCast', selection: 'manual' }],
     });
-    expect(getRuneEffectDescription(avalanche)).toBe('• Destroy the row with the most runes');
+    expect(getRuneEffectDescription(avalanche)).toBe('• Destroy 1 Enemy Rune');
     expect(createEnemyTurnRunes('golem-lord', 3).map((rune) => rune.name)).toEqual([
       'Barricade', 'Barricade', 'Barricade', 'Barricade',
     ]);

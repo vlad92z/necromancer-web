@@ -9,7 +9,9 @@ import {
   initializeSoloGame,
 } from './gameInitialization';
 import { resolveEnemyTurn } from './combatResolution';
+import { createEffectRef } from './effectCatalog';
 import { resolveCastEffects } from './effectResolver';
+import { createRuneRemovalEffectRef } from './runeRemoval';
 import { createRuneFromPool } from './runeEffects';
 
 function createEnemyRune(id: string, damage: number): EnemyRune {
@@ -93,17 +95,33 @@ describe('enemy spellboard combat', () => {
     expect(result.enemy).toMatchObject({ health: 20, armor: 0 });
   });
 
-  it('applies damage reduction independently to each enemy card', () => {
+  it('has Headwind consume another Wind rune for each incoming damage packet', () => {
     const wall = createEmptyWall();
+    const headwind = createRuneFromPool({ id: 'headwind', runeType: 'Wind', rarity: 'uncommon', random: () => 0 });
     wall[0][0] = {
       ...wall[0][0],
       id: 'headwind-wall-copy',
       name: 'Headwind',
       runeTypes: ['Wind'],
       rarity: 'uncommon',
-      castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
+      cardImageSrc: headwind.cardImageSrc,
+      tokenImageSrc: headwind.tokenImageSrc,
+      castEffectRefs: headwind.castEffectRefs,
+      passiveEffectRefs: headwind.passiveEffectRefs,
     };
+    [1, 2].forEach((col) => {
+      wall[0][col] = {
+        ...wall[0][col],
+        id: `wind-target-${col}`,
+        name: 'Tornado',
+        runeTypes: ['Wind'],
+        rarity: 'common',
+        cardImageSrc: 'wind-card.png',
+        tokenImageSrc: 'wind-token.png',
+        castEffectRefs: [],
+        passiveEffectRefs: [],
+      };
+    });
     const player = {
       ...createPlayer('player-1', 'Tester', 20, [], 20),
       wall,
@@ -117,9 +135,91 @@ describe('enemy spellboard combat', () => {
       random: () => 0,
     });
 
-    expect(result.player.health).toBe(16);
-    expect(result.healthDamage).toBe(4);
-    expect(result.logs.filter((log) => log.effectId === 'passive.reduceDamage')).toHaveLength(2);
+    expect(result.player.health).toBe(20);
+    expect(result.healthDamage).toBe(0);
+    expect(result.player.wall[0][0].id).toBe('headwind-wall-copy');
+    expect(result.player.wall[0][1].id).toBeNull();
+    expect(result.player.wall[0][2].id).toBeNull();
+    expect(result.logs.filter((log) => log.effectId === 'rune.consume')).toHaveLength(2);
+  });
+
+  it('skips a Headwind that was consumed by an earlier Headwind in the same damage packet', () => {
+    const wall = createEmptyWall();
+    const headwind = createRuneFromPool({ id: 'headwind', runeType: 'Wind', rarity: 'uncommon', random: () => 0 });
+    [0, 1].forEach((col) => {
+      wall[0][col] = {
+        ...wall[0][col],
+        id: `headwind-${col}`,
+        name: 'Headwind',
+        runeTypes: ['Wind'],
+        rarity: 'uncommon',
+        cardImageSrc: headwind.cardImageSrc,
+        tokenImageSrc: headwind.tokenImageSrc,
+        castEffectRefs: [],
+        passiveEffectRefs: headwind.passiveEffectRefs,
+      };
+    });
+
+    const result = resolveEnemyTurn({
+      player: { ...createPlayer('player-1', 'Tester', 20, [], 20), wall },
+      enemy: initializeSoloGame().enemy,
+      enemyBoard: createEnemySpellBoard(),
+      enemyQueuedRunes: [createEnemyRune('attacker', 10)],
+      random: () => 0,
+    });
+
+    expect(result.player.health).toBe(15);
+    expect(result.logs.filter((log) => log.effectId === 'rune.consume')).toHaveLength(1);
+  });
+
+  it('applies Headwind before armor and requires another Wind rune', () => {
+    const headwind = createRuneFromPool({ id: 'headwind', runeType: 'Wind', rarity: 'uncommon', random: () => 0 });
+    const wall = createEmptyWall();
+    wall[0][0] = {
+      ...wall[0][0],
+      id: 'headwind-source',
+      name: 'Headwind',
+      runeTypes: ['Wind'],
+      rarity: 'uncommon',
+      cardImageSrc: headwind.cardImageSrc,
+      tokenImageSrc: headwind.tokenImageSrc,
+      castEffectRefs: [],
+      passiveEffectRefs: headwind.passiveEffectRefs,
+    };
+    const withoutTarget = resolveEnemyTurn({
+      player: { ...createPlayer('player-1', 'Tester', 20, [], 20), wall, armor: 5 },
+      enemy: initializeSoloGame().enemy,
+      enemyQueuedRunes: [createEnemyRune('attacker-without-target', 7)],
+      random: () => 0,
+    });
+
+    expect(withoutTarget.player).toMatchObject({ health: 18, armor: 0 });
+    expect(withoutTarget.player.wall[0][0].id).toBe('headwind-source');
+    expect(withoutTarget.logs).toContainEqual(expect.objectContaining({
+      effectId: 'rune.consume',
+      output: expect.objectContaining({ noTarget: true }),
+    }));
+
+    wall[0][1] = {
+      ...wall[0][1],
+      id: 'wind-target',
+      name: 'Tornado',
+      runeTypes: ['Wind'],
+      rarity: 'common',
+      cardImageSrc: 'wind-card.png',
+      tokenImageSrc: 'wind-token.png',
+      castEffectRefs: [],
+      passiveEffectRefs: [],
+    };
+    const withTarget = resolveEnemyTurn({
+      player: { ...createPlayer('player-1', 'Tester', 20, [], 20), wall, armor: 5 },
+      enemy: initializeSoloGame().enemy,
+      enemyQueuedRunes: [createEnemyRune('attacker-with-target', 7)],
+      random: () => 0,
+    });
+
+    expect(withTarget.player).toMatchObject({ health: 20, armor: 3 });
+    expect(withTarget.player.wall[0][1].id).toBeNull();
   });
 
   it('resolves enemy board start and end turn effects around card plays', () => {
@@ -179,7 +279,7 @@ describe('enemy spellboard combat', () => {
     expect(result.enemyBoard.flat().map((cell) => cell.id)).toContain('last');
   });
 
-  it('clears only wall copies in the topmost fullest row when Avalanche is played', () => {
+  it('destroys one random player-wall rune when Avalanche is played', () => {
     const player = createPlayer('player-1', 'Tester', 100, [createEnemyRune('deck-rune', 0)], 100);
     const originalDeck = player.deck;
     [0, 1].forEach((rowIndex) => {
@@ -206,12 +306,12 @@ describe('enemy spellboard combat', () => {
       random: () => 0,
     });
 
-    expect(result.player.wall[0].every((cell) => cell.id === null)).toBe(true);
-    expect(result.player.wall[1].filter((cell) => cell.id !== null)).toHaveLength(2);
+    expect(result.player.wall[0][0].id).toBeNull();
+    expect(result.player.wall.flat().filter((cell) => cell.id !== null)).toHaveLength(3);
     expect(result.player.deck).toBe(originalDeck);
     expect(result.logs).toContainEqual(expect.objectContaining({
-      effectId: 'enemy.destroyMostFilledRow',
-      output: expect.objectContaining({ destroyedRowIndex: 0, destroyedRuneCount: 2 }),
+      effectId: 'rune.destroy',
+      output: expect.objectContaining({ removedRuneId: 'wall-0-0', row: 0, col: 0 }),
     }));
   });
 
@@ -226,9 +326,89 @@ describe('enemy spellboard combat', () => {
 
     expect(result.player.wall).toEqual(player.wall);
     expect(result.logs).toContainEqual(expect.objectContaining({
-      effectId: 'enemy.destroyMostFilledRow',
-      output: expect.objectContaining({ destroyedRowIndex: null, destroyedRuneCount: 0 }),
+      effectId: 'rune.destroy',
+      output: expect.objectContaining({ removedRuneId: null, noTarget: true }),
     }));
+  });
+
+  it('has AI resolve manual Consumption randomly on its own wall', () => {
+    const board = createEnemySpellBoard();
+    board[0][0] = {
+      ...board[0][0],
+      id: 'enemy-fire-target',
+      runeTypes: ['Fire'],
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [],
+    };
+    const consumer: EnemyRune = {
+      ...createEnemyRune('enemy-consumer', 0),
+      castEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'consume',
+        trigger: 'onCast',
+        selection: 'manual',
+        runeType: 'Fire',
+        payload: createEffectRef('cast.damage', { amount: 5 }),
+      })],
+    };
+
+    const result = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy: initializeSoloGame().enemy,
+      enemyBoard: board,
+      enemyQueuedRunes: [consumer],
+      random: () => 0,
+    });
+
+    expect(result.player.health).toBe(15);
+    expect(result.enemyBoard[0][0].id).toBeNull();
+    expect(result.enemyBoard[0][1].id).toBe('enemy-consumer');
+  });
+
+  it('keeps enemy timed plain and removal effects in listed order', () => {
+    const board = createEnemySpellBoard();
+    board[0][0] = {
+      ...board[0][0],
+      id: 'timed-enemy-source',
+      runeTypes: ['Wind'],
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [
+        createEffectRef('passive.damageEndTurn', { amount: 2 }),
+        createRuneRemovalEffectRef({
+          kind: 'consume',
+          trigger: 'endTurn',
+          selection: 'manual',
+          runeType: 'Fire',
+          payload: createEffectRef('cast.damage', { amount: 5 }),
+        }),
+        createEffectRef('passive.damageEndTurn', { amount: 3 }),
+      ],
+    };
+    board[0][1] = {
+      ...board[0][1],
+      id: 'timed-enemy-target',
+      runeTypes: ['Fire'],
+      rarity: 'common',
+      castEffectRefs: [],
+      passiveEffectRefs: [],
+    };
+
+    const result = resolveEnemyTurn({
+      player: createPlayer('player-1', 'Tester', 20, [], 20),
+      enemy: initializeSoloGame().enemy,
+      enemyBoard: board,
+      enemyQueuedRunes: [createEnemyRune('zero-damage-card', 0)],
+      random: () => 0,
+    });
+
+    expect(result.player.health).toBe(10);
+    expect(result.enemyBoard[0][1].id).toBeNull();
+    expect(result.logs.map((log) => log.effectId)).toEqual([
+      'passive.damageEndTurn',
+      'rune.consume',
+      'passive.damageEndTurn',
+    ]);
   });
 
   it('alternates Golem Lord turns between armor, rocks, and Avalanche', () => {

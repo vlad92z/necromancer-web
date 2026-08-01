@@ -16,6 +16,7 @@ export interface CombatState {
   enemyBoard: GameState['enemyBoard'];
   enemyQueuedRunes: GameState['enemyQueuedRunes'];
   enemyTurnNumber: number;
+  pendingCombatResolution: GameState['pendingCombatResolution'];
 }
 
 export interface CombatStore extends CombatState {
@@ -33,6 +34,7 @@ export function pickCombatState(state: GameState): CombatState {
     enemyBoard: state.enemyBoard,
     enemyQueuedRunes: state.enemyQueuedRunes,
     enemyTurnNumber: state.enemyTurnNumber,
+    pendingCombatResolution: state.pendingCombatResolution,
   };
 }
 

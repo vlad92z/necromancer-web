@@ -3,13 +3,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { EffectRef, RuneEffectRarity, RuneType } from '../types/game';
+import type { RuneEffectRarity, RuneEffectRef, RuneType } from '../types/game';
 import { createRuneFromPool, getRuneEffectDescription, PREDEFINED_RUNE_VARIANTS } from './runeEffects';
 
-const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
-  castEffectRefs: EffectRef[];
-  passiveEffectRefs: EffectRef[];
-}>> = {
+const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
+  castEffectRefs: RuneEffectRef[];
+  passiveEffectRefs: RuneEffectRef[];
+}>>> = {
   common: {
     Fire: {
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 5 } }],
@@ -49,13 +49,15 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Record<RuneType, {
       castEffectRefs: [{ effectId: 'cast.healthIncrease', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
-    Void: {
-      castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 2 } }],
-      passiveEffectRefs: [],
-    },
     Wind: {
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
+      passiveEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onIncomingDamage',
+        selection: 'random',
+        runeType: 'Wind',
+        payload: { effectId: 'passive.reduceDamage', params: { amount: 5 } },
+      }],
     },
     Lightning: {
       castEffectRefs: [],
@@ -206,7 +208,13 @@ describe('runeEffects', () => {
     });
     expect(createRune('wind-uncommon', 'Wind', 'uncommon')).toMatchObject({
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
+      passiveEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onIncomingDamage',
+        selection: 'random',
+        runeType: 'Wind',
+        payload: { effectId: 'passive.reduceDamage', params: { amount: 5 } },
+      }],
     });
     expect(createRune('lightning-uncommon', 'Lightning', 'uncommon')).toMatchObject({
       castEffectRefs: [],
@@ -214,10 +222,9 @@ describe('runeEffects', () => {
         { effectId: 'passive.adjacentDamageBoost', params: { amount: 1 } },
       ],
     });
-    expect(createRune('void-uncommon', 'Void', 'uncommon')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.damageConsuming', params: { amount: 2 } }],
-      passiveEffectRefs: [],
-    });
+    expect(() => createRune('void-uncommon', 'Void', 'uncommon')).toThrow(
+      'No predefined rune variants for uncommon Void'
+    );
   });
 
   it('maps all rare rune identities to Stage 3 refs', () => {

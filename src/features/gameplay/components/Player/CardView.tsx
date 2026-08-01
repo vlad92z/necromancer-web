@@ -13,6 +13,7 @@ interface CardViewProps {
   variant?: TooltipCardVariant;
   size?: 'default' | 'hand' | 'compact';
   isSelected?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }
 
@@ -25,6 +26,7 @@ export function CardView({
   variant = 'default',
   size = 'default',
   isSelected = false,
+  disabled = false,
   onClick,
 }: CardViewProps) {
   const border = 'border-[3px] border-[#141313]';
@@ -46,9 +48,9 @@ export function CardView({
   const selectedClassName = isSelected
     ? 'translate-y-[-10px] ring-4 ring-[#f2c14e] ring-offset-2 ring-offset-[#141313]'
     : '';
-  const interactiveClassName = onClick
+  const interactiveClassName = onClick && !disabled
     ? 'cursor-pointer focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#fff8d8] hover:translate-y-[-6px]'
-    : '';
+    : disabled ? 'cursor-not-allowed opacity-60' : '';
   const isSmallCard = size === 'hand' || size === 'compact';
   const sizeClassName = size === 'hand'
     ? 'h-72 w-48 flex-none p-1.5 gap-1.5'
@@ -104,7 +106,7 @@ export function CardView({
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} aria-pressed={isSelected} data-selected={isSelected ? 'true' : undefined} className={className} style={{ backgroundColor: cardBackgroundColor }}>
+      <button type="button" disabled={disabled} onClick={onClick} aria-pressed={isSelected} data-selected={isSelected ? 'true' : undefined} className={className} style={{ backgroundColor: cardBackgroundColor }}>
         {content}
       </button>
     );

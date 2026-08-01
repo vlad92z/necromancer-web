@@ -16,6 +16,7 @@ interface WallCellProps {
   size?: RuneSize;
   onRuneHover?: (rune: Rune) => void;
   onRuneLeave?: () => void;
+  isTargetable?: boolean;
 }
 
 export function WallCell({
@@ -26,13 +27,20 @@ export function WallCell({
   size = 'large',
   onRuneHover,
   onRuneLeave,
+  isTargetable = false,
 }: WallCellProps) {
   const rune = wallCellToRune(cell, row, col);
   
   return (
     <div
-      style={{ position: 'relative', display: 'inline-block' }}
-      aria-label="Empty rune cell"
+      style={{
+        position: 'relative',
+        display: 'inline-block',
+        outline: isTargetable ? '4px solid var(--pixel-focus)' : 'none',
+        outlineOffset: isTargetable ? '-4px' : 0,
+        filter: isTargetable ? 'brightness(1.18)' : undefined,
+      }}
+      aria-label={rune ? `${rune.name} rune` : 'Empty rune cell'}
       onMouseEnter={() => rune && onRuneHover?.(rune)}
       onMouseLeave={onRuneLeave}
     >

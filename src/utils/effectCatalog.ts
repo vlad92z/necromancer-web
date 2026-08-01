@@ -2,15 +2,14 @@
  * effectCatalog - central metadata and description helpers for effect refs.
  */
 
-import type { EffectParams, EffectRef, EffectTrigger, RuneType } from '../types/game';
+import type { EffectParams, EffectRef, EffectTrigger, RuneEffectRef, RuneType } from '../types/game';
+import { isRuneRemovalEffectRef } from './runeRemoval';
 
 export type CastEffectId =
   | 'cast.damage'
   | 'cast.damageAdjacent'
   | 'cast.damageConditional'
   | 'cast.damageFragile'
-  | 'cast.damageConsuming'
-  | 'cast.destroyType'
   | 'cast.convertRandom'
   | 'cast.convertAdjacent'
   | 'cast.retriggerAdjacent'
@@ -50,8 +49,7 @@ export type PassiveEffectId =
   | 'passive.vampire'
   | 'passive.reduceDamage';
 
-export type EnemyEffectId = 'enemy.destroyMostFilledRow';
-export type CatalogEffectId = CastEffectId | PassiveEffectId | EnemyEffectId;
+export type CatalogEffectId = CastEffectId | PassiveEffectId;
 export type PassiveStackingKind = 'flat' | 'multiplier';
 
 export interface PassiveEffectMetadata {
@@ -65,7 +63,7 @@ export interface PassiveEffectMetadata {
 
 export interface EffectCatalogEntry {
   id: CatalogEffectId;
-  kind: 'cast' | 'passive' | 'enemy';
+  kind: 'cast' | 'passive';
   title: string;
   displayHint: string;
   passive?: PassiveEffectMetadata;
@@ -112,20 +110,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage, reduced by ${numberParam(params, 'reduction')} for every ${runeTypeParam(params, 'fragileType')} rune in your completed wall`,
-  },
-  'cast.damageConsuming': {
-    id: 'cast.damageConsuming',
-    kind: 'cast',
-    title: 'Consuming Damage',
-    displayHint: 'damage',
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent rune, then destroy them`,
-  },
-  'cast.destroyType': {
-    id: 'cast.destroyType',
-    kind: 'cast',
-    title: 'Type Destroy',
-    displayHint: 'damage',
-    describe: (params) => `Destroy a random completed ${runeTypeParam(params, 'targetType')} rune`,
   },
   'cast.convertRandom': {
     id: 'cast.convertRandom',
@@ -264,13 +248,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage if your completed wall has no ${runeTypeParam(params, 'fragileType')} runes`,
-  },
-  'enemy.destroyMostFilledRow': {
-    id: 'enemy.destroyMostFilledRow',
-    kind: 'enemy',
-    title: 'Avalanche',
-    displayHint: 'damage',
-    describe: () => 'Destroy the row with the most runes',
   },
   'passive.rodHealing': {
     id: 'passive.rodHealing',
@@ -464,7 +441,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Explosive',
     displayHint: 'damage',
     passive: {
-      trigger: 'onCast',
+      trigger: 'onRuneRemoved',
       target: 'explosiveDamage',
       stacking: 'flat',
       paramKey: 'amount',
@@ -492,13 +469,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Damage Reduction',
     displayHint: 'armor',
     passive: {
-      trigger: 'onEnemyAttack',
+      trigger: 'onIncomingDamage',
       target: 'incomingDamage',
       stacking: 'flat',
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Reduce damage taken by ${numberParam(params, 'amount')}`,
+    describe: (params) => `Reduce incoming damage by ${numberParam(params, 'amount')}`,
   },
 };
 
@@ -509,7 +486,19 @@ export function createEffectRef(effectId: CatalogEffectId, params?: EffectParams
   };
 }
 
-export function getEffectDescription(effectRef: EffectRef): string {
+export function getEffectDescription(effectRef: RuneEffectRef): string {
+  if (isRuneRemovalEffectRef(effectRef)) {
+    const verb = effectRef.effectId === 'rune.consume' ? 'Consume' : 'Destroy';
+    const random = effectRef.selection === 'random' ? 'random ' : '';
+    const ownership = effectRef.effectId === 'rune.destroy' ? 'Enemy ' : '';
+    const target = effectRef.runeType ? `${effectRef.runeType} Rune` : `${ownership}Rune`;
+    const count = effectRef.effectId === 'rune.destroy' ? '1 ' : 'a ';
+    const removalText = `${verb} ${count}${random}${target}`;
+    const payloadText = effectRef.payload ? getEffectDescription(effectRef.payload) : '';
+    if (!payloadText) return removalText;
+    return `${removalText} to ${payloadText.charAt(0).toLowerCase()}${payloadText.slice(1)}`;
+  }
+
   const catalogEntry = EFFECT_CATALOG[effectRef.effectId as CatalogEffectId];
   if (!catalogEntry) {
     return '';
@@ -517,7 +506,7 @@ export function getEffectDescription(effectRef: EffectRef): string {
   return catalogEntry.describe(effectRef.params ?? {});
 }
 
-export function getEffectRefDescriptions(effectRefs: EffectRef[] | null | undefined): string[] {
+export function getEffectRefDescriptions(effectRefs: RuneEffectRef[] | null | undefined): string[] {
   if (!effectRefs) {
     return [];
   }

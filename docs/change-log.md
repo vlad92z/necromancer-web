@@ -80,3 +80,10 @@ Compiled from PRDs; ordered by implementation.
 - Kept cleared locations available for movement without replaying combat.
 - Returned to the map after rune-pack rewards and cleared the completed location.
 - Preserved health, deck rewards, enemy scaling, and map progress between encounters.
+
+## 10. Consumption and Destroy
+
+- Added typed Consumption/Destroy wrappers with manual or random, typed or any-rune targeting and optional payloads.
+- Added serializable cast/start/end target pauses, board highlighting, keyboard targeting, and Skip.
+- Changed Headwind to consume another random Wind rune for 5 pre-armor damage reduction.
+- Changed Avalanche to destroy one random player-wall rune and removed Void Blast plus the old bespoke destroy effects.

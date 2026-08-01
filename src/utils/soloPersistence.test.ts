@@ -46,6 +46,40 @@ describe('soloPersistence', () => {
     });
   });
 
+  it('persists a serializable pending rune target and continuation', async () => {
+    const { createEffectRef } = await import('./effectCatalog');
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { createRuneFromPool } = await import('./runeEffects');
+    const { createRuneRemovalEffectRef } = await import('./runeRemoval');
+    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true };
+    const castRune = createRuneFromPool({ id: 'pending-cast', runeType: 'Fire', rarity: 'common' });
+    const effectRef = createRuneRemovalEffectRef({
+      kind: 'consume',
+      trigger: 'onCast',
+      selection: 'manual',
+      payload: createEffectRef('cast.damage', { amount: 5 }),
+    });
+    state.pendingCombatResolution = {
+      target: {
+        sourceOwner: 'player',
+        sourceRuneId: castRune.id,
+        sourcePosition: { row: 0, col: 0 },
+        effectRef,
+      },
+      continuation: {
+        kind: 'cast',
+        castRune,
+        sourcePosition: { row: 0, col: 0 },
+        remainingEffectRefs: [],
+      },
+    };
+
+    saveSoloState(state);
+
+    expect(loadSoloState()?.pendingCombatResolution).toEqual(state.pendingCombatResolution);
+  });
+
   it('restores generated tiles, cleared encounters, and player position', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { completeActiveMapEncounter, travelOnSoloMap } = await import('./soloMap');
@@ -156,10 +190,10 @@ describe('soloPersistence', () => {
     expect(hasSavedSoloState()).toBe(false);
   });
 
-  it('invalidates wrong-version payloads', async () => {
+  it('invalidates schema 28 payloads', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { loadSoloState } = await import('./soloPersistence');
-    storage.set('necromancer-solo-state', JSON.stringify({ version: 9, state: initializeSoloGame() }));
+    storage.set('necromancer-solo-state', JSON.stringify({ version: 28, state: initializeSoloGame() }));
 
     expect(loadSoloState()).toBeNull();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
