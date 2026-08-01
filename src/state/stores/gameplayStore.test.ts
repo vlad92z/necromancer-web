@@ -160,6 +160,34 @@ describe('gameplayStore current combat', () => {
     expect(state.soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: true });
   });
 
+  it('reveals a road tile before resolving its arrival event', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const shrineToken = getRegionDefinition('greenwood').eventTokens.find((token) => token.kind === 'healing');
+    store.setState((state) => ({
+      ...state,
+      player: { ...state.player, health: 50, maxHealth: 100 },
+      soloMap: { ...state.soloMap, availableEventTokenIds: [shrineToken!.id] },
+    }));
+
+    const arrivalTarget = store.getState().revealMapRoadTarget({
+      kind: 'road',
+      tileKey: '0,0',
+      roadId: 'right-75',
+    });
+
+    expect(arrivalTarget).toEqual({ kind: 'location', tileKey: '1,0', locationId: 'A' });
+    expect(store.getState().soloPhase).toBe('map');
+    expect(store.getState().player.health).toBe(50);
+    expect(store.getState().soloMap.playerPosition).toEqual({ tileKey: '0,0', locationId: 'start' });
+    expect(store.getState().soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: false });
+
+    store.getState().travelToMapTarget(arrivalTarget!);
+
+    expect(store.getState().player.health).toBe(75);
+    expect(store.getState().soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: true });
+  });
+
   it('moves between cleared locations without resetting combat state', () => {
     const store = createGameplayStoreInstance();
     startEncounterAtA(store);

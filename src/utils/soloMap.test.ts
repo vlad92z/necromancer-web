@@ -5,6 +5,7 @@ import {
   createForestMapTile,
   createMapTileKey,
   createMapTravelTargetKey,
+  discoverSoloMapRoad,
   getFrontierRoadIds,
   getMapLocationMarkerKind,
   getReachableMapTargets,
@@ -26,7 +27,7 @@ function initializeCombatOnlyMap() {
   };
 }
 
-function roadTarget(roadId: MapRoadId): MapTravelTarget {
+function roadTarget(roadId: MapRoadId): Extract<MapTravelTarget, { kind: 'road' }> {
   return {
     kind: 'road',
     tileKey: createMapTileKey(0, 0),
@@ -103,6 +104,20 @@ describe('soloMap', () => {
     expect(getFrontierRoadIds(map, startTile)).toEqual([]);
     expect(getReachableMapTargets(map)).toEqual([]);
     expect(travelOnSoloMap(map, roadTarget('right-75')).map).toBe(map);
+  });
+
+  it('reveals a frontier tile without moving the player or resolving its arrival event', () => {
+    const map = initializeSoloMap();
+    const discovery = discoverSoloMapRoad(map, roadTarget('right-75'), () => 0.99);
+
+    expect(discovery).toMatchObject({
+      arrivalTarget: { kind: 'location', tileKey: '1,0', locationId: 'A' },
+      revealedTileKey: '1,0',
+    });
+    expect(discovery?.map.playerPosition).toEqual(map.playerPosition);
+    expect(discovery?.map.activeEncounter).toBeNull();
+    expect(discovery?.map.tiles['1,0'].events.A?.cleared).toBe(false);
+    expect(discovery?.map.availableEventTokenIds).toHaveLength(map.availableEventTokenIds.length - 4);
   });
 
   it('places the first-tile boss at 5% and never on the blind arrival location', () => {

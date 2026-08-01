@@ -12,20 +12,30 @@ import {
   getReachableMapTargets,
   MAP_TILE_SIZE,
 } from '../../../../utils/soloMap';
+import { ANIMATION } from '../../../../styles/tokens';
 import { MapTile } from './MapTile';
 
 const MAP_SCALE = 1.5;
+
+type MapLocationTravelTarget = Extract<MapTravelTarget, { kind: 'location' }>;
+
+interface PendingMapTravel {
+  arrivalTarget: MapLocationTravelTarget;
+  revealedTileKey: string | null;
+  stage: 'tile-reveal' | 'event-resolve';
+}
 
 export function SoloMapView(): ReactElement {
   const map = useSoloMapState();
   const arcaneDust = useArcaneDust();
   const { health, maxHealth } = useGameplayHealthState();
-  const { travelToMapTarget } = useGameplayActions();
+  const { revealMapRoadTarget, travelToMapTarget } = useGameplayActions();
   const { openSettingsOverlay } = useUIActions();
   const playClickSound = useClickSound();
   const currentMarkerRef = useRef<HTMLDivElement | null>(null);
   const restoreKeyboardFocusRef = useRef(false);
   const [announcement, setAnnouncement] = useState('Player at the starting camp');
+  const [pendingTravel, setPendingTravel] = useState<PendingMapTravel | null>(null);
 
   const tiles = useMemo(
     () => Object.values(map.tiles).sort((left, right) => left.y - right.y || left.x - right.x),
@@ -51,10 +61,62 @@ export function SoloMapView(): ReactElement {
     target: MapTravelTarget,
     fromKeyboard: boolean,
   ) => {
+    if (pendingTravel) {
+      return;
+    }
+
     restoreKeyboardFocusRef.current = fromKeyboard;
     playClickSound();
+
+    if (target.kind === 'road') {
+      const arrivalTarget = revealMapRoadTarget(target);
+      if (!arrivalTarget) {
+        return;
+      }
+
+      setPendingTravel({
+        arrivalTarget,
+        revealedTileKey: arrivalTarget.tileKey,
+        stage: 'tile-reveal',
+      });
+      return;
+    }
+
+    const event = target.locationId === 'start'
+      ? null
+      : map.tiles[target.tileKey]?.events[target.locationId];
+    if (event && !event.cleared) {
+      setPendingTravel({
+        arrivalTarget: target,
+        revealedTileKey: null,
+        stage: 'event-resolve',
+      });
+      return;
+    }
+
     travelToMapTarget(target);
-  }, [playClickSound, travelToMapTarget]);
+  }, [map.tiles, pendingTravel, playClickSound, revealMapRoadTarget, travelToMapTarget]);
+
+  useEffect(() => {
+    if (!pendingTravel) {
+      return;
+    }
+
+    const delay = pendingTravel.stage === 'tile-reveal'
+      ? ANIMATION.MAP_TILE_REVEAL_DURATION_MS
+      : ANIMATION.MAP_EVENT_RESOLVE_DELAY_MS;
+    const timer = window.setTimeout(() => {
+      if (pendingTravel.stage === 'tile-reveal') {
+        setPendingTravel({ ...pendingTravel, stage: 'event-resolve' });
+        return;
+      }
+
+      travelToMapTarget(pendingTravel.arrivalTarget);
+      setPendingTravel(null);
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [pendingTravel, travelToMapTarget]);
 
   useEffect(() => {
     const locationLabel = map.playerPosition.locationId === 'start'
@@ -134,6 +196,12 @@ export function SoloMapView(): ReactElement {
               map={map}
               tile={tile}
               reachableTargetKeys={reachableTargetKeys}
+              eventResolveTarget={pendingTravel?.stage === 'event-resolve'
+                ? pendingTravel.arrivalTarget
+                : null}
+              isTravelLocked={pendingTravel !== null}
+              isRevealing={pendingTravel?.stage === 'tile-reveal'
+                && pendingTravel.revealedTileKey === tile.key}
               onTravel={handleTravel}
               onCurrentMarker={handleCurrentMarker}
             />

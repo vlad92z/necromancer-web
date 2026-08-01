@@ -92,6 +92,12 @@ export interface MapTravelResult {
   triggeredEvent: MapLocationEvent | null;
 }
 
+export interface MapRoadDiscoveryResult {
+  map: SoloMapState;
+  arrivalTarget: Extract<MapTravelTarget, { kind: 'location' }>;
+  revealedTileKey: string;
+}
+
 export type MapLocationMarkerKind = 'player' | 'encounter' | 'cleared';
 
 export function createMapTileKey(x: number, y: number): string {
@@ -239,11 +245,17 @@ export function getLocationForRoad(roadId: MapRoadId): MapEncounterLocationId {
   return ROAD_LOCATIONS[roadId];
 }
 
-function createRoadTarget(tileKey: string, roadId: MapRoadId): MapTravelTarget {
+function createRoadTarget(
+  tileKey: string,
+  roadId: MapRoadId,
+): Extract<MapTravelTarget, { kind: 'road' }> {
   return { kind: 'road', tileKey, roadId };
 }
 
-function createLocationTarget(tileKey: string, locationId: MapLocationId): MapTravelTarget {
+function createLocationTarget(
+  tileKey: string,
+  locationId: MapLocationId,
+): Extract<MapTravelTarget, { kind: 'location' }> {
   return { kind: 'location', tileKey, locationId };
 }
 
@@ -411,17 +423,45 @@ export function travelOnSoloMap(
     return arriveAtLocation(map, reachableTarget.tileKey, reachableTarget.locationId);
   }
 
-  const sourceTile = map.tiles[reachableTarget.tileKey];
-  if (!sourceTile) {
+  const discovery = discoverSoloMapRoad(map, reachableTarget, random);
+  if (!discovery) {
     return { map, enteredEncounter: false, triggeredEvent: null };
   }
 
-  const neighborCoordinate = getNeighborCoordinate(sourceTile, reachableTarget.roadId);
+  return arriveAtLocation(
+    discovery.map,
+    discovery.arrivalTarget.tileKey,
+    discovery.arrivalTarget.locationId,
+  );
+}
+
+export function discoverSoloMapRoad(
+  map: SoloMapState,
+  target: Extract<MapTravelTarget, { kind: 'road' }>,
+  random = Math.random,
+): MapRoadDiscoveryResult | null {
+  const reachableTarget = getReachableMapTargets(map).find((candidate) => (
+    createMapTravelTargetKey(candidate) === createMapTravelTargetKey(target)
+  ));
+  if (!reachableTarget || reachableTarget.kind !== 'road') {
+    return null;
+  }
+
+  const sourceTile = map.tiles[target.tileKey];
+  if (!sourceTile) {
+    return null;
+  }
+
+  const neighborCoordinate = getNeighborCoordinate(sourceTile, target.roadId);
   const neighborKey = createMapTileKey(neighborCoordinate.x, neighborCoordinate.y);
-  const destinationLocation = getLocationForRoad(getOppositeRoad(reachableTarget.roadId));
+  if (map.tiles[neighborKey]) {
+    return null;
+  }
+
+  const destinationLocation = getLocationForRoad(getOppositeRoad(target.roadId));
   const discoveredForestTileCount = Object.values(map.tiles).filter((tile) => tile.kind === 'forest').length;
   const region = getRegionDefinition(map.regionId);
-  const neighbor = map.tiles[neighborKey] ?? createForestMapTile(
+  const neighbor = createForestMapTile(
     neighborCoordinate.x,
     neighborCoordinate.y,
     map.availableEventTokenIds,
@@ -434,17 +474,20 @@ export function travelOnSoloMap(
         excludedLocationId: destinationLocation,
       },
   );
-  const mapWithNeighbor = map.tiles[neighborKey]
-    ? map
-    : {
-      ...map,
-      availableEventTokenIds: map.availableEventTokenIds.filter((tokenId) => !Object.values(neighbor.events).some(
-        (event) => event?.tokenId === tokenId,
-      )),
-      tiles: {
-        ...map.tiles,
-        [neighbor.key]: neighbor,
-      },
-    };
-  return arriveAtLocation(mapWithNeighbor, neighbor.key, destinationLocation);
+  const mapWithNeighbor: SoloMapState = {
+    ...map,
+    availableEventTokenIds: map.availableEventTokenIds.filter((tokenId) => !Object.values(neighbor.events).some(
+      (event) => event?.tokenId === tokenId,
+    )),
+    tiles: {
+      ...map.tiles,
+      [neighbor.key]: neighbor,
+    },
+  };
+
+  return {
+    map: mapWithNeighbor,
+    arrivalTarget: createLocationTarget(neighbor.key, destinationLocation),
+    revealedTileKey: neighbor.key,
+  };
 }

@@ -11,6 +11,7 @@ export interface GameplayActions {
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   returnToMapAfterReward: () => void;
+  revealMapRoadTarget: (target: Extract<MapTravelTarget, { kind: 'road' }>) => Extract<MapTravelTarget, { kind: 'location' }> | null;
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
@@ -25,6 +26,7 @@ export const gameplayActions: GameplayActions = {
   hydrateGameState: (nextState) => useGameplayStore.getState().hydrateGameState(nextState),
   returnToStartScreen: () => useGameplayStore.getState().returnToStartScreen(),
   returnToMapAfterReward: () => useGameplayStore.getState().returnToMapAfterReward(),
+  revealMapRoadTarget: (target) => useGameplayStore.getState().revealMapRoadTarget(target),
   travelToMapTarget: (target) => useGameplayStore.getState().travelToMapTarget(target),
   selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),
   castRuneToWall: (row, col) => useGameplayStore.getState().castRuneToWall(row, col),

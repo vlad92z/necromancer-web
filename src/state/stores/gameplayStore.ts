@@ -39,7 +39,7 @@ import {
   resolveCompletedStartTurnEffects,
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
-import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
+import { completeActiveMapEncounter, discoverSoloMapRoad, travelOnSoloMap } from '../../utils/soloMap';
 import { getRegionEventToken } from '../../utils/regionCatalog';
 import {
   clearPersistedSoloRun,
@@ -278,6 +278,7 @@ export interface GameplayStore extends GameState {
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   returnToMapAfterReward: () => void;
+  revealMapRoadTarget: (target: Extract<MapTravelTarget, { kind: 'road' }>) => Extract<MapTravelTarget, { kind: 'location' }> | null;
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
   castRuneToWall: (row: number, col: number) => void;
@@ -333,6 +334,27 @@ export const gameplayStoreConfig = (
 
   resetGame: () => {
     set(() => initializeSoloGame());
+  },
+
+  revealMapRoadTarget: (target) => {
+    let arrivalTarget: Extract<MapTravelTarget, { kind: 'location' }> | null = null;
+    set((state) => {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat || state.isVictory) {
+        return state;
+      }
+
+      const discovery = discoverSoloMapRoad(state.soloMap, target);
+      if (!discovery) {
+        return state;
+      }
+
+      arrivalTarget = discovery.arrivalTarget;
+      return {
+        ...state,
+        soloMap: discovery.map,
+      };
+    });
+    return arrivalTarget;
   },
 
   travelToMapTarget: (target: MapTravelTarget) => {
