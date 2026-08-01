@@ -22,7 +22,7 @@ describe('soloPersistence', () => {
 
   it('saves and loads versioned solo state payloads', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
-    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const { loadSoloState, saveSoloState, SOLO_STATE_VERSION } = await import('./soloPersistence');
     const state = { ...initializeSoloGame(17), gameStarted: true };
 
     saveSoloState(state);
@@ -30,7 +30,7 @@ describe('soloPersistence', () => {
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 27,
+      version: SOLO_STATE_VERSION,
       state: {
         gameStarted: true,
         enemyMaxHealth: 17,

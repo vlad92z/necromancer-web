@@ -6,7 +6,7 @@ import type { GameState, SoloMapState } from '../types/game';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 27;
+export const SOLO_STATE_VERSION = 28;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;

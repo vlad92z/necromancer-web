@@ -361,12 +361,10 @@ Start:
 - No runeforges, pattern lines, overload UI, or RuneScore win UI in combat.
 
 Casting:
-- Selecting a card and clicking matching wall slot plays the card.
-- Wrong-type slot rejects placement.
+- Selecting a card and clicking any empty wall slot plays the card.
+- Rune type does not restrict placement.
 - Completed slot rejects placement.
-- Row N slot completes only after N matching plays.
-- Non-final plays do not resolve effects.
-- Final play resolves effect and fills slot.
+- Placement immediately fills the slot and resolves cast effects.
 
 Enemy:
 - End Turn moves remaining hand to discard.

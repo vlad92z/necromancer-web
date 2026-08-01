@@ -24,13 +24,11 @@ describe('gameInitialization combat state', () => {
     expect(state.selectedHandRuneId).toBeNull();
   });
 
-  it('starts the default Goblin encounter at 20 health', () => {
+  it('starts the default Goblin encounter at 20 health with neutral slots', () => {
     const state = initializeSoloGame();
 
     expect(state.enemy).toMatchObject({ health: 20, maxHealth: 20 });
-    expect(state.enemyBoard.flat().every((cell) => (
-      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
-    ))).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => cell.id === null && cell.runeTypes.length === 0)).toBe(true);
     expect(state.arcaneDust).toBe(0);
   });
 

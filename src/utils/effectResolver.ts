@@ -304,7 +304,6 @@ function cloneWall(wall: ScoringWall): ScoringWall {
   return wall.map((row) => row.map((cell) => ({
     id: cell.id,
     name: cell.name,
-    acceptedRuneTypes: [...cell.acceptedRuneTypes],
     runeTypes: [...cell.runeTypes],
     rarity: cell.rarity,
     cardImageSrc: cell.cardImageSrc,
@@ -315,11 +314,10 @@ function cloneWall(wall: ScoringWall): ScoringWall {
   })));
 }
 
-function createEmptyWallCell(acceptedRuneTypes: RuneType[]): WallCell {
+function createEmptyWallCell(): WallCell {
   return {
     id: null,
     name: null,
-    acceptedRuneTypes: [...acceptedRuneTypes],
     runeTypes: [],
     rarity: null,
     cardImageSrc: null,
@@ -360,7 +358,7 @@ function clearCompletedCell(
   }
 
   const nextWall = cloneWall(wall);
-  nextWall[position.row][position.col] = createEmptyWallCell(nextWall[position.row][position.col].acceptedRuneTypes);
+  nextWall[position.row][position.col] = createEmptyWallCell();
 
   return { wall: nextWall, suppressedRune };
 }
@@ -384,7 +382,6 @@ function convertCompletedCell(
   nextWall[position.row][position.col] = {
     id: suppressedRune.id,
     name: convertedRune.name,
-    acceptedRuneTypes: [...nextWall[position.row][position.col].acceptedRuneTypes],
     runeTypes: [targetType],
     rarity: 'common',
     cardImageSrc: convertedRune.cardImageSrc,

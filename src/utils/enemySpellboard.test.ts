@@ -27,15 +27,13 @@ function createEnemyRune(id: string, damage: number): EnemyRune {
 }
 
 describe('enemy spellboard combat', () => {
-  it('initializes a hidden enemy queue and Life-slot board', () => {
+  it('initializes a hidden enemy queue and neutral-slot board', () => {
     const state = initializeSoloGame();
 
     expect(state.enemyBoard).toHaveLength(6);
     expect(state.enemyBoard.flat()).toHaveLength(36);
     expect(state.enemyBoard.flat().every((cell) => cell.id === null)).toBe(true);
-    expect(state.enemyBoard.flat().every((cell) => (
-      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
-    ))).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => cell.runeTypes.length === 0)).toBe(true);
     expect(state.enemyQueuedRunes).toEqual([]);
     expect(createEnemyTurnRunes('goblin', 4).map((rune) => rune.name)).toEqual(['Throw Rock', 'Throw Rock', 'Throw Rock', 'Hide']);
     expect(createEnemyTurnRunes('goblin', 4).map((rune) => rune.runeTypes[0])).toEqual(['Life', 'Life', 'Life', 'Life']);

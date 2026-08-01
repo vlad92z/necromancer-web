@@ -14,7 +14,6 @@ import type { DrawTypeRequest, WallPosition } from './effectResolver';
 import { createEnemySpellBoard, createEnemyTurnRunes, DEFAULT_HAND_SIZE } from './gameInitialization';
 import { copyEffectRefs } from './runeEffects';
 import { runeHasType } from './runeHelpers';
-import { canRuneSatisfySlot } from './scoring';
 
 export const EXTRA_DRAW_HAND_LIMIT = 10;
 
@@ -309,8 +308,7 @@ export function castRuneToWallSlot({
   if (
     !selectedRune ||
     !targetCell ||
-    targetCell.id !== null ||
-    !canRuneSatisfySlot(selectedRune.runeTypes, targetCell.acceptedRuneTypes)
+    targetCell.id !== null
   ) {
     return {
       status: 'invalid',
@@ -330,7 +328,6 @@ export function castRuneToWallSlot({
   nextWall[row][col] = {
     id: completedRune.id,
     name: completedRune.name,
-    acceptedRuneTypes: [...targetCell.acceptedRuneTypes],
     runeTypes: [...completedRune.runeTypes],
     rarity: completedRune.rarity,
     cardImageSrc: completedRune.cardImageSrc,
@@ -591,7 +588,6 @@ export function resolveEnemyTurn({
     nextBoard[slot.row][slot.col] = {
       id: rune.id,
       name: rune.name,
-      acceptedRuneTypes: [...nextBoard[slot.row][slot.col].acceptedRuneTypes],
       runeTypes: [...rune.runeTypes],
       rarity: rune.rarity,
       cardImageSrc: rune.cardImageSrc,

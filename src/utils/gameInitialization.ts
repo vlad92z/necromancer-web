@@ -15,7 +15,6 @@ import type {
 import { copyEffectRefs, createRuneFromCardName } from './runeEffects';
 import type { CardName } from './cardCatalog';
 import { MONSTER_CATALOG } from './monsterCatalog';
-import { getWallSlotRuneTypes } from './scoring';
 import { initializeSoloMap } from './soloMap';
 
 export const RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
@@ -43,13 +42,12 @@ export const STARTING_DECK: Rune[] = STARTING_DECK_DEFINITIONS.map(({ id, cardNa
 export function createEmptyWall(size: number = WALL_SIZE): ScoringWall {
   return Array(size)
     .fill(null)
-    .map((_, row) =>
+    .map(() =>
       Array(size)
         .fill(null)
-        .map((_, col) => ({
+        .map(() => ({
           id: null,
           name: null,
-          acceptedRuneTypes: getWallSlotRuneTypes(row, col),
           runeTypes: [],
           rarity: null,
           cardImageSrc: null,
@@ -65,12 +63,8 @@ export function createEnemySpellBoard(size: number = WALL_SIZE): ScoringWall {
   return createMonsterSpellBoard('goblin', size);
 }
 
-export function createMonsterSpellBoard(monsterId: MonsterId, size: number = WALL_SIZE): ScoringWall {
-  const acceptedRuneTypes = MONSTER_CATALOG[monsterId].acceptedRuneTypes;
-  return createEmptyWall(size).map((row) => row.map((cell) => ({
-    ...cell,
-    acceptedRuneTypes: [...acceptedRuneTypes],
-  })));
+export function createMonsterSpellBoard(_monsterId: MonsterId, size: number = WALL_SIZE): ScoringWall {
+  return createEmptyWall(size);
 }
 
 export function createGoblinEnemy(maxHealth: number = MONSTER_CATALOG.goblin.maxHealth): Enemy {

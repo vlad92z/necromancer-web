@@ -4,7 +4,7 @@
 
 import type { Rune, WallCell as WallCellType } from '../../../types/game';
 import { RuneCell } from '../../../components/RuneCell';
-import { WALL_SLOT_PLACEHOLDER_ASSETS } from '../../../utils/wallSlotPlaceholders';
+import slotRune from '../../../assets/runes/slot_rune.png';
 import { wallCellToRune } from '../../../utils/wallCellRune';
 import type { RuneSize } from '../../../styles/tokens';
 
@@ -27,14 +27,12 @@ export function WallCell({
   onRuneHover,
   onRuneLeave,
 }: WallCellProps) {
-  const acceptedRuneType = cell.acceptedRuneTypes[0];
-  const placeholderLabel = cell.acceptedRuneTypes.join('/');
   const rune = wallCellToRune(cell, row, col);
   
   return (
     <div
       style={{ position: 'relative', display: 'inline-block' }}
-      aria-label={`${placeholderLabel} rune cell`}
+      aria-label="Empty rune cell"
       onMouseEnter={() => rune && onRuneHover?.(rune)}
       onMouseLeave={onRuneLeave}
     >
@@ -42,7 +40,7 @@ export function WallCell({
         rune={rune}
         variant="wall"
         size={size}
-        emptyIcon={acceptedRuneType ? WALL_SLOT_PLACEHOLDER_ASSETS[acceptedRuneType] : undefined}
+        emptyIcon={slotRune}
         placeholder={{
           type: 'rune',
         }}

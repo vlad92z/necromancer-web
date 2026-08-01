@@ -1,7 +1,7 @@
 /** The canonical catalogue for encounter monsters and their rewards. */
 import goblinImageSrc from '../assets/enemies/goblin.png';
 import golemImageSrc from '../assets/enemies/golem.png';
-import type { MonsterId, RuneType } from '../types/game';
+import type { MonsterId } from '../types/game';
 import type { CardName } from './cardCatalog';
 
 export interface MonsterTurnCard {
@@ -17,7 +17,6 @@ export interface MonsterDefinition {
   isBoss: boolean;
   maxHealth: number;
   armor: number;
-  acceptedRuneTypes: readonly RuneType[];
   arcaneDustRewardRange: readonly [minimum: number, maximum: number];
   rewardCardNames: readonly CardName[];
   turnCycle: readonly (readonly MonsterTurnCard[])[];
@@ -31,7 +30,6 @@ export const MONSTER_CATALOG = {
     isBoss: false,
     maxHealth: 20,
     armor: 0,
-    acceptedRuneTypes: ['Life'],
     arcaneDustRewardRange: [4, 7],
     rewardCardNames: ['Throw Rock', 'Hide', 'Scorch', 'Lifeline'],
     turnCycle: [[
@@ -48,7 +46,6 @@ export const MONSTER_CATALOG = {
     isBoss: true,
     maxHealth: 50,
     armor: 0,
-    acceptedRuneTypes: ['Life'],
     arcaneDustRewardRange: [0, 0],
     rewardCardNames: [],
     turnCycle: [

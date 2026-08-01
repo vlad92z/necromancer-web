@@ -11,7 +11,6 @@ describe('wallCellRune', () => {
     const cell: WallCell = {
       id: 'wall-copy-void',
       name: 'Void 3',
-      acceptedRuneTypes: ['Void'],
       runeTypes: ['Void'],
       rarity: 'rare',
       cardImageSrc: 'void-card.png',

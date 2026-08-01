@@ -35,9 +35,7 @@ describe('monsterCatalog', () => {
       maxHealth: 50,
       imageSrc: expect.stringContaining('golem.png'),
     });
-    expect(createMonsterSpellBoard('golem-lord').flat().every((cell) => (
-      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
-    ))).toBe(true);
+    expect(createMonsterSpellBoard('golem-lord').flat().every((cell) => cell.runeTypes.length === 0)).toBe(true);
     expect(createEnemyTurnRunes('golem-lord', 0).map((rune) => rune.name)).toEqual([
       'Barricade', 'Barricade', 'Barricade', 'Barricade',
     ]);

@@ -139,7 +139,7 @@ describe('gameplayStore current combat', () => {
       maxHealth: 50,
       imageSrc: expect.stringContaining('golem.png'),
     });
-    expect(state.enemyBoard.flat().every((cell) => cell.acceptedRuneTypes.join(',') === 'Life')).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => cell.runeTypes.length === 0)).toBe(true);
   });
 
   it('heals 25% of max health and visits a Healing Shrine immediately', () => {
@@ -260,7 +260,7 @@ describe('gameplayStore current combat', () => {
     expect(state.player.mana).toBe(5);
   });
 
-  it('keeps selection active for invalid wall casts', () => {
+  it('casts into a neutral wall slot', () => {
     const store = createGameplayStoreInstance();
     const lifeRune = createTestRune('life-1', 'Life', 3);
 
@@ -273,9 +273,9 @@ describe('gameplayStore current combat', () => {
     store.getState().castRuneToWall(0, 0);
 
     const state = store.getState();
-    expect(state.hand).toEqual([lifeRune]);
-    expect(state.selectedHandRuneId).toBe(lifeRune.id);
-    expect(state.player.wall[0][0].runeTypes).toEqual([]);
+    expect(state.hand).toEqual([]);
+    expect(state.selectedHandRuneId).toBeNull();
+    expect(state.player.wall[0][0].runeTypes).toEqual(['Life']);
   });
 
   it('discards hand, applies enemy attack, and draws next hand on end turn', () => {
@@ -555,14 +555,14 @@ describe('gameplayStore current combat', () => {
       if (index === 0) return;
       cell.id = `filled-${index}`;
       cell.name = 'Filled';
-      cell.runeTypes = [...cell.acceptedRuneTypes];
+      cell.runeTypes = ['Fire'];
       cell.rarity = 'common';
       cell.cardImageSrc = 'card.png';
       cell.tokenImageSrc = 'token.png';
       cell.castEffectRefs = [];
       cell.passiveEffectRefs = [];
     });
-    const finalRune = createTestRune('boss-wall-final', wall[0][0].acceptedRuneTypes[0], 0);
+    const finalRune = createTestRune('boss-wall-final', 'Fire', 0);
 
     store.setState((state) => ({
       ...state,
@@ -754,7 +754,6 @@ describe('gameplayStore current combat', () => {
   it('increments rune sound signal when a completed rune is retriggered', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
-    wall[0][0].acceptedRuneTypes = ['Void'];
     wall[0][1] = {
     ...wall[0][1],
       id: 'completed-frost',
@@ -867,7 +866,6 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const voidRune = createRuneFromPool({ id: 'void-pulse', runeType: 'Void', rarity: 'rare' });
     const wall = createEmptyWall();
-    wall[0][0].acceptedRuneTypes = ['Void'];
 
     store.setState((state) => ({
       ...state,
@@ -931,7 +929,6 @@ describe('gameplayStore current combat', () => {
     startEncounterAtA(store);
     const uncommonVoid = createRuneFromPool({ id: 'uncommon-void', runeType: 'Void', rarity: 'uncommon' });
     const wall = createEmptyWall();
-    wall[0][0].acceptedRuneTypes = ['Void'];
     wall[0][1] = {
     ...wall[0][1],
       id: 'adjacent-fire',

@@ -649,7 +649,6 @@ describe('effectResolver resolveCastEffects', () => {
     expect(randomResult.wall[0][1]).toEqual({
       id: 'completed-0-1',
       name: 'Frost Shield',
-      acceptedRuneTypes: ['Fire'],
       runeTypes: ['Frost'],
       rarity: 'common',
       cardImageSrc: CARD_DEFINITIONS['Frost Shield'].cardImageSrc,
@@ -1213,7 +1212,6 @@ function createWallCell(
   return {
     id,
     name: `${runeType} Test`,
-    acceptedRuneTypes: [runeType],
     runeTypes: [runeType],
     rarity: 'common',
     cardImageSrc: `${runeType.toLowerCase()}-card.png`,

@@ -87,7 +87,6 @@ export interface TooltipCard {
 export interface WallCell {
   id: string | null;
   name: string | null;
-  acceptedRuneTypes: RuneType[];
   runeTypes: RuneType[];
   rarity: RuneEffectRarity | null;
   cardImageSrc: string | null;

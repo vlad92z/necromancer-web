@@ -37,7 +37,6 @@ describe('combatResolution wall casting', () => {
     expect(result.player.wall[0][0]).toEqual({
       id: `wall-copy-${rarity}`,
       name: fireRune.name,
-      acceptedRuneTypes: ['Fire'],
       runeTypes: ['Fire'],
       rarity,
       cardImageSrc: fireRune.cardImageSrc,
@@ -50,7 +49,7 @@ describe('combatResolution wall casting', () => {
     expect(result.completedPosition).toEqual({ row: 0, col: 0 });
   });
 
-  it('rejects casts whose rune types do not satisfy the slot', () => {
+  it('places a rune regardless of its rune type', () => {
     const lifeRune = createTestRune('life-wrong-type', 'Life');
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
     const result = castRuneToWallSlot({
@@ -62,10 +61,10 @@ describe('combatResolution wall casting', () => {
       col: 0,
     });
 
-    expect(result.status).toBe('invalid');
-    expect(result.hand).toEqual([lifeRune]);
-    expect(result.discardPile).toEqual([]);
-    expect(result.selectedHandRuneId).toBe(lifeRune.id);
+    expect(result.status).toBe('completed');
+    expect(result.hand).toEqual([]);
+    expect(result.discardPile).toEqual([lifeRune]);
+    expect(result.selectedHandRuneId).toBeNull();
   });
 
   it('rejects casts into filled slots without clearing selection', () => {
@@ -122,10 +121,9 @@ describe('combatResolution wall casting', () => {
     expect(firstResult.player.wall[0][0].id).not.toBe(secondResult.player.wall[1][5].id);
   });
 
-  it('accepts a multi-type rune when any type matches a multi-type slot', () => {
+  it('preserves all types on a multi-type rune', () => {
     const rune = { ...createTestRune('hybrid', 'Fire'), runeTypes: ['Fire', 'Wind'] as RuneType[] };
     const player = createPlayer('player-1', 'Tester', 10, [], 10);
-    player.wall[0][0].acceptedRuneTypes = ['Life', 'Wind'];
 
     const result = castRuneToWallSlot({
       player,
@@ -776,7 +774,6 @@ function createWallCell(runeType: RuneType, passiveEffectRefs: Rune['passiveEffe
   return {
     id: `completed-${runeType}`,
     name: `${runeType} Test`,
-    acceptedRuneTypes: [runeType],
     runeTypes: [runeType],
     rarity: 'common',
     cardImageSrc: `${runeType.toLowerCase()}-card.png`,
