@@ -63,7 +63,6 @@ export interface Enemy {
   isBoss?: boolean;
   health: number;
   maxHealth: number;
-  armor?: number;
   arcaneDustRewardRange?: readonly [minimum: number, maximum: number];
 }
 
@@ -109,6 +108,7 @@ export interface WallCell {
   manaCost?: number | null;
   castEffectRefs: RuneEffectRef[] | null;
   passiveEffectRefs: RuneEffectRef[] | null;
+  shield: number | null;
 }
 
 export type ScoringWall = WallCell[][];
@@ -119,7 +119,6 @@ export interface Player {
   wall: ScoringWall;
   health: number;
   maxHealth: number;
-  armor: number;
   mana: number;
   maxMana: number;
   deck: Rune[];
@@ -130,7 +129,7 @@ export type MapTileKind = 'start' | 'forest';
 export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
 export type RegionId = 'greenwood';
-export type MapEventKind = 'combat' | 'boss' | 'healing' | 'empty';
+export type MapEventKind = 'combat' | 'boss' | 'healing' | 'sacrificial-altar' | 'empty';
 export type MonsterId = 'goblin' | 'witch' | 'shade' | 'golem-lord';
 export type MapRoadId =
   | 'left-75'

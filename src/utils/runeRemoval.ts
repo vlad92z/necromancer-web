@@ -116,6 +116,7 @@ export function createEmptyWallCell(): WallCell {
     manaCost: null,
     castEffectRefs: null,
     passiveEffectRefs: null,
+    shield: null,
   };
 }
 

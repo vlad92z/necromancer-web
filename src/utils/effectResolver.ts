@@ -31,6 +31,7 @@ import {
   removeRuneAtPosition,
   wallHasRuneId,
 } from './runeRemoval';
+import { addShieldToWallCell, applyDamageToShieldedWall } from './shield';
 
 export interface CastEffectResolutionInput {
   player: Player;
@@ -76,12 +77,14 @@ export interface EndTurnEffectResolutionInput {
   player: Player;
   enemy: Enemy | null;
   wall: ScoringWall;
+  opposingWall?: ScoringWall;
   activeArtefacts?: ArtefactId[];
 }
 
 export interface EndTurnEffectResolutionResult {
   player: Player;
   enemy: Enemy | null;
+  opposingWall: ScoringWall;
   logs: EffectResolutionLog[];
 }
 
@@ -127,6 +130,7 @@ export interface PassiveEffectResolutionResult {
 export interface IncomingDamageResolutionResult {
   player: Player;
   enemy: Enemy | null;
+  opposingWall: ScoringWall;
   incomingDamage: number;
   removedRunes: Rune[];
   logs: EffectResolutionLog[];
@@ -345,6 +349,7 @@ function cloneWall(wall: ScoringWall): ScoringWall {
     manaCost: cell.manaCost,
     castEffectRefs: cell.castEffectRefs ? copyEffectRefs(cell.castEffectRefs) : null,
     passiveEffectRefs: cell.passiveEffectRefs ? copyEffectRefs(cell.passiveEffectRefs) : null,
+    shield: cell.shield,
   })));
 }
 
@@ -358,6 +363,7 @@ function createEmptyWallCell(): WallCell {
     tokenImageSrc: null,
     castEffectRefs: null,
     passiveEffectRefs: null,
+    shield: null,
   };
 }
 
@@ -422,6 +428,7 @@ function convertCompletedCell(
     tokenImageSrc: convertedRune.tokenImageSrc,
     castEffectRefs: [],
     passiveEffectRefs: [],
+    shield: null,
   };
 
   return { wall: nextWall, suppressedRune };
@@ -501,14 +508,17 @@ export function resolveIncomingDamageEffects({
   baseDamage,
   activeArtefacts = [],
   random = Math.random,
+  opposingWall = [],
 }: {
   player: Player;
   enemy: Enemy | null;
   baseDamage: number;
   activeArtefacts?: ArtefactId[];
   random?: () => number;
+  opposingWall?: ScoringWall;
 }): IncomingDamageResolutionResult {
   let nextWall = cloneWall(player.wall);
+  let nextOpposingWall = cloneWall(opposingWall);
   let nextEnemy = enemy;
   let incomingDamage = Math.max(0, baseDamage);
   const removedRunes: Rune[] = [];
@@ -546,7 +556,9 @@ export function resolveIncomingDamageEffects({
     nextWall = removal.wall;
     removedRunes.push(removal.removedRune);
     const explosiveDamage = getExplosiveDamage(removal.removedRune);
-    nextEnemy = applyExplosiveDamageToEnemy(nextEnemy, explosiveDamage);
+    const damageResult = applyDamageToEnemyBoard(nextEnemy, nextOpposingWall, explosiveDamage);
+    nextEnemy = damageResult.enemy;
+    nextOpposingWall = damageResult.wall;
     const reduction = queued.effectRef.payload?.effectId === 'passive.reduceDamage'
       ? numberParam(queued.effectRef.payload, 'amount')
       : 0;
@@ -579,6 +591,7 @@ export function resolveIncomingDamageEffects({
   return {
     player: { ...player, wall: nextWall },
     enemy: nextEnemy,
+    opposingWall: nextOpposingWall,
     incomingDamage: Math.max(0, passiveResult.values.incomingDamage ?? incomingDamage),
     removedRunes,
     logs: [...logs, ...passiveResult.logs],
@@ -638,15 +651,18 @@ export function resolveTimedRuneRemovalEffects({
         : 0;
       const modifier = (
         item.effectRef.effectId === 'passive.pulseSynergy'
-        || item.effectRef.effectId === 'passive.armorEndTurnSynergy'
+        || item.effectRef.effectId === 'passive.shieldEndTurnSynergy'
         || item.effectRef.effectId === 'passive.healingStartTurnSynergy'
       ) ? amount * synergyCount : amount;
       if (item.effectRef.effectId === 'passive.damageEndTurn' || item.effectRef.effectId === 'passive.pulseSynergy') {
-        nextEnemy = nextEnemy && modifier > 0
-          ? { ...nextEnemy, health: Math.max(0, nextEnemy.health - modifier) }
-          : nextEnemy;
-      } else if (item.effectRef.effectId === 'passive.armorEndTurnSynergy') {
-        nextPlayer = { ...nextPlayer, armor: nextPlayer.armor + modifier };
+        const damageResult = applyDamageToEnemyBoard(nextEnemy, nextOpposingWall, modifier);
+        nextEnemy = damageResult.enemy;
+        nextOpposingWall = damageResult.wall;
+      } else if (item.effectRef.effectId === 'passive.shieldEndTurnSynergy') {
+        nextPlayer = {
+          ...nextPlayer,
+          wall: addShieldToWallCell(nextPlayer.wall, item.sourcePosition, modifier),
+        };
       } else if (
         item.effectRef.effectId === 'passive.healingStartTurn'
         || item.effectRef.effectId === 'passive.healingStartTurnSynergy'
@@ -727,11 +743,13 @@ export function resolveTimedRuneRemovalEffects({
     const explosiveDamage = getExplosiveDamage(removal.removedRune);
     if (item.effectRef.effectId === 'rune.consume') {
       nextPlayer = { ...nextPlayer, wall: removal.wall };
-      nextEnemy = applyExplosiveDamageToEnemy(nextEnemy, explosiveDamage);
+      const damageResult = applyDamageToEnemyBoard(nextEnemy, nextOpposingWall, explosiveDamage);
+      nextEnemy = damageResult.enemy;
+      nextOpposingWall = damageResult.wall;
       removedRunes.push(removal.removedRune);
     } else {
       nextOpposingWall = removal.wall;
-      nextPlayer = applyExplosiveDamageToPlayer(nextPlayer, explosiveDamage);
+      nextPlayer = applyDamageToPlayerBoard(nextPlayer, explosiveDamage);
     }
 
     const payload = item.effectRef.payload;
@@ -739,11 +757,16 @@ export function resolveTimedRuneRemovalEffects({
     if (payload) {
       payloadAmount = numberParam(payload, 'amount');
       if (payload.effectId === 'cast.damage' || payload.effectId === 'passive.damageEndTurn') {
-        nextEnemy = applyExplosiveDamageToEnemy(nextEnemy, payloadAmount);
+        const damageResult = applyDamageToEnemyBoard(nextEnemy, nextOpposingWall, payloadAmount);
+        nextEnemy = damageResult.enemy;
+        nextOpposingWall = damageResult.wall;
       } else if (payload.effectId === 'cast.healing' || payload.effectId === 'passive.healingStartTurn') {
         nextPlayer = { ...nextPlayer, health: Math.min(nextPlayer.maxHealth, nextPlayer.health + payloadAmount) };
-      } else if (payload.effectId === 'cast.armor') {
-        nextPlayer = { ...nextPlayer, armor: nextPlayer.armor + payloadAmount };
+      } else if (payload.effectId === 'cast.shield') {
+        nextPlayer = {
+          ...nextPlayer,
+          wall: addShieldToWallCell(nextPlayer.wall, item.sourcePosition, payloadAmount),
+        };
       } else if (payload.effectId === 'cast.draw' || payload.effectId === 'passive.drawingStartTurn') {
         drawCount += payloadAmount;
       }
@@ -1103,6 +1126,7 @@ function resolvePlainCastEffects({
   opposingWall = [],
 }: CastEffectResolutionInput): CastEffectResolutionResult {
   let nextWall = cloneWall(wall);
+  let nextOpposingWall = cloneWall(opposingWall);
   let nextSuppressedRunes = [...suppressedRunes];
   let returnedRunes: Rune[] = [];
   let returnedOverflowRunes: Rune[] = [];
@@ -1110,14 +1134,13 @@ function resolvePlainCastEffects({
   let explosiveDamage = 0;
   let baseDamage = 0;
   let baseHealing = 0;
-  let baseArmor = 0;
+  let baseShield = 0;
   let baseArcaneDustDelta = 0;
   let baseDrawCount = 0;
   let drawTypeRequests: DrawTypeRequest[] = [];
   let baseMaxHealthDelta = 0;
   let projectedEnemyHealth = enemy?.health ?? null;
   let projectedPlayerHealth = player.health;
-  let projectedPlayerArmor = player.armor;
   let projectedPlayerMaxHealth = player.maxHealth;
   const logs: EffectResolutionLog[] = [];
   let wallRuneCounts = countFilledWallRunesByType(nextWall);
@@ -1128,7 +1151,6 @@ function resolvePlainCastEffects({
       enemyHealth: projectedEnemyHealth,
       playerHealth: projectedPlayerHealth,
       playerMaxHealth: projectedPlayerMaxHealth,
-      playerArmor: projectedPlayerArmor,
       arcaneDustDelta: baseArcaneDustDelta,
       drawCount: baseDrawCount,
       drawTypeRequests,
@@ -1308,23 +1330,20 @@ function resolvePlainCastEffects({
         }));
         break;
       }
-      case 'cast.armor': {
-        const armor = numberParam(effectRef, 'amount');
-        baseArmor += armor;
-        projectedPlayerArmor += armor;
-        logs.push(createCastLog(castRune, effectRef, baseInput, { armor, playerArmor: projectedPlayerArmor }));
+      case 'cast.shield': {
+        const shield = numberParam(effectRef, 'amount');
+        baseShield += shield;
+        logs.push(createCastLog(castRune, effectRef, baseInput, { shield }));
         break;
       }
-      case 'cast.armorAdjacent': {
+      case 'cast.shieldAdjacent': {
         const adjacentCount = countAdjacentCompletedRunesIncludingSource(wall, sourcePosition, getPrimaryRuneType(castRune));
-        const armor = numberParam(effectRef, 'amount') * adjacentCount;
-        baseArmor += armor;
-        projectedPlayerArmor += armor;
+        const shield = numberParam(effectRef, 'amount') * adjacentCount;
+        baseShield += shield;
         logs.push(createCastLog(castRune, effectRef, baseInput, {
-          armor,
+          shield,
           adjacentCount,
           sourcePosition,
-          playerArmor: projectedPlayerArmor,
         }));
         break;
       }
@@ -1455,7 +1474,6 @@ function resolvePlainCastEffects({
               wall: nextWall,
               health: projectedPlayerHealth,
               maxHealth: projectedPlayerMaxHealth,
-              armor: projectedPlayerArmor,
             },
             enemy: projectedEnemyHealth === null || !enemy ? enemy : { ...enemy, health: projectedEnemyHealth },
             castRune: filteredRune,
@@ -1466,16 +1484,15 @@ function resolvePlainCastEffects({
             allowRetrigger: false,
             handSize: handSize + returnedRunes.length,
             rng,
+            opposingWall: nextOpposingWall,
           });
 
           const previousProjectedEnemyHealth = projectedEnemyHealth;
           const previousProjectedPlayerHealth = projectedPlayerHealth;
           const previousProjectedPlayerMaxHealth = projectedPlayerMaxHealth;
-          const previousProjectedPlayerArmor = projectedPlayerArmor;
 
           projectedPlayerHealth = retriggerResult.player.health;
           projectedPlayerMaxHealth = retriggerResult.player.maxHealth;
-          projectedPlayerArmor = retriggerResult.player.armor;
           projectedEnemyHealth = retriggerResult.enemy?.health ?? projectedEnemyHealth;
           if (previousProjectedEnemyHealth !== null && retriggerResult.enemy) {
             baseDamage += Math.max(0, previousProjectedEnemyHealth - retriggerResult.enemy.health);
@@ -1483,11 +1500,11 @@ function resolvePlainCastEffects({
           const maxHealthDelta = retriggerResult.player.maxHealth - previousProjectedPlayerMaxHealth;
           baseMaxHealthDelta += maxHealthDelta;
           baseHealing += Math.max(0, retriggerResult.player.health - previousProjectedPlayerHealth - maxHealthDelta);
-          baseArmor += Math.max(0, retriggerResult.player.armor - previousProjectedPlayerArmor);
           baseArcaneDustDelta += retriggerResult.arcaneDustDelta;
           baseDrawCount += retriggerResult.drawCount;
           drawTypeRequests = [...drawTypeRequests, ...retriggerResult.drawTypeRequests];
           nextWall = retriggerResult.wall;
+          nextOpposingWall = retriggerResult.opposingWall;
           nextSuppressedRunes = retriggerResult.suppressedRunes;
           returnedRunes = [...returnedRunes, ...retriggerResult.returnedRunes];
           returnedOverflowRunes = [...returnedOverflowRunes, ...retriggerResult.returnedOverflowRunes];
@@ -1534,7 +1551,6 @@ function resolvePlainCastEffects({
               wall: nextWall,
               health: projectedPlayerHealth,
               maxHealth: projectedPlayerMaxHealth,
-              armor: projectedPlayerArmor,
             },
             enemy: projectedEnemyHealth === null || !enemy ? enemy : { ...enemy, health: projectedEnemyHealth },
             castRune: filteredRune,
@@ -1545,16 +1561,15 @@ function resolvePlainCastEffects({
             allowRetrigger: false,
             handSize: handSize + returnedRunes.length,
             rng,
+            opposingWall: nextOpposingWall,
           });
 
           const previousProjectedEnemyHealth = projectedEnemyHealth;
           const previousProjectedPlayerHealth = projectedPlayerHealth;
           const previousProjectedPlayerMaxHealth = projectedPlayerMaxHealth;
-          const previousProjectedPlayerArmor = projectedPlayerArmor;
 
           projectedPlayerHealth = retriggerResult.player.health;
           projectedPlayerMaxHealth = retriggerResult.player.maxHealth;
-          projectedPlayerArmor = retriggerResult.player.armor;
           projectedEnemyHealth = retriggerResult.enemy?.health ?? projectedEnemyHealth;
           if (previousProjectedEnemyHealth !== null && retriggerResult.enemy) {
             baseDamage += Math.max(0, previousProjectedEnemyHealth - retriggerResult.enemy.health);
@@ -1562,11 +1577,11 @@ function resolvePlainCastEffects({
           const maxHealthDelta = retriggerResult.player.maxHealth - previousProjectedPlayerMaxHealth;
           baseMaxHealthDelta += maxHealthDelta;
           baseHealing += Math.max(0, retriggerResult.player.health - previousProjectedPlayerHealth - maxHealthDelta);
-          baseArmor += Math.max(0, retriggerResult.player.armor - previousProjectedPlayerArmor);
           baseArcaneDustDelta += retriggerResult.arcaneDustDelta;
           baseDrawCount += retriggerResult.drawCount;
           drawTypeRequests = [...drawTypeRequests, ...retriggerResult.drawTypeRequests];
           nextWall = retriggerResult.wall;
+          nextOpposingWall = retriggerResult.opposingWall;
           nextSuppressedRunes = retriggerResult.suppressedRunes;
           returnedRunes = [...returnedRunes, ...retriggerResult.returnedRunes];
           returnedOverflowRunes = [...returnedOverflowRunes, ...retriggerResult.returnedOverflowRunes];
@@ -1611,7 +1626,7 @@ function resolvePlainCastEffects({
         }));
         break;
       }
-      case 'cast.armorSynergy': {
+      case 'cast.shieldSynergy': {
         const synergyType = runeTypeParam(effectRef, 'synergyType');
         const synergyCount = countWallRunesByTypeIncludingTrigger({
           wall: nextWall,
@@ -1620,14 +1635,12 @@ function resolvePlainCastEffects({
           castRuneType: getPrimaryRuneType(castRune),
           runeType: synergyType,
         });
-        const armor = numberParam(effectRef, 'amount') * synergyCount;
-        baseArmor += armor;
-        projectedPlayerArmor += armor;
+        const shield = numberParam(effectRef, 'amount') * synergyCount;
+        baseShield += shield;
         logs.push(createCastLog(castRune, effectRef, baseInput, {
-          armor,
+          shield,
           synergyType,
           synergyCount,
-          playerArmor: projectedPlayerArmor,
         }));
         break;
       }
@@ -1657,7 +1670,7 @@ function resolvePlainCastEffects({
     baseValues: {
       damage: baseDamage,
       healing: baseHealing,
-      armor: baseArmor,
+      shield: baseShield,
       arcaneDustDelta: baseArcaneDustDelta,
     },
     castRuneType: getPrimaryRuneType(castRune),
@@ -1674,16 +1687,16 @@ function resolvePlainCastEffects({
   });
   const finalDamage = damageResult.damage;
   const finalHealing = passiveResult.values.healing ?? 0;
-  const finalArmor = passiveResult.values.armor ?? 0;
+  const finalShield = passiveResult.values.shield ?? 0;
   const arcaneDustDelta = passiveResult.values.arcaneDustDelta ?? baseArcaneDustDelta;
   const baseEnemyHealth = enemy?.health ?? null;
   const totalEnemyDamage = finalDamage + explosiveDamage;
-  const enemyArmorAbsorbed = enemy ? Math.min(enemy.armor ?? 0, totalEnemyDamage) : 0;
+  const enemyShieldResult = applyDamageToShieldedWall(nextOpposingWall, totalEnemyDamage);
+  nextOpposingWall = enemyShieldResult.wall;
   const enemyAfterExplosive = enemy && totalEnemyDamage > 0
     ? {
       ...enemy,
-      armor: (enemy.armor ?? 0) - enemyArmorAbsorbed,
-      health: Math.max(0, enemy.health - (totalEnemyDamage - enemyArmorAbsorbed)),
+      health: Math.max(0, enemy.health - enemyShieldResult.remainingDamage),
     }
     : enemy;
   const actualEnemyHpLoss = baseEnemyHealth !== null && enemyAfterExplosive
@@ -1696,12 +1709,14 @@ function resolvePlainCastEffects({
     ? player.health + baseMaxHealthDelta
     : Math.min(player.health, finalMaxHealth);
   const finalHealth = Math.min(finalMaxHealth, healthAfterMaxHealthDelta + finalHealing + vampireHealing);
-  const nextPlayer = finalHealing > 0 || vampireHealing > 0 || finalArmor > 0 || baseMaxHealthDelta !== 0
+  const shieldedWall = addShieldToWallCell(nextWall, sourcePosition, finalShield);
+  wallChanged = wallChanged || shieldedWall !== nextWall;
+  nextWall = shieldedWall;
+  const nextPlayer = finalHealing > 0 || vampireHealing > 0 || baseMaxHealthDelta !== 0
     ? {
       ...player,
       health: finalHealth,
       maxHealth: finalMaxHealth,
-      armor: player.armor + finalArmor,
     }
     : player;
   const explosiveLogs = explosiveDamage > 0
@@ -1715,7 +1730,7 @@ function resolvePlainCastEffects({
     player: nextPlayer,
     enemy: enemyAfterExplosive,
     wall: nextWall,
-    opposingWall,
+    opposingWall: nextOpposingWall,
     suppressedRunes: nextSuppressedRunes,
     returnedRunes,
     returnedOverflowRunes,
@@ -1745,23 +1760,26 @@ function combineCastResults(
   };
 }
 
-function applyExplosiveDamageToEnemy(enemy: Enemy | null, damage: number): Enemy | null {
-  if (!enemy || damage <= 0) return enemy;
-  const absorbed = Math.min(enemy.armor ?? 0, damage);
+function applyDamageToEnemyBoard(
+  enemy: Enemy | null,
+  wall: ScoringWall,
+  damage: number,
+): { enemy: Enemy | null; wall: ScoringWall } {
+  if (!enemy || damage <= 0) return { enemy, wall };
+  const result = applyDamageToShieldedWall(wall, damage);
   return {
-    ...enemy,
-    armor: (enemy.armor ?? 0) - absorbed,
-    health: Math.max(0, enemy.health - (damage - absorbed)),
+    enemy: { ...enemy, health: Math.max(0, enemy.health - result.remainingDamage) },
+    wall: result.wall,
   };
 }
 
-function applyExplosiveDamageToPlayer(player: Player, damage: number): Player {
+function applyDamageToPlayerBoard(player: Player, damage: number): Player {
   if (damage <= 0) return player;
-  const absorbed = Math.min(player.armor, damage);
+  const result = applyDamageToShieldedWall(player.wall, damage);
   return {
     ...player,
-    armor: player.armor - absorbed,
-    health: Math.max(0, player.health - (damage - absorbed)),
+    wall: result.wall,
+    health: Math.max(0, player.health - result.remainingDamage),
   };
 }
 
@@ -1850,14 +1868,18 @@ export function resolveCastEffects(input: CastEffectResolutionInput): CastEffect
 
   const removal = removeRuneAtPosition(targetWall, selectedPosition);
   const explosiveDamage = removal.removedRune ? getExplosiveDamage(removal.removedRune) : 0;
-  const nextWall = removalEffect.effectId === 'rune.consume' ? removal.wall : before.wall;
-  const nextOpposingWall = removalEffect.effectId === 'rune.destroy' ? removal.wall : before.opposingWall;
-  const nextPlayer = removalEffect.effectId === 'rune.destroy'
-    ? applyExplosiveDamageToPlayer({ ...playerWithResolvedWall, wall: nextWall }, explosiveDamage)
-    : { ...playerWithResolvedWall, wall: nextWall };
-  const nextEnemy = removalEffect.effectId === 'rune.consume'
-    ? applyExplosiveDamageToEnemy(before.enemy, explosiveDamage)
-    : before.enemy;
+  let nextWall = removalEffect.effectId === 'rune.consume' ? removal.wall : before.wall;
+  let nextOpposingWall = removalEffect.effectId === 'rune.destroy' ? removal.wall : before.opposingWall;
+  let nextPlayer = { ...playerWithResolvedWall, wall: nextWall };
+  let nextEnemy = before.enemy;
+  if (removalEffect.effectId === 'rune.destroy') {
+    nextPlayer = applyDamageToPlayerBoard(nextPlayer, explosiveDamage);
+    nextWall = nextPlayer.wall;
+  } else {
+    const damageResult = applyDamageToEnemyBoard(nextEnemy, nextOpposingWall, explosiveDamage);
+    nextEnemy = damageResult.enemy;
+    nextOpposingWall = damageResult.wall;
+  }
   const removalLog = createEffectLog(
     'rune',
     input.castRune.id,
@@ -1933,10 +1955,12 @@ export function resolveEndTurnEffects({
   player,
   enemy,
   wall,
+  opposingWall = [],
   activeArtefacts = [],
 }: EndTurnEffectResolutionInput): EndTurnEffectResolutionResult {
   let nextPlayer = player;
   let nextEnemy = enemy;
+  let nextOpposingWall = opposingWall;
   const logs: EffectResolutionLog[] = [];
   const activePassives = sortActivePassiveEffects(collectActivePassiveEffects({ wall, activeArtefacts }));
 
@@ -1962,7 +1986,7 @@ export function resolveEndTurnEffects({
 
     if (
       passive.effectRef.effectId === 'passive.pulseSynergy' ||
-      passive.effectRef.effectId === 'passive.armorEndTurnSynergy'
+      passive.effectRef.effectId === 'passive.shieldEndTurnSynergy'
     ) {
       synergyType = runeTypeParam(passive.effectRef, 'synergyType');
       synergyCount = countWallRunesByTypeIncludingTrigger({
@@ -1990,10 +2014,10 @@ export function resolveEndTurnEffects({
       }
     ));
 
-    if (passiveMetadata.target === 'armor') {
+    if (passiveMetadata.target === 'shield' && sourcePosition) {
       nextPlayer = {
         ...nextPlayer,
-        armor: nextPlayer.armor + modifier,
+        wall: addShieldToWallCell(nextPlayer.wall, sourcePosition, modifier),
       };
       return;
     }
@@ -2012,16 +2036,16 @@ export function resolveEndTurnEffects({
     logs.push(...damageResult.logs);
 
     if (nextEnemy && damageResult.damage > 0) {
-      nextEnemy = {
-        ...nextEnemy,
-        health: Math.max(0, nextEnemy.health - damageResult.damage),
-      };
+      const applied = applyDamageToEnemyBoard(nextEnemy, nextOpposingWall, damageResult.damage);
+      nextEnemy = applied.enemy;
+      nextOpposingWall = applied.wall;
     }
   });
 
   return {
     player: nextPlayer,
     enemy: nextEnemy,
+    opposingWall: nextOpposingWall,
     logs,
   };
 }

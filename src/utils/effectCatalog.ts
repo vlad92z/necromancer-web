@@ -17,8 +17,8 @@ export type CastEffectId =
   | 'cast.retriggerType'
   | 'cast.healing'
   | 'cast.healSynergy'
-  | 'cast.armor'
-  | 'cast.armorAdjacent'
+  | 'cast.shield'
+  | 'cast.shieldAdjacent'
   | 'cast.healthIncrease'
   | 'cast.healthDecrease'
   | 'cast.draw'
@@ -28,24 +28,24 @@ export type CastEffectId =
   | 'cast.arcaneDustAdjacent'
   | 'cast.fortune'
   | 'cast.synergy'
-  | 'cast.armorSynergy'
+  | 'cast.shieldSynergy'
   | 'cast.fragile';
 
 export type PassiveEffectId =
   | 'passive.rodHealing'
-  | 'passive.potionArmor'
+  | 'passive.potionShield'
   | 'passive.tomeCastDamage'
   | 'passive.damageBoost'
   | 'passive.adjacentDamageBoost'
   | 'passive.damageBoostSynergy'
   | 'passive.damageEndTurn'
   | 'passive.pulseSynergy'
-  | 'passive.armorEndTurnSynergy'
+  | 'passive.shieldEndTurnSynergy'
   | 'passive.healingStartTurn'
   | 'passive.healingStartTurnSynergy'
   | 'passive.drawingStartTurn'
   | 'passive.addDamage'
-  | 'passive.armorBoost'
+  | 'passive.shieldBoost'
   | 'passive.explosive'
   | 'passive.vampire'
   | 'passive.reduceDamage';
@@ -163,19 +163,19 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     describe: (params) =>
       `Heal ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
-  'cast.armor': {
-    id: 'cast.armor',
+  'cast.shield': {
+    id: 'cast.shield',
     kind: 'cast',
-    title: 'Armor',
-    displayHint: 'armor',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} armor`,
+    title: 'Shield',
+    displayHint: 'shield',
+    describe: (params) => `Shield ${numberParam(params, 'amount')}`,
   },
-  'cast.armorAdjacent': {
-    id: 'cast.armorAdjacent',
+  'cast.shieldAdjacent': {
+    id: 'cast.shieldAdjacent',
     kind: 'cast',
-    title: 'Adjacent Armor',
-    displayHint: 'armor',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} armor for every adjacent rune`,
+    title: 'Adjacent Shield',
+    displayHint: 'shield',
+    describe: (params) => `Shield ${numberParam(params, 'amount')} for every adjacent rune`,
   },
   'cast.healthIncrease': {
     id: 'cast.healthIncrease',
@@ -241,13 +241,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
-  'cast.armorSynergy': {
-    id: 'cast.armorSynergy',
+  'cast.shieldSynergy': {
+    id: 'cast.shieldSynergy',
     kind: 'cast',
-    title: 'Armor Synergy',
-    displayHint: 'armor',
+    title: 'Shield Synergy',
+    displayHint: 'shield',
     describe: (params) =>
-      `Gain ${numberParam(params, 'amount')} armor for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `Shield ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
   'cast.fragile': {
     id: 'cast.fragile',
@@ -271,19 +271,19 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: () => 'Double all healing',
   },
-  'passive.potionArmor': {
-    id: 'passive.potionArmor',
+  'passive.potionShield': {
+    id: 'passive.potionShield',
     kind: 'passive',
-    title: 'Armor Multiplier',
-    displayHint: 'armor',
+    title: 'Shield Multiplier',
+    displayHint: 'shield',
     passive: {
       trigger: 'onCast',
-      target: 'armor',
+      target: 'shield',
       stacking: 'multiplier',
-      paramKey: 'armorMultiplier',
+      paramKey: 'shieldMultiplier',
       defaultValue: 1,
     },
-    describe: () => 'Double all armor gained',
+    describe: () => 'Double all shield gained',
   },
   'passive.tomeCastDamage': {
     id: 'passive.tomeCastDamage',
@@ -357,20 +357,20 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) => `At the end of your turn, deal ${numberParam(params, 'amount')} damage`,
   },
-  'passive.armorEndTurnSynergy': {
-    id: 'passive.armorEndTurnSynergy',
+  'passive.shieldEndTurnSynergy': {
+    id: 'passive.shieldEndTurnSynergy',
     kind: 'passive',
-    title: 'End Turn Armor Synergy',
-    displayHint: 'armor',
+    title: 'End Turn Shield Synergy',
+    displayHint: 'shield',
     passive: {
       trigger: 'endTurn',
-      target: 'armor',
+      target: 'shield',
       stacking: 'flat',
       paramKey: 'amount',
       defaultValue: 0,
     },
     describe: (params) =>
-      `At end of turn, gain ${numberParam(params, 'amount')} armor for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `At end of turn, Shield ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
   'passive.healingStartTurn': {
     id: 'passive.healingStartTurn',
@@ -429,19 +429,19 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) => `${runeTypeParam(params, 'runeType')} runes deal +${numberParam(params, 'amount')} damage`,
   },
-  'passive.armorBoost': {
-    id: 'passive.armorBoost',
+  'passive.shieldBoost': {
+    id: 'passive.shieldBoost',
     kind: 'passive',
-    title: 'Armor Boost',
-    displayHint: 'armor',
+    title: 'Shield Boost',
+    displayHint: 'shield',
     passive: {
       trigger: 'onCast',
-      target: 'armor',
+      target: 'shield',
       stacking: 'flat',
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Increase all armor gained by ${numberParam(params, 'amount')}`,
+    describe: (params) => `Increase all shield gained by ${numberParam(params, 'amount')}`,
   },
   'passive.explosive': {
     id: 'passive.explosive',
@@ -475,7 +475,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     id: 'passive.reduceDamage',
     kind: 'passive',
     title: 'Damage Reduction',
-    displayHint: 'armor',
+    displayHint: 'shield',
     passive: {
       trigger: 'onIncomingDamage',
       target: 'incomingDamage',

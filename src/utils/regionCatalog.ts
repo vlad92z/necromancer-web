@@ -1,6 +1,9 @@
 /** The canonical catalogue for adventure regions and their finite location-event tokens. */
 import goblinImageSrc from '../assets/enemies/goblin.png';
 import healingShrineImageSrc from '../assets/enemies/healing_shrine.png';
+import healingShrineVisitedImageSrc from '../assets/enemies/healing_shrine_visited.png';
+import sacrificialAltarImageSrc from '../assets/enemies/sacrificial_altar.png';
+import sacrificialAltarVisitedImageSrc from '../assets/enemies/sacrificial_altar_visited.png';
 import witchImageSrc from '../assets/enemies/witch.png';
 import shadeImageSrc from '../assets/enemies/shade.png';
 import tokenVisitedImageSrc from '../assets/map/token_visited.png';
@@ -56,14 +59,28 @@ const healingShrineTokens = Array.from({ length: 3 }, (_, index) => ({
   kind: 'healing' as const,
   healingPercent: 25,
   unvisitedImageSrc: healingShrineImageSrc,
-  visitedImageSrc: tokenVisitedImageSrc,
+  visitedImageSrc: healingShrineVisitedImageSrc,
+}));
+
+const sacrificialAltarTokens = Array.from({ length: 3 }, (_, index) => ({
+  id: `greenwood-sacrificial-altar-${index + 1}`,
+  name: 'Sacrificial Altar',
+  kind: 'sacrificial-altar' as const,
+  unvisitedImageSrc: sacrificialAltarImageSrc,
+  visitedImageSrc: sacrificialAltarVisitedImageSrc,
 }));
 
 export const REGION_CATALOG = {
   greenwood: {
     id: 'greenwood',
     name: 'Greenwood',
-    eventTokens: [...goblinTokens, ...witchTokens, ...shadeTokens, ...healingShrineTokens],
+    eventTokens: [
+      ...goblinTokens,
+      ...witchTokens,
+      ...shadeTokens,
+      ...healingShrineTokens,
+      ...sacrificialAltarTokens,
+    ],
     bossMonsterIds: ['golem-lord'],
   },
 } satisfies Record<RegionId, RegionDefinition>;

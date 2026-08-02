@@ -18,7 +18,6 @@ export interface MonsterDefinition {
   imageSrc: string;
   isBoss: boolean;
   maxHealth: number;
-  armor: number;
   arcaneDustRewardRange: readonly [minimum: number, maximum: number];
   rewardCardNames: readonly CardName[];
   turnCycle: readonly (readonly MonsterTurnCard[])[];
@@ -31,7 +30,6 @@ export const MONSTER_CATALOG = {
     imageSrc: goblinImageSrc,
     isBoss: false,
     maxHealth: 18,
-    armor: 0,
     arcaneDustRewardRange: [4, 7],
     rewardCardNames: ['ThrowRock', 'Hide', 'Scorch', 'Heal'],
     turnCycle: [[
@@ -46,7 +44,6 @@ export const MONSTER_CATALOG = {
     imageSrc: witchImageSrc,
     isBoss: false,
     maxHealth: 15,
-    armor: 0,
     arcaneDustRewardRange: [4, 7],
     rewardCardNames: ['LightningBolt', 'AmplifyMagic', 'Heal'],
     turnCycle: [
@@ -69,12 +66,10 @@ export const MONSTER_CATALOG = {
     imageSrc: shadeImageSrc,
     isBoss: false,
     maxHealth: 28,
-    armor: 0,
     arcaneDustRewardRange: [4, 7],
     rewardCardNames: ['ShadowBolt', 'VoidTendrils', 'Heal'],
     turnCycle: [[
       { idSuffix: 'shadow-bolt-0', cardName: 'ShadowBolt', damage: 0 },
-      { idSuffix: 'shadow-bolt-1', cardName: 'ShadowBolt', damage: 0 },
       { idSuffix: 'heal', cardName: 'Heal', damage: 0 },
     ]],
   },
@@ -84,7 +79,6 @@ export const MONSTER_CATALOG = {
     imageSrc: golemImageSrc,
     isBoss: true,
     maxHealth: 50,
-    armor: 0,
     arcaneDustRewardRange: [0, 0],
     rewardCardNames: [],
     turnCycle: [

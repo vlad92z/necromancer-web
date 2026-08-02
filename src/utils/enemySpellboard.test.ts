@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EnemyRune } from '../types/game';
+import type { EnemyRune, ScoringWall } from '../types/game';
 import {
   createEmptyWall,
   createEnemySpellBoard,
@@ -12,7 +12,9 @@ import { resolveEnemyTurn } from './combatResolution';
 import { createEffectRef } from './effectCatalog';
 import { resolveCastEffects } from './effectResolver';
 import { createRuneRemovalEffectRef } from './runeRemoval';
-import { createRuneFromPool } from './runeEffects';
+import { createRuneFromCardName } from './runeEffects';
+
+const totalShield = (wall: ScoringWall) => wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
 
 function createEnemyRune(id: string, damage: number): EnemyRune {
   return {
@@ -45,7 +47,7 @@ describe('enemy spellboard combat', () => {
     expect(createEnemyTurnRunes('goblin', 4)[0]?.castEffectRefs).toEqual([
       { effectId: 'cast.damage', params: { amount: 3 } },
     ]);
-    expect(createEnemyTurnRunes('goblin', 4)[3]).toMatchObject({
+    expect(createEnemyTurnRunes('goblin', 4)[2]).toMatchObject({
       name: 'Hide',
       manaCost: 0,
       cardImageSrc: expect.stringContaining('card_hide.png'),
@@ -53,17 +55,17 @@ describe('enemy spellboard combat', () => {
         effectId: 'rune.consume',
         trigger: 'onCast',
         selection: 'manual',
-        payload: { effectId: 'cast.armor', params: { amount: 3 } },
+        payload: { effectId: 'cast.shield', params: { amount: 2 } },
       }],
     });
   });
 
   it('plays queued runes in order into random open slots and applies each damage', () => {
-    const player = { ...createPlayer('player-1', 'Tester', 20, [], 20), armor: 1 };
+    const player = createPlayer('player-1', 'Tester', 20, [], 20);
     const queuedRunes = [createEnemyRune('first', 1), createEnemyRune('second', 2), createEnemyRune('third', 3)];
     const result = resolveEnemyTurn({
       player,
-      enemy: initializeSoloGame().enemy,
+      enemy: createMonsterEnemy('goblin'),
       enemyBoard: createEnemySpellBoard(),
       enemyQueuedRunes: queuedRunes,
       random: () => 0,
@@ -71,21 +73,21 @@ describe('enemy spellboard combat', () => {
 
     expect(result.enemyQueuedRunes).toEqual([]);
     expect(result.enemyBoard[0].slice(0, 3).map((cell) => cell.id)).toEqual(['first', 'second', 'third']);
-    expect(result.player.armor).toBe(0);
-    expect(result.player.health).toBe(15);
-    expect(result.healthDamage).toBe(5);
+    expect(totalShield(result.player.wall)).toBe(0);
+    expect(result.player.health).toBe(14);
+    expect(result.healthDamage).toBe(6);
   });
 
-  it('gives the Goblin armor when Hide is placed', () => {
+  it('gives the Goblin shield when Hide is placed', () => {
     const result = resolveEnemyTurn({
       player: createPlayer('player-1', 'Tester', 20, [], 20),
-      enemy: initializeSoloGame().enemy,
+      enemy: createMonsterEnemy('goblin'),
       enemyBoard: createEnemySpellBoard(),
-      enemyQueuedRunes: [createEnemyTurnRunes('goblin', 0)[0]!, createEnemyTurnRunes('goblin', 0)[3]!],
+      enemyQueuedRunes: [createEnemyTurnRunes('goblin', 0)[0]!, createEnemyTurnRunes('goblin', 0)[2]!],
       random: () => 0,
     });
 
-    expect(result.enemy?.armor).toBe(3);
+    expect(totalShield(result.enemyBoard)).toBe(2);
   });
 
   it('has Shade resolve each Shadow Bolt from the Void runes already on its spell wall', () => {
@@ -103,21 +105,32 @@ describe('enemy spellboard combat', () => {
     expect(result.enemy?.health).toBe(28);
   });
 
-  it('has Goblin armor absorb player damage before health', () => {
-    const goblin = { ...initializeSoloGame().enemy!, armor: 5 };
+  it('has Goblin shield absorb player damage before health', () => {
+    const goblin = createMonsterEnemy('goblin');
+    const enemyBoard = createEmptyWall();
+    enemyBoard[0]![0] = {
+      ...enemyBoard[0]![0],
+      id: 'shielded-enemy-rune',
+      name: 'Frost Shield',
+      runeTypes: ['Frost'],
+      rarity: 'common',
+      shield: 5,
+    };
     const result = resolveCastEffects({
       player: createPlayer('player-1', 'Tester', 20, [], 20),
       enemy: goblin,
-      castRune: createRuneFromPool({ id: 'firebolt', runeType: 'Fire', rarity: 'common', random: () => 0 }),
+      castRune: createRuneFromCardName({ id: 'firebolt', cardName: 'Firebolt' }),
       wall: createEmptyWall(),
+      opposingWall: enemyBoard,
     });
 
-    expect(result.enemy).toMatchObject({ health: 20, armor: 0 });
+    expect(result.enemy?.health).toBe(goblin.health);
+    expect(totalShield(result.opposingWall)).toBe(3);
   });
 
   it('has Headwind consume another Wind rune for each incoming damage packet', () => {
     const wall = createEmptyWall();
-    const headwind = createRuneFromPool({ id: 'headwind', runeType: 'Wind', rarity: 'uncommon', random: () => 0 });
+    const headwind = createRuneFromCardName({ id: 'headwind', cardName: 'Headwind' });
     wall[0][0] = {
       ...wall[0][0],
       id: 'headwind-wall-copy',
@@ -128,6 +141,7 @@ describe('enemy spellboard combat', () => {
       tokenImageSrc: headwind.tokenImageSrc,
       castEffectRefs: headwind.castEffectRefs,
       passiveEffectRefs: headwind.passiveEffectRefs,
+      shield: 5,
     };
     [1, 2].forEach((col) => {
       wall[0][col] = {
@@ -165,7 +179,7 @@ describe('enemy spellboard combat', () => {
 
   it('skips a Headwind that was consumed by an earlier Headwind in the same damage packet', () => {
     const wall = createEmptyWall();
-    const headwind = createRuneFromPool({ id: 'headwind', runeType: 'Wind', rarity: 'uncommon', random: () => 0 });
+    const headwind = createRuneFromCardName({ id: 'headwind', cardName: 'Headwind' });
     [0, 1].forEach((col) => {
       wall[0][col] = {
         ...wall[0][col],
@@ -192,8 +206,8 @@ describe('enemy spellboard combat', () => {
     expect(result.logs.filter((log) => log.effectId === 'rune.consume')).toHaveLength(1);
   });
 
-  it('applies Headwind before armor and requires another Wind rune', () => {
-    const headwind = createRuneFromPool({ id: 'headwind', runeType: 'Wind', rarity: 'uncommon', random: () => 0 });
+  it('applies Headwind before shield and requires another Wind rune', () => {
+    const headwind = createRuneFromCardName({ id: 'headwind', cardName: 'Headwind' });
     const wall = createEmptyWall();
     wall[0][0] = {
       ...wall[0][0],
@@ -205,16 +219,17 @@ describe('enemy spellboard combat', () => {
       tokenImageSrc: headwind.tokenImageSrc,
       castEffectRefs: [],
       passiveEffectRefs: headwind.passiveEffectRefs,
+      shield: 5,
     };
     const withoutTarget = resolveEnemyTurn({
-      player: { ...createPlayer('player-1', 'Tester', 20, [], 20), wall, armor: 5 },
-      enemy: initializeSoloGame().enemy,
+      player: { ...createPlayer('player-1', 'Tester', 20, [], 20), wall },
+      enemy: createMonsterEnemy('goblin'),
       enemyQueuedRunes: [createEnemyRune('attacker-without-target', 7)],
       random: () => 0,
     });
 
-    expect(withoutTarget.player).toMatchObject({ health: 18, armor: 0 });
-    expect(withoutTarget.player.wall[0][0].id).toBe('headwind-source');
+    expect(withoutTarget.player.health).toBe(18);
+    expect(withoutTarget.player.wall[0][0].id).toBeNull();
     expect(withoutTarget.logs).toContainEqual(expect.objectContaining({
       effectId: 'rune.consume',
       output: expect.objectContaining({ noTarget: true }),
@@ -232,13 +247,14 @@ describe('enemy spellboard combat', () => {
       passiveEffectRefs: [],
     };
     const withTarget = resolveEnemyTurn({
-      player: { ...createPlayer('player-1', 'Tester', 20, [], 20), wall, armor: 5 },
-      enemy: initializeSoloGame().enemy,
+      player: { ...createPlayer('player-1', 'Tester', 20, [], 20), wall },
+      enemy: createMonsterEnemy('goblin'),
       enemyQueuedRunes: [createEnemyRune('attacker-with-target', 7)],
       random: () => 0,
     });
 
-    expect(withTarget.player).toMatchObject({ health: 20, armor: 3 });
+    expect(withTarget.player.health).toBe(20);
+    expect(withTarget.player.wall[0][0].shield).toBe(3);
     expect(withTarget.player.wall[0][1].id).toBeNull();
   });
 
@@ -256,7 +272,7 @@ describe('enemy spellboard combat', () => {
         { effectId: 'passive.damageEndTurn', params: { amount: 2 } },
       ],
     };
-    const enemy = { ...initializeSoloGame().enemy!, health: 10, armor: 0 };
+    const enemy = { ...initializeSoloGame().enemy!, health: 10 };
 
     const result = resolveEnemyTurn({
       player: createPlayer('player-1', 'Tester', 20, [], 20),
@@ -431,26 +447,26 @@ describe('enemy spellboard combat', () => {
     ]);
   });
 
-  it('alternates Golem Lord turns between armor, rocks, and Avalanche', () => {
+  it('alternates Golem Lord turns between shield, rocks, and Avalanche', () => {
     const golem = createMonsterEnemy('golem-lord');
-    const armorTurn = resolveEnemyTurn({
+    const shieldTurn = resolveEnemyTurn({
       player: createPlayer('player-1', 'Tester', 100, [], 100),
       enemy: golem,
       turnNumber: 0,
       random: () => 0,
     });
-    expect(armorTurn.enemy?.armor).toBe(20);
-    expect(armorTurn.enemyBoard.flat().filter((cell) => cell.name === 'Barricade')).toHaveLength(4);
+    expect(totalShield(shieldTurn.enemyBoard)).toBe(20);
+    expect(shieldTurn.enemyBoard.flat().filter((cell) => cell.name === 'Barricade')).toHaveLength(4);
 
     const rockTurn = resolveEnemyTurn({
-      player: armorTurn.player,
-      enemy: armorTurn.enemy,
-      enemyBoard: armorTurn.enemyBoard,
+      player: shieldTurn.player,
+      enemy: shieldTurn.enemy,
+      enemyBoard: shieldTurn.enemyBoard,
       turnNumber: 1,
       random: () => 0,
     });
     expect(rockTurn.player.health).toBe(76);
     expect(rockTurn.healthDamage).toBe(24);
-    expect(rockTurn.enemyBoard.flat().filter((cell) => cell.name === 'Hurl Rock')).toHaveLength(3);
+    expect(rockTurn.enemyBoard.flat().filter((cell) => cell.name === 'Hurl')).toHaveLength(3);
   });
 });

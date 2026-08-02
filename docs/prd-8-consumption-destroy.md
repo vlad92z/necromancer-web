@@ -12,7 +12,7 @@
 
 ## Cards
 
-- Headwind: `Consume a random Wind Rune to reduce incoming damage by 5` before armor. Multiple live Headwinds resolve in wall order while damage remains.
+- Headwind: `Consume a random Wind Rune to reduce incoming damage by 5` before shield. Multiple live Headwinds resolve in wall order while damage remains.
 - Avalanche: `Destroy 1 Enemy Rune`; Golem Lord chooses randomly.
 - Void Blast removed.
 

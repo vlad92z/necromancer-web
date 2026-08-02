@@ -3,7 +3,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Rune, RuneType } from '../../types/game';
+import type { Rune, RuneType, ScoringWall } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall, createMonsterEnemy } from '../../utils/gameInitialization';
 import { MONSTER_CATALOG } from '../../utils/monsterCatalog';
@@ -14,6 +14,23 @@ import { createRuneRemovalEffectRef } from '../../utils/runeRemoval';
 import { createGameplayStoreInstance } from './gameplayStore';
 
 type GameplayStoreInstance = ReturnType<typeof createGameplayStoreInstance>;
+
+const totalShield = (wall: ScoringWall) => wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
+
+function createShieldWall(...values: number[]): ScoringWall {
+  const wall = createEmptyWall();
+  values.forEach((shield, index) => {
+    wall[0]![index] = {
+      ...wall[0]![index],
+      id: `shield-${index}`,
+      name: 'Shield Test',
+      runeTypes: ['Frost'],
+      rarity: 'common',
+      shield,
+    };
+  });
+  return wall;
+}
 
 function startEncounterAtA(store: GameplayStoreInstance): void {
   store.getState().startSoloRun();
@@ -70,7 +87,7 @@ describe('gameplayStore current combat', () => {
     store.getState().startSoloRun();
     store.setState((state) => ({
       ...state,
-      player: { ...state.player, health: 73, armor: 12 },
+      player: { ...state.player, health: 73 },
       soloMap: {
         ...state.soloMap,
         availableEventTokenIds: getRegionDefinition('greenwood').eventTokens
@@ -97,7 +114,7 @@ describe('gameplayStore current combat', () => {
     });
     expect(state.hand).toHaveLength(5);
     expect(state.player.health).toBe(73);
-    expect(state.player.armor).toBe(0);
+    expect(totalShield(state.player.wall)).toBe(0);
   });
 
   it('launches Golem Lord with its boss metadata and Life-only board', () => {
@@ -193,6 +210,57 @@ describe('gameplayStore current combat', () => {
 
     expect(store.getState().player.health).toBe(75);
     expect(store.getState().soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: true });
+  });
+
+  it('opens a Sacrificial Altar until the player sacrifices a selected card', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const altarToken = getRegionDefinition('greenwood').eventTokens.find(
+      (token) => token.kind === 'sacrificial-altar',
+    );
+    store.setState((state) => ({
+      ...state,
+      player: { ...state.player, health: 50 },
+      soloMap: { ...state.soloMap, availableEventTokenIds: [altarToken!.id] },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+    const altarState = store.getState();
+    const selectedRuneId = altarState.fullDeck[0].id;
+    expect(altarState.soloMap.tiles['1,0'].events.A).toMatchObject({
+      kind: 'sacrificial-altar',
+      cleared: false,
+    });
+
+    store.getState().travelToMapTarget({ kind: 'location', tileKey: '1,0', locationId: 'B' });
+    expect(store.getState().soloMap.playerPosition).toEqual({ tileKey: '1,0', locationId: 'A' });
+
+    store.getState().sacrificeCardAtAltar(selectedRuneId);
+    const resolvedState = store.getState();
+    expect(resolvedState.player.health).toBe(40);
+    expect(resolvedState.fullDeck.some((rune) => rune.id === selectedRuneId)).toBe(false);
+    expect(resolvedState.soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
+  });
+
+  it('can skip a Sacrificial Altar without paying health or deleting a card', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const altarToken = getRegionDefinition('greenwood').eventTokens.find(
+      (token) => token.kind === 'sacrificial-altar',
+    );
+    store.setState((state) => ({
+      ...state,
+      soloMap: { ...state.soloMap, availableEventTokenIds: [altarToken!.id] },
+    }));
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+    const health = store.getState().player.health;
+    const deck = store.getState().fullDeck;
+
+    store.getState().skipSacrificialAltar();
+
+    expect(store.getState().player.health).toBe(health);
+    expect(store.getState().fullDeck).toBe(deck);
+    expect(store.getState().soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
   });
 
   it('moves between cleared locations without resetting combat state', () => {
@@ -293,27 +361,27 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand,
-      player: { ...state.player, deck, armor: 2, health: 10 },
+      player: { ...state.player, deck, wall: createShieldWall(2), health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(3);
-    expect(state.player.armor).toBe(0);
+    expect(state.player.health).toBe(6);
+    expect(totalShield(state.player.wall)).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.hand.map((rune) => rune.id)).toEqual(['deck-fire', 'deck-life', 'hand-fire']);
     expect(state.discardPile).toEqual([]);
   });
 
-  it('does not increment enemy attack sound signal when armor fully absorbs attack', () => {
+  it('does not increment enemy attack sound signal when shield fully absorbs attack', () => {
     const store = createGameplayStoreInstance();
 
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 10, health: 10 },
+      player: { ...state.player, deck: [], wall: createShieldWall(10), health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -321,26 +389,26 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.player.health).toBe(10);
-    expect(state.player.armor).toBe(1);
+    expect(totalShield(state.player.wall)).toBe(4);
     expect(state.enemyAttackSoundSignal).toBe(0);
     expect(state.shieldSoundSignal).toBe(1);
   });
 
-  it('increments enemy attack sound signal when armor partially absorbs attack', () => {
+  it('increments enemy attack sound signal when shield partially absorbs attack', () => {
     const store = createGameplayStoreInstance();
 
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 3, health: 10 },
+      player: { ...state.player, deck: [], wall: createShieldWall(3), health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(4);
-    expect(state.player.armor).toBe(0);
+    expect(state.player.health).toBe(7);
+    expect(totalShield(state.player.wall)).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.shieldSoundSignal).toBe(0);
   });
@@ -351,7 +419,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 0, health: 4 },
+      player: { ...state.player, deck: [], health: 4 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -379,7 +447,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, wall, deck: [], armor: 0, health: 10 },
+      player: { ...state.player, wall, deck: [], health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -701,30 +769,30 @@ describe('gameplayStore current combat', () => {
     expect(state.runeSoundSignals[runeType]).toBe(1);
   });
 
-  it('increments the casting rune sound signal for non-Frost armor gain', () => {
+  it('increments the casting rune sound signal for non-Frost shield gain', () => {
     const store = createGameplayStoreInstance();
-    const armorRune: Rune = {
-      id: 'fire-armor',
+    const shieldRune: Rune = {
+      id: 'fire-shield',
       name: 'Fire Test',
       runeTypes: ['Fire'],
       rarity: 'common',
       cardImageSrc: 'fire-card.png',
       tokenImageSrc: 'fire-token.png',
-      castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
+      castEffectRefs: [createEffectRef('cast.shield', { amount: 3 })],
       passiveEffectRefs: [],
     };
 
     store.setState((state) => ({
       ...state,
-      hand: [armorRune],
-      selectedHandRuneId: armorRune.id,
+      hand: [shieldRune],
+      selectedHandRuneId: shieldRune.id,
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().castRuneToWall(0, 0);
 
     const state = store.getState();
-    expect(state.player.armor).toBe(3);
+    expect(totalShield(state.player.wall)).toBe(3);
     expect(state.runeSoundSignals.Fire).toBe(1);
     expect(state.runeSoundSignals.Frost).toBe(0);
   });
@@ -738,7 +806,7 @@ describe('gameplayStore current combat', () => {
       runeTypes: ['Frost'],
       rarity: 'epic',
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.armorBoost', { amount: 5 })],
+      passiveEffectRefs: [createEffectRef('passive.shieldBoost', { amount: 5 })],
     };
     const fireRune = createTestRune('fire-1', 'Fire', 0);
 
@@ -746,7 +814,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [fireRune],
       selectedHandRuneId: fireRune.id,
-      player: { ...state.player, wall, armor: 0 },
+      player: { ...state.player, wall },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -819,7 +887,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand,
-      player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
+      player: { ...state.player, wall, health: 10, deck: [] },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5 },
     }));
 
@@ -831,7 +899,7 @@ describe('gameplayStore current combat', () => {
     expect(state.player.health).toBe(10);
   });
 
-  it('applies rare Frost end-turn armor before enemy attacks', () => {
+  it('applies rare Frost end-turn shield before enemy attacks', () => {
     const store = createGameplayStoreInstance();
     const hand = [createTestRune('hand-fire', 'Fire', 0)];
     const wall = createEmptyWall();
@@ -841,7 +909,7 @@ describe('gameplayStore current combat', () => {
       runeTypes: ['Frost'],
       rarity: 'rare',
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.armorEndTurnSynergy', { amount: 2, synergyType: 'Frost' })],
+      passiveEffectRefs: [createEffectRef('passive.shieldEndTurnSynergy', { amount: 2, synergyType: 'Frost' })],
     };
     wall[0][1] = {
     ...wall[0][1],
@@ -855,7 +923,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand,
-      player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
+      player: { ...state.player, wall, health: 10, deck: [] },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       discardPile: [],
     }));
@@ -863,8 +931,8 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(5);
-    expect(state.player.armor).toBe(0);
+    expect(state.player.health).toBe(8);
+    expect(totalShield(state.player.wall)).toBe(0);
     expect(state.combatPhase).toBe('player-turn');
   });
 
@@ -877,7 +945,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [voidRune],
       selectedHandRuneId: voidRune.id,
-      player: { ...state.player, wall, deck: [], armor: 10, health: 10 },
+      player: { ...state.player, wall, deck: [], health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       discardPile: [],
     }));
@@ -917,7 +985,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [createTestRune('hand-fire', 'Fire', 1)],
-      player: { ...state.player, wall, deck, health: 5, maxHealth: 10, armor: 10 },
+      player: { ...state.player, wall, deck, health: 5, maxHealth: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       discardPile: [],
     }));
@@ -1064,7 +1132,7 @@ describe('gameplayStore current combat', () => {
         trigger: 'startTurn',
         selection: 'manual',
         runeType: 'Fire',
-        payload: createEffectRef('cast.armor', { amount: 2 }),
+        payload: createEffectRef('cast.shield', { amount: 2 }),
       })],
     };
     startWall[0][1] = { ...startWall[0][1], id: 'start-target', runeTypes: ['Fire'], rarity: 'common' };
@@ -1072,7 +1140,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [],
       discardPile: [],
-      player: { ...state.player, wall: startWall, deck: [], health: 20, maxHealth: 20, armor: 0 },
+      player: { ...state.player, wall: startWall, deck: [], health: 20, maxHealth: 20 },
     }));
 
     startStore.getState().endCombatTurn();
@@ -1080,7 +1148,7 @@ describe('gameplayStore current combat', () => {
     startStore.getState().selectPendingRuneTarget('player', 0, 1);
     expect(startStore.getState().pendingCombatResolution).toBeNull();
     expect(startStore.getState().combatPhase).toBe('player-turn');
-    expect(startStore.getState().player.armor).toBe(2);
+    expect(totalShield(startStore.getState().player.wall)).toBe(2);
     expect(startStore.getState().player.wall[0][1].id).toBeNull();
   });
 

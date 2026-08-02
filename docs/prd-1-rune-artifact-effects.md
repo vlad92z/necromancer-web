@@ -57,10 +57,10 @@ Effect catalog:
 Current rune effects become cast effects:
 - `Damage`
 - `Healing`
-- `Armor`
+- `Shield`
 - `Fortune`
 - `Synergy`
-- `ArmorSynergy`
+- `ShieldSynergy`
 - `Fragile`
 - `Channel`
 - `ChannelSynergy`
@@ -96,7 +96,7 @@ Current artefacts map to passives:
 - Ring: modify deck-draft rarity odds.
 - Robe: modify deck-draft selection limit.
 - Rod: modify healing.
-- Potion: modify armor gain.
+- Potion: modify shield gain.
 - Tome: modify output from single-slot/single-cast effects.
 
 Future:
@@ -171,7 +171,7 @@ Rarity does not drive v1 effect resolution.
 
 ## Test Scenarios
 
-- Cast damage, healing, armor, fortune effects resolve from refs.
+- Cast damage, healing, shield, fortune effects resolve from refs.
 - Synergy and Fragile inspect whole completed wall.
 - Multiple passives resolve in deterministic order.
 - Flat bonuses apply before multipliers.

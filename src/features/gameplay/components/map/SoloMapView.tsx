@@ -15,6 +15,7 @@ import {
 import { getRegionDefinition } from '../../../../utils/regionCatalog';
 import { ANIMATION } from '../../../../styles/tokens';
 import { MapTile } from './MapTile';
+import { SacrificialAltarModal } from './SacrificialAltarModal';
 
 const MAP_SCALE = 1.5;
 
@@ -211,6 +212,7 @@ export function SoloMapView(): ReactElement {
         </div>
         <p className="sr-only" aria-live="polite">{announcement}</p>
       </section>
+      <SacrificialAltarModal />
     </div>
   );
 }

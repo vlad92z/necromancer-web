@@ -37,8 +37,14 @@ import {
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { resolveTimedRuneRemovalEffects } from '../../utils/effectResolver';
-import { completeActiveMapEncounter, discoverSoloMapRoad, travelOnSoloMap } from '../../utils/soloMap';
+import {
+  completeActiveMapEncounter,
+  discoverSoloMapRoad,
+  getCurrentMapLocationEvent,
+  travelOnSoloMap,
+} from '../../utils/soloMap';
 import { getRegionEventToken } from '../../utils/regionCatalog';
+import { resolveSacrificialAltar } from '../../utils/sacrificialAltar';
 import {
   clearPersistedSoloRun,
   getSelectedArtefactIds,
@@ -48,6 +54,10 @@ import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gamepla
 import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
 import { getRuneRemovalCandidates } from '../../utils/runeRemoval';
+
+function totalWallShield(wall: ScoringWall): number {
+  return wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
+}
 
 function enterDeckDraftMode(state: GameState): GameState {
   if (state.enemy?.isBoss) {
@@ -663,7 +673,7 @@ function runCombatTurn(
     || (log.effectId === 'rune.consume' && typeof log.output.reduction === 'number' && log.output.reduction > 0)
   ));
   const shieldedAttack = enemyTurnResult.healthDamage === 0 && (
-    enemyTurnResult.player.armor < endTurnEffects.player.armor || preventedDamage
+    totalWallShield(enemyTurnResult.player.wall) < totalWallShield(endTurnEffects.player.wall) || preventedDamage
   );
   const shieldSoundSignal = stateAfterTimed.shieldSoundSignal + (shieldedAttack ? 1 : 0);
   runeSoundEvents = mergeRuneSoundEvents(
@@ -760,6 +770,8 @@ export interface GameplayStore extends GameState {
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   returnToMapAfterReward: () => void;
+  sacrificeCardAtAltar: (runeId: string) => void;
+  skipSacrificialAltar: () => void;
   revealMapRoadTarget: (target: Extract<MapTravelTarget, { kind: 'road' }>) => Extract<MapTravelTarget, { kind: 'location' }> | null;
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
@@ -847,6 +859,11 @@ export const gameplayStoreConfig = (
         return state;
       }
 
+      const currentEvent = getCurrentMapLocationEvent(state.soloMap);
+      if (currentEvent?.kind === 'sacrificial-altar' && !currentEvent.cleared) {
+        return state;
+      }
+
       const result = travelOnSoloMap(state.soloMap, target);
       if (result.map === state.soloMap) {
         return state;
@@ -869,6 +886,36 @@ export const gameplayStoreConfig = (
           ? { ...state.player, health: Math.min(state.player.maxHealth, state.player.health + healingAmount) }
           : state.player,
       };
+    });
+  },
+
+  sacrificeCardAtAltar: (runeId: string) => {
+    set((state) => {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat || state.isVictory) {
+        return state;
+      }
+
+      const result = resolveSacrificialAltar(state, runeId);
+      if (result.status !== 'sacrificed') return state;
+      return {
+        ...state,
+        soloMap: result.soloMap,
+        player: result.player,
+        fullDeck: result.fullDeck,
+      };
+    });
+  },
+
+  skipSacrificialAltar: () => {
+    set((state) => {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat || state.isVictory) {
+        return state;
+      }
+
+      const result = resolveSacrificialAltar(state, null);
+      return result.status === 'skipped'
+        ? { ...state, soloMap: result.soloMap }
+        : state;
     });
   },
 

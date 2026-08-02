@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Enemy, Rune, RuneType, WallCell } from '../types/game';
+import type { Enemy, Rune, RuneType, ScoringWall, WallCell } from '../types/game';
 import { createEffectRef } from './effectCatalog';
 import { createPlayer } from './gameInitialization';
 import {
@@ -12,6 +12,25 @@ import {
   resolveCompletedRuneCastEffects,
   wallHasRuneType,
 } from './combatResolution';
+
+const totalShield = (wall: ScoringWall) => wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
+
+function placeSourceRune(player: ReturnType<typeof createPlayer>, rune: Rune): ReturnType<typeof createPlayer> {
+  const wall = player.wall.map((row) => [...row]);
+  wall[0]![0] = {
+    id: rune.id,
+    name: rune.name,
+    runeTypes: [...rune.runeTypes],
+    rarity: rune.rarity,
+    cardImageSrc: rune.cardImageSrc,
+    tokenImageSrc: rune.tokenImageSrc,
+    manaCost: rune.manaCost ?? 2,
+    castEffectRefs: rune.castEffectRefs,
+    passiveEffectRefs: rune.passiveEffectRefs,
+    shield: null,
+  };
+  return { ...player, wall };
+}
 
 describe('combatResolution wall casting', () => {
   it.each(['common', 'uncommon', 'rare', 'epic'] as const)(
@@ -44,6 +63,7 @@ describe('combatResolution wall casting', () => {
       manaCost: fireRune.manaCost ?? 2,
       castEffectRefs: fireRune.castEffectRefs,
       passiveEffectRefs: fireRune.passiveEffectRefs,
+      shield: null,
     });
     expect(result.completedRune?.id).toBe(`wall-copy-${rarity}`);
     expect(result.completedPosition).toEqual({ row: 0, col: 0 });
@@ -112,13 +132,13 @@ describe('combatResolution wall casting', () => {
       discardPile: firstResult.discardPile,
       selectedHandRuneId: secondRune.id,
       row: 1,
-      col: 5,
+      col: 4,
       createCompletedRuneId: () => 'wall-copy-second',
     });
 
     expect(firstResult.player.wall[0][0].id).toBe('wall-copy-first');
-    expect(secondResult.player.wall[1][5].id).toBe('wall-copy-second');
-    expect(firstResult.player.wall[0][0].id).not.toBe(secondResult.player.wall[1][5].id);
+    expect(secondResult.player.wall[1][4].id).toBe('wall-copy-second');
+    expect(firstResult.player.wall[0][0].id).not.toBe(secondResult.player.wall[1][4].id);
   });
 
   it('preserves all types on a multi-type rune', () => {
@@ -339,22 +359,26 @@ describe('combatResolution basic combat effects', () => {
     ]);
   });
 
-  it('clamps healing at max health and adds armor', () => {
+  it('clamps healing at max health and adds shield', () => {
     const player = {
       ...createPlayer('player-1', 'Tester', 10, [], 10),
       health: 8,
-      armor: 1,
     };
     const rune = createTestRuneWithEffects('support-rune', 'Life', [
       { type: 'Healing', amount: 5, rarity: 'common' },
-      { type: 'Armor', amount: 2, rarity: 'common' },
+      { type: 'Shield', amount: 2, rarity: 'common' },
     ]);
 
-    const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(10), rune });
+    const result = resolveCompletedRuneCastEffects({
+      player: placeSourceRune(player, rune),
+      enemy: createTestEnemy(10),
+      rune,
+      sourcePosition: { row: 0, col: 0 },
+    });
 
     expect(result.player.health).toBe(10);
-    expect(result.player.armor).toBe(3);
-    expect(result.logs.map((log) => log.effectId)).toEqual(['cast.healing', 'cast.armor']);
+    expect(totalShield(result.player.wall)).toBe(2);
+    expect(result.logs.map((log) => log.effectId)).toEqual(['cast.healing', 'cast.shield']);
   });
 
   it('returns fortune as arcane dust delta and keeps unknown effects as no-op logs', () => {
@@ -439,25 +463,29 @@ describe('combatResolution basic combat effects', () => {
     });
   });
 
-  it('applies ArmorSynergy using whole completed wall counts', () => {
+  it('applies ShieldSynergy using whole completed wall counts', () => {
     const player = {
       ...createPlayerWithWall([
         [0, 3, 'Frost'],
         [1, 3, 'Frost'],
         [2, 4, 'Void'],
       ]),
-      armor: 1,
     };
-    const rune = createTestRuneWithEffects('frost-armor-synergy', 'Frost', [
-      { type: 'ArmorSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
+    const rune = createTestRuneWithEffects('frost-shield-synergy', 'Frost', [
+      { type: 'ShieldSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
     ]);
 
-    const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(20), rune });
+    const result = resolveCompletedRuneCastEffects({
+      player: placeSourceRune(player, rune),
+      enemy: createTestEnemy(20),
+      rune,
+      sourcePosition: { row: 0, col: 0 },
+    });
 
-    expect(result.player.armor).toBe(10);
+    expect(totalShield(result.player.wall)).toBe(9);
     expect(result.logs[0]).toMatchObject({
-      effectId: 'cast.armorSynergy',
-      output: { armor: 9, synergyType: 'Frost', synergyCount: 3, playerArmor: 10 },
+      effectId: 'cast.shieldSynergy',
+      output: { shield: 9, synergyType: 'Frost', synergyCount: 3 },
     });
   });
 
@@ -493,25 +521,29 @@ describe('combatResolution basic combat effects', () => {
         [1, 4, 'Void'],
         [2, 3, 'Frost'],
       ]),
-      armor: 0,
     };
     const rune = createTestRuneWithEffects('advanced-mixed', 'Void', [
       { type: 'Damage', amount: 1, rarity: 'common' },
       { type: 'Synergy', amount: 2, synergyType: 'Void', rarity: 'uncommon' },
-      { type: 'ArmorSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
+      { type: 'ShieldSynergy', amount: 3, synergyType: 'Frost', rarity: 'rare' },
       { type: 'Fragile', amount: 4, fragileType: 'Life', rarity: 'uncommon' },
       { type: 'Fortune', amount: 5, rarity: 'common' },
     ]);
 
-    const result = resolveCompletedRuneCastEffects({ player, enemy: createTestEnemy(20), rune });
+    const result = resolveCompletedRuneCastEffects({
+      player: placeSourceRune(player, rune),
+      enemy: createTestEnemy(20),
+      rune,
+      sourcePosition: { row: 0, col: 0 },
+    });
 
     expect(result.enemy?.health).toBe(9);
-    expect(result.player.armor).toBe(3);
+    expect(totalShield(result.player.wall)).toBe(3);
     expect(result.arcaneDustDelta).toBe(5);
     expect(result.logs.map((log) => log.effectId)).toEqual([
       'cast.damage',
       'cast.synergy',
-      'cast.armorSynergy',
+      'cast.shieldSynergy',
       'cast.fragile',
       'cast.fortune',
     ]);
@@ -543,63 +575,63 @@ describe('combatResolution basic combat effects', () => {
     const player = {
       ...createPlayer('player-1', 'Tester', 10, [], 10),
       health: 4,
-      armor: 1,
     };
     const enemy = createTestEnemy(20);
     const rune = createTestRuneWithEffects('artefact-combat-rune', 'Life', [
       { type: 'Damage', amount: 3, rarity: 'common' },
       { type: 'Healing', amount: 4, rarity: 'common' },
-      { type: 'Armor', amount: 2, rarity: 'common' },
+      { type: 'Shield', amount: 2, rarity: 'common' },
     ]);
 
     const result = resolveCompletedRuneCastEffects({
-      player,
+      player: placeSourceRune(player, rune),
       enemy,
       rune,
       activeArtefacts: ['tome', 'rod', 'potion'],
+      sourcePosition: { row: 0, col: 0 },
     });
 
     expect(result.enemy?.health).toBe(16);
     expect(result.player.health).toBe(10);
-    expect(result.player.armor).toBe(5);
+    expect(totalShield(result.player.wall)).toBe(4);
     expect(result.logs.map((log) => log.effectId)).toEqual([
       'cast.damage',
       'cast.healing',
-      'cast.armor',
+      'cast.shield',
       'passive.tomeCastDamage',
       'passive.rodHealing',
-      'passive.potionArmor',
+      'passive.potionShield',
     ]);
   });
 
-  it('applies Potion to armor synergy and Tome before final damage application', () => {
+  it('applies Potion to shield synergy and Tome before final damage application', () => {
     const player = {
       ...createPlayerWithWall([
         [0, 3, 'Frost'],
         [1, 3, 'Frost'],
       ]),
-      armor: 1,
     };
     const enemy = createTestEnemy(10);
     const rune = createTestRuneWithEffects('artefact-synergy-rune', 'Frost', [
       { type: 'Damage', amount: 1, rarity: 'common' },
-      { type: 'ArmorSynergy', amount: 2, synergyType: 'Frost', rarity: 'rare' },
+      { type: 'ShieldSynergy', amount: 2, synergyType: 'Frost', rarity: 'rare' },
     ]);
 
     const result = resolveCompletedRuneCastEffects({
-      player,
+      player: placeSourceRune(player, rune),
       enemy,
       rune,
       activeArtefacts: ['tome', 'potion'],
+      sourcePosition: { row: 0, col: 0 },
     });
 
     expect(result.enemy?.health).toBe(8);
-    expect(result.player.armor).toBe(13);
+    expect(totalShield(result.player.wall)).toBe(12);
     expect(result.logs).toMatchObject([
       { effectId: 'cast.damage', output: { damage: 1, enemyHealth: 9 } },
-      { effectId: 'cast.armorSynergy', output: { armor: 6, playerArmor: 7 } },
+      { effectId: 'cast.shieldSynergy', output: { shield: 6 } },
       { effectId: 'passive.tomeCastDamage', output: { previousValue: 1, nextValue: 2 } },
-      { effectId: 'passive.potionArmor', output: { previousValue: 6, nextValue: 12 } },
+      { effectId: 'passive.potionShield', output: { previousValue: 6, nextValue: 12 } },
     ]);
   });
 
@@ -729,14 +761,14 @@ function toCatalogEffectRef(effect: unknown): Rune['castEffectRefs'][number] {
       return createEffectRef('cast.damage', { amount: candidate.amount ?? 0 });
     case 'Healing':
       return createEffectRef('cast.healing', { amount: candidate.amount ?? 0 });
-    case 'Armor':
-      return createEffectRef('cast.armor', { amount: candidate.amount ?? 0 });
+    case 'Shield':
+      return createEffectRef('cast.shield', { amount: candidate.amount ?? 0 });
     case 'Fortune':
       return createEffectRef('cast.fortune', { amount: candidate.amount ?? 0 });
     case 'Synergy':
       return createEffectRef('cast.synergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
-    case 'ArmorSynergy':
-      return createEffectRef('cast.armorSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
+    case 'ShieldSynergy':
+      return createEffectRef('cast.shieldSynergy', { amount: candidate.amount ?? 0, synergyType: candidate.synergyType });
     case 'Fragile':
       return createEffectRef('cast.fragile', { amount: candidate.amount ?? 0, fragileType: candidate.fragileType });
     default:
@@ -780,5 +812,6 @@ function createWallCell(runeType: RuneType, passiveEffectRefs: Rune['passiveEffe
     tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs: [],
     passiveEffectRefs,
+    shield: null,
   };
 }

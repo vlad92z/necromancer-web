@@ -32,7 +32,7 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
     id: 'potion',
     name: 'Frost Potion',
     image: potionPng,
-    passiveEffectRefs: [createEffectRef('passive.potionArmor', { armorMultiplier: 2 })],
+    passiveEffectRefs: [createEffectRef('passive.potionShield', { shieldMultiplier: 2 })],
   },
   rod: {
     id: 'rod',

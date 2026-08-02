@@ -60,7 +60,8 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             <p className="space-y-1">
               <span className="block">• Damage lowers enemy HP</span>
               <span className="block">• Healing restores health up to your max health</span>
-              <span className="block">• Armor absorbs enemy attacks before health</span>
+              <span className="block">• Shield belongs to wall tokens and absorbs damage from top-left in row order</span>
+              <span className="block">• A token is removed when its shield reaches 0</span>
               <span className="block">• End Turn discards your hand, the enemy attacks, then you draw up to six cards</span>
             </p>
           </section>

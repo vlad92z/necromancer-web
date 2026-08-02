@@ -40,7 +40,9 @@ export function WallCell({
         outlineOffset: isTargetable ? '-4px' : 0,
         filter: isTargetable ? 'brightness(1.18)' : undefined,
       }}
-      aria-label={rune ? `${rune.name} rune` : 'Empty rune cell'}
+      aria-label={rune
+        ? `${rune.name} rune${cell.shield !== null ? `, shield ${cell.shield}` : ''}`
+        : 'Empty rune cell'}
       onMouseEnter={() => rune && onRuneHover?.(rune)}
       onMouseLeave={onRuneLeave}
     >
@@ -54,6 +56,14 @@ export function WallCell({
         }}
         runePulseKey={pulseKey}
       />
+      {rune && cell.shield !== null && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2 border-2 border-[#141313] bg-[#293532] px-1 py-0.5 font-['Silkscreen'] text-[10px] leading-none text-[#75c9f0] shadow-[2px_2px_0_#141313]"
+        >
+          🛡 {cell.shield}
+        </span>
+      )}
     </div>
   );
 }

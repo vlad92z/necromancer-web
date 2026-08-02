@@ -12,7 +12,6 @@ export function createMonsterEnemy(monsterId: MonsterId): Enemy {
     isBoss: monster.isBoss,
     health: monster.maxHealth,
     maxHealth: monster.maxHealth,
-    armor: monster.armor,
     arcaneDustRewardRange: monster.arcaneDustRewardRange,
   };
 }

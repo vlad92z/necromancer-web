@@ -37,7 +37,7 @@ Core decisions:
 - Rune passives are active only while completed on the wall.
 - Start-turn passives resolve after normal hand refill.
 - End-turn passives resolve before enemy attack.
-- Enemy attack reduction applies before armor.
+- Enemy attack reduction applies before shield.
 - Enemy HP 0 still opens deck draft immediately; enemy does not attack.
 
 ## Counting + Targeting
@@ -91,9 +91,9 @@ Cast effects:
 - `damageSynergy`: deal X damage per completed target-type rune.
 - `damageFragile`: deal max(0, X - Y per completed target-type rune).
 - `damageConditional`: deal X damage if at least Y completed target-type runes exist.
-- `armor`: gain X armor.
-- `armorAdjacent`: gain X armor per adjacent completed rune.
-- `armorSynergy`: gain X armor per completed target-type rune.
+- `shield`: add X shield to the source token.
+- `shieldAdjacent`: add X shield per adjacent completed rune to the source token.
+- `shieldSynergy`: add X shield per completed target-type rune to the source token.
 - `heal`: heal X.
 - `healAdjacent`: heal X per adjacent completed rune.
 - `healSynergy`: heal X per completed target-type rune.
@@ -111,8 +111,8 @@ Cast effects:
 
 Passive effects:
 - `addDamage`: target rune type deals X additional damage.
-- `reduceDamage`: reduce incoming enemy attack damage by X before armor.
-- `armorBoost`: increase all armor gained by X.
+- `reduceDamage`: reduce incoming enemy attack damage by X before shield.
+- `shieldBoost`: increase all shield gained by X.
 - `healingStartTurn`: at start of turn heal X.
 - `drawingStartTurn`: at start of turn draw X additional runes, up to hand cap.
 - `damageBoostSynergy`: increase all damage by X% per completed target-type rune.
@@ -129,10 +129,10 @@ Fire:
 - Epic: `addDamage` Fire 5.
 
 Frost:
-- Common: `armor` 3.
-- Uncommon: `armorAdjacent` 3.
-- Rare: `armorSynergy` 5 Frost.
-- Epic: `armorBoost` 5.
+- Common: `shield` 3.
+- Uncommon: `shieldAdjacent` 3.
+- Rare: `shieldSynergy` 5 Frost.
+- Epic: `shieldBoost` 5.
 
 Life:
 - Common: `heal` 2.
@@ -180,7 +180,7 @@ Unassigned but specced:
 
 - Every listed effect has deterministic behavior.
 - Current rarity table maps to effect refs without effect-level rarity.
-- Completed-only counting is consistent across damage, armor, heal, dust, pulse, and boosts.
+- Completed-only counting is consistent across damage, shield, heal, dust, pulse, and boosts.
 - Board mutation never permanently loses deck cards before encounter end.
 - Retriggers cannot recurse.
 - Passive-only runes display clearly and activate only from completed wall cells.
@@ -195,7 +195,7 @@ Unassigned but specced:
 - Vampire heals from actual enemy HP loss only.
 - Start-turn heal/draw runs after normal refill.
 - End-turn pulse runs before enemy attack.
-- Reduce damage applies before armor.
+- Reduce damage applies before shield.
 - Destroy, convert, return, and charge mutate wall/hand/charges as specified.
 - Explosive fires once on consume/destroy/convert and does not chain.
 - Retrigger adjacent/type skips retrigger effects.

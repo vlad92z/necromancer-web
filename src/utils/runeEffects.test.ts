@@ -16,11 +16,11 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
       passiveEffectRefs: [],
     },
     Frost: {
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 3 } }],
       passiveEffectRefs: [],
     },
     Life: {
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 5 } }],
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 5 } }],
       passiveEffectRefs: [],
     },
     Void: {
@@ -42,7 +42,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
       passiveEffectRefs: [],
     },
     Frost: {
-      castEffectRefs: [{ effectId: 'cast.armorAdjacent', params: { amount: 3 } }],
+      castEffectRefs: [{ effectId: 'cast.shieldAdjacent', params: { amount: 3 } }],
       passiveEffectRefs: [],
     },
     Life: {
@@ -71,7 +71,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
     },
     Frost: {
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.armorEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } }],
+      passiveEffectRefs: [{ effectId: 'passive.shieldEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } }],
     },
     Life: {
       castEffectRefs: [],
@@ -97,7 +97,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
     },
     Frost: {
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.armorBoost', params: { amount: 10 } }],
+      passiveEffectRefs: [{ effectId: 'passive.shieldBoost', params: { amount: 10 } }],
     },
     Life: {
       castEffectRefs: [{ effectId: 'cast.healSynergy', params: { amount: 3, synergyType: 'Life' } }],
@@ -141,10 +141,10 @@ describe('runeEffects', () => {
 
   it('maps all common rune identities to Stage 1 refs', () => {
     expect(createRune('frost-common', 'Frost', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.armor', params: { amount: 3 } },
+      { effectId: 'cast.shield', params: { amount: 3 } },
     ]);
     expect(createRune('life-common', 'Life', 'common').castEffectRefs).toEqual([
-      { effectId: 'cast.armor', params: { amount: 5 } },
+      { effectId: 'cast.shield', params: { amount: 5 } },
     ]);
     expect(createRune('void-common', 'Void', 'common').castEffectRefs).toEqual([
       { effectId: 'cast.damage', params: { amount: 10 } },
@@ -162,7 +162,7 @@ describe('runeEffects', () => {
     const rune = createRune('frost-rare', 'Frost', 'rare');
 
     expect(rune.passiveEffectRefs).toEqual([
-      { effectId: 'passive.armorEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } },
+      { effectId: 'passive.shieldEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } },
     ]);
     expect(rune.passiveEffectRefs[0]?.params).not.toHaveProperty('rarity');
   });
@@ -199,7 +199,7 @@ describe('runeEffects', () => {
       passiveEffectRefs: [],
     });
     expect(createRune('frost-uncommon', 'Frost', 'uncommon')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.armorAdjacent', params: { amount: 3 } }],
+      castEffectRefs: [{ effectId: 'cast.shieldAdjacent', params: { amount: 3 } }],
       passiveEffectRefs: [],
     });
     expect(createRune('life-uncommon', 'Life', 'uncommon')).toMatchObject({
@@ -234,7 +234,7 @@ describe('runeEffects', () => {
     });
     expect(createRune('frost-rare', 'Frost', 'rare')).toMatchObject({
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.armorEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } }],
+      passiveEffectRefs: [{ effectId: 'passive.shieldEndTurnSynergy', params: { amount: 2, synergyType: 'Frost' } }],
     });
     expect(createRune('life-rare', 'Life', 'rare')).toMatchObject({
       castEffectRefs: [],
@@ -261,7 +261,7 @@ describe('runeEffects', () => {
     });
     expect(createRune('frost-epic', 'Frost', 'epic')).toMatchObject({
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.armorBoost', params: { amount: 10 } }],
+      passiveEffectRefs: [{ effectId: 'passive.shieldBoost', params: { amount: 10 } }],
     });
     expect(createRune('life-epic', 'Life', 'epic')).toMatchObject({
       castEffectRefs: [{ effectId: 'cast.healSynergy', params: { amount: 3, synergyType: 'Life' } }],

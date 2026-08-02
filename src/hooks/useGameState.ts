@@ -142,7 +142,6 @@ export function useGameplayHealthState() {
     useShallow((state) => ({
       health: state.player.health,
       maxHealth: state.player.maxHealth,
-      armor: state.player.armor,
       mana: state.player.mana,
       maxMana: state.player.maxMana,
     })),

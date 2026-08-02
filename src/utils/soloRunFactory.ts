@@ -43,7 +43,7 @@ export function createRuneSoundSignals(): Record<RuneType, number> {
 
 export function createPlayer(id: string, name: string, startingHealth: number, deck: Rune[], maxHealth: number): Player {
   return {
-    id, name, wall: createEmptySpellWall(), health: startingHealth, maxHealth, armor: 0,
+    id, name, wall: createEmptySpellWall(), health: startingHealth, maxHealth,
     mana: DEFAULT_PLAYER_MANA, maxMana: DEFAULT_PLAYER_MANA, deck,
   };
 }
@@ -63,7 +63,6 @@ export function createEncounterState({ monsterId, player, fullDeck }: {
     player: {
       ...player,
       wall: createEmptySpellWall(),
-      armor: 0,
       mana: player.maxMana,
       deck: activeDeck.slice(DEFAULT_HAND_SIZE),
     },

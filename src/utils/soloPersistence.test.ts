@@ -56,14 +56,27 @@ describe('soloPersistence', () => {
     expect(loadSoloState()).toBeNull();
   });
 
+  it('invalidates current-version saves whose wall cells predate token shields', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState, SOLO_STATE_VERSION } = await import('./soloPersistence');
+    const state = initializeSoloGame();
+    const legacyCell = { ...state.player.wall[0]![0] } as Record<string, unknown>;
+    delete legacyCell.shield;
+    state.player.wall[0]![0] = legacyCell as unknown as typeof state.player.wall[number][number];
+
+    storage.set('necromancer-solo-state', JSON.stringify({ version: SOLO_STATE_VERSION, state }));
+
+    expect(loadSoloState()).toBeNull();
+  });
+
   it('persists a serializable pending rune target and continuation', async () => {
     const { createEffectRef } = await import('./effectCatalog');
     const { initializeSoloGame } = await import('./gameInitialization');
-    const { createRuneFromPool } = await import('./runeEffects');
+    const { createRuneFromCardName } = await import('./runeEffects');
     const { createRuneRemovalEffectRef } = await import('./runeRemoval');
     const { loadSoloState, saveSoloState } = await import('./soloPersistence');
     const state = { ...initializeSoloGame(), gameStarted: true };
-    const castRune = createRuneFromPool({ id: 'pending-cast', runeType: 'Fire', rarity: 'common' });
+    const castRune = createRuneFromCardName({ id: 'pending-cast', cardName: 'Firebolt' });
     const effectRef = createRuneRemovalEffectRef({
       kind: 'consume',
       trigger: 'onCast',
@@ -117,6 +130,35 @@ describe('soloPersistence', () => {
           },
         },
       },
+    });
+  });
+
+  it('restores an unresolved Sacrificial Altar on the map', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true };
+    state.soloMap.tiles['1,0'] = {
+      key: '1,0',
+      x: 1,
+      y: 0,
+      kind: 'forest',
+      events: {
+        A: {
+          id: '1,0:A',
+          locationId: 'A',
+          tokenId: 'greenwood-sacrificial-altar-1',
+          kind: 'sacrificial-altar',
+          cleared: false,
+        },
+      },
+    };
+    state.soloMap.playerPosition = { tileKey: '1,0', locationId: 'A' };
+
+    saveSoloState(state);
+
+    expect(loadSoloState()?.soloMap.tiles['1,0'].events.A).toMatchObject({
+      kind: 'sacrificial-altar',
+      cleared: false,
     });
   });
 

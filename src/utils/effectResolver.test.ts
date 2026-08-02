@@ -10,27 +10,29 @@ import { createEmptyWall, createPlayer } from './gameInitialization';
 import { CARD_DEFINITIONS } from './cardCatalog';
 import { createRuneRemovalEffectRef } from './runeRemoval';
 
+const totalShield = (wall: ScoringWall) => wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
+
 describe('effectResolver resolveCastEffects', () => {
-  it('resolves damage, healing, armor, and fortune in ref order', () => {
-    const player = { ...createTestPlayer(), health: 8, armor: 1 };
+  it('resolves damage, healing, shield, and fortune in ref order', () => {
+    const player = { ...createTestPlayer([[0, 0, 'Fire']]), health: 8 };
     const enemy = createTestEnemy(20);
     const castRune = createTestRune('mixed-cast', 'Fire', [
       createEffectRef('cast.damage', { amount: 3 }),
       createEffectRef('cast.healing', { amount: 5 }),
-      createEffectRef('cast.armor', { amount: 2 }),
+      createEffectRef('cast.shield', { amount: 2 }),
       createEffectRef('cast.fortune', { amount: 4 }),
     ]);
 
-    const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall });
+    const result = resolveCastEffects({ player, enemy, castRune, wall: player.wall, sourcePosition: { row: 0, col: 0 } });
 
     expect(result.enemy?.health).toBe(17);
     expect(result.player.health).toBe(10);
-    expect(result.player.armor).toBe(3);
+    expect(totalShield(result.wall)).toBe(2);
     expect(result.arcaneDustDelta).toBe(4);
     expect(result.logs.map((log) => log.effectId)).toEqual([
       'cast.damage',
       'cast.healing',
-      'cast.armor',
+      'cast.shield',
       'cast.fortune',
     ]);
   });
@@ -300,16 +302,17 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
-  it('resolves adjacent armor from diagonal and orthogonal completed wall runes plus the source', () => {
+  it('resolves adjacent shield from diagonal and orthogonal completed wall runes plus the source', () => {
     const player = createTestPlayer([
       [0, 0, 'Frost'],
       [0, 1, 'Fire'],
       [1, 0, 'Life'],
+      [1, 1, 'Frost'],
       [2, 2, 'Void'],
     ]);
     const enemy = createTestEnemy(20);
     const castRune = createTestRune('frost-adjacent', 'Frost', [
-      createEffectRef('cast.armorAdjacent', { amount: 3 }),
+      createEffectRef('cast.shieldAdjacent', { amount: 3 }),
     ]);
 
     const result = resolveCastEffects({
@@ -320,10 +323,10 @@ describe('effectResolver resolveCastEffects', () => {
       sourcePosition: { row: 1, col: 1 },
     });
 
-    expect(result.player.armor).toBe(15);
+    expect(totalShield(result.wall)).toBe(15);
     expect(result.logs[0]).toMatchObject({
-      effectId: 'cast.armorAdjacent',
-      output: { armor: 15, adjacentCount: 5 },
+      effectId: 'cast.shieldAdjacent',
+      output: { shield: 15, adjacentCount: 5 },
     });
   });
 
@@ -513,19 +516,20 @@ describe('effectResolver resolveCastEffects', () => {
     expect(frostResult.enemy?.health).toBe(17);
   });
 
-  it('applies armorBoost to armor gained', () => {
+  it('applies shieldBoost to shield gained', () => {
     const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Frost', [createEffectRef('passive.armorBoost', { amount: 5 })]);
+    wall[0][0] = createWallCell('Frost', [createEffectRef('passive.shieldBoost', { amount: 5 })]);
     const player = { ...createTestPlayer(), wall };
 
     const result = resolveCastEffects({
       player,
       enemy: createTestEnemy(20),
-      castRune: createTestRune('armor-cast', 'Frost', [createEffectRef('cast.armor', { amount: 3 })]),
+      castRune: createTestRune('shield-cast', 'Frost', [createEffectRef('cast.shield', { amount: 3 })]),
       wall,
+      sourcePosition: { row: 0, col: 0 },
     });
 
-    expect(result.player.armor).toBe(8);
+    expect(totalShield(result.wall)).toBe(8);
   });
 
   it('resolves healing synergy from completed wall counts and the triggering rune', () => {
@@ -779,8 +783,8 @@ describe('effectResolver resolveCastEffects', () => {
       name: 'Frost Shield',
       runeTypes: ['Frost'],
       rarity: 'common',
-      cardImageSrc: CARD_DEFINITIONS['Frost Shield'].cardImageSrc,
-      tokenImageSrc: CARD_DEFINITIONS['Frost Shield'].tokenImageSrc,
+      cardImageSrc: CARD_DEFINITIONS.FrostShield.cardImageSrc,
+      tokenImageSrc: CARD_DEFINITIONS.FrostShield.tokenImageSrc,
       castEffectRefs: [],
       passiveEffectRefs: [],
     });
@@ -882,13 +886,13 @@ describe('effectResolver resolveCastEffects', () => {
   });
 
   it('applies selected combat artefact passives once per completed cast', () => {
-    const player = { ...createTestPlayer(), health: 4, armor: 1 };
+    const player = { ...createTestPlayer([[0, 0, 'Fire']]), health: 4 };
     const enemy = createTestEnemy(20);
     const castRune = createTestRune('artefact-cast', 'Fire', [
       createEffectRef('cast.damage', { amount: 3 }),
       createEffectRef('cast.damage', { amount: 2 }),
       createEffectRef('cast.healing', { amount: 4 }),
-      createEffectRef('cast.armor', { amount: 3 }),
+      createEffectRef('cast.shield', { amount: 3 }),
     ]);
 
     const result = resolveCastEffects({
@@ -897,19 +901,20 @@ describe('effectResolver resolveCastEffects', () => {
       castRune,
       wall: player.wall,
       activeArtefacts: ['tome', 'rod', 'potion'],
+      sourcePosition: { row: 0, col: 0 },
     });
 
     expect(result.enemy?.health).toBe(14);
     expect(result.player.health).toBe(10);
-    expect(result.player.armor).toBe(7);
+    expect(totalShield(result.wall)).toBe(6);
     expect(result.logs.map((log) => log.effectId)).toEqual([
       'cast.damage',
       'cast.damage',
       'cast.healing',
-      'cast.armor',
+      'cast.shield',
       'passive.tomeCastDamage',
       'passive.rodHealing',
-      'passive.potionArmor',
+      'passive.potionShield',
     ]);
     expect(result.logs.slice(4)).toMatchObject([
       {
@@ -925,17 +930,17 @@ describe('effectResolver resolveCastEffects', () => {
       {
         sourceType: 'artefact',
         sourceId: 'potion',
-        output: { target: 'armor', stacking: 'multiplier', previousValue: 3, nextValue: 6 },
+        output: { target: 'shield', stacking: 'multiplier', previousValue: 3, nextValue: 6 },
       },
     ]);
   });
 
   it('adds Tome damage to non-damage casts exactly once', () => {
-    const player = createTestPlayer();
+    const player = createTestPlayer([[0, 0, 'Life']]);
     const enemy = createTestEnemy(20);
     const castRune = createTestRune('support-tome-cast', 'Life', [
       createEffectRef('cast.healing', { amount: 3 }),
-      createEffectRef('cast.armor', { amount: 2 }),
+      createEffectRef('cast.shield', { amount: 2 }),
       createEffectRef('cast.fortune', { amount: 4 }),
     ]);
 
@@ -945,11 +950,12 @@ describe('effectResolver resolveCastEffects', () => {
       castRune,
       wall: player.wall,
       activeArtefacts: ['tome'],
+      sourcePosition: { row: 0, col: 0 },
     });
 
     expect(result.enemy?.health).toBe(19);
     expect(result.player.health).toBe(10);
-    expect(result.player.armor).toBe(2);
+    expect(totalShield(result.wall)).toBe(2);
     expect(result.arcaneDustDelta).toBe(4);
     expect(result.logs.filter((log) => log.effectId === 'passive.tomeCastDamage')).toHaveLength(1);
   });
@@ -1052,14 +1058,14 @@ describe('effectResolver end turn effects', () => {
     });
   });
 
-  it('grants end-turn armor for completed Frost runes', () => {
+  it('grants end-turn shield for completed Frost runes', () => {
     const wall = createEmptyWall(6);
     wall[0][0] = createWallCell('Frost', [
-      createEffectRef('passive.armorEndTurnSynergy', { amount: 2, synergyType: 'Frost' }),
+      createEffectRef('passive.shieldEndTurnSynergy', { amount: 2, synergyType: 'Frost' }),
     ]);
     wall[0][1] = createWallCell('Frost');
     wall[0][2] = createWallCell('Fire');
-    const player = { ...createTestPlayer(), wall, armor: 1 };
+    const player = { ...createTestPlayer(), wall };
 
     const result = resolveEndTurnEffects({
       player,
@@ -1067,11 +1073,11 @@ describe('effectResolver end turn effects', () => {
       wall,
     });
 
-    expect(result.player.armor).toBe(5);
+    expect(totalShield(result.player.wall)).toBe(4);
     expect(result.enemy?.health).toBe(20);
     expect(result.logs).toHaveLength(1);
     expect(result.logs[0]).toMatchObject({
-      effectId: 'passive.armorEndTurnSynergy',
+      effectId: 'passive.shieldEndTurnSynergy',
       trigger: 'endTurn',
       output: { modifier: 4, synergyType: 'Frost', synergyCount: 2 },
     });
@@ -1124,7 +1130,7 @@ describe('effectResolver passive effects', () => {
   it('collects wall rune passives and selected artefact passives in stable source order', () => {
     const wall = createEmptyWall(6);
     wall[1][2] = createWallCell('Fire', [createEffectRef('passive.tomeCastDamage', { damageBonus: 1 })]);
-    wall[0][5] = createWallCell('Frost', [createEffectRef('passive.potionArmor', { armorMultiplier: 3 })]);
+    wall[0][5] = createWallCell('Frost', [createEffectRef('passive.potionShield', { shieldMultiplier: 3 })]);
 
     const passives = collectActivePassiveEffects({ wall, activeArtefacts: ['rod', 'robe'] });
 
@@ -1134,7 +1140,7 @@ describe('effectResolver passive effects', () => {
       effectId: passive.effectRef.effectId,
       sourceOrder: passive.sourceOrder,
     }))).toEqual([
-      { sourceType: 'rune', sourceId: 'completed-Frost', effectId: 'passive.potionArmor', sourceOrder: 5 },
+      { sourceType: 'rune', sourceId: 'completed-Frost', effectId: 'passive.potionShield', sourceOrder: 5 },
       { sourceType: 'rune', sourceId: 'completed-Fire', effectId: 'passive.tomeCastDamage', sourceOrder: 8 },
       { sourceType: 'artefact', sourceId: 'rod', effectId: 'passive.rodHealing', sourceOrder: 0 },
     ]);
@@ -1146,7 +1152,7 @@ describe('effectResolver passive effects', () => {
     const baseValues = {
       damage: 10,
       healing: 5,
-      armor: 4,
+      shield: 4,
       epicChance: 3,
     };
 
@@ -1159,13 +1165,13 @@ describe('effectResolver passive effects', () => {
     expect(onCast.values).toEqual({
       damage: 12,
       healing: 10,
-      armor: 8,
+      shield: 8,
       epicChance: 3,
     });
     expect(onCast.logs.map((log) => log.effectId)).toEqual([
       'passive.tomeCastDamage',
       'passive.rodHealing',
-      'passive.potionArmor',
+      'passive.potionShield',
     ]);
 
     const onDeckDraftOffer = resolvePassiveEffects({
@@ -1177,7 +1183,7 @@ describe('effectResolver passive effects', () => {
     expect(onDeckDraftOffer.values).toEqual({
       damage: 10,
       healing: 5,
-      armor: 4,
+      shield: 4,
       epicChance: 3,
     });
     expect(onDeckDraftOffer.logs).toEqual([]);
@@ -1346,5 +1352,6 @@ function createWallCell(
     tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
     castEffectRefs,
     passiveEffectRefs,
+    shield: null,
   };
 }

@@ -27,8 +27,8 @@ describe('cardCatalog artwork', () => {
     const rune = createRuneFromPool({ id: 'frost-rare', runeType: 'Frost', rarity: 'rare' });
 
     expect(rune).toMatchObject({
-      cardImageSrc: CARD_DEFINITIONS['Freezing Cold'].cardImageSrc,
-      tokenImageSrc: CARD_DEFINITIONS['Freezing Cold'].tokenImageSrc,
+      cardImageSrc: CARD_DEFINITIONS.FrostShield.cardImageSrc,
+      tokenImageSrc: CARD_DEFINITIONS.FrostShield.tokenImageSrc,
     });
   });
 });

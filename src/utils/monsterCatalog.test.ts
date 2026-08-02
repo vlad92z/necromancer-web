@@ -13,7 +13,6 @@ describe('monsterCatalog', () => {
       name: MONSTER_CATALOG.goblin.name,
       imageSrc: MONSTER_CATALOG.goblin.imageSrc,
       maxHealth: MONSTER_CATALOG.goblin.maxHealth,
-      armor: MONSTER_CATALOG.goblin.armor,
       arcaneDustRewardRange: MONSTER_CATALOG.goblin.arcaneDustRewardRange,
     });
     expect(MONSTER_CATALOG.goblin.rewardCardNames).toEqual(['ThrowRock', 'Hide', 'Scorch', 'Heal']);

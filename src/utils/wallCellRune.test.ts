@@ -18,6 +18,7 @@ describe('wallCellRune', () => {
       manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
+      shield: 2,
     };
 
     const rune = wallCellToRune(cell, 2, 3);

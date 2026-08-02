@@ -43,12 +43,12 @@ describe('effectCatalog', () => {
         effectId: 'rune.consume',
         trigger: 'onCast',
         selection: 'manual',
-        payload: { effectId: 'cast.armor', params: { amount: 3 } },
+        payload: { effectId: 'cast.shield', params: { amount: 3 } },
       }],
     });
     expect(CARD_DEFINITIONS.FrostShield).toMatchObject({
       manaCost: 2,
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 3 } }],
     });
   });
 
@@ -110,8 +110,8 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.retriggerType', { targetType: 'Life' }))).toBe(
       'Retrigger all Life runes'
     );
-    expect(getEffectDescription(createEffectRef('cast.armorAdjacent', { amount: 3 }))).toBe(
-      'Gain 3 armor for every adjacent rune'
+    expect(getEffectDescription(createEffectRef('cast.shieldAdjacent', { amount: 3 }))).toBe(
+      'Shield 3 for every adjacent rune'
     );
     expect(getEffectDescription(createEffectRef('cast.healthIncrease', { amount: 1 }))).toBe('Increase maximum health by 1');
     expect(getEffectDescription(createEffectRef('cast.healthDecrease', { amount: 2 }))).toBe(
@@ -134,8 +134,8 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }))).toBe(
       'Deal 2 damage for every Void rune in your completed wall'
     );
-    expect(getEffectDescription(createEffectRef('cast.armorSynergy', { amount: 5, synergyType: 'Frost' }))).toBe(
-      'Gain 5 armor for every Frost rune in your completed wall'
+    expect(getEffectDescription(createEffectRef('cast.shieldSynergy', { amount: 5, synergyType: 'Frost' }))).toBe(
+      'Shield 5 for every Frost rune in your completed wall'
     );
     expect(getEffectDescription(createEffectRef('passive.damageBoostSynergy', {
       percent: 5,
@@ -151,10 +151,10 @@ describe('effectCatalog', () => {
       amount: 5,
       synergyType: 'Void',
     }))).toBe('At end of turn, deal 5 damage for every Void rune in your completed wall');
-    expect(getEffectDescription(createEffectRef('passive.armorEndTurnSynergy', {
+    expect(getEffectDescription(createEffectRef('passive.shieldEndTurnSynergy', {
       amount: 2,
       synergyType: 'Frost',
-    }))).toBe('At end of turn, gain 2 armor for every Frost rune in your completed wall');
+    }))).toBe('At end of turn, Shield 2 for every Frost rune in your completed wall');
     expect(getEffectDescription(createEffectRef('passive.healingStartTurn', { amount: 2 }))).toBe(
       'At start of turn, heal 2'
     );
@@ -168,8 +168,8 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.addDamage', { amount: 5, runeType: 'Fire' }))).toBe(
       'Fire runes deal +5 damage'
     );
-    expect(getEffectDescription(createEffectRef('passive.armorBoost', { amount: 5 }))).toBe(
-      'Increase all armor gained by 5'
+    expect(getEffectDescription(createEffectRef('passive.shieldBoost', { amount: 5 }))).toBe(
+      'Increase all shield gained by 5'
     );
     expect(getEffectDescription(createEffectRef('passive.explosive', { amount: 50 }))).toBe(
       'Deal 50 damage when consumed, destroyed, or transformed'
@@ -193,7 +193,7 @@ describe('effectCatalog', () => {
     expect(ARTEFACTS.ring.passiveEffectRefs).toEqual([]);
     expect(ARTEFACTS.robe.passiveEffectRefs).toEqual([]);
     expect(ARTEFACTS.rod.passiveEffectRefs[0]?.effectId).toBe('passive.rodHealing');
-    expect(ARTEFACTS.potion.passiveEffectRefs[0]?.effectId).toBe('passive.potionArmor');
+    expect(ARTEFACTS.potion.passiveEffectRefs[0]?.effectId).toBe('passive.potionShield');
     expect(ARTEFACTS.tome.passiveEffectRefs[0]?.effectId).toBe('passive.tomeCastDamage');
 
     expect(getArtefactEffectDescription('ring')).toBe('');

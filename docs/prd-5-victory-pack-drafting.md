@@ -10,7 +10,7 @@
 ## Goblin Drop Pool
 
 - Throw Rock — Life, common, 1 mana, deal 3 damage.
-- Hide — Life, common, 0 mana, consume a rune to gain 3 armor.
+- Hide — Life, uncommon, 0 mana, consume a rune; Shield 2 on the Hide token.
 - Scorch — Fire, common, 3 mana, at end of your turn consume any rune to deal 5 damage.
 - Heal — Life, uncommon, 5 mana, heal 5 health.
 

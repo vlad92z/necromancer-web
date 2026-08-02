@@ -13,6 +13,7 @@ export function createEmptySpellWallCell(): WallCell {
     manaCost: null,
     castEffectRefs: null,
     passiveEffectRefs: null,
+    shield: null,
   };
 }
 

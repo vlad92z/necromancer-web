@@ -85,7 +85,7 @@ describe('gameInitialization combat state', () => {
     expect(deck.find((rune) => rune.name === 'Firebolt')).toMatchObject({ manaCost: 2 });
     expect(deck.find((rune) => rune.name === 'Frost Shield')).toMatchObject({
       manaCost: 2,
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 3 } }],
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 3 } }],
     });
     expect(deck.find((rune) => rune.name === 'Void Tendrils')).toMatchObject({ manaCost: 5 });
   });
@@ -94,7 +94,7 @@ describe('gameInitialization combat state', () => {
     const deck = createStartingDeck();
 
     expect(deck.find((rune) => rune.name === 'Barricade')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 5 } }],
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 5 } }],
     });
     expect(deck.find((rune) => rune.name === 'Barricade')?.cardImageSrc).toContain('card_barricade.png');
     expect(deck.find((rune) => rune.name === 'Headwind')?.cardImageSrc).toContain('card_headwind.png');

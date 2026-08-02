@@ -100,6 +100,12 @@ export interface MapRoadDiscoveryResult {
 
 export type MapLocationMarkerKind = 'player' | 'encounter' | 'cleared';
 
+export function getCurrentMapLocationEvent(map: SoloMapState): MapLocationEvent | null {
+  const { tileKey, locationId } = map.playerPosition;
+  if (locationId === 'start') return null;
+  return map.tiles[tileKey]?.events[locationId] ?? null;
+}
+
 export function createMapTileKey(x: number, y: number): string {
   return `${x},${y}`;
 }
@@ -391,7 +397,9 @@ function arriveAtLocation(
   }
 
   const isCombatEvent = event.kind === 'combat' || event.kind === 'boss';
-  const shouldClearImmediately = !isCombatEvent && !event.cleared;
+  const shouldClearImmediately = !isCombatEvent
+    && event.kind !== 'sacrificial-altar'
+    && !event.cleared;
   const nextEvent = shouldClearImmediately ? { ...event, cleared: true } : event;
 
   return {
@@ -415,6 +423,29 @@ function arriveAtLocation(
     },
     enteredEncounter: isCombatEvent && !event.cleared,
     triggeredEvent: shouldClearImmediately ? event : null,
+  };
+}
+
+export function completeCurrentMapLocationEvent(map: SoloMapState): SoloMapState {
+  const { tileKey, locationId } = map.playerPosition;
+  if (locationId === 'start') return map;
+
+  const tile = map.tiles[tileKey];
+  const event = tile?.events[locationId];
+  if (!tile || !event || event.cleared) return map;
+
+  return {
+    ...map,
+    tiles: {
+      ...map.tiles,
+      [tileKey]: {
+        ...tile,
+        events: {
+          ...tile.events,
+          [locationId]: { ...event, cleared: true },
+        },
+      },
+    },
   };
 }
 

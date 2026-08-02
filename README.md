@@ -40,14 +40,14 @@ There is intentionally no `npm run test` script; run Vitest with `npx vitest run
 - The player starts with a 12-card deck and draws up to **five** runes at an encounter start and after each completed turn.
 - The spell wall is a neutral 5×5 grid. Select a rune in hand, then place it in any empty slot; every rarity resolves immediately.
 - Casting spends the card's mana cost. Players start each turn with 7 mana; mana refreshes to full after the enemy turn.
-- Filled wall runes provide their passive effects while they remain on the wall. Cards may deal damage, grant armor, heal, draw or return cards, and interact with neighbouring or matching runes.
+- Filled wall runes provide their passive effects while they remain on the wall. Shield effects add shield to the source token; other effects may deal damage, heal, draw or return cards, and interact with neighbouring or matching runes.
 - Consumption removes another rune from its owner's wall before resolving an optional payload; Destroy removes an opposing wall rune. Manual effects pause for a valid board target or Skip, while random effects and all enemy choices resolve automatically.
-- Armor absorbs incoming damage before health. A player is defeated at 0 health.
+- Incoming damage consumes shielded tokens from the top-left across each row. A partially depleted token keeps its remaining shield; a token reaching 0 is removed and its passives stop. Damage left after all shields reduces health.
 
 ### Enemy turn and victory
 
 - **End Turn** resolves the player's end-turn effects, discards the remaining hand, resolves the enemy turn, then draws the next hand and resolves player start-turn effects.
-- Enemies play their turn cards into a persistent 5×5 enemy spellboard. Their cards resolve in order and can damage the player, grant enemy armor, or apply other effects.
+- Enemies play their turn cards into a persistent 5×5 enemy spellboard. Their cards resolve in order and use the same token-shield rules as the player.
 - The enemy wins if its board fills; the player also loses at 0 health.
 - Reducing enemy health to 0, or filling the player wall, wins the encounter immediately—before an enemy turn.
 - A normal victory awards Arcane Dust and three single-rune offers from that enemy's reward pool. Select at most one, then continue to the map. Boss victory ends the run.

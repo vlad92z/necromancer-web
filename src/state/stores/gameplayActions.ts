@@ -11,6 +11,8 @@ export interface GameplayActions {
   hydrateGameState: (nextState: GameState) => void;
   returnToStartScreen: () => void;
   returnToMapAfterReward: () => void;
+  sacrificeCardAtAltar: (runeId: string) => void;
+  skipSacrificialAltar: () => void;
   revealMapRoadTarget: (target: Extract<MapTravelTarget, { kind: 'road' }>) => Extract<MapTravelTarget, { kind: 'location' }> | null;
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
@@ -28,6 +30,8 @@ export const gameplayActions: GameplayActions = {
   hydrateGameState: (nextState) => useGameplayStore.getState().hydrateGameState(nextState),
   returnToStartScreen: () => useGameplayStore.getState().returnToStartScreen(),
   returnToMapAfterReward: () => useGameplayStore.getState().returnToMapAfterReward(),
+  sacrificeCardAtAltar: (runeId) => useGameplayStore.getState().sacrificeCardAtAltar(runeId),
+  skipSacrificialAltar: () => useGameplayStore.getState().skipSacrificialAltar(),
   revealMapRoadTarget: (target) => useGameplayStore.getState().revealMapRoadTarget(target),
   travelToMapTarget: (target) => useGameplayStore.getState().travelToMapTarget(target),
   selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),

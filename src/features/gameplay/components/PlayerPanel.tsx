@@ -1,5 +1,5 @@
 /**
- * PlayerPanel - displays the player's combat avatar, health, armor, and artefacts.
+ * PlayerPanel - displays the player's combat avatar, health, mana, and artefacts.
  */
 
 import wizardImage from '../../../assets/enemies/wizard.png';
@@ -13,7 +13,7 @@ interface PlayerPanelProps {
 }
 
 export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
-  const { health, maxHealth, armor, mana, maxMana } = useGameplayHealthState();
+  const { health, maxHealth, mana, maxMana } = useGameplayHealthState();
   const selectedArtefactIds = useSelectedArtefactIds();
 
   const healthRatio = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0;
@@ -35,14 +35,7 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
-          <span className="flex items-center gap-1.5">
-            {armor > 0 && (
-              <span className="flex items-center gap-1 text-[#5dc6b0]">
-                <span aria-hidden="true">🛡</span>
-                <span>{armor}</span>
-              </span>
-            )}
-          </span>
+          <span />
           <span>{health} / {maxHealth}</span>
         </div>
         <div className="pixel-health-track">

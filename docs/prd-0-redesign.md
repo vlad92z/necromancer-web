@@ -16,7 +16,7 @@ Keep:
 - Rune cards
 - Neutral 5x5 spell wall
 - Deck growth and deck draft rewards
-- Player health, armor, healing, damage, arcane dust
+- Player health, shield, healing, damage, arcane dust
 
 Primary v1 loop:
 1. Start encounter.
@@ -54,7 +54,7 @@ The player sees:
 - Enemy panel with goblin image.
 - Enemy HP.
 - Enemy queued intent: Attack 5.
-- Player health and armor.
+- Player health and shield.
 - Deck, discard, and hand counts.
 - Neutral 5x5 spell wall.
 - Hand of rune cards.
@@ -90,9 +90,9 @@ At End Turn:
 
 V1 enemy action:
 - Attack 5.
-- Armor absorbs damage before health.
+- Shielded wall tokens absorb damage in row-major order before health.
 - If health reaches 0, player is defeated.
-- Armor resets before the next encounter, not during the current encounter.
+- Shield exists only on placed tokens; encounter walls reset between encounters.
 
 ### Victory
 
@@ -149,9 +149,9 @@ Damage:
 Healing:
 - Restores player health up to max health.
 
-Armor:
-- Adds armor.
-- Armor absorbs enemy attack before health.
+Shield:
+- Adds shield to the effect's source token.
+- Shielded tokens absorb damage in row-major order and are removed at 0 shield.
 
 Fortune:
 - Adds arcane dust as today.
@@ -160,7 +160,7 @@ Synergy:
 - No segment logic.
 - Counts matching synergy rune type across the whole completed spell wall.
 
-ArmorSynergy:
+ShieldSynergy:
 - Counts matching synergy rune type across the whole completed spell wall.
 
 Fragile:
@@ -317,7 +317,7 @@ Remove/hide from combat:
 
 Keep:
 - Health view.
-- Armor display if currently separate or in Health view.
+- Current shield value overlaid on each shielded wall token.
 - Deck overlay, adapted to show draw/discard if useful.
 - Settings.
 - Arcane dust.
@@ -369,7 +369,7 @@ Casting:
 Enemy:
 - End Turn moves remaining hand to discard.
 - Enemy attacks for 5.
-- Armor absorbs before health.
+- Shielded wall tokens absorb before health in row-major order.
 - Health 0 causes defeat.
 - Enemy HP 0 causes immediate victory.
 
@@ -399,7 +399,7 @@ Unit tests:
 - Final charge resolves effect and fills wall cell.
 - Damage reduces enemy HP.
 - Healing caps at max health.
-- Armor absorbs enemy attack.
+- Shielded wall tokens absorb damage and are removed at 0 shield.
 - Synergy counts whole wall.
 - Fragile checks whole wall absence.
 - Channel effects disabled.

@@ -27,7 +27,7 @@ describe('deckDrafting', () => {
         effectId: 'rune.consume',
         trigger: 'onCast',
         selection: 'manual',
-        payload: { effectId: 'cast.armor', params: { amount: 3 } },
+        payload: { effectId: 'cast.shield', params: { amount: 3 } },
       }],
     });
     expect(cards.get('Scorch')).toMatchObject({
