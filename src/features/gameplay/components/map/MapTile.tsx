@@ -20,7 +20,6 @@ import {
 } from '../../../../utils/soloMap';
 import forestTileImage from '../../../../assets/map/tile_1.png';
 import tokenVisited from '../../../../assets/map/token_visited.png';
-import playerToken from '../../../../assets/enemies/wizard.png';
 import tokenPath from '../../../../assets/map/token_path.png';
 import { getRegionEventToken } from '../../../../utils/regionCatalog';
 import { getMonsterDefinition } from '../../../../utils/monsterCatalog';
@@ -187,9 +186,7 @@ export function MapTile({
     const showVisitedUnderlay = markerKind === 'encounter'
       && eventResolveTarget?.tileKey === tile.key
       && eventResolveTarget.locationId === locationId;
-    const imageSrc = current
-      ? playerToken
-      : markerKind === 'cleared'
+    const imageSrc = current || markerKind === 'cleared'
         ? eventToken?.visitedImageSrc ?? tokenVisited
         : monster?.imageSrc ?? eventToken?.unvisitedImageSrc ?? tokenVisited;
 
