@@ -1,7 +1,9 @@
 /** The canonical catalogue for encounter monsters and their rewards. */
 import goblinImageSrc from '../assets/enemies/goblin.png';
 import golemImageSrc from '../assets/enemies/golem.png';
-import type { MonsterId, RuneType } from '../types/game';
+import witchImageSrc from '../assets/enemies/witch.png';
+import shadeImageSrc from '../assets/enemies/shade.png';
+import type { MonsterId } from '../types/game';
 import type { CardName } from './cardCatalog';
 
 export interface MonsterTurnCard {
@@ -16,8 +18,6 @@ export interface MonsterDefinition {
   imageSrc: string;
   isBoss: boolean;
   maxHealth: number;
-  armor: number;
-  acceptedRuneTypes: readonly RuneType[];
   arcaneDustRewardRange: readonly [minimum: number, maximum: number];
   rewardCardNames: readonly CardName[];
   turnCycle: readonly (readonly MonsterTurnCard[])[];
@@ -29,16 +29,48 @@ export const MONSTER_CATALOG = {
     name: 'Goblin',
     imageSrc: goblinImageSrc,
     isBoss: false,
-    maxHealth: 20,
-    armor: 0,
-    acceptedRuneTypes: ['Life'],
+    maxHealth: 18,
     arcaneDustRewardRange: [4, 7],
-    rewardCardNames: ['Throw Rock', 'Hide', 'Scorch', 'Lifeline'],
+    rewardCardNames: ['ThrowRock', 'Hide', 'Scorch', 'Heal'],
     turnCycle: [[
-      { idSuffix: 'throw-rock-0', cardName: 'Throw Rock', damage: 3 },
-      { idSuffix: 'throw-rock-1', cardName: 'Throw Rock', damage: 3 },
-      { idSuffix: 'throw-rock-2', cardName: 'Throw Rock', damage: 3 },
+      { idSuffix: 'throw-rock-0', cardName: 'ThrowRock', damage: 3 },
+      { idSuffix: 'throw-rock-1', cardName: 'ThrowRock', damage: 3 },
       { idSuffix: 'hide', cardName: 'Hide', damage: 0 },
+    ]],
+  },
+  witch: {
+    id: 'witch',
+    name: 'Witch',
+    imageSrc: witchImageSrc,
+    isBoss: false,
+    maxHealth: 15,
+    arcaneDustRewardRange: [4, 7],
+    rewardCardNames: ['LightningBolt', 'AmplifyMagic', 'Heal'],
+    turnCycle: [
+      [
+        { idSuffix: 'firebolt-0', cardName: 'Firebolt', damage: 2 },
+        { idSuffix: 'firebolt-1', cardName: 'Firebolt', damage: 2 },
+      ],
+      [
+        { idSuffix: 'frost-shield-0', cardName: 'FrostShield', damage: 0 },
+        { idSuffix: 'frost-shield-1', cardName: 'FrostShield', damage: 0 },
+      ],
+      [
+        { idSuffix: 'amplify-magic', cardName: 'AmplifyMagic', damage: 0 },
+      ],
+    ],
+  },
+  shade: {
+    id: 'shade',
+    name: 'Shade',
+    imageSrc: shadeImageSrc,
+    isBoss: false,
+    maxHealth: 28,
+    arcaneDustRewardRange: [4, 7],
+    rewardCardNames: ['ShadowBolt', 'VoidTendrils', 'Heal'],
+    turnCycle: [[
+      { idSuffix: 'shadow-bolt-0', cardName: 'ShadowBolt', damage: 0 },
+      { idSuffix: 'heal', cardName: 'Heal', damage: 0 },
     ]],
   },
   'golem-lord': {
@@ -47,8 +79,6 @@ export const MONSTER_CATALOG = {
     imageSrc: golemImageSrc,
     isBoss: true,
     maxHealth: 50,
-    armor: 0,
-    acceptedRuneTypes: ['Life'],
     arcaneDustRewardRange: [0, 0],
     rewardCardNames: [],
     turnCycle: [
@@ -59,9 +89,9 @@ export const MONSTER_CATALOG = {
         { idSuffix: 'barricade-3', cardName: 'Barricade', damage: 0 },
       ],
       [
-        { idSuffix: 'hurl-rock-0', cardName: 'Hurl Rock', damage: 8 },
-        { idSuffix: 'hurl-rock-1', cardName: 'Hurl Rock', damage: 8 },
-        { idSuffix: 'hurl-rock-2', cardName: 'Hurl Rock', damage: 8 },
+        { idSuffix: 'hurl-rock-0', cardName: 'HurlRock', damage: 8 },
+        { idSuffix: 'hurl-rock-1', cardName: 'HurlRock', damage: 8 },
+        { idSuffix: 'hurl-rock-2', cardName: 'HurlRock', damage: 8 },
       ],
       [
         { idSuffix: 'avalanche', cardName: 'Avalanche', damage: 0 },

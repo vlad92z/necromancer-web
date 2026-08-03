@@ -37,7 +37,7 @@ Core decisions:
 - Rune passives are active only while completed on the wall.
 - Start-turn passives resolve after normal hand refill.
 - End-turn passives resolve before enemy attack.
-- Enemy attack reduction applies before armor.
+- Enemy attack reduction applies before shield.
 - Enemy HP 0 still opens deck draft immediately; enemy does not attack.
 
 ## Counting + Targeting
@@ -68,7 +68,7 @@ Core decisions:
 - Convert clears source identity and writes a common no-effect rune of target type.
 - Converted runes count as completed target-type wall runes.
 - Converted runes do not preserve rarity, cast effects, or passive effects.
-- Destroy/convert trigger `explosive` once.
+- Consume, destroy, or convert trigger `explosive` once.
 - Explosive damage does not chain more mutation or retrigger effects.
 - Victory restores original deck ownership for destroyed, converted, returned, wall, and charge-spent runes.
 - Virtual charge increments adjacent incomplete charge counters by 1 and creates no card.
@@ -91,10 +91,9 @@ Cast effects:
 - `damageSynergy`: deal X damage per completed target-type rune.
 - `damageFragile`: deal max(0, X - Y per completed target-type rune).
 - `damageConditional`: deal X damage if at least Y completed target-type runes exist.
-- `damageConsuming`: deal X damage per adjacent completed rune, then destroy those adjacent runes.
-- `armor`: gain X armor.
-- `armorAdjacent`: gain X armor per adjacent completed rune.
-- `armorSynergy`: gain X armor per completed target-type rune.
+- `shield`: add X shield to the source token.
+- `shieldAdjacent`: add X shield per adjacent completed rune to the source token.
+- `shieldSynergy`: add X shield per completed target-type rune to the source token.
 - `heal`: heal X.
 - `healAdjacent`: heal X per adjacent completed rune.
 - `healSynergy`: heal X per completed target-type rune.
@@ -103,7 +102,6 @@ Cast effects:
 - `arcaneDust`: gain X arcane dust.
 - `arcaneDustAdjacent`: gain X arcane dust per adjacent completed rune.
 - `drawAdjacent`: draw 1 rune per adjacent completed rune, up to hand cap.
-- `destroyType`: destroy one random completed target-type rune, excluding source.
 - `convertRandom`: convert one random completed source-type rune into target type.
 - `convertAdjacent`: convert all adjacent completed runes into target type.
 - `returnAdjacent`: return adjacent completed runes to hand, up to hand cap.
@@ -113,12 +111,12 @@ Cast effects:
 
 Passive effects:
 - `addDamage`: target rune type deals X additional damage.
-- `reduceDamage`: reduce incoming enemy attack damage by X before armor.
-- `armorBoost`: increase all armor gained by X.
+- `reduceDamage`: reduce incoming enemy attack damage by X before shield.
+- `shieldBoost`: increase all shield gained by X.
 - `healingStartTurn`: at start of turn heal X.
 - `drawingStartTurn`: at start of turn draw X additional runes, up to hand cap.
 - `damageBoostSynergy`: increase all damage by X% per completed target-type rune.
-- `explosive`: deal X damage if this rune is destroyed or transformed.
+- `explosive`: deal X damage when this rune is consumed, destroyed, or transformed.
 - `pulseSynergy`: at end of turn deal X damage per completed target-type rune.
 - `vampire`: heal X% of actual enemy HP loss.
 
@@ -131,10 +129,10 @@ Fire:
 - Epic: `addDamage` Fire 5.
 
 Frost:
-- Common: `armor` 3.
-- Uncommon: `armorAdjacent` 3.
-- Rare: `armorSynergy` 5 Frost.
-- Epic: `armorBoost` 5.
+- Common: `shield` 3.
+- Uncommon: `shieldAdjacent` 3.
+- Rare: `shieldSynergy` 5 Frost.
+- Epic: `shieldBoost` 5.
 
 Life:
 - Common: `heal` 2.
@@ -151,7 +149,7 @@ Lightning:
 Void:
 - Common: `damageConditional` 25 if at least 2 Void.
 - Uncommon: `pulseSynergy` 5 Void.
-- Rare: `damageConsuming` 10.
+- Uncommon: currently unassigned; Void Blast removed.
 - Epic: `vampire` 25%.
 
 Wind:
@@ -161,7 +159,6 @@ Wind:
 - Epic: `returnAdjacent`.
 
 Unassigned but specced:
-- `destroyType`
 - `reduceDamage`
 - `healthDecrease`
 - `convertRandom`
@@ -183,7 +180,7 @@ Unassigned but specced:
 
 - Every listed effect has deterministic behavior.
 - Current rarity table maps to effect refs without effect-level rarity.
-- Completed-only counting is consistent across damage, armor, heal, dust, pulse, and boosts.
+- Completed-only counting is consistent across damage, shield, heal, dust, pulse, and boosts.
 - Board mutation never permanently loses deck cards before encounter end.
 - Retriggers cannot recurse.
 - Passive-only runes display clearly and activate only from completed wall cells.
@@ -198,9 +195,9 @@ Unassigned but specced:
 - Vampire heals from actual enemy HP loss only.
 - Start-turn heal/draw runs after normal refill.
 - End-turn pulse runs before enemy attack.
-- Reduce damage applies before armor.
+- Reduce damage applies before shield.
 - Destroy, convert, return, and charge mutate wall/hand/charges as specified.
-- Explosive fires once on destroy/convert and does not chain.
+- Explosive fires once on consume/destroy/convert and does not chain.
 - Retrigger adjacent/type skips retrigger effects.
 - Victory restores encounter-suppressed runes to deck.
 

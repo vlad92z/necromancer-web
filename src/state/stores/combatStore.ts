@@ -4,7 +4,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { CombatPhase, Enemy, GameState, Rune } from '../../types/game';
-import { initializeSoloGame } from '../../utils/gameInitialization';
+import { createInitialSoloRunState } from '../../utils/soloRunFactory';
 
 export interface CombatState {
   enemy: Enemy | null;
@@ -16,6 +16,7 @@ export interface CombatState {
   enemyBoard: GameState['enemyBoard'];
   enemyQueuedRunes: GameState['enemyQueuedRunes'];
   enemyTurnNumber: number;
+  pendingCombatResolution: GameState['pendingCombatResolution'];
 }
 
 export interface CombatStore extends CombatState {
@@ -33,10 +34,11 @@ export function pickCombatState(state: GameState): CombatState {
     enemyBoard: state.enemyBoard,
     enemyQueuedRunes: state.enemyQueuedRunes,
     enemyTurnNumber: state.enemyTurnNumber,
+    pendingCombatResolution: state.pendingCombatResolution,
   };
 }
 
-export function createCombatStore(initialState: CombatState = pickCombatState(initializeSoloGame())) {
+export function createCombatStore(initialState: CombatState = pickCombatState(createInitialSoloRunState())) {
   return create<CombatStore>((set) => ({
     ...initialState,
     replaceCombatState: (next) => set(() => next),

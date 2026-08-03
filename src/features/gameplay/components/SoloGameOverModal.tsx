@@ -8,7 +8,7 @@ import { useClickSound } from '../../../hooks/useClickSound';
 
 export function SoloGameOverModal() {
   const { returnToStartScreen: returnToStart } = useGameplayActions();
-  const { enemyMaxHealth, gameIndex: game } = useGameplaySummaryState();
+  const { gameIndex: game } = useGameplaySummaryState();
   const playClickSound = useClickSound();
   const subline = 'Your health reached zero.';
 
@@ -22,9 +22,8 @@ export function SoloGameOverModal() {
       </div>
       <div className="mb-5 text-xs text-[#b5d3bd]">{subline}</div>
 
-      <div className="mb-5 grid grid-cols-3 gap-3">
+      <div className="mb-5">
         <StatCard label="Games Cleared" value={game - 1} accent="#60a5fa" />
-        <StatCard label="Enemy HP Tier" value={enemyMaxHealth} accent="#facc15" />
       </div>
 
       <button

@@ -1,6 +1,7 @@
-import type { EffectRef, Rune, RuneEffectRarity, RuneType } from '../types/game';
+import type { Rune, RuneEffectRarity, RuneEffectRef, RuneType } from '../types/game';
 import { CARD_DEFINITIONS, type CardDefinition, type CardName } from './cardCatalog';
 import { getEffectRefDescriptions } from './effectCatalog';
+import { copyRuneEffectRef } from './runeRemoval';
 
 type RuneTemplate = CardDefinition;
 
@@ -11,11 +12,8 @@ interface CreateRuneFromPoolInput {
   random?: () => number;
 }
 
-export function copyEffectRefs(effectRefs: EffectRef[] | null | undefined): EffectRef[] {
-  return effectRefs?.map((effectRef) => ({
-    effectId: effectRef.effectId,
-    ...(effectRef.params ? { params: { ...effectRef.params } } : {}),
-  })) ?? [];
+export function copyEffectRefs(effectRefs: RuneEffectRef[] | null | undefined): RuneEffectRef[] {
+  return effectRefs?.map(copyRuneEffectRef) ?? [];
 }
 
 /** Compatibility index for type/rarity game rules; card data lives in cardCatalog.ts. */
@@ -27,10 +25,6 @@ export const PREDEFINED_RUNE_VARIANTS: Record<RuneType, Record<RuneEffectRarity,
   Wind: { common: [], uncommon: [], rare: [], epic: [] },
   Lightning: { common: [], uncommon: [], rare: [], epic: [] },
 };
-
-Object.values(CARD_DEFINITIONS).filter((card) => card.pool === 'standard').forEach((card) => {
-  PREDEFINED_RUNE_VARIANTS[card.runeTypes[0]][card.rarity].push(card);
-});
 
 export function createRuneFromCardName({ id, cardName }: { id: string; cardName: CardName }): Rune {
   const card = CARD_DEFINITIONS[cardName];

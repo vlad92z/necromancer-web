@@ -4,7 +4,7 @@ Compiled from PRDs; ordered by implementation.
 
 ## 1. Combat Redesign
 
-- Implemented solo combat around hand, spell wall, enemy, player health, and armor.
+- Implemented solo combat around hand, spell wall, enemy, player health, and shield.
 - Replaced score-target victory with enemy HP defeat and a queued enemy Attack 5 intent.
 - Added turn flow: draw up to 6 runes, cast matching wall slots, end turn, discard hand, enemy attacks, draw again.
 - Made wall slots charge over turns, with effects resolving only when a slot completes.
@@ -22,7 +22,7 @@ Compiled from PRDs; ordered by implementation.
 
 - Implemented defined rarity ladders and identities for Fire, Frost, Life, Lightning, Void, and Wind.
 - Added completed-wall-only counting for synergy, fragile, adjacency, targeting, passives, and mutation effects.
-- Added deterministic damage, healing, armor, draw, dust, mutation, retrigger, pulse, explosive, and vampire rules.
+- Added deterministic damage, healing, shield, draw, dust, mutation, retrigger, pulse, explosive, and vampire rules.
 - Made board mutation encounter-scoped, with destroyed, converted, returned, wall, and charge-spent runes recovered on victory.
 - Prevented retrigger recursion and kept random targeting deterministic among eligible completed cells.
 
@@ -80,3 +80,10 @@ Compiled from PRDs; ordered by implementation.
 - Kept cleared locations available for movement without replaying combat.
 - Returned to the map after rune-pack rewards and cleared the completed location.
 - Preserved health, deck rewards, enemy scaling, and map progress between encounters.
+
+## 10. Consumption and Destroy
+
+- Consume now casts over an occupied rune on either configured wall; the destination wall owns the new rune's passives.
+- Destroy now explicitly targets self or opponent, supports mandatory manual/random multi-target resolution, and excludes its source on self-targets.
+- Removed Skip and the obsolete adjacent-removal Consume effect; persisted manual Destroy keeps its remaining count.
+- Changed Headwind and Amplify Magic to Destroy-own. Avalanche displays `Destroy a rune`; Golem Lord resolves it randomly against the player wall.

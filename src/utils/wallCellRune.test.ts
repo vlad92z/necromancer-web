@@ -11,7 +11,6 @@ describe('wallCellRune', () => {
     const cell: WallCell = {
       id: 'wall-copy-void',
       name: 'Void 3',
-      acceptedRuneTypes: ['Void'],
       runeTypes: ['Void'],
       rarity: 'rare',
       cardImageSrc: 'void-card.png',
@@ -19,6 +18,7 @@ describe('wallCellRune', () => {
       manaCost: 2,
       castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 4 } }],
       passiveEffectRefs: [{ effectId: 'passive.tomeCastDamage', params: { damageBonus: 1 } }],
+      shield: 2,
     };
 
     const rune = wallCellToRune(cell, 2, 3);

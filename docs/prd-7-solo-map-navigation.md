@@ -38,7 +38,7 @@ Put a persistent traversable map between solo encounters.
 - Uncleared arrival → Goblin encounter → reward → Return to Map.
 - Location clears only when leaving rewards.
 - Continue restores map, encounter, or reward.
-- Save schema 27; older saves invalid.
+- Save schema 29; older saves invalid.
 
 ## Greenwood Final Boss
 
@@ -47,7 +47,7 @@ Put a persistent traversable map between solo encounters.
 - Only one boss is placed. Greenwood selects randomly from its boss list; currently Golem Lord only.
 - Empty tiles remain discoverable after normal events run out until the boss appears. Frontier exploration then closes once both the event pool is empty and the boss exists.
 - Golem Lord: 50 health, Life-only enemy board, `golem.png`; repeats four Barricades, three Hurl Rocks, then one Avalanche.
-- Hurl Rock costs 2 and deals 8 damage. Avalanche costs 5 and clears the topmost fullest player-wall row; removed wall copies do not affect card zones or the permanent deck.
+- Hurl Rock costs 2 and deals 8 damage. Avalanche costs 5 and says `Destroy a rune`; Golem Lord chooses one player-wall target randomly.
 - Zero boss health or a full player wall ends the adventure immediately in victory, without card or Arcane Dust rewards.
 
 ## Acceptance

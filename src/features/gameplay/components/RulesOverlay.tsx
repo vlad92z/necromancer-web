@@ -41,7 +41,7 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             <h3 className="text-sm text-[#f2c14e]">🎲 Your Turn</h3>
             <p className="space-y-2">
               <span className="block">1. Select a rune from your hand</span>
-              <span className="block">2. Click a matching dual-type wall slot to place it</span>
+              <span className="block">2. Click any empty wall slot to place it</span>
               <span className="block">3. Placed runes resolve their effects immediately</span>
             </p>
           </section>
@@ -50,9 +50,8 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             <h3 className="text-sm text-[#f2c14e]">📊 Wall Slots</h3>
             <p className="space-y-1">
               <span className="block">• Every rune takes one action to place, regardless of rarity or row</span>
-              <span className="block">• Empty slots accept either rune type shown by their icon</span>
+              <span className="block">• Every empty slot accepts any rune type</span>
               <span className="block">• Filled slots cannot accept another rune</span>
-              <span className="block">• Wrong rune types are rejected and stay selected</span>
             </p>
           </section>
 
@@ -61,7 +60,8 @@ export function RulesOverlay({ onClose }: RulesOverlayProps) {
             <p className="space-y-1">
               <span className="block">• Damage lowers enemy HP</span>
               <span className="block">• Healing restores health up to your max health</span>
-              <span className="block">• Armor absorbs enemy attacks before health</span>
+              <span className="block">• Shield belongs to wall tokens and absorbs damage from top-left in row order</span>
+              <span className="block">• A token is removed when its shield reaches 0</span>
               <span className="block">• End Turn discards your hand, the enemy attacks, then you draw up to six cards</span>
             </p>
           </section>

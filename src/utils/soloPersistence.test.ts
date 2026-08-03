@@ -22,18 +22,17 @@ describe('soloPersistence', () => {
 
   it('saves and loads versioned solo state payloads', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
-    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
-    const state = { ...initializeSoloGame(17), gameStarted: true };
+    const { loadSoloState, saveSoloState, SOLO_STATE_VERSION } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true };
 
     saveSoloState(state);
 
     const rawPayload = storage.get('necromancer-solo-state');
     expect(rawPayload).toBeDefined();
     expect(JSON.parse(rawPayload as string)).toMatchObject({
-      version: 27,
+      version: SOLO_STATE_VERSION,
       state: {
         gameStarted: true,
-        enemyMaxHealth: 17,
         soloPhase: 'map',
         soloMap: {
           playerPosition: { tileKey: '0,0', locationId: 'start' },
@@ -42,8 +41,68 @@ describe('soloPersistence', () => {
     });
     expect(loadSoloState()).toMatchObject({
       gameStarted: true,
-      enemyMaxHealth: 17,
     });
+  });
+
+  it('invalidates current-version saves with a legacy 6 by 6 spell wall', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { createEmptySpellWall } = await import('./spellWall');
+    const { loadSoloState, SOLO_STATE_VERSION } = await import('./soloPersistence');
+    const state = initializeSoloGame();
+    state.player.wall = createEmptySpellWall(6);
+
+    storage.set('necromancer-solo-state', JSON.stringify({ version: SOLO_STATE_VERSION, state }));
+
+    expect(loadSoloState()).toBeNull();
+  });
+
+  it('invalidates current-version saves whose wall cells predate token shields', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState, SOLO_STATE_VERSION } = await import('./soloPersistence');
+    const state = initializeSoloGame();
+    const legacyCell = { ...state.player.wall[0]![0] } as Record<string, unknown>;
+    delete legacyCell.shield;
+    state.player.wall[0]![0] = legacyCell as unknown as typeof state.player.wall[number][number];
+
+    storage.set('necromancer-solo-state', JSON.stringify({ version: SOLO_STATE_VERSION, state }));
+
+    expect(loadSoloState()).toBeNull();
+  });
+
+  it('persists a serializable pending rune target and continuation', async () => {
+    const { createEffectRef } = await import('./effectCatalog');
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { createRuneFromCardName } = await import('./runeEffects');
+    const { createRuneRemovalEffectRef } = await import('./runeRemoval');
+    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true };
+    const castRune = createRuneFromCardName({ id: 'pending-cast', cardName: 'Firebolt' });
+    const effectRef = createRuneRemovalEffectRef({
+      kind: 'destroy',
+      trigger: 'onCast',
+      selection: 'manual',
+      targetOwner: 'opponent',
+      count: 2,
+      payload: createEffectRef('cast.damage', { amount: 5 }),
+    });
+    state.pendingCombatResolution = {
+      target: {
+        sourceOwner: 'player',
+        sourceRuneId: castRune.id,
+        sourcePosition: { row: 0, col: 0 },
+        effectRef,
+      },
+      continuation: {
+        kind: 'cast',
+        castRune,
+        sourcePosition: { row: 0, col: 0 },
+        remainingEffectRefs: [],
+      },
+    };
+
+    saveSoloState(state);
+
+    expect(loadSoloState()?.pendingCombatResolution).toEqual(state.pendingCombatResolution);
   });
 
   it('restores generated tiles, cleared encounters, and player position', async () => {
@@ -73,6 +132,35 @@ describe('soloPersistence', () => {
           },
         },
       },
+    });
+  });
+
+  it('restores an unresolved Sacrificial Altar on the map', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState, saveSoloState } = await import('./soloPersistence');
+    const state = { ...initializeSoloGame(), gameStarted: true };
+    state.soloMap.tiles['1,0'] = {
+      key: '1,0',
+      x: 1,
+      y: 0,
+      kind: 'forest',
+      events: {
+        A: {
+          id: '1,0:A',
+          locationId: 'A',
+          tokenId: 'greenwood-sacrificial-altar-1',
+          kind: 'sacrificial-altar',
+          cleared: false,
+        },
+      },
+    };
+    state.soloMap.playerPosition = { tileKey: '1,0', locationId: 'A' };
+
+    saveSoloState(state);
+
+    expect(loadSoloState()?.soloMap.tiles['1,0'].events.A).toMatchObject({
+      kind: 'sacrificial-altar',
+      cleared: false,
     });
   });
 
@@ -156,10 +244,19 @@ describe('soloPersistence', () => {
     expect(hasSavedSoloState()).toBe(false);
   });
 
-  it('invalidates wrong-version payloads', async () => {
+  it('invalidates schema 28 payloads', async () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { loadSoloState } = await import('./soloPersistence');
-    storage.set('necromancer-solo-state', JSON.stringify({ version: 9, state: initializeSoloGame() }));
+    storage.set('necromancer-solo-state', JSON.stringify({ version: 28, state: initializeSoloGame() }));
+
+    expect(loadSoloState()).toBeNull();
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
+  });
+
+  it('invalidates schema 38 payloads from the skippable removal model', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState } = await import('./soloPersistence');
+    storage.set('necromancer-solo-state', JSON.stringify({ version: 38, state: initializeSoloGame() }));
 
     expect(loadSoloState()).toBeNull();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');

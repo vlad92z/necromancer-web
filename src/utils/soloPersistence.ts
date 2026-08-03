@@ -3,10 +3,11 @@
  */
 
 import type { GameState, SoloMapState } from '../types/game';
+import { SPELL_WALL_SIDE_LENGTH } from './spellWall';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 27;
+export const SOLO_STATE_VERSION = 39;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -47,12 +48,51 @@ function isSoloMapState(value: unknown): value is SoloMapState {
       && events.every((event) => event === null || (
         isRecord(event)
         && (typeof event.tokenId === 'string' || event.tokenId === null)
-        && ['combat', 'boss', 'healing', 'empty'].includes(String(event.kind))
-        && (event.monsterId === undefined || ['goblin', 'golem-lord'].includes(String(event.monsterId)))
+        && ['combat', 'boss', 'healing', 'sacrificial-altar', 'artefact', 'empty'].includes(String(event.kind))
+        && (event.monsterId === undefined || ['goblin', 'witch', 'shade', 'golem-lord'].includes(String(event.monsterId)))
         && (event.kind !== 'boss' || event.monsterId === 'golem-lord')
+        && (event.offeredArtefactId === undefined || ['rod', 'robe', 'tome', 'ring', 'potion'].includes(String(event.offeredArtefactId)))
+        && (event.arcaneDustReward === undefined || (typeof event.arcaneDustReward === 'number' && Number.isInteger(event.arcaneDustReward) && event.arcaneDustReward >= 0))
         && typeof event.cleared === 'boolean'
       ));
   });
+}
+
+function isPosition(value: unknown): boolean {
+  return isRecord(value) && Number.isInteger(value.row) && Number.isInteger(value.col);
+}
+
+function isPendingCombatResolution(value: unknown): boolean {
+  if (value === null) return true;
+  if (!isRecord(value) || !isRecord(value.target) || !isRecord(value.continuation)) return false;
+  const effectRef = value.target.effectRef;
+  if (
+    !isRecord(effectRef)
+    || effectRef.effectId !== 'rune.destroy'
+    || !['manual', 'random'].includes(String(effectRef.selection))
+    || !['self', 'opponent'].includes(String(effectRef.targetOwner))
+    || !Number.isInteger(effectRef.count)
+    || Number(effectRef.count) < 1
+    || !['onCast', 'onIncomingDamage', 'startTurn', 'endTurn'].includes(String(effectRef.trigger))
+    || !isPosition(value.target.sourcePosition)
+  ) return false;
+  const kind = value.continuation.kind;
+  if (kind === 'cast') {
+    return isRecord(value.continuation.castRune)
+      && isPosition(value.continuation.sourcePosition)
+      && Array.isArray(value.continuation.remainingEffectRefs);
+  }
+  return (kind === 'startTurn' || kind === 'endTurn')
+    && Array.isArray(value.continuation.processedRemovalKeys);
+}
+
+function isCurrentSpellWall(value: unknown): boolean {
+  return Array.isArray(value)
+    && value.length === SPELL_WALL_SIDE_LENGTH
+    && value.every((row) => Array.isArray(row)
+      && row.length === SPELL_WALL_SIDE_LENGTH
+      && row.every((cell) => isRecord(cell)
+        && (cell.shield === null || (typeof cell.shield === 'number' && cell.shield > 0))));
 }
 
 function isSoloStatePayload(value: unknown): value is SoloStatePayload {
@@ -69,14 +109,15 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   return Array.isArray(state.hand)
     && Array.isArray(state.discardPile)
     && Array.isArray(state.suppressedRunes)
-    && Array.isArray(state.enemyBoard)
+    && isCurrentSpellWall(state.enemyBoard)
     && Array.isArray(state.enemyQueuedRunes)
-    && typeof state.enemyMaxHealth === 'number'
+    && isPendingCombatResolution(state.pendingCombatResolution)
     && typeof state.arcaneDust === 'number'
     && typeof state.isVictory === 'boolean'
     && isRecord(state.player)
     && typeof state.player.mana === 'number'
     && typeof state.player.maxMana === 'number'
+    && isCurrentSpellWall(state.player.wall)
     && ['map', 'encounter', 'reward'].includes(String(state.soloPhase))
     && isSoloMapState(state.soloMap);
 }

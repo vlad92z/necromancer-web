@@ -4,7 +4,7 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useGameplayActions } from '../../../../hooks/useGameActions';
-import { useCombatZoneState } from '../../../../hooks/useGameState';
+import { useCombatZoneState, usePendingRuneTargetState } from '../../../../hooks/useGameState';
 import { buildRuneTooltipCards } from '../../../../utils/tooltipCards';
 import { CardView } from './CardView';
 
@@ -34,6 +34,7 @@ const DEFAULT_CARD_WIDTH = 230;
 
 export function TooltipView() {
   const { hand, selectedHandRuneId } = useCombatZoneState();
+  const pendingTarget = usePendingRuneTargetState();
   const { selectHandRune } = useGameplayActions();
 
   const handCards = useMemo(() => {
@@ -113,6 +114,7 @@ export function TooltipView() {
               variant={card.variant}
               size="hand"
               isSelected={isSelected}
+              disabled={Boolean(pendingTarget)}
               onClick={() => selectHandRune(rune.id)}
             />
           </div>

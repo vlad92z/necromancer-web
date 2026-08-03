@@ -14,9 +14,9 @@ Remove from combat:
 Keep:
 - Massive Spell fantasy
 - Rune cards
-- 6x6 spell wall
+- Neutral 5x5 spell wall
 - Deck growth and deck draft rewards
-- Player health, armor, healing, damage, arcane dust
+- Player health, shield, healing, damage, arcane dust
 
 Primary v1 loop:
 1. Start encounter.
@@ -54,9 +54,9 @@ The player sees:
 - Enemy panel with goblin image.
 - Enemy HP.
 - Enemy queued intent: Attack 5.
-- Player health and armor.
+- Player health and shield.
 - Deck, discard, and hand counts.
-- 6x6 spell wall.
+- Neutral 5x5 spell wall.
 - Hand of rune cards.
 - End Turn button bottom-right.
 
@@ -90,9 +90,9 @@ At End Turn:
 
 V1 enemy action:
 - Attack 5.
-- Armor absorbs damage before health.
+- Shielded wall tokens absorb damage in row-major order before health.
 - If health reaches 0, player is defeated.
-- Armor resets before the next encounter, not during the current encounter.
+- Shield exists only on placed tokens; encounter walls reset between encounters.
 
 ### Victory
 
@@ -108,7 +108,7 @@ Runeforge-themed reward language can remain temporarily.
 
 ## Spell Wall Rules
 
-Keep current 6x6 expected-rune wall pattern.
+Use a neutral 5x5 spell wall; every empty slot accepts any rune.
 
 Each wall cell has:
 - Expected rune type.
@@ -149,9 +149,9 @@ Damage:
 Healing:
 - Restores player health up to max health.
 
-Armor:
-- Adds armor.
-- Armor absorbs enemy attack before health.
+Shield:
+- Adds shield to the effect's source token.
+- Shielded tokens absorb damage in row-major order and are removed at 0 shield.
 
 Fortune:
 - Adds arcane dust as today.
@@ -160,7 +160,7 @@ Synergy:
 - No segment logic.
 - Counts matching synergy rune type across the whole completed spell wall.
 
-ArmorSynergy:
+ShieldSynergy:
 - Counts matching synergy rune type across the whole completed spell wall.
 
 Fragile:
@@ -317,7 +317,7 @@ Remove/hide from combat:
 
 Keep:
 - Health view.
-- Armor display if currently separate or in Health view.
+- Current shield value overlaid on each shielded wall token.
 - Deck overlay, adapted to show draw/discard if useful.
 - Settings.
 - Arcane dust.
@@ -332,7 +332,7 @@ End Turn:
 Primary files:
 - `src/types/game.ts`: add enemy, intent, hand, discard, charge types.
 - `src/state/stores/gameplayStore.ts`: replace combat transition logic.
-- `src/utils/gameInitialization.ts`: initialize enemy encounter and combat zones.
+- `src/utils/soloRunFactory.ts`: create map-run and encounter combat state.
 - `src/utils/scoring.ts`: replace segment resolver with whole-wall cast resolver or add new resolver.
 - `src/features/gameplay/components/SoloGameBoard.tsx`: replace combat layout.
 - `src/features/gameplay/components/Player/ScoringWall.tsx`: make wall cells placement targets and charge display.
@@ -361,17 +361,15 @@ Start:
 - No runeforges, pattern lines, overload UI, or RuneScore win UI in combat.
 
 Casting:
-- Selecting a card and clicking matching wall slot plays the card.
-- Wrong-type slot rejects placement.
+- Selecting a card and clicking any empty wall slot plays the card.
+- Rune type does not restrict placement.
 - Completed slot rejects placement.
-- Row N slot completes only after N matching plays.
-- Non-final plays do not resolve effects.
-- Final play resolves effect and fills slot.
+- Placement immediately fills the slot and resolves cast effects.
 
 Enemy:
 - End Turn moves remaining hand to discard.
 - Enemy attacks for 5.
-- Armor absorbs before health.
+- Shielded wall tokens absorb before health in row-major order.
 - Health 0 causes defeat.
 - Enemy HP 0 causes immediate victory.
 
@@ -401,7 +399,7 @@ Unit tests:
 - Final charge resolves effect and fills wall cell.
 - Damage reduces enemy HP.
 - Healing caps at max health.
-- Armor absorbs enemy attack.
+- Shielded wall tokens absorb damage and are removed at 0 shield.
 - Synergy counts whole wall.
 - Fragile checks whole wall absence.
 - Channel effects disabled.

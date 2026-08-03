@@ -9,10 +9,10 @@
 
 ## Goblin Drop Pool
 
-- Throw Rock — Life, common, 1 mana, deal 3 damage.
-- Hide — Life, common, 1 mana, gain 3 armor.
-- TorScorchch — Fire, common, 3 mana, at end of your turn deal 3 damage; uses `card_fireball.png`.
-- Lifeline — Life, uncommon, 5 mana, increase maximum health by 5.
+- Throw — Life, common, 1 mana, deal 1 damage for every Life rune on your wall.
+- Hide — Life, uncommon, 0 mana, consume a Life rune by replacing it; Shield 3 on the Hide token.
+- Scorch — Fire, uncommon, 2 mana, deal 2 damage for every adjacent Fire rune.
+- Heal — Life, uncommon, 3 mana, consume a Life rune by replacing it; heal 5 health.
 
 ## UI
 

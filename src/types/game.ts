@@ -16,7 +16,35 @@ export interface EffectRef {
   params?: EffectParams;
 }
 
-export type EffectTrigger = 'onCast' | 'onEnemyAttack' | 'startTurn' | 'endTurn' | 'onDeckDraftOffer';
+export type RuneRemovalKind = 'consume' | 'destroy';
+export type RuneRemovalSelection = 'manual' | 'random';
+export type RuneRemovalTrigger = 'onCast' | 'onIncomingDamage' | 'startTurn' | 'endTurn';
+export type RuneEffectTargetOwner = 'self' | 'opponent';
+
+interface RuneTargetEffectRefBase {
+  params?: never;
+  selection: RuneRemovalSelection;
+  targetOwner: RuneEffectTargetOwner;
+  runeType?: RuneType;
+  payload?: EffectRef;
+}
+
+export interface RuneConsumeEffectRef extends RuneTargetEffectRefBase {
+  effectId: 'rune.consume';
+  trigger: 'onCast';
+}
+
+export interface RuneDestroyEffectRef extends RuneTargetEffectRefBase {
+  effectId: 'rune.destroy';
+  trigger: RuneRemovalTrigger;
+  count: number;
+}
+
+export type RuneRemovalEffectRef = RuneConsumeEffectRef | RuneDestroyEffectRef;
+
+export type RuneEffectRef = EffectRef | RuneRemovalEffectRef;
+
+export type EffectTrigger = 'onCast' | 'onIncomingDamage' | 'onRuneRemoved' | 'startTurn' | 'endTurn' | 'onDeckDraftOffer';
 export type EffectSourceType = 'rune' | 'artefact';
 
 export interface EffectResolutionLog {
@@ -37,8 +65,8 @@ export interface Rune {
   cardImageSrc: string;
   tokenImageSrc: string;
   manaCost?: number;
-  castEffectRefs: EffectRef[];
-  passiveEffectRefs: EffectRef[];
+  castEffectRefs: RuneEffectRef[];
+  passiveEffectRefs: RuneEffectRef[];
 }
 
 export interface Enemy {
@@ -48,7 +76,6 @@ export interface Enemy {
   isBoss?: boolean;
   health: number;
   maxHealth: number;
-  armor?: number;
   arcaneDustRewardRange?: readonly [minimum: number, maximum: number];
 }
 
@@ -87,14 +114,14 @@ export interface TooltipCard {
 export interface WallCell {
   id: string | null;
   name: string | null;
-  acceptedRuneTypes: RuneType[];
   runeTypes: RuneType[];
   rarity: RuneEffectRarity | null;
   cardImageSrc: string | null;
   tokenImageSrc: string | null;
   manaCost?: number | null;
-  castEffectRefs: EffectRef[] | null;
-  passiveEffectRefs: EffectRef[] | null;
+  castEffectRefs: RuneEffectRef[] | null;
+  passiveEffectRefs: RuneEffectRef[] | null;
+  shield: number | null;
 }
 
 export type ScoringWall = WallCell[][];
@@ -105,7 +132,6 @@ export interface Player {
   wall: ScoringWall;
   health: number;
   maxHealth: number;
-  armor: number;
   mana: number;
   maxMana: number;
   deck: Rune[];
@@ -116,8 +142,8 @@ export type MapTileKind = 'start' | 'forest';
 export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
 export type RegionId = 'greenwood';
-export type MapEventKind = 'combat' | 'boss' | 'healing' | 'empty';
-export type MonsterId = 'goblin' | 'golem-lord';
+export type MapEventKind = 'combat' | 'boss' | 'healing' | 'sacrificial-altar' | 'artefact' | 'empty';
+export type MonsterId = 'goblin' | 'witch' | 'shade' | 'golem-lord';
 export type MapRoadId =
   | 'left-75'
   | 'left-155'
@@ -139,6 +165,8 @@ export interface MapLocationEvent {
   tokenId: string | null;
   kind: MapEventKind;
   monsterId?: MonsterId;
+  offeredArtefactId?: ArtefactId;
+  arcaneDustReward?: number;
   cleared: boolean;
 }
 
@@ -192,6 +220,40 @@ export interface CombatZoneState {
   enemyBoard: ScoringWall;
   enemyQueuedRunes: EnemyRune[];
   enemyTurnNumber: number;
+  pendingCombatResolution: PendingCombatResolution | null;
+}
+
+export interface WallPosition {
+  row: number;
+  col: number;
+}
+
+export interface PendingRuneTarget {
+  sourceOwner: 'player' | 'enemy';
+  sourceRuneId: string;
+  sourcePosition: WallPosition;
+  effectRef: RuneDestroyEffectRef;
+}
+
+export type PendingCombatContinuation =
+  | {
+    kind: 'cast';
+    castRune: Rune;
+    sourcePosition: WallPosition;
+    remainingEffectRefs: RuneEffectRef[];
+  }
+  | {
+    kind: 'endTurn';
+    processedRemovalKeys: string[];
+  }
+  | {
+    kind: 'startTurn';
+    processedRemovalKeys: string[];
+  };
+
+export interface PendingCombatResolution {
+  target: PendingRuneTarget;
+  continuation: PendingCombatContinuation;
 }
 
 export interface GameState extends CombatZoneState {
@@ -203,7 +265,6 @@ export interface GameState extends CombatZoneState {
   fullDeck: Rune[];
   gameIndex: number;
   arcaneDust: number;
-  enemyMaxHealth: number;
   isDefeat: boolean;
   isVictory: boolean;
   longestRun: number;

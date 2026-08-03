@@ -5,6 +5,7 @@ import {
   createForestMapTile,
   createMapTileKey,
   createMapTravelTargetKey,
+  discoverSoloMapRoad,
   getFrontierRoadIds,
   getMapLocationMarkerKind,
   getReachableMapTargets,
@@ -26,7 +27,7 @@ function initializeCombatOnlyMap() {
   };
 }
 
-function roadTarget(roadId: MapRoadId): MapTravelTarget {
+function roadTarget(roadId: MapRoadId): Extract<MapTravelTarget, { kind: 'road' }> {
   return {
     kind: 'road',
     tileKey: createMapTileKey(0, 0),
@@ -105,6 +106,20 @@ describe('soloMap', () => {
     expect(travelOnSoloMap(map, roadTarget('right-75')).map).toBe(map);
   });
 
+  it('reveals a frontier tile without moving the player or resolving its arrival event', () => {
+    const map = initializeSoloMap();
+    const discovery = discoverSoloMapRoad(map, roadTarget('right-75'), () => 0.99);
+
+    expect(discovery).toMatchObject({
+      arrivalTarget: { kind: 'location', tileKey: '1,0', locationId: 'A' },
+      revealedTileKey: '1,0',
+    });
+    expect(discovery?.map.playerPosition).toEqual(map.playerPosition);
+    expect(discovery?.map.activeEncounter).toBeNull();
+    expect(discovery?.map.tiles['1,0'].events.A?.cleared).toBe(false);
+    expect(discovery?.map.availableEventTokenIds).toHaveLength(map.availableEventTokenIds.length - 4);
+  });
+
   it('places the first-tile boss at 5% and never on the blind arrival location', () => {
     const result = travelOnSoloMap(initializeSoloMap(), roadTarget('right-75'), () => 0);
     const tile = result.map.tiles['1,0'];
@@ -128,22 +143,32 @@ describe('soloMap', () => {
     expect(allBosses).toHaveLength(1);
   });
 
-  it('raises boss chance by five points per tile and explores empty tiles until discovery', () => {
+  it('always places the boss on the current tile when no event tokens remain', () => {
     const first = travelOnSoloMap(
       { ...initializeSoloMap(), availableEventTokenIds: [] },
       roadTarget('right-75'),
       () => 0.99,
     );
-    expect(Object.values(first.map.tiles['1,0'].events).some((event) => event?.kind === 'boss')).toBe(false);
-    expect(getFrontierRoadIds(first.map, first.map.tiles['1,0']).length).toBeGreaterThan(0);
 
-    const second = travelOnSoloMap(first.map, {
-      kind: 'road',
-      tileKey: '1,0',
-      roadId: 'top-75',
-    }, () => 0.099);
-    expect(Object.values(second.map.tiles['1,-1'].events).some((event) => event?.kind === 'boss')).toBe(true);
-    expect(getFrontierRoadIds(second.map, second.map.tiles['1,-1'])).toEqual([]);
+    expect(Object.values(first.map.tiles['1,0'].events)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'boss', monsterId: 'golem-lord' }),
+    ]));
+    expect(getFrontierRoadIds(first.map, first.map.tiles['1,0'])).toEqual([]);
+  });
+
+  it('randomly replaces a filled slot when the current tile consumes the final tokens', () => {
+    const availableTokenIds = getRegionDefinition('greenwood').eventTokens.slice(0, 4).map((token) => token.id);
+    const result = travelOnSoloMap(
+      { ...initializeSoloMap(), availableEventTokenIds: availableTokenIds },
+      roadTarget('right-75'),
+      () => 0.99,
+    );
+    const events = Object.values(result.map.tiles['1,0'].events);
+
+    expect(events).toHaveLength(4);
+    expect(events.filter((event) => event?.kind === 'boss')).toHaveLength(1);
+    expect(events.filter((event) => event?.kind === 'combat')).toHaveLength(3);
+    expect(result.map.availableEventTokenIds).toEqual([]);
   });
 
   it('caps boss chance at 100%', () => {

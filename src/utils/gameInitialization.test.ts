@@ -5,16 +5,18 @@ import {
   rollEnemyArcaneDustReward,
   STARTING_DECK,
 } from './gameInitialization';
+import { MONSTER_CATALOG } from './monsterCatalog';
+import { getRuneEffectDescription } from './runeEffects';
 
 describe('gameInitialization combat state', () => {
-  it('initializes a goblin encounter using enemy max health', () => {
-    const state = initializeSoloGame(42);
+  it('initializes a Goblin encounter from the monster catalogue', () => {
+    const state = initializeSoloGame();
 
     expect(state.enemy).toMatchObject({
       id: 'goblin',
       name: 'Goblin',
-      health: 42,
-      maxHealth: 42,
+      health: MONSTER_CATALOG.goblin.maxHealth,
+      maxHealth: MONSTER_CATALOG.goblin.maxHealth,
     });
     expect(state.combatPhase).toBe('player-turn');
     expect(state.hand).toHaveLength(5);
@@ -24,13 +26,14 @@ describe('gameInitialization combat state', () => {
     expect(state.selectedHandRuneId).toBeNull();
   });
 
-  it('starts the default Goblin encounter at 20 health', () => {
+  it('starts the default Goblin encounter at its catalogue health with neutral slots', () => {
     const state = initializeSoloGame();
 
-    expect(state.enemy).toMatchObject({ health: 20, maxHealth: 20 });
-    expect(state.enemyBoard.flat().every((cell) => (
-      cell.acceptedRuneTypes.length === 1 && cell.acceptedRuneTypes[0] === 'Life'
-    ))).toBe(true);
+    expect(state.enemy).toMatchObject({
+      health: MONSTER_CATALOG.goblin.maxHealth,
+      maxHealth: MONSTER_CATALOG.goblin.maxHealth,
+    });
+    expect(state.enemyBoard.flat().every((cell) => cell.id === null && cell.runeTypes.length === 0)).toBe(true);
     expect(state.arcaneDust).toBe(0);
   });
 
@@ -67,10 +70,25 @@ describe('gameInitialization combat state', () => {
       rarity: 'uncommon',
       manaCost: 4,
       castEffectRefs: [],
-      passiveEffectRefs: [{ effectId: 'passive.reduceDamage', params: { amount: 1 } }],
+      passiveEffectRefs: [{
+        effectId: 'rune.destroy',
+        trigger: 'onIncomingDamage',
+        selection: 'random',
+        targetOwner: 'self',
+        count: 1,
+        runeType: 'Wind',
+        payload: { effectId: 'passive.reduceDamage', params: { amount: 5 } },
+      }],
     });
+    expect(getRuneEffectDescription(deck.find((rune) => rune.name === 'Headwind')!)).toBe(
+      '• Destroy a random Wind rune on your wall to reduce incoming damage by 5',
+    );
     expect(deck.find((rune) => rune.name === 'Lightning Bolt')).toMatchObject({ manaCost: 1 });
     expect(deck.find((rune) => rune.name === 'Firebolt')).toMatchObject({ manaCost: 2 });
+    expect(deck.find((rune) => rune.name === 'Frost Shield')).toMatchObject({
+      manaCost: 2,
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 3 } }],
+    });
     expect(deck.find((rune) => rune.name === 'Void Tendrils')).toMatchObject({ manaCost: 5 });
   });
 
@@ -78,7 +96,7 @@ describe('gameInitialization combat state', () => {
     const deck = createStartingDeck();
 
     expect(deck.find((rune) => rune.name === 'Barricade')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.armor', params: { amount: 5 } }],
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 5 } }],
     });
     expect(deck.find((rune) => rune.name === 'Barricade')?.cardImageSrc).toContain('card_barricade.png');
     expect(deck.find((rune) => rune.name === 'Headwind')?.cardImageSrc).toContain('card_headwind.png');
@@ -100,6 +118,14 @@ describe('gameInitialization combat state', () => {
       { effectId: 'cast.damage', params: { amount: 5 } },
     ]);
     expect(firstDeck[0].castEffectRefs).not.toBe(secondDeck[0].castEffectRefs);
+    const firstHeadwindEffect = firstDeck.find((rune) => rune.name === 'Headwind')!.passiveEffectRefs[0];
+    const secondHeadwindEffect = secondDeck.find((rune) => rune.name === 'Headwind')!.passiveEffectRefs[0];
+    expect(firstHeadwindEffect).not.toBe(secondHeadwindEffect);
+    expect('payload' in firstHeadwindEffect && 'payload' in secondHeadwindEffect
+      ? firstHeadwindEffect.payload
+      : null).not.toBe(
+      'payload' in secondHeadwindEffect ? secondHeadwindEffect.payload : null,
+    );
   });
 
   it('assigns current type card and token art to every starting rune', () => {

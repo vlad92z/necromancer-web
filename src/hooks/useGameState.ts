@@ -34,6 +34,10 @@ export function useSelectedArtefactIds() {
   return useArtefactStore((state) => state.selectedArtefactIds);
 }
 
+export function useActiveArtefactIds() {
+  return useRunStore((state) => state.activeArtefacts);
+}
+
 export function useActiveElement() {
   return useUIStore((state) => state.activeElement);
 }
@@ -125,6 +129,10 @@ export function useEnemySpellBoardState() {
   );
 }
 
+export function usePendingRuneTargetState() {
+  return useCombatStore((state) => state.pendingCombatResolution?.target ?? null);
+}
+
 export function useGameplayDeckState() {
   const deck = useBoardStore((state) => state.player.deck);
   const fullDeck = useRunStore((state) => state.fullDeck);
@@ -138,7 +146,6 @@ export function useGameplayHealthState() {
     useShallow((state) => ({
       health: state.player.health,
       maxHealth: state.player.maxHealth,
-      armor: state.player.armor,
       mana: state.player.mana,
       maxMana: state.player.maxMana,
     })),
@@ -171,7 +178,6 @@ export function useGameplaySummaryState() {
   return useRunStore(
     useShallow((state) => ({
       gameIndex: state.gameIndex,
-      enemyMaxHealth: state.enemyMaxHealth,
     })),
   );
 }

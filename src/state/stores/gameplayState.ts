@@ -34,7 +34,6 @@ export function getGameplayState(): GameState {
     fullDeck: run.fullDeck,
     gameIndex: run.gameIndex,
     arcaneDust: run.arcaneDust,
-    enemyMaxHealth: run.enemyMaxHealth,
     isDefeat: run.isDefeat,
     isVictory: run.isVictory,
     longestRun: run.longestRun,
@@ -52,6 +51,7 @@ export function getGameplayState(): GameState {
     enemyBoard: combat.enemyBoard,
     enemyQueuedRunes: combat.enemyQueuedRunes,
     enemyTurnNumber: combat.enemyTurnNumber,
+    pendingCombatResolution: combat.pendingCombatResolution,
   };
 }
 

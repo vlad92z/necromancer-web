@@ -43,14 +43,7 @@ export function EnemyPanel({ hoveredRune }: EnemyPanelProps) {
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
-          <span className="flex items-center gap-1.5">
-            {(enemy.armor ?? 0) > 0 && (
-              <span className="flex items-center gap-1 text-[#5dc6b0]">
-                <span aria-hidden="true">🛡</span>
-                <span>{enemy.armor}</span>
-              </span>
-            )}
-          </span>
+          <span />
           <span>{enemy.health} / {enemy.maxHealth}</span>
         </div>
         <div className="pixel-health-track">

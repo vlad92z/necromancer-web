@@ -5,7 +5,7 @@
 import { create, type StoreApi } from 'zustand';
 import type { ArtefactId } from '../../types/artefacts';
 import type { DeckDraftState, GameState, Rune, RuneSoundSignals, SoloPhase } from '../../types/game';
-import { initializeSoloGame } from '../../utils/gameInitialization';
+import { createInitialSoloRunState } from '../../utils/soloRunFactory';
 
 export interface RunState {
   gameStarted: boolean;
@@ -14,7 +14,6 @@ export interface RunState {
   fullDeck: Rune[];
   gameIndex: number;
   arcaneDust: number;
-  enemyMaxHealth: number;
   isDefeat: boolean;
   isVictory: boolean;
   longestRun: number;
@@ -37,7 +36,6 @@ export function pickRunState(state: GameState): RunState {
     fullDeck: state.fullDeck,
     gameIndex: state.gameIndex,
     arcaneDust: state.arcaneDust,
-    enemyMaxHealth: state.enemyMaxHealth,
     isDefeat: state.isDefeat,
     isVictory: state.isVictory,
     longestRun: state.longestRun,
@@ -49,7 +47,7 @@ export function pickRunState(state: GameState): RunState {
   };
 }
 
-export function createRunStore(initialState: RunState = pickRunState(initializeSoloGame())) {
+export function createRunStore(initialState: RunState = pickRunState(createInitialSoloRunState())) {
   return create<RunStore>((set) => ({
     ...initialState,
     replaceRunState: (next) => set(() => next),

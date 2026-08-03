@@ -3,15 +3,34 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Rune, RuneType } from '../../types/game';
+import type { Rune, RuneType, ScoringWall } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall, createMonsterEnemy } from '../../utils/gameInitialization';
-import { createRuneFromPool } from '../../utils/runeEffects';
+import { MONSTER_CATALOG } from '../../utils/monsterCatalog';
+import { createRuneFromCardName, createRuneFromPool } from '../../utils/runeEffects';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import { getRegionDefinition } from '../../utils/regionCatalog';
+import { createRuneRemovalEffectRef } from '../../utils/runeRemoval';
 import { createGameplayStoreInstance } from './gameplayStore';
 
 type GameplayStoreInstance = ReturnType<typeof createGameplayStoreInstance>;
+
+const totalShield = (wall: ScoringWall) => wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
+
+function createShieldWall(...values: number[]): ScoringWall {
+  const wall = createEmptyWall();
+  values.forEach((shield, index) => {
+    wall[0]![index] = {
+      ...wall[0]![index],
+      id: `shield-${index}`,
+      name: 'Shield Test',
+      runeTypes: ['Frost'],
+      rarity: 'common',
+      shield,
+    };
+  });
+  return wall;
+}
 
 function startEncounterAtA(store: GameplayStoreInstance): void {
   store.getState().startSoloRun();
@@ -46,9 +65,10 @@ describe('gameplayStore current combat', () => {
     expect(state.soloPhase).toBe('map');
     expect(state.soloMap.playerPosition).toEqual({ tileKey: '0,0', locationId: 'start' });
     expect(Object.keys(state.soloMap.tiles)).toEqual(['0,0']);
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 20 });
+    expect(state.enemy).toBeNull();
     expect(state.combatPhase).toBe('player-turn');
-    expect(state.hand).toHaveLength(5);
+    expect(state.hand).toEqual([]);
+    expect(state.player.deck).toHaveLength(state.fullDeck.length);
     expect(state.discardPile).toEqual([]);
     expect(state.deckDraftState).toBeNull();
   });
@@ -67,7 +87,7 @@ describe('gameplayStore current combat', () => {
     store.getState().startSoloRun();
     store.setState((state) => ({
       ...state,
-      player: { ...state.player, health: 73, armor: 12 },
+      player: { ...state.player, health: 73 },
       soloMap: {
         ...state.soloMap,
         availableEventTokenIds: getRegionDefinition('greenwood').eventTokens
@@ -87,10 +107,14 @@ describe('gameplayStore current combat', () => {
     expect(state.soloMap.playerPosition).toEqual({ tileKey: '1,0', locationId: 'A' });
     expect(state.soloMap.tiles['1,0'].events.A?.cleared).toBe(false);
     expect(state.soloMap.activeEncounter).toMatchObject({ tileKey: '1,0', locationId: 'A' });
-    expect(state.enemy).toMatchObject({ id: 'goblin', health: 20, maxHealth: 20 });
+    expect(state.enemy).toMatchObject({
+      id: 'goblin',
+      health: MONSTER_CATALOG.goblin.maxHealth,
+      maxHealth: MONSTER_CATALOG.goblin.maxHealth,
+    });
     expect(state.hand).toHaveLength(5);
     expect(state.player.health).toBe(73);
-    expect(state.player.armor).toBe(0);
+    expect(totalShield(state.player.wall)).toBe(0);
   });
 
   it('launches Golem Lord with its boss metadata and Life-only board', () => {
@@ -139,7 +163,7 @@ describe('gameplayStore current combat', () => {
       maxHealth: 50,
       imageSrc: expect.stringContaining('golem.png'),
     });
-    expect(state.enemyBoard.flat().every((cell) => cell.acceptedRuneTypes.join(',') === 'Life')).toBe(true);
+    expect(state.enemyBoard.flat().every((cell) => cell.runeTypes.length === 0)).toBe(true);
   });
 
   it('heals 25% of max health and visits a Healing Shrine immediately', () => {
@@ -158,6 +182,124 @@ describe('gameplayStore current combat', () => {
     expect(state.soloPhase).toBe('map');
     expect(state.player.health).toBe(75);
     expect(state.soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: true });
+  });
+
+  it('reveals a road tile before resolving its arrival event', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const shrineToken = getRegionDefinition('greenwood').eventTokens.find((token) => token.kind === 'healing');
+    store.setState((state) => ({
+      ...state,
+      player: { ...state.player, health: 50, maxHealth: 100 },
+      soloMap: { ...state.soloMap, availableEventTokenIds: [shrineToken!.id] },
+    }));
+
+    const arrivalTarget = store.getState().revealMapRoadTarget({
+      kind: 'road',
+      tileKey: '0,0',
+      roadId: 'right-75',
+    });
+
+    expect(arrivalTarget).toEqual({ kind: 'location', tileKey: '1,0', locationId: 'A' });
+    expect(store.getState().soloPhase).toBe('map');
+    expect(store.getState().player.health).toBe(50);
+    expect(store.getState().soloMap.playerPosition).toEqual({ tileKey: '0,0', locationId: 'start' });
+    expect(store.getState().soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: false });
+
+    store.getState().travelToMapTarget(arrivalTarget!);
+
+    expect(store.getState().player.health).toBe(75);
+    expect(store.getState().soloMap.tiles['1,0'].events.A).toMatchObject({ kind: 'healing', cleared: true });
+  });
+
+  it('opens a Sacrificial Altar until the player sacrifices a selected card', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const altarToken = getRegionDefinition('greenwood').eventTokens.find(
+      (token) => token.kind === 'sacrificial-altar',
+    );
+    store.setState((state) => ({
+      ...state,
+      player: { ...state.player, health: 50 },
+      soloMap: { ...state.soloMap, availableEventTokenIds: [altarToken!.id] },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+    const altarState = store.getState();
+    const selectedRuneId = altarState.fullDeck[0].id;
+    expect(altarState.soloMap.tiles['1,0'].events.A).toMatchObject({
+      kind: 'sacrificial-altar',
+      cleared: false,
+    });
+
+    store.getState().travelToMapTarget({ kind: 'location', tileKey: '1,0', locationId: 'B' });
+    expect(store.getState().soloMap.playerPosition).toEqual({ tileKey: '1,0', locationId: 'A' });
+
+    store.getState().sacrificeCardAtAltar(selectedRuneId);
+    const resolvedState = store.getState();
+    expect(resolvedState.player.health).toBe(40);
+    expect(resolvedState.fullDeck.some((rune) => rune.id === selectedRuneId)).toBe(false);
+    expect(resolvedState.soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
+  });
+
+  it('can skip a Sacrificial Altar without paying health or deleting a card', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const altarToken = getRegionDefinition('greenwood').eventTokens.find(
+      (token) => token.kind === 'sacrificial-altar',
+    );
+    store.setState((state) => ({
+      ...state,
+      soloMap: { ...state.soloMap, availableEventTokenIds: [altarToken!.id] },
+    }));
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+    const health = store.getState().player.health;
+    const deck = store.getState().fullDeck;
+
+    store.getState().skipSacrificialAltar();
+
+    expect(store.getState().player.health).toBe(health);
+    expect(store.getState().fullDeck).toBe(deck);
+    expect(store.getState().soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
+  });
+
+  it('offers the Greenwood Artefact event until claimed, then keeps its rewards for the run', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const artefactToken = getRegionDefinition('greenwood').eventTokens.find((token) => token.kind === 'artefact');
+    store.setState((state) => ({
+      ...state,
+      soloMap: { ...state.soloMap, availableEventTokenIds: [artefactToken!.id] },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+    const offered = store.getState().soloMap.tiles['1,0'].events.A;
+    expect(offered).toMatchObject({ kind: 'artefact', offeredArtefactId: 'ring', arcaneDustReward: 27, cleared: false });
+
+    store.getState().claimArtefactEvent();
+
+    expect(store.getState().activeArtefacts).toContain('ring');
+    expect(store.getState().arcaneDust).toBe(27);
+    expect(store.getState().soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
+  });
+
+  it('starts subsequent encounters with Ring of Mana bonus mana', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      activeArtefacts: ['ring'],
+      soloMap: {
+        ...state.soloMap,
+        availableEventTokenIds: getRegionDefinition('greenwood').eventTokens
+          .filter((token) => token.kind === 'combat')
+          .map((token) => token.id),
+      },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+
+    expect(store.getState().player).toMatchObject({ mana: 6, maxMana: 5 });
   });
 
   it('moves between cleared locations without resetting combat state', () => {
@@ -232,7 +374,7 @@ describe('gameplayStore current combat', () => {
     expect(state.player.mana).toBe(5);
   });
 
-  it('keeps selection active for invalid wall casts', () => {
+  it('casts into a neutral wall slot', () => {
     const store = createGameplayStoreInstance();
     const lifeRune = createTestRune('life-1', 'Life', 3);
 
@@ -245,9 +387,9 @@ describe('gameplayStore current combat', () => {
     store.getState().castRuneToWall(0, 0);
 
     const state = store.getState();
-    expect(state.hand).toEqual([lifeRune]);
-    expect(state.selectedHandRuneId).toBe(lifeRune.id);
-    expect(state.player.wall[0][0].runeTypes).toEqual([]);
+    expect(state.hand).toEqual([]);
+    expect(state.selectedHandRuneId).toBeNull();
+    expect(state.player.wall[0][0].runeTypes).toEqual(['Life']);
   });
 
   it('discards hand, applies enemy attack, and draws next hand on end turn', () => {
@@ -258,27 +400,27 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand,
-      player: { ...state.player, deck, armor: 2, health: 10 },
+      player: { ...state.player, deck, wall: createShieldWall(2), health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(3);
-    expect(state.player.armor).toBe(0);
+    expect(state.player.health).toBe(6);
+    expect(totalShield(state.player.wall)).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.hand.map((rune) => rune.id)).toEqual(['deck-fire', 'deck-life', 'hand-fire']);
     expect(state.discardPile).toEqual([]);
   });
 
-  it('does not increment enemy attack sound signal when armor fully absorbs attack', () => {
+  it('does not increment enemy attack sound signal when shield fully absorbs attack', () => {
     const store = createGameplayStoreInstance();
 
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 10, health: 10 },
+      player: { ...state.player, deck: [], wall: createShieldWall(10), health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -286,26 +428,26 @@ describe('gameplayStore current combat', () => {
 
     const state = store.getState();
     expect(state.player.health).toBe(10);
-    expect(state.player.armor).toBe(1);
+    expect(totalShield(state.player.wall)).toBe(4);
     expect(state.enemyAttackSoundSignal).toBe(0);
     expect(state.shieldSoundSignal).toBe(1);
   });
 
-  it('increments enemy attack sound signal when armor partially absorbs attack', () => {
+  it('increments enemy attack sound signal when shield partially absorbs attack', () => {
     const store = createGameplayStoreInstance();
 
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 3, health: 10 },
+      player: { ...state.player, deck: [], wall: createShieldWall(3), health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(4);
-    expect(state.player.armor).toBe(0);
+    expect(state.player.health).toBe(7);
+    expect(totalShield(state.player.wall)).toBe(0);
     expect(state.enemyAttackSoundSignal).toBe(1);
     expect(state.shieldSoundSignal).toBe(0);
   });
@@ -316,7 +458,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, deck: [], armor: 0, health: 4 },
+      player: { ...state.player, deck: [], health: 4 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -344,7 +486,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [],
-      player: { ...state.player, wall, deck: [], armor: 0, health: 10 },
+      player: { ...state.player, wall, deck: [], health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -426,7 +568,6 @@ describe('gameplayStore current combat', () => {
     expect(nextState.soloMap.tiles['1,0'].events.B?.cleared).toBe(false);
     expect(nextState.combatPhase).toBe('player-turn');
     expect(nextState.enemy?.maxHealth).toBe(20);
-    expect(nextState.enemyMaxHealth).toBe(20);
     expect(nextState.suppressedRunes).toEqual([]);
     expect(nextState.discardPile).toEqual([]);
     expect([...nextState.hand, ...nextState.player.deck].map((rune) => rune.id).sort()).toEqual(
@@ -527,14 +668,14 @@ describe('gameplayStore current combat', () => {
       if (index === 0) return;
       cell.id = `filled-${index}`;
       cell.name = 'Filled';
-      cell.runeTypes = [...cell.acceptedRuneTypes];
+      cell.runeTypes = ['Fire'];
       cell.rarity = 'common';
       cell.cardImageSrc = 'card.png';
       cell.tokenImageSrc = 'token.png';
       cell.castEffectRefs = [];
       cell.passiveEffectRefs = [];
     });
-    const finalRune = createTestRune('boss-wall-final', wall[0][0].acceptedRuneTypes[0], 0);
+    const finalRune = createTestRune('boss-wall-final', 'Fire', 0);
 
     store.setState((state) => ({
       ...state,
@@ -667,30 +808,30 @@ describe('gameplayStore current combat', () => {
     expect(state.runeSoundSignals[runeType]).toBe(1);
   });
 
-  it('increments the casting rune sound signal for non-Frost armor gain', () => {
+  it('increments the casting rune sound signal for non-Frost shield gain', () => {
     const store = createGameplayStoreInstance();
-    const armorRune: Rune = {
-      id: 'fire-armor',
+    const shieldRune: Rune = {
+      id: 'fire-shield',
       name: 'Fire Test',
       runeTypes: ['Fire'],
       rarity: 'common',
       cardImageSrc: 'fire-card.png',
       tokenImageSrc: 'fire-token.png',
-      castEffectRefs: [createEffectRef('cast.armor', { amount: 3 })],
+      castEffectRefs: [createEffectRef('cast.shield', { amount: 3 })],
       passiveEffectRefs: [],
     };
 
     store.setState((state) => ({
       ...state,
-      hand: [armorRune],
-      selectedHandRuneId: armorRune.id,
+      hand: [shieldRune],
+      selectedHandRuneId: shieldRune.id,
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
     store.getState().castRuneToWall(0, 0);
 
     const state = store.getState();
-    expect(state.player.armor).toBe(3);
+    expect(totalShield(state.player.wall)).toBe(3);
     expect(state.runeSoundSignals.Fire).toBe(1);
     expect(state.runeSoundSignals.Frost).toBe(0);
   });
@@ -704,7 +845,7 @@ describe('gameplayStore current combat', () => {
       runeTypes: ['Frost'],
       rarity: 'epic',
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.armorBoost', { amount: 5 })],
+      passiveEffectRefs: [createEffectRef('passive.shieldBoost', { amount: 5 })],
     };
     const fireRune = createTestRune('fire-1', 'Fire', 0);
 
@@ -712,7 +853,7 @@ describe('gameplayStore current combat', () => {
       ...state,
       hand: [fireRune],
       selectedHandRuneId: fireRune.id,
-      player: { ...state.player, wall, armor: 0 },
+      player: { ...state.player, wall },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
@@ -726,7 +867,6 @@ describe('gameplayStore current combat', () => {
   it('increments rune sound signal when a completed rune is retriggered', () => {
     const store = createGameplayStoreInstance();
     const wall = createEmptyWall();
-    wall[0][0].acceptedRuneTypes = ['Void'];
     wall[0][1] = {
     ...wall[0][1],
       id: 'completed-frost',
@@ -786,7 +926,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand,
-      player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
+      player: { ...state.player, wall, health: 10, deck: [] },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 5, maxHealth: 5 },
     }));
 
@@ -798,7 +938,7 @@ describe('gameplayStore current combat', () => {
     expect(state.player.health).toBe(10);
   });
 
-  it('applies rare Frost end-turn armor before enemy attacks', () => {
+  it('applies rare Frost end-turn shield before enemy attacks', () => {
     const store = createGameplayStoreInstance();
     const hand = [createTestRune('hand-fire', 'Fire', 0)];
     const wall = createEmptyWall();
@@ -808,7 +948,7 @@ describe('gameplayStore current combat', () => {
       runeTypes: ['Frost'],
       rarity: 'rare',
       castEffectRefs: [],
-      passiveEffectRefs: [createEffectRef('passive.armorEndTurnSynergy', { amount: 2, synergyType: 'Frost' })],
+      passiveEffectRefs: [createEffectRef('passive.shieldEndTurnSynergy', { amount: 2, synergyType: 'Frost' })],
     };
     wall[0][1] = {
     ...wall[0][1],
@@ -822,7 +962,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand,
-      player: { ...state.player, wall, health: 10, armor: 0, deck: [] },
+      player: { ...state.player, wall, health: 10, deck: [] },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       discardPile: [],
     }));
@@ -830,8 +970,8 @@ describe('gameplayStore current combat', () => {
     store.getState().endCombatTurn();
 
     const state = store.getState();
-    expect(state.player.health).toBe(5);
-    expect(state.player.armor).toBe(0);
+    expect(state.player.health).toBe(8);
+    expect(totalShield(state.player.wall)).toBe(0);
     expect(state.combatPhase).toBe('player-turn');
   });
 
@@ -839,13 +979,12 @@ describe('gameplayStore current combat', () => {
     const store = createGameplayStoreInstance();
     const voidRune = createRuneFromPool({ id: 'void-pulse', runeType: 'Void', rarity: 'rare' });
     const wall = createEmptyWall();
-    wall[0][0].acceptedRuneTypes = ['Void'];
 
     store.setState((state) => ({
       ...state,
       hand: [voidRune],
       selectedHandRuneId: voidRune.id,
-      player: { ...state.player, wall, deck: [], armor: 10, health: 10 },
+      player: { ...state.player, wall, deck: [], health: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       discardPile: [],
     }));
@@ -885,7 +1024,7 @@ describe('gameplayStore current combat', () => {
     store.setState((state) => ({
       ...state,
       hand: [createTestRune('hand-fire', 'Fire', 1)],
-      player: { ...state.player, wall, deck, health: 5, maxHealth: 10, armor: 10 },
+      player: { ...state.player, wall, deck, health: 5, maxHealth: 10 },
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 30, maxHealth: 30 },
       discardPile: [],
     }));
@@ -898,49 +1037,249 @@ describe('gameplayStore current combat', () => {
     expect(state.player.deck).toHaveLength(1);
   });
 
-  it('does not persist consumed adjacent runes across victory', () => {
+  it('commits manual consumption by replacing the clicked rune before resolving the payload', () => {
     const store = createGameplayStoreInstance();
     startEncounterAtA(store);
-    const uncommonVoid = createRuneFromPool({ id: 'uncommon-void', runeType: 'Void', rarity: 'uncommon' });
+    const consumer: Rune = {
+      ...createRuneFromCardName({ id: 'consumer', cardName: 'VoidTendrils' }),
+      castEffectRefs: [
+        createEffectRef('cast.damage', { amount: 2 }),
+        createRuneRemovalEffectRef({
+          kind: 'consume',
+          trigger: 'onCast',
+          selection: 'manual',
+          runeType: 'Fire',
+          payload: createEffectRef('cast.damage', { amount: 5 }),
+        }),
+      ],
+    };
     const wall = createEmptyWall();
-    wall[0][0].acceptedRuneTypes = ['Void'];
     wall[0][1] = {
-    ...wall[0][1],
+      ...wall[0][1],
       id: 'adjacent-fire',
+      name: 'Fire Target',
       runeTypes: ['Fire'],
       rarity: 'common',
+      cardImageSrc: 'fire-card.png',
+      tokenImageSrc: 'fire-token.png',
       castEffectRefs: [createEffectRef('cast.damage', { amount: 1 })],
       passiveEffectRefs: [],
     };
     store.setState((state) => ({
       ...state,
-      hand: [uncommonVoid],
-      selectedHandRuneId: uncommonVoid.id,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
       player: { ...state.player, wall, deck: [] },
-      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 2, maxHealth: 2 },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
       suppressedRunes: [],
+    }));
+
+    store.getState().castRuneToWall(0, 1);
+
+    const state = store.getState();
+    expect(state.enemy?.health).toBe(3);
+    expect(state.pendingCombatResolution).toBeNull();
+    expect(state.hand).toEqual([]);
+    expect(state.discardPile.map((rune) => rune.id)).toContain('consumer');
+    expect(state.player.wall[0][1].name).toBe(consumer.name);
+    expect(state.suppressedRunes.map((rune) => rune.id)).toContain('adjacent-fire');
+  });
+
+  it('rejects Consume with no eligible target without spending mana or moving the card', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromCardName({ id: 'blocked-consumer', cardName: 'VoidTendrils' }),
+      manaCost: 2,
+      castEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', runeType: 'Fire',
+      })],
+    };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, wall: createEmptyWall(), mana: 5, deck: [] },
     }));
 
     store.getState().castRuneToWall(0, 0);
 
-    const state = store.getState();
-    expect(state.combatPhase).toBe('victory');
-    expect(state.hand).toEqual([]);
-    expect(state.suppressedRunes).toEqual([]);
-    expect(state.player.deck.map((rune) => rune.id)).not.toContain('adjacent-fire');
-    expect(state.player.deck.map((rune) => rune.id)).not.toContain('uncommon-void');
+    expect(store.getState().hand.map((rune) => rune.id)).toEqual([consumer.id]);
+    expect(store.getState().player.mana).toBe(5);
+    expect(store.getState().discardPile).toEqual([]);
+  });
 
-    store.getState().returnToMapAfterReward();
-    store.getState().travelToMapTarget({
-      kind: 'location',
-      tileKey: '1,0',
-      locationId: 'B',
+  it('places an opponent-targeted Consume rune on the enemy wall', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromCardName({ id: 'enemy-wall-consumer', cardName: 'VoidTendrils' }),
+      castEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'consume', trigger: 'onCast', selection: 'random', targetOwner: 'opponent',
+        payload: createEffectRef('cast.shield', { amount: 3 }),
+      })],
+      passiveEffectRefs: [createEffectRef('passive.damageBoost', { amount: 2 })],
+    };
+    const enemyBoard = createEmptyWall();
+    enemyBoard[0][0] = { ...enemyBoard[0][0], id: 'enemy-target', runeTypes: ['Fire'], rarity: 'common' };
+    enemyBoard[0][1] = { ...enemyBoard[0][1], id: 'enemy-random-target', runeTypes: ['Life'], rarity: 'common' };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, deck: [] },
+      enemyBoard,
+    }));
+
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    store.getState().castRuneToWall(0, 0, 'enemy');
+    randomSpy.mockRestore();
+
+    expect(store.getState().enemyBoard[0][0].id).toBe('enemy-target');
+    expect(store.getState().enemyBoard[0][1]).toMatchObject({
+      name: consumer.name,
+      passiveEffectRefs: consumer.passiveEffectRefs,
+      shield: 3,
     });
+    expect(store.getState().player.wall[0][0].id).toBeNull();
+  });
 
-    const nextState = store.getState();
-    const nextEncounterRuneIds = [...nextState.hand, ...nextState.player.deck].map((rune) => rune.id);
-    expect(nextEncounterRuneIds).not.toContain('adjacent-fire');
-    expect(nextEncounterRuneIds).not.toContain('uncommon-void');
+  it('finishes a consume cast chain before evaluating victory', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromCardName({ id: 'victory-consumer', cardName: 'VoidTendrils' }),
+      castEffectRefs: [
+        createEffectRef('cast.damage', { amount: 10 }),
+        createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual' }),
+      ],
+    };
+    const wall = createEmptyWall();
+    wall[0][1] = { ...wall[0][1], id: 'victory-target', runeTypes: ['Fire'], rarity: 'common' };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, wall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
+    }));
+
+    store.getState().castRuneToWall(0, 1);
+    expect(store.getState().pendingCombatResolution).toBeNull();
+    expect(store.getState().soloPhase).toBe('reward');
+  });
+
+  it('pauses and resumes mandatory manual end-turn and start-turn destruction', () => {
+    const endStore = createGameplayStoreInstance();
+    startEncounterAtA(endStore);
+    const endWall = createEmptyWall();
+    endWall[0][0] = {
+      ...endWall[0][0],
+      id: 'end-source',
+      runeTypes: ['Wind'],
+      rarity: 'common',
+      passiveEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'destroy',
+        trigger: 'endTurn',
+        selection: 'manual',
+        targetOwner: 'self',
+        count: 1,
+        runeType: 'Fire',
+        payload: createEffectRef('cast.damage', { amount: 5 }),
+      })],
+    };
+    endWall[0][1] = { ...endWall[0][1], id: 'end-target', runeTypes: ['Fire'], rarity: 'common' };
+    endStore.setState((state) => ({
+      ...state,
+      hand: [],
+      discardPile: [],
+      player: { ...state.player, wall: endWall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20 },
+    }));
+
+    endStore.getState().endCombatTurn();
+    expect(endStore.getState().pendingCombatResolution?.continuation.kind).toBe('endTurn');
+    expect(endStore.getState().enemyTurnNumber).toBe(0);
+    endStore.getState().selectPendingRuneTarget('player', 0, 1);
+    expect(endStore.getState().pendingCombatResolution).toBeNull();
+    expect(endStore.getState().enemyTurnNumber).toBe(1);
+    expect(endStore.getState().enemy?.health).toBe(15);
+    expect(endStore.getState().player.wall[0][1].id).toBeNull();
+
+    const startStore = createGameplayStoreInstance();
+    startEncounterAtA(startStore);
+    const startWall = createEmptyWall();
+    startWall[0][0] = {
+      ...startWall[0][0],
+      id: 'start-source',
+      runeTypes: ['Wind'],
+      rarity: 'common',
+      passiveEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'destroy',
+        trigger: 'startTurn',
+        selection: 'manual',
+        targetOwner: 'self',
+        count: 1,
+        runeType: 'Fire',
+        payload: createEffectRef('cast.shield', { amount: 2 }),
+      })],
+    };
+    startWall[0][1] = { ...startWall[0][1], id: 'start-target', runeTypes: ['Fire'], rarity: 'common' };
+    startStore.setState((state) => ({
+      ...state,
+      hand: [],
+      discardPile: [],
+      player: { ...state.player, wall: startWall, deck: [], health: 20, maxHealth: 20 },
+    }));
+
+    startStore.getState().endCombatTurn();
+    expect(startStore.getState().pendingCombatResolution?.continuation.kind).toBe('startTurn');
+    startStore.getState().selectPendingRuneTarget('player', 0, 1);
+    expect(startStore.getState().pendingCombatResolution).toBeNull();
+    expect(startStore.getState().combatPhase).toBe('player-turn');
+    expect(totalShield(startStore.getState().player.wall)).toBe(2);
+    expect(startStore.getState().player.wall[0][1].id).toBeNull();
+  });
+
+  it('requires every available target for a manual multi-destroy and stops when the wall runs out', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromCardName({ id: 'double-consumer', cardName: 'VoidTendrils' }),
+      castEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'destroy',
+        trigger: 'onCast',
+        selection: 'manual',
+        targetOwner: 'self',
+        count: 3,
+        payload: createEffectRef('cast.damage', { amount: 5 }),
+      })],
+    };
+    const wall = createEmptyWall();
+    wall[0][1] = { ...wall[0][1], id: 'first-target', runeTypes: ['Fire'], rarity: 'common' };
+    wall[0][2] = { ...wall[0][2], id: 'second-target', runeTypes: ['Life'], rarity: 'common' };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, wall, deck: [] },
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 20, maxHealth: 20 },
+      suppressedRunes: [],
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+    expect(store.getState().pendingCombatResolution?.target.effectRef.count).toBe(3);
+
+    store.getState().selectPendingRuneTarget('player', 0, 1);
+    expect(store.getState().pendingCombatResolution?.target.effectRef.count).toBe(2);
+    expect(store.getState().enemy?.health).toBe(20);
+
+    store.getState().selectPendingRuneTarget('player', 0, 2);
+    const state = store.getState();
+    expect(state.pendingCombatResolution).toBeNull();
+    expect(state.enemy?.health).toBe(15);
+    expect(state.player.wall[0][1].id).toBeNull();
+    expect(state.player.wall[0][2].id).toBeNull();
   });
 
   it('returns adjacent completed runes to hand with epic Wind', () => {

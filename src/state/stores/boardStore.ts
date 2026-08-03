@@ -4,7 +4,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { GameState, Player } from '../../types/game';
-import { initializeSoloGame } from '../../utils/gameInitialization';
+import { createInitialSoloRunState } from '../../utils/soloRunFactory';
 
 export interface BoardState {
   player: Player;
@@ -20,7 +20,7 @@ export function pickBoardState(state: GameState): BoardState {
   };
 }
 
-export function createBoardStore(initialState: BoardState = pickBoardState(initializeSoloGame())) {
+export function createBoardStore(initialState: BoardState = pickBoardState(createInitialSoloRunState())) {
   return create<BoardStore>((set) => ({
     ...initialState,
     replaceBoardState: (next) => set(() => next),

@@ -15,6 +15,7 @@ import { TooltipView } from './Player/TooltipView';
 import { PlayerPanel } from './PlayerPanel';
 import { EnemySpellBoard } from './EnemySpellBoard';
 import { SoloVictoryModal } from './SoloVictoryModal';
+import { RuneTargetPrompt } from './RuneTargetPrompt';
 
 interface SoloGameViewProps {
   hiddenWallSlots: Set<string>;
@@ -70,6 +71,7 @@ export const SoloGameView = memo(function SoloGameView({
             <TooltipView />
           </div>
           <EndTurnButton className="absolute bottom-3 right-4 z-20" />
+          <RuneTargetPrompt />
         </section>
       </div>
       { deckDraftState && (<DeckDraftingModal draftState={deckDraftState}/>)}

@@ -2,23 +2,22 @@
  * effectCatalog - central metadata and description helpers for effect refs.
  */
 
-import type { EffectParams, EffectRef, EffectTrigger, RuneType } from '../types/game';
+import type { EffectParams, EffectRef, EffectTrigger, RuneEffectRef, RuneType } from '../types/game';
+import { isRuneRemovalEffectRef } from './runeRemoval';
 
 export type CastEffectId =
   | 'cast.damage'
   | 'cast.damageAdjacent'
   | 'cast.damageConditional'
   | 'cast.damageFragile'
-  | 'cast.damageConsuming'
-  | 'cast.destroyType'
   | 'cast.convertRandom'
   | 'cast.convertAdjacent'
   | 'cast.retriggerAdjacent'
   | 'cast.retriggerType'
   | 'cast.healing'
   | 'cast.healSynergy'
-  | 'cast.armor'
-  | 'cast.armorAdjacent'
+  | 'cast.shield'
+  | 'cast.shieldAdjacent'
   | 'cast.healthIncrease'
   | 'cast.healthDecrease'
   | 'cast.draw'
@@ -28,30 +27,30 @@ export type CastEffectId =
   | 'cast.arcaneDustAdjacent'
   | 'cast.fortune'
   | 'cast.synergy'
-  | 'cast.armorSynergy'
+  | 'cast.shieldSynergy'
   | 'cast.fragile';
 
 export type PassiveEffectId =
   | 'passive.rodHealing'
-  | 'passive.potionArmor'
+  | 'passive.potionShield'
   | 'passive.tomeCastDamage'
   | 'passive.damageBoost'
   | 'passive.adjacentDamageBoost'
   | 'passive.damageBoostSynergy'
   | 'passive.damageEndTurn'
   | 'passive.pulseSynergy'
-  | 'passive.armorEndTurnSynergy'
+  | 'passive.shieldEndTurnSynergy'
   | 'passive.healingStartTurn'
   | 'passive.healingStartTurnSynergy'
   | 'passive.drawingStartTurn'
+  | 'passive.ringManaStartTurn'
   | 'passive.addDamage'
-  | 'passive.armorBoost'
+  | 'passive.shieldBoost'
   | 'passive.explosive'
   | 'passive.vampire'
   | 'passive.reduceDamage';
 
-export type EnemyEffectId = 'enemy.destroyMostFilledRow';
-export type CatalogEffectId = CastEffectId | PassiveEffectId | EnemyEffectId;
+export type CatalogEffectId = CastEffectId | PassiveEffectId;
 export type PassiveStackingKind = 'flat' | 'multiplier';
 
 export interface PassiveEffectMetadata {
@@ -65,7 +64,7 @@ export interface PassiveEffectMetadata {
 
 export interface EffectCatalogEntry {
   id: CatalogEffectId;
-  kind: 'cast' | 'passive' | 'enemy';
+  kind: 'cast' | 'passive';
   title: string;
   displayHint: string;
   passive?: PassiveEffectMetadata;
@@ -95,7 +94,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Adjacent Damage',
     displayHint: 'damage',
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent rune`,
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent ${params.runeType ? `${runeTypeParam(params, 'runeType')} ` : ''}rune`,
   },
   'cast.damageConditional': {
     id: 'cast.damageConditional',
@@ -112,20 +111,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage, reduced by ${numberParam(params, 'reduction')} for every ${runeTypeParam(params, 'fragileType')} rune in your completed wall`,
-  },
-  'cast.damageConsuming': {
-    id: 'cast.damageConsuming',
-    kind: 'cast',
-    title: 'Consuming Damage',
-    displayHint: 'damage',
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent rune, then destroy them`,
-  },
-  'cast.destroyType': {
-    id: 'cast.destroyType',
-    kind: 'cast',
-    title: 'Type Destroy',
-    displayHint: 'damage',
-    describe: (params) => `Destroy a random completed ${runeTypeParam(params, 'targetType')} rune`,
   },
   'cast.convertRandom': {
     id: 'cast.convertRandom',
@@ -171,19 +156,19 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     describe: (params) =>
       `Heal ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
-  'cast.armor': {
-    id: 'cast.armor',
+  'cast.shield': {
+    id: 'cast.shield',
     kind: 'cast',
-    title: 'Armor',
-    displayHint: 'armor',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} armor`,
+    title: 'Shield',
+    displayHint: 'shield',
+    describe: (params) => `Shield ${numberParam(params, 'amount')}`,
   },
-  'cast.armorAdjacent': {
-    id: 'cast.armorAdjacent',
+  'cast.shieldAdjacent': {
+    id: 'cast.shieldAdjacent',
     kind: 'cast',
-    title: 'Adjacent Armor',
-    displayHint: 'armor',
-    describe: (params) => `Gain ${numberParam(params, 'amount')} armor for every adjacent rune`,
+    title: 'Adjacent Shield',
+    displayHint: 'shield',
+    describe: (params) => `Shield ${numberParam(params, 'amount')} for every adjacent rune`,
   },
   'cast.healthIncrease': {
     id: 'cast.healthIncrease',
@@ -249,13 +234,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
-  'cast.armorSynergy': {
-    id: 'cast.armorSynergy',
+  'cast.shieldSynergy': {
+    id: 'cast.shieldSynergy',
     kind: 'cast',
-    title: 'Armor Synergy',
-    displayHint: 'armor',
+    title: 'Shield Synergy',
+    displayHint: 'shield',
     describe: (params) =>
-      `Gain ${numberParam(params, 'amount')} armor for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `Shield ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
   'cast.fragile': {
     id: 'cast.fragile',
@@ -264,13 +249,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     displayHint: 'damage',
     describe: (params) =>
       `Deal ${numberParam(params, 'amount')} damage if your completed wall has no ${runeTypeParam(params, 'fragileType')} runes`,
-  },
-  'enemy.destroyMostFilledRow': {
-    id: 'enemy.destroyMostFilledRow',
-    kind: 'enemy',
-    title: 'Avalanche',
-    displayHint: 'damage',
-    describe: () => 'Destroy the row with the most runes',
   },
   'passive.rodHealing': {
     id: 'passive.rodHealing',
@@ -286,19 +264,19 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: () => 'Double all healing',
   },
-  'passive.potionArmor': {
-    id: 'passive.potionArmor',
+  'passive.potionShield': {
+    id: 'passive.potionShield',
     kind: 'passive',
-    title: 'Armor Multiplier',
-    displayHint: 'armor',
+    title: 'Shield Multiplier',
+    displayHint: 'shield',
     passive: {
       trigger: 'onCast',
-      target: 'armor',
+      target: 'shield',
       stacking: 'multiplier',
-      paramKey: 'armorMultiplier',
+      paramKey: 'shieldMultiplier',
       defaultValue: 1,
     },
-    describe: () => 'Double all armor gained',
+    describe: () => 'Double all shield gained',
   },
   'passive.tomeCastDamage': {
     id: 'passive.tomeCastDamage',
@@ -372,20 +350,20 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) => `At the end of your turn, deal ${numberParam(params, 'amount')} damage`,
   },
-  'passive.armorEndTurnSynergy': {
-    id: 'passive.armorEndTurnSynergy',
+  'passive.shieldEndTurnSynergy': {
+    id: 'passive.shieldEndTurnSynergy',
     kind: 'passive',
-    title: 'End Turn Armor Synergy',
-    displayHint: 'armor',
+    title: 'End Turn Shield Synergy',
+    displayHint: 'shield',
     passive: {
       trigger: 'endTurn',
-      target: 'armor',
+      target: 'shield',
       stacking: 'flat',
       paramKey: 'amount',
       defaultValue: 0,
     },
     describe: (params) =>
-      `At end of turn, gain ${numberParam(params, 'amount')} armor for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
+      `At end of turn, Shield ${numberParam(params, 'amount')} for every ${runeTypeParam(params, 'synergyType')} rune in your completed wall`,
   },
   'passive.healingStartTurn': {
     id: 'passive.healingStartTurn',
@@ -430,6 +408,20 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) => `At start of turn, draw ${numberParam(params, 'amount')} additional runes`,
   },
+  'passive.ringManaStartTurn': {
+    id: 'passive.ringManaStartTurn',
+    kind: 'passive',
+    title: 'Start Turn Mana',
+    displayHint: 'mana',
+    passive: {
+      trigger: 'startTurn',
+      target: 'mana',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `At start of turn, gain ${numberParam(params, 'amount')} mana`,
+  },
   'passive.addDamage': {
     id: 'passive.addDamage',
     kind: 'passive',
@@ -444,19 +436,19 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) => `${runeTypeParam(params, 'runeType')} runes deal +${numberParam(params, 'amount')} damage`,
   },
-  'passive.armorBoost': {
-    id: 'passive.armorBoost',
+  'passive.shieldBoost': {
+    id: 'passive.shieldBoost',
     kind: 'passive',
-    title: 'Armor Boost',
-    displayHint: 'armor',
+    title: 'Shield Boost',
+    displayHint: 'shield',
     passive: {
       trigger: 'onCast',
-      target: 'armor',
+      target: 'shield',
       stacking: 'flat',
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Increase all armor gained by ${numberParam(params, 'amount')}`,
+    describe: (params) => `Increase all shield gained by ${numberParam(params, 'amount')}`,
   },
   'passive.explosive': {
     id: 'passive.explosive',
@@ -464,13 +456,16 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Explosive',
     displayHint: 'damage',
     passive: {
-      trigger: 'onCast',
+      trigger: 'onRuneRemoved',
       target: 'explosiveDamage',
       stacking: 'flat',
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage if destroyed or transformed`,
+    describe: (params) => {
+      const removalKind = params.removalKind;
+      return `Deal ${numberParam(params, 'amount')} damage when ${removalKind === 'consume' ? 'consumed' : removalKind === 'destroy' ? 'destroyed' : removalKind === 'transform' ? 'transformed' : 'consumed, destroyed, or transformed'}`;
+    },
   },
   'passive.vampire': {
     id: 'passive.vampire',
@@ -490,15 +485,15 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     id: 'passive.reduceDamage',
     kind: 'passive',
     title: 'Damage Reduction',
-    displayHint: 'armor',
+    displayHint: 'shield',
     passive: {
-      trigger: 'onEnemyAttack',
+      trigger: 'onIncomingDamage',
       target: 'incomingDamage',
       stacking: 'flat',
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Reduce damage taken by ${numberParam(params, 'amount')}`,
+    describe: (params) => `Reduce incoming damage by ${numberParam(params, 'amount')}`,
   },
 };
 
@@ -509,7 +504,25 @@ export function createEffectRef(effectId: CatalogEffectId, params?: EffectParams
   };
 }
 
-export function getEffectDescription(effectRef: EffectRef): string {
+export function getEffectDescription(effectRef: RuneEffectRef): string {
+  if (isRuneRemovalEffectRef(effectRef)) {
+    const random = effectRef.selection === 'random' ? 'random ' : '';
+    const type = effectRef.runeType ? `${effectRef.runeType} ` : '';
+    let removalText: string;
+    if (effectRef.effectId === 'rune.consume') {
+      removalText = effectRef.targetOwner === 'self'
+        ? `Consume a ${random}${type}rune`
+        : `Consume your opponents ${random}${type}rune`;
+    } else {
+      const count = effectRef.count === 1 ? 'a' : String(effectRef.count);
+      const plural = effectRef.count === 1 ? 'rune' : 'runes';
+      removalText = `Destroy ${count} ${random}${type}${plural}${effectRef.targetOwner === 'self' ? ' on your wall' : ''}`;
+    }
+    const payloadText = effectRef.payload ? getEffectDescription(effectRef.payload) : '';
+    if (!payloadText) return removalText;
+    return `${removalText} to ${payloadText.charAt(0).toLowerCase()}${payloadText.slice(1)}`;
+  }
+
   const catalogEntry = EFFECT_CATALOG[effectRef.effectId as CatalogEffectId];
   if (!catalogEntry) {
     return '';
@@ -517,7 +530,7 @@ export function getEffectDescription(effectRef: EffectRef): string {
   return catalogEntry.describe(effectRef.params ?? {});
 }
 
-export function getEffectRefDescriptions(effectRefs: EffectRef[] | null | undefined): string[] {
+export function getEffectRefDescriptions(effectRefs: RuneEffectRef[] | null | undefined): string[] {
   if (!effectRefs) {
     return [];
   }

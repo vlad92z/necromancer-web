@@ -1,4 +1,5 @@
 import type { KeyboardEvent, MouseEvent, ReactElement } from 'react';
+import { motion } from 'framer-motion';
 import type {
   MapLocationId,
   MapPoint,
@@ -19,15 +20,18 @@ import {
 } from '../../../../utils/soloMap';
 import forestTileImage from '../../../../assets/map/tile_1.png';
 import tokenVisited from '../../../../assets/map/token_visited.png';
-import playerToken from '../../../../assets/enemies/wizard.png';
 import tokenPath from '../../../../assets/map/token_path.png';
 import { getRegionEventToken } from '../../../../utils/regionCatalog';
 import { getMonsterDefinition } from '../../../../utils/monsterCatalog';
+import { ANIMATION } from '../../../../styles/tokens';
 
 interface MapTileProps {
   map: SoloMapState;
   tile: MapTileState;
   reachableTargetKeys: Set<string>;
+  eventResolveTarget: Extract<MapTravelTarget, { kind: 'location' }> | null;
+  isTravelLocked: boolean;
+  isRevealing: boolean;
   onTravel: (target: MapTravelTarget, fromKeyboard: boolean) => void;
   onCurrentMarker: (element: HTMLDivElement | null) => void;
 }
@@ -41,6 +45,8 @@ interface MapMarkerProps {
   current: boolean;
   markerKind: MapLocationMarkerKind | 'frontier';
   isBoss?: boolean;
+  showVisitedUnderlay?: boolean;
+  isTravelLocked: boolean;
   onTravel: MapTileProps['onTravel'];
   onCurrentMarker: MapTileProps['onCurrentMarker'];
 }
@@ -57,6 +63,8 @@ function MapMarker({
   current,
   markerKind,
   isBoss = false,
+  showVisitedUnderlay = false,
+  isTravelLocked,
   onTravel,
   onCurrentMarker,
 }: MapMarkerProps): ReactElement {
@@ -106,10 +114,19 @@ function MapMarker({
         data-map-boss={isBoss || undefined}
         className={`${positionClassName} hover:bg-[#fff8d8]/20 focus-visible:bg-[#fff8d8]/20 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fff8d8]`}
         style={style}
+        disabled={isTravelLocked}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
       >
-        <img src={imageSrc} alt="" aria-hidden="true" className={imageClassName} />
+        {showVisitedUnderlay && (
+          <img
+            src={tokenVisited}
+            alt=""
+            aria-hidden="true"
+            className={`absolute z-0 ${imageClassName}`}
+          />
+        )}
+        <img src={imageSrc} alt="" aria-hidden="true" className={`relative z-10 ${imageClassName}`} />
       </button>
     );
   }
@@ -151,6 +168,9 @@ export function MapTile({
   map,
   tile,
   reachableTargetKeys,
+  eventResolveTarget,
+  isTravelLocked,
+  isRevealing,
   onTravel,
   onCurrentMarker,
 }: MapTileProps): ReactElement {
@@ -163,9 +183,10 @@ export function MapTile({
     const eventToken = getRegionEventToken(event?.tokenId ?? null);
     const monster = event?.monsterId ? getMonsterDefinition(event.monsterId) : null;
     const isBoss = event?.kind === 'boss' && monster?.isBoss === true;
-    const imageSrc = current
-      ? playerToken
-      : markerKind === 'cleared'
+    const showVisitedUnderlay = markerKind === 'encounter'
+      && eventResolveTarget?.tileKey === tile.key
+      && eventResolveTarget.locationId === locationId;
+    const imageSrc = current || markerKind === 'cleared'
         ? eventToken?.visitedImageSrc ?? tokenVisited
         : monster?.imageSrc ?? eventToken?.unvisitedImageSrc ?? tokenVisited;
 
@@ -182,6 +203,8 @@ export function MapTile({
         current={current}
         markerKind={markerKind}
         isBoss={isBoss && !current && markerKind !== 'cleared'}
+        showVisitedUnderlay={showVisitedUnderlay}
+        isTravelLocked={isTravelLocked}
         onTravel={onTravel}
         onCurrentMarker={onCurrentMarker}
       />
@@ -189,7 +212,7 @@ export function MapTile({
   };
 
   return (
-    <div
+    <motion.div
       className="absolute overflow-visible"
       data-map-tile={tile.key}
       style={{
@@ -198,6 +221,9 @@ export function MapTile({
         width: `${MAP_TILE_SIZE}px`,
         height: `${MAP_TILE_SIZE}px`,
       }}
+      initial={isRevealing ? { opacity: 0 } : false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: ANIMATION.MAP_TILE_REVEAL_DURATION_MS / 1000, ease: 'linear' }}
     >
       <img
         src={forestTileImage}
@@ -225,11 +251,12 @@ export function MapTile({
             reachable={reachableTargetKeys.has(createMapTravelTargetKey(target))}
             current={false}
             markerKind="frontier"
+            isTravelLocked={isTravelLocked}
             onTravel={onTravel}
             onCurrentMarker={onCurrentMarker}
           />
         );
       })}
-    </div>
+    </motion.div>
   );
 }

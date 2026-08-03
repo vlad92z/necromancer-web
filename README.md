@@ -1,25 +1,20 @@
 # Massive Spell: Arcane Arena
 
-A single-player roguelite rune-casting game. Explore a persistent tile map, build a deck, complete runes on a spell wall, defeat encounters, and choose a rune pack after each victory.
+A single-player roguelite rune-casting game. Travel through Greenwood, build a rune deck, fill a spell wall, defeat encounters, and choose rewards after each non-boss victory.
 
-## Tech Stack
+## Tech stack
 
 - React 19 + TypeScript 5.9 (strict mode)
 - Vite 7
-- Zustand 5 for split global state
-- Framer Motion 12 for animation
+- Zustand 5 for serializable global state
+- Framer Motion 12
 - React Router 7
-- Tailwind CSS 4, integrated through `@tailwindcss/vite`
+- Tailwind CSS 4 through `@tailwindcss/vite`
 - Vitest 4
 
-## Quick Start
+## Quick start
 
-### Prerequisites
-
-- Node.js 20 (see `.node-version`)
-- npm
-
-### Install and run
+Prerequisites: Node.js 20 (see `.node-version`) and npm.
 
 ```bash
 npm install
@@ -30,117 +25,100 @@ npx vitest run
 npm run preview
 ```
 
-## Gameplay Rules
+There is intentionally no `npm run test` script; run Vitest with `npx vitest run`.
+
+## Gameplay
 
 ### Adventure map
 
-- New solo runs begin at the center of a forest tile with eight unexplored road exits.
-- Selecting a reachable road lazily reveals the adjacent tile and moves the player directly to its connected encounter.
-- Standard tiles contain encounter locations A, B, C, and D. Travel is limited to the fixed road graph and supports backtracking through cleared locations.
-- Wind markers indicate unexplored tile edges. Fire marks uncleared encounters, Frost marks cleared encounters, and Life marks the player.
-- Discovered tiles and player position persist through Continue Run.
-- Entering an uncleared location starts a Goblin encounter. Entering a cleared location only moves the player.
-- Victory opens rune-pack rewards. Return to Map clears the location; the next uncleared destination starts the next encounter.
+- A solo run begins in Greenwood. The map reveals forest tiles and connected roads as the player travels.
+- Locations can contain Goblin combats, healing shrines, or the Golem Lord boss. Cleared encounters remain traversable.
+- The map, player position, deck, health, and encounter state are persisted for **Continue Run**. Saved combat state is versioned; incompatible older saves are discarded.
 
-### Player spell wall
+### Player turn
 
-- The player has a 6×6 spell wall built from six rune types: Fire, Life, Wind, Frost, Void, and Lightning.
-- An encounter starts with up to six runes drawn into hand.
-- Select a rune, then choose an empty compatible wall slot.
-- Every rune is placed immediately in a compatible empty wall slot, regardless of rarity.
-- The first rune locks an incomplete slot to its rune type. Completing the slot places the staged rune and resolves its effects.
-- Armor absorbs damage before health.
+- The player starts with a 12-card deck and draws up to **five** runes at an encounter start and after each completed turn.
+- The spell wall is a neutral 5×5 grid. Select a rune in hand, then place it in any empty slot; every rarity resolves immediately.
+- Casting spends the card's mana cost. Players start each turn with 7 mana; mana refreshes to full after the enemy turn.
+- Filled wall runes provide their passive effects while they remain on the wall. Shield effects add shield to the source token; other effects may deal damage, heal, draw or return cards, and interact with neighbouring or matching runes.
+- Consume casts the new rune over an eligible occupied slot on the configured wall. Destroy removes the configured number of runes from either wall. Both support typed and random targets; committed effects are mandatory and resolve up to the available targets.
+- Incoming damage depletes shielded tokens from the top-left across each row. A partially depleted token keeps its remaining shield; a token reaching 0 is removed and its passives stop. Damage left after all shields reduces health.
 
-### Enemy turn
+### Enemy turn and victory
 
-- Ending a turn discards the remaining hand, then resolves the enemy turn before the next hand is drawn.
-- The enemy plays three 1-damage Life runes into random open slots on its own persistent 6×6 spellboard.
-- Enemy runes resolve in dealt order; armor can absorb their damage.
-- The run ends if player health reaches zero or the enemy spellboard fills.
+- **End Turn** resolves the player's end-turn effects, discards the remaining hand, resolves the enemy turn, then draws the next hand and resolves player start-turn effects.
+- Enemies play their turn cards into a persistent 5×5 enemy spellboard. Their cards resolve in order and use the same token-shield rules as the player.
+- The enemy wins if its board fills; the player also loses at 0 health.
+- Reducing enemy health to 0, or filling the player wall, wins the encounter immediately—before an enemy turn.
+- A normal victory awards Arcane Dust and three single-rune offers from that enemy's reward pool. Select at most one, then continue to the map. Boss victory ends the run.
 
-### Deck cycle and victory
+### Current encounters
 
-- The next hand is drawn up to six cards; the discard pile is shuffled into the deck only when necessary.
-- Reducing enemy health to zero opens deck drafting immediately, before an enemy turn.
-- Choose one of six rune-type packs. Each selected pack adds three runes to the deck; rarity odds improve with wins.
-- Return to Map after drafting. The next uncleared location starts with a fresh player wall and enemy board; enemy health and damage scale between encounters.
+- Goblin: 20 health; repeatedly plays three Throw Rocks and Hide. Victories offer Goblin reward cards.
+- Golem Lord: 50-health boss with a cycling turn sequence of Barricades, Hurl Rocks, and Avalanche; Avalanche destroys one random player-wall rune.
 
-### Combat layout
+### Arena catalogue
 
-- The metadata bar shows run and combat information.
-- The combat area is ordered left-to-right: player panel, player spell wall, enemy spellboard, enemy panel.
-- The hand tray spans the bottom of the view with the End Turn action.
+- Arena is a read-only enemy catalogue available from the main menu.
+- Every catalogue enemy is shown with its maximum health. Selecting one shows each row of its repeating turn cycle and every card in its possible loot pool.
+- Arena does not start combat or change run state, rewards, or saved progress.
 
-## Project Structure
+## Combat layout
+
+The combat view is composed in `SoloGameBoard.tsx`: player panel, player spell wall, enemy spellboard, enemy panel, then the hand tray and End Turn control. The metadata bar tracks run and combat state. Hovering a filled wall rune shows its original card preview near its respective health panel.
+
+## Project structure
 
 ```
 src/
 ├── assets/                 # Art, fonts, sounds, and stat icons
 ├── components/             # Reusable UI and overlays
-├── features/gameplay/      # Adventure map, combat board, hand tray, deck draft
-├── hooks/                  # Zustand selectors, actions, and audio hooks
-├── routes/                 # Main menu and solo start screen
-├── state/stores/           # Run, board, combat, gameplay, UI, artefact stores
-├── styles/                 # Tokens and shared CSS theme primitives
+├── features/               # Arena catalogue plus map, combat, hand, and reward UI
+├── hooks/                  # Zustand selectors/actions and audio hooks
+├── routes/                 # Main menu, Adventure, and Arena entry screens
+├── state/stores/           # Run, map, board, combat, UI, artefact, gameplay stores
+├── styles/                 # Shared pixel theme and TypeScript style tokens
 ├── systems/                # Cross-store orchestration and analytics
 ├── types/                  # Serializable game and artefact types
-├── utils/                  # Pure combat, initialization, effects, persistence
+├── utils/                  # Pure rules, catalogues, effects, persistence, map logic
 ├── App.tsx
 └── main.tsx
 ```
 
-`App.tsx` currently exposes `/` for the main menu and `/solo` for solo play. Unknown paths redirect to `/`.
+`App.tsx` exposes `/` for the main menu, `/solo` for Adventure, and `/arena` for the read-only enemy catalogue. Unknown routes redirect to `/`.
 
-## Styling and Pixel Theme
+## Architecture
 
-Tailwind 4 is configured through the Vite plugin. Global styles begin in `src/index.css`, which imports Tailwind and the shared pixel theme:
+- `gameplayStore.ts` orchestrates travel, encounter setup, casting, turns, rewards, and persistence notifications.
+- Read state is split across `runStore`, `mapStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`; `gameplayState.ts` maintains the combined serializable snapshot.
+- Game rules are pure utilities in `src/utils/`. The registry-backed effect resolver is deterministic and independent of React and Zustand.
+- Runes hold rarity, card/token artwork, cast/passive refs, and typed Consume/Destroy wrappers with explicit target ownership. Pending multi-Destroy resolution remains serializable.
+- `cardCatalog.ts`, `monsterCatalog.ts`, and `regionCatalog.ts` are the canonical gameplay catalogues.
+- Keep global state serializable: no DOM refs, timers, class instances, or closures in Zustand.
+
+## Styling and accessibility
+
+`src/index.css` imports Tailwind and the shared pixel theme:
 
 ```css
 @import 'tailwindcss';
 @import './styles/pixel-theme.css';
 ```
 
-`src/styles/pixel-theme.css` is the theme foundation for the pixel-art UI. It contains:
+Use `src/styles/pixel-theme.css` for shared pixel palette, panels, buttons, and focus treatment; use Tailwind utilities for local layout. `src/index.css` defines `.font-pixel` for pixel display text.
 
-- CSS custom properties for the pixel palette, text, panels, focus state, and button variants.
-- Reusable component classes: `.pixel-screen`, `.pixel-panel`, `.pixel-panel-inset`, `.pixel-message-panel`, and `.pixel-button`.
-- Button variants: `.pixel-button--primary` and `.pixel-button--utility`.
-
-Use these stable primitives for shared visual treatment, then add Tailwind utilities locally for each view's layout and responsive behavior:
-
-```tsx
-<main className="pixel-screen min-h-screen px-6 py-10">
-  <section className="pixel-panel p-2">
-    <div className="pixel-panel-inset px-6 py-10">
-      <button className="pixel-button pixel-button--primary">Play</button>
-    </div>
-  </section>
-</main>
-```
-
-The pixel font is defined in `src/index.css` as `.font-pixel`. Use it for display text and labels; do not duplicate the font declaration in individual screens. Keep game-specific layout styles in the component unless a primitive is needed by multiple views.
-
-`src/styles/tokens.ts` remains available for existing TypeScript consumers. New pixel-theme colours and surfaces should normally be added to `pixel-theme.css` so CSS components and future screens share one source of truth.
-
-## Keyboard and Overlay Behaviour
-
-- Keyboard selection must drive real DOM focus as well as any visual active state. Arrow-key navigation should focus the newly selected control.
-- Modal overlays own their keyboard handling while open. They must use dialog semantics, move focus inside on open, trap Tab navigation, and restore focus to the invoking control on close.
-- Overlay visibility is global UI state, but DOM refs and previous-focus targets stay local to React components. Use explicit `openSettingsOverlay()` and `closeSettingsOverlay()` actions instead of toggling visibility when the intended state is known.
-- Route transitions must close transient overlays so an overlay cannot appear unexpectedly on a later screen.
+Keyboard selection must update real DOM focus as well as visible active state. Modal overlays own keyboard input while open: dialog semantics, initial focus, Tab trapping, Escape/close behaviour, and focus restoration to the invoking control. Keep DOM refs local to components and close transient overlays before navigation.
 
 ## Deployment (Cloudflare Pages)
 
-### Automatic deployment
+Connect the repository to Cloudflare Pages with:
 
-1. Connect the repository to Cloudflare Pages.
-2. Configure:
-   - Framework: **Vite**
-   - Build command: `npm run build`
-   - Output directory: `dist`
-   - Node.js version: `20`
+- Framework: Vite
+- Build command: `npm run build`
+- Output directory: `dist`
+- Node.js: 20
 
-### Manual deployment
+For a manual deployment:
 
 ```bash
 npm install -g wrangler
@@ -149,11 +127,11 @@ npm run build
 wrangler pages deploy dist --project-name=necromancer-web
 ```
 
-Configuration files: `wrangler.toml`, `.node-version`, `public/_headers`, and `public/_redirects`.
+Deployment configuration is in `wrangler.toml`, `.node-version`, `public/_headers`, and `public/_redirects`.
 
 ## Analytics
 
-Mixpanel is initialized in `src/main.tsx` through `src/utils/mixpanel.ts`. Set `VITE_MIXPANEL_TOKEN=skip` in `.env.local` to disable it locally. Use the exported helpers to record product events:
+Mixpanel initializes from `src/main.tsx` through `src/utils/mixpanel.ts`. Set `VITE_MIXPANEL_TOKEN=skip` in `.env.local` to disable it locally. Use the exported helpers for product events:
 
 ```ts
 import { identify, trackEvent } from './utils/mixpanel'
@@ -162,19 +140,11 @@ trackEvent('game_started', { mode: 'solo' })
 identify('player-1234')
 ```
 
-## Architecture Notes
-
-- `gameplayStore.ts` orchestrates map travel and encounter actions.
-- Read ownership is split across `runStore`, `mapStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`.
-- Global state must stay serializable. Pure game rules belong in `src/utils/`; cross-store side effects belong in `src/systems/`.
-- `SoloMapView.tsx` renders the discovered tile grid and derives reachable markers from the pure map topology.
-- `SoloGameBoard.tsx` composes the combat view. Dedicated components render player and enemy panels, both spellboards, tooltips, and the hand tray.
-
 ## Contributing
 
-- Keep TypeScript strict; import types with `import type`.
-- Prefer small focused changes and follow existing component, hook, and store patterns.
-- Keep game rules out of React components and Zustand state serializable.
-- Use Tailwind for local layout and the shared pixel theme for reusable visual primitives.
-- Preserve keyboard focus and modal ownership when changing menus, buttons, or overlays.
-- Read `Agents.md` for project-specific implementation and testing guidance.
+- Keep TypeScript strict and import types with `import type`.
+- Prefer focused changes that follow existing component, hook, store, and utility patterns.
+- Keep rules out of React components, preserve serializable state, and retain the shared pixel UI primitives.
+- Preserve DOM-focus and modal-ownership behaviour when changing interactive UI.
+- Add focused tests for changes to initialization, combat, turns, rewards, map flow, or persistence.
+- Read `AGENTS.md` for the full project guidance.

@@ -5,9 +5,80 @@
 import { describe, expect, it } from 'vitest';
 import { ARTEFACTS } from '../types/artefacts';
 import { getArtefactEffectDescription } from './artefactDescriptions';
-import { createEffectRef, getEffectDescription } from './effectCatalog';
+import { createEffectRef, EFFECT_CATALOG, getEffectDescription } from './effectCatalog';
+import { createRuneRemovalEffectRef } from './runeRemoval';
+import { CARD_DEFINITIONS } from './cardCatalog';
 
 describe('effectCatalog', () => {
+  it('marks Explosive as an on-removal trigger', () => {
+    expect(EFFECT_CATALOG['passive.explosive'].passive?.trigger).toBe('onRuneRemoved');
+  });
+
+  it('defines the current Firebolt, Lightning Bolt, Void Tendrils, and Tornado contracts', () => {
+    expect(CARD_DEFINITIONS.Firebolt).toMatchObject({
+      manaCost: 1,
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 2 } }],
+    });
+    expect(CARD_DEFINITIONS.LightningBolt).toMatchObject({
+      manaCost: 2,
+      castEffectRefs: [],
+      passiveEffectRefs: [{ effectId: 'passive.explosive', params: { amount: 7 } }],
+    });
+    expect(CARD_DEFINITIONS.VoidTendrils).toMatchObject({
+      manaCost: 2,
+      castEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onCast',
+        selection: 'manual',
+        payload: { effectId: 'cast.damage', params: { amount: 5 } },
+      }],
+    });
+    expect(CARD_DEFINITIONS.Tornado).toMatchObject({
+      manaCost: 5,
+      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 10 } }],
+    });
+    expect(CARD_DEFINITIONS.Hide).toMatchObject({
+      manaCost: 0,
+      castEffectRefs: [{
+        effectId: 'rune.consume',
+        trigger: 'onCast',
+        selection: 'manual',
+        payload: { effectId: 'cast.shield', params: { amount: 3 } },
+      }],
+    });
+    expect(CARD_DEFINITIONS.FrostShield).toMatchObject({
+      manaCost: 2,
+      castEffectRefs: [{ effectId: 'cast.shield', params: { amount: 3 } }],
+    });
+  });
+
+  it('defines Shadow Bolt as a two-mana Void-wall synergy spell', () => {
+    expect(CARD_DEFINITIONS.ShadowBolt).toMatchObject({
+      runeTypes: ['Void'],
+      manaCost: 2,
+      cardImageSrc: expect.stringContaining('card_shadow_bolt.png'),
+      castEffectRefs: [{ effectId: 'cast.synergy', params: { amount: 2, synergyType: 'Void' } }],
+    });
+  });
+
+  it('defines Amplify Magic as a three-mana Frost damage boost', () => {
+    expect(CARD_DEFINITIONS.AmplifyMagic).toMatchObject({
+      runeTypes: ['Frost'],
+      manaCost: 3,
+      cardImageSrc: expect.stringContaining('card_amplify_magic.png'),
+      passiveEffectRefs: [
+        { effectId: 'passive.damageBoost', params: { amount: 1 } },
+        {
+          effectId: 'rune.destroy',
+          trigger: 'endTurn',
+          selection: 'random',
+          targetOwner: 'self',
+          count: 1,
+        },
+      ],
+    });
+  });
+
   it('renders cast effect descriptions from refs', () => {
     expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage');
     expect(getEffectDescription(createEffectRef('cast.damageAdjacent', { amount: 1 }))).toBe(
@@ -23,12 +94,35 @@ describe('effectCatalog', () => {
       reduction: 5,
       fragileType: 'Frost',
     }))).toBe('Deal 25 damage, reduced by 5 for every Frost rune in your completed wall');
-    expect(getEffectDescription(createEffectRef('cast.damageConsuming', { amount: 10 }))).toBe(
-      'Deal 10 damage for every adjacent rune, then destroy them'
-    );
-    expect(getEffectDescription(createEffectRef('cast.destroyType', { targetType: 'Fire' }))).toBe(
-      'Destroy a random completed Fire rune'
-    );
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'consume',
+      trigger: 'onCast',
+      selection: 'random',
+      targetOwner: 'self',
+      runeType: 'Fire',
+      payload: createEffectRef('cast.damage', { amount: 5 }),
+    }))).toBe('Consume a random Fire rune to deal 5 damage');
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'destroy',
+      trigger: 'onCast',
+      selection: 'manual',
+      targetOwner: 'opponent',
+      count: 1,
+    }))).toBe('Destroy a rune');
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'destroy',
+      trigger: 'onCast',
+      selection: 'random',
+      targetOwner: 'self',
+      count: 3,
+      runeType: 'Fire',
+    }))).toBe('Destroy 3 random Fire runes on your wall');
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'consume',
+      trigger: 'onCast',
+      selection: 'manual',
+      targetOwner: 'opponent',
+    }))).toBe('Consume your opponents rune');
     expect(getEffectDescription(createEffectRef('cast.convertRandom', { sourceType: 'Fire', targetType: 'Frost' }))).toBe(
       'Convert a random completed Fire rune into a common Frost rune with no effects'
     );
@@ -39,8 +133,8 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.retriggerType', { targetType: 'Life' }))).toBe(
       'Retrigger all Life runes'
     );
-    expect(getEffectDescription(createEffectRef('cast.armorAdjacent', { amount: 3 }))).toBe(
-      'Gain 3 armor for every adjacent rune'
+    expect(getEffectDescription(createEffectRef('cast.shieldAdjacent', { amount: 3 }))).toBe(
+      'Shield 3 for every adjacent rune'
     );
     expect(getEffectDescription(createEffectRef('cast.healthIncrease', { amount: 1 }))).toBe('Increase maximum health by 1');
     expect(getEffectDescription(createEffectRef('cast.healthDecrease', { amount: 2 }))).toBe(
@@ -63,8 +157,8 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.synergy', { amount: 2, synergyType: 'Void' }))).toBe(
       'Deal 2 damage for every Void rune in your completed wall'
     );
-    expect(getEffectDescription(createEffectRef('cast.armorSynergy', { amount: 5, synergyType: 'Frost' }))).toBe(
-      'Gain 5 armor for every Frost rune in your completed wall'
+    expect(getEffectDescription(createEffectRef('cast.shieldSynergy', { amount: 5, synergyType: 'Frost' }))).toBe(
+      'Shield 5 for every Frost rune in your completed wall'
     );
     expect(getEffectDescription(createEffectRef('passive.damageBoostSynergy', {
       percent: 5,
@@ -80,10 +174,10 @@ describe('effectCatalog', () => {
       amount: 5,
       synergyType: 'Void',
     }))).toBe('At end of turn, deal 5 damage for every Void rune in your completed wall');
-    expect(getEffectDescription(createEffectRef('passive.armorEndTurnSynergy', {
+    expect(getEffectDescription(createEffectRef('passive.shieldEndTurnSynergy', {
       amount: 2,
       synergyType: 'Frost',
-    }))).toBe('At end of turn, gain 2 armor for every Frost rune in your completed wall');
+    }))).toBe('At end of turn, Shield 2 for every Frost rune in your completed wall');
     expect(getEffectDescription(createEffectRef('passive.healingStartTurn', { amount: 2 }))).toBe(
       'At start of turn, heal 2'
     );
@@ -97,17 +191,17 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('passive.addDamage', { amount: 5, runeType: 'Fire' }))).toBe(
       'Fire runes deal +5 damage'
     );
-    expect(getEffectDescription(createEffectRef('passive.armorBoost', { amount: 5 }))).toBe(
-      'Increase all armor gained by 5'
+    expect(getEffectDescription(createEffectRef('passive.shieldBoost', { amount: 5 }))).toBe(
+      'Increase all shield gained by 5'
     );
     expect(getEffectDescription(createEffectRef('passive.explosive', { amount: 50 }))).toBe(
-      'Deal 50 damage if destroyed or transformed'
+      'Deal 50 damage when consumed, destroyed, or transformed'
     );
     expect(getEffectDescription(createEffectRef('passive.vampire', { percent: 50 }))).toBe(
       'Heal 50% of damage dealt'
     );
     expect(getEffectDescription(createEffectRef('passive.reduceDamage', { amount: 3 }))).toBe(
-      'All damage taken by you is reduced by 3'
+      'Reduce incoming damage by 3'
     );
   });
 
@@ -119,13 +213,13 @@ describe('effectCatalog', () => {
   });
 
   it('defines artefact passive refs and catalog descriptions', () => {
-    expect(ARTEFACTS.ring.passiveEffectRefs).toEqual([]);
+    expect(ARTEFACTS.ring.passiveEffectRefs[0]).toMatchObject({ effectId: 'passive.ringManaStartTurn', params: { amount: 1 } });
     expect(ARTEFACTS.robe.passiveEffectRefs).toEqual([]);
     expect(ARTEFACTS.rod.passiveEffectRefs[0]?.effectId).toBe('passive.rodHealing');
-    expect(ARTEFACTS.potion.passiveEffectRefs[0]?.effectId).toBe('passive.potionArmor');
+    expect(ARTEFACTS.potion.passiveEffectRefs[0]?.effectId).toBe('passive.potionShield');
     expect(ARTEFACTS.tome.passiveEffectRefs[0]?.effectId).toBe('passive.tomeCastDamage');
 
-    expect(getArtefactEffectDescription('ring')).toBe('');
+    expect(getArtefactEffectDescription('ring')).toBe('At start of turn, gain 1 mana');
     expect(getArtefactEffectDescription('tome')).toBe('+1 damage on all casts');
   });
 });
