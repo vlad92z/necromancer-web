@@ -1,14 +1,12 @@
-import { useGameplayActions } from '../../../hooks/useGameActions';
 import { usePendingRuneTargetState } from '../../../hooks/useGameState';
 
 export function RuneTargetPrompt() {
   const pendingTarget = usePendingRuneTargetState();
-  const { skipPendingRuneTarget } = useGameplayActions();
   if (!pendingTarget) return null;
 
-  const isConsume = pendingTarget.effectRef.effectId === 'rune.consume';
   const targetType = pendingTarget.effectRef.runeType ? `${pendingTarget.effectRef.runeType} ` : '';
-  const boardLabel = isConsume ? 'your wall' : 'the enemy wall';
+  const boardLabel = pendingTarget.effectRef.targetOwner === 'self' ? 'your wall' : 'the enemy wall';
+  const count = pendingTarget.effectRef.count;
 
   return (
     <div
@@ -17,15 +15,8 @@ export function RuneTargetPrompt() {
       aria-live="polite"
     >
       <span className="text-xs tracking-[0.08em] text-[#fff8d8]">
-        Select a {targetType}Rune on {boardLabel}, or skip this effect.
+        Select {count === 1 ? 'a' : count} {targetType}rune{count === 1 ? '' : 's'} on {boardLabel} to destroy.
       </span>
-      <button
-        type="button"
-        className="pixel-game-button min-w-24 px-4 py-3 text-xs tracking-[0.12em]"
-        onClick={skipPendingRuneTarget}
-      >
-        Skip
-      </button>
     </div>
   );
 }

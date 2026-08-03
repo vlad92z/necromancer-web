@@ -8,7 +8,6 @@ import { isRuneRemovalEffectRef } from './runeRemoval';
 export type CastEffectId =
   | 'cast.damage'
   | 'cast.damageAdjacent'
-  | 'cast.consumeAdjacent'
   | 'cast.damageConditional'
   | 'cast.damageFragile'
   | 'cast.convertRandom'
@@ -96,13 +95,6 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Adjacent Damage',
     displayHint: 'damage',
     describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent ${params.runeType ? `${runeTypeParam(params, 'runeType')} ` : ''}rune`,
-  },
-  'cast.consumeAdjacent': {
-    id: 'cast.consumeAdjacent',
-    kind: 'cast',
-    title: 'Adjacent Consumption',
-    displayHint: 'damage',
-    describe: (params) => `Consume adjacent runes, deal ${numberParam(params, 'amount')} damage for each rune consumed`,
   },
   'cast.damageConditional': {
     id: 'cast.damageConditional',
@@ -514,12 +506,18 @@ export function createEffectRef(effectId: CatalogEffectId, params?: EffectParams
 
 export function getEffectDescription(effectRef: RuneEffectRef): string {
   if (isRuneRemovalEffectRef(effectRef)) {
-    const verb = effectRef.effectId === 'rune.consume' ? 'Consume' : 'Destroy';
     const random = effectRef.selection === 'random' ? 'random ' : '';
-    const ownership = effectRef.effectId === 'rune.destroy' ? 'Enemy ' : '';
-    const target = effectRef.runeType ? `${effectRef.runeType} Rune` : `${ownership}Rune`;
-    const count = effectRef.effectId === 'rune.destroy' ? '1 ' : 'a ';
-    const removalText = `${verb} ${count}${random}${target}`;
+    const type = effectRef.runeType ? `${effectRef.runeType} ` : '';
+    let removalText: string;
+    if (effectRef.effectId === 'rune.consume') {
+      removalText = effectRef.targetOwner === 'self'
+        ? `Consume a ${random}${type}rune`
+        : `Consume your opponents ${random}${type}rune`;
+    } else {
+      const count = effectRef.count === 1 ? 'a' : String(effectRef.count);
+      const plural = effectRef.count === 1 ? 'rune' : 'runes';
+      removalText = `Destroy ${count} ${random}${type}${plural}${effectRef.targetOwner === 'self' ? ' on your wall' : ''}`;
+    }
     const payloadText = effectRef.payload ? getEffectDescription(effectRef.payload) : '';
     if (!payloadText) return removalText;
     return `${removalText} to ${payloadText.charAt(0).toLowerCase()}${payloadText.slice(1)}`;

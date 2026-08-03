@@ -10,9 +10,9 @@
 ## Goblin Drop Pool
 
 - Throw — Life, common, 1 mana, deal 1 damage for every Life rune on your wall.
-- Hide — Life, uncommon, 0 mana, consume a Life rune; Shield 3 on the Hide token.
+- Hide — Life, uncommon, 0 mana, consume a Life rune by replacing it; Shield 3 on the Hide token.
 - Scorch — Fire, uncommon, 2 mana, deal 2 damage for every adjacent Fire rune.
-- Heal — Life, uncommon, 3 mana, consume a Life rune; heal 5 health.
+- Heal — Life, uncommon, 3 mana, consume a Life rune by replacing it; heal 5 health.
 
 ## UI
 

@@ -19,15 +19,28 @@ export interface EffectRef {
 export type RuneRemovalKind = 'consume' | 'destroy';
 export type RuneRemovalSelection = 'manual' | 'random';
 export type RuneRemovalTrigger = 'onCast' | 'onIncomingDamage' | 'startTurn' | 'endTurn';
+export type RuneEffectTargetOwner = 'self' | 'opponent';
 
-export interface RuneRemovalEffectRef {
-  effectId: 'rune.consume' | 'rune.destroy';
+interface RuneTargetEffectRefBase {
   params?: never;
-  trigger: RuneRemovalTrigger;
   selection: RuneRemovalSelection;
+  targetOwner: RuneEffectTargetOwner;
   runeType?: RuneType;
   payload?: EffectRef;
 }
+
+export interface RuneConsumeEffectRef extends RuneTargetEffectRefBase {
+  effectId: 'rune.consume';
+  trigger: 'onCast';
+}
+
+export interface RuneDestroyEffectRef extends RuneTargetEffectRefBase {
+  effectId: 'rune.destroy';
+  trigger: RuneRemovalTrigger;
+  count: number;
+}
+
+export type RuneRemovalEffectRef = RuneConsumeEffectRef | RuneDestroyEffectRef;
 
 export type RuneEffectRef = EffectRef | RuneRemovalEffectRef;
 
@@ -219,7 +232,7 @@ export interface PendingRuneTarget {
   sourceOwner: 'player' | 'enemy';
   sourceRuneId: string;
   sourcePosition: WallPosition;
-  effectRef: RuneRemovalEffectRef;
+  effectRef: RuneDestroyEffectRef;
 }
 
 export type PendingCombatContinuation =

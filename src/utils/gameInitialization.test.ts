@@ -71,15 +71,17 @@ describe('gameInitialization combat state', () => {
       manaCost: 4,
       castEffectRefs: [],
       passiveEffectRefs: [{
-        effectId: 'rune.consume',
+        effectId: 'rune.destroy',
         trigger: 'onIncomingDamage',
         selection: 'random',
+        targetOwner: 'self',
+        count: 1,
         runeType: 'Wind',
         payload: { effectId: 'passive.reduceDamage', params: { amount: 5 } },
       }],
     });
     expect(getRuneEffectDescription(deck.find((rune) => rune.name === 'Headwind')!)).toBe(
-      '• Consume a random Wind Rune to reduce incoming damage by 5',
+      '• Destroy a random Wind rune on your wall to reduce incoming damage by 5',
     );
     expect(deck.find((rune) => rune.name === 'Lightning Bolt')).toMatchObject({ manaCost: 1 });
     expect(deck.find((rune) => rune.name === 'Firebolt')).toMatchObject({ manaCost: 2 });

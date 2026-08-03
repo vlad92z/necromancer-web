@@ -66,7 +66,16 @@ describe('effectCatalog', () => {
       runeTypes: ['Frost'],
       manaCost: 3,
       cardImageSrc: expect.stringContaining('card_amplify_magic.png'),
-      passiveEffectRefs: [{ effectId: 'passive.damageBoost', params: { amount: 1 } }],
+      passiveEffectRefs: [
+        { effectId: 'passive.damageBoost', params: { amount: 1 } },
+        {
+          effectId: 'rune.destroy',
+          trigger: 'endTurn',
+          selection: 'random',
+          targetOwner: 'self',
+          count: 1,
+        },
+      ],
     });
   });
 
@@ -74,9 +83,6 @@ describe('effectCatalog', () => {
     expect(getEffectDescription(createEffectRef('cast.damage', { amount: 3 }))).toBe('Deal 3 damage');
     expect(getEffectDescription(createEffectRef('cast.damageAdjacent', { amount: 1 }))).toBe(
       'Deal 1 damage for every adjacent rune'
-    );
-    expect(getEffectDescription(createEffectRef('cast.consumeAdjacent', { amount: 1 }))).toBe(
-      'Consume adjacent runes, deal 1 damage for each rune consumed'
     );
     expect(getEffectDescription(createEffectRef('cast.damageConditional', {
       amount: 25,
@@ -92,14 +98,31 @@ describe('effectCatalog', () => {
       kind: 'consume',
       trigger: 'onCast',
       selection: 'random',
+      targetOwner: 'self',
       runeType: 'Fire',
       payload: createEffectRef('cast.damage', { amount: 5 }),
-    }))).toBe('Consume a random Fire Rune to deal 5 damage');
+    }))).toBe('Consume a random Fire rune to deal 5 damage');
     expect(getEffectDescription(createRuneRemovalEffectRef({
       kind: 'destroy',
       trigger: 'onCast',
       selection: 'manual',
-    }))).toBe('Destroy 1 Enemy Rune');
+      targetOwner: 'opponent',
+      count: 1,
+    }))).toBe('Destroy a rune');
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'destroy',
+      trigger: 'onCast',
+      selection: 'random',
+      targetOwner: 'self',
+      count: 3,
+      runeType: 'Fire',
+    }))).toBe('Destroy 3 random Fire runes on your wall');
+    expect(getEffectDescription(createRuneRemovalEffectRef({
+      kind: 'consume',
+      trigger: 'onCast',
+      selection: 'manual',
+      targetOwner: 'opponent',
+    }))).toBe('Consume your opponents rune');
     expect(getEffectDescription(createEffectRef('cast.convertRandom', { sourceType: 'Fire', targetType: 'Frost' }))).toBe(
       'Convert a random completed Fire rune into a common Frost rune with no effects'
     );

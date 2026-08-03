@@ -3,7 +3,7 @@
  */
 
 import type { ArtefactId } from '../types/artefacts';
-import type { EffectResolutionLog, Enemy, EnemyRune, MonsterId, Player, Rune, RuneEffectRef, RuneType, ScoringWall, WallPosition } from '../types/game';
+import type { EffectResolutionLog, Enemy, EnemyRune, MonsterId, Player, Rune, RuneConsumeEffectRef, RuneEffectRef, RuneType, ScoringWall, WallPosition } from '../types/game';
 import {
   resolveCastEffects,
   resolveEndTurnEffects,
@@ -17,7 +17,7 @@ import { DEFAULT_HAND_SIZE } from './soloRunFactory';
 import { createEmptySpellWall } from './spellWall';
 import { copyEffectRefs } from './runeEffects';
 import { runeHasType } from './runeHelpers';
-import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef, removeRuneAtPosition, wallHasRuneId } from './runeRemoval';
+import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef, placeRuneAtPosition, removeRuneAtPosition, wallHasRuneId } from './runeRemoval';
 import { addShieldToWallCell, applyDamageToShieldedWall } from './shield';
 
 export const EXTRA_DRAW_HAND_LIMIT = 10;
@@ -91,7 +91,21 @@ export interface CompletedRuneCastEffectsInput {
   handSize?: number;
   enemyBoard?: ScoringWall;
   manualRemovalPosition?: WallPosition;
-  skipManualRemoval?: boolean;
+  sourceWallOwner?: 'self' | 'opponent';
+}
+
+export interface ConsumedRuneCastInput {
+  player: Player;
+  enemy: Enemy | null;
+  enemyBoard: ScoringWall;
+  rune: Rune;
+  removedRune: Rune;
+  consumeEffect: RuneConsumeEffectRef;
+  sourcePosition: WallPosition;
+  targetSide: 'player' | 'enemy';
+  activeArtefacts?: ArtefactId[];
+  suppressedRunes?: Rune[];
+  handSize?: number;
 }
 
 export interface CompletedRuneCastEffectsResult {
@@ -267,42 +281,56 @@ function resolveEnemyTimedRemovalEffects({
       return;
     }
 
-    const targetWall = effectRef.effectId === 'rune.consume' ? nextBoard : nextPlayer.wall;
-    const position = chooseRandomRunePosition(getRuneRemovalCandidates({
-      wall: targetWall,
-      runeType: effectRef.runeType,
-      excludedRuneId: effectRef.effectId === 'rune.consume' ? sourceId : null,
-    }), random);
-    if (!position) {
+    if (effectRef.effectId !== 'rune.destroy') return;
+    const targetIsSelf = effectRef.targetOwner === 'self';
+    let destroyedCount = 0;
+    const destroyedTargets: Array<{ id: string; row: number; col: number; explosiveDamage: number }> = [];
+    for (let index = 0; index < effectRef.count; index += 1) {
+      const targetWall = targetIsSelf ? nextBoard : nextPlayer.wall;
+      const position = chooseRandomRunePosition(getRuneRemovalCandidates({
+        wall: targetWall,
+        runeType: effectRef.runeType,
+        excludedRuneId: targetIsSelf ? sourceId : null,
+      }), random);
+      if (!position) break;
+      const removal = removeRuneAtPosition(targetWall, position);
+      if (!removal.removedRune) break;
+      destroyedCount += 1;
+      const explosiveDamage = explosiveDamageForRune(removal.removedRune, 'destroy');
+      if (targetIsSelf) {
+        nextBoard = removal.wall;
+        const damageResult = resolveEnemyIncomingDamage({
+          player: nextPlayer,
+          enemy: nextEnemy,
+          baseDamage: explosiveDamage,
+          activeArtefacts,
+          random,
+          enemyBoard: nextBoard,
+        });
+        nextPlayer = damageResult.player;
+        nextEnemy = damageResult.enemy ?? nextEnemy;
+        nextBoard = damageResult.enemyBoard;
+        healthDamage += damageResult.healthDamage;
+        logs.push(...damageResult.logs);
+      } else {
+        nextPlayer = { ...nextPlayer, wall: removal.wall };
+        const damageResult = applyDamageToEnemyWall(nextEnemy, nextBoard, explosiveDamage);
+        nextEnemy = damageResult.enemy;
+        nextBoard = damageResult.enemyBoard;
+      }
+      destroyedTargets.push({
+        id: removal.removedRune.id,
+        row: position.row,
+        col: position.col,
+        explosiveDamage,
+      });
+    }
+    if (destroyedCount === 0) {
       logs.push({
         sourceType: 'rune', sourceId, effectId: effectRef.effectId, trigger,
         input: { runeType: effectRef.runeType ?? null }, output: { noTarget: true }, displayHint: 'damage',
       });
       return;
-    }
-    const removal = removeRuneAtPosition(targetWall, position);
-    if (!removal.removedRune) return;
-    const explosiveDamage = explosiveDamageForRune(removal.removedRune, effectRef.effectId === 'rune.consume' ? 'consume' : 'destroy');
-    if (effectRef.effectId === 'rune.consume') {
-      nextBoard = removal.wall;
-      const damageResult = resolveEnemyIncomingDamage({
-        player: nextPlayer,
-        enemy: nextEnemy,
-        baseDamage: explosiveDamage,
-        activeArtefacts,
-        random,
-        enemyBoard: nextBoard,
-      });
-      nextPlayer = damageResult.player;
-      nextEnemy = damageResult.enemy ?? nextEnemy;
-      nextBoard = damageResult.enemyBoard;
-      healthDamage += damageResult.healthDamage;
-      logs.push(...damageResult.logs);
-    } else {
-      nextPlayer = { ...nextPlayer, wall: removal.wall };
-      const damageResult = applyDamageToEnemyWall(nextEnemy, nextBoard, explosiveDamage);
-      nextEnemy = damageResult.enemy;
-      nextBoard = damageResult.enemyBoard;
     }
     const amount = typeof effectRef.payload?.params?.amount === 'number' ? effectRef.payload.params.amount : 0;
     if (effectRef.payload?.effectId === 'cast.damage' || effectRef.payload?.effectId === 'passive.damageEndTurn') {
@@ -324,10 +352,18 @@ function resolveEnemyTimedRemovalEffects({
     } else if (effectRef.payload?.effectId === 'cast.shield') {
       nextBoard = addShieldToWallCell(nextBoard, sourcePosition, amount);
     }
+    const lastTarget = destroyedTargets[destroyedTargets.length - 1];
     logs.push({
       sourceType: 'rune', sourceId, effectId: effectRef.effectId, trigger,
       input: { runeType: effectRef.runeType ?? null },
-      output: { removedRuneId: removal.removedRune.id, row: position.row, col: position.col, explosiveDamage },
+      output: {
+        removedRuneId: lastTarget?.id,
+        removedRuneIds: destroyedTargets.map((target) => target.id),
+        row: lastTarget?.row,
+        col: lastTarget?.col,
+        destroyedCount,
+        explosiveDamage: destroyedTargets.reduce((total, target) => total + target.explosiveDamage, 0),
+      },
       displayHint: 'damage',
     });
   });
@@ -532,6 +568,49 @@ export function castRuneToWallSlot({
   };
 }
 
+export function castRuneOverWallSlot({
+  player,
+  enemyBoard,
+  hand,
+  discardPile,
+  selectedHandRuneId,
+  targetSide,
+  row,
+  col,
+  createCompletedRuneId = createDefaultCompletedRuneId,
+}: WallCastInput & { enemyBoard: ScoringWall; targetSide: 'player' | 'enemy' }): WallCastResult & {
+  enemyBoard: ScoringWall;
+  removedRune: Rune | null;
+} {
+  const selectedRune = selectedHandRuneId
+    ? hand.find((rune) => rune.id === selectedHandRuneId) ?? null
+    : null;
+  const targetWall = targetSide === 'player' ? player.wall : enemyBoard;
+  const removal = removeRuneAtPosition(targetWall, { row, col });
+  if (!selectedRune || !removal.removedRune) {
+    return {
+      status: 'invalid', player, enemyBoard, hand, discardPile, selectedHandRuneId,
+      completedRune: null, completedPosition: null, removedRune: null,
+    };
+  }
+  const completedRune = {
+    ...cloneRune(selectedRune),
+    id: createCompletedRuneId(selectedRune, { row, col }),
+  };
+  const replacedWall = placeRuneAtPosition(removal.wall, { row, col }, completedRune);
+  return {
+    status: 'completed',
+    player: targetSide === 'player' ? { ...player, wall: replacedWall } : player,
+    enemyBoard: targetSide === 'enemy' ? replacedWall : enemyBoard,
+    hand: hand.filter((rune) => rune.id !== selectedRune.id),
+    discardPile: [...discardPile, selectedRune],
+    selectedHandRuneId: null,
+    completedRune,
+    completedPosition: { row, col },
+    removedRune: removal.removedRune,
+  };
+}
+
 export function resolveCompletedRuneCastEffects({
   player,
   enemy,
@@ -542,7 +621,7 @@ export function resolveCompletedRuneCastEffects({
   handSize = 0,
   enemyBoard = createEmptySpellWall(),
   manualRemovalPosition,
-  skipManualRemoval = false,
+  sourceWallOwner = 'self',
 }: CompletedRuneCastEffectsInput): CompletedRuneCastEffectsResult {
   const result = resolveCastEffects({
     player,
@@ -555,7 +634,7 @@ export function resolveCompletedRuneCastEffects({
     handSize,
     opposingWall: enemyBoard,
     manualRemovalPosition,
-    skipManualRemoval,
+    sourceWallOwner,
   });
 
   return {
@@ -566,6 +645,89 @@ export function resolveCompletedRuneCastEffects({
     } : result.player,
     enemyBoard: result.opposingWall,
   };
+}
+
+export function resolveConsumedRuneCastEffects({
+  player,
+  enemy,
+  enemyBoard,
+  rune,
+  removedRune,
+  consumeEffect,
+  sourcePosition,
+  targetSide,
+  activeArtefacts = [],
+  suppressedRunes = [],
+  handSize = 0,
+}: ConsumedRuneCastInput): CompletedRuneCastEffectsResult {
+  const explosiveDamage = explosiveDamageForRune(removedRune, 'consume');
+  let nextPlayer = player;
+  let nextEnemy = enemy;
+  let nextEnemyBoard = enemyBoard;
+  let removalLogs: EffectResolutionLog[] = [];
+  let nextSuppressedRunes = suppressedRunes;
+
+  if (targetSide === 'player') {
+    nextSuppressedRunes = [...suppressedRunes, removedRune];
+    const outgoing = resolvePlayerOutgoingDamage({
+      trigger: 'onRuneRemoved', baseDamage: explosiveDamage, wall: player.wall, activeArtefacts,
+    });
+    removalLogs = [...outgoing.logs];
+    if (nextEnemy) {
+      const damaged = applyDamageToEnemyWall(nextEnemy, nextEnemyBoard, outgoing.damage);
+      nextEnemy = damaged.enemy;
+      nextEnemyBoard = damaged.enemyBoard;
+    }
+  } else if (explosiveDamage > 0) {
+    const incoming = resolveEnemyIncomingDamage({
+      player: nextPlayer,
+      enemy: nextEnemy,
+      enemyBoard: nextEnemyBoard,
+      baseDamage: explosiveDamage,
+      activeArtefacts,
+      random: Math.random,
+    });
+    nextPlayer = incoming.player;
+    nextEnemy = incoming.enemy;
+    nextEnemyBoard = incoming.enemyBoard;
+    removalLogs = [...incoming.logs];
+  }
+
+  const consumeLog: EffectResolutionLog = {
+    sourceType: 'rune',
+    sourceId: rune.id,
+    effectId: 'rune.consume',
+    trigger: 'onCast',
+    input: { runeType: consumeEffect.runeType ?? null, targetOwner: consumeEffect.targetOwner },
+    output: {
+      removedRuneId: removedRune.id,
+      row: sourcePosition.row,
+      col: sourcePosition.col,
+      explosiveDamage,
+    },
+    displayHint: 'damage',
+  };
+  const consumeIndex = rune.castEffectRefs.findIndex((effectRef) => effectRef.effectId === 'rune.consume');
+  const continuationRune: Rune = {
+    ...rune,
+    castEffectRefs: [
+      ...rune.castEffectRefs.slice(0, consumeIndex),
+      ...(consumeEffect.payload ? [consumeEffect.payload] : []),
+      ...rune.castEffectRefs.slice(consumeIndex + 1),
+    ],
+  };
+  const resolved = resolveCompletedRuneCastEffects({
+    player: nextPlayer,
+    enemy: nextEnemy,
+    rune: continuationRune,
+    activeArtefacts,
+    sourcePosition,
+    sourceWallOwner: targetSide === 'player' ? 'self' : 'opponent',
+    suppressedRunes: nextSuppressedRunes,
+    handSize,
+    enemyBoard: nextEnemyBoard,
+  });
+  return { ...resolved, logs: [consumeLog, ...removalLogs, ...resolved.logs] };
 }
 
 function resolveEnemyIncomingDamage({
@@ -655,6 +817,7 @@ function resolveEnemyCardEffects({
   activeArtefacts,
   random,
   sourcePosition,
+  sourceOwner = 'self',
 }: {
   player: Player;
   enemy: Enemy;
@@ -663,6 +826,7 @@ function resolveEnemyCardEffects({
   activeArtefacts: ArtefactId[];
   random: () => number;
   sourcePosition: WallPosition;
+  sourceOwner?: 'self' | 'opponent';
 }): EnemyTurnEffectsResult {
   let nextPlayer = player;
   let nextEnemy = enemy;
@@ -703,7 +867,8 @@ function resolveEnemyCardEffects({
           : 0;
         applyIncomingPacket(amount * synergyCount);
       } else if (effectRef.effectId === 'cast.shield') {
-        nextBoard = addShieldToWallCell(nextBoard, sourcePosition, amount);
+        if (sourceOwner === 'self') nextBoard = addShieldToWallCell(nextBoard, sourcePosition, amount);
+        else nextPlayer = { ...nextPlayer, wall: addShieldToWallCell(nextPlayer.wall, sourcePosition, amount) };
       } else if (effectRef.effectId === 'cast.healing') {
         nextEnemy = { ...nextEnemy, health: Math.min(nextEnemy.maxHealth, nextEnemy.health + Math.max(0, amount)) };
       }
@@ -711,11 +876,13 @@ function resolveEnemyCardEffects({
     }
     if (effectRef.trigger !== 'onCast') return;
 
-    const targetWall = effectRef.effectId === 'rune.consume' ? nextBoard : nextPlayer.wall;
+    if (effectRef.effectId !== 'rune.destroy') return;
+    const targetIsSelf = effectRef.targetOwner === 'self';
+    const targetWall = targetIsSelf ? nextBoard : nextPlayer.wall;
     const position = chooseRandomRunePosition(getRuneRemovalCandidates({
       wall: targetWall,
       runeType: effectRef.runeType,
-      excludedRuneId: effectRef.effectId === 'rune.consume' ? rune.id : null,
+      excludedRuneId: targetIsSelf ? rune.id : null,
     }), random);
     if (!position) {
       logs.push({
@@ -729,8 +896,8 @@ function resolveEnemyCardEffects({
 
     const removal = removeRuneAtPosition(targetWall, position);
     if (!removal.removedRune) return;
-    const explosiveDamage = explosiveDamageForRune(removal.removedRune, effectRef.effectId === 'rune.consume' ? 'consume' : 'destroy');
-    if (effectRef.effectId === 'rune.consume') {
+    const explosiveDamage = explosiveDamageForRune(removal.removedRune, 'destroy');
+    if (targetIsSelf) {
       nextBoard = removal.wall;
       applyIncomingPacket(explosiveDamage);
     } else {
@@ -751,6 +918,39 @@ function resolveEnemyCardEffects({
       displayHint: 'damage',
     });
 
+    for (let remaining = effectRef.count - 1; remaining > 0; remaining -= 1) {
+      const remainingWall = targetIsSelf ? nextBoard : nextPlayer.wall;
+      const nextPosition = chooseRandomRunePosition(getRuneRemovalCandidates({
+        wall: remainingWall,
+        runeType: effectRef.runeType,
+        excludedRuneId: targetIsSelf ? rune.id : null,
+      }), random);
+      if (!nextPosition) break;
+      const nextRemoval = removeRuneAtPosition(remainingWall, nextPosition);
+      if (!nextRemoval.removedRune) break;
+      const nextExplosiveDamage = explosiveDamageForRune(nextRemoval.removedRune, 'destroy');
+      if (targetIsSelf) {
+        nextBoard = nextRemoval.wall;
+        applyIncomingPacket(nextExplosiveDamage);
+      } else {
+        nextPlayer = { ...nextPlayer, wall: nextRemoval.wall };
+        const damageResult = applyDamageToEnemyWall(nextEnemy, nextBoard, nextExplosiveDamage);
+        nextEnemy = damageResult.enemy;
+        nextBoard = damageResult.enemyBoard;
+      }
+      logs.push({
+        sourceType: 'rune', sourceId: rune.id, effectId: effectRef.effectId, trigger: 'onCast',
+        input: { runeType: effectRef.runeType ?? null },
+        output: {
+          removedRuneId: nextRemoval.removedRune.id,
+          row: nextPosition.row,
+          col: nextPosition.col,
+          explosiveDamage: nextExplosiveDamage,
+        },
+        displayHint: 'damage',
+      });
+    }
+
     const payloadAmount = typeof effectRef.payload?.params?.amount === 'number'
       ? effectRef.payload.params.amount
       : 0;
@@ -759,7 +959,8 @@ function resolveEnemyCardEffects({
     } else if (effectRef.payload?.effectId === 'cast.healing' || effectRef.payload?.effectId === 'passive.healingStartTurn') {
       nextEnemy = { ...nextEnemy, health: Math.min(nextEnemy.maxHealth, nextEnemy.health + Math.max(0, payloadAmount)) };
     } else if (effectRef.payload?.effectId === 'cast.shield') {
-      nextBoard = addShieldToWallCell(nextBoard, sourcePosition, payloadAmount);
+      if (sourceOwner === 'self') nextBoard = addShieldToWallCell(nextBoard, sourcePosition, payloadAmount);
+      else nextPlayer = { ...nextPlayer, wall: addShieldToWallCell(nextPlayer.wall, sourcePosition, payloadAmount) };
     }
   });
 
@@ -817,6 +1018,80 @@ export function resolveEnemyTurn({
   let logs = [...startTurnResult.logs];
 
   for (const rune of runesToPlay) {
+    const consumeIndex = rune.castEffectRefs.findIndex((effectRef) => (
+      isRuneRemovalEffectRef(effectRef) && effectRef.effectId === 'rune.consume'
+    ));
+    const consumeEffect = consumeIndex >= 0 ? rune.castEffectRefs[consumeIndex] : null;
+    if (consumeEffect && isRuneRemovalEffectRef(consumeEffect) && consumeEffect.effectId === 'rune.consume') {
+      const targetSide = consumeEffect.targetOwner === 'self' ? 'enemy' : 'player';
+      const targetWall = targetSide === 'enemy' ? nextBoard : nextPlayer.wall;
+      const target = chooseRandomRunePosition(getRuneRemovalCandidates({
+        wall: targetWall,
+        runeType: consumeEffect.runeType,
+      }), random);
+      if (!target) continue;
+      const removal = removeRuneAtPosition(targetWall, target);
+      if (!removal.removedRune) continue;
+      const replacedWall = placeRuneAtPosition(removal.wall, target, rune);
+      if (targetSide === 'enemy') nextBoard = replacedWall;
+      else nextPlayer = { ...nextPlayer, wall: replacedWall };
+
+      const explosiveDamage = explosiveDamageForRune(removal.removedRune, 'consume');
+      if (targetSide === 'enemy') {
+        const incoming = resolveEnemyIncomingDamage({
+          player: nextPlayer,
+          enemy: nextEnemy,
+          enemyBoard: nextBoard,
+          baseDamage: explosiveDamage,
+          activeArtefacts,
+          random,
+        });
+        nextPlayer = incoming.player;
+        nextEnemy = incoming.enemy ?? nextEnemy;
+        nextBoard = incoming.enemyBoard;
+        healthDamage += incoming.healthDamage;
+        logs = [...logs, ...incoming.logs];
+      } else {
+        const outgoing = resolvePlayerOutgoingDamage({
+          trigger: 'onRuneRemoved', baseDamage: explosiveDamage, wall: nextPlayer.wall, activeArtefacts,
+        });
+        const damaged = applyDamageToEnemyWall(nextEnemy, nextBoard, outgoing.damage);
+        nextEnemy = damaged.enemy;
+        nextBoard = damaged.enemyBoard;
+        logs = [...logs, ...outgoing.logs];
+      }
+      logs.push({
+        sourceType: 'rune', sourceId: rune.id, effectId: 'rune.consume', trigger: 'onCast',
+        input: { runeType: consumeEffect.runeType ?? null, targetOwner: consumeEffect.targetOwner },
+        output: { removedRuneId: removal.removedRune.id, row: target.row, col: target.col, explosiveDamage },
+        displayHint: 'damage',
+      });
+      const continuationRune: EnemyRune = {
+        ...rune,
+        castEffectRefs: [
+          ...rune.castEffectRefs.slice(0, consumeIndex),
+          ...(consumeEffect.payload ? [consumeEffect.payload] : []),
+          ...rune.castEffectRefs.slice(consumeIndex + 1),
+        ],
+      };
+      const cardResult = resolveEnemyCardEffects({
+        player: nextPlayer,
+        enemy: nextEnemy,
+        enemyBoard: nextBoard,
+        rune: continuationRune,
+        activeArtefacts,
+        random,
+        sourcePosition: target,
+        sourceOwner: targetSide === 'enemy' ? 'self' : 'opponent',
+      });
+      nextPlayer = cardResult.player;
+      nextEnemy = cardResult.enemy;
+      nextBoard = cardResult.enemyBoard;
+      healthDamage += cardResult.healthDamage;
+      logs = [...logs, ...cardResult.logs];
+      continue;
+    }
+
     const openSlots: Array<{ row: number; col: number }> = [];
     nextBoard.forEach((row, rowIndex) => row.forEach((cell, colIndex) => {
       if (!cell.id) openSlots.push({ row: rowIndex, col: colIndex });

@@ -83,7 +83,7 @@ Compiled from PRDs; ordered by implementation.
 
 ## 10. Consumption and Destroy
 
-- Added typed Consumption/Destroy wrappers with manual or random, typed or any-rune targeting and optional payloads.
-- Added serializable cast/start/end target pauses, board highlighting, keyboard targeting, and Skip.
-- Changed Headwind to consume another random Wind rune for 5 pre-shield damage reduction.
-- Changed Avalanche to destroy one random player-wall rune and removed Void Blast plus the old bespoke destroy effects.
+- Consume now casts over an occupied rune on either configured wall; the destination wall owns the new rune's passives.
+- Destroy now explicitly targets self or opponent, supports mandatory manual/random multi-target resolution, and excludes its source on self-targets.
+- Removed Skip and the obsolete adjacent-removal Consume effect; persisted manual Destroy keeps its remaining count.
+- Changed Headwind and Amplify Magic to Destroy-own. Avalanche displays `Destroy a rune`; Golem Lord resolves it randomly against the player wall.

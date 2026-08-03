@@ -7,7 +7,7 @@ import { SPELL_WALL_SIDE_LENGTH } from './spellWall';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 38;
+export const SOLO_STATE_VERSION = 39;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -68,8 +68,11 @@ function isPendingCombatResolution(value: unknown): boolean {
   const effectRef = value.target.effectRef;
   if (
     !isRecord(effectRef)
-    || !['rune.consume', 'rune.destroy'].includes(String(effectRef.effectId))
+    || effectRef.effectId !== 'rune.destroy'
     || !['manual', 'random'].includes(String(effectRef.selection))
+    || !['self', 'opponent'].includes(String(effectRef.targetOwner))
+    || !Number.isInteger(effectRef.count)
+    || Number(effectRef.count) < 1
     || !['onCast', 'onIncomingDamage', 'startTurn', 'endTurn'].includes(String(effectRef.trigger))
     || !isPosition(value.target.sourcePosition)
   ) return false;

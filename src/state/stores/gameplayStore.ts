@@ -28,12 +28,14 @@ import {
 } from '../../utils/deckDrafting';
 import {
   castRuneToWallSlot,
+  castRuneOverWallSlot,
   collectVictoryDeck,
   drawRunes,
   drawRunesOfType,
   endPlayerTurn,
   EXTRA_DRAW_HAND_LIMIT,
   resolveCompletedRuneCastEffects,
+  resolveConsumedRuneCastEffects,
   resolveEnemyTurn,
 } from '../../utils/combatResolution';
 import { resolveTimedRuneRemovalEffects } from '../../utils/effectResolver';
@@ -55,7 +57,7 @@ import {
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
 import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
-import { getRuneRemovalCandidates } from '../../utils/runeRemoval';
+import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef } from '../../utils/runeRemoval';
 
 function totalWallShield(wall: ScoringWall): number {
   return wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
@@ -419,22 +421,18 @@ function applyCompletedCastResolution({
 
 function resolvePendingCastTarget(
   state: GameState,
-  position: WallPosition | null,
-  skip: boolean,
+  position: WallPosition,
 ): GameState {
   const pending = state.pendingCombatResolution;
   if (!pending || pending.continuation.kind !== 'cast') return state;
   const { effectRef } = pending.target;
-  const targetWall = effectRef.effectId === 'rune.consume' ? state.player.wall : state.enemyBoard;
-  if (!skip) {
-    if (!position) return state;
-    const isValid = getRuneRemovalCandidates({
-      wall: targetWall,
-      runeType: effectRef.runeType,
-      excludedRuneId: effectRef.effectId === 'rune.consume' ? pending.target.sourceRuneId : null,
-    }).some((candidate) => candidate.row === position.row && candidate.col === position.col);
-    if (!isValid) return state;
-  }
+  const targetWall = effectRef.targetOwner === 'self' ? state.player.wall : state.enemyBoard;
+  const isValid = getRuneRemovalCandidates({
+    wall: targetWall,
+    runeType: effectRef.runeType,
+    excludedRuneId: effectRef.targetOwner === 'self' ? pending.target.sourceRuneId : null,
+  }).some((candidate) => candidate.row === position.row && candidate.col === position.col);
+  if (!isValid) return state;
 
   const resumedRune: Rune = {
     ...pending.continuation.castRune,
@@ -449,8 +447,7 @@ function resolvePendingCastTarget(
     suppressedRunes: state.suppressedRunes,
     handSize: state.hand.length,
     enemyBoard: state.enemyBoard,
-    ...(position ? { manualRemovalPosition: position } : {}),
-    skipManualRemoval: skip,
+    manualRemovalPosition: position,
   });
 
   return applyCompletedCastResolution({
@@ -516,7 +513,7 @@ function finishPlayerStartTurn(
   state: GameState,
   processedRemovalKeys: string[] = [],
   manualRemovalPosition?: WallPosition,
-  skipManualRemoval: boolean = false,
+  manualRemainingCount?: number,
 ): GameState {
   const timed = resolveTimedRuneRemovalEffects({
     trigger: 'startTurn',
@@ -525,7 +522,7 @@ function finishPlayerStartTurn(
     opposingWall: state.enemyBoard,
     processedKeys: processedRemovalKeys,
     ...(manualRemovalPosition ? { manualRemovalPosition } : {}),
-    skipManualRemoval,
+    ...(manualRemainingCount ? { manualRemainingCount } : {}),
   });
   if (timed.pendingRemoval) return pendingTimedState({ state, trigger: 'startTurn', result: timed });
 
@@ -617,7 +614,7 @@ function runCombatTurn(
   state: GameState,
   processedRemovalKeys: string[] = [],
   manualRemovalPosition?: WallPosition,
-  skipManualRemoval: boolean = false,
+  manualRemainingCount?: number,
 ): GameState {
   const timedEnd = resolveTimedRuneRemovalEffects({
     trigger: 'endTurn',
@@ -626,7 +623,7 @@ function runCombatTurn(
     opposingWall: state.enemyBoard,
     processedKeys: processedRemovalKeys,
     ...(manualRemovalPosition ? { manualRemovalPosition } : {}),
-    skipManualRemoval,
+    ...(manualRemainingCount ? { manualRemainingCount } : {}),
   });
   if (timedEnd.pendingRemoval) return pendingTimedState({ state, trigger: 'endTurn', result: timedEnd });
 
@@ -685,7 +682,7 @@ function runCombatTurn(
   const enemyAttackSoundSignal = stateAfterTimed.enemyAttackSoundSignal + (enemyTurnResult.healthDamage > 0 ? 1 : 0);
   const preventedDamage = enemyTurnResult.logs.some((log) => (
     (log.effectId === 'passive.reduceDamage' && log.output.previousValue !== log.output.nextValue)
-    || (log.effectId === 'rune.consume' && typeof log.output.reduction === 'number' && log.output.reduction > 0)
+    || (log.effectId === 'rune.destroy' && typeof log.output.reduction === 'number' && log.output.reduction > 0)
   ));
   const shieldedAttack = enemyTurnResult.healthDamage === 0 && (
     totalWallShield(enemyTurnResult.player.wall) < totalWallShield(endTurnEffects.player.wall) || preventedDamage
@@ -767,16 +764,16 @@ function runCombatTurn(
 
 function resolvePendingTimedTarget(
   state: GameState,
-  position: WallPosition | null,
-  skip: boolean,
+  position: WallPosition,
 ): GameState {
   const continuation = state.pendingCombatResolution?.continuation;
+  const remainingCount = state.pendingCombatResolution?.target.effectRef.count;
   if (!continuation || continuation.kind === 'cast') return state;
   const baseState = { ...state, pendingCombatResolution: null };
   if (continuation.kind === 'endTurn') {
-    return runCombatTurn(baseState, continuation.processedRemovalKeys, position ?? undefined, skip);
+    return runCombatTurn(baseState, continuation.processedRemovalKeys, position, remainingCount);
   }
-  return finishPlayerStartTurn(baseState, continuation.processedRemovalKeys, position ?? undefined, skip);
+  return finishPlayerStartTurn(baseState, continuation.processedRemovalKeys, position, remainingCount);
 }
 
 export interface GameplayStore extends GameState {
@@ -792,9 +789,8 @@ export interface GameplayStore extends GameState {
   revealMapRoadTarget: (target: Extract<MapTravelTarget, { kind: 'road' }>) => Extract<MapTravelTarget, { kind: 'location' }> | null;
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
-  castRuneToWall: (row: number, col: number) => void;
+  castRuneToWall: (row: number, col: number, side?: 'player' | 'enemy') => void;
   selectPendingRuneTarget: (side: 'player' | 'enemy', row: number, col: number) => void;
-  skipPendingRuneTarget: () => void;
   endCombatTurn: () => void;
   resetGame: () => void;
   selectDeckDraftOffer: (offerId: string) => void;
@@ -976,7 +972,7 @@ export const gameplayStoreConfig = (
     });
   },
 
-  castRuneToWall: (row: number, col: number) => {
+  castRuneToWall: (row: number, col: number, side = 'player') => {
     set((state) => {
       if (state.combatPhase !== 'player-turn' || state.isDefeat || state.deckDraftState || state.pendingCombatResolution) {
         return state;
@@ -987,6 +983,59 @@ export const gameplayStoreConfig = (
       if (!selectedRune || manaCost > state.player.mana) {
         return state;
       }
+
+      const consumeEffect = selectedRune.castEffectRefs.find((effectRef) => (
+        isRuneRemovalEffectRef(effectRef) && effectRef.effectId === 'rune.consume'
+      ));
+      if (consumeEffect) {
+        const targetSide = consumeEffect.targetOwner === 'self' ? 'player' : 'enemy';
+        if (side !== targetSide) return state;
+        const targetWall = targetSide === 'player' ? state.player.wall : state.enemyBoard;
+        const candidates = getRuneRemovalCandidates({ wall: targetWall, runeType: consumeEffect.runeType });
+        const clickedIsEligible = candidates.some((position) => position.row === row && position.col === col);
+        if (!clickedIsEligible) return state;
+        const targetPosition = consumeEffect.selection === 'random'
+          ? chooseRandomRunePosition(candidates, Math.random)
+          : { row, col };
+        if (!targetPosition) return state;
+        const result = castRuneOverWallSlot({
+          player: state.player,
+          enemyBoard: state.enemyBoard,
+          hand: state.hand,
+          discardPile: state.discardPile,
+          selectedHandRuneId: state.selectedHandRuneId,
+          targetSide,
+          row: targetPosition.row,
+          col: targetPosition.col,
+        });
+        if (result.status !== 'completed' || !result.completedRune || !result.removedRune || !result.completedPosition) {
+          return state;
+        }
+        const resolvedEffects = resolveConsumedRuneCastEffects({
+          player: result.player,
+          enemy: state.enemy,
+          enemyBoard: result.enemyBoard,
+          rune: result.completedRune,
+          removedRune: result.removedRune,
+          consumeEffect,
+          sourcePosition: result.completedPosition,
+          targetSide,
+          activeArtefacts: state.activeArtefacts,
+          suppressedRunes: state.suppressedRunes,
+          handSize: result.hand.length,
+        });
+        return applyCompletedCastResolution({
+          state,
+          resolvedEffects,
+          completedRune: result.completedRune,
+          sourcePosition: result.completedPosition,
+          hand: result.hand,
+          discardPile: result.discardPile,
+          manaSpent: manaCost,
+        });
+      }
+
+      if (side !== 'player') return state;
 
       const result = castRuneToWallSlot({
         player: state.player,
@@ -1034,18 +1083,12 @@ export const gameplayStoreConfig = (
     set((state) => {
       const pending = state.pendingCombatResolution;
       if (!pending) return state;
-      const expectedSide = pending.target.effectRef.effectId === 'rune.consume' ? 'player' : 'enemy';
+      const expectedSide = pending.target.effectRef.targetOwner === 'self' ? 'player' : 'enemy';
       if (side !== expectedSide) return state;
       return pending.continuation.kind === 'cast'
-        ? resolvePendingCastTarget(state, { row, col }, false)
-        : resolvePendingTimedTarget(state, { row, col }, false);
+        ? resolvePendingCastTarget(state, { row, col })
+        : resolvePendingTimedTarget(state, { row, col });
     });
-  },
-
-  skipPendingRuneTarget: () => {
-    set((state) => state.pendingCombatResolution?.continuation.kind === 'cast'
-      ? resolvePendingCastTarget(state, null, true)
-      : resolvePendingTimedTarget(state, null, true));
   },
 
   endCombatTurn: () => {

@@ -103,7 +103,7 @@ describe('monsterCatalog', () => {
       cardImageSrc: expect.stringContaining('card_avalanche.png'),
       castEffectRefs: [{ effectId: 'rune.destroy', trigger: 'onCast', selection: 'manual' }],
     });
-    expect(getRuneEffectDescription(avalanche)).toBe('• Destroy 1 Enemy Rune');
+    expect(getRuneEffectDescription(avalanche)).toBe('• Destroy a rune');
     expect(createEnemyTurnRunes('golem-lord', 3).map((rune) => rune.name)).toEqual([
       'Barricade', 'Barricade', 'Barricade', 'Barricade',
     ]);

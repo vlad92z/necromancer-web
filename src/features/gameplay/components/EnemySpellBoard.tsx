@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useGameplayActions } from '../../../hooks/useGameActions';
-import { useEnemySpellBoardState, usePendingRuneTargetState } from '../../../hooks/useGameState';
+import { useCombatZoneState, useEnemySpellBoardState, usePendingRuneTargetState } from '../../../hooks/useGameState';
 import type { Rune } from '../../../types/game';
 import { WallCell } from './WallCell';
+import { isRuneRemovalEffectRef } from '../../../utils/runeRemoval';
 
 const GAP = 0;
 
@@ -16,23 +17,31 @@ interface EnemySpellBoardProps {
 
 export function EnemySpellBoard({ onRuneHover, onRuneLeave }: EnemySpellBoardProps) {
   const { wall } = useEnemySpellBoardState();
+  const { hand, selectedHandRuneId } = useCombatZoneState();
   const pendingTarget = usePendingRuneTargetState();
-  const { selectPendingRuneTarget } = useGameplayActions();
-  const isDestroying = pendingTarget?.effectRef.effectId === 'rune.destroy';
+  const { castRuneToWall, selectPendingRuneTarget } = useGameplayActions();
+  const selectedRune = hand.find((rune) => rune.id === selectedHandRuneId);
+  const consumeEffect = selectedRune?.castEffectRefs.find((effectRef) => (
+    isRuneRemovalEffectRef(effectRef) && effectRef.effectId === 'rune.consume'
+  ));
+  const isConsuming = consumeEffect?.targetOwner === 'opponent';
+  const isDestroying = pendingTarget?.effectRef.targetOwner === 'opponent';
+  const targetEffect = isConsuming ? consumeEffect : isDestroying ? pendingTarget.effectRef : null;
+  const isTargeting = Boolean(targetEffect);
   const buttonRefs = useRef(new Map<string, HTMLButtonElement>());
   const targetableKeys = useMemo(() => new Set(wall.flatMap((row, rowIndex) => row.flatMap((cell, colIndex) => (
-    isDestroying
+    targetEffect
     && cell.id
-    && (!pendingTarget.effectRef.runeType || cell.runeTypes.includes(pendingTarget.effectRef.runeType))
+    && (!targetEffect.runeType || cell.runeTypes.includes(targetEffect.runeType))
       ? [`${rowIndex}-${colIndex}`]
       : []
-  )))), [isDestroying, pendingTarget, wall]);
+  )))), [targetEffect, wall]);
 
   useEffect(() => {
-    if (!isDestroying) return;
+    if (!isTargeting) return;
     const firstKey = targetableKeys.values().next().value as string | undefined;
     if (firstKey) buttonRefs.current.get(firstKey)?.focus();
-  }, [isDestroying, pendingTarget?.sourceRuneId, targetableKeys]);
+  }, [isTargeting, pendingTarget?.sourceRuneId, targetableKeys]);
 
   const handleArrow = (event: KeyboardEvent<HTMLButtonElement>, currentKey: string) => {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
@@ -61,10 +70,14 @@ export function EnemySpellBoard({ onRuneHover, onRuneLeave }: EnemySpellBoardPro
                 }}
                 disabled={Boolean(pendingTarget) && !targetableKeys.has(`${rowIndex}-${colIndex}`)}
                 tabIndex={targetableKeys.has(`${rowIndex}-${colIndex}`) ? 0 : -1}
-                onClick={() => selectPendingRuneTarget('enemy', rowIndex, colIndex)}
+                onClick={() => {
+                  if (!targetableKeys.has(`${rowIndex}-${colIndex}`)) return;
+                  if (isConsuming) castRuneToWall(rowIndex, colIndex, 'enemy');
+                  else selectPendingRuneTarget('enemy', rowIndex, colIndex);
+                }}
                 onKeyDown={(event) => handleArrow(event, `${rowIndex}-${colIndex}`)}
                 aria-label={targetableKeys.has(`${rowIndex}-${colIndex}`)
-                  ? `Destroy ${cell.name ?? cell.runeTypes.join(' ')} rune at row ${rowIndex + 1}, column ${colIndex + 1}`
+                  ? `${isConsuming ? 'Consume' : 'Destroy'} ${cell.name ?? cell.runeTypes.join(' ')} rune at row ${rowIndex + 1}, column ${colIndex + 1}`
                   : undefined}
                 style={{ display: 'flex', border: 0, padding: 0, background: 'transparent' }}
               >

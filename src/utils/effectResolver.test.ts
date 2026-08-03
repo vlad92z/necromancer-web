@@ -128,32 +128,6 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
-  it('consumes each adjacent rune and deals damage for each one consumed', () => {
-    const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Frost', [], [], 'north-west');
-    wall[0][1] = createWallCell('Life', [], [], 'north');
-    wall[1][0] = createWallCell('Void', [], [], 'west');
-    const player = { ...createTestPlayer(), wall };
-
-    const result = resolveCastEffects({
-      player,
-      enemy: createTestEnemy(20),
-      castRune: createTestRune('fireball', 'Fire', [createEffectRef('cast.consumeAdjacent', { amount: 1 })]),
-      wall,
-      sourcePosition: { row: 1, col: 1 },
-    });
-
-    expect(result.enemy?.health).toBe(17);
-    expect(result.wall[0][0].id).toBeNull();
-    expect(result.wall[0][1].id).toBeNull();
-    expect(result.wall[1][0].id).toBeNull();
-    expect(result.suppressedRunes.map((rune) => rune.id)).toEqual(['north-west', 'north', 'west']);
-    expect(result.logs[0]).toMatchObject({
-      effectId: 'cast.consumeAdjacent',
-      output: { damage: 3, consumedRuneIds: ['north-west', 'north', 'west'] },
-    });
-  });
-
   it('resolves conditional damage from completed wall counts', () => {
     const belowThresholdPlayer = createTestPlayer([[0, 4, 'Void']]);
     const atThresholdPlayer = createTestPlayer([
@@ -440,35 +414,6 @@ describe('effectResolver resolveCastEffects', () => {
     });
   });
 
-  it('consumes one deterministic random matching rune, excludes the source, and resolves its payload', () => {
-    const player = createTestPlayer([[0, 0, 'Fire'], [0, 1, 'Fire'], [1, 1, 'Void']]);
-    const enemy = createTestEnemy(50);
-    const castRune = createTestRune('uncommon-void', 'Void', [
-      createRuneRemovalEffectRef({
-        kind: 'consume',
-        trigger: 'onCast',
-        selection: 'random',
-        runeType: 'Fire',
-        payload: createEffectRef('cast.damage', { amount: 5 }),
-      }),
-    ]);
-
-    const result = resolveCastEffects({
-      player,
-      enemy,
-      castRune,
-      wall: player.wall,
-      sourcePosition: { row: 1, col: 1 },
-      rng: () => 0.99,
-    });
-
-    expect(result.enemy?.health).toBe(45);
-    expect(result.wall[0][0].runeTypes[0]).toBe('Fire');
-    expect(result.wall[0][1].runeTypes).toEqual([]);
-    expect(result.wall[1][1].runeTypes[0]).toBe('Void');
-    expect(result.suppressedRunes.map((rune) => rune.id)).toEqual(['completed-0-1']);
-  });
-
   it('replays adjacent cast effects while skipping retriggers', () => {
     const player = createTestPlayer();
     const wall = createEmptyWall(6);
@@ -560,31 +505,6 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.player.health).toBe(7);
   });
 
-  it('fires Lightning Bolt damage when consumed', () => {
-    const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Lightning', CARD_DEFINITIONS.LightningBolt.passiveEffectRefs);
-    const player = { ...createTestPlayer(), wall };
-    const castRune = createTestRune('consumer', 'Void', [createRuneRemovalEffectRef({
-      kind: 'consume',
-      trigger: 'onCast',
-      selection: 'random',
-    })]);
-
-    const result = resolveCastEffects({
-      player,
-      enemy: createTestEnemy(20),
-      castRune,
-      wall,
-      sourcePosition: { row: 1, col: 1 },
-    });
-
-    expect(result.enemy?.health).toBe(13);
-    expect(result.logs).toContainEqual(expect.objectContaining({
-      effectId: 'rune.consume',
-      output: expect.objectContaining({ explosiveDamage: 7 }),
-    }));
-  });
-
   it('returns adjacent runes up to hand cap without suppressing them', () => {
     const wall = createEmptyWall(6);
     wall[0][0] = createWallCell('Fire', [], [], 'completed-0-0');
@@ -614,7 +534,7 @@ describe('effectResolver resolveCastEffects', () => {
     expect(result.wall[1][0].runeTypes).toEqual([]);
   });
 
-  it('destroys a deterministic random typed rune on the opposing wall', () => {
+  it('destroys deterministic unique random typed runes up to count on the opposing wall', () => {
     const wall = createEmptyWall(6);
     const opposingWall = createEmptyWall(6);
     opposingWall[0][0] = createWallCell('Fire', [], [], 'enemy-0-0');
@@ -624,6 +544,8 @@ describe('effectResolver resolveCastEffects', () => {
       kind: 'destroy',
       trigger: 'onCast',
       selection: 'random',
+      targetOwner: 'opponent',
+      count: 2,
       runeType: 'Fire',
     })]);
 
@@ -637,7 +559,7 @@ describe('effectResolver resolveCastEffects', () => {
       rng: () => 0.75,
     });
 
-    expect(result.opposingWall[0][0].runeTypes[0]).toBe('Fire');
+    expect(result.opposingWall[0][0].runeTypes).toEqual([]);
     expect(result.opposingWall[0][1].runeTypes).toEqual([]);
     expect(result.suppressedRunes).toEqual([]);
   });
@@ -655,6 +577,8 @@ describe('effectResolver resolveCastEffects', () => {
       kind: 'destroy',
       trigger: 'onCast',
       selection: 'random',
+      targetOwner: 'opponent',
+      count: 1,
       payload: createEffectRef('cast.healing', { amount: 2 }),
     })]);
 
@@ -667,7 +591,7 @@ describe('effectResolver resolveCastEffects', () => {
     });
 
     expect(result.opposingWall[0][0].id).toBeNull();
-    expect(result.player.health).toBe(5);
+    expect(result.player.health).toBe(10);
   });
 
   it('no-ops random type destroy when no eligible target exists', () => {
@@ -678,6 +602,8 @@ describe('effectResolver resolveCastEffects', () => {
       kind: 'destroy',
       trigger: 'onCast',
       selection: 'random',
+      targetOwner: 'opponent',
+      count: 1,
       runeType: 'Frost',
       payload: createEffectRef('cast.damage', { amount: 5 }),
     })]);
@@ -693,24 +619,27 @@ describe('effectResolver resolveCastEffects', () => {
     });
 
     expect(result.wall[0][0].runeTypes[0]).toBe('Fire');
-    expect(result.enemy?.health).toBe(20);
+    expect(result.enemy?.health).toBe(15);
     expect(result.suppressedRunes).toEqual([]);
     expect(result.logs[0]).toMatchObject({ effectId: 'rune.destroy', output: { noTarget: true } });
   });
 
-  it('pauses timed effects in strict order and resumes a manual consumption payload', () => {
+  it('pauses timed effects in strict order and resumes a mandatory manual destruction payload', () => {
     const wall = createEmptyWall(6);
     wall[0][0] = createWallCell('Wind', [
       createEffectRef('passive.damageEndTurn', { amount: 2 }),
       createRuneRemovalEffectRef({
-        kind: 'consume',
+        kind: 'destroy',
         trigger: 'endTurn',
         selection: 'manual',
+        targetOwner: 'self',
+        count: 2,
         runeType: 'Fire',
         payload: createEffectRef('cast.damage', { amount: 5 }),
       }),
     ], [], 'timed-source');
     wall[0][1] = createWallCell('Fire', [], [], 'timed-target');
+    wall[0][2] = createWallCell('Fire', [], [], 'timed-target-2');
     const first = resolveTimedRuneRemovalEffects({
       trigger: 'endTurn',
       player: { ...createTestPlayer(), wall },
@@ -720,46 +649,31 @@ describe('effectResolver resolveCastEffects', () => {
 
     expect(first.enemy?.health).toBe(18);
     expect(first.pendingRemoval?.sourceId).toBe('timed-source');
-    const resumed = resolveTimedRuneRemovalEffects({
+    const resumedOnce = resolveTimedRuneRemovalEffects({
       trigger: 'endTurn',
       player: first.player,
       enemy: first.enemy,
       opposingWall: first.opposingWall,
       processedKeys: first.processedKeys,
       manualRemovalPosition: { row: 0, col: 1 },
+      manualRemainingCount: first.pendingRemoval?.effectRef.count,
     });
 
+    expect(resumedOnce.pendingRemoval?.effectRef.count).toBe(1);
+    expect(resumedOnce.enemy?.health).toBe(18);
+    const resumed = resolveTimedRuneRemovalEffects({
+      trigger: 'endTurn',
+      player: resumedOnce.player,
+      enemy: resumedOnce.enemy,
+      opposingWall: resumedOnce.opposingWall,
+      processedKeys: resumedOnce.processedKeys,
+      manualRemovalPosition: { row: 0, col: 2 },
+      manualRemainingCount: resumedOnce.pendingRemoval?.effectRef.count,
+    });
     expect(resumed.pendingRemoval).toBeNull();
     expect(resumed.enemy?.health).toBe(13);
     expect(resumed.player.wall[0][1].id).toBeNull();
-  });
-
-  it('has Scorch consume any rune on cast before dealing 5 damage', () => {
-    const wall = createEmptyWall(6);
-    wall[0][0] = createWallCell('Fire', CARD_DEFINITIONS.Scorch.castEffectRefs, [], 'scorch');
-    wall[0][1] = createWallCell('Fire', [], [], 'fire-target');
-    const scorch = createTestRune('scorch', 'Fire', CARD_DEFINITIONS.Scorch.castEffectRefs);
-    const first = resolveCastEffects({
-      player: { ...createTestPlayer(), wall },
-      enemy: createTestEnemy(20),
-      castRune: scorch,
-      wall,
-      sourcePosition: { row: 0, col: 0 },
-    });
-
-    expect(first.pendingRemoval?.effectRef).not.toHaveProperty('runeType');
-    const resumed = resolveCastEffects({
-      player: first.player,
-      enemy: first.enemy,
-      castRune: scorch,
-      wall: first.wall,
-      opposingWall: first.opposingWall,
-      sourcePosition: { row: 0, col: 0 },
-      manualRemovalPosition: { row: 0, col: 1 },
-    });
-
-    expect(resumed.enemy?.health).toBe(15);
-    expect(resumed.player.wall[0][1].id).toBeNull();
+    expect(resumed.player.wall[0][2].id).toBeNull();
   });
 
   it('converts random and adjacent targets into common no-effect runes while suppressing originals', () => {

@@ -7,7 +7,7 @@ import type { Rune, RuneType, ScoringWall } from '../../types/game';
 import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall, createMonsterEnemy } from '../../utils/gameInitialization';
 import { MONSTER_CATALOG } from '../../utils/monsterCatalog';
-import { createRuneFromPool } from '../../utils/runeEffects';
+import { createRuneFromCardName, createRuneFromPool } from '../../utils/runeEffects';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import { getRegionDefinition } from '../../utils/regionCatalog';
 import { createRuneRemovalEffectRef } from '../../utils/runeRemoval';
@@ -1037,11 +1037,11 @@ describe('gameplayStore current combat', () => {
     expect(state.player.deck).toHaveLength(1);
   });
 
-  it('commits a cast, pauses for manual consumption, and resumes after target selection', () => {
+  it('commits manual consumption by replacing the clicked rune before resolving the payload', () => {
     const store = createGameplayStoreInstance();
     startEncounterAtA(store);
     const consumer: Rune = {
-      ...createRuneFromPool({ id: 'consumer', runeType: 'Void', rarity: 'common' }),
+      ...createRuneFromCardName({ id: 'consumer', cardName: 'VoidTendrils' }),
       castEffectRefs: [
         createEffectRef('cast.damage', { amount: 2 }),
         createRuneRemovalEffectRef({
@@ -1074,31 +1074,81 @@ describe('gameplayStore current combat', () => {
       suppressedRunes: [],
     }));
 
-    store.getState().castRuneToWall(0, 0);
+    store.getState().castRuneToWall(0, 1);
 
-    let state = store.getState();
-    expect(state.enemy?.health).toBe(8);
-    expect(state.pendingCombatResolution?.target.effectRef.effectId).toBe('rune.consume');
+    const state = store.getState();
+    expect(state.enemy?.health).toBe(3);
+    expect(state.pendingCombatResolution).toBeNull();
     expect(state.hand).toEqual([]);
     expect(state.discardPile.map((rune) => rune.id)).toContain('consumer');
-    expect(state.player.wall[0][1].id).toBe('adjacent-fire');
-    store.getState().endCombatTurn();
-    expect(store.getState().enemyTurnNumber).toBe(0);
-
-    store.getState().selectPendingRuneTarget('player', 0, 1);
-
-    state = store.getState();
-    expect(state.pendingCombatResolution).toBeNull();
-    expect(state.enemy?.health).toBe(3);
-    expect(state.player.wall[0][1].id).toBeNull();
+    expect(state.player.wall[0][1].name).toBe(consumer.name);
     expect(state.suppressedRunes.map((rune) => rune.id)).toContain('adjacent-fire');
   });
 
-  it('finishes a paused cast chain before evaluating victory', () => {
+  it('rejects Consume with no eligible target without spending mana or moving the card', () => {
     const store = createGameplayStoreInstance();
     startEncounterAtA(store);
     const consumer: Rune = {
-      ...createRuneFromPool({ id: 'victory-consumer', runeType: 'Void', rarity: 'common' }),
+      ...createRuneFromCardName({ id: 'blocked-consumer', cardName: 'VoidTendrils' }),
+      manaCost: 2,
+      castEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', runeType: 'Fire',
+      })],
+    };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, wall: createEmptyWall(), mana: 5, deck: [] },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().hand.map((rune) => rune.id)).toEqual([consumer.id]);
+    expect(store.getState().player.mana).toBe(5);
+    expect(store.getState().discardPile).toEqual([]);
+  });
+
+  it('places an opponent-targeted Consume rune on the enemy wall', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromCardName({ id: 'enemy-wall-consumer', cardName: 'VoidTendrils' }),
+      castEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'consume', trigger: 'onCast', selection: 'random', targetOwner: 'opponent',
+        payload: createEffectRef('cast.shield', { amount: 3 }),
+      })],
+      passiveEffectRefs: [createEffectRef('passive.damageBoost', { amount: 2 })],
+    };
+    const enemyBoard = createEmptyWall();
+    enemyBoard[0][0] = { ...enemyBoard[0][0], id: 'enemy-target', runeTypes: ['Fire'], rarity: 'common' };
+    enemyBoard[0][1] = { ...enemyBoard[0][1], id: 'enemy-random-target', runeTypes: ['Life'], rarity: 'common' };
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, deck: [] },
+      enemyBoard,
+    }));
+
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    store.getState().castRuneToWall(0, 0, 'enemy');
+    randomSpy.mockRestore();
+
+    expect(store.getState().enemyBoard[0][0].id).toBe('enemy-target');
+    expect(store.getState().enemyBoard[0][1]).toMatchObject({
+      name: consumer.name,
+      passiveEffectRefs: consumer.passiveEffectRefs,
+      shield: 3,
+    });
+    expect(store.getState().player.wall[0][0].id).toBeNull();
+  });
+
+  it('finishes a consume cast chain before evaluating victory', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer: Rune = {
+      ...createRuneFromCardName({ id: 'victory-consumer', cardName: 'VoidTendrils' }),
       castEffectRefs: [
         createEffectRef('cast.damage', { amount: 10 }),
         createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual' }),
@@ -1114,16 +1164,12 @@ describe('gameplayStore current combat', () => {
       enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
     }));
 
-    store.getState().castRuneToWall(0, 0);
-    expect(store.getState().pendingCombatResolution).not.toBeNull();
-    expect(store.getState().soloPhase).toBe('encounter');
-
-    store.getState().selectPendingRuneTarget('player', 0, 1);
+    store.getState().castRuneToWall(0, 1);
     expect(store.getState().pendingCombatResolution).toBeNull();
     expect(store.getState().soloPhase).toBe('reward');
   });
 
-  it('pauses and resumes manual end-turn and start-turn consumption', () => {
+  it('pauses and resumes mandatory manual end-turn and start-turn destruction', () => {
     const endStore = createGameplayStoreInstance();
     startEncounterAtA(endStore);
     const endWall = createEmptyWall();
@@ -1133,9 +1179,11 @@ describe('gameplayStore current combat', () => {
       runeTypes: ['Wind'],
       rarity: 'common',
       passiveEffectRefs: [createRuneRemovalEffectRef({
-        kind: 'consume',
+        kind: 'destroy',
         trigger: 'endTurn',
         selection: 'manual',
+        targetOwner: 'self',
+        count: 1,
         runeType: 'Fire',
         payload: createEffectRef('cast.damage', { amount: 5 }),
       })],
@@ -1167,9 +1215,11 @@ describe('gameplayStore current combat', () => {
       runeTypes: ['Wind'],
       rarity: 'common',
       passiveEffectRefs: [createRuneRemovalEffectRef({
-        kind: 'consume',
+        kind: 'destroy',
         trigger: 'startTurn',
         selection: 'manual',
+        targetOwner: 'self',
+        count: 1,
         runeType: 'Fire',
         payload: createEffectRef('cast.shield', { amount: 2 }),
       })],
@@ -1191,26 +1241,19 @@ describe('gameplayStore current combat', () => {
     expect(startStore.getState().player.wall[0][1].id).toBeNull();
   });
 
-  it('skips only the current manual removal before presenting the next prompt', () => {
+  it('requires every available target for a manual multi-destroy and stops when the wall runs out', () => {
     const store = createGameplayStoreInstance();
     startEncounterAtA(store);
     const consumer: Rune = {
-      ...createRuneFromPool({ id: 'double-consumer', runeType: 'Void', rarity: 'common' }),
-      castEffectRefs: [
-        createRuneRemovalEffectRef({
-          kind: 'consume',
-          trigger: 'onCast',
-          selection: 'manual',
-          payload: createEffectRef('cast.damage', { amount: 5 }),
-        }),
-        createRuneRemovalEffectRef({
-          kind: 'consume',
-          trigger: 'onCast',
-          selection: 'manual',
-          payload: createEffectRef('cast.damage', { amount: 3 }),
-        }),
-        createEffectRef('cast.damage', { amount: 1 }),
-      ],
+      ...createRuneFromCardName({ id: 'double-consumer', cardName: 'VoidTendrils' }),
+      castEffectRefs: [createRuneRemovalEffectRef({
+        kind: 'destroy',
+        trigger: 'onCast',
+        selection: 'manual',
+        targetOwner: 'self',
+        count: 3,
+        payload: createEffectRef('cast.damage', { amount: 5 }),
+      })],
     };
     const wall = createEmptyWall();
     wall[0][1] = { ...wall[0][1], id: 'first-target', runeTypes: ['Fire'], rarity: 'common' };
@@ -1225,18 +1268,18 @@ describe('gameplayStore current combat', () => {
     }));
 
     store.getState().castRuneToWall(0, 0);
-    expect(store.getState().pendingCombatResolution?.target.effectRef.effectId).toBe('rune.consume');
-
-    store.getState().skipPendingRuneTarget();
-    expect(store.getState().pendingCombatResolution?.target.effectRef.effectId).toBe('rune.consume');
-    expect(store.getState().enemy?.health).toBe(20);
+    expect(store.getState().pendingCombatResolution?.target.effectRef.count).toBe(3);
 
     store.getState().selectPendingRuneTarget('player', 0, 1);
+    expect(store.getState().pendingCombatResolution?.target.effectRef.count).toBe(2);
+    expect(store.getState().enemy?.health).toBe(20);
+
+    store.getState().selectPendingRuneTarget('player', 0, 2);
     const state = store.getState();
     expect(state.pendingCombatResolution).toBeNull();
-    expect(state.enemy?.health).toBe(16);
+    expect(state.enemy?.health).toBe(15);
     expect(state.player.wall[0][1].id).toBeNull();
-    expect(state.player.wall[0][2].id).toBe('second-target');
+    expect(state.player.wall[0][2].id).toBeNull();
   });
 
   it('returns adjacent completed runes to hand with epic Wind', () => {

@@ -13,8 +13,9 @@ describe('runeRemoval', () => {
   it('clones typed refs and their optional payload', () => {
     const original = createRuneRemovalEffectRef({
       kind: 'consume',
-      trigger: 'startTurn',
+      trigger: 'onCast',
       selection: 'manual',
+      targetOwner: 'self',
       runeType: 'Fire',
       payload: createEffectRef('cast.damage', { amount: 5 }),
     });
@@ -28,7 +29,12 @@ describe('runeRemoval', () => {
       kind: 'destroy',
       trigger: 'endTurn',
       selection: 'random',
+      targetOwner: 'opponent',
+      count: 2,
     }))).not.toHaveProperty('payload');
+    expect(createRuneRemovalEffectRef({
+      kind: 'destroy', trigger: 'onCast', selection: 'random', targetOwner: 'self', count: 0,
+    }).count).toBe(1);
   });
 
   it('matches any rune type entry, excludes the source, and preserves row-major order', () => {

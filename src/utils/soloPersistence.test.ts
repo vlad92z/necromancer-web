@@ -78,9 +78,11 @@ describe('soloPersistence', () => {
     const state = { ...initializeSoloGame(), gameStarted: true };
     const castRune = createRuneFromCardName({ id: 'pending-cast', cardName: 'Firebolt' });
     const effectRef = createRuneRemovalEffectRef({
-      kind: 'consume',
+      kind: 'destroy',
       trigger: 'onCast',
       selection: 'manual',
+      targetOwner: 'opponent',
+      count: 2,
       payload: createEffectRef('cast.damage', { amount: 5 }),
     });
     state.pendingCombatResolution = {
@@ -246,6 +248,15 @@ describe('soloPersistence', () => {
     const { initializeSoloGame } = await import('./gameInitialization');
     const { loadSoloState } = await import('./soloPersistence');
     storage.set('necromancer-solo-state', JSON.stringify({ version: 28, state: initializeSoloGame() }));
+
+    expect(loadSoloState()).toBeNull();
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');
+  });
+
+  it('invalidates schema 38 payloads from the skippable removal model', async () => {
+    const { initializeSoloGame } = await import('./gameInitialization');
+    const { loadSoloState } = await import('./soloPersistence');
+    storage.set('necromancer-solo-state', JSON.stringify({ version: 38, state: initializeSoloGame() }));
 
     expect(loadSoloState()).toBeNull();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('necromancer-solo-state');

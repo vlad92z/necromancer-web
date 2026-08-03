@@ -38,7 +38,7 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
   },
   uncommon: {
     Fire: {
-      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 1 } }],
+      castEffectRefs: [],
       passiveEffectRefs: [],
     },
     Frost: {
@@ -52,9 +52,11 @@ const expectedRuneMatrix: Record<RuneEffectRarity, Partial<Record<RuneType, {
     Wind: {
       castEffectRefs: [],
       passiveEffectRefs: [{
-        effectId: 'rune.consume',
+        effectId: 'rune.destroy',
         trigger: 'onIncomingDamage',
         selection: 'random',
+        targetOwner: 'self',
+        count: 1,
         runeType: 'Wind',
         payload: { effectId: 'passive.reduceDamage', params: { amount: 5 } },
       }],
@@ -195,7 +197,7 @@ describe('runeEffects', () => {
 
   it('maps all uncommon rune identities to Stage 2 refs', () => {
     expect(createRune('fire-uncommon', 'Fire', 'uncommon')).toMatchObject({
-      castEffectRefs: [{ effectId: 'cast.consumeAdjacent', params: { amount: 1 } }],
+      castEffectRefs: [],
       passiveEffectRefs: [],
     });
     expect(createRune('frost-uncommon', 'Frost', 'uncommon')).toMatchObject({
@@ -209,9 +211,11 @@ describe('runeEffects', () => {
     expect(createRune('wind-uncommon', 'Wind', 'uncommon')).toMatchObject({
       castEffectRefs: [],
       passiveEffectRefs: [{
-        effectId: 'rune.consume',
+        effectId: 'rune.destroy',
         trigger: 'onIncomingDamage',
         selection: 'random',
+        targetOwner: 'self',
+        count: 1,
         runeType: 'Wind',
         payload: { effectId: 'passive.reduceDamage', params: { amount: 5 } },
       }],
@@ -299,7 +303,7 @@ describe('runeEffects', () => {
   it('describes effects without rarity placement requirements', () => {
     expect(getRuneEffectDescription(createRune('fire-common', 'Fire', 'common'))).toBe('• Deal 5 damage');
     expect(getRuneEffectDescription(createRune('fire-uncommon', 'Fire', 'uncommon'))).toBe(
-      '• Consume adjacent runes, deal 1 damage for each rune consumed'
+      ''
     );
   });
 });

@@ -1,5 +1,7 @@
 import type {
   Rune,
+  RuneConsumeEffectRef,
+  RuneDestroyEffectRef,
   RuneEffectRef,
   RuneRemovalEffectRef,
   RuneType,
@@ -9,9 +11,17 @@ import type {
 } from '../types/game';
 
 export function isRuneRemovalEffectRef(effectRef: RuneEffectRef): effectRef is RuneRemovalEffectRef {
-  return (effectRef.effectId === 'rune.consume' || effectRef.effectId === 'rune.destroy')
-    && 'trigger' in effectRef
-    && 'selection' in effectRef;
+  if (!('trigger' in effectRef) || !('selection' in effectRef) || !('targetOwner' in effectRef)) {
+    return false;
+  }
+  if ((effectRef.targetOwner !== 'self' && effectRef.targetOwner !== 'opponent')
+    || (effectRef.selection !== 'manual' && effectRef.selection !== 'random')) {
+    return false;
+  }
+  if (effectRef.effectId === 'rune.consume') return effectRef.trigger === 'onCast';
+  return effectRef.effectId === 'rune.destroy'
+    && Number.isInteger(effectRef.count)
+    && effectRef.count > 0;
 }
 
 export function copyRuneEffectRef(effectRef: RuneEffectRef): RuneEffectRef {
@@ -20,6 +30,8 @@ export function copyRuneEffectRef(effectRef: RuneEffectRef): RuneEffectRef {
       effectId: effectRef.effectId,
       trigger: effectRef.trigger,
       selection: effectRef.selection,
+      targetOwner: effectRef.targetOwner,
+      ...(effectRef.effectId === 'rune.destroy' ? { count: effectRef.count } : {}),
       ...(effectRef.runeType ? { runeType: effectRef.runeType } : {}),
       ...(effectRef.payload ? {
         payload: {
@@ -36,26 +48,40 @@ export function copyRuneEffectRef(effectRef: RuneEffectRef): RuneEffectRef {
   };
 }
 
+interface RuneRemovalEffectInputBase {
+  trigger: RuneRemovalEffectRef['trigger'];
+  selection: RuneRemovalEffectRef['selection'];
+  targetOwner?: RuneRemovalEffectRef['targetOwner'];
+  runeType?: RuneType;
+  payload?: RuneRemovalEffectRef['payload'];
+}
+
+export function createRuneRemovalEffectRef(input: RuneRemovalEffectInputBase & { kind: 'consume' }): RuneConsumeEffectRef;
+export function createRuneRemovalEffectRef(input: RuneRemovalEffectInputBase & { kind: 'destroy'; count?: number }): RuneDestroyEffectRef;
 export function createRuneRemovalEffectRef({
   kind,
   trigger,
   selection,
+  targetOwner = 'self',
+  count = 1,
   runeType,
   payload,
-}: {
-  kind: 'consume' | 'destroy';
-  trigger: RuneRemovalEffectRef['trigger'];
-  selection: RuneRemovalEffectRef['selection'];
-  runeType?: RuneType;
-  payload?: RuneRemovalEffectRef['payload'];
-}): RuneRemovalEffectRef {
-  return {
-    effectId: kind === 'consume' ? 'rune.consume' : 'rune.destroy',
-    trigger,
+}: RuneRemovalEffectInputBase & { kind: 'consume' | 'destroy'; count?: number }): RuneRemovalEffectRef {
+  const shared = {
     selection,
+    targetOwner,
     ...(runeType ? { runeType } : {}),
     ...(payload ? { payload: copyRuneEffectRef(payload) } : {}),
   };
+  if (kind === 'consume') {
+    return { effectId: 'rune.consume', trigger: 'onCast', ...shared } satisfies RuneConsumeEffectRef;
+  }
+  return {
+    effectId: 'rune.destroy',
+    trigger,
+    count: Math.max(1, Math.floor(count)),
+    ...shared,
+  } satisfies RuneDestroyEffectRef;
 }
 
 export function isCompletedWallCell(cell: WallCell | null | undefined): cell is WallCell & { id: string } {
@@ -137,6 +163,33 @@ export function removeRuneAtPosition(
   })));
   nextWall[position.row][position.col] = createEmptyWallCell();
   return { wall: nextWall, removedRune };
+}
+
+export function placeRuneAtPosition(
+  wall: ScoringWall,
+  position: WallPosition,
+  rune: Rune,
+): ScoringWall {
+  if (!wall[position.row]?.[position.col]) return wall;
+  const nextWall = wall.map((row) => row.map((entry) => ({
+    ...entry,
+    runeTypes: [...entry.runeTypes],
+    castEffectRefs: entry.castEffectRefs?.map(copyRuneEffectRef) ?? null,
+    passiveEffectRefs: entry.passiveEffectRefs?.map(copyRuneEffectRef) ?? null,
+  })));
+  nextWall[position.row][position.col] = {
+    id: rune.id,
+    name: rune.name,
+    runeTypes: [...rune.runeTypes],
+    rarity: rune.rarity,
+    cardImageSrc: rune.cardImageSrc,
+    tokenImageSrc: rune.tokenImageSrc,
+    manaCost: rune.manaCost ?? 2,
+    castEffectRefs: rune.castEffectRefs.map(copyRuneEffectRef),
+    passiveEffectRefs: rune.passiveEffectRefs.map(copyRuneEffectRef),
+    shield: null,
+  };
+  return nextWall;
 }
 
 export function wallHasRuneId(wall: ScoringWall, runeId: string): boolean {

@@ -41,8 +41,8 @@ There is intentionally no `npm run test` script; run Vitest with `npx vitest run
 - The spell wall is a neutral 5×5 grid. Select a rune in hand, then place it in any empty slot; every rarity resolves immediately.
 - Casting spends the card's mana cost. Players start each turn with 7 mana; mana refreshes to full after the enemy turn.
 - Filled wall runes provide their passive effects while they remain on the wall. Shield effects add shield to the source token; other effects may deal damage, heal, draw or return cards, and interact with neighbouring or matching runes.
-- Consumption removes another rune from its owner's wall before resolving an optional payload; Destroy removes an opposing wall rune. Manual effects pause for a valid board target or Skip, while random effects and all enemy choices resolve automatically.
-- Incoming damage consumes shielded tokens from the top-left across each row. A partially depleted token keeps its remaining shield; a token reaching 0 is removed and its passives stop. Damage left after all shields reduces health.
+- Consume casts the new rune over an eligible occupied slot on the configured wall. Destroy removes the configured number of runes from either wall. Both support typed and random targets; committed effects are mandatory and resolve up to the available targets.
+- Incoming damage depletes shielded tokens from the top-left across each row. A partially depleted token keeps its remaining shield; a token reaching 0 is removed and its passives stop. Damage left after all shields reduces health.
 
 ### Enemy turn and victory
 
@@ -92,7 +92,7 @@ src/
 - `gameplayStore.ts` orchestrates travel, encounter setup, casting, turns, rewards, and persistence notifications.
 - Read state is split across `runStore`, `mapStore`, `boardStore`, `combatStore`, `uiStore`, and `artefactStore`; `gameplayState.ts` maintains the combined serializable snapshot.
 - Game rules are pure utilities in `src/utils/`. The registry-backed effect resolver is deterministic and independent of React and Zustand.
-- Runes hold rarity, card/token artwork, cast/passive refs, and optional typed Consumption/Destroy wrappers. Pending target resolution remains serializable.
+- Runes hold rarity, card/token artwork, cast/passive refs, and typed Consume/Destroy wrappers with explicit target ownership. Pending multi-Destroy resolution remains serializable.
 - `cardCatalog.ts`, `monsterCatalog.ts`, and `regionCatalog.ts` are the canonical gameplay catalogues.
 - Keep global state serializable: no DOM refs, timers, class instances, or closures in Zustand.
 
