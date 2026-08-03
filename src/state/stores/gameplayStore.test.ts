@@ -263,6 +263,45 @@ describe('gameplayStore current combat', () => {
     expect(store.getState().soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
   });
 
+  it('offers the Greenwood Artefact event until claimed, then keeps its rewards for the run', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    const artefactToken = getRegionDefinition('greenwood').eventTokens.find((token) => token.kind === 'artefact');
+    store.setState((state) => ({
+      ...state,
+      soloMap: { ...state.soloMap, availableEventTokenIds: [artefactToken!.id] },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+    const offered = store.getState().soloMap.tiles['1,0'].events.A;
+    expect(offered).toMatchObject({ kind: 'artefact', offeredArtefactId: 'ring', arcaneDustReward: 27, cleared: false });
+
+    store.getState().claimArtefactEvent();
+
+    expect(store.getState().activeArtefacts).toContain('ring');
+    expect(store.getState().arcaneDust).toBe(27);
+    expect(store.getState().soloMap.tiles['1,0'].events.A?.cleared).toBe(true);
+  });
+
+  it('starts subsequent encounters with Ring of Mana bonus mana', () => {
+    const store = createGameplayStoreInstance();
+    store.getState().startSoloRun();
+    store.setState((state) => ({
+      ...state,
+      activeArtefacts: ['ring'],
+      soloMap: {
+        ...state.soloMap,
+        availableEventTokenIds: getRegionDefinition('greenwood').eventTokens
+          .filter((token) => token.kind === 'combat')
+          .map((token) => token.id),
+      },
+    }));
+
+    store.getState().travelToMapTarget({ kind: 'road', tileKey: '0,0', roadId: 'right-75' });
+
+    expect(store.getState().player).toMatchObject({ mana: 6, maxMana: 5 });
+  });
+
   it('moves between cleared locations without resetting combat state', () => {
     const store = createGameplayStoreInstance();
     startEncounterAtA(store);

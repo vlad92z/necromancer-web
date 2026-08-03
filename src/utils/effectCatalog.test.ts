@@ -190,13 +190,13 @@ describe('effectCatalog', () => {
   });
 
   it('defines artefact passive refs and catalog descriptions', () => {
-    expect(ARTEFACTS.ring.passiveEffectRefs).toEqual([]);
+    expect(ARTEFACTS.ring.passiveEffectRefs[0]).toMatchObject({ effectId: 'passive.ringManaStartTurn', params: { amount: 1 } });
     expect(ARTEFACTS.robe.passiveEffectRefs).toEqual([]);
     expect(ARTEFACTS.rod.passiveEffectRefs[0]?.effectId).toBe('passive.rodHealing');
     expect(ARTEFACTS.potion.passiveEffectRefs[0]?.effectId).toBe('passive.potionShield');
     expect(ARTEFACTS.tome.passiveEffectRefs[0]?.effectId).toBe('passive.tomeCastDamage');
 
-    expect(getArtefactEffectDescription('ring')).toBe('');
+    expect(getArtefactEffectDescription('ring')).toBe('At start of turn, gain 1 mana');
     expect(getArtefactEffectDescription('tome')).toBe('+1 damage on all casts');
   });
 });

@@ -34,6 +34,10 @@ export function useSelectedArtefactIds() {
   return useArtefactStore((state) => state.selectedArtefactIds);
 }
 
+export function useActiveArtefactIds() {
+  return useRunStore((state) => state.activeArtefacts);
+}
+
 export function useActiveElement() {
   return useUIStore((state) => state.activeElement);
 }

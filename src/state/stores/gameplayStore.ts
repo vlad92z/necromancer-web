@@ -45,6 +45,8 @@ import {
 } from '../../utils/soloMap';
 import { getRegionEventToken } from '../../utils/regionCatalog';
 import { resolveSacrificialAltar } from '../../utils/sacrificialAltar';
+import { resolveArtefactEvent } from '../../utils/artefactEvent';
+import { resolveStartTurnEffects } from '../../utils/effectResolver';
 import {
   clearPersistedSoloRun,
   getSelectedArtefactIds,
@@ -135,6 +137,11 @@ function initializeEncounterForMapLocation(
   }
 
   const encounterState = createEncounterState({ monsterId, player: state.player, fullDeck: state.fullDeck });
+  const artefactStartTurnEffects = resolveStartTurnEffects({
+    player: encounterState.player,
+    wall: createEmptySpellWall(),
+    activeArtefacts: state.activeArtefacts,
+  });
   const maxHealth = state.player.maxHealth ?? state.startingHealth;
   const health = Math.min(maxHealth, Math.max(0, state.player.health));
   const nextState: GameState = {
@@ -144,7 +151,7 @@ function initializeEncounterForMapLocation(
     soloMap,
     startingHealth: state.startingHealth,
     player: {
-      ...encounterState.player,
+      ...artefactStartTurnEffects.player,
       health,
       maxHealth,
     },
@@ -572,7 +579,12 @@ function finishPlayerStartTurn(
     state.runeSoundSignals,
     countRuneSoundEvents({ logs: timed.logs, wall: timed.player.wall }),
   );
-  const extraDrawCount = timed.drawCount;
+  const artefactStartTurnEffects = resolveStartTurnEffects({
+    player: { ...timed.player, mana: timed.player.maxMana },
+    wall: createEmptySpellWall(),
+    activeArtefacts: state.activeArtefacts,
+  });
+  const extraDrawCount = timed.drawCount + artefactStartTurnEffects.drawCount;
   const startTurnDrawResult = extraDrawCount > 0
     ? drawRunes({
       player: timed.player,
@@ -585,7 +597,10 @@ function finishPlayerStartTurn(
 
   return {
     ...state,
-    player: { ...startTurnDrawResult.player, mana: startTurnDrawResult.player.maxMana },
+    player: {
+      ...startTurnDrawResult.player,
+      mana: artefactStartTurnEffects.player.mana,
+    },
     enemy: timed.enemy,
     enemyBoard: timed.opposingWall,
     hand: startTurnDrawResult.hand,
@@ -772,6 +787,8 @@ export interface GameplayStore extends GameState {
   returnToMapAfterReward: () => void;
   sacrificeCardAtAltar: (runeId: string) => void;
   skipSacrificialAltar: () => void;
+  claimArtefactEvent: () => void;
+  skipArtefactEvent: () => void;
   revealMapRoadTarget: (target: Extract<MapTravelTarget, { kind: 'road' }>) => Extract<MapTravelTarget, { kind: 'location' }> | null;
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
@@ -860,7 +877,7 @@ export const gameplayStoreConfig = (
       }
 
       const currentEvent = getCurrentMapLocationEvent(state.soloMap);
-      if (currentEvent?.kind === 'sacrificial-altar' && !currentEvent.cleared) {
+      if ((currentEvent?.kind === 'sacrificial-altar' || currentEvent?.kind === 'artefact') && !currentEvent.cleared) {
         return state;
       }
 
@@ -916,6 +933,29 @@ export const gameplayStoreConfig = (
       return result.status === 'skipped'
         ? { ...state, soloMap: result.soloMap }
         : state;
+    });
+  },
+
+  claimArtefactEvent: () => {
+    set((state) => {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat || state.isVictory) return state;
+      const result = resolveArtefactEvent(state, true);
+      return result.status === 'claimed'
+        ? {
+          ...state,
+          soloMap: result.soloMap,
+          activeArtefacts: result.activeArtefacts,
+          arcaneDust: result.arcaneDust,
+        }
+        : state;
+    });
+  },
+
+  skipArtefactEvent: () => {
+    set((state) => {
+      if (!state.gameStarted || state.soloPhase !== 'map' || state.isDefeat || state.isVictory) return state;
+      const result = resolveArtefactEvent(state, false);
+      return result.status === 'skipped' ? { ...state, soloMap: result.soloMap } : state;
     });
   },
 

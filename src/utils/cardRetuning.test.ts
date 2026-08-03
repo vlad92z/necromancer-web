@@ -1,0 +1,97 @@
+import { describe, expect, it } from 'vitest';
+import type { EnemyRune, Rune } from '../types/game';
+import { CARD_DEFINITIONS } from './cardCatalog';
+import { castRuneToWallSlot, resolveCompletedRuneCastEffects, resolveEnemyTurn } from './combatResolution';
+import { resolveTimedRuneRemovalEffects } from './effectResolver';
+import { createMonsterEnemy } from './monsterFactory';
+import { createRuneFromCardName } from './runeEffects';
+import { createPlayer } from './soloRunFactory';
+
+function place(player: ReturnType<typeof createPlayer>, rune: Rune, row: number, col: number) {
+  const result = castRuneToWallSlot({
+    player,
+    hand: [rune],
+    discardPile: [],
+    selectedHandRuneId: rune.id,
+    row,
+    col,
+  });
+  if (result.status !== 'completed' || !result.completedRune || !result.completedPosition) throw new Error('Expected a completed rune');
+  return result;
+}
+
+describe('retuned cards', () => {
+  it('defines every requested canonical effect', () => {
+    expect(CARD_DEFINITIONS.Barricade.castEffectRefs).toEqual([{ effectId: 'cast.shieldAdjacent', params: { amount: 1 } }]);
+    expect(CARD_DEFINITIONS.Firebolt.castEffectRefs).toEqual([{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }]);
+    expect(CARD_DEFINITIONS.VoidTendrils.castEffectRefs[0]).toMatchObject({ effectId: 'rune.consume', payload: { effectId: 'cast.damage', params: { amount: 12 } } });
+    expect(CARD_DEFINITIONS.ThrowRock.castEffectRefs).toEqual([{ effectId: 'cast.synergy', params: { amount: 1, synergyType: 'Life' } }]);
+    expect(CARD_DEFINITIONS.Hide.castEffectRefs[0]).toMatchObject({ effectId: 'rune.consume', runeType: 'Life', payload: { effectId: 'cast.shield', params: { amount: 3 } } });
+    expect(CARD_DEFINITIONS.Scorch.castEffectRefs).toEqual([{ effectId: 'cast.damageAdjacent', params: { amount: 2, runeType: 'Fire' } }]);
+    expect(CARD_DEFINITIONS.Heal.castEffectRefs[0]).toMatchObject({ effectId: 'rune.consume', runeType: 'Life', payload: { effectId: 'cast.healing', params: { amount: 5 } } });
+    expect(CARD_DEFINITIONS.FrostShield.passiveEffectRefs).toContainEqual({ effectId: 'passive.explosive', params: { amount: 3, removalKind: 'destroy' } });
+    expect(CARD_DEFINITIONS.AmplifyMagic.passiveEffectRefs).toContainEqual({ effectId: 'rune.consume', trigger: 'endTurn', selection: 'random' });
+    expect(CARD_DEFINITIONS.LightningBolt.passiveEffectRefs).toEqual([{ effectId: 'passive.explosive', params: { amount: 12, removalKind: 'consume' } }]);
+  });
+
+  it('counts only adjacent runes and filters Scorch to Fire neighbors', () => {
+    const base = createPlayer('player', 'Player', 20, [], 20);
+    const fireNeighbor = place(base, createRuneFromCardName({ id: 'fire-neighbor', cardName: 'Firebolt' }), 0, 0);
+    const lifeNeighbor = place(fireNeighbor.player, createRuneFromCardName({ id: 'life-neighbor', cardName: 'Barricade' }), 0, 1);
+    const scorchPlacement = place(lifeNeighbor.player, createRuneFromCardName({ id: 'scorch', cardName: 'Scorch' }), 1, 1);
+    const result = resolveCompletedRuneCastEffects({
+      player: scorchPlacement.player,
+      enemy: createMonsterEnemy('goblin'),
+      rune: scorchPlacement.completedRune!,
+      sourcePosition: scorchPlacement.completedPosition!,
+    });
+
+    expect(result.enemy?.health).toBe(createMonsterEnemy('goblin').health - 2);
+  });
+
+  it('consumes a Lightning Bolt for 12 damage, but does not trigger it when destroyed', () => {
+    const player = place(createPlayer('player', 'Player', 20, [], 20), createRuneFromCardName({ id: 'lightning', cardName: 'LightningBolt' }), 0, 0).player;
+    const consumer = createRuneFromCardName({ id: 'consumer', cardName: 'VoidTendrils' });
+    const consumed = resolveCompletedRuneCastEffects({
+      player,
+      enemy: createMonsterEnemy('goblin'),
+      rune: consumer,
+      sourcePosition: { row: 1, col: 1 },
+      manualRemovalPosition: { row: 0, col: 0 },
+    });
+    expect(consumed.enemy?.health).toBe(0);
+  });
+
+  it('Amplify Magic boosts player damage and consumes one other rune at end turn', () => {
+    const amplify = createRuneFromCardName({ id: 'amplify', cardName: 'AmplifyMagic' });
+    const firebolt = createRuneFromCardName({ id: 'firebolt', cardName: 'Firebolt' });
+    const first = place(createPlayer('player', 'Player', 20, [], 20), amplify, 0, 0);
+    const second = place(first.player, firebolt, 0, 1);
+    const cast = resolveCompletedRuneCastEffects({
+      player: second.player,
+      enemy: createMonsterEnemy('goblin'),
+      rune: second.completedRune!,
+      sourcePosition: second.completedPosition!,
+    });
+    const timed = resolveTimedRuneRemovalEffects({
+      trigger: 'endTurn', player: cast.player, enemy: cast.enemy, opposingWall: cast.enemyBoard, random: () => 0,
+    });
+
+    expect(cast.enemy?.health).toBe(createMonsterEnemy('goblin').health - 2);
+    expect(timed.player.wall[0][0]?.id).toBe(first.completedRune!.id);
+    expect(timed.player.wall[0][1]?.id).toBeNull();
+  });
+
+  it('deals Frost Shield destruction damage when its shield reaches zero', () => {
+    const frost = createRuneFromCardName({ id: 'frost', cardName: 'FrostShield' });
+    const placed = place(createPlayer('player', 'Player', 20, [], 20), frost, 0, 0);
+    const resolved = resolveCompletedRuneCastEffects({
+      player: placed.player, enemy: createMonsterEnemy('goblin'), rune: placed.completedRune!, sourcePosition: placed.completedPosition!,
+    });
+    const attack: EnemyRune = { ...createRuneFromCardName({ id: 'attack', cardName: 'HurlRock' }), damage: 3, castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 3 } }] };
+    const result = resolveEnemyTurn({ player: resolved.player, enemy: createMonsterEnemy('goblin'), enemyQueuedRunes: [attack], random: () => 0 });
+
+    expect(result.player.wall[0][0]?.id).toBeNull();
+    expect(result.enemy?.health).toBe(createMonsterEnemy('goblin').health - 3);
+  });
+});

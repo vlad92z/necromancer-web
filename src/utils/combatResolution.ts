@@ -8,6 +8,7 @@ import {
   resolveCastEffects,
   resolveEndTurnEffects,
   resolveIncomingDamageEffects,
+  resolvePlayerOutgoingDamage,
   resolveStartTurnEffects,
 } from './effectResolver';
 import type { DrawTypeRequest } from './effectResolver';
@@ -169,9 +170,10 @@ interface EnemyTurnEffectsResult {
   enemyBoard: ScoringWall;
 }
 
-function explosiveDamageForRune(rune: Rune | null): number {
+function explosiveDamageForRune(rune: Rune | null, removalKind: 'consume' | 'destroy'): number {
   return rune?.passiveEffectRefs.reduce((total, effectRef) => (
     effectRef.effectId === 'passive.explosive' && typeof effectRef.params?.amount === 'number'
+      && (!effectRef.params?.removalKind || effectRef.params.removalKind === removalKind)
       ? total + effectRef.params.amount
       : total
   ), 0) ?? 0;
@@ -280,7 +282,7 @@ function resolveEnemyTimedRemovalEffects({
     }
     const removal = removeRuneAtPosition(targetWall, position);
     if (!removal.removedRune) return;
-    const explosiveDamage = explosiveDamageForRune(removal.removedRune);
+    const explosiveDamage = explosiveDamageForRune(removal.removedRune, effectRef.effectId === 'rune.consume' ? 'consume' : 'destroy');
     if (effectRef.effectId === 'rune.consume') {
       nextBoard = removal.wall;
       const damageResult = resolveEnemyIncomingDamage({
@@ -597,6 +599,22 @@ function resolveEnemyIncomingDamage({
   const incomingDamage = damageEffects.incomingDamage;
   const shieldResult = applyDamageToShieldedWall(damageEffects.player.wall, incomingDamage);
   const healthDamage = shieldResult.remainingDamage;
+  let nextEnemy = damageEffects.enemy;
+  let nextEnemyBoard = damageEffects.opposingWall;
+  const destructionLogs: EffectResolutionLog[] = [];
+  shieldResult.removedRunes.forEach((rune) => {
+    const outgoing = resolvePlayerOutgoingDamage({
+      trigger: 'onRuneRemoved',
+      baseDamage: explosiveDamageForRune(rune, 'destroy'),
+      wall: shieldResult.wall,
+      activeArtefacts,
+    });
+    destructionLogs.push(...outgoing.logs);
+    if (!nextEnemy || outgoing.damage <= 0) return;
+    const damageResult = applyDamageToEnemyWall(nextEnemy, nextEnemyBoard, outgoing.damage);
+    nextEnemy = damageResult.enemy;
+    nextEnemyBoard = damageResult.enemyBoard;
+  });
 
   return {
     player: {
@@ -604,10 +622,10 @@ function resolveEnemyIncomingDamage({
       wall: shieldResult.wall,
       health: Math.max(0, damageEffects.player.health - healthDamage),
     },
-    enemy: damageEffects.enemy,
-    enemyBoard: damageEffects.opposingWall,
+    enemy: nextEnemy,
+    enemyBoard: nextEnemyBoard,
     healthDamage,
-    logs: damageEffects.logs,
+    logs: [...damageEffects.logs, ...destructionLogs],
   };
 }
 
@@ -711,7 +729,7 @@ function resolveEnemyCardEffects({
 
     const removal = removeRuneAtPosition(targetWall, position);
     if (!removal.removedRune) return;
-    const explosiveDamage = explosiveDamageForRune(removal.removedRune);
+    const explosiveDamage = explosiveDamageForRune(removal.removedRune, effectRef.effectId === 'rune.consume' ? 'consume' : 'destroy');
     if (effectRef.effectId === 'rune.consume') {
       nextBoard = removal.wall;
       applyIncomingPacket(explosiveDamage);

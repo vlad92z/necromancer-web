@@ -44,6 +44,7 @@ export type PassiveEffectId =
   | 'passive.healingStartTurn'
   | 'passive.healingStartTurnSynergy'
   | 'passive.drawingStartTurn'
+  | 'passive.ringManaStartTurn'
   | 'passive.addDamage'
   | 'passive.shieldBoost'
   | 'passive.explosive'
@@ -94,7 +95,7 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     kind: 'cast',
     title: 'Adjacent Damage',
     displayHint: 'damage',
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent rune`,
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent ${params.runeType ? `${runeTypeParam(params, 'runeType')} ` : ''}rune`,
   },
   'cast.consumeAdjacent': {
     id: 'cast.consumeAdjacent',
@@ -415,6 +416,20 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     },
     describe: (params) => `At start of turn, draw ${numberParam(params, 'amount')} additional runes`,
   },
+  'passive.ringManaStartTurn': {
+    id: 'passive.ringManaStartTurn',
+    kind: 'passive',
+    title: 'Start Turn Mana',
+    displayHint: 'mana',
+    passive: {
+      trigger: 'startTurn',
+      target: 'mana',
+      stacking: 'flat',
+      paramKey: 'amount',
+      defaultValue: 0,
+    },
+    describe: (params) => `At start of turn, gain ${numberParam(params, 'amount')} mana`,
+  },
   'passive.addDamage': {
     id: 'passive.addDamage',
     kind: 'passive',
@@ -455,7 +470,10 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
       paramKey: 'amount',
       defaultValue: 0,
     },
-    describe: (params) => `Deal ${numberParam(params, 'amount')} damage when consumed, destroyed, or transformed`,
+    describe: (params) => {
+      const removalKind = params.removalKind;
+      return `Deal ${numberParam(params, 'amount')} damage when ${removalKind === 'consume' ? 'consumed' : removalKind === 'destroy' ? 'destroyed' : removalKind === 'transform' ? 'transformed' : 'consumed, destroyed, or transformed'}`;
+    },
   },
   'passive.vampire': {
     id: 'passive.vampire',

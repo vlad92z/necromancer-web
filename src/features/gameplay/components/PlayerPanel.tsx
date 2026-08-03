@@ -4,8 +4,11 @@
 
 import wizardImage from '../../../assets/enemies/wizard.png';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
-import { useGameplayHealthState, useSelectedArtefactIds } from '../../../hooks/useGameState';
+import { useActiveArtefactIds, useGameplayHealthState } from '../../../hooks/useGameState';
+import { useState } from 'react';
+import type { ArtefactId } from '../../../types/artefacts';
 import type { Rune } from '../../../types/game';
+import { ArtefactCardPreview } from './ArtefactCardPreview';
 import { WallRuneCardPreview } from './WallRuneCardPreview';
 
 interface PlayerPanelProps {
@@ -14,10 +17,12 @@ interface PlayerPanelProps {
 
 export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
   const { health, maxHealth, mana, maxMana } = useGameplayHealthState();
-  const selectedArtefactIds = useSelectedArtefactIds();
+  const activeArtefactIds = useActiveArtefactIds();
+  const [hoveredArtefactId, setHoveredArtefactId] = useState<ArtefactId | null>(null);
 
   const healthRatio = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0;
   const healthPercent = Math.round(healthRatio * 100);
+  const displayedMaxMana = Math.max(maxMana, mana);
 
   return (
     <section>
@@ -44,8 +49,8 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
             style={{ width: `${healthPercent}%` }}
           />
         </div>
-        <div className="mt-2 flex items-center gap-1" aria-label={`${mana} of ${maxMana} mana`}>
-          {Array.from({ length: maxMana }, (_, index) => (
+        <div className="mt-2 flex items-center gap-1" aria-label={`${mana} of ${displayedMaxMana} mana`}>
+          {Array.from({ length: displayedMaxMana }, (_, index) => (
             <span
               key={index}
               className={`h-3 w-3 rounded-full border-2 border-[#141313] ${index < mana ? 'bg-[#75c9f0]' : 'bg-transparent'}`}
@@ -55,11 +60,16 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
         </div>
       </div>
 
-      <WallRuneCardPreview rune={hoveredRune} />
+      {hoveredArtefactId ? <ArtefactCardPreview artefactId={hoveredArtefactId} /> : <WallRuneCardPreview rune={hoveredRune} />}
       
-        {selectedArtefactIds.length > 0 ? (
+        {activeArtefactIds.length > 0 ? (
           <div className="pixel-game-panel-inset mt-4 px-3 py-2">
-            <ArtefactsRow selectedArtefactIds={selectedArtefactIds} compact />
+            <ArtefactsRow
+              selectedArtefactIds={activeArtefactIds}
+              compact
+              onArtefactHover={setHoveredArtefactId}
+              onArtefactLeave={() => setHoveredArtefactId(null)}
+            />
           </div>
         ) : null }
       

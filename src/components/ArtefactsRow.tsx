@@ -9,9 +9,16 @@ import { getArtefactEffectDescription } from '../utils/artefactDescriptions';
 interface ArtefactsRowProps {
   selectedArtefactIds: ArtefactId[];
   compact?: boolean;
+  onArtefactHover?: (artefactId: ArtefactId) => void;
+  onArtefactLeave?: () => void;
 }
 
-export function ArtefactsRow({ selectedArtefactIds, compact = false }: ArtefactsRowProps) {
+export function ArtefactsRow({
+  selectedArtefactIds,
+  compact = false,
+  onArtefactHover,
+  onArtefactLeave,
+}: ArtefactsRowProps) {
   const isEmpty = selectedArtefactIds.length === 0;
 
   // Match rune cell sizes: medium = 35px, large = 60px
@@ -37,6 +44,8 @@ export function ArtefactsRow({ selectedArtefactIds, compact = false }: Artefacts
             className={`${iconSize} overflow-hidden border-[3px] border-[#141313] bg-[#293532] shadow-[4px_4px_0_#141313]`}
             role="img"
             aria-label={tooltipText}
+            onMouseEnter={() => onArtefactHover?.(artefactId)}
+            onMouseLeave={onArtefactLeave}
           >
             <img
               src={artefact.image}

@@ -8,7 +8,7 @@ interface CardViewProps {
   title: string;
   description: string;
   imageSrc: string;
-  manaCost: number;
+  manaCost?: number;
   runeTypes: RuneType[];
   variant?: TooltipCardVariant;
   size?: 'default' | 'hand' | 'compact';
@@ -91,15 +91,17 @@ export function CardView({
 
       <div className={descriptionClassName}>
         {description}
-        <span
-          className={isSmallCard
-            ? 'absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#141313] font-pixel text-[10px]'
-            : 'absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#141313] font-pixel text-xs'}
-          style={{ backgroundColor: manaBackgroundColor, color: manaTextColor }}
-          aria-label={`${manaCost} mana, ${runeTypes.join(' / ')} rune type`}
-        >
-          {manaCost}
-        </span>
+        {manaCost !== undefined && (
+          <span
+            className={isSmallCard
+              ? 'absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#141313] font-pixel text-[10px]'
+              : 'absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#141313] font-pixel text-xs'}
+            style={{ backgroundColor: manaBackgroundColor, color: manaTextColor }}
+            aria-label={`${manaCost} mana, ${runeTypes.join(' / ')} rune type`}
+          >
+            {manaCost}
+          </span>
+        )}
       </div>
     </>
   );

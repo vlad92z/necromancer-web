@@ -4,10 +4,13 @@ import healingShrineImageSrc from '../assets/enemies/healing_shrine.png';
 import healingShrineVisitedImageSrc from '../assets/enemies/healing_shrine_visited.png';
 import sacrificialAltarImageSrc from '../assets/enemies/sacrificial_altar.png';
 import sacrificialAltarVisitedImageSrc from '../assets/enemies/sacrificial_altar_visited.png';
+import artefactImageSrc from '../assets/enemies/artifact.png';
+import artefactVisitedImageSrc from '../assets/enemies/artifact_visited.png';
 import witchImageSrc from '../assets/enemies/witch.png';
 import shadeImageSrc from '../assets/enemies/shade.png';
 import tokenVisitedImageSrc from '../assets/map/token_visited.png';
 import type { MapEventKind, MonsterId, RegionId } from '../types/game';
+import type { ArtefactId } from '../types/artefacts';
 
 export interface RegionEventTokenDefinition {
   id: string;
@@ -17,6 +20,8 @@ export interface RegionEventTokenDefinition {
   visitedImageSrc: string;
   monsterId?: MonsterId;
   healingPercent?: number;
+  artefactPool?: readonly ArtefactId[];
+  arcaneDustRewardRange?: readonly [minimum: number, maximum: number];
 }
 
 export interface RegionDefinition {
@@ -70,6 +75,16 @@ const sacrificialAltarTokens = Array.from({ length: 3 }, (_, index) => ({
   visitedImageSrc: sacrificialAltarVisitedImageSrc,
 }));
 
+const artefactTokens = Array.from({ length: 1 }, (_, index) => ({
+  id: `greenwood-artefact-${index + 1}`,
+  name: 'Artefact',
+  kind: 'artefact' as const,
+  artefactPool: ['ring'] as const,
+  arcaneDustRewardRange: [15, 27] as const,
+  unvisitedImageSrc: artefactImageSrc,
+  visitedImageSrc: artefactVisitedImageSrc,
+}));
+
 export const REGION_CATALOG = {
   greenwood: {
     id: 'greenwood',
@@ -80,6 +95,7 @@ export const REGION_CATALOG = {
       ...shadeTokens,
       ...healingShrineTokens,
       ...sacrificialAltarTokens,
+      ...artefactTokens,
     ],
     bossMonsterIds: ['golem-lord'],
   },

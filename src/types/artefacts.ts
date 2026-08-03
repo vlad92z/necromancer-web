@@ -48,9 +48,9 @@ export const ARTEFACTS: Record<ArtefactId, Artefact> = {
   },
   ring: {
     id: 'ring',
-    name: 'Signet of Fortune',
+    name: 'Ring of Mana',
     image: ringPng,
-    passiveEffectRefs: [],
+    passiveEffectRefs: [createEffectRef('passive.ringManaStartTurn', { amount: 1 })],
   },
   robe: {
     id: 'robe',

@@ -15,11 +15,11 @@ const STARTING_DECK_DEFINITIONS: Array<{ id: string; cardName: CardName }> = [
   { id: 'player-1-2', cardName: 'Firebolt' },
   { id: 'player-1-4', cardName: 'Firebolt' },
   { id: 'player-1-5', cardName: 'Firebolt' },
-  { id: 'player-1-6', cardName: 'FrostShield' },
-  { id: 'player-1-7', cardName: 'FrostShield' },
-  { id: 'player-1-8', cardName: 'FrostShield' },
-  { id: 'player-1-9', cardName: 'FrostShield' },
-  { id: 'player-1-10', cardName: 'FrostShield' },
+  { id: 'player-1-6', cardName: 'Barricade' },
+  { id: 'player-1-7', cardName: 'Barricade' },
+  { id: 'player-1-8', cardName: 'Barricade' },
+  { id: 'player-1-9', cardName: 'Barricade' },
+  { id: 'player-1-10', cardName: 'Barricade' },
   { id: 'player-1-11', cardName: 'VoidTendrils' },
 ];
 

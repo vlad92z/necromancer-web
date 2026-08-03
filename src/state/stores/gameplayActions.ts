@@ -13,6 +13,8 @@ export interface GameplayActions {
   returnToMapAfterReward: () => void;
   sacrificeCardAtAltar: (runeId: string) => void;
   skipSacrificialAltar: () => void;
+  claimArtefactEvent: () => void;
+  skipArtefactEvent: () => void;
   revealMapRoadTarget: (target: Extract<MapTravelTarget, { kind: 'road' }>) => Extract<MapTravelTarget, { kind: 'location' }> | null;
   travelToMapTarget: (target: MapTravelTarget) => void;
   selectHandRune: (runeId: string) => void;
@@ -32,6 +34,8 @@ export const gameplayActions: GameplayActions = {
   returnToMapAfterReward: () => useGameplayStore.getState().returnToMapAfterReward(),
   sacrificeCardAtAltar: (runeId) => useGameplayStore.getState().sacrificeCardAtAltar(runeId),
   skipSacrificialAltar: () => useGameplayStore.getState().skipSacrificialAltar(),
+  claimArtefactEvent: () => useGameplayStore.getState().claimArtefactEvent(),
+  skipArtefactEvent: () => useGameplayStore.getState().skipArtefactEvent(),
   revealMapRoadTarget: (target) => useGameplayStore.getState().revealMapRoadTarget(target),
   travelToMapTarget: (target) => useGameplayStore.getState().travelToMapTarget(target),
   selectHandRune: (runeId) => useGameplayStore.getState().selectHandRune(runeId),

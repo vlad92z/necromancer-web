@@ -1,4 +1,4 @@
-import type { ScoringWall, WallPosition } from '../types/game';
+import type { Rune, ScoringWall, WallPosition } from '../types/game';
 import { removeRuneAtPosition } from './runeRemoval';
 
 export interface ShieldDamageResult {
@@ -6,6 +6,7 @@ export interface ShieldDamageResult {
   absorbedDamage: number;
   remainingDamage: number;
   removedRuneIds: string[];
+  removedRunes: Rune[];
 }
 
 export function addShieldToWallCell(
@@ -30,6 +31,7 @@ export function applyDamageToShieldedWall(wall: ScoringWall, damage: number): Sh
   let remainingDamage = Math.max(0, damage);
   let absorbedDamage = 0;
   const removedRuneIds: string[] = [];
+  const removedRunes: Rune[] = [];
 
   for (let row = 0; row < wall.length && remainingDamage > 0; row += 1) {
     for (let col = 0; col < (nextWall[row]?.length ?? 0) && remainingDamage > 0; col += 1) {
@@ -44,7 +46,10 @@ export function applyDamageToShieldedWall(wall: ScoringWall, damage: number): Sh
       if (absorbed === currentShield) {
         const removal = removeRuneAtPosition(nextWall, { row, col });
         nextWall = removal.wall;
-        if (removal.removedRune) removedRuneIds.push(removal.removedRune.id);
+        if (removal.removedRune) {
+          removedRuneIds.push(removal.removedRune.id);
+          removedRunes.push(removal.removedRune);
+        }
       } else {
         nextWall = nextWall.map((wallRow) => [...wallRow]);
         nextWall[row]![col] = { ...cell, shield: currentShield - absorbed };
@@ -52,5 +57,5 @@ export function applyDamageToShieldedWall(wall: ScoringWall, damage: number): Sh
     }
   }
 
-  return { wall: nextWall, absorbedDamage, remainingDamage, removedRuneIds };
+  return { wall: nextWall, absorbedDamage, remainingDamage, removedRuneIds, removedRunes };
 }

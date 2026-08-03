@@ -129,7 +129,7 @@ export type MapTileKind = 'start' | 'forest';
 export type MapLocationId = 'start' | 'A' | 'B' | 'C' | 'D';
 export type MapEncounterLocationId = Exclude<MapLocationId, 'start'>;
 export type RegionId = 'greenwood';
-export type MapEventKind = 'combat' | 'boss' | 'healing' | 'sacrificial-altar' | 'empty';
+export type MapEventKind = 'combat' | 'boss' | 'healing' | 'sacrificial-altar' | 'artefact' | 'empty';
 export type MonsterId = 'goblin' | 'witch' | 'shade' | 'golem-lord';
 export type MapRoadId =
   | 'left-75'
@@ -152,6 +152,8 @@ export interface MapLocationEvent {
   tokenId: string | null;
   kind: MapEventKind;
   monsterId?: MonsterId;
+  offeredArtefactId?: ArtefactId;
+  arcaneDustReward?: number;
   cleared: boolean;
 }
 

@@ -187,6 +187,15 @@ function createForestMapTileWithConsumedTokenIds(
       tokenId,
       kind: token?.kind ?? 'empty',
       ...(token?.monsterId ? { monsterId: token.monsterId } : {}),
+      ...(token?.artefactPool?.length
+        ? { offeredArtefactId: token.artefactPool[Math.floor(random() * token.artefactPool.length)] }
+        : {}),
+      ...(token?.arcaneDustRewardRange
+        ? {
+          arcaneDustReward: token.arcaneDustRewardRange[0]
+            + Math.floor(random() * (token.arcaneDustRewardRange[1] - token.arcaneDustRewardRange[0] + 1)),
+        }
+        : {}),
       cleared: false,
     };
     return result;
@@ -399,6 +408,7 @@ function arriveAtLocation(
   const isCombatEvent = event.kind === 'combat' || event.kind === 'boss';
   const shouldClearImmediately = !isCombatEvent
     && event.kind !== 'sacrificial-altar'
+    && event.kind !== 'artefact'
     && !event.cleared;
   const nextEvent = shouldClearImmediately ? { ...event, cleared: true } : event;
 
