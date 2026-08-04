@@ -2,15 +2,12 @@
  * PlayerPanel - displays the player's combat avatar, health, mana, and artefacts.
  */
 
-import combatWizard1 from '../../../assets/enemies/combat_wizard_1.png';
-import combatWizard2 from '../../../assets/enemies/combat_wizard_2.png';
-import combatWizard3 from '../../../assets/enemies/combat_wizard_3.png';
-import combatWizard4 from '../../../assets/enemies/combat_wizard_4.png';
-import combatWizard5 from '../../../assets/enemies/combat_wizard_5.png';
-import combatWizard6 from '../../../assets/enemies/combat_wizard_6.png';
+import { motion } from 'framer-motion';
+import wizardImage from '../../../assets/enemies/wizard.png';
+import manaOrbImage from '../../../assets/enemies/orb_mana.png';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
 import { useActiveArtefactIds, useGameplayHealthState } from '../../../hooks/useGameState';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ArtefactId } from '../../../types/artefacts';
 import type { Rune } from '../../../types/game';
 import { ANIMATION } from '../../../styles/tokens';
@@ -21,36 +18,14 @@ interface PlayerPanelProps {
   hoveredRune: Rune | null;
 }
 
-const COMBAT_WIZARD_FRAMES = [
-  combatWizard1,
-  combatWizard2,
-  combatWizard3,
-  combatWizard4,
-  combatWizard5,
-  combatWizard6,
-  combatWizard5,
-  combatWizard4,
-  combatWizard3,
-  combatWizard2,
-  combatWizard1,
-] as const;
-
 export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
   const { health, maxHealth, mana, maxMana } = useGameplayHealthState();
   const activeArtefactIds = useActiveArtefactIds();
   const [hoveredArtefactId, setHoveredArtefactId] = useState<ArtefactId | null>(null);
-  const [combatWizardFrameIndex, setCombatWizardFrameIndex] = useState(0);
 
   const healthRatio = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0;
   const healthPercent = Math.round(healthRatio * 100);
   const displayedMaxMana = Math.max(maxMana, mana);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setCombatWizardFrameIndex((currentFrame) => (currentFrame + 1) % COMBAT_WIZARD_FRAMES.length);
-    }, ANIMATION.COMBAT_WIZARD_FRAME_DURATION_MS);
-    return () => window.clearInterval(timer);
-  }, []);
 
   return (
     <section>
@@ -59,11 +34,27 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
       </div>
 
       <div className="mt-5 flex justify-center">
-        <img
-          src={COMBAT_WIZARD_FRAMES[combatWizardFrameIndex]}
-          alt="Player wizard"
-          className="h-55 max-w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]"
-        />
+        <div className="relative h-55 w-55 max-w-full">
+          <img
+            src={wizardImage}
+            alt="Player wizard"
+            className="h-full w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]"
+          />
+          <motion.img
+            src={manaOrbImage}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute z-10 w-[12.1%] max-w-none [image-rendering:pixelated] drop-shadow-[2px_2px_0_#141313]"
+            style={{ left: '73%', top: '42%' }}
+            animate={{ y: [4, -4, -4, 4, 4] }}
+            transition={{
+              duration: ANIMATION.COMBAT_MANA_ORB_FLOAT_DURATION_MS / 750,
+              ease: 'easeInOut',
+              repeat: Infinity,
+              times: [0, 0.42, 0.5, 0.92, 1],
+            }}
+          />
+        </div>
       </div>
 
       <div className="mt-5">
