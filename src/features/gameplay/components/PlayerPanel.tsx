@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 import wizardImage from '../../../assets/enemies/wizard.png';
 import manaOrbImage from '../../../assets/enemies/orb_mana.png';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
-import { useActiveArtefactIds, useGameplayHealthState } from '../../../hooks/useGameState';
-import { useState } from 'react';
+import { useActiveArtefactIds, useGameplayHealthState, useSpellAnimationEvent } from '../../../hooks/useGameState';
+import { useEffect, useState } from 'react';
 import type { ArtefactId } from '../../../types/artefacts';
 import type { Rune } from '../../../types/game';
 import { ANIMATION } from '../../../styles/tokens';
@@ -21,7 +21,28 @@ interface PlayerPanelProps {
 export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
   const { health, maxHealth, mana, maxMana } = useGameplayHealthState();
   const activeArtefactIds = useActiveArtefactIds();
+  const spellAnimationEvent = useSpellAnimationEvent();
   const [hoveredArtefactId, setHoveredArtefactId] = useState<ArtefactId | null>(null);
+  const [spellAnimationFrame, setSpellAnimationFrame] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!spellAnimationEvent) return;
+
+    const { frames, frameDurationMs } = spellAnimationEvent.animation;
+    let frameIndex = 0;
+    setSpellAnimationFrame(frameIndex);
+    const intervalId = window.setInterval(() => {
+      frameIndex += 1;
+      if (frameIndex >= frames.length) {
+        window.clearInterval(intervalId);
+        setSpellAnimationFrame(null);
+        return;
+      }
+      setSpellAnimationFrame(frameIndex);
+    }, frameDurationMs);
+
+    return () => window.clearInterval(intervalId);
+  }, [spellAnimationEvent]);
 
   const healthRatio = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0;
   const healthPercent = Math.round(healthRatio * 100);
@@ -41,11 +62,13 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
             className="h-full w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]"
           />
           <motion.img
-            src={manaOrbImage}
+            src={spellAnimationFrame === null
+              ? manaOrbImage
+              : spellAnimationEvent?.animation.frames[spellAnimationFrame] ?? manaOrbImage}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute z-10 w-[12.1%] max-w-none [image-rendering:pixelated] drop-shadow-[2px_2px_0_#141313]"
-            style={{ left: '73%', top: '42%' }}
+            className="pointer-events-none absolute z-10 w-[24.2%] max-w-none [image-rendering:pixelated] drop-shadow-[2px_2px_0_#141313]"
+            style={{ left: '68%', top: '38%' }}
             animate={{ y: [4, -4, -4, 4, 4] }}
             transition={{
               duration: ANIMATION.COMBAT_MANA_ORB_FLOAT_DURATION_MS / 750,

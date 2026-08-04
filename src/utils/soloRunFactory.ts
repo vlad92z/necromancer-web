@@ -98,6 +98,7 @@ export function createInitialSoloRunState(fullDeck: Rune[] = createStartingDeck(
     deckDraftState: null,
     activeArtefacts: [],
     runeSoundSignals: createRuneSoundSignals(),
+    spellAnimationEvent: null,
     enemyAttackSoundSignal: 0,
     shieldSoundSignal: 0,
     enemy: null,

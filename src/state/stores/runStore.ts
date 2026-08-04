@@ -4,7 +4,7 @@
 
 import { create, type StoreApi } from 'zustand';
 import type { ArtefactId } from '../../types/artefacts';
-import type { DeckDraftState, GameState, Rune, RuneSoundSignals, SoloPhase } from '../../types/game';
+import type { DeckDraftState, GameState, Rune, RuneSoundSignals, SoloPhase, SpellAnimationEvent } from '../../types/game';
 import { createInitialSoloRunState } from '../../utils/soloRunFactory';
 
 export interface RunState {
@@ -20,6 +20,7 @@ export interface RunState {
   deckDraftState: DeckDraftState | null;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
+  spellAnimationEvent: SpellAnimationEvent | null;
   enemyAttackSoundSignal: number;
   shieldSoundSignal: number;
 }
@@ -42,6 +43,7 @@ export function pickRunState(state: GameState): RunState {
     deckDraftState: state.deckDraftState,
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
+    spellAnimationEvent: state.spellAnimationEvent,
     enemyAttackSoundSignal: state.enemyAttackSoundSignal,
     shieldSoundSignal: state.shieldSoundSignal,
   };

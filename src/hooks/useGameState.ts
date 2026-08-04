@@ -166,6 +166,10 @@ export function useRuneSoundSignals() {
   return useRunStore((state) => state.runeSoundSignals);
 }
 
+export function useSpellAnimationEvent() {
+  return useRunStore((state) => state.spellAnimationEvent);
+}
+
 export function useEnemyAttackSoundSignal() {
   return useRunStore((state) => state.enemyAttackSoundSignal);
 }

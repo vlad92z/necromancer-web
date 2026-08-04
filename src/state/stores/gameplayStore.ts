@@ -166,6 +166,7 @@ function initializeEncounterForMapLocation(
     deckDraftState: null,
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
+    spellAnimationEvent: state.spellAnimationEvent,
     enemyAttackSoundSignal: state.enemyAttackSoundSignal,
     shieldSoundSignal: state.shieldSoundSignal,
   };
@@ -300,6 +301,15 @@ function applyCompletedCastResolution({
   discardPile: Rune[];
   manaSpent: number;
 }): GameState {
+  const stateWithSpellAnimation = manaSpent > 0 && completedRune.spellAnimation
+    ? {
+      ...state,
+      spellAnimationEvent: {
+        sequence: (state.spellAnimationEvent?.sequence ?? 0) + 1,
+        animation: completedRune.spellAnimation,
+      },
+    }
+    : state;
   const resolvedRuneSoundEvents = countRuneSoundEvents({
     completedRune,
     logs: resolvedEffects.logs,
@@ -326,7 +336,7 @@ function applyCompletedCastResolution({
     });
 
     return enterDeckDraftMode({
-      ...state,
+      ...stateWithSpellAnimation,
       player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: resolvedEffects.enemy,
       enemyBoard: resolvedEffects.enemyBoard,
@@ -343,7 +353,7 @@ function applyCompletedCastResolution({
   if (!resolvedEffects.pendingRemoval && resolvedEffects.player.health <= 0) {
     trackDefeat(state, resolvedEffects.player);
     return {
-      ...state,
+      ...stateWithSpellAnimation,
       player: {
         ...resolvedEffects.player,
         mana: Math.max(0, resolvedEffects.player.mana - manaSpent),
@@ -402,7 +412,7 @@ function applyCompletedCastResolution({
     : null;
 
   return {
-    ...state,
+    ...stateWithSpellAnimation,
     player: {
       ...drawResult.player,
       mana: Math.max(0, drawResult.player.mana - manaSpent),
