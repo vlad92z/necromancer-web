@@ -226,6 +226,10 @@ export interface CombatZoneState {
   combatPhase: CombatPhase;
   hand: Rune[];
   discardPile: Rune[];
+  /** Runes removed from the player's wall by destruction or Consume during this encounter. */
+  playerDestroyedRunes: Rune[];
+  /** Runes removed from the enemy wall by destruction or Consume during this encounter. */
+  enemyDestroyedRunes: Rune[];
   suppressedRunes: Rune[];
   selectedHandRuneId: string | null;
   enemyBoard: ScoringWall;

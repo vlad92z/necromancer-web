@@ -3,7 +3,7 @@
 ## Cards
 
 - 2 Frost Shield, common Frost, 2 mana: Shield 3; deal 3 damage when destroyed.
-- 2 Firebolt, common Fire, 1 mana: deal 1 damage for every adjacent rune.
+- 2 Firebolt, common Fire, 2 mana: deal 1 damage for every rune on your completed wall.
 - 2 Lightning Bolt, common Lightning, 2 mana: deal 12 damage when consumed.
 - 2 Barricade, common Life: Shield 1 for every adjacent rune.
 - 2 Void Tendrils, common Void, 2 mana: replace a rune with Void Tendrils; deal 12 damage.

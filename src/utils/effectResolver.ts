@@ -201,6 +201,13 @@ function countFilledWallRunesByType(wall: ScoringWall): Map<RuneType, number> {
   }, new Map<RuneType, number>());
 }
 
+function countCompletedWallRunes(wall: ScoringWall): number {
+  return wall.reduce(
+    (count, row) => count + row.filter(isCompletedWallCell).length,
+    0,
+  );
+}
+
 function countWallRunesByTypeIncludingTrigger({
   wall,
   counts,
@@ -1296,6 +1303,20 @@ function resolvePlainCastEffects({
           damage,
           adjacentCount,
           sourcePosition,
+          enemyHealth: projectedEnemyHealth,
+        }));
+        break;
+      }
+      case 'cast.damageBoard': {
+        const boardRuneCount = countCompletedWallRunes(wall);
+        const damage = numberParam(effectRef, 'amount') * boardRuneCount;
+        baseDamage += damage;
+        if (projectedEnemyHealth !== null) {
+          projectedEnemyHealth = Math.max(0, projectedEnemyHealth - damage);
+        }
+        logs.push(createCastLog(castRune, effectRef, baseInput, {
+          damage,
+          boardRuneCount,
           enemyHealth: projectedEnemyHealth,
         }));
         break;

@@ -16,8 +16,8 @@ describe('effectCatalog', () => {
 
   it('defines the current Firebolt, Lightning Bolt, Void Tendrils, and Tornado contracts', () => {
     expect(CARD_DEFINITIONS.Firebolt).toMatchObject({
-      manaCost: 1,
-      castEffectRefs: [{ effectId: 'cast.damage', params: { amount: 2 } }],
+      manaCost: 2,
+      castEffectRefs: [{ effectId: 'cast.damageBoard', params: { amount: 1 } }],
     });
     expect(CARD_DEFINITIONS.LightningBolt).toMatchObject({
       manaCost: 2,

@@ -110,6 +110,8 @@ export function useCombatZoneState() {
     useShallow((state) => ({
       hand: state.hand,
       discardPile: state.discardPile,
+      playerDestroyedRunes: state.playerDestroyedRunes,
+      enemyDestroyedRunes: state.enemyDestroyedRunes,
       selectedHandRuneId: state.selectedHandRuneId,
     })),
   );

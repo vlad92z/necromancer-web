@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import type { ActiveElement } from '../../features/gameplay/components/keyboardNavigation';
 
-export type RuneZoneOverlay = 'draw' | 'discard' | 'deck';
+export type RuneZoneOverlay = 'draw' | 'discard' | 'destroyed' | 'deck';
 
 interface UIStore {
   // Overlay visibility states

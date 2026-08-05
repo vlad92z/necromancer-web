@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import wizardImage from '../../../assets/enemies/wizard.png';
 import manaOrbImage from '../../../assets/enemies/orb_mana.png';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
-import { useActiveArtefactIds, useGameplayHealthState, useSpellAnimationEvent } from '../../../hooks/useGameState';
+import { useActiveArtefactIds, useGameplayHealthState, useGameplayWallState, useSpellAnimationEvent } from '../../../hooks/useGameState';
 import { useEffect, useState } from 'react';
 import type { ArtefactId } from '../../../types/artefacts';
 import type { Rune } from '../../../types/game';
@@ -20,6 +20,7 @@ interface PlayerPanelProps {
 
 export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
   const { health, maxHealth, mana, maxMana } = useGameplayHealthState();
+  const { wall } = useGameplayWallState();
   const activeArtefactIds = useActiveArtefactIds();
   const spellAnimationEvent = useSpellAnimationEvent();
   const [hoveredArtefactId, setHoveredArtefactId] = useState<ArtefactId | null>(null);
@@ -47,6 +48,7 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
   const healthRatio = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0;
   const healthPercent = Math.round(healthRatio * 100);
   const displayedMaxMana = Math.max(maxMana, mana);
+  const totalShield = wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
 
   return (
     <section>
@@ -82,7 +84,7 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
-          <span />
+          <span className="text-[#75c9f0]" aria-label={`Shield: ${totalShield}`}>{totalShield}</span>
           <span>{health} / {maxHealth}</span>
         </div>
         <div className="pixel-health-track">

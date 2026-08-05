@@ -26,6 +26,13 @@ describe('gameInitialization combat state', () => {
     expect(state.selectedHandRuneId).toBeNull();
   });
 
+  it('initializes empty player and enemy destroyed rune histories', () => {
+    const state = initializeSoloGame();
+
+    expect(state.playerDestroyedRunes).toEqual([]);
+    expect(state.enemyDestroyedRunes).toEqual([]);
+  });
+
   it('starts the default Goblin encounter at its catalogue health with neutral slots', () => {
     const state = initializeSoloGame();
 
@@ -104,7 +111,7 @@ describe('gameInitialization combat state', () => {
       deck
         .filter((rune) => ['Firebolt', 'Lightning Bolt', 'Tornado', 'Void Tendrils'].includes(rune.name))
         .every((rune) => rune.castEffectRefs[0]?.effectId === 'cast.damage'
-          && rune.castEffectRefs[0]?.params?.amount === (rune.name === 'Lightning Bolt' ? 2 : rune.name === 'Void Tendrils' ? 10 : 5))
+          && rune.castEffectRefs[0]?.params?.amount === (rune.name === 'Lightning Bolt' ? 2 : rune.name === 'Void Tendrils' ? 10 : rune.name === 'Firebolt' ? 1 : 5))
     ).toBe(true);
   });
 

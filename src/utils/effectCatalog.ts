@@ -8,6 +8,7 @@ import { isRuneRemovalEffectRef } from './runeRemoval';
 export type CastEffectId =
   | 'cast.damage'
   | 'cast.damageAdjacent'
+  | 'cast.damageBoard'
   | 'cast.damageConditional'
   | 'cast.damageFragile'
   | 'cast.convertRandom'
@@ -95,6 +96,13 @@ export const EFFECT_CATALOG: Record<CatalogEffectId, EffectCatalogEntry> = {
     title: 'Adjacent Damage',
     displayHint: 'damage',
     describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every adjacent ${params.runeType ? `${runeTypeParam(params, 'runeType')} ` : ''}rune`,
+  },
+  'cast.damageBoard': {
+    id: 'cast.damageBoard',
+    kind: 'cast',
+    title: 'Board Damage',
+    displayHint: 'damage',
+    describe: (params) => `Deal ${numberParam(params, 'amount')} damage for every rune on your completed wall`,
   },
   'cast.damageConditional': {
     id: 'cast.damageConditional',
