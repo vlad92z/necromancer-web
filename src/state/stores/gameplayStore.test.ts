@@ -1083,6 +1083,7 @@ describe('gameplayStore current combat', () => {
     expect(state.discardPile.map((rune) => rune.id)).toContain('consumer');
     expect(state.player.wall[0][1].name).toBe(consumer.name);
     expect(state.suppressedRunes.map((rune) => rune.id)).toContain('adjacent-fire');
+    expect(state.playerDestroyedRunes.map((rune) => rune.id)).toContain('adjacent-fire');
   });
 
   it('rejects Consume with no eligible target without spending mana or moving the card', () => {

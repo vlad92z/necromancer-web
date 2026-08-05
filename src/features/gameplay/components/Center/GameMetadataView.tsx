@@ -33,6 +33,7 @@ export function GameMetadataView() {
       <div className="flex flex-row flex-44 items-center justify-end gap-3">
         <RuneZoneButton zone="draw" />
         <RuneZoneButton zone="discard" />
+        <RuneZoneButton zone="destroyed" />
         <RuneZoneButton zone="deck" />
         <ClickSoundButton
           title="⚙"

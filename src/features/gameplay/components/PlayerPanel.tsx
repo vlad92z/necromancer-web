@@ -2,14 +2,11 @@
  * PlayerPanel - displays the player's combat avatar, health, mana, and artefacts.
  */
 
-import combatWizard1 from '../../../assets/enemies/combat_wizard_1.png';
-import combatWizard2 from '../../../assets/enemies/combat_wizard_2.png';
-import combatWizard3 from '../../../assets/enemies/combat_wizard_3.png';
-import combatWizard4 from '../../../assets/enemies/combat_wizard_4.png';
-import combatWizard5 from '../../../assets/enemies/combat_wizard_5.png';
-import combatWizard6 from '../../../assets/enemies/combat_wizard_6.png';
+import { motion } from 'framer-motion';
+import wizardImage from '../../../assets/enemies/wizard.png';
+import manaOrbImage from '../../../assets/enemies/orb_mana.png';
 import { ArtefactsRow } from '../../../components/ArtefactsRow';
-import { useActiveArtefactIds, useGameplayHealthState } from '../../../hooks/useGameState';
+import { useActiveArtefactIds, useGameplayHealthState, useGameplayWallState, useSpellAnimationEvent } from '../../../hooks/useGameState';
 import { useEffect, useState } from 'react';
 import type { ArtefactId } from '../../../types/artefacts';
 import type { Rune } from '../../../types/game';
@@ -21,36 +18,37 @@ interface PlayerPanelProps {
   hoveredRune: Rune | null;
 }
 
-const COMBAT_WIZARD_FRAMES = [
-  combatWizard1,
-  combatWizard2,
-  combatWizard3,
-  combatWizard4,
-  combatWizard5,
-  combatWizard6,
-  combatWizard5,
-  combatWizard4,
-  combatWizard3,
-  combatWizard2,
-  combatWizard1,
-] as const;
-
 export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
   const { health, maxHealth, mana, maxMana } = useGameplayHealthState();
+  const { wall } = useGameplayWallState();
   const activeArtefactIds = useActiveArtefactIds();
+  const spellAnimationEvent = useSpellAnimationEvent();
   const [hoveredArtefactId, setHoveredArtefactId] = useState<ArtefactId | null>(null);
-  const [combatWizardFrameIndex, setCombatWizardFrameIndex] = useState(0);
+  const [spellAnimationFrame, setSpellAnimationFrame] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!spellAnimationEvent) return;
+
+    const { frames, frameDurationMs } = spellAnimationEvent.animation;
+    let frameIndex = 0;
+    setSpellAnimationFrame(frameIndex);
+    const intervalId = window.setInterval(() => {
+      frameIndex += 1;
+      if (frameIndex >= frames.length) {
+        window.clearInterval(intervalId);
+        setSpellAnimationFrame(null);
+        return;
+      }
+      setSpellAnimationFrame(frameIndex);
+    }, frameDurationMs);
+
+    return () => window.clearInterval(intervalId);
+  }, [spellAnimationEvent]);
 
   const healthRatio = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0;
   const healthPercent = Math.round(healthRatio * 100);
   const displayedMaxMana = Math.max(maxMana, mana);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setCombatWizardFrameIndex((currentFrame) => (currentFrame + 1) % COMBAT_WIZARD_FRAMES.length);
-    }, ANIMATION.COMBAT_WIZARD_FRAME_DURATION_MS);
-    return () => window.clearInterval(timer);
-  }, []);
+  const totalShield = wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
 
   return (
     <section>
@@ -59,16 +57,34 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
       </div>
 
       <div className="mt-5 flex justify-center">
-        <img
-          src={COMBAT_WIZARD_FRAMES[combatWizardFrameIndex]}
-          alt="Player wizard"
-          className="h-55 max-w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]"
-        />
+        <div className="relative h-55 w-55 max-w-full">
+          <img
+            src={wizardImage}
+            alt="Player wizard"
+            className="h-full w-full object-contain [image-rendering:pixelated] drop-shadow-[6px_6px_0_#141313]"
+          />
+          <motion.img
+            src={spellAnimationFrame === null
+              ? manaOrbImage
+              : spellAnimationEvent?.animation.frames[spellAnimationFrame] ?? manaOrbImage}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute z-10 w-[24.2%] max-w-none [image-rendering:pixelated] drop-shadow-[2px_2px_0_#141313]"
+            style={{ left: '68%', top: '38%' }}
+            animate={{ y: [4, -4, -4, 4, 4] }}
+            transition={{
+              duration: ANIMATION.COMBAT_MANA_ORB_FLOAT_DURATION_MS / 750,
+              ease: 'easeInOut',
+              repeat: Infinity,
+              times: [0, 0.42, 0.5, 0.92, 1],
+            }}
+          />
+        </div>
       </div>
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
-          <span />
+          <span className="text-[#75c9f0]" aria-label={`Shield: ${totalShield}`}>{totalShield}</span>
           <span>{health} / {maxHealth}</span>
         </div>
         <div className="pixel-health-track">

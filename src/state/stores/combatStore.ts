@@ -11,6 +11,8 @@ export interface CombatState {
   combatPhase: CombatPhase;
   hand: Rune[];
   discardPile: Rune[];
+  playerDestroyedRunes: Rune[];
+  enemyDestroyedRunes: Rune[];
   suppressedRunes: Rune[];
   selectedHandRuneId: string | null;
   enemyBoard: GameState['enemyBoard'];
@@ -29,6 +31,8 @@ export function pickCombatState(state: GameState): CombatState {
     combatPhase: state.combatPhase,
     hand: state.hand,
     discardPile: state.discardPile,
+    playerDestroyedRunes: state.playerDestroyedRunes,
+    enemyDestroyedRunes: state.enemyDestroyedRunes,
     suppressedRunes: state.suppressedRunes,
     selectedHandRuneId: state.selectedHandRuneId,
     enemyBoard: state.enemyBoard,

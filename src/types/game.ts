@@ -8,6 +8,16 @@ export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning'
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 export type RuneSoundSignals = Record<RuneType, number>;
 
+export interface RuneSpellAnimation {
+  frames: readonly string[];
+  frameDurationMs: number;
+}
+
+export interface SpellAnimationEvent {
+  sequence: number;
+  animation: RuneSpellAnimation;
+}
+
 export type EffectId = string;
 export type EffectParams = Record<string, unknown>;
 
@@ -64,6 +74,7 @@ export interface Rune {
   rarity: RuneEffectRarity;
   cardImageSrc: string;
   tokenImageSrc: string;
+  spellAnimation?: RuneSpellAnimation;
   manaCost?: number;
   castEffectRefs: RuneEffectRef[];
   passiveEffectRefs: RuneEffectRef[];
@@ -215,6 +226,10 @@ export interface CombatZoneState {
   combatPhase: CombatPhase;
   hand: Rune[];
   discardPile: Rune[];
+  /** Runes removed from the player's wall by destruction or Consume during this encounter. */
+  playerDestroyedRunes: Rune[];
+  /** Runes removed from the enemy wall by destruction or Consume during this encounter. */
+  enemyDestroyedRunes: Rune[];
   suppressedRunes: Rune[];
   selectedHandRuneId: string | null;
   enemyBoard: ScoringWall;
@@ -271,6 +286,7 @@ export interface GameState extends CombatZoneState {
   deckDraftState: DeckDraftState | null;
   activeArtefacts: ArtefactId[];
   runeSoundSignals: RuneSoundSignals;
+  spellAnimationEvent: SpellAnimationEvent | null;
   enemyAttackSoundSignal: number;
   shieldSoundSignal: number;
 }

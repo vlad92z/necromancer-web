@@ -57,10 +57,45 @@ import {
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
 import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
-import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef } from '../../utils/runeRemoval';
+import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef, runeFromWallCell } from '../../utils/runeRemoval';
 
 function totalWallShield(wall: ScoringWall): number {
   return wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
+}
+
+function recordDestroyedRunes({
+  state,
+  previousPlayerWall,
+  previousEnemyWall,
+  nextPlayerWall,
+  nextEnemyWall,
+  logs,
+}: {
+  state: GameState;
+  previousPlayerWall: ScoringWall;
+  previousEnemyWall: ScoringWall;
+  nextPlayerWall: ScoringWall;
+  nextEnemyWall: ScoringWall;
+  logs: EffectResolutionLog[];
+}): Pick<GameState, 'playerDestroyedRunes' | 'enemyDestroyedRunes'> {
+  const nonDestroyedRemovalIds = new Set(logs
+    .filter((log) => log.effectId === 'cast.returnAdjacent')
+    .flatMap((log) => {
+      const ids = log.output.removedRuneIds ?? log.output.returnedRuneIds;
+      return Array.isArray(ids)
+        ? ids.filter((id): id is string => typeof id === 'string')
+        : typeof log.output.removedRuneId === 'string' ? [log.output.removedRuneId] : [];
+    }));
+  const removedRunes = (before: ScoringWall, after: ScoringWall) => {
+    const remainingIds = new Set(after.flat().map((cell) => cell.id).filter((id): id is string => Boolean(id)));
+    return before.flat()
+      .map(runeFromWallCell)
+      .filter((rune): rune is Rune => rune !== null && !remainingIds.has(rune.id) && !nonDestroyedRemovalIds.has(rune.id));
+  };
+  return {
+    playerDestroyedRunes: [...state.playerDestroyedRunes, ...removedRunes(previousPlayerWall, nextPlayerWall)],
+    enemyDestroyedRunes: [...state.enemyDestroyedRunes, ...removedRunes(previousEnemyWall, nextEnemyWall)],
+  };
 }
 
 function enterDeckDraftMode(state: GameState): GameState {
@@ -112,6 +147,8 @@ function normalizeHydratedGameState(currentState: GameState, nextState: GameStat
     combatPhase: nextState.combatPhase ?? 'player-turn',
     hand: nextState.hand ?? [],
     discardPile: nextState.discardPile ?? [],
+    playerDestroyedRunes: nextState.playerDestroyedRunes ?? [],
+    enemyDestroyedRunes: nextState.enemyDestroyedRunes ?? [],
     suppressedRunes: nextState.suppressedRunes ?? [],
     enemyBoard: nextState.enemyBoard ?? createEmptySpellWall(),
     enemyQueuedRunes: nextState.enemyQueuedRunes ?? [],
@@ -166,6 +203,7 @@ function initializeEncounterForMapLocation(
     deckDraftState: null,
     activeArtefacts: state.activeArtefacts,
     runeSoundSignals: state.runeSoundSignals,
+    spellAnimationEvent: state.spellAnimationEvent,
     enemyAttackSoundSignal: state.enemyAttackSoundSignal,
     shieldSoundSignal: state.shieldSoundSignal,
   };
@@ -300,10 +338,27 @@ function applyCompletedCastResolution({
   discardPile: Rune[];
   manaSpent: number;
 }): GameState {
+  const stateWithSpellAnimation = manaSpent > 0 && completedRune.spellAnimation
+    ? {
+      ...state,
+      spellAnimationEvent: {
+        sequence: (state.spellAnimationEvent?.sequence ?? 0) + 1,
+        animation: completedRune.spellAnimation,
+      },
+    }
+    : state;
   const resolvedRuneSoundEvents = countRuneSoundEvents({
     completedRune,
     logs: resolvedEffects.logs,
     wall: resolvedEffects.player.wall,
+  });
+  const destroyedRunes = recordDestroyedRunes({
+    state,
+    previousPlayerWall: state.player.wall,
+    previousEnemyWall: state.enemyBoard,
+    nextPlayerWall: resolvedEffects.player.wall,
+    nextEnemyWall: resolvedEffects.enemyBoard,
+    logs: resolvedEffects.logs,
   });
   const handWithReturnedRunes = [...hand, ...resolvedEffects.returnedRunes];
   const discardWithResolvedRunes = [
@@ -326,7 +381,8 @@ function applyCompletedCastResolution({
     });
 
     return enterDeckDraftMode({
-      ...state,
+      ...stateWithSpellAnimation,
+      ...destroyedRunes,
       player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: resolvedEffects.enemy,
       enemyBoard: resolvedEffects.enemyBoard,
@@ -343,7 +399,8 @@ function applyCompletedCastResolution({
   if (!resolvedEffects.pendingRemoval && resolvedEffects.player.health <= 0) {
     trackDefeat(state, resolvedEffects.player);
     return {
-      ...state,
+      ...stateWithSpellAnimation,
+      ...destroyedRunes,
       player: {
         ...resolvedEffects.player,
         mana: Math.max(0, resolvedEffects.player.mana - manaSpent),
@@ -402,7 +459,8 @@ function applyCompletedCastResolution({
     : null;
 
   return {
-    ...state,
+    ...stateWithSpellAnimation,
+    ...destroyedRunes,
     player: {
       ...drawResult.player,
       mana: Math.max(0, drawResult.player.mana - manaSpent),
@@ -481,8 +539,17 @@ function pendingTimedState({
       handLimit: EXTRA_DRAW_HAND_LIMIT,
     })
     : { player: result.player, hand: state.hand, discardPile: state.discardPile };
+  const destroyedRunes = recordDestroyedRunes({
+    state,
+    previousPlayerWall: state.player.wall,
+    previousEnemyWall: state.enemyBoard,
+    nextPlayerWall: result.player.wall,
+    nextEnemyWall: result.opposingWall,
+    logs: result.logs,
+  });
   return {
     ...state,
+    ...destroyedRunes,
     player: drawResult.player,
     enemy: result.enemy,
     enemyBoard: result.opposingWall,
@@ -525,6 +592,14 @@ function finishPlayerStartTurn(
     ...(manualRemainingCount ? { manualRemainingCount } : {}),
   });
   if (timed.pendingRemoval) return pendingTimedState({ state, trigger: 'startTurn', result: timed });
+  const destroyedRunes = recordDestroyedRunes({
+    state,
+    previousPlayerWall: state.player.wall,
+    previousEnemyWall: state.enemyBoard,
+    nextPlayerWall: timed.player.wall,
+    nextEnemyWall: timed.opposingWall,
+    logs: timed.logs,
+  });
 
   if ((timed.enemy?.health ?? 1) <= 0) {
     const victoryDeck = collectVictoryDeck({
@@ -535,6 +610,7 @@ function finishPlayerStartTurn(
     });
     return enterDeckDraftMode({
       ...state,
+      ...destroyedRunes,
       player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: timed.enemy,
       enemyBoard: timed.opposingWall,
@@ -554,6 +630,7 @@ function finishPlayerStartTurn(
     trackDefeat(state, timed.player);
     return {
       ...state,
+      ...destroyedRunes,
       player: timed.player,
       enemy: timed.enemy,
       enemyBoard: timed.opposingWall,
@@ -594,6 +671,7 @@ function finishPlayerStartTurn(
 
   return {
     ...state,
+    ...destroyedRunes,
     player: {
       ...startTurnDrawResult.player,
       mana: artefactStartTurnEffects.player.mana,
@@ -629,6 +707,14 @@ function runCombatTurn(
 
   const stateAfterTimed: GameState = {
     ...state,
+    ...recordDestroyedRunes({
+      state,
+      previousPlayerWall: state.player.wall,
+      previousEnemyWall: state.enemyBoard,
+      nextPlayerWall: timedEnd.player.wall,
+      nextEnemyWall: timedEnd.opposingWall,
+      logs: timedEnd.logs,
+    }),
     player: timedEnd.player,
     enemy: timedEnd.enemy,
     enemyBoard: timedEnd.opposingWall,
@@ -679,6 +765,17 @@ function runCombatTurn(
     turnNumber: stateAfterTimed.enemyTurnNumber,
     activeArtefacts: stateAfterTimed.activeArtefacts,
   });
+  const stateAfterEnemy = {
+    ...stateAfterTimed,
+    ...recordDestroyedRunes({
+      state: stateAfterTimed,
+      previousPlayerWall: stateAfterTimed.player.wall,
+      previousEnemyWall: stateAfterTimed.enemyBoard,
+      nextPlayerWall: enemyTurnResult.player.wall,
+      nextEnemyWall: enemyTurnResult.enemyBoard,
+      logs: enemyTurnResult.logs,
+    }),
+  };
   const enemyAttackSoundSignal = stateAfterTimed.enemyAttackSoundSignal + (enemyTurnResult.healthDamage > 0 ? 1 : 0);
   const preventedDamage = enemyTurnResult.logs.some((log) => (
     (log.effectId === 'passive.reduceDamage' && log.output.previousValue !== log.output.nextValue)
@@ -697,12 +794,12 @@ function runCombatTurn(
   if ((enemyTurnResult.enemy?.health ?? 1) <= 0) {
     const victoryDeck = collectVictoryDeck({
       player: enemyTurnResult.player,
-      hand: stateAfterTimed.hand,
-      discardPile: stateAfterTimed.discardPile,
-      suppressedRunes: stateAfterTimed.suppressedRunes,
+      hand: stateAfterEnemy.hand,
+      discardPile: stateAfterEnemy.discardPile,
+      suppressedRunes: stateAfterEnemy.suppressedRunes,
     });
     return enterDeckDraftMode({
-      ...stateAfterTimed,
+      ...stateAfterEnemy,
       player: { ...victoryDeck.player, wall: createEmptySpellWall() },
       enemy: enemyTurnResult.enemy,
       enemyBoard: enemyTurnResult.enemyBoard,
@@ -710,30 +807,30 @@ function runCombatTurn(
       discardPile: victoryDeck.discardPile,
       suppressedRunes: [],
       enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
-      enemyTurnNumber: stateAfterTimed.enemyTurnNumber + 1,
+      enemyTurnNumber: stateAfterEnemy.enemyTurnNumber + 1,
       selectedHandRuneId: null,
-      runeSoundSignals: applyRuneSoundEvents(stateAfterTimed.runeSoundSignals, runeSoundEvents),
+      runeSoundSignals: applyRuneSoundEvents(stateAfterEnemy.runeSoundSignals, runeSoundEvents),
       enemyAttackSoundSignal,
       shieldSoundSignal,
     });
   }
 
   if (enemyTurnResult.player.health <= 0 || enemyTurnResult.boardFull) {
-    trackDefeat(stateAfterTimed, enemyTurnResult.player);
+    trackDefeat(stateAfterEnemy, enemyTurnResult.player);
     return {
-      ...stateAfterTimed,
+      ...stateAfterEnemy,
       player: enemyTurnResult.player,
       enemy: enemyTurnResult.enemy,
       hand: [],
       discardPile,
       enemyBoard: enemyTurnResult.enemyBoard,
       enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
-      enemyTurnNumber: stateAfterTimed.enemyTurnNumber + 1,
+      enemyTurnNumber: stateAfterEnemy.enemyTurnNumber + 1,
       selectedHandRuneId: null,
       isDefeat: true,
       combatPhase: 'defeat',
-      longestRun: Math.max(stateAfterTimed.longestRun, stateAfterTimed.gameIndex),
-      runeSoundSignals: applyRuneSoundEvents(stateAfterTimed.runeSoundSignals, runeSoundEvents),
+      longestRun: Math.max(stateAfterEnemy.longestRun, stateAfterEnemy.gameIndex),
+      runeSoundSignals: applyRuneSoundEvents(stateAfterEnemy.runeSoundSignals, runeSoundEvents),
       enemyAttackSoundSignal,
       shieldSoundSignal,
     };
@@ -745,17 +842,17 @@ function runCombatTurn(
     discardPile: stateAfterTimed.discardPile,
   });
   const stateAtStartTurn: GameState = {
-    ...stateAfterTimed,
+    ...stateAfterEnemy,
     player: refill.player,
     enemy: enemyTurnResult.enemy,
     hand: refill.hand,
     discardPile: refill.discardPile,
     enemyBoard: enemyTurnResult.enemyBoard,
     enemyQueuedRunes: enemyTurnResult.enemyQueuedRunes,
-    enemyTurnNumber: stateAfterTimed.enemyTurnNumber + 1,
+    enemyTurnNumber: stateAfterEnemy.enemyTurnNumber + 1,
     selectedHandRuneId: null,
     combatPhase: 'player-turn',
-    runeSoundSignals: applyRuneSoundEvents(stateAfterTimed.runeSoundSignals, runeSoundEvents),
+    runeSoundSignals: applyRuneSoundEvents(stateAfterEnemy.runeSoundSignals, runeSoundEvents),
     enemyAttackSoundSignal,
     shieldSoundSignal,
   };

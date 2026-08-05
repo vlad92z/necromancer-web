@@ -25,7 +25,7 @@ function place(player: ReturnType<typeof createPlayer>, rune: Rune, row: number,
 describe('retuned cards', () => {
   it('defines every requested canonical effect', () => {
     expect(CARD_DEFINITIONS.Barricade.castEffectRefs).toEqual([{ effectId: 'cast.shieldAdjacent', params: { amount: 1 } }]);
-    expect(CARD_DEFINITIONS.Firebolt.castEffectRefs).toEqual([{ effectId: 'cast.damageAdjacent', params: { amount: 1 } }]);
+    expect(CARD_DEFINITIONS.Firebolt.castEffectRefs).toEqual([{ effectId: 'cast.damageBoard', params: { amount: 1 } }]);
     expect(CARD_DEFINITIONS.VoidTendrils.castEffectRefs[0]).toMatchObject({ effectId: 'rune.consume', payload: { effectId: 'cast.damage', params: { amount: 12 } } });
     expect(CARD_DEFINITIONS.ThrowRock.castEffectRefs).toEqual([{ effectId: 'cast.synergy', params: { amount: 1, synergyType: 'Life' } }]);
     expect(CARD_DEFINITIONS.Hide.castEffectRefs[0]).toMatchObject({ effectId: 'rune.consume', runeType: 'Life', payload: { effectId: 'cast.shield', params: { amount: 3 } } });
@@ -51,6 +51,22 @@ describe('retuned cards', () => {
     });
 
     expect(result.enemy?.health).toBe(createMonsterEnemy('goblin').health - 2);
+  });
+
+  it('makes Firebolt deal one damage for every rune in the completed wall', () => {
+    const base = createPlayer('player', 'Player', 20, [], 20);
+    const first = place(base, createRuneFromCardName({ id: 'barricade', cardName: 'Barricade' }), 0, 0);
+    const second = place(first.player, createRuneFromCardName({ id: 'frost-shield', cardName: 'FrostShield' }), 0, 1);
+    const firebolt = place(second.player, createRuneFromCardName({ id: 'firebolt', cardName: 'Firebolt' }), 1, 1);
+    const enemy = createMonsterEnemy('goblin');
+    const result = resolveCompletedRuneCastEffects({
+      player: firebolt.player,
+      enemy,
+      rune: firebolt.completedRune!,
+      sourcePosition: firebolt.completedPosition!,
+    });
+
+    expect(result.enemy?.health).toBe(enemy.health - 3);
   });
 
   it('consumes a Lightning Bolt for 12 damage, but does not trigger it when destroyed', () => {
@@ -94,7 +110,7 @@ describe('retuned cards', () => {
       trigger: 'endTurn', player: cast.player, enemy: cast.enemy, opposingWall: cast.enemyBoard, random: () => 0,
     });
 
-    expect(cast.enemy?.health).toBe(createMonsterEnemy('goblin').health - 2);
+    expect(cast.enemy?.health).toBe(createMonsterEnemy('goblin').health - 3);
     expect(timed.player.wall[0][0]?.id).toBe(first.completedRune!.id);
     expect(timed.player.wall[0][1]?.id).toBeNull();
   });

@@ -7,7 +7,7 @@ import { createEmptySpellWall } from './spellWall';
 
 export const PLAYER_RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 export const DEFAULT_HAND_SIZE = 5;
-export const DEFAULT_PLAYER_MANA = 5;
+export const DEFAULT_PLAYER_MANA = 7;
 
 const STARTING_DECK_DEFINITIONS: Array<{ id: string; cardName: CardName }> = [
   { id: 'player-1-0', cardName: 'Firebolt' },
@@ -70,6 +70,8 @@ export function createEncounterState({ monsterId, player, fullDeck }: {
     combatPhase: 'player-turn',
     hand,
     discardPile: [],
+    playerDestroyedRunes: [],
+    enemyDestroyedRunes: [],
     suppressedRunes: [],
     selectedHandRuneId: null,
     enemyBoard: createEmptySpellWall(),
@@ -98,12 +100,15 @@ export function createInitialSoloRunState(fullDeck: Rune[] = createStartingDeck(
     deckDraftState: null,
     activeArtefacts: [],
     runeSoundSignals: createRuneSoundSignals(),
+    spellAnimationEvent: null,
     enemyAttackSoundSignal: 0,
     shieldSoundSignal: 0,
     enemy: null,
     combatPhase: 'player-turn',
     hand: [],
     discardPile: [],
+    playerDestroyedRunes: [],
+    enemyDestroyedRunes: [],
     suppressedRunes: [],
     selectedHandRuneId: null,
     enemyBoard: createEmptySpellWall(),

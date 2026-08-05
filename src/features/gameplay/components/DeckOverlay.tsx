@@ -29,6 +29,10 @@ const ZONE_COPY: Record<RuneZoneOverlayType, { title: string; emptyText: string 
     title: 'Discard',
     emptyText: 'No discarded runes',
   },
+  destroyed: {
+    title: 'Destroyed',
+    emptyText: 'No destroyed runes',
+  },
   deck: {
     title: 'Deck',
     emptyText: 'No runes in deck',
@@ -37,7 +41,7 @@ const ZONE_COPY: Record<RuneZoneOverlayType, { title: string; emptyText: string 
 
 export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
   const { deck, fullDeck, isDrafting } = useGameplayDeckState();
-  const { hand, discardPile } = useCombatZoneState();
+  const { hand, discardPile, playerDestroyedRunes } = useCombatZoneState();
   const soloPhase = useSoloPhase();
   const { closeRuneZoneOverlay: onClose } = useUIActions();
   const playClickSound = useClickSound();
@@ -47,6 +51,8 @@ export function RuneZoneOverlay({ zone }: RuneZoneOverlayProps) {
     ? deck
     : zone === 'discard'
       ? discardPile
+      : zone === 'destroyed'
+        ? playerDestroyedRunes
         : isDrafting || soloPhase === 'map'
           ? fullDeck
           : [...deck, ...discardPile, ...hand];

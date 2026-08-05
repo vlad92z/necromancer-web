@@ -17,6 +17,11 @@ const ZONE_COPY: Record<RuneZoneOverlay, { label: string; title: string; tooltip
         title: 'Discard',
         tooltip: (count) => `You have ${count} discarded runes.`,
     },
+    destroyed: {
+        label: 'Destroyed',
+        title: 'Destroyed',
+        tooltip: (count) => `You have ${count} destroyed runes.`,
+    },
     deck: {
         label: 'Deck',
         title: 'Deck',
@@ -30,7 +35,7 @@ interface RuneZoneButtonProps {
 
 export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
     const { deck, fullDeck } = useGameplayDeckState();
-    const { hand, discardPile } = useCombatZoneState();
+    const { hand, discardPile, playerDestroyedRunes } = useCombatZoneState();
     const soloPhase = useSoloPhase();
     const { activeRuneZoneOverlay } = useUIOverlayState();
     const { openRuneZoneOverlay } = useUIActions();
@@ -40,7 +45,9 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
         ? deck.length
         : zone === 'discard'
             ? discardPile.length
-        : soloPhase === 'map'
+            : zone === 'destroyed'
+                ? playerDestroyedRunes.length
+            : soloPhase === 'map'
             ? fullDeck.length
             : deck.length + discardPile.length + hand.length;
     const copy = ZONE_COPY[zone];
@@ -51,6 +58,7 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
     const zoneClassName: Record<RuneZoneOverlay, string> = {
         draw: statBaseClass,
         discard: statBaseClass,
+        destroyed: statBaseClass,
         deck: statBaseClass,
     };
     const handleClick = () => {
@@ -68,7 +76,7 @@ export function RuneZoneButton({ zone }: RuneZoneButtonProps) {
             className={zoneClassName[zone]}
         >
             <img
-                src={zone === 'draw' ? drawSvg : zone === 'discard' ? discardSvg : deckSvg}
+                src={zone === 'draw' ? drawSvg : zone === 'deck' ? deckSvg : discardSvg}
                 aria-hidden={true}
                 className="inline-flex h-[35px] w-[35px] [image-rendering:pixelated]"
             />

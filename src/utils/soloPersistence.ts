@@ -7,7 +7,7 @@ import { SPELL_WALL_SIDE_LENGTH } from './spellWall';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 39;
+export const SOLO_STATE_VERSION = 41;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;
@@ -108,7 +108,17 @@ function isSoloStatePayload(value: unknown): value is SoloStatePayload {
   const state = candidate.state as Partial<GameState> & Record<string, unknown>;
   return Array.isArray(state.hand)
     && Array.isArray(state.discardPile)
+    && Array.isArray(state.playerDestroyedRunes)
+    && Array.isArray(state.enemyDestroyedRunes)
     && Array.isArray(state.suppressedRunes)
+    && (state.spellAnimationEvent === null || (
+      isRecord(state.spellAnimationEvent)
+      && Number.isInteger(state.spellAnimationEvent.sequence)
+      && isRecord(state.spellAnimationEvent.animation)
+      && Array.isArray(state.spellAnimationEvent.animation.frames)
+      && state.spellAnimationEvent.animation.frames.every((frame) => typeof frame === 'string')
+      && typeof state.spellAnimationEvent.animation.frameDurationMs === 'number'
+    ))
     && isCurrentSpellWall(state.enemyBoard)
     && Array.isArray(state.enemyQueuedRunes)
     && isPendingCombatResolution(state.pendingCombatResolution)

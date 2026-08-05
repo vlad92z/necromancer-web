@@ -110,6 +110,8 @@ export function useCombatZoneState() {
     useShallow((state) => ({
       hand: state.hand,
       discardPile: state.discardPile,
+      playerDestroyedRunes: state.playerDestroyedRunes,
+      enemyDestroyedRunes: state.enemyDestroyedRunes,
       selectedHandRuneId: state.selectedHandRuneId,
     })),
   );
@@ -164,6 +166,10 @@ export function useGameplayStatusState() {
 
 export function useRuneSoundSignals() {
   return useRunStore((state) => state.runeSoundSignals);
+}
+
+export function useSpellAnimationEvent() {
+  return useRunStore((state) => state.spellAnimationEvent);
 }
 
 export function useEnemyAttackSoundSignal() {
