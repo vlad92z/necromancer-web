@@ -20,6 +20,13 @@ import voidOrb4 from '../assets/combat/spells/void/orb_void_4.png';
 import voidOrb5 from '../assets/combat/spells/void/orb_void_5.png';
 import voidOrb6 from '../assets/combat/spells/void/orb_void_6.png';
 import voidOrb7 from '../assets/combat/spells/void/orb_void_7.png';
+import fireOrb1 from '../assets/combat/spells/fire/orb_fire_1.png';
+import fireOrb2 from '../assets/combat/spells/fire/orb_fire_2.png';
+import fireOrb3 from '../assets/combat/spells/fire/orb_fire_3.png';
+import fireOrb4 from '../assets/combat/spells/fire/orb_fire_4.png';
+import fireOrb5 from '../assets/combat/spells/fire/orb_fire_5.png';
+import fireOrb6 from '../assets/combat/spells/fire/orb_fire_6.png';
+import fireOrb7 from '../assets/combat/spells/fire/orb_fire_7.png';
 import fireToken from '../assets/runes/tokens/token_fire.png';
 import frostToken from '../assets/runes/tokens/token_frost.png';
 import lifeToken from '../assets/runes/tokens/token_life.png';
@@ -40,13 +47,18 @@ const voidOrbSpellAnimation = {
   frameDurationMs: 75,
 } as const;
 
+const fireOrbSpellAnimation = {
+  frames: [fireOrb1, fireOrb2, fireOrb3, fireOrb4, fireOrb5, fireOrb6, fireOrb7, fireOrb6, fireOrb5, fireOrb4, fireOrb3, fireOrb2, fireOrb1],
+  frameDurationMs: 75,
+} as const;
+
 /** Keys are the canonical card names; each entry deliberately owns its card and token art. */
 export const CARD_DEFINITIONS = {
-  Firebolt: { templateId: 'firebolt', name: 'Firebolt', runeTypes: ['Fire'], rarity: 'common', cardImageSrc: fireboltImg, tokenImageSrc: fireToken, spellAnimation: voidOrbSpellAnimation, manaCost: 1, castEffectRefs: [createEffectRef('cast.damageAdjacent', { amount: 1 })], passiveEffectRefs: [] },
+  Firebolt: { templateId: 'firebolt', name: 'Firebolt', runeTypes: ['Fire'], rarity: 'common', cardImageSrc: fireboltImg, tokenImageSrc: fireToken, spellAnimation: fireOrbSpellAnimation, manaCost: 2, castEffectRefs: [createEffectRef('cast.damageAdjacent', { amount: 1 })], passiveEffectRefs: [] },
   FrostShield: { templateId: 'frost_shield', name: 'Frost Shield', runeTypes: ['Frost'], rarity: 'common', cardImageSrc: frostShieldImg, tokenImageSrc: frostToken, spellAnimation: voidOrbSpellAnimation, manaCost: 2, castEffectRefs: [createEffectRef('cast.shield', { amount: 3 })], passiveEffectRefs: [createEffectRef('passive.explosive', { amount: 3, removalKind: 'destroy' })] },
-  Barricade: { templateId: 'barricade', name: 'Barricade', runeTypes: ['Life'], rarity: 'common', cardImageSrc: barricadeImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, manaCost: 3, castEffectRefs: [createEffectRef('cast.shieldAdjacent', { amount: 1 })], passiveEffectRefs: [] },
+  Barricade: { templateId: 'barricade', name: 'Barricade', runeTypes: ['Life'], rarity: 'common', cardImageSrc: barricadeImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, manaCost: 2, castEffectRefs: [createEffectRef('cast.shieldAdjacent', { amount: 1 })], passiveEffectRefs: [] },
   Heal: { templateId: 'heal', name: 'Heal', runeTypes: ['Life'], rarity: 'uncommon', cardImageSrc: healImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, manaCost: 3, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', runeType: 'Life', payload: createEffectRef('cast.healing', { amount: 5 }) })], passiveEffectRefs: [] },
-  VoidTendrils: { templateId: 'void_tendrils', name: 'Void Tendrils', runeTypes: ['Void'], rarity: 'common', cardImageSrc: voidTendrilsImg, tokenImageSrc: voidToken, spellAnimation: voidOrbSpellAnimation, manaCost: 2, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', payload: createEffectRef('cast.damage', { amount: 12 }) })], passiveEffectRefs: [] },
+  VoidTendrils: { templateId: 'void_tendrils', name: 'Void Tendrils', runeTypes: ['Void'], rarity: 'common', cardImageSrc: voidTendrilsImg, tokenImageSrc: voidToken, spellAnimation: voidOrbSpellAnimation, manaCost: 3, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', payload: createEffectRef('cast.damage', { amount: 6 }) })], passiveEffectRefs: [] },
   Tornado: { templateId: 'tornado', name: 'Tornado', runeTypes: ['Wind'], rarity: 'common', cardImageSrc: tornadoImg, tokenImageSrc: windToken, spellAnimation: voidOrbSpellAnimation, manaCost: 5, castEffectRefs: [createEffectRef('cast.damage', { amount: 15 })], passiveEffectRefs: [] },
   Headwind: { templateId: 'headwind', name: 'Headwind', runeTypes: ['Wind'], rarity: 'uncommon', cardImageSrc: headwindImg, tokenImageSrc: windToken, spellAnimation: voidOrbSpellAnimation, manaCost: 3, castEffectRefs: [], passiveEffectRefs: [createRuneRemovalEffectRef({
     kind: 'destroy',
@@ -60,7 +72,7 @@ export const CARD_DEFINITIONS = {
   LightningBolt: { templateId: 'lightning_bolt', name: 'Lightning Bolt', runeTypes: ['Lightning'], rarity: 'common', cardImageSrc: lightningBoltImg, tokenImageSrc: lightningToken, spellAnimation: voidOrbSpellAnimation, manaCost: 2, castEffectRefs: [], passiveEffectRefs: [createEffectRef('passive.explosive', { amount: 12, removalKind: 'consume' })] },
   ThrowRock: { templateId: 'throw_rock', name: 'Throw', runeTypes: ['Life'], rarity: 'common', cardImageSrc: throwRockImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, manaCost: 1, castEffectRefs: [createEffectRef('cast.synergy', { amount: 1, synergyType: 'Life' })], passiveEffectRefs: [] },
   Hide: { templateId: 'hide', name: 'Hide', runeTypes: ['Life'], rarity: 'uncommon', cardImageSrc: hideImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, manaCost: 0, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', runeType: 'Life', payload: createEffectRef('cast.shield', { amount: 3 }) })], passiveEffectRefs: [] },
-  Scorch: { templateId: 'scorch', name: 'Scorch', runeTypes: ['Fire'], rarity: 'uncommon', cardImageSrc: scorchImg, tokenImageSrc: fireToken, spellAnimation: voidOrbSpellAnimation, manaCost: 2, castEffectRefs: [createEffectRef('cast.damageAdjacent', { amount: 2, runeType: 'Fire' })], passiveEffectRefs: [] },
+  Scorch: { templateId: 'scorch', name: 'Scorch', runeTypes: ['Fire'], rarity: 'uncommon', cardImageSrc: scorchImg, tokenImageSrc: fireToken, spellAnimation: fireOrbSpellAnimation, manaCost: 2, castEffectRefs: [createEffectRef('cast.damageAdjacent', { amount: 2, runeType: 'Fire' })], passiveEffectRefs: [] },
   HurlRock: { templateId: 'hurl_rock', name: 'Hurl', runeTypes: ['Life'], rarity: 'uncommon', cardImageSrc: throwRockImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, manaCost: 2, castEffectRefs: [createEffectRef('cast.damage', { amount: 8 })], passiveEffectRefs: [] },
   Avalanche: { templateId: 'avalanche', name: 'Avalanche', runeTypes: ['Life'], rarity: 'rare', cardImageSrc: avalancheImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, manaCost: 5, castEffectRefs: [createRuneRemovalEffectRef({
     kind: 'destroy',

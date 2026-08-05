@@ -10,9 +10,10 @@ describe('cardCatalog artwork', () => {
     });
   });
 
-  it('defines the void orb animation on every card, playing forward then back to frame one', () => {
+  it('defines the matching orb animation on every card, playing forward then back to frame one', () => {
     Object.values(CARD_DEFINITIONS).forEach((card) => {
-      expect(card.spellAnimation.frames.map((frame) => frame.match(/orb_void_(\d)\.png/)?.[1]))
+      const orbKind = (card.runeTypes as readonly string[]).includes('Fire') ? 'fire' : 'void';
+      expect(card.spellAnimation.frames.map((frame) => frame.match(new RegExp(`orb_${orbKind}_(\\d)\\.png`))?.[1]))
         .toEqual(['1', '2', '3', '4', '5', '6', '7', '6', '5', '4', '3', '2', '1']);
       expect(card.spellAnimation.frameDurationMs).toBeGreaterThan(0);
     });

@@ -7,7 +7,7 @@ import { createEmptySpellWall } from './spellWall';
 
 export const PLAYER_RUNE_TYPES: RuneType[] = ['Fire', 'Life', 'Wind', 'Frost', 'Void', 'Lightning'];
 export const DEFAULT_HAND_SIZE = 5;
-export const DEFAULT_PLAYER_MANA = 5;
+export const DEFAULT_PLAYER_MANA = 7;
 
 const STARTING_DECK_DEFINITIONS: Array<{ id: string; cardName: CardName }> = [
   { id: 'player-1-0', cardName: 'Firebolt' },
