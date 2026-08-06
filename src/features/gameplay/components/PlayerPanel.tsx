@@ -84,7 +84,9 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
-          <span className="text-[#75c9f0]" aria-label={`Shield: ${totalShield}`}>{totalShield}</span>
+          {totalShield > 0 ? (
+            <span className="text-[#75c9f0]" aria-label={`Shield: ${totalShield}`}>{totalShield}</span>
+          ) : <span />}
           <span>{health} / {maxHealth}</span>
         </div>
         <div className="pixel-health-track">
