@@ -10,6 +10,7 @@ export function createEmptySpellWallCell(): WallCell {
     rarity: null,
     cardImageSrc: null,
     tokenImageSrc: null,
+    spellSound: null,
     manaCost: null,
     castEffectRefs: null,
     passiveEffectRefs: null,

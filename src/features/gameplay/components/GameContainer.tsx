@@ -16,12 +16,10 @@ import {
 import { useEnemyAttackSound } from '../../../hooks/useEnemyAttackSound';
 import { useRuneSound } from '../../../hooks/useRuneSound';
 import { useShieldSound } from '../../../hooks/useShieldSound';
-import type { RuneSoundSignals, RuneType } from '../../../types/game';
+import type { RuneSoundSignals } from '../../../types/game';
 import { SoloGameView } from './SoloGameBoard';
 import { computeBoardScale, SCALING_CONFIG } from '../../../utils/boardScaling';
 import { SoloMapView } from './map/SoloMapView';
-
-const RUNE_SOUND_TYPES: RuneType[] = ['Fire', 'Frost', 'Life', 'Void', 'Wind', 'Lightning'];
 
 export function GameContainer() {
   const { returnToStartScreen } = useGameplayActions();
@@ -59,10 +57,10 @@ export function GameContainer() {
   }, []);
 
   useEffect(() => {
-    RUNE_SOUND_TYPES.forEach((runeType) => {
-      const signalDelta = runeSoundSignals[runeType] - previousRuneSoundSignalsRef.current[runeType];
+    Object.entries(runeSoundSignals).forEach(([soundUrl, signal]) => {
+      const signalDelta = signal - (previousRuneSoundSignalsRef.current[soundUrl] ?? 0);
       for (let index = 0; index < signalDelta; index += 1) {
-        playRuneSound(runeType);
+        playRuneSound(soundUrl);
       }
     });
 

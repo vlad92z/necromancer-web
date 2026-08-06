@@ -8,6 +8,7 @@ import { createEffectRef } from '../../utils/effectCatalog';
 import { createEmptyWall, createMonsterEnemy } from '../../utils/gameInitialization';
 import { MONSTER_CATALOG } from '../../utils/monsterCatalog';
 import { createRuneFromCardName, createRuneFromPool } from '../../utils/runeEffects';
+import { CARD_DEFINITIONS } from '../../utils/cardCatalog';
 import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap';
 import { getRegionDefinition } from '../../utils/regionCatalog';
 import { createRuneRemovalEffectRef } from '../../utils/runeRemoval';
@@ -783,6 +784,22 @@ describe('gameplayStore current combat', () => {
     expect(store.getState().runeSoundSignals[runeType]).toBe(1);
   });
 
+  it('signals Barricade by its canonical stone sound', () => {
+    const store = createGameplayStoreInstance();
+    const barricade = createRuneFromCardName({ id: 'barricade-sound', cardName: 'Barricade' });
+
+    store.setState((state) => ({
+      ...state,
+      hand: [barricade],
+      selectedHandRuneId: barricade.id,
+      enemy: { id: 'goblin', name: 'Goblin', imageSrc: '', health: 10, maxHealth: 10 },
+    }));
+
+    store.getState().castRuneToWall(0, 1);
+
+    expect(store.getState().runeSoundSignals[CARD_DEFINITIONS.Barricade.spellSound]).toBe(1);
+  });
+
   it.each<[{ rarity: Rune['rarity']; runeType: RuneType; row: number; col: number }]>([
     [{ rarity: 'common', runeType: 'Fire', row: 0, col: 0 }],
     [{ rarity: 'uncommon', runeType: 'Frost', row: 0, col: 3 }],
@@ -1371,6 +1388,7 @@ function createTestRune(
     rarity,
     cardImageSrc: `${runeType.toLowerCase()}-card.png`,
     tokenImageSrc: `${runeType.toLowerCase()}-token.png`,
+    spellSound: runeType,
     manaCost,
     castEffectRefs: [createEffectRef('cast.damage', { amount: damage })],
     passiveEffectRefs: [],

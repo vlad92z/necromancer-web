@@ -36,6 +36,7 @@ export function createRuneFromCardName({ id, cardName }: { id: string; cardName:
     cardImageSrc: card.cardImageSrc,
     tokenImageSrc: card.tokenImageSrc,
     spellAnimation: card.spellAnimation,
+    spellSound: card.spellSound,
     manaCost: card.manaCost,
     castEffectRefs: copyEffectRefs(card.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(card.passiveEffectRefs),

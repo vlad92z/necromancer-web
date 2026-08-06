@@ -9,7 +9,6 @@ import type {
   MapTravelTarget,
   Player,
   Rune,
-  RuneType,
   ScoringWall,
   SoloMapState,
   WallPosition,
@@ -234,41 +233,40 @@ function trackDefeat(state: GameState, player: Player): void {
   });
 }
 
-function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType[]>, wall: ScoringWall): Map<string, RuneType[]> {
+function addCompletedWallSpellSoundsById(spellSoundsById: Map<string, string>, wall: ScoringWall): Map<string, string> {
   wall.forEach((row) => {
     row.forEach((cell) => {
-      if (cell.id && cell.runeTypes.length > 0) {
-        runeTypesById.set(cell.id, cell.runeTypes);
+      if (cell.id && cell.spellSound) {
+        spellSoundsById.set(cell.id, cell.spellSound);
       }
     });
   });
-  return runeTypesById;
+  return spellSoundsById;
 }
 
-function createEmptyRuneSoundEvents(): Record<RuneType, number> {
+function createEmptyRuneSoundEvents(): Record<string, number> {
   return createRuneSoundSignals();
 }
 
-function addRuneSoundEvent(events: Record<RuneType, number>, runeType: RuneType): void {
-  events[runeType] += 1;
+function addRuneSoundEvent(events: Record<string, number>, soundUrl: string): void {
+  events[soundUrl] = (events[soundUrl] ?? 0) + 1;
 }
 
 function mergeRuneSoundEvents(
-  left: Record<RuneType, number>,
-  right: Record<RuneType, number>
-): Record<RuneType, number> {
-  const next = createEmptyRuneSoundEvents();
-  Object.keys(next).forEach((runeType) => {
-    const typedRuneType = runeType as RuneType;
-    next[typedRuneType] = left[typedRuneType] + right[typedRuneType];
+  left: Record<string, number>,
+  right: Record<string, number>
+): Record<string, number> {
+  const next = { ...left };
+  Object.entries(right).forEach(([soundUrl, count]) => {
+    next[soundUrl] = (next[soundUrl] ?? 0) + count;
   });
   return next;
 }
 
 function applyRuneSoundEvents(
-  signals: Record<RuneType, number>,
-  events: Record<RuneType, number>
-): Record<RuneType, number> {
+  signals: Record<string, number>,
+  events: Record<string, number>
+): Record<string, number> {
   return mergeRuneSoundEvents(signals, events);
 }
 
@@ -280,14 +278,12 @@ function countRuneSoundEvents({
   completedRune?: Rune | null;
   logs: EffectResolutionLog[];
   wall: ScoringWall;
-}): Record<RuneType, number> {
+}): Record<string, number> {
   const events = createEmptyRuneSoundEvents();
-  const completedRuneTypesById = addCompletedWallRuneTypesById(new Map<string, RuneType[]>(), wall);
-  const retriggeredRuneIdsByType = new Map<RuneType, Set<string>>();
+  const completedRuneSpellSoundsById = addCompletedWallSpellSoundsById(new Map<string, string>(), wall);
+  const retriggeredRuneIdsBySound = new Map<string, Set<string>>();
 
-  if (completedRune) {
-    completedRune.runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
-  }
+  if (completedRune?.spellSound) addRuneSoundEvent(events, completedRune.spellSound);
 
   logs.forEach((log) => {
     if (log.sourceType !== 'rune') {
@@ -295,27 +291,25 @@ function countRuneSoundEvents({
     }
 
     if (log.effectId.startsWith('passive.')) {
-      const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
-      runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
+      const spellSound = completedRuneSpellSoundsById.get(log.sourceId);
+      if (spellSound) addRuneSoundEvent(events, spellSound);
       return;
     }
 
-    const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
+    const spellSound = completedRuneSpellSoundsById.get(log.sourceId);
     if (
       log.effectId.startsWith('cast.') &&
       log.sourceId !== completedRune?.id &&
-      runeTypes.length > 0
+      spellSound
     ) {
-      runeTypes.forEach((runeType) => {
-        const retriggeredRuneIds = retriggeredRuneIdsByType.get(runeType) ?? new Set<string>();
-        retriggeredRuneIds.add(log.sourceId);
-        retriggeredRuneIdsByType.set(runeType, retriggeredRuneIds);
-      });
+      const retriggeredRuneIds = retriggeredRuneIdsBySound.get(spellSound) ?? new Set<string>();
+      retriggeredRuneIds.add(log.sourceId);
+      retriggeredRuneIdsBySound.set(spellSound, retriggeredRuneIds);
     }
   });
 
-  retriggeredRuneIdsByType.forEach((runeIds, runeType) => {
-    events[runeType] += runeIds.size;
+  retriggeredRuneIdsBySound.forEach((runeIds, soundUrl) => {
+    events[soundUrl] = (events[soundUrl] ?? 0) + runeIds.size;
   });
 
   return events;
