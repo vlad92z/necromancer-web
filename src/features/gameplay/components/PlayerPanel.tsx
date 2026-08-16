@@ -71,8 +71,8 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
               : spellAnimationEvent?.animation.frames[spellAnimationFrame] ?? manaOrbImage}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute z-10 w-[24.2%] max-w-none [image-rendering:pixelated] drop-shadow-[2px_2px_0_#141313]"
-            style={{ left: '68%', top: '38%' }}
+            className="pointer-events-none absolute z-10 w-[26%] max-w-none [image-rendering:pixelated] drop-shadow-[2px_2px_0_#141313]"
+            style={{ left: '74%', top: '38%' }}
             animate={{ y: [4, -4, -4, 4, 4] }}
             transition={{
               duration: ANIMATION.COMBAT_MANA_ORB_FLOAT_DURATION_MS / 750,
