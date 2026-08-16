@@ -25,6 +25,10 @@ describe('cardCatalog artwork', () => {
     expect(CARD_DEFINITIONS.Barricade.spellAnimation.frames[4]).not.toBe(CARD_DEFINITIONS.Barricade.spellAnimation.frames[0]);
   });
 
+  it('gives Void Tendrils its dedicated void blast sound', () => {
+    expect(CARD_DEFINITIONS.VoidTendrils.spellSound).toContain('void_blast.mp3');
+  });
+
   it('uses card-specific artwork for Barricade and Headwind', () => {
     expect(createRuneFromCardName({ id: 'life-common', cardName: 'Barricade' }).cardImageSrc).toContain('card_barricade.png');
     expect(createRuneFromCardName({ id: 'wind-uncommon', cardName: 'Headwind' }).cardImageSrc).toContain('card_headwind.png');

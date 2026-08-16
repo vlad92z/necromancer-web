@@ -37,6 +37,7 @@ import runeFrostSound from '../assets/sounds/rune_frost.mp3';
 import runeLifeSound from '../assets/sounds/rune_life.mp3';
 import runeLightningSound from '../assets/sounds/rune_lightning.mp3';
 import runeVoidSound from '../assets/sounds/rune_void.mp3';
+import voidBlastSound from '../assets/sounds/void_blast.mp3';
 import runeWindSound from '../assets/sounds/rune_wind.mp3';
 import spellStoneSound from '../assets/sounds/spell_stone.mp3';
 import fireToken from '../assets/runes/tokens/token_fire.png';
@@ -76,7 +77,7 @@ export const CARD_DEFINITIONS = {
   FrostShield: { templateId: 'frost_shield', name: 'Frost Shield', runeTypes: ['Frost'], rarity: 'common', cardImageSrc: frostShieldImg, tokenImageSrc: frostToken, spellAnimation: voidOrbSpellAnimation, spellSound: runeFrostSound, manaCost: 2, castEffectRefs: [createEffectRef('cast.shield', { amount: 3 })], passiveEffectRefs: [createEffectRef('passive.explosive', { amount: 3, removalKind: 'destroy' })] },
   Barricade: { templateId: 'barricade', name: 'Barricade', runeTypes: ['Life'], rarity: 'common', cardImageSrc: barricadeImg, tokenImageSrc: lifeToken, spellAnimation: stoneOrbSpellAnimation, spellSound: spellStoneSound, manaCost: 2, castEffectRefs: [createEffectRef('cast.shieldAdjacent', { amount: 2 })], passiveEffectRefs: [] },
   Heal: { templateId: 'heal', name: 'Heal', runeTypes: ['Life'], rarity: 'uncommon', cardImageSrc: healImg, tokenImageSrc: lifeToken, spellAnimation: voidOrbSpellAnimation, spellSound: runeLifeSound, manaCost: 3, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', runeType: 'Life', payload: createEffectRef('cast.healing', { amount: 5 }) })], passiveEffectRefs: [] },
-  VoidTendrils: { templateId: 'void_tendrils', name: 'Void Tendrils', runeTypes: ['Void'], rarity: 'common', cardImageSrc: voidTendrilsImg, tokenImageSrc: voidToken, spellAnimation: voidOrbSpellAnimation, spellSound: runeVoidSound, manaCost: 3, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', payload: createEffectRef('cast.damage', { amount: 9 }) })], passiveEffectRefs: [] },
+  VoidTendrils: { templateId: 'void_tendrils', name: 'Void Tendrils', runeTypes: ['Void'], rarity: 'common', cardImageSrc: voidTendrilsImg, tokenImageSrc: voidToken, spellAnimation: voidOrbSpellAnimation, spellSound: voidBlastSound, manaCost: 3, castEffectRefs: [createRuneRemovalEffectRef({ kind: 'consume', trigger: 'onCast', selection: 'manual', targetOwner: 'self', payload: createEffectRef('cast.damage', { amount: 9 }) })], passiveEffectRefs: [] },
   Tornado: { templateId: 'tornado', name: 'Tornado', runeTypes: ['Wind'], rarity: 'common', cardImageSrc: tornadoImg, tokenImageSrc: windToken, spellAnimation: voidOrbSpellAnimation, spellSound: runeWindSound, manaCost: 5, castEffectRefs: [createEffectRef('cast.damage', { amount: 15 })], passiveEffectRefs: [] },
   Headwind: { templateId: 'headwind', name: 'Headwind', runeTypes: ['Wind'], rarity: 'uncommon', cardImageSrc: headwindImg, tokenImageSrc: windToken, spellAnimation: voidOrbSpellAnimation, spellSound: runeWindSound, manaCost: 3, castEffectRefs: [], passiveEffectRefs: [createRuneRemovalEffectRef({
     kind: 'destroy',
