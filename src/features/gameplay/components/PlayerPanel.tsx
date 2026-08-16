@@ -108,7 +108,7 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       {hoveredArtefactId ? <ArtefactCardPreview artefactId={hoveredArtefactId} /> : <WallRuneCardPreview rune={hoveredRune} />}
       
-        {activeArtefactIds.length > 0 ? (
+        {activeArtefactIds.length > 5 ? (
           <div className="pixel-game-panel-inset mt-4 px-3 py-2">
             <ArtefactsRow
               selectedArtefactIds={activeArtefactIds}
