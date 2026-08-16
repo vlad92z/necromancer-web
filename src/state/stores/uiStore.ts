@@ -8,6 +8,11 @@ import type { ActiveElement } from '../../features/gameplay/components/keyboardN
 
 export type RuneZoneOverlay = 'draw' | 'discard' | 'destroyed' | 'deck';
 
+export interface PlayerSpeech {
+  id: number;
+  message: string;
+}
+
 interface UIStore {
   // Overlay visibility states
   showRulesOverlay: boolean;
@@ -17,6 +22,8 @@ interface UIStore {
   isMusicMuted: boolean;
   hasMusicSessionStarted: boolean;
   activeElement: ActiveElement | null;
+  playerSpeech: PlayerSpeech | null;
+  playerSpeechSequence: number;
   
   // Actions to toggle overlays
   toggleRulesOverlay: () => void;
@@ -30,6 +37,8 @@ interface UIStore {
   toggleMusicMuted: () => void;
   markMusicSessionStarted: () => void;
   setActiveElement: (next: ActiveElement | null | ((current: ActiveElement | null) => ActiveElement | null)) => void;
+  showPlayerSpeech: (message: string) => void;
+  clearPlayerSpeech: (id?: number) => void;
 }
 
 const getInitialVolume = (): number => {
@@ -57,6 +66,8 @@ export const useUIStore = create<UIStore>((set) => ({
   isMusicMuted: getInitialMusicMuted(),
   hasMusicSessionStarted: false,
   activeElement: null,
+  playerSpeech: null,
+  playerSpeechSequence: 0,
   
   // Actions
   toggleRulesOverlay: () => {
@@ -114,5 +125,23 @@ export const useUIStore = create<UIStore>((set) => ({
     set((state) => ({
       activeElement: typeof next === 'function' ? next(state.activeElement) : next,
     }));
+  },
+
+  showPlayerSpeech: (message) => {
+    set((state) => ({
+      playerSpeechSequence: state.playerSpeechSequence + 1,
+      playerSpeech: {
+        id: state.playerSpeechSequence + 1,
+        message,
+      },
+    }));
+  },
+
+  clearPlayerSpeech: (id) => {
+    set((state) => (
+      id === undefined || state.playerSpeech?.id === id
+        ? { playerSpeech: null }
+        : state
+    ));
   },
 }));

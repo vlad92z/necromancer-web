@@ -56,6 +56,7 @@ import {
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
 import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
+import { useUIStore } from './uiStore';
 import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef, runeFromWallCell } from '../../utils/runeRemoval';
 
 function totalWallShield(wall: ScoringWall): number {
@@ -1052,7 +1053,13 @@ export const gameplayStoreConfig = (
         return state;
       }
 
-      if (!state.hand.some((rune) => rune.id === runeId)) {
+      const rune = state.hand.find((handRune) => handRune.id === runeId);
+      if (!rune) {
+        return state;
+      }
+
+      if ((rune.manaCost ?? 2) > state.player.mana) {
+        useUIStore.getState().showPlayerSpeech("I don't have enough mana");
         return state;
       }
 
@@ -1072,6 +1079,7 @@ export const gameplayStoreConfig = (
       const selectedRune = state.hand.find((rune) => rune.id === state.selectedHandRuneId);
       const manaCost = selectedRune?.manaCost ?? 2;
       if (!selectedRune || manaCost > state.player.mana) {
+        if (selectedRune) useUIStore.getState().showPlayerSpeech("I don't have enough mana");
         return state;
       }
 
@@ -1080,11 +1088,21 @@ export const gameplayStoreConfig = (
       ));
       if (consumeEffect) {
         const targetSide = consumeEffect.targetOwner === 'self' ? 'player' : 'enemy';
-        if (side !== targetSide) return state;
+        if (side !== targetSide) {
+          useUIStore.getState().showPlayerSpeech(
+            targetSide === 'player'
+              ? 'I must consume a rune on my spell wall'
+              : 'I must consume a rune on the enemy spellboard',
+          );
+          return state;
+        }
         const targetWall = targetSide === 'player' ? state.player.wall : state.enemyBoard;
         const candidates = getRuneRemovalCandidates({ wall: targetWall, runeType: consumeEffect.runeType });
         const clickedIsEligible = candidates.some((position) => position.row === row && position.col === col);
-        if (!clickedIsEligible) return state;
+        if (!clickedIsEligible) {
+          useUIStore.getState().showPlayerSpeech('I must place this on another rune to consume it');
+          return state;
+        }
         const targetPosition = consumeEffect.selection === 'random'
           ? chooseRandomRunePosition(candidates, Math.random)
           : { row, col };
@@ -1126,7 +1144,10 @@ export const gameplayStoreConfig = (
         });
       }
 
-      if (side !== 'player') return state;
+      if (side !== 'player') {
+        useUIStore.getState().showPlayerSpeech('I must place this on my spell wall');
+        return state;
+      }
 
       const result = castRuneToWallSlot({
         player: state.player,
@@ -1138,6 +1159,9 @@ export const gameplayStoreConfig = (
       });
 
       if (result.status === 'invalid') {
+        if (state.player.wall[row]?.[col]?.id) {
+          useUIStore.getState().showPlayerSpeech('I must place this in an empty slot');
+        }
         return state;
       }
 

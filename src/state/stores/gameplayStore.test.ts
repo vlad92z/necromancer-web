@@ -13,6 +13,7 @@ import { completeActiveMapEncounter, travelOnSoloMap } from '../../utils/soloMap
 import { getRegionDefinition } from '../../utils/regionCatalog';
 import { createRuneRemovalEffectRef } from '../../utils/runeRemoval';
 import { createGameplayStoreInstance } from './gameplayStore';
+import { useUIStore } from './uiStore';
 
 type GameplayStoreInstance = ReturnType<typeof createGameplayStoreInstance>;
 
@@ -54,6 +55,7 @@ function startEncounterAtA(store: GameplayStoreInstance): void {
 describe('gameplayStore current combat', () => {
   beforeEach(() => {
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    useUIStore.getState().clearPlayerSpeech();
   });
 
   it('starts a solo run on the map with the combat state ready for a future encounter', () => {
@@ -351,6 +353,48 @@ describe('gameplayStore current combat', () => {
 
     store.getState().endCombatTurn();
     expect(store.getState().player.mana).toBe(7);
+  });
+
+  it('does not select an unaffordable hand rune and explains why', () => {
+    const store = createGameplayStoreInstance();
+    const expensiveFireRune = createTestRune('expensive-fire', 'Fire', 3, 'common', 5);
+
+    store.setState((state) => ({
+      ...state,
+      hand: [expensiveFireRune],
+      selectedHandRuneId: null,
+      player: { ...state.player, mana: 4 },
+    }));
+
+    store.getState().selectHandRune(expensiveFireRune.id);
+
+    expect(store.getState().selectedHandRuneId).toBeNull();
+    expect(useUIStore.getState().playerSpeech?.message).toBe("I don't have enough mana");
+  });
+
+  it('explains when an ordinary rune is played on an occupied slot', () => {
+    const store = createGameplayStoreInstance();
+    const fireRune = createTestRune('fire-1', 'Fire', 3);
+    const wall = createEmptyWall();
+    wall[0]![0] = {
+      ...wall[0]![0],
+      id: 'occupied',
+      name: 'Occupied Rune',
+      runeTypes: ['Frost'],
+      rarity: 'common',
+    };
+    store.setState((state) => ({
+      ...state,
+      hand: [fireRune],
+      selectedHandRuneId: fireRune.id,
+      player: { ...state.player, wall },
+    }));
+
+    store.getState().castRuneToWall(0, 0);
+
+    expect(store.getState().hand).toEqual([fireRune]);
+    expect(store.getState().player.wall[0]![0]?.id).toBe('occupied');
+    expect(useUIStore.getState().playerSpeech?.message).toBe('I must place this in an empty slot');
   });
 
   it('selects a hand rune and completes a row-one wall slot', () => {
@@ -1125,6 +1169,25 @@ describe('gameplayStore current combat', () => {
     expect(store.getState().hand.map((rune) => rune.id)).toEqual([consumer.id]);
     expect(store.getState().player.mana).toBe(5);
     expect(store.getState().discardPile).toEqual([]);
+    expect(useUIStore.getState().playerSpeech?.message).toBe('I must place this on another rune to consume it');
+  });
+
+  it('explains when a Consume rune targets the wrong spellboard', () => {
+    const store = createGameplayStoreInstance();
+    startEncounterAtA(store);
+    const consumer = createRuneFromCardName({ id: 'self-consumer', cardName: 'VoidTendrils' });
+    store.setState((state) => ({
+      ...state,
+      hand: [consumer],
+      selectedHandRuneId: consumer.id,
+      player: { ...state.player, mana: 5, deck: [] },
+    }));
+
+    store.getState().castRuneToWall(0, 0, 'enemy');
+
+    expect(store.getState().hand).toEqual([consumer]);
+    expect(store.getState().player.mana).toBe(5);
+    expect(useUIStore.getState().playerSpeech?.message).toBe('I must consume a rune on my spell wall');
   });
 
   it('places an opponent-targeted Consume rune on the enemy wall', () => {

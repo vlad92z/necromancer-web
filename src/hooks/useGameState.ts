@@ -96,6 +96,10 @@ export function useUIOverlayState() {
   );
 }
 
+export function usePlayerSpeech() {
+  return useUIStore((state) => state.playerSpeech);
+}
+
 export function useCombatEnemyState() {
   return useCombatStore(
     useShallow((state) => ({

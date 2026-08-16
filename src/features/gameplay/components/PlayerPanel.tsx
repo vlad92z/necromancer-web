@@ -13,6 +13,7 @@ import type { Rune } from '../../../types/game';
 import { ANIMATION } from '../../../styles/tokens';
 import { ArtefactCardPreview } from './ArtefactCardPreview';
 import { WallRuneCardPreview } from './WallRuneCardPreview';
+import { PlayerSpeechBubble } from './PlayerSpeechBubble';
 
 interface PlayerPanelProps {
   hoveredRune: Rune | null;
@@ -58,6 +59,7 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       <div className="mt-5 flex justify-center">
         <div className="relative h-55 w-55 max-w-full">
+          <PlayerSpeechBubble />
           <img
             src={wizardImage}
             alt="Player wizard"
