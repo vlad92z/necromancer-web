@@ -55,6 +55,20 @@ body {
   *:active::after {
     cursor: url('./assets/mouse/spell_pointer_click.png') 0 0, auto !important;
   }
+
+  .cursor-sword,
+  .cursor-sword *,
+  .cursor-sword::before,
+  .cursor-sword::after {
+    cursor: url('./assets/mouse/mouse_sword.png') 0 0, auto !important;
+  }
+
+  .cursor-spell-error,
+  .cursor-spell-error *,
+  .cursor-spell-error::before,
+  .cursor-spell-error::after {
+    cursor: url('./assets/mouse/mouse_error.png') 0 0, auto !important;
+  }
 }
 
 #root {

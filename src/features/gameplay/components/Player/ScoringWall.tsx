@@ -99,6 +99,11 @@ export function ScoringWall({ hiddenWallSlots, onRuneHover, onRuneLeave }: Scori
               aria-label={targetableKeys.has(cellKey(rowIndex, colIndex))
                 ? `${isConsuming ? 'Consume' : 'Destroy'} ${cell.name ?? cell.runeTypes.join(' ')} rune at row ${rowIndex + 1}, column ${colIndex + 1}`
                 : `Wall slot row ${rowIndex + 1}, column ${colIndex + 1}`}
+              className={selectedRune && (isTargeting
+                ? !targetableKeys.has(cellKey(rowIndex, colIndex))
+                : cell.id !== null)
+                ? 'cursor-spell-error'
+                : undefined}
               style={{ display: 'flex', cursor: 'pointer', border: 0, padding: 0, background: 'transparent' }}
             >
               <WallCell
