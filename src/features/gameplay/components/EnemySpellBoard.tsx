@@ -82,6 +82,9 @@ export function EnemySpellBoard({ onRuneHover, onRuneLeave }: EnemySpellBoardPro
                 aria-label={targetableKeys.has(`${rowIndex}-${colIndex}`)
                   ? `${isConsuming ? 'Consume' : 'Destroy'} ${cell.name ?? cell.runeTypes.join(' ')} rune at row ${rowIndex + 1}, column ${colIndex + 1}`
                   : undefined}
+                className={selectedRune && isTargeting && !targetableKeys.has(`${rowIndex}-${colIndex}`)
+                  ? 'cursor-spell-error'
+                  : undefined}
                 style={{ display: 'flex', border: 0, padding: 0, background: 'transparent' }}
               >
                 <WallCell

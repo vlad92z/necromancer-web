@@ -45,6 +45,7 @@ interface MapMarkerProps {
   current: boolean;
   markerKind: MapLocationMarkerKind | 'frontier';
   isBoss?: boolean;
+  isEnemy?: boolean;
   showVisitedUnderlay?: boolean;
   isTravelLocked: boolean;
   onTravel: MapTileProps['onTravel'];
@@ -63,6 +64,7 @@ function MapMarker({
   current,
   markerKind,
   isBoss = false,
+  isEnemy = false,
   showVisitedUnderlay = false,
   isTravelLocked,
   onTravel,
@@ -112,7 +114,7 @@ function MapMarker({
         aria-label={label}
         data-map-marker={markerKind}
         data-map-boss={isBoss || undefined}
-        className={`${positionClassName} hover:bg-[#fff8d8]/20 focus-visible:bg-[#fff8d8]/20 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fff8d8]`}
+        className={`${positionClassName} ${isEnemy ? 'cursor-sword' : ''} hover:bg-[#fff8d8]/20 focus-visible:bg-[#fff8d8]/20 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fff8d8]`}
         style={style}
         disabled={isTravelLocked}
         onClick={handleClick}
@@ -136,7 +138,7 @@ function MapMarker({
       aria-hidden="true"
       data-map-marker={markerKind}
       data-map-boss={isBoss || undefined}
-      className={`${positionClassName} pointer-events-none`}
+      className={`${positionClassName} ${isEnemy ? 'cursor-sword' : 'pointer-events-none'}`}
       style={style}
     >
       <img src={imageSrc} alt="" className={imageClassName} />
@@ -203,6 +205,7 @@ export function MapTile({
         current={current}
         markerKind={markerKind}
         isBoss={isBoss && !current && markerKind !== 'cleared'}
+        isEnemy={Boolean(monster) && !current && markerKind !== 'cleared'}
         showVisitedUnderlay={showVisitedUnderlay}
         isTravelLocked={isTravelLocked}
         onTravel={onTravel}
