@@ -71,9 +71,12 @@ export function EnemySpellBoard({ onRuneHover, onRuneLeave }: EnemySpellBoardPro
                 disabled={Boolean(pendingTarget) && !targetableKeys.has(`${rowIndex}-${colIndex}`)}
                 tabIndex={targetableKeys.has(`${rowIndex}-${colIndex}`) ? 0 : -1}
                 onClick={() => {
-                  if (!targetableKeys.has(`${rowIndex}-${colIndex}`)) return;
-                  if (isConsuming) castRuneToWall(rowIndex, colIndex, 'enemy');
-                  else selectPendingRuneTarget('enemy', rowIndex, colIndex);
+                  if (targetableKeys.has(`${rowIndex}-${colIndex}`)) {
+                    if (isConsuming) castRuneToWall(rowIndex, colIndex, 'enemy');
+                    else selectPendingRuneTarget('enemy', rowIndex, colIndex);
+                  } else if (isConsuming || !pendingTarget) {
+                    castRuneToWall(rowIndex, colIndex, 'enemy');
+                  }
                 }}
                 onKeyDown={(event) => handleArrow(event, `${rowIndex}-${colIndex}`)}
                 aria-label={targetableKeys.has(`${rowIndex}-${colIndex}`)

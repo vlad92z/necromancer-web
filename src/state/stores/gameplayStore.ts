@@ -9,7 +9,6 @@ import type {
   MapTravelTarget,
   Player,
   Rune,
-  RuneType,
   ScoringWall,
   SoloMapState,
   WallPosition,
@@ -57,6 +56,7 @@ import {
 import { trackGameplayDefeat, trackGameplayNewGame } from '../../systems/gameplayAnalytics';
 import { attachGameplayPersistence } from './gameplayPersistence';
 import { replaceGameplayState } from './gameplayState';
+import { useUIStore } from './uiStore';
 import { chooseRandomRunePosition, getRuneRemovalCandidates, isRuneRemovalEffectRef, runeFromWallCell } from '../../utils/runeRemoval';
 
 function totalWallShield(wall: ScoringWall): number {
@@ -234,41 +234,40 @@ function trackDefeat(state: GameState, player: Player): void {
   });
 }
 
-function addCompletedWallRuneTypesById(runeTypesById: Map<string, RuneType[]>, wall: ScoringWall): Map<string, RuneType[]> {
+function addCompletedWallSpellSoundsById(spellSoundsById: Map<string, string>, wall: ScoringWall): Map<string, string> {
   wall.forEach((row) => {
     row.forEach((cell) => {
-      if (cell.id && cell.runeTypes.length > 0) {
-        runeTypesById.set(cell.id, cell.runeTypes);
+      if (cell.id && cell.spellSound) {
+        spellSoundsById.set(cell.id, cell.spellSound);
       }
     });
   });
-  return runeTypesById;
+  return spellSoundsById;
 }
 
-function createEmptyRuneSoundEvents(): Record<RuneType, number> {
+function createEmptyRuneSoundEvents(): Record<string, number> {
   return createRuneSoundSignals();
 }
 
-function addRuneSoundEvent(events: Record<RuneType, number>, runeType: RuneType): void {
-  events[runeType] += 1;
+function addRuneSoundEvent(events: Record<string, number>, soundUrl: string): void {
+  events[soundUrl] = (events[soundUrl] ?? 0) + 1;
 }
 
 function mergeRuneSoundEvents(
-  left: Record<RuneType, number>,
-  right: Record<RuneType, number>
-): Record<RuneType, number> {
-  const next = createEmptyRuneSoundEvents();
-  Object.keys(next).forEach((runeType) => {
-    const typedRuneType = runeType as RuneType;
-    next[typedRuneType] = left[typedRuneType] + right[typedRuneType];
+  left: Record<string, number>,
+  right: Record<string, number>
+): Record<string, number> {
+  const next = { ...left };
+  Object.entries(right).forEach(([soundUrl, count]) => {
+    next[soundUrl] = (next[soundUrl] ?? 0) + count;
   });
   return next;
 }
 
 function applyRuneSoundEvents(
-  signals: Record<RuneType, number>,
-  events: Record<RuneType, number>
-): Record<RuneType, number> {
+  signals: Record<string, number>,
+  events: Record<string, number>
+): Record<string, number> {
   return mergeRuneSoundEvents(signals, events);
 }
 
@@ -280,14 +279,12 @@ function countRuneSoundEvents({
   completedRune?: Rune | null;
   logs: EffectResolutionLog[];
   wall: ScoringWall;
-}): Record<RuneType, number> {
+}): Record<string, number> {
   const events = createEmptyRuneSoundEvents();
-  const completedRuneTypesById = addCompletedWallRuneTypesById(new Map<string, RuneType[]>(), wall);
-  const retriggeredRuneIdsByType = new Map<RuneType, Set<string>>();
+  const completedRuneSpellSoundsById = addCompletedWallSpellSoundsById(new Map<string, string>(), wall);
+  const retriggeredRuneIdsBySound = new Map<string, Set<string>>();
 
-  if (completedRune) {
-    completedRune.runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
-  }
+  if (completedRune?.spellSound) addRuneSoundEvent(events, completedRune.spellSound);
 
   logs.forEach((log) => {
     if (log.sourceType !== 'rune') {
@@ -295,27 +292,25 @@ function countRuneSoundEvents({
     }
 
     if (log.effectId.startsWith('passive.')) {
-      const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
-      runeTypes.forEach((runeType) => addRuneSoundEvent(events, runeType));
+      const spellSound = completedRuneSpellSoundsById.get(log.sourceId);
+      if (spellSound) addRuneSoundEvent(events, spellSound);
       return;
     }
 
-    const runeTypes = completedRuneTypesById.get(log.sourceId) ?? [];
+    const spellSound = completedRuneSpellSoundsById.get(log.sourceId);
     if (
       log.effectId.startsWith('cast.') &&
       log.sourceId !== completedRune?.id &&
-      runeTypes.length > 0
+      spellSound
     ) {
-      runeTypes.forEach((runeType) => {
-        const retriggeredRuneIds = retriggeredRuneIdsByType.get(runeType) ?? new Set<string>();
-        retriggeredRuneIds.add(log.sourceId);
-        retriggeredRuneIdsByType.set(runeType, retriggeredRuneIds);
-      });
+      const retriggeredRuneIds = retriggeredRuneIdsBySound.get(spellSound) ?? new Set<string>();
+      retriggeredRuneIds.add(log.sourceId);
+      retriggeredRuneIdsBySound.set(spellSound, retriggeredRuneIds);
     }
   });
 
-  retriggeredRuneIdsByType.forEach((runeIds, runeType) => {
-    events[runeType] += runeIds.size;
+  retriggeredRuneIdsBySound.forEach((runeIds, soundUrl) => {
+    events[soundUrl] = (events[soundUrl] ?? 0) + runeIds.size;
   });
 
   return events;
@@ -1058,7 +1053,13 @@ export const gameplayStoreConfig = (
         return state;
       }
 
-      if (!state.hand.some((rune) => rune.id === runeId)) {
+      const rune = state.hand.find((handRune) => handRune.id === runeId);
+      if (!rune) {
+        return state;
+      }
+
+      if ((rune.manaCost ?? 2) > state.player.mana) {
+        useUIStore.getState().showPlayerSpeech("I don't have enough mana");
         return state;
       }
 
@@ -1078,6 +1079,7 @@ export const gameplayStoreConfig = (
       const selectedRune = state.hand.find((rune) => rune.id === state.selectedHandRuneId);
       const manaCost = selectedRune?.manaCost ?? 2;
       if (!selectedRune || manaCost > state.player.mana) {
+        if (selectedRune) useUIStore.getState().showPlayerSpeech("I don't have enough mana");
         return state;
       }
 
@@ -1086,11 +1088,21 @@ export const gameplayStoreConfig = (
       ));
       if (consumeEffect) {
         const targetSide = consumeEffect.targetOwner === 'self' ? 'player' : 'enemy';
-        if (side !== targetSide) return state;
+        if (side !== targetSide) {
+          useUIStore.getState().showPlayerSpeech(
+            targetSide === 'player'
+              ? 'I must consume a rune on my spell wall'
+              : 'I must consume a rune on the enemy spellboard',
+          );
+          return state;
+        }
         const targetWall = targetSide === 'player' ? state.player.wall : state.enemyBoard;
         const candidates = getRuneRemovalCandidates({ wall: targetWall, runeType: consumeEffect.runeType });
         const clickedIsEligible = candidates.some((position) => position.row === row && position.col === col);
-        if (!clickedIsEligible) return state;
+        if (!clickedIsEligible) {
+          useUIStore.getState().showPlayerSpeech('I must place this on another rune to consume it');
+          return state;
+        }
         const targetPosition = consumeEffect.selection === 'random'
           ? chooseRandomRunePosition(candidates, Math.random)
           : { row, col };
@@ -1132,7 +1144,10 @@ export const gameplayStoreConfig = (
         });
       }
 
-      if (side !== 'player') return state;
+      if (side !== 'player') {
+        useUIStore.getState().showPlayerSpeech('I must place this on my spell wall');
+        return state;
+      }
 
       const result = castRuneToWallSlot({
         player: state.player,
@@ -1144,6 +1159,9 @@ export const gameplayStoreConfig = (
       });
 
       if (result.status === 'invalid') {
+        if (state.player.wall[row]?.[col]?.id) {
+          useUIStore.getState().showPlayerSpeech('I must place this in an empty slot');
+        }
         return state;
       }
 

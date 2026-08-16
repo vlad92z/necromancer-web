@@ -34,11 +34,8 @@ export function createStartingDeck(): Rune[] {
   }));
 }
 
-export function createRuneSoundSignals(): Record<RuneType, number> {
-  return PLAYER_RUNE_TYPES.reduce<Record<RuneType, number>>((signals, runeType) => {
-    signals[runeType] = 0;
-    return signals;
-  }, {} as Record<RuneType, number>);
+export function createRuneSoundSignals(): Record<string, number> {
+  return {};
 }
 
 export function createPlayer(id: string, name: string, startingHealth: number, deck: Rune[], maxHealth: number): Player {

@@ -7,7 +7,7 @@ import { SPELL_WALL_SIDE_LENGTH } from './spellWall';
 
 const SOLO_STATE_KEY = 'necromancer-solo-state';
 const SOLO_BEST_ROUND_KEY = 'necromancer-solo-best-round';
-export const SOLO_STATE_VERSION = 41;
+export const SOLO_STATE_VERSION = 42;
 
 interface SoloStatePayload {
   version: typeof SOLO_STATE_VERSION;

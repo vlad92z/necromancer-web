@@ -354,6 +354,7 @@ function cloneWall(wall: ScoringWall): ScoringWall {
     rarity: cell.rarity,
     cardImageSrc: cell.cardImageSrc,
     tokenImageSrc: cell.tokenImageSrc,
+    spellSound: cell.spellSound,
     manaCost: cell.manaCost,
     castEffectRefs: cell.castEffectRefs ? copyEffectRefs(cell.castEffectRefs) : null,
     passiveEffectRefs: cell.passiveEffectRefs ? copyEffectRefs(cell.passiveEffectRefs) : null,
@@ -391,6 +392,7 @@ function runeFromCompletedCell(
     rarity: cell.rarity ?? 'common',
     cardImageSrc: cell.cardImageSrc ?? '',
     tokenImageSrc: cell.tokenImageSrc ?? '',
+    ...(cell.spellSound ? { spellSound: cell.spellSound } : {}),
     castEffectRefs: copyEffectRefs(cell.castEffectRefs),
     passiveEffectRefs: copyEffectRefs(cell.passiveEffectRefs),
   };

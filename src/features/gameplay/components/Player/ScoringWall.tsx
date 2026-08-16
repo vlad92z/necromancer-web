@@ -56,6 +56,8 @@ export function ScoringWall({ hiddenWallSlots, onRuneHover, onRuneLeave }: Scori
         if (targetableKeys.has(key)) {
           if (isConsuming) castRuneToWall(rowIndex, colIndex, 'player');
           else selectPendingRuneTarget('player', rowIndex, colIndex);
+        } else if (isConsuming) {
+          castRuneToWall(rowIndex, colIndex, 'player');
         }
         return;
       }

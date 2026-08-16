@@ -4,6 +4,7 @@ import { ClickSoundButton } from '../../../../components/ClickSoundButton';
 import { useGameplayActions, useUIActions } from '../../../../hooks/useGameActions';
 import { useArcaneDust, useGameplayHealthState, useSoloMapState } from '../../../../hooks/useGameState';
 import { useClickSound } from '../../../../hooks/useClickSound';
+import { useMapFootstepSound } from '../../../../hooks/useMapFootstepSound';
 import type { MapTravelTarget } from '../../../../types/game';
 import { RuneZoneButton } from '../../../../components/DeckButton';
 import arcaneDustIcon from '../../../../assets/stats/arcane_dust.png';
@@ -82,6 +83,7 @@ export function SoloMapView(): ReactElement {
   const [pendingTravel, setPendingTravel] = useState<PendingMapTravel | null>(null);
   const [wizardFrameIndex, setWizardFrameIndex] = useState(0);
   const [wizardFacing, setWizardFacing] = useState<'left' | 'right'>('right');
+  useMapFootstepSound(pendingTravel?.stage === 'walking');
 
   const tiles = useMemo(
     () => Object.values(map.tiles).sort((left, right) => left.y - right.y || left.x - right.x),

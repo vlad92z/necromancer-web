@@ -6,7 +6,8 @@ import type { ArtefactId } from './artefacts';
 
 export type RuneType = 'Fire' | 'Frost' | 'Life' | 'Void' | 'Wind' | 'Lightning';
 export type RuneEffectRarity = 'common' | 'uncommon' | 'rare' | 'epic';
-export type RuneSoundSignals = Record<RuneType, number>;
+/** Monotonic play counters keyed by the canonical sound URL of each spell. */
+export type RuneSoundSignals = Record<string, number>;
 
 export interface RuneSpellAnimation {
   frames: readonly string[];
@@ -75,6 +76,7 @@ export interface Rune {
   cardImageSrc: string;
   tokenImageSrc: string;
   spellAnimation?: RuneSpellAnimation;
+  spellSound?: string;
   manaCost?: number;
   castEffectRefs: RuneEffectRef[];
   passiveEffectRefs: RuneEffectRef[];
@@ -129,6 +131,7 @@ export interface WallCell {
   rarity: RuneEffectRarity | null;
   cardImageSrc: string | null;
   tokenImageSrc: string | null;
+  spellSound?: string | null;
   manaCost?: number | null;
   castEffectRefs: RuneEffectRef[] | null;
   passiveEffectRefs: RuneEffectRef[] | null;

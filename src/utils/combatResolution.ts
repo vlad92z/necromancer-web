@@ -1108,6 +1108,7 @@ export function resolveEnemyTurn({
       rarity: rune.rarity,
       cardImageSrc: rune.cardImageSrc,
       tokenImageSrc: rune.tokenImageSrc,
+      spellSound: rune.spellSound ?? null,
       manaCost: rune.manaCost ?? 2,
       castEffectRefs: rune.castEffectRefs,
       passiveEffectRefs: rune.passiveEffectRefs,

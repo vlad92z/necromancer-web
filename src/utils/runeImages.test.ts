@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARD_DEFINITIONS } from './cardCatalog';
-import { createRuneFromPool } from './runeEffects';
+import { createRuneFromCardName } from './runeEffects';
 
 describe('cardCatalog artwork', () => {
   it('defines card and token artwork on every card entry', () => {
@@ -10,35 +10,38 @@ describe('cardCatalog artwork', () => {
     });
   });
 
-  it('defines the matching orb animation on every card, playing forward then back to frame one', () => {
+  it('defines a spell animation and sound on every card', () => {
     Object.values(CARD_DEFINITIONS).forEach((card) => {
-      const orbKind = (card.runeTypes as readonly string[]).includes('Fire') ? 'fire' : 'void';
-      expect(card.spellAnimation.frames.map((frame) => frame.match(new RegExp(`orb_${orbKind}_(\\d)\\.png`))?.[1]))
-        .toEqual(['1', '2', '3', '4', '5', '6', '7', '6', '5', '4', '3', '2', '1']);
+      expect(card.spellAnimation.frames.length).toBeGreaterThan(0);
       expect(card.spellAnimation.frameDurationMs).toBeGreaterThan(0);
+      expect(card.spellSound).toContain('.mp3');
     });
   });
 
+  it('gives Barricade its stone sound and forward-and-back stone animation', () => {
+    expect(CARD_DEFINITIONS.Barricade.spellSound).toContain('spell_stone.mp3');
+    expect(CARD_DEFINITIONS.Barricade.spellAnimation.frames).toHaveLength(9);
+    expect(CARD_DEFINITIONS.Barricade.spellAnimation.frames[0]).toBe(CARD_DEFINITIONS.Barricade.spellAnimation.frames[8]);
+    expect(CARD_DEFINITIONS.Barricade.spellAnimation.frames[4]).not.toBe(CARD_DEFINITIONS.Barricade.spellAnimation.frames[0]);
+  });
+
+  it('gives Void Tendrils its dedicated void blast sound', () => {
+    expect(CARD_DEFINITIONS.VoidTendrils.spellSound).toContain('void_blast.mp3');
+  });
+
   it('uses card-specific artwork for Barricade and Headwind', () => {
-    expect(createRuneFromPool({
-      id: 'life-common',
-      runeType: 'Life',
-      rarity: 'common',
-    }).cardImageSrc).toContain('card_barricade.png');
-    expect(createRuneFromPool({
-      id: 'wind-uncommon',
-      runeType: 'Wind',
-      rarity: 'uncommon',
-    }).cardImageSrc).toContain('card_headwind.png');
+    expect(createRuneFromCardName({ id: 'life-common', cardName: 'Barricade' }).cardImageSrc).toContain('card_barricade.png');
+    expect(createRuneFromCardName({ id: 'wind-uncommon', cardName: 'Headwind' }).cardImageSrc).toContain('card_headwind.png');
   });
 
   it('stores both resolved image values on created cards', () => {
-    const rune = createRuneFromPool({ id: 'frost-rare', runeType: 'Frost', rarity: 'rare' });
+    const rune = createRuneFromCardName({ id: 'frost-common', cardName: 'FrostShield' });
 
     expect(rune).toMatchObject({
       cardImageSrc: CARD_DEFINITIONS.FrostShield.cardImageSrc,
       tokenImageSrc: CARD_DEFINITIONS.FrostShield.tokenImageSrc,
       spellAnimation: CARD_DEFINITIONS.FrostShield.spellAnimation,
+      spellSound: CARD_DEFINITIONS.FrostShield.spellSound,
     });
   });
 });

@@ -2,7 +2,7 @@
  * EnemyPanel - displays the active enemy.
  */
 
-import { useCombatEnemyState } from '../../../hooks/useGameState';
+import { useCombatEnemyState, useEnemySpellBoardState } from '../../../hooks/useGameState';
 import type { Rune } from '../../../types/game';
 import { WallRuneCardPreview } from './WallRuneCardPreview';
 
@@ -12,6 +12,7 @@ interface EnemyPanelProps {
 
 export function EnemyPanel({ hoveredRune }: EnemyPanelProps) {
   const { enemy } = useCombatEnemyState();
+  const { wall } = useEnemySpellBoardState();
 
   if (!enemy) {
     return (
@@ -24,6 +25,7 @@ export function EnemyPanel({ hoveredRune }: EnemyPanelProps) {
 
   const healthRatio = enemy.maxHealth > 0 ? Math.max(0, Math.min(1, enemy.health / enemy.maxHealth)) : 0;
   const healthPercent = Math.round(healthRatio * 100);
+  const totalShield = wall.flat().reduce((total, cell) => total + (cell.shield ?? 0), 0);
 
   return (
     <section>
@@ -43,7 +45,9 @@ export function EnemyPanel({ hoveredRune }: EnemyPanelProps) {
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
-          <span />
+          {totalShield > 0 ? (
+            <span className="text-[#75c9f0]" aria-label={`Shield: ${totalShield}`}>{totalShield}</span>
+          ) : <span />}
           <span>{enemy.health} / {enemy.maxHealth}</span>
         </div>
         <div className="pixel-health-track">

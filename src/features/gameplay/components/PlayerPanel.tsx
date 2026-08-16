@@ -13,6 +13,7 @@ import type { Rune } from '../../../types/game';
 import { ANIMATION } from '../../../styles/tokens';
 import { ArtefactCardPreview } from './ArtefactCardPreview';
 import { WallRuneCardPreview } from './WallRuneCardPreview';
+import { PlayerSpeechBubble } from './PlayerSpeechBubble';
 
 interface PlayerPanelProps {
   hoveredRune: Rune | null;
@@ -58,6 +59,7 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       <div className="mt-5 flex justify-center">
         <div className="relative h-55 w-55 max-w-full">
+          <PlayerSpeechBubble />
           <img
             src={wizardImage}
             alt="Player wizard"
@@ -84,7 +86,9 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between text-xs uppercase text-[#fff8d8]">
-          <span className="text-[#75c9f0]" aria-label={`Shield: ${totalShield}`}>{totalShield}</span>
+          {totalShield > 0 ? (
+            <span className="text-[#75c9f0]" aria-label={`Shield: ${totalShield}`}>{totalShield}</span>
+          ) : <span />}
           <span>{health} / {maxHealth}</span>
         </div>
         <div className="pixel-health-track">
@@ -106,7 +110,7 @@ export function PlayerPanel({ hoveredRune }: PlayerPanelProps) {
 
       {hoveredArtefactId ? <ArtefactCardPreview artefactId={hoveredArtefactId} /> : <WallRuneCardPreview rune={hoveredRune} />}
       
-        {activeArtefactIds.length > 0 ? (
+        {activeArtefactIds.length > 5 ? (
           <div className="pixel-game-panel-inset mt-4 px-3 py-2">
             <ArtefactsRow
               selectedArtefactIds={activeArtefactIds}
